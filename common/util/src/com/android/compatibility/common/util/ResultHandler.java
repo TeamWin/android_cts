@@ -165,7 +165,7 @@ public class ResultHandler {
                             String result = parser.getAttributeValue(NS, RESULT_ATTR);
                             test.setResultStatus(TestStatus.getStatus(result));
                             test.setRetry(true);
-                            if (parser.nextTag() == XmlPullParser.START_TAG) {
+                            while (parser.nextTag() == XmlPullParser.START_TAG) {
                                 if (parser.getName().equals(FAILURE_TAG)) {
                                     test.setMessage(parser.getAttributeValue(NS, MESSAGE_ATTR));
                                     if (parser.nextTag() == XmlPullParser.START_TAG) {
@@ -175,19 +175,17 @@ public class ResultHandler {
                                         parser.nextTag();
                                     }
                                     parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
-                                    parser.nextTag();
                                 } else if (parser.getName().equals(BUGREPORT_TAG)) {
                                     test.setBugReport(parser.nextText());
-                                    parser.nextTag();
+                                    parser.require(XmlPullParser.END_TAG, NS, BUGREPORT_TAG);
                                 } else if (parser.getName().equals(LOGCAT_TAG)) {
                                     test.setLog(parser.nextText());
-                                    parser.nextTag();
+                                    parser.require(XmlPullParser.END_TAG, NS, LOGCAT_TAG);
                                 } else if (parser.getName().equals(SCREENSHOT_TAG)) {
                                     test.setScreenshot(parser.nextText());
-                                    parser.nextTag();
+                                    parser.require(XmlPullParser.END_TAG, NS, SCREENSHOT_TAG);
                                 } else {
                                     test.setReportLog(ReportLog.parse(parser));
-                                    parser.nextTag();
                                 }
                             }
                             parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
