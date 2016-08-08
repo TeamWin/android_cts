@@ -42,7 +42,7 @@
         <value>http://redirector.gvt1.com/videoplayback?id=271de9756065677e&amp;itag=18&amp;source=youtube&amp;ip=0.0.0.0&amp;ipbits=0&amp;expire=19000000000&amp;sparams=ip,ipbits,expire,id,itag,source&amp;signature=667AEEF54639926662CE62361400B8F8C1753B3F.15F46C382C68A9F121BA17BF1F56BEDEB4B06091&amp;key=ik0&amp;user=android-device-test</value>
     </entry>
     <entry key="streaming_media_player_test_http_h264_base_aac_video2">
-        <value>http://www.youtube.com/api/manifest/hls_variant/id/0168724d02bd9945/itag/5/source/youtube/playlist_type/DVR/ip/0.0.0.0/ipbits/0/expire/19000000000/sparams/ip,ipbits,expire,id,itag,source,playlist_type/signature/773AB8ACC68A96E5AA481996AD6A1BBCB70DCB87.95733B544ACC5F01A1223A837D2CF04DF85A3360/key/ik0/file/m3u8</value>
+        <value>http://redirector.gvt1.com/videoplayback?id=c80658495af60617&amp;itag=18&amp;source=youtube&amp;ip=0.0.0.0&amp;ipbits=0&amp;expire=19000000000&amp;sparams=ip,ipbits,expire,id,itag,source&amp;signature=46A04ED550CA83B79B60060BA80C79FDA5853D26.49582D382B4A9AFAA163DED38D2AE531D85603C0&amp;key=ik0&amp;user=android-device-test</value>
     </entry>
     <entry key="streaming_media_player_test_http_mpeg4_sp_aac_video1">
         <value>http://redirector.gvt1.com/videoplayback?id=271de9756065677e&amp;itag=17&amp;source=youtube&amp;ip=0.0.0.0&amp;ipbits=0&amp;expire=19000000000&amp;sparams=ip,ipbits,expire,id,itag,source&amp;signature=837198AAADF6F36BA6B2D324F690A7C5B7AFE3FF.7138CE5E36D718220726C1FC305497FF2D082249&amp;key=ik0&amp;user=android-device-test</value>
