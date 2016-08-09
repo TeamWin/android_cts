@@ -16,6 +16,14 @@
 
 package android.view.inputmethod.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -25,13 +33,18 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Printer;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -39,7 +52,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class InputMethodInfoTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class InputMethodInfoTest {
+    private Context mContext;
+
     private InputMethodInfo mInputMethodInfo;
     private String mPackageName;
     private String mClassName;
@@ -58,9 +75,9 @@ public class InputMethodInfoTest extends AndroidTestCase {
     private int mSubtypeId;
     private InputMethodSubtype mInputMethodSubtype;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         mPackageName = mContext.getPackageName();
         mClassName = InputMethodSettingsActivityStub.class.getName();
         mLabel = "test";
@@ -82,6 +99,7 @@ public class InputMethodInfoTest extends AndroidTestCase {
                 mSubtypeOverridesImplicitlyEnabledSubtype, mSubtypeId);
     }
 
+    @Test
     public void testInputMethodInfoProperties() throws XmlPullParserException, IOException {
         assertEquals(0, mInputMethodInfo.describeContents());
         assertNotNull(mInputMethodInfo.toString());
@@ -101,6 +119,7 @@ public class InputMethodInfoTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testInputMethodSubtypeProperties() {
         // TODO: Test InputMethodSubtype.getDisplayName()
         assertEquals(mSubtypeNameResId, mInputMethodSubtype.getNameResId());
@@ -135,29 +154,35 @@ public class InputMethodInfoTest extends AndroidTestCase {
         assertEquals(mClassName, info.getServiceName());
     }
 
+    @Test
     public void testDump() {
-        MockPrinter printer = new MockPrinter();
+        Printer printer = mock(Printer.class);
         String prefix = "test";
         mInputMethodInfo.dump(printer, prefix);
+        verify(printer, atLeastOnce()).println(anyString());
     }
 
+    @Test
     public void testLoadIcon() {
         PackageManager pm = mContext.getPackageManager();
         assertNotNull(mInputMethodInfo.loadIcon(pm));
     }
 
+    @Test
     public void testEquals() {
         InputMethodInfo inputMethodInfo = new InputMethodInfo(mPackageName, mClassName, mLabel,
                 mSettingsActivity);
         assertTrue(inputMethodInfo.equals(mInputMethodInfo));
     }
 
+    @Test
     public void testLoadLabel() {
         CharSequence expected = "test";
         PackageManager pm = mContext.getPackageManager();
         assertEquals(expected.toString(), mInputMethodInfo.loadLabel(pm).toString());
     }
 
+    @Test
     public void testInputMethodInfoWriteToParcel() {
         final Parcel p = Parcel.obtain();
         mInputMethodInfo.writeToParcel(p, 0);
@@ -173,6 +198,7 @@ public class InputMethodInfoTest extends AndroidTestCase {
         assertService(mInputMethodInfo.getServiceInfo(), imi.getServiceInfo());
     }
 
+    @Test
     public void testInputMethodSubtypeWriteToParcel() {
         final Parcel p = Parcel.obtain();
         mInputMethodSubtype.writeToParcel(p, 0);
@@ -195,8 +221,9 @@ public class InputMethodInfoTest extends AndroidTestCase {
                 subtype.overridesImplicitlyEnabledSubtype());
     }
 
+    @Test
     public void testInputMethodSubtypesOfSystemImes() {
-        if (!getContext().getPackageManager().hasSystemFeature(
+        if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
             return;
         }
@@ -237,8 +264,9 @@ public class InputMethodInfoTest extends AndroidTestCase {
         assertTrue(foundEnabledSystemImeSubtypeWithValidLanguage);
     }
 
+    @Test
     public void testAtLeastOneEncryptionAwareInputMethodIsAvailable() {
-        if (!getContext().getPackageManager().hasSystemFeature(
+        if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
             return;
         }
@@ -261,11 +289,5 @@ public class InputMethodInfoTest extends AndroidTestCase {
             }
         }
         assertTrue(hasEncryptionAwareInputMethod);
-    }
-
-    class MockPrinter implements Printer {
-        @Override
-        public void println(String x) {
-        }
     }
 }

@@ -16,23 +16,30 @@
 
 package android.view.inputmethod.cts;
 
-import android.view.cts.R;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
-import android.test.AndroidTestCase;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.Keyboard.Key;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.view.cts.R;
 
-import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class KeyboardTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class KeyboardTest {
+    @Test
     public void testKeyOnPressedAndReleased() {
         Key nonStickyKey = null;
         Key stickyKey = null;
         // Indirectly instantiate Keyboard.Key with XML resources.
-        final Keyboard keyboard = new Keyboard(getContext(), R.xml.keyboard);
+        final Keyboard keyboard =
+                new Keyboard(InstrumentationRegistry.getTargetContext(), R.xml.keyboard);
         for (final Key key : keyboard.getKeys()) {
             if (!key.sticky) {
                 nonStickyKey = key;

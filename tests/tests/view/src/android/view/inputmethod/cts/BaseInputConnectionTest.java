@@ -16,11 +16,20 @@
 
 package android.view.inputmethod.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.cts.util.PollingCheck;
 import android.os.Bundle;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
@@ -38,35 +47,35 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.InputConnectionTestUtils;
 import android.widget.EditText;
 
-public class BaseInputConnectionTest extends
-        ActivityInstrumentationTestCase2<InputMethodCtsActivity> {
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class BaseInputConnectionTest {
+    private Instrumentation mInstrumentation;
     private InputMethodCtsActivity mActivity;
     private Window mWindow;
     private EditText mView;
     private BaseInputConnection mConnection;
-    private Instrumentation mInstrumentation;
 
-    public BaseInputConnectionTest() {
-        super("android.view.cts", InputMethodCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<InputMethodCtsActivity> mActivityRule =
+            new ActivityTestRule<>(InputMethodCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-        mActivity = getActivity();
-        new PollingCheck() {
-            @Override
-                protected boolean check() {
-                return mActivity.hasWindowFocus();
-            }
-        }.run();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
         mWindow = mActivity.getWindow();
         mView = (EditText) mWindow.findViewById(R.id.entry);
         mConnection = new BaseInputConnection(mView, true);
     }
 
+    @Test
     public void testDefaultMethods() {
         // These methods are default to return fixed result.
 
@@ -90,6 +99,7 @@ public class BaseInputConnectionTest extends
         assertFalse(mConnection.performPrivateCommand(action, new Bundle()));
     }
 
+    @Test
     public void testOpComposingSpans() {
         Spannable text = new SpannableString("Test ComposingSpans");
         BaseInputConnection.setComposingSpans(text);
@@ -120,6 +130,7 @@ public class BaseInputConnectionTest extends
      *                          around the current selection position of the editable text.
      * setSelection: changes the selection position in the current editable text.
      */
+    @Test
     public void testOpTextMethods() throws Throwable {
         // return is an default Editable instance with empty source
         final Editable text = mConnection.getEditable();
@@ -145,22 +156,15 @@ public class BaseInputConnectionTest extends
         assertEquals(expected.toString(), mConnection.getTextAfterCursor(offLength,
                 BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                assertTrue(mView.requestFocus());
-                assertTrue(mView.isFocused());
-            }
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mView.requestFocus());
+            assertTrue(mView.isFocused());
         });
 
         // dummy mode
         BaseInputConnection dummyConnection = new BaseInputConnection(mView, false);
         dummyConnection.commitText(inputText, inputText.length());
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return text2.toString().equals(mView.getText().toString());
-            }
-        }.run();
+        PollingCheck.waitFor(() -> text2.toString().equals(mView.getText().toString()));
         assertEquals(0, dummyConnection.getCursorCapsMode(TextUtils.CAP_MODE_WORDS));
 
         // Test deleteSurroundingText
@@ -182,6 +186,7 @@ public class BaseInputConnectionTest extends
      * setComposingText: The default implementation places the given text into the editable,
      *                  replacing any existing composing text
      */
+    @Test
     public void testFinishComposingText() throws Throwable {
         CharSequence str = "TestFinish";
         Editable inputText = Editable.Factory.getInstance().newEditable(str);
@@ -195,35 +200,27 @@ public class BaseInputConnectionTest extends
         assertTrue(BaseInputConnection.getComposingSpanStart(text) == -1);
         assertTrue(BaseInputConnection.getComposingSpanEnd(text) == -1);
 
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                assertTrue(mView.requestFocus());
-                assertTrue(mView.isFocused());
-            }
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mView.requestFocus());
+            assertTrue(mView.isFocused());
         });
 
         // dummy mode
         BaseInputConnection dummyConnection = new BaseInputConnection(mView, false);
         dummyConnection.setComposingText(str, str.length());
         dummyConnection.finishComposingText();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return text.toString().equals(mView.getText().toString());
-            }
-        }.run();
+        PollingCheck.waitFor(() -> text.toString().equals(mView.getText().toString()));
     }
 
     /**
      * Provides standard implementation for sending a key event to the window
      * attached to the input connection's view
      */
+    @Test
     public void testSendKeyEvent() throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                assertTrue(mView.requestFocus());
-                assertTrue(mView.isFocused());
-            }
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mView.requestFocus());
+            assertTrue(mView.isFocused());
         });
 
         // 12-key support
@@ -237,17 +234,13 @@ public class BaseInputConnectionTest extends
             mInstrumentation.sendStringSync("q");
             mInstrumentation.waitForIdleSync();
         }
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return "q".equals(mView.getText().toString());
-            }
-        }.run();
+        PollingCheck.waitFor(() -> "q".equals(mView.getText().toString()));
     }
 
     /**
      * Updates InputMethodManager with the current fullscreen mode.
      */
+    @Test
     public void testReportFullscreenMode() {
         InputMethodManager imManager = (InputMethodManager) mInstrumentation.getTargetContext()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -281,7 +274,7 @@ public class BaseInputConnectionTest extends
         };
     }
 
-    private void testDeleteSurroundingTextMain(final String initialState,
+    private void verifyDeleteSurroundingTextMain(final String initialState,
             final int deleteBefore, final int deleteAfter, final String expectedState) {
         final CharSequence source = InputConnectionTestUtils.formatString(initialState);
         final BaseInputConnection ic = createDummyConnectionWithSelection(mView, source);
@@ -318,47 +311,48 @@ public class BaseInputConnectionTest extends
     /**
      * Tests {@link BaseInputConnection#deleteSurroundingText(int, int)} comprehensively.
      */
+    @Test
     public void testDeleteSurroundingText() throws Throwable {
-        testDeleteSurroundingTextMain("012[]3456789", 0, 0, "012[]3456789");
-        testDeleteSurroundingTextMain("012[]3456789", -1, -1, "012[]3456789");
-        testDeleteSurroundingTextMain("012[]3456789", 1, 2, "01[]56789");
-        testDeleteSurroundingTextMain("012[]3456789", 10, 1, "[]456789");
-        testDeleteSurroundingTextMain("012[]3456789", 1, 10, "01[]");
-        testDeleteSurroundingTextMain("[]0123456789", 3, 3, "[]3456789");
-        testDeleteSurroundingTextMain("0123456789[]", 3, 3, "0123456[]");
-        testDeleteSurroundingTextMain("012[345]6789", 0, 0, "012[345]6789");
-        testDeleteSurroundingTextMain("012[345]6789", -1, -1, "012[345]6789");
-        testDeleteSurroundingTextMain("012[345]6789", 1, 2, "01[345]89");
-        testDeleteSurroundingTextMain("012[345]6789", 10, 1, "[345]789");
-        testDeleteSurroundingTextMain("012[345]6789", 1, 10, "01[345]");
-        testDeleteSurroundingTextMain("[012]3456789", 3, 3, "[012]6789");
-        testDeleteSurroundingTextMain("0123456[789]", 3, 3, "0123[789]");
-        testDeleteSurroundingTextMain("[0123456789]", 0, 0, "[0123456789]");
-        testDeleteSurroundingTextMain("[0123456789]", 1, 1, "[0123456789]");
+        verifyDeleteSurroundingTextMain("012[]3456789", 0, 0, "012[]3456789");
+        verifyDeleteSurroundingTextMain("012[]3456789", -1, -1, "012[]3456789");
+        verifyDeleteSurroundingTextMain("012[]3456789", 1, 2, "01[]56789");
+        verifyDeleteSurroundingTextMain("012[]3456789", 10, 1, "[]456789");
+        verifyDeleteSurroundingTextMain("012[]3456789", 1, 10, "01[]");
+        verifyDeleteSurroundingTextMain("[]0123456789", 3, 3, "[]3456789");
+        verifyDeleteSurroundingTextMain("0123456789[]", 3, 3, "0123456[]");
+        verifyDeleteSurroundingTextMain("012[345]6789", 0, 0, "012[345]6789");
+        verifyDeleteSurroundingTextMain("012[345]6789", -1, -1, "012[345]6789");
+        verifyDeleteSurroundingTextMain("012[345]6789", 1, 2, "01[345]89");
+        verifyDeleteSurroundingTextMain("012[345]6789", 10, 1, "[345]789");
+        verifyDeleteSurroundingTextMain("012[345]6789", 1, 10, "01[345]");
+        verifyDeleteSurroundingTextMain("[012]3456789", 3, 3, "[012]6789");
+        verifyDeleteSurroundingTextMain("0123456[789]", 3, 3, "0123[789]");
+        verifyDeleteSurroundingTextMain("[0123456789]", 0, 0, "[0123456789]");
+        verifyDeleteSurroundingTextMain("[0123456789]", 1, 1, "[0123456789]");
 
         // Surrogate characters do not have any special meanings.  Validating the character sequence
         // is beyond the goal of this API.
-        testDeleteSurroundingTextMain("0<>[]3456789", 1, 0, "0<[]3456789");
-        testDeleteSurroundingTextMain("0<>[]3456789", 2, 0, "0[]3456789");
-        testDeleteSurroundingTextMain("0<>[]3456789", 3, 0, "[]3456789");
-        testDeleteSurroundingTextMain("012[]<>56789", 0, 1, "012[]>56789");
-        testDeleteSurroundingTextMain("012[]<>56789", 0, 2, "012[]56789");
-        testDeleteSurroundingTextMain("012[]<>56789", 0, 3, "012[]6789");
-        testDeleteSurroundingTextMain("0<<[]3456789", 1, 0, "0<[]3456789");
-        testDeleteSurroundingTextMain("0<<[]3456789", 2, 0, "0[]3456789");
-        testDeleteSurroundingTextMain("0<<[]3456789", 3, 0, "[]3456789");
-        testDeleteSurroundingTextMain("012[]<<56789", 0, 1, "012[]<56789");
-        testDeleteSurroundingTextMain("012[]<<56789", 0, 2, "012[]56789");
-        testDeleteSurroundingTextMain("012[]<<56789", 0, 3, "012[]6789");
-        testDeleteSurroundingTextMain("0>>[]3456789", 1, 0, "0>[]3456789");
-        testDeleteSurroundingTextMain("0>>[]3456789", 2, 0, "0[]3456789");
-        testDeleteSurroundingTextMain("0>>[]3456789", 3, 0, "[]3456789");
-        testDeleteSurroundingTextMain("012[]>>56789", 0, 1, "012[]>56789");
-        testDeleteSurroundingTextMain("012[]>>56789", 0, 2, "012[]56789");
-        testDeleteSurroundingTextMain("012[]>>56789", 0, 3, "012[]6789");
+        verifyDeleteSurroundingTextMain("0<>[]3456789", 1, 0, "0<[]3456789");
+        verifyDeleteSurroundingTextMain("0<>[]3456789", 2, 0, "0[]3456789");
+        verifyDeleteSurroundingTextMain("0<>[]3456789", 3, 0, "[]3456789");
+        verifyDeleteSurroundingTextMain("012[]<>56789", 0, 1, "012[]>56789");
+        verifyDeleteSurroundingTextMain("012[]<>56789", 0, 2, "012[]56789");
+        verifyDeleteSurroundingTextMain("012[]<>56789", 0, 3, "012[]6789");
+        verifyDeleteSurroundingTextMain("0<<[]3456789", 1, 0, "0<[]3456789");
+        verifyDeleteSurroundingTextMain("0<<[]3456789", 2, 0, "0[]3456789");
+        verifyDeleteSurroundingTextMain("0<<[]3456789", 3, 0, "[]3456789");
+        verifyDeleteSurroundingTextMain("012[]<<56789", 0, 1, "012[]<56789");
+        verifyDeleteSurroundingTextMain("012[]<<56789", 0, 2, "012[]56789");
+        verifyDeleteSurroundingTextMain("012[]<<56789", 0, 3, "012[]6789");
+        verifyDeleteSurroundingTextMain("0>>[]3456789", 1, 0, "0>[]3456789");
+        verifyDeleteSurroundingTextMain("0>>[]3456789", 2, 0, "0[]3456789");
+        verifyDeleteSurroundingTextMain("0>>[]3456789", 3, 0, "[]3456789");
+        verifyDeleteSurroundingTextMain("012[]>>56789", 0, 1, "012[]>56789");
+        verifyDeleteSurroundingTextMain("012[]>>56789", 0, 2, "012[]56789");
+        verifyDeleteSurroundingTextMain("012[]>>56789", 0, 3, "012[]6789");
     }
 
-    private void testDeleteSurroundingTextInCodePointsMain(final String initialState,
+    private void verifyDeleteSurroundingTextInCodePointsMain(final String initialState,
             final int deleteBeforeInCodePoints, final int deleteAfterInCodePoints,
             final String expectedState) {
         final CharSequence source = InputConnectionTestUtils.formatString(initialState);
@@ -398,93 +392,94 @@ public class BaseInputConnectionTest extends
      * Tests {@link BaseInputConnection#deleteSurroundingTextInCodePoints(int, int)}
      * comprehensively.
      */
+    @Test
     public void testDeleteSurroundingTextInCodePoints() throws Throwable {
-        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 0, 0, "012[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]3456789", -1, -1, "012[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 1, 2, "01[]56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 10, 1, "[]456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]3456789", 1, 10, "01[]");
-        testDeleteSurroundingTextInCodePointsMain("[]0123456789", 3, 3, "[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0123456789[]", 3, 3, "0123456[]");
-        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 0, 0, "012[345]6789");
-        testDeleteSurroundingTextInCodePointsMain("012[345]6789", -1, -1, "012[345]6789");
-        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 1, 2, "01[345]89");
-        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 10, 1, "[345]789");
-        testDeleteSurroundingTextInCodePointsMain("012[345]6789", 1, 10, "01[345]");
-        testDeleteSurroundingTextInCodePointsMain("[012]3456789", 3, 3, "[012]6789");
-        testDeleteSurroundingTextInCodePointsMain("0123456[789]", 3, 3, "0123[789]");
-        testDeleteSurroundingTextInCodePointsMain("[0123456789]", 0, 0, "[0123456789]");
-        testDeleteSurroundingTextInCodePointsMain("[0123456789]", 1, 1, "[0123456789]");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]3456789", 0, 0, "012[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]3456789", -1, -1, "012[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]3456789", 1, 2, "01[]56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]3456789", 10, 1, "[]456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]3456789", 1, 10, "01[]");
+        verifyDeleteSurroundingTextInCodePointsMain("[]0123456789", 3, 3, "[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0123456789[]", 3, 3, "0123456[]");
+        verifyDeleteSurroundingTextInCodePointsMain("012[345]6789", 0, 0, "012[345]6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[345]6789", -1, -1, "012[345]6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[345]6789", 1, 2, "01[345]89");
+        verifyDeleteSurroundingTextInCodePointsMain("012[345]6789", 10, 1, "[345]789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[345]6789", 1, 10, "01[345]");
+        verifyDeleteSurroundingTextInCodePointsMain("[012]3456789", 3, 3, "[012]6789");
+        verifyDeleteSurroundingTextInCodePointsMain("0123456[789]", 3, 3, "0123[789]");
+        verifyDeleteSurroundingTextInCodePointsMain("[0123456789]", 0, 0, "[0123456789]");
+        verifyDeleteSurroundingTextInCodePointsMain("[0123456789]", 1, 1, "[0123456789]");
 
-        testDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 1, 0, "0[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 2, 0, "[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 3, 0, "[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 1, "012[]56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 2, "012[]6789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 3, "012[]789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 1, 0, "0[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 2, 0, "[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<>[]3456789", 3, 0, "[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 1, "012[]56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 2, "012[]6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<>56789", 0, 3, "012[]789");
 
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 0, "[]<><><><><>");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 1, "[]<><><><>");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 2, "[]<><><>");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 3, "[]<><>");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 4, "[]<>");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 5, "[]");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 6, "[]");
-        testDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 1000, "[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 0, 0, "<><><><><>[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 1, 0, "<><><><>[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 2, 0, "<><><>[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 3, 0, "<><>[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 4, 0, "<>[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 5, 0, "[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 6, 0, "[]");
-        testDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 1000, 0, "[]");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 0, "[]<><><><><>");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 1, "[]<><><><>");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 2, "[]<><><>");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 3, "[]<><>");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 4, "[]<>");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 5, "[]");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 6, "[]");
+        verifyDeleteSurroundingTextInCodePointsMain("[]<><><><><>", 0, 1000, "[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 0, 0, "<><><><><>[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 1, 0, "<><><><>[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 2, 0, "<><><>[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 3, 0, "<><>[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 4, 0, "<>[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 5, 0, "[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 6, 0, "[]");
+        verifyDeleteSurroundingTextInCodePointsMain("<><><><><>[]", 1000, 0, "[]");
 
-        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 1, 0, "0<<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 2, 0, "0<<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 3, 0, "0<<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 1, "012[]<<56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 2, "012[]<<56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 3, "012[]<<56789");
-        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 1, 0, "0>>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 2, 0, "0>>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 3, 0, "0>>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 1, "012[]>>56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 2, "012[]>>56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 3, "012[]>>56789");
-        testDeleteSurroundingTextInCodePointsMain("01<[]>456789", 1, 0, "01<[]>456789");
-        testDeleteSurroundingTextInCodePointsMain("01<[]>456789", 0, 1, "01<[]>456789");
-        testDeleteSurroundingTextInCodePointsMain("<12[]3456789", 1, 0, "<1[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("<12[]3456789", 2, 0, "<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("<12[]3456789", 3, 0, "<12[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 1, 0, "<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 2, 0, "<<>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 3, 0, "<<>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 1, "012[]4>6789");
-        testDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 2, "012[]>6789");
-        testDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 3, "012[]34>6789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 1, "012[]>6789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 2, "012[]<>>6789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 3, "012[]<>>6789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 1, 0, "0<<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 2, 0, "0<<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 3, 0, "0<<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 1, "012[]<<56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 2, "012[]<<56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<<56789", 0, 3, "012[]<<56789");
+        verifyDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 1, 0, "0>>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 2, 0, "0>>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 3, 0, "0>>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 1, "012[]>>56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 2, "012[]>>56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]>>56789", 0, 3, "012[]>>56789");
+        verifyDeleteSurroundingTextInCodePointsMain("01<[]>456789", 1, 0, "01<[]>456789");
+        verifyDeleteSurroundingTextInCodePointsMain("01<[]>456789", 0, 1, "01<[]>456789");
+        verifyDeleteSurroundingTextInCodePointsMain("<12[]3456789", 1, 0, "<1[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("<12[]3456789", 2, 0, "<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("<12[]3456789", 3, 0, "<12[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 1, 0, "<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 2, 0, "<<>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("<<>[]3456789", 3, 0, "<<>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 1, "012[]4>6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 2, "012[]>6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]34>6789", 0, 3, "012[]34>6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 1, "012[]>6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 2, "012[]<>>6789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<>>6789", 0, 3, "012[]<>>6789");
 
         // Atomicity test.
-        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 1, 1, "0<<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 2, 1, "0<<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 3, 1, "0<<[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 1, "012[]<<56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 2, "012[]<<56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 3, "012[]<<56789");
-        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 1, 1, "0>>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 2, 1, "0>>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 3, 1, "0>>[]3456789");
-        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 1, "012[]>>56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 2, "012[]>>56789");
-        testDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 3, "012[]>>56789");
-        testDeleteSurroundingTextInCodePointsMain("01<[]>456789", 1, 1, "01<[]>456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 1, 1, "0<<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 2, 1, "0<<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0<<[]3456789", 3, 1, "0<<[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 1, "012[]<<56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 2, "012[]<<56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]<<56789", 1, 3, "012[]<<56789");
+        verifyDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 1, 1, "0>>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 2, 1, "0>>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("0>>[]3456789", 3, 1, "0>>[]3456789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 1, "012[]>>56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 2, "012[]>>56789");
+        verifyDeleteSurroundingTextInCodePointsMain("012[]>>56789", 1, 3, "012[]>>56789");
+        verifyDeleteSurroundingTextInCodePointsMain("01<[]>456789", 1, 1, "01<[]>456789");
 
         // Do not verify the character sequences in the selected region.
-        testDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 0, "0[><]456789");
-        testDeleteSurroundingTextInCodePointsMain("01[><]456789", 0, 1, "01[><]56789");
-        testDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 1, "0[><]56789");
+        verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 0, "0[><]456789");
+        verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 0, 1, "01[><]56789");
+        verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 1, "0[><]56789");
     }
 }

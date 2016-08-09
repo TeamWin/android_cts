@@ -15,15 +15,21 @@
  */
 package android.view.inputmethod.cts;
 
+import static org.junit.Assert.assertEquals;
 
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.inputmethod.ExtractedText;
 
-public class ExtractedTextTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ExtractedTextTest {
+    @Test
     public void testWriteToParcel() {
-
         ExtractedText extractedText = new ExtractedText();
         extractedText.flags = 1;
         extractedText.selectionEnd = 11;

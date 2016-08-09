@@ -16,18 +16,24 @@
 
 package android.view.inputmethod.cts;
 
+import static org.junit.Assert.assertEquals;
 
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.inputmethod.InputContentInfo;
 
-import java.lang.NullPointerException;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.security.InvalidParameterException;
 
-public class InputContentInfoTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class InputContentInfoTest {
+    @Test
     public void testInputContentInfo() {
         InputContentInfo info = new InputContentInfo(
                  Uri.parse("content://com.example/path"),
@@ -55,94 +61,64 @@ public class InputContentInfoTest extends AndroidTestCase {
         assertEquals(info.getLinkUri(), targetInfo.getLinkUri());
     }
 
-    public void testContentUri() {
-        try {
-            InputContentInfo info = new InputContentInfo(
-                    null, new ClipDescription("sample content", new String[]{"image/png"}),
-                    Uri.parse("https://example.com"));
-            fail("InputContentInfo must not accept a null content URI.");
-        } catch (NullPointerException e) {
-            // OK.
-        } catch (Exception e) {
-            fail("Unexpected exception=" + e);
-        }
-
-        try {
-            InputContentInfo info = new InputContentInfo(
-                    Uri.parse("https://example.com"),
-                    new ClipDescription("sample content", new String[]{"image/png"}),
-                    Uri.parse("https://example.com"));
-            fail("InputContentInfo must accept content URI only.");
-        } catch (InvalidParameterException e) {
-            // OK.
-        } catch (Exception e) {
-            fail("Unexpected exception=" + e);
-        }
+    @Test(expected=NullPointerException.class)
+    public void testContentUriNullContentUri() {
+        new InputContentInfo(
+                null, new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com"));
     }
 
-    public void testMimeType() {
-        try {
-            InputContentInfo info = new InputContentInfo(
-                     Uri.parse("content://com.example/path"), null,
-                     Uri.parse("https://example.com"));
-            fail("InputContentInfo must not accept a null description.");
-        } catch (NullPointerException e) {
-            // OK.
-        } catch (Exception e) {
-            fail("Unexpected exception=" + e);
-        }
+    @Test(expected=InvalidParameterException.class)
+    public void testContentUriInvalidContentUri() {
+        new InputContentInfo(
+                Uri.parse("https://example.com"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com"));
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testMimeTypeNulLDescription() {
+        new InputContentInfo(
+                 Uri.parse("content://com.example/path"), null,
+                 Uri.parse("https://example.com"));
+    }
+
+    @Test
     public void testLinkUri() {
-        try {
-            InputContentInfo info = new InputContentInfo(
-                     Uri.parse("content://com.example/path"),
-                     new ClipDescription("sample content", new String[]{"image/png"}),
-                     null);
-        } catch (Exception e) {
-            fail("InputContentInfo must accept a null link Uri.");
-        }
+        // Test that we accept null link Uri
+        new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                null);
 
-        try {
-            InputContentInfo info = new InputContentInfo(
-                     Uri.parse("content://com.example/path"),
-                     new ClipDescription("sample content", new String[]{"image/png"}),
-                     Uri.parse("http://example.com/path"));
-        } catch (Exception e) {
-            fail("InputContentInfo must accept http link Uri.");
-        }
+        // Test that we accept http link Uri
+        new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("http://example.com/path"));
 
-        try {
-            InputContentInfo info = new InputContentInfo(
-                     Uri.parse("content://com.example/path"),
-                     new ClipDescription("sample content", new String[]{"image/png"}),
-                     Uri.parse("https://example.com/path"));
-        } catch (Exception e) {
-            fail("InputContentInfo must accept https link Uri.");
-        }
+        // Test that we accept https link Uri
+        new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com/path"));
+    }
 
-        try {
-            InputContentInfo info = new InputContentInfo(
-                     Uri.parse("content://com.example/path"),
-                     new ClipDescription("sample content", new String[]{"image/png"}),
-                     Uri.parse("ftp://example.com/path"));
-            fail("InputContentInfo must accept http and https link Uri only.");
-        } catch (InvalidParameterException e) {
-            // OK.
-        } catch (Exception e) {
-            fail("Unexpected exception=" + e);
-        }
+    @Test(expected=InvalidParameterException.class)
+    public void testLinkUriFtpLinkUri() {
+        // InputContentInfo must accept http and https link Uri only
+        new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("ftp://example.com/path"));
+    }
 
-        try {
-            InputContentInfo info = new InputContentInfo(
-                     Uri.parse("content://com.example/path"),
-                     new ClipDescription("sample content", new String[]{"image/png"}),
-                     Uri.parse("content://com.example/path"));
-            fail("InputContentInfo must accept http and https link Uri only.");
-        } catch (InvalidParameterException e) {
-            // OK.
-        } catch (Exception e) {
-            fail("Unexpected exception=" + e);
-        }
+    @Test(expected=InvalidParameterException.class)
+    public void testLinkUriContentLinkUri() {
+        // InputContentInfo must accept http and https link Uri only
+        new InputContentInfo(
+                 Uri.parse("content://com.example/path"),
+                 new ClipDescription("sample content", new String[]{"image/png"}),
+                 Uri.parse("content://com.example/path"));
     }
 }
