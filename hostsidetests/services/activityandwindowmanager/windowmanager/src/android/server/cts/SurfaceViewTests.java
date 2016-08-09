@@ -30,23 +30,17 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import android.server.cts.ActivityManagerTestBase;
 import android.server.cts.WindowManagerState.WindowState;
 
-public class SurfaceViewTests extends ActivityManagerTestBase {
-    static final String ACTIVITY_NAME = "SurfaceViewTestActivity";
-    static final String INTENT_KEY = "android.server.FrameTestApp.SurfaceViewTestCase";
-    static final String baseWindowName =
-        "android.server.FrameTestApp/android.server.FrameTestApp.";
-
+public class SurfaceViewTests extends ParentChildTestBase {
     private List<WindowState> mWindowList = new ArrayList();
 
-    public void startTestCase(String testCase) throws Exception{
-        setComponentName("android.server.FrameTestApp");
-        String cmd = getAmStartCmd(ACTIVITY_NAME, INTENT_KEY, testCase);
-        CLog.logAndDisplay(LogLevel.INFO, cmd);
-        executeShellCommand(cmd);
+    @Override
+    String intentKey() {
+        return "android.server.FrameTestApp.SurfaceViewTestCase";
     }
 
-    void stopTestCase() throws Exception{
-        executeShellCommand("am force-stop android.server.FrameTestApp");
+    @Override
+    String activityName() {
+        return "SurfaceViewTestActivity";
     }
 
     WindowState getSingleWindow(String fullWindowName) {
@@ -59,33 +53,26 @@ public class SurfaceViewTests extends ActivityManagerTestBase {
         }
     }
 
-    interface SurfaceViewTest {
-        void doTest(WindowState parent, WindowState surfaceView);
-    }
-
-    void doSurfaceViewTest(String testCase, SurfaceViewTest t) throws Exception {
-        startTestCase(testCase);
-
-        String svName = "SurfaceView - " + baseWindowName + ACTIVITY_NAME;
+    void doSingleTest(ParentChildTest t) throws Exception {
+        String svName = "SurfaceView - " + getBaseWindowName() + activityName();
         final String[] waitForVisible = new String[] { svName };
 
         mAmWmState.computeState(mDevice, waitForVisible);
         WindowState sv = getSingleWindow(svName);
-        WindowState parent = getSingleWindow(baseWindowName + "SurfaceViewTestActivity");
+        WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
 
         t.doTest(parent, sv);
-        stopTestCase();
     }
 
     public void testSurfaceViewOnBottom() throws Exception {
-        doSurfaceViewTest("OnBottom",
+        doParentChildTest("OnBottom",
             (WindowState parent, WindowState sv) -> {
                 assertFalse(sv.getLayer() >= parent.getLayer());
             });
     }
 
     public void testSurfaceViewOnTop() throws Exception {
-        doSurfaceViewTest("OnTop",
+        doParentChildTest("OnTop",
             (WindowState parent, WindowState sv) -> {
                 assertFalse(parent.getLayer() >= sv.getLayer());
             });
@@ -93,7 +80,7 @@ public class SurfaceViewTests extends ActivityManagerTestBase {
 
     public void testSurfaceViewOversized() throws Exception {
         final int oversizedDimension = 8000;
-        doSurfaceViewTest("Oversized",
+        doParentChildTest("Oversized",
             (WindowState parent, WindowState sv) -> {
                     // The SurfaceView is allowed to be as big as it wants,
                     // but we should verify it's visually cropped to the parent bounds.

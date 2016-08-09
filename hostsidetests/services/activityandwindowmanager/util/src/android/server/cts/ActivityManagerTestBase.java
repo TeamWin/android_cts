@@ -110,8 +110,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         componentName = name;
     }
 
+    static String getBaseWindowName() {
+        return componentName + "/" + componentName + ".";
+    }
+
     static String getWindowName(final String activityName) {
-        return componentName + "/" + componentName + "." + activityName;
+        return getBaseWindowName() + activityName;
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
@@ -537,5 +541,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 }
             }
         }
+    }
+
+    protected void stopTestCase() throws Exception {
+        executeShellCommand("am force-stop " + componentName);
     }
 }
