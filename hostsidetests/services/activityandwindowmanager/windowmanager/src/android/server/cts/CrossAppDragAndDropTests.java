@@ -99,11 +99,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
+        mDevice = getDevice();
         if (!supportsDragAndDrop()) {
             return;
         }
 
-        mDevice = getDevice();
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
         cleanupState();
