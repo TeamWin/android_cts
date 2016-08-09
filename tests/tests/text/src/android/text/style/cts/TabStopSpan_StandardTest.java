@@ -16,9 +16,10 @@
 
 package android.text.style.cts;
 
-import junit.framework.TestCase;
 import android.text.style.TabStopSpan;
 import android.text.style.TabStopSpan.Standard;
+
+import junit.framework.TestCase;
 
 public class TabStopSpan_StandardTest extends TestCase {
     public void testConstructor() {

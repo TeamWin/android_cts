@@ -19,9 +19,9 @@ package android.text.format.cts;
 import android.content.Context;
 import android.test.AndroidTestCase;
 import android.text.format.DateUtils;
+
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Formatter;
 import java.util.Locale;
 import java.util.TimeZone;
 

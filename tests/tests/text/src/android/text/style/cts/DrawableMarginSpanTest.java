@@ -16,9 +16,6 @@
 
 package android.text.style.cts;
 
-import android.text.cts.R;
-
-
 import android.graphics.Canvas;
 import android.graphics.Paint.FontMetricsInt;
 import android.graphics.drawable.Drawable;
@@ -28,6 +25,7 @@ import android.text.Layout;
 import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
+import android.text.cts.R;
 import android.text.style.DrawableMarginSpan;
 
 public class DrawableMarginSpanTest extends AndroidTestCase {

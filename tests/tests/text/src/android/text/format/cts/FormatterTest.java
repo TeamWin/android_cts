@@ -16,12 +16,12 @@
 
 package android.text.format.cts;
 
+import android.support.test.filters.SmallTest;
+import android.test.AndroidTestCase;
+import android.text.format.Formatter;
+
 import java.math.BigDecimal;
 import java.math.MathContext;
-
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.text.format.Formatter;
 
 public class FormatterTest extends AndroidTestCase {
 

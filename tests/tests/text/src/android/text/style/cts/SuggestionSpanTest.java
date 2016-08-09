@@ -24,8 +24,8 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.LocaleList;
 import android.os.Parcel;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.style.SuggestionSpan;
 
 import java.util.Locale;

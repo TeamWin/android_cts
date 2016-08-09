@@ -16,8 +16,8 @@
 
 package android.text.cts;
 
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Html;
 import android.text.SpanWatcher;
 import android.text.Spannable;

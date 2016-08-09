@@ -19,8 +19,8 @@ package android.text.style.cts;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Parcel;
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.style.EasyEditSpan;
 
 public class EasyEditSpanTest extends AndroidTestCase {

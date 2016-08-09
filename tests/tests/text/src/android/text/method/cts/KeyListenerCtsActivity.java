@@ -16,11 +16,10 @@
 
 package android.text.method.cts;
 
-import android.text.cts.R;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.text.cts.R;
 import android.text.method.BaseKeyListener;
 import android.text.method.DateKeyListener;
 import android.text.method.DateTimeKeyListener;

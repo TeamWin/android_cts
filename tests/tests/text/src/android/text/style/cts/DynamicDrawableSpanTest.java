@@ -16,14 +16,12 @@
 
 package android.text.style.cts;
 
-import android.text.cts.R;
-
-
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.graphics.Paint.FontMetricsInt;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.test.AndroidTestCase;
+import android.text.cts.R;
 import android.text.style.DynamicDrawableSpan;
 
 public class DynamicDrawableSpanTest extends AndroidTestCase {
