@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.widget.cts.util.TestUtils.within;
+import static android.cts.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
