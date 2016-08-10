@@ -40,7 +40,6 @@ public class PropertyValuesHolderTest extends
         ActivityInstrumentationTestCase2<AnimationActivity> {
     private static final float LINE1_START = -32f;
     private static final float LINE1_END = -2f;
-    private static final float LINE1_Y = 0f;
     private static final float LINE2_START = 2f;
     private static final float LINE2_END = 12f;
     private static final float QUADRATIC_CTRL_PT1_X = 0f;
@@ -49,6 +48,7 @@ public class PropertyValuesHolderTest extends
     private static final float QUADRATIC_CTRL_PT2_Y = 20f;
     private static final float QUADRATIC_CTRL_PT3_X = 100f;
     private static final float QUADRATIC_CTRL_PT3_Y = 0f;
+    private static final float EPSILON = .001f;
 
     private AnimationActivity mActivity;
     private Animator mAnimator;
@@ -397,8 +397,8 @@ public class PropertyValuesHolderTest extends
 
                 float expectedX = fraction * (data.length - 1);
 
-                assertEquals(expectedX, values[0]);
-                assertEquals(expectedX * 2, values[1]);
+                assertEquals(expectedX, values[0], EPSILON);
+                assertEquals(expectedX * 2, values[1], EPSILON);
                 assertEquals(0f, values[2]);
             }
         });
