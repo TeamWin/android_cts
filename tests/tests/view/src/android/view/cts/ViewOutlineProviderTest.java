@@ -16,111 +16,107 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.annotation.NonNull;
-import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.view.View;
 import android.view.ViewOutlineProvider;
-import org.junit.Rule;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.*;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ViewOutlineProviderTest {
-    @Rule
-    public ActivityTestRule mActivityTestRule = new ActivityTestRule<>(MockActivity.class);
+    private Context mContext;
 
-    Activity getActivity() { return mActivityTestRule.getActivity(); }
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
+    }
 
+    @UiThreadTest
     @Test
     public void testBackground() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-            View view = new View(mActivityTestRule.getActivity());
-            view.setLeftTopRightBottom(100, 200, 300, 400);
+        View view = new View(mContext);
+        view.setLeftTopRightBottom(100, 200, 300, 400);
 
+        Outline outline = new Outline();
+        outline.setAlpha(1.0f);
+        Rect queryRect = new Rect();
 
-            Outline outline = new Outline();
-            outline.setAlpha(1.0f);
-            Rect queryRect = new Rect();
+        // No background - outline is 0 alpha, width x height rect
+        ViewOutlineProvider.BACKGROUND.getOutline(view, outline);
+        outline.getRect(queryRect);
+        assertEquals(new Rect(0, 0, 200, 200), queryRect);
+        assertEquals(0f, outline.getAlpha(), 0f);
 
-
-            // No background - outline is 0 alpha, width x height rect
-            ViewOutlineProvider.BACKGROUND.getOutline(view, outline);
-            outline.getRect(queryRect);
-            assertEquals(new Rect(0, 0, 200, 200), queryRect);
-            assertEquals(0f, outline.getAlpha(), 0f);
-
-
-            // With background - outline is passed directly from background
-            view.setBackground(new ColorDrawable(Color.BLACK) {
-                @Override
-                public void getOutline(@NonNull Outline outline) {
-                    outline.setRect(1, 2, 3, 4);
-                    outline.setAlpha(0.123f);
-                }
-            });
-            ViewOutlineProvider.BACKGROUND.getOutline(view, outline);
-            outline.getRect(queryRect);
-            assertEquals(new Rect(1, 2, 3, 4), queryRect);
-            assertEquals(0.123f, outline.getAlpha(), 0f);
+        // With background - outline is passed directly from background
+        view.setBackground(new ColorDrawable(Color.BLACK) {
+            @Override
+            public void getOutline(@NonNull Outline outline) {
+                outline.setRect(1, 2, 3, 4);
+                outline.setAlpha(0.123f);
+            }
         });
+        ViewOutlineProvider.BACKGROUND.getOutline(view, outline);
+        outline.getRect(queryRect);
+        assertEquals(new Rect(1, 2, 3, 4), queryRect);
+        assertEquals(0.123f, outline.getAlpha(), 0f);
     }
 
-
+    @UiThreadTest
     @Test
     public void testBounds() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-            View view = new View(mActivityTestRule.getActivity());
+        View view = new View(mContext);
 
-            Outline outline = new Outline();
-            Rect queryRect = new Rect();
-            outline.setAlpha(0.123f);
+        Outline outline = new Outline();
+        Rect queryRect = new Rect();
+        outline.setAlpha(0.123f);
 
-            view.setLeftTopRightBottom(1, 2, 3, 4);
-            ViewOutlineProvider.BOUNDS.getOutline(view, outline);
-            outline.getRect(queryRect);
-            assertEquals(new Rect(0, 0, 2, 2), queryRect); // local width/height
-            assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
+        view.setLeftTopRightBottom(1, 2, 3, 4);
+        ViewOutlineProvider.BOUNDS.getOutline(view, outline);
+        outline.getRect(queryRect);
+        assertEquals(new Rect(0, 0, 2, 2), queryRect); // local width/height
+        assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
 
-            view.setLeftTopRightBottom(100, 200, 300, 400);
-            ViewOutlineProvider.BOUNDS.getOutline(view, outline);
-            outline.getRect(queryRect);
-            assertEquals(new Rect(0, 0, 200, 200), queryRect); // local width/height
-            assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
-        });
+        view.setLeftTopRightBottom(100, 200, 300, 400);
+        ViewOutlineProvider.BOUNDS.getOutline(view, outline);
+        outline.getRect(queryRect);
+        assertEquals(new Rect(0, 0, 200, 200), queryRect); // local width/height
+        assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
     }
 
+    @UiThreadTest
     @Test
     public void testPaddedBounds() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-            View view = new View(mActivityTestRule.getActivity());
+        View view = new View(mContext);
 
-            Outline outline = new Outline();
-            Rect queryRect = new Rect();
-            outline.setAlpha(0.123f);
+        Outline outline = new Outline();
+        Rect queryRect = new Rect();
+        outline.setAlpha(0.123f);
 
-            view.setLeftTopRightBottom(10, 20, 30, 40);
-            view.setPadding(0, 0, 0, 0);
-            ViewOutlineProvider.PADDED_BOUNDS.getOutline(view, outline);
-            outline.getRect(queryRect);
-            assertEquals(new Rect(0, 0, 20, 20), queryRect); // local width/height
-            assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
+        view.setLeftTopRightBottom(10, 20, 30, 40);
+        view.setPadding(0, 0, 0, 0);
+        ViewOutlineProvider.PADDED_BOUNDS.getOutline(view, outline);
+        outline.getRect(queryRect);
+        assertEquals(new Rect(0, 0, 20, 20), queryRect); // local width/height
+        assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
 
-            view.setPadding(5, 5, 5, 5);
-            ViewOutlineProvider.PADDED_BOUNDS.getOutline(view, outline);
-            outline.getRect(queryRect);
-            assertEquals(new Rect(5, 5, 15, 15), queryRect); // local width/height, inset by 5
-            assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
-        });
+        view.setPadding(5, 5, 5, 5);
+        ViewOutlineProvider.PADDED_BOUNDS.getOutline(view, outline);
+        outline.getRect(queryRect);
+        assertEquals(new Rect(5, 5, 15, 15), queryRect); // local width/height, inset by 5
+        assertEquals(0.123f, outline.getAlpha(), 0f); // alpha not changed
     }
 }
