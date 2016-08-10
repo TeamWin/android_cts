@@ -22,6 +22,7 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.cts.util.WidgetTestUtils;
+import android.cts.util.Within;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -486,7 +487,4 @@ public class TestUtils {
         }
     }
 
-    public static VerificationMode within(long timeout) {
-        return new Within(timeout);
-    }
 }
