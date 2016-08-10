@@ -16,7 +16,7 @@
 
 package android.text.method.cts;
 
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.filters.SmallTest;
 import android.text.InputType;
 import android.text.method.BaseKeyListener;
 import android.view.KeyEvent;

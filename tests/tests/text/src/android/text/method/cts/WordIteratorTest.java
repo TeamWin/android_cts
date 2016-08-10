@@ -18,9 +18,9 @@ package android.text.method.cts;
 
 import android.text.method.WordIterator;
 
-import java.text.BreakIterator;
-
 import junit.framework.TestCase;
+
+import java.text.BreakIterator;
 
 public class WordIteratorTest extends TestCase {
 

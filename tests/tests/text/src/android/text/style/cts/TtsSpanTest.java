@@ -18,7 +18,7 @@ package android.text.style.cts;
 
 import android.os.Parcel;
 import android.os.PersistableBundle;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.filters.SmallTest;
 import android.text.style.TtsSpan;
 
 import junit.framework.TestCase;

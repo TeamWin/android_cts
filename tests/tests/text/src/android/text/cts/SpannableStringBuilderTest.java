@@ -17,8 +17,8 @@
 package android.text.cts;
 
 
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Selection;

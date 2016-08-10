@@ -16,12 +16,12 @@
 
 package android.text.style.cts;
 
-import junit.framework.TestCase;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
-import android.text.TextPaint;
 import android.text.style.ReplacementSpan;
+
+import junit.framework.TestCase;
 
 public class ReplacementSpanTest extends TestCase {
     public void testUpdateMeasureState() {

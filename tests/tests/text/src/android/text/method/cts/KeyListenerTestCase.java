@@ -16,10 +16,9 @@
 
 package android.text.method.cts;
 
-import android.text.cts.R;
-
 import android.app.Instrumentation;
 import android.test.ActivityInstrumentationTestCase2;
+import android.text.cts.R;
 import android.text.format.DateUtils;
 import android.text.method.KeyListener;
 import android.view.KeyEvent;

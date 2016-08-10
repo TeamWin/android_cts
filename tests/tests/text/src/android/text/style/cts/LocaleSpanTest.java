@@ -16,13 +16,14 @@
 
 package android.text.style.cts;
 
-import junit.framework.TestCase;
 import android.annotation.NonNull;
 import android.os.LocaleList;
 import android.os.Parcel;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.filters.SmallTest;
 import android.text.TextPaint;
 import android.text.style.LocaleSpan;
+
+import junit.framework.TestCase;
 
 public class LocaleSpanTest extends TestCase {
 

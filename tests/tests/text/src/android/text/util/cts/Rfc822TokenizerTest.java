@@ -17,8 +17,8 @@
 package android.text.util.cts;
 
 
+import android.support.test.filters.SmallTest;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
 

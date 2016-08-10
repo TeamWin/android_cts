@@ -25,11 +25,11 @@ import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.text.format.DateFormat;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
