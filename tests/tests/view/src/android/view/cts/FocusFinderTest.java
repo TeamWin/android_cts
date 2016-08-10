@@ -16,16 +16,27 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.graphics.Rect;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.FocusFinder;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinderCtsActivity> {
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class FocusFinderTest {
     private FocusFinder mFocusFinder;
     private ViewGroup mLayout;
     private Button mTopLeft;
@@ -33,31 +44,32 @@ public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinde
     private Button mBottomLeft;
     private Button mBottomRight;
 
-    public FocusFinderTest() {
-        super("android.view.cts", FocusFinderCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<FocusFinderCtsActivity> mActivityRule =
+            new ActivityTestRule<>(FocusFinderCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        FocusFinderCtsActivity activity = mActivityRule.getActivity();
+
         mFocusFinder = FocusFinder.getInstance();
-        mLayout = getActivity().layout;
-        mTopLeft = getActivity().topLeftButton;
-        mTopRight = getActivity().topRightButton;
-        mBottomLeft = getActivity().bottomLeftButton;
-        mBottomRight = getActivity().bottomRightButton;
+        mLayout = activity.layout;
+        mTopLeft = activity.topLeftButton;
+        mTopRight = activity.topRightButton;
+        mBottomLeft = activity.bottomLeftButton;
+        mBottomRight = activity.bottomRightButton;
         mTopLeft.setNextFocusLeftId(View.NO_ID);
         mTopRight.setNextFocusLeftId(View.NO_ID);
         mBottomLeft.setNextFocusLeftId(View.NO_ID);
         mBottomRight.setNextFocusLeftId(View.NO_ID);
     }
 
+    @Test
     public void testGetInstance() {
-        mFocusFinder = null;
-        mFocusFinder = FocusFinder.getInstance();
         assertNotNull(mFocusFinder);
     }
 
+    @Test
     public void testFindNextFocus() {
         /*
          * Go clockwise around the buttons from the top left searching for focus.
@@ -68,22 +80,23 @@ public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinde
          * | 3 | 4 |
          * +---+---+
          */
-        assertNextFocus(mTopLeft, View.FOCUS_RIGHT, mTopRight);
-        assertNextFocus(mTopRight, View.FOCUS_DOWN, mBottomRight);
-        assertNextFocus(mBottomRight, View.FOCUS_LEFT, mBottomLeft);
-        assertNextFocus(mBottomLeft, View.FOCUS_UP, mTopLeft);
+        verifyNextFocus(mTopLeft, View.FOCUS_RIGHT, mTopRight);
+        verifyNextFocus(mTopRight, View.FOCUS_DOWN, mBottomRight);
+        verifyNextFocus(mBottomRight, View.FOCUS_LEFT, mBottomLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_UP, mTopLeft);
 
-        assertNextFocus(null, View.FOCUS_RIGHT, mTopLeft);
-        assertNextFocus(null, View.FOCUS_DOWN, mTopLeft);
-        assertNextFocus(null, View.FOCUS_LEFT, mBottomRight);
-        assertNextFocus(null, View.FOCUS_UP, mBottomRight);
+        verifyNextFocus(null, View.FOCUS_RIGHT, mTopLeft);
+        verifyNextFocus(null, View.FOCUS_DOWN, mTopLeft);
+        verifyNextFocus(null, View.FOCUS_LEFT, mBottomRight);
+        verifyNextFocus(null, View.FOCUS_UP, mBottomRight);
     }
 
-    private void assertNextFocus(View currentFocus, int direction, View expectedNextFocus) {
+    private void verifyNextFocus(View currentFocus, int direction, View expectedNextFocus) {
         View actualNextFocus = mFocusFinder.findNextFocus(mLayout, currentFocus, direction);
         assertEquals(expectedNextFocus, actualNextFocus);
     }
 
+    @Test
     public void testFindNextFocusFromRect() {
         /*
          * Create a small rectangle on the border between the top left and top right buttons.
@@ -99,8 +112,8 @@ public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinde
         rect.offset(mTopLeft.getWidth() / 2, 0);
         rect.inset(mTopLeft.getWidth() / 4, mTopLeft.getHeight() / 4);
 
-        assertNextFocusFromRect(rect, View.FOCUS_LEFT, mTopLeft);
-        assertNextFocusFromRect(rect, View.FOCUS_RIGHT, mTopRight);
+        verifytNextFocusFromRect(rect, View.FOCUS_LEFT, mTopLeft);
+        verifytNextFocusFromRect(rect, View.FOCUS_RIGHT, mTopRight);
 
         /*
          * Create a small rectangle on the border between the top left and bottom left buttons.
@@ -115,15 +128,16 @@ public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinde
         rect.offset(0, mTopRight.getHeight() / 2);
         rect.inset(mTopLeft.getWidth() / 4, mTopLeft.getHeight() / 4);
 
-        assertNextFocusFromRect(rect, View.FOCUS_UP, mTopLeft);
-        assertNextFocusFromRect(rect, View.FOCUS_DOWN, mBottomLeft);
+        verifytNextFocusFromRect(rect, View.FOCUS_UP, mTopLeft);
+        verifytNextFocusFromRect(rect, View.FOCUS_DOWN, mBottomLeft);
     }
 
-    private void assertNextFocusFromRect(Rect rect, int direction, View expectedNextFocus) {
+    private void verifytNextFocusFromRect(Rect rect, int direction, View expectedNextFocus) {
         View actualNextFocus = mFocusFinder.findNextFocusFromRect(mLayout, rect, direction);
         assertEquals(expectedNextFocus, actualNextFocus);
     }
 
+    @Test
     public void testFindNearestTouchable() {
         /*
          * Table layout with two rows and coordinates are relative to those parent rows.
@@ -174,36 +188,37 @@ public class FocusFinderTest extends ActivityInstrumentationTestCase2<FocusFinde
         assertEquals(-1, deltas[1]);
     }
 
+    @Test
     public void testFindNextAndPrevFocusAvoidingChain() {
         mBottomRight.setNextFocusForwardId(mBottomLeft.getId());
         mBottomLeft.setNextFocusForwardId(mTopRight.getId());
         // Follow the chain
-        assertNextFocus(mBottomRight, View.FOCUS_FORWARD, mBottomLeft);
-        assertNextFocus(mBottomLeft, View.FOCUS_FORWARD, mTopRight);
-        assertNextFocus(mTopRight, View.FOCUS_BACKWARD, mBottomLeft);
-        assertNextFocus(mBottomLeft, View.FOCUS_BACKWARD, mBottomRight);
+        verifyNextFocus(mBottomRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mTopRight, View.FOCUS_BACKWARD, mBottomLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_BACKWARD, mBottomRight);
 
         // Now go to the one not in the chain
-        assertNextFocus(mTopRight, View.FOCUS_FORWARD, mTopLeft);
-        assertNextFocus(mBottomRight, View.FOCUS_BACKWARD, mTopLeft);
+        verifyNextFocus(mTopRight, View.FOCUS_FORWARD, mTopLeft);
+        verifyNextFocus(mBottomRight, View.FOCUS_BACKWARD, mTopLeft);
 
         // Now go back to the top of the chain
-        assertNextFocus(mTopLeft, View.FOCUS_FORWARD, mBottomRight);
-        assertNextFocus(mTopLeft, View.FOCUS_BACKWARD, mTopRight);
+        verifyNextFocus(mTopLeft, View.FOCUS_FORWARD, mBottomRight);
+        verifyNextFocus(mTopLeft, View.FOCUS_BACKWARD, mTopRight);
 
         // Now make the chain a circle -- this is the pathological case
         mTopRight.setNextFocusForwardId(mBottomRight.getId());
         // Fall back to the next one in a chain.
-        assertNextFocus(mTopLeft, View.FOCUS_FORWARD, mTopRight);
-        assertNextFocus(mTopLeft, View.FOCUS_BACKWARD, mBottomRight);
+        verifyNextFocus(mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mTopLeft, View.FOCUS_BACKWARD, mBottomRight);
 
         //Now do branching focus changes
         mTopRight.setNextFocusForwardId(View.NO_ID);
         mBottomRight.setNextFocusForwardId(mTopRight.getId());
-        assertNextFocus(mBottomRight, View.FOCUS_FORWARD, mTopRight);
-        assertNextFocus(mBottomLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mBottomRight, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mBottomLeft, View.FOCUS_FORWARD, mTopRight);
         // From the tail, it jumps out of the chain
-        assertNextFocus(mTopRight, View.FOCUS_FORWARD, mTopLeft);
+        verifyNextFocus(mTopRight, View.FOCUS_FORWARD, mTopLeft);
 
         // Back from the head of a tree goes out of the tree
         // We don't know which is the head of the focus chain since it is branching.
