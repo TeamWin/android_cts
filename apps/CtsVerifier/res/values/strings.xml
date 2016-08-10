@@ -419,7 +419,7 @@
 
     <!-- Strings for Location GNSS tests -->
     <string name="location_gnss_constellation_type_test">GNSS Measurement Constellation Test</string>
-    <string name="location_gnss_measure_no_location_test">GNSS Measurement WhenNoLocation Test</string>
+    <string name="location_gnss_measure_no_location_test">GNSS Measurement Before Location Test</string>
     <string name="location_gnss_reg_test">GNSS Measurement Registration Test</string>
     <string name="location_gnss_value_test">GNSS Measurement Values Test</string>
     <string name="location_gnss_nav_msg_test">GNSS Navigation Message Test</string>
