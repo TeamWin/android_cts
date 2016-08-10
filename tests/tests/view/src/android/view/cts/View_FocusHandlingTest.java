@@ -16,24 +16,35 @@
 
 package android.view.cts;
 
-import android.view.cts.R;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.graphics.Rect;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 
-public class View_FocusHandlingTest
-        extends ActivityInstrumentationTestCase2<FocusHandlingCtsActivity> {
-    public View_FocusHandlingTest() {
-        super("android.view.cts", FocusHandlingCtsActivity.class);
-    }
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class View_FocusHandlingTest {
+    @Rule
+    public ActivityTestRule<FocusHandlingCtsActivity> mActivityRule =
+            new ActivityTestRule<>(FocusHandlingCtsActivity.class);
 
     @UiThreadTest
+    @Test
     public void testFocusHandling() {
-        Activity activity = getActivity();
+        Activity activity = mActivityRule.getActivity();
 
         View v1 = activity.findViewById(R.id.view1);
         View v2 = activity.findViewById(R.id.view2);

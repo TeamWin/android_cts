@@ -16,31 +16,38 @@
 
 package android.view.cts;
 
-import android.view.cts.R;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.res.XmlResourceParser;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.cts.util.XmlUtils;
 import android.widget.LinearLayout;
 
-public class ViewGroup_MarginLayoutParamsTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    private ViewGroup.MarginLayoutParams mMarginLayoutParams;
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ViewGroup_MarginLayoutParamsTest {
     private Context mContext;
+    private ViewGroup.MarginLayoutParams mMarginLayoutParams;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mMarginLayoutParams = null;
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
     }
 
+    @Test
     public void testConstructor() {
-        mMarginLayoutParams = null;
         // create a new MarginLayoutParams instance
         XmlResourceParser p = mContext.getResources().getLayout(
                 R.layout.viewgroup_margin_layout);
@@ -68,9 +75,9 @@ public class ViewGroup_MarginLayoutParamsTest extends InstrumentationTestCase {
         ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(320, 480);
         mMarginLayoutParams = new ViewGroup.MarginLayoutParams(lp);
         assertNotNull(mMarginLayoutParams);
-
     }
 
+    @Test
     public void testSetMargins() {
         // create a new MarginLayoutParams instance
         mMarginLayoutParams = new ViewGroup.MarginLayoutParams(320, 480);
@@ -86,6 +93,7 @@ public class ViewGroup_MarginLayoutParamsTest extends InstrumentationTestCase {
         assertEquals(false, mMarginLayoutParams.isMarginRelative());
     }
 
+    @Test
     public void testSetMarginsRelative() {
         // create a new MarginLayoutParams instance
         mMarginLayoutParams = new ViewGroup.MarginLayoutParams(320, 480);
@@ -103,6 +111,7 @@ public class ViewGroup_MarginLayoutParamsTest extends InstrumentationTestCase {
         assertEquals(true, mMarginLayoutParams.isMarginRelative());
     }
 
+    @Test
     public void testResolveMarginsRelative() {
         ViewGroup vg = new LinearLayout(mContext);
 
@@ -171,6 +180,7 @@ public class ViewGroup_MarginLayoutParamsTest extends InstrumentationTestCase {
         assertEquals(true, mMarginLayoutParams.isMarginRelative());
     }
 
+    @Test
     public void testResolveMarginsExplicit() {
         // LTR / relative margin case
         mMarginLayoutParams = new ViewGroup.MarginLayoutParams(320, 480);
