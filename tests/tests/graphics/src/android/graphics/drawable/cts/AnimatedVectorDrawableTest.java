@@ -139,9 +139,9 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
     }
 
     @MediumTest
-    public void testSingleFrameAnimation() {
-        final MyCallback callback = new MyCallback();
+    public void testSingleFrameAnimation() throws InterruptedException {
         int resId = R.drawable.avd_single_frame;
+        final MyCallback callback = new MyCallback();
         final AnimatedVectorDrawable d1 =
                 (AnimatedVectorDrawable) mResources.getDrawable(resId);
         // The AVD has a duration as 16ms.
@@ -162,8 +162,10 @@ public class AnimatedVectorDrawableTest extends ActivityInstrumentationTestCase2
                 d1.draw(canvas);
                 int endColor = bitmap.getPixel(IMAGE_WIDTH / 2, IMAGE_HEIGHT / 2);
                 assertEquals("Center point's color must be green", 0xFF00FF00, endColor);
+                callback.notifyStarted();
             }
         });
+        callback.waitForStart();
     }
 
     @SmallTest
