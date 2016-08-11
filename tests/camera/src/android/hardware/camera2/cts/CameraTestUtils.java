@@ -51,6 +51,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
+import android.util.Range;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -1665,6 +1666,22 @@ public class CameraTestUtils extends Assert {
                 /*top*/cropCenterY - cropHeight / 2,
                 /*right*/ cropCenterX + cropWidth / 2 - 1,
                 /*bottom*/cropCenterY + cropHeight / 2 - 1);
+    }
+
+    /**
+     * Get AeAvailableTargetFpsRanges and sort them in descending order by max fps
+     *
+     * @param staticInfo camera static metadata
+     * @return AeAvailableTargetFpsRanges in descending order by max fps
+     */
+    public static Range<Integer>[] getDescendingTargetFpsRanges(StaticMetadata staticInfo) {
+        Range<Integer>[] fpsRanges = staticInfo.getAeAvailableTargetFpsRangesChecked();
+        Arrays.sort(fpsRanges, new Comparator<Range<Integer>>() {
+            public int compare(Range<Integer> r1, Range<Integer> r2) {
+                return r2.getUpper() - r1.getUpper();
+            }
+        });
+        return fpsRanges;
     }
 
     /**
