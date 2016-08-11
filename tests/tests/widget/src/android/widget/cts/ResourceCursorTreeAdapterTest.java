@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -23,7 +26,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.InstrumentationTestCase;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +40,7 @@ import org.junit.runner.RunWith;
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class ResourceCursorTreeAdapterTest extends InstrumentationTestCase {
+public class ResourceCursorTreeAdapterTest {
     private ResourceCursorTreeAdapter mResourceCursorTreeAdapter;
 
     private Context mContext;
