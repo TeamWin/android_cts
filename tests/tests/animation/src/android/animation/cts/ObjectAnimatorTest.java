@@ -48,6 +48,7 @@ public class ObjectAnimatorTest extends
     private static final float QUADRATIC_CTRL_PT2_Y = 20f;
     private static final float QUADRATIC_CTRL_PT3_X = 100f;
     private static final float QUADRATIC_CTRL_PT3_Y = 0f;
+    private static final float EPSILON = .001f;
 
     private AnimationActivity mActivity;
     private ObjectAnimator mObjectAnimator;
@@ -547,8 +548,8 @@ public class ObjectAnimatorTest extends
 
                 float expectedX = fraction * (data.length - 1);
 
-                assertEquals(expectedX, values[0]);
-                assertEquals(expectedX * 2, values[1]);
+                assertEquals(expectedX, values[0], EPSILON);
+                assertEquals(expectedX * 2, values[1], EPSILON);
                 assertEquals(0f, values[2]);
             }
         });
