@@ -17,6 +17,7 @@
 package android.provider.cts;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -68,6 +69,9 @@ public class MediaStoreIntentsTest extends AndroidTestCase {
     }
 
     public void testViewImageFile() {
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
         final String[] schemes = new String[] {
                 "file", "http", "https", "content" };
         final String[] mimes = new String[] {
