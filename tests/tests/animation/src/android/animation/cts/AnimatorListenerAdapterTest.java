@@ -17,10 +17,13 @@ package android.animation.cts;
 
 import android.animation.AnimatorListenerAdapter;
 import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
+@RunWith(AndroidJUnit4.class)
 public class AnimatorListenerAdapterTest {
     /**
      * AnimatorListenerAdapter has a noop implementation of the AnimatorListener interface.
@@ -30,7 +33,7 @@ public class AnimatorListenerAdapterTest {
      * much to test here since it has no implementation.
      */
     @Test
-    public void testNullOk() throws Throwable {
+    public void testNullOk() {
         AnimatorListenerAdapter adapter = new MyAdapter();
         adapter.onAnimationStart(null);
         adapter.onAnimationEnd(null);
