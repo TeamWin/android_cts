@@ -16,35 +16,55 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.method.MetaKeyKeyListener;
-import android.view.KeyEvent;
 import android.view.KeyCharacterMap.KeyData;
-import android.view.KeyEvent.Callback;
+import android.view.KeyEvent;
 
 import junit.framework.Assert;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 
 /**
  * Test {@link KeyEvent}.
  */
-public class KeyEventTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class KeyEventTest {
     private KeyEvent mKeyEvent;
     private long mDownTime;
     private long mEventTime;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
 
         mDownTime = SystemClock.uptimeMillis();
         mEventTime = SystemClock.uptimeMillis();
     }
 
+    @Test
     public void testConstructor() {
         new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
 
@@ -66,6 +86,7 @@ public class KeyEventTest extends AndroidTestCase {
         new KeyEvent(mDownTime, "test", 0, KeyEvent.FLAG_SOFT_KEYBOARD);
     }
 
+    @Test
     public void testGetCharacters() {
         String characters = "android_test";
         mKeyEvent = new KeyEvent(mDownTime, characters, 0, KeyEvent.FLAG_SOFT_KEYBOARD);
@@ -77,10 +98,12 @@ public class KeyEventTest extends AndroidTestCase {
         assertNull(mKeyEvent.getCharacters());
     }
 
+    @Test
     public void testGetMaxKeyCode() {
         assertTrue(KeyEvent.getMaxKeyCode() > 0);
     }
 
+    @Test
     public void testIsShiftPressed() {
         assertFalse(mKeyEvent.isShiftPressed());
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
@@ -91,11 +114,13 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(mKeyEvent.isShiftPressed());
     }
 
+    @Test
     public void testGetDeadChar() {
         // decimal number of &egrave; is 232.
         assertEquals(232, KeyEvent.getDeadChar('`', 'e'));
     }
 
+    @Test
     public void testGetKeyData() {
         KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_Z);
         KeyData keyData = new KeyData();
@@ -108,47 +133,51 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(0, keyData.meta[3]);
     }
 
+    @Test
     public void testDispatch() {
-        MockCallback callback = new MockCallback();
+        final KeyEvent.Callback callback = mock(KeyEvent.Callback.class);
+        doReturn(true).when(callback).onKeyDown(anyInt(), any(KeyEvent.class));
+        doReturn(true).when(callback).onKeyUp(anyInt(), any(KeyEvent.class));
+        doAnswer((InvocationOnMock invocation) -> {
+            final int count = (Integer) invocation.getArguments()[1];
+            return (count < 1) ? false : true;
+        }).when(callback).onKeyMultiple(anyInt(), anyInt(), any(KeyEvent.class));
+
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
-        callback.reset();
-        assertFalse(callback.isKeyDown());
+        verify(callback, never()).onKeyDown(anyInt(), any(KeyEvent.class));
         assertTrue(mKeyEvent.dispatch(callback));
-        assertTrue(callback.isKeyDown());
-        assertEquals(KeyEvent.KEYCODE_0, callback.getKeyCode());
-        assertSame(mKeyEvent, callback.getKeyEvent());
+        verify(callback, times(1)).onKeyDown(KeyEvent.KEYCODE_0, mKeyEvent);
+        verifyNoMoreInteractions(callback);
 
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_0);
-        callback.reset();
-        assertFalse(callback.isKeyUp());
+        verify(callback, never()).onKeyUp(anyInt(), any(KeyEvent.class));
         assertTrue(mKeyEvent.dispatch(callback));
-        assertTrue(callback.isKeyUp());
-        assertEquals(KeyEvent.KEYCODE_0, callback.getKeyCode());
-        assertSame(mKeyEvent, callback.getKeyEvent());
+        verify(callback, times(1)).onKeyUp(KeyEvent.KEYCODE_0, mKeyEvent);
+        verifyNoMoreInteractions(callback);
 
-        callback.reset();
         int count = 2;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_MULTIPLE,
                 KeyEvent.KEYCODE_0, count);
-        assertFalse(callback.isKeyMultiple());
+        verify(callback, never()).onKeyMultiple(anyInt(), anyInt(), any(KeyEvent.class));
         assertTrue(mKeyEvent.dispatch(callback));
-        assertTrue(callback.isKeyMultiple());
-        assertEquals(KeyEvent.KEYCODE_0, callback.getKeyCode());
-        assertSame(mKeyEvent, callback.getKeyEvent());
-        assertEquals(count, callback.getCount());
+        verify(callback, times(1)).onKeyMultiple(KeyEvent.KEYCODE_0, count, mKeyEvent);
+        verifyNoMoreInteractions(callback);
 
-        callback.reset();
         count = 0;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_MULTIPLE,
                 KeyEvent.KEYCODE_0, count);
         assertTrue(mKeyEvent.dispatch(callback));
-        assertTrue(callback.isKeyMultiple());
-        assertTrue(callback.isKeyDown());
-        assertTrue(callback.isKeyUp());
-        assertEquals(count, callback.getCount());
-        assertEquals(KeyEvent.KEYCODE_0, callback.getKeyCode());
+        // Note that even though we didn't reset our mock callback, we have a brand new
+        // instance of KeyEvent in mKeyEvent. This is why we're expecting the relevant
+        // onKeyXXX() methods on the mock callback to be called once with that new KeyEvent
+        // instance.
+        verify(callback, times(1)).onKeyDown(KeyEvent.KEYCODE_0, mKeyEvent);
+        verify(callback, times(1)).onKeyMultiple(KeyEvent.KEYCODE_0, count, mKeyEvent);
+        verify(callback, times(1)).onKeyUp(KeyEvent.KEYCODE_0, mKeyEvent);
+        verifyNoMoreInteractions(callback);
     }
 
+    @Test
     public void testGetMetaState() {
         int metaState = KeyEvent.META_ALT_ON;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_MULTIPLE,
@@ -156,18 +185,21 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(metaState, mKeyEvent.getMetaState());
     }
 
+    @Test
     public void testGetEventTime() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_0, 5);
         assertEquals(mEventTime, mKeyEvent.getEventTime());
     }
 
+    @Test
     public void testGetDownTime() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_0, 5);
         assertEquals(mDownTime, mKeyEvent.getDownTime());
     }
 
+    @Test
     public void testGetUnicodeChar1() {
         // 48 is Unicode character of '0'
         assertEquals(48, mKeyEvent.getUnicodeChar());
@@ -183,6 +215,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(0, mKeyEvent.getUnicodeChar());
     }
 
+    @Test
     public void testGetUnicodeChar2() {
         // 48 is Unicode character of '0'
         assertEquals(48, mKeyEvent.getUnicodeChar(MetaKeyKeyListener.META_CAP_LOCKED));
@@ -198,6 +231,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(0, mKeyEvent.getUnicodeChar(0));
     }
 
+    @Test
     public void testGetNumber() {
         // 48 is associated with key '0'
         assertEquals(48, mKeyEvent.getNumber());
@@ -207,6 +241,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(51, mKeyEvent.getNumber());
     }
 
+    @Test
     public void testIsSymPressed() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
                 KeyEvent.META_SYM_ON);
@@ -217,6 +252,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(mKeyEvent.isSymPressed());
     }
 
+    @Test
     public void testGetDeviceId() {
         int deviceId = 1;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
@@ -224,11 +260,13 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(deviceId, mKeyEvent.getDeviceId());
     }
 
+    @Test
     public void testToString() {
         // make sure it does not throw any exception.
         mKeyEvent.toString();
     }
 
+    @Test
     public void testIsAltPressed() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
                 KeyEvent.META_ALT_ON);
@@ -239,6 +277,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(mKeyEvent.isAltPressed());
     }
 
+    @Test
     public void testGetModifierMetaStateMask() {
         int mask = KeyEvent.getModifierMetaStateMask();
         assertTrue((mask & KeyEvent.META_SHIFT_ON) != 0);
@@ -261,6 +300,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse((mask & KeyEvent.META_SCROLL_LOCK_ON) != 0);
     }
 
+    @Test
     public void testIsModifierKey() {
         assertTrue(KeyEvent.isModifierKey(KeyEvent.KEYCODE_SHIFT_LEFT));
         assertTrue(KeyEvent.isModifierKey(KeyEvent.KEYCODE_SHIFT_RIGHT));
@@ -279,6 +319,7 @@ public class KeyEventTest extends AndroidTestCase {
 
     private static final int UNDEFINED_META_STATE = 0x80000000;
 
+    @Test
     public void testNormalizeMetaState() {
         // Already normalized values.
         assertEquals(0, KeyEvent.normalizeMetaState(0));
@@ -312,6 +353,7 @@ public class KeyEventTest extends AndroidTestCase {
                 KeyEvent.normalizeMetaState(KeyEvent.META_SHIFT_ON | UNDEFINED_META_STATE));
     }
 
+    @Test
     public void testMetaStateHasNoModifiers() {
         assertTrue(KeyEvent.metaStateHasNoModifiers(0));
         assertTrue(KeyEvent.metaStateHasNoModifiers(KeyEvent.META_CAPS_LOCK_ON));
@@ -334,6 +376,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(KeyEvent.metaStateHasNoModifiers(KeyEvent.META_FUNCTION_ON));
     }
 
+    @Test
     public void testMetaStateHasModifiers() {
         assertTrue(KeyEvent.metaStateHasModifiers(0, 0));
         assertTrue(KeyEvent.metaStateHasModifiers(
@@ -413,6 +456,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(KeyEvent.metaStateHasModifiers(0, UNDEFINED_META_STATE));
     }
 
+    @Test
     public void testHasNoModifiers() {
         KeyEvent ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON);
@@ -423,6 +467,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(ev.hasNoModifiers());
     }
 
+    @Test
     public void testHasModifiers() {
         KeyEvent ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON);
@@ -438,10 +483,12 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(ev.hasModifiers(KeyEvent.META_SHIFT_LEFT_ON));
     }
 
+    @Test
     public void testGetDisplayLabel() {
         assertTrue(mKeyEvent.getDisplayLabel() > 0);
     }
 
+    @Test
     public void testIsSystem() {
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU);
         assertTrue(mKeyEvent.isSystem());
@@ -486,6 +533,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertFalse(mKeyEvent.isSystem());
     }
 
+    @Test
     public void testIsPrintingKey() {
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, Character.SPACE_SEPARATOR);
         assertTrue(mKeyEvent.isPrintingKey());
@@ -506,6 +554,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertTrue(mKeyEvent.isPrintingKey());
     }
 
+    @Test
     public void testGetMatch1() {
         char[] codes1 = new char[] { '0', '1', '2' };
         assertEquals('0', mKeyEvent.getMatch(codes1));
@@ -518,10 +567,12 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals('S', mKeyEvent.getMatch(codes3));
     }
 
+    @Test
     public void testGetAction() {
         assertEquals(KeyEvent.ACTION_DOWN, mKeyEvent.getAction());
     }
 
+    @Test
     public void testGetRepeatCount() {
         int repeatCount = 1;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_MULTIPLE,
@@ -529,6 +580,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(repeatCount, mKeyEvent.getRepeatCount());
     }
 
+    @Test
     public void testWriteToParcel() {
         Parcel parcel = Parcel.obtain();
         mKeyEvent.writeToParcel(parcel, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
@@ -548,15 +600,18 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(mKeyEvent.getEventTime(), keyEvent.getEventTime());
     }
 
+    @Test
     public void testDescribeContents() {
         // make sure it never shrow any exception.
         mKeyEvent.describeContents();
     }
 
+    @Test
     public void testGetKeyCode() {
         assertEquals(KeyEvent.KEYCODE_0, mKeyEvent.getKeyCode());
     }
 
+    @Test
     public void testGetFlags() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_0, 5, KeyEvent.META_SHIFT_ON, 1, 1, KeyEvent.FLAG_WOKE_HERE);
@@ -567,6 +622,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(KeyEvent.FLAG_SOFT_KEYBOARD, mKeyEvent.getFlags());
     }
 
+    @Test
     public void testGetScanCode() {
         int scanCode = 1;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
@@ -574,6 +630,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(scanCode, mKeyEvent.getScanCode());
     }
 
+    @Test
     public void testChangeAction() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_0, 5, KeyEvent.META_SHIFT_ON, 1, 1, KeyEvent.FLAG_WOKE_HERE);
@@ -590,6 +647,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(mKeyEvent.getRepeatCount(), newEvent.getRepeatCount());
     }
 
+    @Test
     public void testChangeFlags() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_0, 5, KeyEvent.META_SHIFT_ON, 1, 1, KeyEvent.FLAG_WOKE_HERE);
@@ -606,6 +664,7 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(mKeyEvent.getRepeatCount(), newEvent.getRepeatCount());
     }
 
+    @Test
     public void testChangeTimeRepeat() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_0, 5, KeyEvent.META_SHIFT_ON, 1, 1, KeyEvent.FLAG_WOKE_HERE);
@@ -622,73 +681,5 @@ public class KeyEventTest extends AndroidTestCase {
         assertEquals(mKeyEvent.getDeviceId(), newEvent.getDeviceId());
         assertEquals(mKeyEvent.getDownTime(), newEvent.getDownTime());
         assertEquals(mKeyEvent.getKeyCode(), newEvent.getKeyCode());
-    }
-
-    private class MockCallback implements Callback {
-        private boolean mIsKeyDown;
-        private boolean mIsKeyUp;
-        private boolean mIsMultiple;
-        private int mKeyCode;
-        private KeyEvent mKeyEvent;
-        private int mCount;
-
-        public boolean isKeyDown() {
-            return mIsKeyDown;
-        }
-
-        public boolean isKeyUp() {
-            return mIsKeyUp;
-        }
-
-        public boolean isKeyMultiple() {
-            return mIsMultiple;
-        }
-
-        public int getKeyCode() {
-            return mKeyCode;
-        }
-
-        public KeyEvent getKeyEvent() {
-            return mKeyEvent;
-        }
-
-        public int getCount() {
-            return mCount;
-        }
-
-        public void reset() {
-            mIsKeyDown = false;
-            mIsKeyUp = false;
-            mIsMultiple = false;
-        }
-
-        public boolean onKeyDown(int keyCode, KeyEvent event) {
-            mIsKeyDown = true;
-            mKeyCode = keyCode;
-            mKeyEvent = event;
-            return true;
-        }
-
-        public boolean onKeyLongPress(int keyCode, KeyEvent event) {
-            return false;
-        }
-
-        public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
-            mIsMultiple = true;
-            mKeyCode = keyCode;
-            mKeyEvent = event;
-            mCount = count;
-            if (count < 1) {
-                return false; // this key event never repeat.
-            }
-            return true;
-        }
-
-        public boolean onKeyUp(int keyCode, KeyEvent event) {
-            mIsKeyUp = true;
-            mKeyCode = keyCode;
-            mKeyEvent = event;
-            return true;
-        }
     }
 }

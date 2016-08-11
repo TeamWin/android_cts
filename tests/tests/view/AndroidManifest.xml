@@ -23,10 +23,9 @@
                 android:icon="@drawable/size_48x48"
                 android:maxRecents="1"
                 android:multiArch="true"
-                android:name="android.view.cts.MockApplication"
                 android:supportsRtl="true">
         <uses-library android:name="android.test.runner" />
-        
+
         <activity android:name="android.view.cts.ViewStubCtsActivity"
             android:label="ViewStubCtsActivity">
             <intent-filter>
@@ -34,7 +33,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.cts.UsingViewsCtsActivity"
             android:label="Using Views Test">
             <intent-filter>
@@ -42,7 +41,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.cts.FocusHandlingCtsActivity"
             android:label="Focus Handling Test">
             <intent-filter>
@@ -50,14 +49,14 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.cts.ViewGroupCtsActivity" android:label="ViewGroupCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.cts.ViewTestCtsActivity"
             android:label="ViewTestCtsActivity">
             <intent-filter>
@@ -65,7 +64,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.cts.ViewLayoutPositionTestCtsActivity"
             android:label="ViewTestCtsActivity">
             <intent-filter>
@@ -82,7 +81,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.animation.cts.AnimationTestCtsActivity"
             android:label="AnimationTestCtsActivity" android:configChanges="orientation|screenSize">
             <intent-filter>
@@ -106,7 +105,7 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
-        
+
         <activity android:name="android.view.inputmethod.cts.InputMethodCtsActivity"
             android:label="InputMethodCtsActivity">
             <intent-filter>
