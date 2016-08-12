@@ -16,52 +16,59 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.Instrumentation;
-import android.content.Context;
+import android.cts.util.CtsKeyEventUtil;
 import android.cts.util.PollingCheck;
-import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.Region;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
-import android.util.AttributeSet;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.cts.SurfaceViewCtsActivity.MockSurfaceView;
 
-public class SurfaceViewTest extends ActivityInstrumentationTestCase2<SurfaceViewCtsActivity> {
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    private Context mContext;
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class SurfaceViewTest {
     private Instrumentation mInstrumentation;
+    private SurfaceViewCtsActivity mActivity;
     private MockSurfaceView mMockSurfaceView;
 
-    public SurfaceViewTest() {
-        super("android.view.cts", SurfaceViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<SurfaceViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(SurfaceViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-        mContext = mInstrumentation.getContext();
-        final SurfaceViewCtsActivity activity = getActivity();
-        new PollingCheck() {
-            @Override
-                protected boolean check() {
-                return activity.hasWindowFocus();
-            }
-        }.run();
-        mMockSurfaceView = activity.getSurfaceView();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        PollingCheck.waitFor(mActivity::hasWindowFocus);
+        mMockSurfaceView = mActivity.getSurfaceView();
     }
 
     @UiThreadTest
+    @Test
     public void testConstructor() {
-        new SurfaceView(mContext);
-        new SurfaceView(mContext, null);
-        new SurfaceView(mContext, null, 0);
+        new SurfaceView(mActivity);
+        new SurfaceView(mActivity, null);
+        new SurfaceView(mActivity, null, 0);
     }
 
+    @Test
     public void testSurfaceView() {
         final int left = 40;
         final int top = 30;
@@ -99,11 +106,12 @@ public class SurfaceViewTest extends ActivityInstrumentationTestCase2<SurfaceVie
         assertTrue(actual instanceof SurfaceHolder);
     }
 
-    @UiThreadTest
     /**
      * check point:
      * check surfaceView size before and after layout
      */
+    @UiThreadTest
+    @Test
     public void testOnSizeChanged() {
         final int left = 40;
         final int top = 30;
@@ -123,11 +131,12 @@ public class SurfaceViewTest extends ActivityInstrumentationTestCase2<SurfaceVie
         assertEquals(bottom - top, mMockSurfaceView.getHeight());
     }
 
-    @UiThreadTest
     /**
      * check point:
      * check surfaceView scroll X and y before and after scrollTo
      */
+    @UiThreadTest
+    @Test
     public void testOnScrollChanged() {
         final int scrollToX = 200;
         final int scrollToY = 200;
@@ -143,25 +152,12 @@ public class SurfaceViewTest extends ActivityInstrumentationTestCase2<SurfaceVie
         assertEquals(scrollToY, mMockSurfaceView.getScrollY());
     }
 
+    @Test
     public void testOnDetachedFromWindow() {
-        final MockSurfaceView mockSurfaceView = getActivity().getSurfaceView();
-        assertFalse(mockSurfaceView.isDetachedFromWindow());
-        assertTrue(mockSurfaceView.isShown());
-        sendKeys(KeyEvent.KEYCODE_BACK);
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return mockSurfaceView.isDetachedFromWindow() &&
-                       !mockSurfaceView.isShown();
-            }
-        }.run();
-    }
-
-    private void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            fail("error occurs when wait for an action: " + e.toString());
-        }
+        assertFalse(mMockSurfaceView.isDetachedFromWindow());
+        assertTrue(mMockSurfaceView.isShown());
+        CtsKeyEventUtil.sendKeys(mInstrumentation, mMockSurfaceView, KeyEvent.KEYCODE_BACK);
+        PollingCheck.waitFor(() -> mMockSurfaceView.isDetachedFromWindow() &&
+                !mMockSurfaceView.isShown());
     }
 }
