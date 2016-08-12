@@ -16,6 +16,19 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.XmlResourceParser;
@@ -29,7 +42,10 @@ import android.graphics.Region;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
@@ -43,10 +59,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.View.MeasureSpec;
-import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.view.ViewGroup.OnHierarchyChangeListener;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -57,10 +71,16 @@ import android.view.animation.Transformation;
 import android.view.cts.util.XmlUtils;
 import android.widget.TextView;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InOrder;
+
 import java.util.ArrayList;
 
-public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
-
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class ViewGroupTest implements CTSResult {
     private Context mContext;
     private MotionEvent mMotionEvent;
     private int mResultCode;
@@ -70,18 +90,19 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         boolean mHasNotify;
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
     }
 
+    @Test
     public void testConstructor() {
         new MockViewGroup(mContext);
         new MockViewGroup(mContext, null);
         new MockViewGroup(mContext, null, 0);
     }
 
+    @Test
     public void testAddFocusables() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setFocusable(true);
@@ -102,6 +123,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, list.size());
     }
 
+    @Test
     public void testAddStatesFromChildren() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -114,6 +136,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isDrawableStateChangedCalled);
     }
 
+    @Test
     public void testAddTouchables() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setFocusable(true);
@@ -146,6 +169,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(v);
     }
 
+    @Test
     public void testAddView() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -156,6 +180,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, vg.getChildCount());
     }
 
+    @Test
     public void testAddViewWithParaViewInt() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -166,6 +191,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, vg.getChildCount());
     }
 
+    @Test
     public void testAddViewWithParaViewLayoutPara() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -177,6 +203,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, vg.getChildCount());
     }
 
+    @Test
     public void testAddViewWithParaViewIntInt() {
         final int width = 100;
         final int height = 200;
@@ -192,6 +219,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, vg.getChildCount());
     }
 
+    @Test
     public void testAddViewWidthParaViewIntLayoutParam() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -203,6 +231,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, vg.getChildCount());
     }
 
+    @Test
     public void testAddViewInLayout() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -218,6 +247,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(vg.isRequestLayoutCalled);
     }
 
+    @Test
     public void testAttachLayoutAnimationParameters() {
         MockViewGroup vg = new MockViewGroup(mContext);
         ViewGroup.LayoutParams param = new ViewGroup.LayoutParams(10, 10);
@@ -227,6 +257,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, param.layoutAnimationParameters.index);
     }
 
+    @Test
     public void testAttachViewToParent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setFocusable(true);
@@ -242,6 +273,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(child, vg.getChildAt(0));
     }
 
+    @Test
     public void testAddViewInLayoutWithParamViewIntLayB() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -258,6 +290,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(vg.isRequestLayoutCalled);
     }
 
+    @Test
     public void testBringChildToFront() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView1 = new TextView(mContext);
@@ -282,6 +315,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(textView1, vg.getChildAt(0));
     }
 
+    @Test
     public void testCanAnimate() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -293,6 +327,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.canAnimate());
     }
 
+    @Test
     public void testCheckLayoutParams() {
         MockViewGroup view = new MockViewGroup(mContext);
         assertFalse(view.checkLayoutParams(null));
@@ -300,6 +335,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(view.checkLayoutParams(new ViewGroup.LayoutParams(100, 200)));
     }
 
+    @Test
     public void testChildDrawableStateChanged() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setAddStatesFromChildren(true);
@@ -308,6 +344,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isRefreshDrawableStateCalled);
     }
 
+    @Test
     public void testCleanupLayoutState() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -318,6 +355,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(textView.isLayoutRequested());
     }
 
+    @Test
     public void testClearChildFocus() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -332,8 +370,8 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(vg.getFocusedChild());
     }
 
+    @Test
     public void testClearDisappearingChildren() {
-
         Canvas canvas = new Canvas();
         MockViewGroup vg = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -360,6 +398,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(0, vg.drawChildCalledTime);
     }
 
+    @Test
     public void testClearFocus() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -370,6 +409,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(textView.isClearFocusCalled);
     }
 
+    @Test
     public void testDetachAllViewsFromParent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -382,6 +422,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(textView.getParent());
     }
 
+    @Test
     public void testDetachViewFromParent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -395,6 +436,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(textView.getParent());
     }
 
+    @Test
     public void testDetachViewFromParentWithParamView() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -409,6 +451,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(vg.getParent());
     }
 
+    @Test
     public void testDetachViewsFromParent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView1 = new TextView(mContext);
@@ -427,6 +470,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(textView2.getParent());
     }
 
+    @Test
     public void testDispatchDraw() {
         MockViewGroup vg = new MockViewGroup(mContext);
         Canvas canvas = new Canvas();
@@ -437,6 +481,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testDispatchFreezeSelfOnly() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setId(1);
@@ -448,6 +493,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, container.size());
     }
 
+    @Test
     public void testDispatchKeyEvent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER);
@@ -462,6 +508,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testDispatchSaveInstanceState() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setId(2);
@@ -482,6 +529,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(textView.isDispatchRestoreInstanceStateCalled);
     }
 
+    @Test
     public void testDispatchSetPressed() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -494,6 +542,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(textView.isPressed());
     }
 
+    @Test
     public void testDispatchSetSelected() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -507,6 +556,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
     }
 
     @SuppressWarnings("unchecked")
+    @Test
     public void testDispatchThawSelfOnly() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setId(1);
@@ -515,9 +565,9 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
 
         vg.dispatchThawSelfOnly(array);
         assertTrue(vg.isOnRestoreInstanceStateCalled);
-
     }
 
+    @Test
     public void testDispatchTouchEvent() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -532,12 +582,9 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
 
         MockTextView textView = new MockTextView(mContext);
         mMotionEvent = null;
-        textView.setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                mMotionEvent = event;
-                return true;
-            }
+        textView.setOnTouchListener((View v, MotionEvent event) -> {
+            mMotionEvent = event;
+            return true;
         });
 
         textView.setVisibility(View.VISIBLE);
@@ -558,6 +605,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(me, mMotionEvent);
     }
 
+    @Test
     public void testDispatchTrackballEvent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MotionEvent me = MotionEvent.obtain(SystemClock.uptimeMillis(),
@@ -572,6 +620,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.dispatchTrackballEvent(me));
     }
 
+    @Test
     public void testDispatchUnhandledMove() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -583,6 +632,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.dispatchUnhandledMove(textView, View.FOCUS_DOWN));
     }
 
+    @Test
     public void testDispatchWindowFocusChanged() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -595,6 +645,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(textView.isPressed());
     }
 
+    @Test
     public void testDispatchWindowVisibilityChanged() {
         int expected = 10;
         MockViewGroup vg = new MockViewGroup(mContext);
@@ -605,6 +656,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(expected, textView.visibility);
     }
 
+    @Test
     public void testDrawableStateChanged() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -616,6 +668,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(textView.mIsRefreshDrawableStateCalled);
     }
 
+    @Test
     public void testDrawChild() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -629,6 +682,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(textView.isDrawCalled);
     }
 
+    @Test
     public void testFindFocus() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -642,6 +696,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(vg, vg.findFocus());
     }
 
+    @Test
     public void testFitSystemWindows() {
         Rect rect = new Rect(1, 1, 100, 100);
         MockViewGroup vg = new MockViewGroup(mContext);
@@ -680,6 +735,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         }
     }
 
+    @Test
     public void testFocusableViewAvailable() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockView child = new MockView(mContext);
@@ -691,6 +747,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isFocusableViewAvailable);
     }
 
+    @Test
     public void testFocusSearch() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -701,6 +758,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(textView, child.focusSearch(textView, 1));
     }
 
+    @Test
     public void testGatherTransparentRegion() {
         Region region = new Region();
         MockViewGroup vg = new MockViewGroup(mContext);
@@ -714,6 +772,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.gatherTransparentRegion(null));
     }
 
+    @Test
     public void testGenerateDefaultLayoutParams(){
         MockViewGroup vg = new MockViewGroup(mContext);
         LayoutParams lp = vg.generateDefaultLayoutParams();
@@ -722,7 +781,8 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(LayoutParams.WRAP_CONTENT, lp.height);
     }
 
-    public void testGenerateLayoutParamsWithParaAttributeSet() throws Exception{
+    @Test
+    public void testGenerateLayoutParamsWithParaAttributeSet() throws Exception {
         MockViewGroup vg = new MockViewGroup(mContext);
         XmlResourceParser set = mContext.getResources().getLayout(
                 android.view.cts.R.layout.abslistview_layout);
@@ -733,6 +793,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(25, lp.width);
     }
 
+    @Test
     public void testGenerateLayoutParams() {
         MockViewGroup vg = new MockViewGroup(mContext);
         LayoutParams p = new LayoutParams(LayoutParams.WRAP_CONTENT,
@@ -743,12 +804,14 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(p.height, generatedParams.height);
     }
 
+    @Test
     public void testGetChildDrawingOrder() {
         MockViewGroup vg = new MockViewGroup(mContext);
         assertEquals(1, vg.getChildDrawingOrder(0, 1));
         assertEquals(2, vg.getChildDrawingOrder(0, 2));
     }
 
+    @Test
     public void testGetChildMeasureSpec() {
         int spec = 1;
         int padding = 1;
@@ -762,11 +825,13 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
                 ViewGroup.getChildMeasureSpec(spec, padding, childDimension));
     }
 
+    @Test
     public void testGetChildStaticTransformation() {
         MockViewGroup vg = new MockViewGroup(mContext);
         assertFalse(vg.getChildStaticTransformation(null, null));
     }
 
+    @Test
     public void testGetChildVisibleRect() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -783,6 +848,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.getChildVisibleRect(textView, rect, p));
     }
 
+    @Test
     public void testGetDescendantFocusability() {
         MockViewGroup vg = new MockViewGroup(mContext);
         final int FLAG_MASK_FOCUSABILITY = 0x60000;
@@ -792,6 +858,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse((vg.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
     }
 
+    @Test
     public void testGetLayoutAnimation() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -803,13 +870,13 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(la, vg.getLayoutAnimation());
     }
 
+    @Test
     public void testGetLayoutAnimationListener() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
         assertNull(vg.getLayoutAnimationListener());
 
         AnimationListener al = new AnimationListener() {
-
             @Override
             public void onAnimationEnd(Animation animation) {
             }
@@ -826,6 +893,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(al, vg.getLayoutAnimationListener());
     }
 
+    @Test
     public void testGetPersistentDrawingCache() {
         MockViewGroup vg = new MockViewGroup(mContext);
         final int mPersistentDrawingCache1 = 2;
@@ -836,6 +904,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(mPersistentDrawingCache2, vg.getPersistentDrawingCache());
     }
 
+    @Test
     public void testHasFocus() {
         MockViewGroup vg = new MockViewGroup(mContext);
         assertFalse(vg.hasFocus());
@@ -848,6 +917,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.hasFocus());
     }
 
+    @Test
     public void testHasFocusable() {
         MockViewGroup vg = new MockViewGroup(mContext);
         assertFalse(vg.hasFocusable());
@@ -857,6 +927,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.hasFocusable());
     }
 
+    @Test
     public void testIndexOfChild() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -867,18 +938,17 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(0, vg.indexOfChild(textView));
     }
 
-    private void setupActivity(String action) {
-
-        Intent intent = new Intent(getInstrumentation().getTargetContext(),
-                ViewGroupCtsActivity.class);
-        intent.setAction(action);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        getInstrumentation().getTargetContext().startActivity(intent);
-    }
-
+    @LargeTest
+    @Test
     public void testInvalidateChild() {
         ViewGroupCtsActivity.setResult(this);
-        setupActivity(ViewGroupCtsActivity.ACTION_INVALIDATE_CHILD);
+
+        Context context = InstrumentationRegistry.getTargetContext();
+        Intent intent = new Intent(context, ViewGroupCtsActivity.class);
+        intent.setAction(ViewGroupCtsActivity.ACTION_INVALIDATE_CHILD);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+
         waitForResult();
         assertEquals(CTSResult.RESULT_OK, mResultCode);
     }
@@ -894,6 +964,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         }
     }
 
+    @Test
     public void testIsAlwaysDrawnWithCacheEnabled() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -905,6 +976,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isAlwaysDrawnWithCacheEnabled());
     }
 
+    @Test
     public void testIsAnimationCacheEnabled() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -916,6 +988,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isAnimationCacheEnabled());
     }
 
+    @Test
     public void testIsChildrenDrawnWithCacheEnabled() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -925,6 +998,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isChildrenDrawnWithCacheEnabled());
     }
 
+    @Test
     public void testMeasureChild() {
         final int width = 100;
         final int height = 200;
@@ -943,6 +1017,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
                 child.mHeightMeasureSpec);
     }
 
+    @Test
     public void testMeasureChildren() {
         final int widthMeasureSpec = 100;
         final int heightMeasureSpec = 200;
@@ -963,6 +1038,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, vg.measureChildCalledTime);
     }
 
+    @Test
     public void testMeasureChildWithMargins() {
         final int width = 10;
         final int height = 20;
@@ -991,6 +1067,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
                 child.mHeightMeasureSpec);
     }
 
+    @Test
     public void testOffsetDescendantRectToMyCoords() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -1012,6 +1089,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, rect.right);
     }
 
+    @Test
     public void testOffsetRectIntoDescendantCoords() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.layout(10, 20, 30, 40);
@@ -1035,6 +1113,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(6, rect.right);
     }
 
+    @Test
     public void testOnAnimationEnd() {
         // this function is a call back function it should be tested in ViewGroup#drawChild.
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1065,6 +1144,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         }
     }
 
+    @Test
     public void testOnAnimationStart() {
         // This is a call back method. It should be tested in ViewGroup#drawChild.
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1085,6 +1165,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(child.isOnAnimationStartCalled);
     }
 
+    @Test
     public void testOnCreateDrawableState() {
         MockViewGroup vg = new MockViewGroup(mContext);
         // Call back function. Called in View#getDrawableState()
@@ -1093,6 +1174,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(1, data.length);
     }
 
+    @Test
     public void testOnInterceptTouchEvent() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MotionEvent me = MotionEvent.obtain(SystemClock.uptimeMillis(),
@@ -1103,6 +1185,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isOnInterceptTouchEventCalled);
     }
 
+    @Test
     public void testOnLayout() {
         final int left = 1;
         final int top = 2;
@@ -1116,6 +1199,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(bottom, mv.bottom);
     }
 
+    @Test
     public void testOnRequestFocusInDescendants() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -1123,6 +1207,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isOnRequestFocusInDescendantsCalled);
     }
 
+    @Test
     public void testRemoveAllViews() {
         MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView = new MockTextView(mContext);
@@ -1136,6 +1221,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(textView.getParent());
     }
 
+    @Test
     public void testRemoveAllViewsInLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1154,36 +1240,26 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertSame(child, textView.getParent());
     }
 
+    @Test
     public void testRemoveDetachedView() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child1 = new MockViewGroup(mContext);
         MockViewGroup child2 = new MockViewGroup(mContext);
-        MockOnHierarchyChangeListener listener = new MockOnHierarchyChangeListener();
+        ViewGroup.OnHierarchyChangeListener listener =
+                mock(ViewGroup.OnHierarchyChangeListener.class);
         parent.setOnHierarchyChangeListener(listener);
         parent.addView(child1);
         parent.addView(child2);
 
         parent.removeDetachedView(child1, false);
-        assertSame(parent, listener.sParent);
-        assertSame(child1, listener.sChild);
+
+        InOrder inOrder = inOrder(listener);
+        inOrder.verify(listener, times(1)).onChildViewAdded(parent, child1);
+        inOrder.verify(listener, times(1)).onChildViewAdded(parent, child2);
+        inOrder.verify(listener, times(1)).onChildViewRemoved(parent, child1);
     }
 
-    static class MockOnHierarchyChangeListener implements OnHierarchyChangeListener {
-
-        public View sParent;
-        public View sChild;
-
-        @Override
-        public void onChildViewAdded(View parent, View child) {
-        }
-
-        @Override
-        public void onChildViewRemoved(View parent, View child) {
-            sParent = parent;
-            sChild = child;
-        }
-    }
-
+    @Test
     public void testRemoveView() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1198,6 +1274,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(child.getParent());
     }
 
+    @Test
     public void testRemoveViewAt() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1220,6 +1297,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(child.getParent());
     }
 
+    @Test
     public void testRemoveViewInLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1234,6 +1312,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(child.getParent());
     }
 
+    @Test
     public void testRemoveViews() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child1 = new MockViewGroup(mContext);
@@ -1269,6 +1348,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(child2.getParent());
     }
 
+    @Test
     public void testRemoveViewsInLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child1 = new MockViewGroup(mContext);
@@ -1304,6 +1384,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(child2.getParent());
     }
 
+    @Test
     public void testRequestChildFocus() {
         MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView = new TextView(mContext);
@@ -1317,11 +1398,13 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertNull(vg.getFocusedChild());
     }
 
+    @Test
     public void testRequestChildRectangleOnScreen() {
         MockViewGroup vg = new MockViewGroup(mContext);
         assertFalse(vg.requestChildRectangleOnScreen(null, null, false));
     }
 
+    @Test
     public void testRequestDisallowInterceptTouchEvent() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockView child = new MockView(mContext);
@@ -1332,6 +1415,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(parent.isRequestDisallowInterceptTouchEventCalled);
     }
 
+    @Test
     public void testRequestFocus() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -1339,6 +1423,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isOnRequestFocusInDescendantsCalled);
     }
 
+    @Test
     public void testRequestTransparentRegion() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockView child1 = new MockView(mContext);
@@ -1349,32 +1434,19 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(parent.isRequestTransparentRegionCalled);
     }
 
+    @Test
     public void testScheduleLayoutAnimation() {
         MockViewGroup vg = new MockViewGroup(mContext);
         Animation animation = new AlphaAnimation(mContext, null);
 
-        MockLayoutAnimationController al = new MockLayoutAnimationController(animation);
+        LayoutAnimationController al = spy(new LayoutAnimationController(animation));
         vg.setLayoutAnimation(al);
         vg.scheduleLayoutAnimation();
         vg.dispatchDraw(new Canvas());
-        assertTrue(al.mIsStartCalled);
+        verify(al, times(1)).start();
     }
 
-    static class MockLayoutAnimationController extends LayoutAnimationController {
-
-        public boolean mIsStartCalled;
-
-        public MockLayoutAnimationController(Animation animation) {
-            super(animation);
-        }
-
-        @Override
-        public void start() {
-            mIsStartCalled = true;
-            super.start();
-        }
-    }
-
+    @Test
     public void testSetAddStatesFromChildren() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setAddStatesFromChildren(true);
@@ -1384,6 +1456,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(vg.addStatesFromChildren());
     }
 
+    @Test
     public void testSetChildrenDrawingCacheEnabled() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -1396,6 +1469,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isAnimationCacheEnabled());
     }
 
+    @Test
     public void testSetChildrenDrawnWithCacheEnabled() {
         MockViewGroup vg = new MockViewGroup(mContext);
 
@@ -1408,6 +1482,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(vg.isChildrenDrawnWithCacheEnabled());
     }
 
+    @Test
     public void testSetClipChildren() {
         Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
@@ -1465,6 +1540,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         }
     }
 
+    @Test
     public void testSetClipToPadding() {
         final int frameLeft = 1;
         final int frameTop = 2;
@@ -1498,6 +1574,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(0, canvas.mBottom);
     }
 
+    @Test
     public void testSetDescendantFocusability() {
         MockViewGroup vg = new MockViewGroup(mContext);
         final int FLAG_MASK_FOCUSABILITY = 0x60000;
@@ -1512,18 +1589,22 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
                 ViewGroup.FOCUS_BEFORE_DESCENDANTS) == 0);
     }
 
+    @Test
     public void testSetOnHierarchyChangeListener() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
-        MockOnHierarchyChangeListener listener = new MockOnHierarchyChangeListener();
+        ViewGroup.OnHierarchyChangeListener listener =
+                mock(ViewGroup.OnHierarchyChangeListener.class);
         parent.setOnHierarchyChangeListener(listener);
         parent.addView(child);
 
         parent.removeDetachedView(child, false);
-        assertSame(parent, listener.sParent);
-        assertSame(child, listener.sChild);
+        InOrder inOrder = inOrder(listener);
+        inOrder.verify(listener, times(1)).onChildViewAdded(parent, child);
+        inOrder.verify(listener, times(1)).onChildViewRemoved(parent, child);
     }
 
+    @Test
     public void testSetPadding() {
         final int left = 1;
         final int top = 2;
@@ -1563,6 +1644,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(false, vg.isPaddingRelative());
     }
 
+    @Test
     public void testSetPaddingRelative() {
         final int start = 1;
         final int top = 2;
@@ -1624,6 +1706,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(true, vg.isPaddingRelative());
     }
 
+    @Test
     public void testSetPersistentDrawingCache() {
         MockViewGroup vg = new MockViewGroup(mContext);
         vg.setPersistentDrawingCache(1);
@@ -1631,6 +1714,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
                 .getPersistentDrawingCache());
     }
 
+    @Test
     public void testShowContextMenuForChild() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1640,6 +1724,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(parent.isShowContextMenuForChildCalled);
     }
 
+    @Test
     public void testShowContextMenuForChild_WithXYCoords() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1649,6 +1734,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(parent.isShowContextMenuForChildCalledWithXYCoords);
     }
 
+    @Test
     public void testStartLayoutAnimation() {
         MockViewGroup vg = new MockViewGroup(mContext);
         RotateAnimation animation = new RotateAnimation(0.1f, 0.1f);
@@ -1661,6 +1747,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vg.isLayoutRequested());
     }
 
+    @Test
     public void testUpdateViewLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
@@ -1672,6 +1759,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(param.height, child.getLayoutParams().height);
     }
 
+    @Test
     public void testDebug() {
         final int EXPECTED = 100;
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1682,6 +1770,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertEquals(EXPECTED + 1, child.debugDepth);
     }
 
+    @Test
     public void testDispatchKeyEventPreIme() {
         MockViewGroup vg = new MockViewGroup(mContext);
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER);
@@ -1710,6 +1799,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(vg.isGetChildStaticTransformationCalled);
     }
 
+    @Test
     public void testStartActionModeForChildRespectsSubclassModeOnPrimary() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
@@ -1726,6 +1816,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertFalse(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @Test
     public void testStartActionModeForChildIgnoresSubclassModeOnFloating() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
@@ -1742,6 +1833,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @Test
     public void testStartActionModeForChildTypedBubblesUpToParent() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
@@ -1755,6 +1847,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @Test
     public void testStartActionModeForChildTypelessBubblesUpToParent() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
@@ -1769,6 +1862,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @Test
     public void testTemporaryDetach() {
         // [vgParent]
         //   - [viewParent1]
@@ -2045,6 +2139,7 @@ public class ViewGroupTest extends InstrumentationTestCase implements CTSResult{
         resetResolvedDrawablesCount = 0;
     }
 
+    @Test
     public void testResetRtlProperties() {
         clearRtlCounters();
 
