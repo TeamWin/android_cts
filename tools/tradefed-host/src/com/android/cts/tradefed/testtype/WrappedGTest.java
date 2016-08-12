@@ -31,6 +31,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test runner for wrapped (native) GTests
@@ -115,7 +116,8 @@ public class WrappedGTest implements IBuildReceiver, IDeviceTest, IRemoteTest {
         try {
             String options = mAbi == null ? "" : String.format("--abi %s ", mAbi.getName());
             String command = String.format("am instrument -w %s%s/.%s", options, mAppNameSpace, mRunner);
-            mDevice.executeShellCommand(command, resultParser, mMaxTestTimeMs, 0);
+            mDevice.executeShellCommand(command, resultParser, mMaxTestTimeMs,
+                    TimeUnit.MILLISECONDS, 0);
         } catch (DeviceNotAvailableException e) {
             resultParser.flush();
             throw e;
