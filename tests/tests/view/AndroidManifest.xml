@@ -162,8 +162,11 @@
             android:label="ScaleGestureDetectorCtsActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
-        <activity android:name="android.view.cts.GLSurfaceViewCtsActivity"
-            android:label="GLSurfaceViewCts"/>
+        <activity android:name="android.view.cts.DisplayRefreshRateCtsActivity"
+                  android:label="DisplayRefreshRateCtsActivity"/>
+
+        <activity android:name="android.view.cts.PixelCopyGLProducerCtsActivity"
+                  android:label="PixelCopyGLProducerCtsActivity"/>
 
         <activity android:name="android.view.cts.MockActivity" android:label="MockActivity">
             <meta-data android:name="android.view.merge"

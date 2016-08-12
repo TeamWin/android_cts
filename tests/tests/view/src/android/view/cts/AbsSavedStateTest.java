@@ -16,41 +16,45 @@
 
 package android.view.cts;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.support.test.filters.SmallTest;
-import android.test.InstrumentationTestCase;
-import android.view.AbsSavedState;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.view.AbsSavedState;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @SmallTest
-public class AbsSavedStateTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AbsSavedStateTest {
+    @Test(expected=IllegalArgumentException.class)
+    public void testConstructorNullParcelable() {
+        new AbsSavedStateImpl((Parcelable) null);
+    }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullParcel() {
+        new AbsSavedStateImpl((Parcel) null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullParcelAndClassLoader() {
+        new AbsSavedStateImpl(null, null);
+    }
+
+    @Test
     public void testConstructor() {
-        try {
-            new AbsSavedStateImpl((Parcelable) null);
-            fail("Expected NullPointerException");
-        } catch (IllegalArgumentException e) {
-            // Expected.
-        }
-
-        try {
-            new AbsSavedStateImpl((Parcel) null);
-            fail("Expected NullPointerException");
-        } catch (NullPointerException e) {
-            // Expected.
-        }
-
-        try {
-            new AbsSavedStateImpl(null, null);
-            fail("Expected NullPointerException");
-        } catch (NullPointerException e) {
-            // Expected.
-        }
-
         AbsSavedState superState = new AbsSavedStateImpl(Parcel.obtain());
         assertNull(superState.getSuperState());
 
@@ -79,6 +83,7 @@ public class AbsSavedStateTest extends InstrumentationTestCase {
         assertSame(AbsSavedState.EMPTY_STATE, s.getSuperState());
     }
 
+    @Test
     public void testCreator() {
         int size = 10;
         AbsSavedState[] array = AbsSavedState.CREATOR.newArray(size);
@@ -108,6 +113,7 @@ public class AbsSavedStateTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testWriteToParcel() {
         Parcelable superState = mock(Parcelable.class);
         AbsSavedState savedState = new AbsSavedStateImpl(superState);

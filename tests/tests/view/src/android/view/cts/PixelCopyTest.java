@@ -16,50 +16,44 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
-import android.opengl.GLSurfaceView;
-import android.opengl.GLSurfaceView.Renderer;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.PixelCopy;
+import android.view.PixelCopy.OnPixelCopyFinishedListener;
 import android.view.Surface;
 import android.view.SurfaceView;
-import android.view.PixelCopy.OnPixelCopyFinishedListener;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
-import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
-import static android.opengl.GLES20.GL_SCISSOR_TEST;
-import static android.opengl.GLES20.glClear;
-import static android.opengl.GLES20.glClearColor;
-import static android.opengl.GLES20.glEnable;
-import static android.opengl.GLES20.glScissor;
-
-import static org.junit.Assert.*;
-
 @MediumTest
-public class PixelCopyTests {
+@RunWith(AndroidJUnit4.class)
+public class PixelCopyTest {
     private static final String TAG = "PixelCopyTests";
 
     @Rule
-    public ActivityTestRule<GLSurfaceViewCtsActivity> mGLSurfaceViewActivityRule =
-            new ActivityTestRule<>(GLSurfaceViewCtsActivity.class, false, false);
+    public ActivityTestRule<PixelCopyGLProducerCtsActivity> mGLSurfaceViewActivityRule =
+            new ActivityTestRule<>(PixelCopyGLProducerCtsActivity.class, false, false);
 
     @Rule
     public ActivityTestRule<PixelCopyVideoSourceActivity> mVideoSourceActivityRule =
@@ -68,7 +62,7 @@ public class PixelCopyTests {
     private Instrumentation mInstrumentation;
 
     @Before
-    public void setUp() throws Exception {
+    public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         assertNotNull(mInstrumentation);
     }
@@ -113,8 +107,6 @@ public class PixelCopyTests {
             try {
                 if (surfaceTexture != null) surfaceTexture.release();
             } catch (Throwable t) {}
-            surface = null;
-            surfaceTexture = null;
         }
     }
 
@@ -122,14 +114,10 @@ public class PixelCopyTests {
     public void testGlProducer() {
         try {
             CountDownLatch swapFence = new CountDownLatch(2);
-            GLSurfaceViewCtsActivity.setGlVersion(2);
-            GLSurfaceViewCtsActivity.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-            GLSurfaceViewCtsActivity.setFixedSize(100, 100);
-            GLSurfaceViewCtsActivity.setRenderer(new QuadColorGLRenderer(
-                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK, swapFence));
 
-            GLSurfaceViewCtsActivity activity =
+            PixelCopyGLProducerCtsActivity activity =
                     mGLSurfaceViewActivityRule.launchActivity(null);
+            activity.setSwapFence(swapFence);
 
             while (!swapFence.await(5, TimeUnit.MILLISECONDS)) {
                 activity.getView().requestRender();
@@ -162,11 +150,6 @@ public class PixelCopyTests {
 
         } catch (InterruptedException e) {
             fail("Interrupted, error=" + e.getMessage());
-        } finally {
-            GLSurfaceViewCtsActivity.resetFixedSize();
-            GLSurfaceViewCtsActivity.resetGlVersion();
-            GLSurfaceViewCtsActivity.resetRenderer();
-            GLSurfaceViewCtsActivity.resetRenderMode();
         }
     }
 
@@ -218,10 +201,14 @@ public class PixelCopyTests {
     private void assertBitmapQuadColor(Bitmap bitmap, int topLeft, int topRight,
             int bottomLeft, int bottomRight, int threshold) {
         // Just quickly sample 4 pixels in the various regions.
-        assertTrue("Top left", pixelsAreSame(topLeft, getPixelFloatPos(bitmap, .25f, .25f), threshold));
-        assertTrue("Top right", pixelsAreSame(topRight, getPixelFloatPos(bitmap, .75f, .25f), threshold));
-        assertTrue("Bottom left", pixelsAreSame(bottomLeft, getPixelFloatPos(bitmap, .25f, .75f), threshold));
-        assertTrue("Bottom right", pixelsAreSame(bottomRight, getPixelFloatPos(bitmap, .75f, .75f), threshold));
+        assertTrue("Top left", pixelsAreSame(topLeft, getPixelFloatPos(bitmap, .25f, .25f),
+                threshold));
+        assertTrue("Top right", pixelsAreSame(topRight, getPixelFloatPos(bitmap, .75f, .25f),
+                threshold));
+        assertTrue("Bottom left", pixelsAreSame(bottomLeft, getPixelFloatPos(bitmap, .25f, .75f),
+                threshold));
+        assertTrue("Bottom right", pixelsAreSame(bottomRight, getPixelFloatPos(bitmap, .75f, .75f),
+                threshold));
     }
 
     private boolean pixelsAreSame(int ideal, int given, int threshold) {
@@ -229,67 +216,6 @@ public class PixelCopyTests {
         error += Math.abs(Color.green(ideal) - Color.green(given));
         error += Math.abs(Color.blue(ideal) - Color.blue(given));
         return (error < threshold);
-    }
-
-    private static class QuadColorGLRenderer implements Renderer {
-
-        private final int mTopLeftColor;
-        private final int mTopRightColor;
-        private final int mBottomLeftColor;
-        private final int mBottomRightColor;
-
-        private final CountDownLatch mFence;
-
-        private int mWidth, mHeight;
-
-        public QuadColorGLRenderer(int topLeft, int topRight,
-                int bottomLeft, int bottomRight, CountDownLatch fence) {
-            mTopLeftColor = topLeft;
-            mTopRightColor = topRight;
-            mBottomLeftColor = bottomLeft;
-            mBottomRightColor = bottomRight;
-            mFence = fence;
-        }
-
-        @Override
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        }
-
-        @Override
-        public void onSurfaceChanged(GL10 gl, int width, int height) {
-            mWidth = width;
-            mHeight = height;
-        }
-
-        @Override
-        public void onDrawFrame(GL10 gl) {
-            int cx = mWidth / 2;
-            int cy = mHeight / 2;
-
-            glEnable(GL_SCISSOR_TEST);
-
-            glScissor(0, cy, cx, mHeight - cy);
-            clearColor(mTopLeftColor);
-
-            glScissor(cx, cy, mWidth - cx, mHeight - cy);
-            clearColor(mTopRightColor);
-
-            glScissor(0, 0, cx, cy);
-            clearColor(mBottomLeftColor);
-
-            glScissor(cx, 0, mWidth - cx, cy);
-            clearColor(mBottomRightColor);
-
-            mFence.countDown();
-        }
-
-        private void clearColor(int color) {
-            glClearColor(Color.red(color) / 255.0f,
-                    Color.green(color) / 255.0f,
-                    Color.blue(color) / 255.0f,
-                    Color.alpha(color) / 255.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
     }
 
     private static class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
