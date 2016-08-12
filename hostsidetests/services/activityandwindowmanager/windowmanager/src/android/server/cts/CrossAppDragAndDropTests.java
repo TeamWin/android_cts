@@ -57,6 +57,8 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String SOURCE_ACTIVITY_NAME = "DragSource";
     private static final String TARGET_ACTIVITY_NAME = "DropTarget";
 
+    private static final String FILE_GLOBAL = "file_global";
+    private static final String FILE_LOCAL = "file_local";
     private static final String DISALLOW_GLOBAL = "disallow_global";
     private static final String CANCEL_SOON = "cancel_soon";
     private static final String GRANT_NONE = "grant_none";
@@ -72,8 +74,10 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String REQUEST_TAKE_PERSISTABLE = "request_take_persistable";
     private static final String REQUEST_WRITE = "request_write";
 
+    private static final String SOURCE_LOG_TAG = "DragSource";
     private static final String TARGET_LOG_TAG = "DropTarget";
 
+    private static final String RESULT_KEY_START_DRAG = "START_DRAG";
     private static final String RESULT_KEY_DRAG_STARTED = "DRAG_STARTED";
     private static final String RESULT_KEY_DRAG_ENDED = "DRAG_ENDED";
     private static final String RESULT_KEY_EXTRAS = "EXTRAS";
@@ -84,13 +88,16 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String RESULT_KEY_CLIP_DESCR_ERROR = "CLIP_DESCR_ERROR";
     private static final String RESULT_KEY_LOCAL_STATE_ERROR = "LOCAL_STATE_ERROR";
 
+    private static final String RESULT_MISSING = "Missing";
     private static final String RESULT_OK = "OK";
     private static final String RESULT_EXCEPTION = "Exception";
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
 
     private ITestDevice mDevice;
+    private boolean mDeviceSupportsDragAndDrop;
 
-    private Map<String, String> mResults;
+    private Map<String, String> mSourceResults;
+    private Map<String, String> mTargetResults;
 
     private String mSourcePackageName;
     private String mTargetPackageName;
@@ -100,7 +107,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         super.setUp();
 
         mDevice = getDevice();
-        if (!supportsDragAndDrop()) {
+
+        // Do not run this test suite on watches.
+        mDeviceSupportsDragAndDrop = !mDevice.hasFeature("feature:android.hardware.type.watch");
+
+        if (!mDeviceSupportsDragAndDrop) {
             return;
         }
 
@@ -113,7 +124,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        if (!supportsDragAndDrop()) {
+        if (!mDeviceSupportsDragAndDrop) {
             return;
         }
 
@@ -280,7 +291,8 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         executeShellCommand("input keyevent 82");
     }
 
-    private Map<String, String> getLogResults(String className) throws Exception {
+    private Map<String, String> getLogResults(String className, String lastResultKey)
+            throws Exception {
         int retryCount = 10;
         Map<String, String> output = new HashMap<String, String>();
         do {
@@ -295,16 +307,28 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
                     }
                 }
             }
-            if (output.containsKey(RESULT_KEY_DRAG_ENDED)) {
+            if (output.containsKey(lastResultKey)) {
                 return output;
             }
         } while (retryCount-- > 0);
         return output;
     }
 
-    private void doTestDragAndDrop(String sourceMode, String targetMode, String expectedDropResult)
+    private void assertDropResult(String sourceMode, String targetMode, String expectedDropResult)
             throws Exception {
-        if (!supportsDragAndDrop()) {
+        assertDragAndDropResults(sourceMode, targetMode, RESULT_OK, expectedDropResult, RESULT_OK);
+    }
+
+    private void assertNoGlobalDragEvents(String sourceMode, String expectedStartDragResult)
+            throws Exception {
+        assertDragAndDropResults(
+                sourceMode, REQUEST_NONE, expectedStartDragResult, RESULT_MISSING, RESULT_MISSING);
+    }
+
+    private void assertDragAndDropResults(String sourceMode, String targetMode,
+                                          String expectedStartDragResult, String expectedDropResult,
+                                          String expectedListenerResults) throws Exception {
+        if (!mDeviceSupportsDragAndDrop) {
             return;
         }
 
@@ -318,114 +342,123 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
                 getWindowCenter(getComponentName(mTargetPackageName, TARGET_ACTIVITY_NAME)),
                 SWIPE_DURATION_MS);
 
-        mResults = getLogResults(TARGET_LOG_TAG);
-        assertResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
-        if (expectedDropResult != null) {
-            assertResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
-            assertResult(RESULT_KEY_ACCESS_AFTER, RESULT_EXCEPTION);
-            assertListenerResults(RESULT_OK);
+        mSourceResults = getLogResults(SOURCE_LOG_TAG, RESULT_KEY_START_DRAG);
+        assertSourceResult(RESULT_KEY_START_DRAG, expectedStartDragResult);
+
+        mTargetResults = getLogResults(TARGET_LOG_TAG, RESULT_KEY_DRAG_ENDED);
+        assertTargetResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
+        if (!RESULT_MISSING.equals(expectedDropResult)) {
+            assertTargetResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
+            assertTargetResult(RESULT_KEY_ACCESS_AFTER, RESULT_EXCEPTION);
         }
+        assertListenerResults(expectedListenerResults);
     }
 
     private void assertListenerResults(String expectedResult) throws Exception {
-        if (!supportsDragAndDrop()) {
-            return;
-        }
+        assertTargetResult(RESULT_KEY_DRAG_STARTED, expectedResult);
+        assertTargetResult(RESULT_KEY_DRAG_ENDED, expectedResult);
+        assertTargetResult(RESULT_KEY_EXTRAS, expectedResult);
 
-        assertResult(RESULT_KEY_DRAG_STARTED, expectedResult);
-        assertResult(RESULT_KEY_DRAG_ENDED, expectedResult);
-        assertResult(RESULT_KEY_EXTRAS, expectedResult);
-
-        assertResult(RESULT_KEY_CLIP_DATA_ERROR, null);
-        assertResult(RESULT_KEY_CLIP_DESCR_ERROR, null);
-        assertResult(RESULT_KEY_LOCAL_STATE_ERROR, null);
+        assertTargetResult(RESULT_KEY_CLIP_DATA_ERROR, RESULT_MISSING);
+        assertTargetResult(RESULT_KEY_CLIP_DESCR_ERROR, RESULT_MISSING);
+        assertTargetResult(RESULT_KEY_LOCAL_STATE_ERROR, RESULT_MISSING);
     }
 
-    private void assertResult(String resultKey, String expectedResult) throws Exception {
-        if (!supportsDragAndDrop()) {
+    private void assertSourceResult(String resultKey, String expectedResult) throws Exception {
+        assertResult(mSourceResults, resultKey, expectedResult);
+    }
+
+    private void assertTargetResult(String resultKey, String expectedResult) throws Exception {
+        assertResult(mTargetResults, resultKey, expectedResult);
+    }
+
+    private void assertResult(Map<String, String> results, String resultKey, String expectedResult)
+            throws Exception {
+        if (!mDeviceSupportsDragAndDrop) {
             return;
         }
 
-        if (expectedResult == null) {
-            if (mResults.containsKey(resultKey)) {
-                fail("Unexpected " + resultKey + "=" + mResults.get(resultKey));
+        if (RESULT_MISSING.equals(expectedResult)) {
+            if (results.containsKey(resultKey)) {
+                fail("Unexpected " + resultKey + "=" + results.get(resultKey));
             }
         } else {
-            assertTrue("Missing " + resultKey, mResults.containsKey(resultKey));
-            assertEquals(resultKey + " result mismatch,", expectedResult, mResults.get(resultKey));
+            assertTrue("Missing " + resultKey, results.containsKey(resultKey));
+            assertEquals(resultKey + " result mismatch,", expectedResult,
+                    results.get(resultKey));
         }
-    }
-
-    private boolean supportsDragAndDrop() throws Exception {
-        // Do not run this test on watches.
-        return !mDevice.hasFeature("feature:android.hardware.type.watch");
     }
 
     public void testCancelSoon() throws Exception {
-        doTestDragAndDrop(CANCEL_SOON, REQUEST_NONE, null);
-        assertListenerResults(RESULT_OK);
+        assertDropResult(CANCEL_SOON, REQUEST_NONE, RESULT_MISSING);
     }
 
     public void testDisallowGlobal() throws Exception {
-        doTestDragAndDrop(DISALLOW_GLOBAL, REQUEST_NONE, null);
-        assertListenerResults(null);
+        assertNoGlobalDragEvents(DISALLOW_GLOBAL, RESULT_OK);
     }
 
     public void testDisallowGlobalBelowSdk24() throws Exception {
         mTargetPackageName = TARGET_23_PACKAGE_NAME;
-        doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, null);
-        assertListenerResults(null);
+        assertNoGlobalDragEvents(GRANT_NONE, RESULT_OK);
+    }
+
+    public void testFileUriLocal() throws Exception {
+        assertNoGlobalDragEvents(FILE_LOCAL, RESULT_OK);
+    }
+
+    public void testFileUriGlobal() throws Exception {
+        assertNoGlobalDragEvents(FILE_GLOBAL, RESULT_EXCEPTION);
     }
 
     public void testGrantNoneRequestNone() throws Exception {
-        doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, RESULT_EXCEPTION);
+        assertDropResult(GRANT_NONE, REQUEST_NONE, RESULT_EXCEPTION);
     }
 
     public void testGrantNoneRequestRead() throws Exception {
-        doTestDragAndDrop(GRANT_NONE, REQUEST_READ, RESULT_NULL_DROP_PERMISSIONS);
+        assertDropResult(GRANT_NONE, REQUEST_READ, RESULT_NULL_DROP_PERMISSIONS);
     }
 
     public void testGrantNoneRequestWrite() throws Exception {
-        doTestDragAndDrop(GRANT_NONE, REQUEST_WRITE, RESULT_NULL_DROP_PERMISSIONS);
+        assertDropResult(GRANT_NONE, REQUEST_WRITE, RESULT_NULL_DROP_PERMISSIONS);
     }
 
     public void testGrantReadRequestNone() throws Exception {
-        doTestDragAndDrop(GRANT_READ, REQUEST_NONE, RESULT_EXCEPTION);
+        assertDropResult(GRANT_READ, REQUEST_NONE, RESULT_EXCEPTION);
     }
 
     public void testGrantReadRequestRead() throws Exception {
-        doTestDragAndDrop(GRANT_READ, REQUEST_READ, RESULT_OK);
+        assertDropResult(GRANT_READ, REQUEST_READ, RESULT_OK);
     }
 
     public void testGrantReadRequestWrite() throws Exception {
-        doTestDragAndDrop(GRANT_READ, REQUEST_WRITE, RESULT_EXCEPTION);
+        assertDropResult(GRANT_READ, REQUEST_WRITE, RESULT_EXCEPTION);
     }
 
     public void testGrantReadNoPrefixRequestReadNested() throws Exception {
-        doTestDragAndDrop(GRANT_READ_NOPREFIX, REQUEST_READ_NESTED, RESULT_EXCEPTION);
+        assertDropResult(GRANT_READ_NOPREFIX, REQUEST_READ_NESTED, RESULT_EXCEPTION);
     }
 
     public void testGrantReadPrefixRequestReadNested() throws Exception {
-        doTestDragAndDrop(GRANT_READ_PREFIX, REQUEST_READ_NESTED, RESULT_OK);
+        assertDropResult(GRANT_READ_PREFIX, REQUEST_READ_NESTED, RESULT_OK);
     }
 
     public void testGrantPersistableRequestTakePersistable() throws Exception {
-        doTestDragAndDrop(GRANT_READ_PERSISTABLE, REQUEST_TAKE_PERSISTABLE, RESULT_OK);
+        assertDropResult(GRANT_READ_PERSISTABLE, REQUEST_TAKE_PERSISTABLE, RESULT_OK);
     }
 
     public void testGrantReadRequestTakePersistable() throws Exception {
-        doTestDragAndDrop(GRANT_READ, REQUEST_TAKE_PERSISTABLE, RESULT_EXCEPTION);
+        assertDropResult(GRANT_READ, REQUEST_TAKE_PERSISTABLE, RESULT_EXCEPTION);
     }
 
     public void testGrantWriteRequestNone() throws Exception {
-        doTestDragAndDrop(GRANT_WRITE, REQUEST_NONE, RESULT_EXCEPTION);
+        assertDropResult(GRANT_WRITE, REQUEST_NONE, RESULT_EXCEPTION);
     }
 
     public void testGrantWriteRequestRead() throws Exception {
-        doTestDragAndDrop(GRANT_WRITE, REQUEST_READ, RESULT_EXCEPTION);
+        assertDropResult(GRANT_WRITE, REQUEST_READ, RESULT_EXCEPTION);
     }
 
     public void testGrantWriteRequestWrite() throws Exception {
-        doTestDragAndDrop(GRANT_WRITE, REQUEST_WRITE, RESULT_OK);
+        assertDropResult(GRANT_WRITE, REQUEST_WRITE, RESULT_OK);
     }
 }

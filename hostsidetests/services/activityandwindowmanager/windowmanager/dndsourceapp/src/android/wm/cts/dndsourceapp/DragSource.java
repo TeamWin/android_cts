@@ -22,17 +22,30 @@ import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.FileUriExposedException;
 import android.os.PersistableBundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.File;
+
 public class DragSource extends Activity{
+    private static final String LOG_TAG = "DragSource";
+
+    private static final String RESULT_KEY_START_DRAG = "START_DRAG";
+    private static final String RESULT_KEY_DETAILS = "DETAILS";
+    private static final String RESULT_OK = "OK";
+    private static final String RESULT_EXCEPTION = "Exception";
+
     private static final String URI_PREFIX =
             "content://" + DragSourceContentProvider.AUTHORITY + "/data";
 
     private static final String MAGIC_VALUE = "42";
     private static final long TIMEOUT_CANCEL = 150;
+
+    private TextView mTextView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,31 +75,42 @@ public class DragSource extends Activity{
                         View.DRAG_FLAG_GLOBAL_PREFIX_URI_PERMISSION);
         setUpDragSource("grant_read_noprefix", prefixUri,
                 View.DRAG_FLAG_GLOBAL | View.DRAG_FLAG_GLOBAL_URI_READ);
+
+        final Uri fileUri = Uri.fromFile(new File("/sdcard/sample.jpg"));
+
+        setUpDragSource("file_local", fileUri, 0);
+        setUpDragSource("file_global", fileUri, View.DRAG_FLAG_GLOBAL);
     }
 
     private void setUpDragSource(String mode, final Uri uri, final int flags) {
         if (!mode.equals(getIntent().getStringExtra("mode"))) {
             return;
         }
-        final View source = findViewById(R.id.drag_source);
-        ((TextView) source).setText(mode);
-        source.setOnTouchListener(new View.OnTouchListener() {
+        mTextView = (TextView) findViewById(R.id.drag_source);
+        mTextView.setText(mode);
+        mTextView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() != MotionEvent.ACTION_DOWN) {
                     return false;
                 }
-                final ClipDescription clipDescription = new ClipDescription("", new String[] {
-                        ClipDescription.MIMETYPE_TEXT_URILIST });
-                PersistableBundle extras = new PersistableBundle(1);
-                extras.putString("extraKey", "extraValue");
-                clipDescription.setExtras(extras);
-                final ClipData clipData = new ClipData(clipDescription, new ClipData.Item(uri));
-                v.startDragAndDrop(
-                        clipData,
-                        new View.DragShadowBuilder(v),
-                        null,
-                        flags);
+                try {
+                    final ClipDescription clipDescription = new ClipDescription("", new String[] {
+                            ClipDescription.MIMETYPE_TEXT_URILIST });
+                    PersistableBundle extras = new PersistableBundle(1);
+                    extras.putString("extraKey", "extraValue");
+                    clipDescription.setExtras(extras);
+                    final ClipData clipData = new ClipData(clipDescription, new ClipData.Item(uri));
+                    v.startDragAndDrop(
+                            clipData,
+                            new View.DragShadowBuilder(v),
+                            null,
+                            flags);
+                    logResult(RESULT_KEY_START_DRAG, RESULT_OK);
+                } catch (FileUriExposedException e) {
+                    logResult(RESULT_KEY_DETAILS, e.getMessage());
+                    logResult(RESULT_KEY_START_DRAG, RESULT_EXCEPTION);
+                }
                 if (mode.equals("cancel_soon")) {
                     new Handler().postDelayed(new Runnable() {
                         @Override
@@ -98,5 +122,10 @@ public class DragSource extends Activity{
                 return true;
             }
         });
+    }
+
+    private void logResult(String key, String value) {
+        Log.i(LOG_TAG, key + "=" + value);
+        mTextView.setText(mTextView.getText() + "\n" + key + "=" + value);
     }
 }
