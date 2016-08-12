@@ -15,6 +15,8 @@
  */
 package android.view.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
@@ -24,14 +26,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
-import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -49,14 +50,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
-
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @SuppressLint("RtlHardcoded")
-public class SurfaceViewSyncTests {
-    private static final String TAG = "SurfaceViewSyncTests";
+public class SurfaceViewSyncTest {
     private static final int PERMISSION_DIALOG_WAIT_MS = 500;
+
+    @Rule
+    public ActivityTestRule<CapturedActivity> mActivityRule =
+            new ActivityTestRule<>(CapturedActivity.class);
+
+    private CapturedActivity mActivity;
+    private MediaPlayer mMediaPlayer;
 
     @Before
     public void setUp() throws UiObjectNotFoundException {
@@ -67,18 +72,10 @@ public class SurfaceViewSyncTests {
         if (acceptButton.waitForExists(PERMISSION_DIALOG_WAIT_MS)) {
             assertTrue(acceptButton.click());
         }
-    }
 
-    private CapturedActivity getActivity() {
-        return (CapturedActivity) mActivityRule.getActivity();
+        mActivity = mActivityRule.getActivity();
+        mMediaPlayer = mActivity.getMediaPlayer();
     }
-
-    private MediaPlayer getMediaPlayer() {
-        return getActivity().getMediaPlayer();
-    }
-
-    @Rule
-    public ActivityTestRule mActivityRule = new ActivityTestRule<>(CapturedActivity.class);
 
     static ValueAnimator makeInfinite(ValueAnimator a) {
         a.setRepeatMode(ObjectAnimator.REVERSE);
@@ -120,8 +117,8 @@ public class SurfaceViewSyncTests {
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                getMediaPlayer().setSurface(holder.getSurface());
-                getMediaPlayer().start();
+                mMediaPlayer.setSurface(holder.getSurface());
+                mMediaPlayer.start();
             }
 
             @Override
@@ -129,8 +126,8 @@ public class SurfaceViewSyncTests {
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                getMediaPlayer().pause();
-                getMediaPlayer().setSurface(null);
+                mMediaPlayer.pause();
+                mMediaPlayer.setSurface(null);
             }
         });
         return surfaceView;
@@ -171,7 +168,7 @@ public class SurfaceViewSyncTests {
     /** Draws a moving 10x10 black rectangle, validates 100 pixels of black are seen each frame */
     @Test
     public void testSmallRect() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 context -> new View(context) {
                     // draw a single pixel
                     final Paint sBlackPaint = new Paint();
@@ -201,7 +198,7 @@ public class SurfaceViewSyncTests {
      */
     @Test
     public void testEmptySurfaceView() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sEmptySurfaceViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 sTranslateAnimationFactory,
@@ -213,7 +210,7 @@ public class SurfaceViewSyncTests {
 
     @Test
     public void testSurfaceViewSmallScale() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
                 sSmallScaleAnimationFactory,
@@ -224,7 +221,7 @@ public class SurfaceViewSyncTests {
 
     @Test
     public void testSurfaceViewBigScale() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
                 sBigScaleAnimationFactory,
@@ -235,7 +232,7 @@ public class SurfaceViewSyncTests {
 
     @Test
     public void testVideoSurfaceViewTranslate() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
                 sTranslateAnimationFactory,
@@ -246,7 +243,7 @@ public class SurfaceViewSyncTests {
 
     @Test
     public void testVideoSurfaceViewRotated() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 view -> makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view,
@@ -260,7 +257,7 @@ public class SurfaceViewSyncTests {
 
     @Test
     public void testVideoSurfaceViewEdgeCoverage() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
                 view -> {
@@ -280,7 +277,7 @@ public class SurfaceViewSyncTests {
 
     @Test
     public void testVideoSurfaceViewCornerCoverage() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        CapturedActivity.TestResult result = mActivity.runTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
                 view -> {
