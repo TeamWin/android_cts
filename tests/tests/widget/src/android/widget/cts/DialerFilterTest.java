@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.cts.util.CtsKeyEventUtil;
 import android.cts.util.PollingCheck;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
@@ -101,7 +102,7 @@ public class DialerFilterTest {
 
         assertTrue(mDialerFilter.hasFocus());
 
-        mInstrumentation.sendStringSync("123");
+        CtsKeyEventUtil.sendString(mInstrumentation, mDialerFilter, "123");
         assertEquals("", mDialerFilter.getLetters().toString());
         assertEquals("123", mDialerFilter.getDigits().toString());
 
@@ -116,10 +117,10 @@ public class DialerFilterTest {
                 = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
         if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
             // "adg" in case of 12-key(NUMERIC) keyboard
-            mInstrumentation.sendStringSync("234");
+            CtsKeyEventUtil.sendString(mInstrumentation, mDialerFilter, "234");
         }
         else {
-            mInstrumentation.sendStringSync("adg");
+            CtsKeyEventUtil.sendString(mInstrumentation, mDialerFilter, "adg");
         }
         assertEquals("ADG", mDialerFilter.getLetters().toString());
         assertEquals("", mDialerFilter.getDigits().toString());
@@ -133,10 +134,10 @@ public class DialerFilterTest {
         // 12-key support
         if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
             // "adg" in case of 12-key(NUMERIC) keyboard
-            mInstrumentation.sendStringSync("234");
+            CtsKeyEventUtil.sendString(mInstrumentation, mDialerFilter, "234");
         }
         else {
-            mInstrumentation.sendStringSync("adg");
+            CtsKeyEventUtil.sendString(mInstrumentation, mDialerFilter, "adg");
         }
         assertEquals("ADG", mDialerFilter.getLetters().toString());
         // A, D, K may map to numbers on some keyboards. Don't test.
@@ -147,7 +148,7 @@ public class DialerFilterTest {
         });
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.sendStringSync("123");
+        CtsKeyEventUtil.sendString(mInstrumentation, mDialerFilter, "123");
         // 1, 2, 3 may map to letters on some keyboards. Don't test.
         assertEquals("123", mDialerFilter.getDigits().toString());
     }
