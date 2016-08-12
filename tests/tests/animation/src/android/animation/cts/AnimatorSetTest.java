@@ -15,14 +15,10 @@
  */
 package android.animation.cts;
 
-import java.lang.Override;
-import java.lang.Runnable;
-import java.lang.Thread;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -30,36 +26,52 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
-import android.test.ActivityInstrumentationTestCase2;
+import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
-public class AnimatorSetTest extends
-        ActivityInstrumentationTestCase2<AnimationActivity> {
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class AnimatorSetTest {
     private AnimationActivity mActivity;
     private AnimatorSet mAnimatorSet;
     private long mDuration = 1000;
     private Object object;
     private ObjectAnimator yAnimator;
     private ObjectAnimator xAnimator;
-    Set<Integer> identityHashes = new HashSet<Integer>();
+    Set<Integer> identityHashes = new HashSet<>();
 
-    public AnimatorSetTest() {
-        super(AnimationActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<AnimationActivity> mActivityRule =
+            new ActivityTestRule<>(AnimationActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        setActivityInitialTouchMode(false);
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
+        mActivity = mActivityRule.getActivity();
         object = mActivity.view.newBall;
         yAnimator = getYAnimator(object);
         xAnimator = getXAnimator(object);
     }
 
-     public void testPlaySequentially() throws Throwable {
+    @Test
+    public void testPlaySequentially() throws Throwable {
          xAnimator.setRepeatCount(0);
          yAnimator.setRepeatCount(0);
          xAnimator.setDuration(50);
@@ -118,12 +130,9 @@ public class AnimatorSetTest extends
 
         long totalDuration = set.getTotalDuration();
         assertFalse(set.isRunning());
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                set.start();
-                startLatch.countDown();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+            startLatch.countDown();
         });
 
         // Set timeout to 100ms, if current count reaches 0 before the timeout, startLatch.await(...)
@@ -137,6 +146,7 @@ public class AnimatorSetTest extends
         }
     }
 
+    @Test
     public void testPlayTogether() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = {xAnimator, yAnimator};
@@ -148,7 +158,7 @@ public class AnimatorSetTest extends
         assertFalse(xAnimator.isRunning());
         assertFalse(yAnimator.isRunning());
         startAnimation(mAnimatorSet);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         assertTrue(mAnimatorSet.isRunning());
         assertTrue(xAnimator.isRunning());
         assertTrue(yAnimator.isRunning());
@@ -163,12 +173,13 @@ public class AnimatorSetTest extends
         assertFalse(anim1.isRunning());
         assertFalse(anim2.isRunning());
         startAnimation(set);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         assertTrue(set.isRunning());
         assertTrue(anim1.isRunning());
         assertTrue(anim2.isRunning());
     }
 
+    @Test
     public void testPlayBeforeAfter() throws Throwable {
         xAnimator.setRepeatCount(0);
         yAnimator.setRepeatCount(0);
@@ -184,6 +195,7 @@ public class AnimatorSetTest extends
         verifySequentialPlayOrder(set, new Animator[] {xAnimator, yAnimator, zAnimator});
     }
 
+    @Test
     public void testPauseAndResume() throws Throwable {
         final AnimatorSet set = new AnimatorSet();
         ValueAnimator a1 = ValueAnimator.ofFloat(0f, 100f);
@@ -212,20 +224,17 @@ public class AnimatorSetTest extends
         set.addListener(l1);
         delayedSet.addListener(l2);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                set.start();
-                delayedSet.start();
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+            delayedSet.start();
 
-                // Pause the delayed set during start delay
-                delayedSet.pause();
-            }
+            // Pause the delayed set during start delay
+            delayedSet.pause();
         });
 
         // Sleep long enough so that if the sets are not properly paused, they would have
         // finished.
-        Thread.sleep(300);
+        SystemClock.sleep(300);
         // Verify that both sets have been paused and *not* finished.
         assertTrue(set.isPaused());
         assertTrue(delayedSet.isPaused());
@@ -234,14 +243,11 @@ public class AnimatorSetTest extends
         assertFalse(l1.mEndIsCalled);
         assertFalse(l2.mEndIsCalled);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                set.resume();
-                delayedSet.resume();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            set.resume();
+            delayedSet.resume();
         });
-        Thread.sleep(300);
+        SystemClock.sleep(300);
 
         assertFalse(set.isPaused());
         assertFalse(delayedSet.isPaused());
@@ -249,6 +255,7 @@ public class AnimatorSetTest extends
         assertTrue(l2.mEndIsCalled);
     }
 
+    @Test
     public void testPauseBeforeStart() throws Throwable {
         final AnimatorSet set = new AnimatorSet();
         ValueAnimator a1 = ValueAnimator.ofFloat(0f, 100f);
@@ -261,23 +268,21 @@ public class AnimatorSetTest extends
         final MyListener listener = new MyListener();
         set.addListener(listener);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Pause animator set before calling start()
-                set.pause();
-                // Verify that pause should have no effect on a not-yet-started animator.
-                assertFalse(set.isPaused());
-                set.start();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            // Pause animator set before calling start()
+            set.pause();
+            // Verify that pause should have no effect on a not-yet-started animator.
+            assertFalse(set.isPaused());
+            set.start();
         });
-        Thread.sleep(300);
+        SystemClock.sleep(300);
 
         // Animator set should finish running by now since it's not paused.
         assertTrue(listener.mStartIsCalled);
         assertTrue(listener.mEndIsCalled);
     }
 
+    @Test
     public void testDuration() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = { xAnimator, yAnimator };
@@ -287,10 +292,11 @@ public class AnimatorSetTest extends
         mAnimatorSet.setDuration(1000);
 
         startAnimation(mAnimatorSet);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         assertEquals(mAnimatorSet.getDuration(), 1000);
     }
 
+    @Test
     public void testStartDelay() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = { xAnimator, yAnimator };
@@ -300,20 +306,22 @@ public class AnimatorSetTest extends
         mAnimatorSet.setStartDelay(10);
 
         startAnimation(mAnimatorSet);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         assertEquals(mAnimatorSet.getStartDelay(), 10);
     }
 
-    public void testgetChildAnimations() throws Throwable {
+    @Test
+    public void testGetChildAnimations() throws Throwable {
         Animator[] animatorArray = { xAnimator, yAnimator };
 
         mAnimatorSet = new AnimatorSet();
-        ArrayList<Animator> childAnimations = mAnimatorSet.getChildAnimations();
+        mAnimatorSet.getChildAnimations();
         assertEquals(0, mAnimatorSet.getChildAnimations().size());
         mAnimatorSet.playSequentially(animatorArray);
         assertEquals(2, mAnimatorSet.getChildAnimations().size());
     }
 
+    @Test
     public void testSetInterpolator() throws Throwable {
         xAnimator.setRepeatCount(ValueAnimator.INFINITE);
         Animator[] animatorArray = {xAnimator, yAnimator};
@@ -324,14 +332,14 @@ public class AnimatorSetTest extends
 
         assertFalse(mAnimatorSet.isRunning());
         startAnimation(mAnimatorSet);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
 
         ArrayList<Animator> animatorList = mAnimatorSet.getChildAnimations();
-        assertEquals(interpolator, ((ObjectAnimator)animatorList.get(0)).getInterpolator());
-        assertEquals(interpolator, ((ObjectAnimator)animatorList.get(1)).getInterpolator());
+        assertEquals(interpolator, animatorList.get(0).getInterpolator());
+        assertEquals(interpolator, animatorList.get(1).getInterpolator());
     }
 
-    public ObjectAnimator getXAnimator(Object object) {
+    private ObjectAnimator getXAnimator(Object object) {
         String propertyX = "x";
         float startX = mActivity.mStartX;
         float endX = mActivity.mStartX + mActivity.mDeltaX;
@@ -343,7 +351,7 @@ public class AnimatorSetTest extends
         return xAnimator;
     }
 
-    public ObjectAnimator getYAnimator(Object object) {
+    private ObjectAnimator getYAnimator(Object object) {
          String property = "y";
          float startY = mActivity.mStartY;
          float endY = mActivity.mStartY + mActivity.mDeltaY;
@@ -356,11 +364,7 @@ public class AnimatorSetTest extends
     }
 
     private void startAnimation(final AnimatorSet animatorSet) throws Throwable {
-        this.runTestOnUiThread(new Runnable() {
-            public void run() {
-                mActivity.startAnimatorSet(animatorSet);
-            }
-        });
+        mActivityRule.runOnUiThread(() -> mActivity.startAnimatorSet(animatorSet));
     }
 
     private void assertUnique(Object object) {
@@ -373,6 +377,7 @@ public class AnimatorSetTest extends
 
     }
 
+    @Test
     public void testClone() throws Throwable {
         final AnimatorSet set1 = new AnimatorSet();
         final AnimatorListenerAdapter setListener = new AnimatorListenerAdapter() {};
@@ -397,12 +402,7 @@ public class AnimatorSetTest extends
 
         AnimateObject target = new AnimateObject();
         set1.setTarget(target);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                set1.start();
-            }
-        });
+        mActivityRule.runOnUiThread(set1::start);
         assertTrue(set1.isStarted());
 
         animator1.getListeners();
@@ -438,6 +438,7 @@ public class AnimatorSetTest extends
         assertSame(animator2.getInterpolator(), clone2.getInterpolator());
     }
 
+    @Test
     public void testSetSynchronized() throws Throwable {
         final TargetObj obj1 = new TargetObj();
         final TargetObj obj2 = new TargetObj();
@@ -457,24 +458,17 @@ public class AnimatorSetTest extends
         combined2.playSequentially(anim4, anim5, anim6);
         combined2.setStartDelay(100);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                combined1.start();
-                combined2.start();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            combined1.start();
+            combined2.start();
         });
 
         while (combined1.isRunning()) {
-            runTestOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    assertEquals(obj1.value, obj2.value);
-                }
-            });
+            mActivityRule.runOnUiThread(() -> assertEquals(obj1.value, obj2.value, 0.0f));
         }
     }
 
+    @Test
     public void testNotifiesAfterEnd() throws Throwable {
         final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
         Animator.AnimatorListener listener = new AnimatorListenerAdapter() {
@@ -495,14 +489,11 @@ public class AnimatorSetTest extends
         final AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.playTogether(animator);
         animatorSet.addListener(listener);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                animatorSet.start();
-                animator.end();
-                assertFalse(animator.isStarted());
-                assertFalse(animatorSet.isStarted());
-            }
+        mActivityRule.runOnUiThread(() -> {
+            animatorSet.start();
+            animator.end();
+            assertFalse(animator.isStarted());
+            assertFalse(animatorSet.isStarted());
         });
     }
 

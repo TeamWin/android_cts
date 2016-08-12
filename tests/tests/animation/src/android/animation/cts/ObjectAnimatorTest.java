@@ -16,6 +16,13 @@
 
 package android.animation.cts;
 
+import static android.cts.util.CtsMockitoUtils.within;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ArgbEvaluator;
@@ -23,20 +30,31 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.TypeConverter;
 import android.animation.ValueAnimator;
+import android.app.Instrumentation;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PointF;
-import android.test.ActivityInstrumentationTestCase2;
+import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Property;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Interpolator;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class ObjectAnimatorTest extends
-        ActivityInstrumentationTestCase2<AnimationActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class ObjectAnimatorTest {
     private static final float LINE1_START = -32f;
     private static final float LINE1_END = -2f;
     private static final float LINE1_Y = 0f;
@@ -50,29 +68,33 @@ public class ObjectAnimatorTest extends
     private static final float QUADRATIC_CTRL_PT3_Y = 0f;
     private static final float EPSILON = .001f;
 
+    private Instrumentation mInstrumentation;
     private AnimationActivity mActivity;
     private ObjectAnimator mObjectAnimator;
     private long mDuration = 1000;
 
-    public ObjectAnimatorTest() {
-        super(AnimationActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<AnimationActivity> mActivityRule =
+            new ActivityTestRule<>(AnimationActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        setActivityInitialTouchMode(false);
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mInstrumentation.setInTouchMode(false);
+        mActivity = mActivityRule.getActivity();
         mObjectAnimator = (ObjectAnimator) mActivity.createAnimatorWithDuration(mDuration);
     }
 
+    @Test
     public void testDuration() throws Throwable {
         final long duration = 2000;
-        ObjectAnimator objectAnimatorLocal = (ObjectAnimator)mActivity.createAnimatorWithDuration(
+        ObjectAnimator objectAnimatorLocal = (ObjectAnimator) mActivity.createAnimatorWithDuration(
             duration);
         startAnimation(objectAnimatorLocal);
         assertEquals(duration, objectAnimatorLocal.getDuration());
     }
+
+    @Test
     public void testOfFloat() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -86,13 +108,14 @@ public class ObjectAnimatorTest extends
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
         startAnimation(objAnimator);
         assertTrue(objAnimator != null);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         float x = mActivity.view.newBall.getX();
         float y = mActivity.view.newBall.getY();
         assertTrue( y >= startY);
         assertTrue( y <= endY);
     }
 
+    @Test
     public void testOfFloatBase() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -106,6 +129,7 @@ public class ObjectAnimatorTest extends
         assertEquals(animator.getPropertyName(), objAnimator.getPropertyName());
     }
 
+    @Test
     public void testOfInt() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "backgroundColor";
@@ -118,20 +142,17 @@ public class ObjectAnimatorTest extends
         colorAnimator.setEvaluator(new ArgbEvaluator());
         colorAnimator.setRepeatCount(1);
         colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                colorAnimator.start();
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(colorAnimator::start);
+        mInstrumentation.waitForIdleSync();
         startAnimation(mObjectAnimator, colorAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         Integer i = (Integer) colorAnimator.getAnimatedValue();
         //We are going from less negative value to a more negative value
         assertTrue(i.intValue() <= startColor);
         assertTrue(endColor <= i.intValue());
     }
 
+    @Test
     public void testOfObject() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "backgroundColor";
@@ -144,20 +165,17 @@ public class ObjectAnimatorTest extends
         colorAnimator.setDuration(1000);
         colorAnimator.setRepeatCount(1);
         colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                colorAnimator.start();
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(colorAnimator::start);
+        mInstrumentation.waitForIdleSync();
         startAnimation(mObjectAnimator, colorAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         Integer i = (Integer) colorAnimator.getAnimatedValue();
         //We are going from less negative value to a more negative value
         assertTrue(i.intValue() <= startColor);
         assertTrue(endColor <= i.intValue());
     }
 
+    @Test
     public void testOfPropertyValuesHolder() throws Throwable {
         Object object = mActivity.view.newBall;
         String propertyName = "backgroundColor";
@@ -171,20 +189,17 @@ public class ObjectAnimatorTest extends
         colorAnimator.setDuration(1000);
         colorAnimator.setRepeatCount(1);
         colorAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        mActivity.runOnUiThread(new Runnable() {
-            public void run() {
-                colorAnimator.start();
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(colorAnimator::start);
+        mInstrumentation.waitForIdleSync();
         startAnimation(mObjectAnimator, colorAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         Integer i = (Integer) colorAnimator.getAnimatedValue();
         //We are going from less negative value to a more negative value
         assertTrue(i.intValue() <= startColor);
         assertTrue(endColor <= i.intValue());
     }
 
+    @Test
     public void testOfArgb() throws Throwable {
         Object object = mActivity.view;
         String property = "backgroundColor";
@@ -199,20 +214,13 @@ public class ObjectAnimatorTest extends
         animator.setDuration(mDuration);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                if (animation.getAnimatedFraction() > .05f) {
-                    latch.countDown();
-                }
+        animator.addUpdateListener((ValueAnimator animation) -> {
+            if (animation.getAnimatedFraction() > .05f) {
+                latch.countDown();
             }
         });
 
-        this.runTestOnUiThread(new Runnable(){
-            public void run() {
-                animator.start();
-            }
-        });
+        mActivityRule.runOnUiThread(animator::start);
         boolean isRunning = animator.isRunning();
         assertTrue(isRunning);
 
@@ -230,14 +238,10 @@ public class ObjectAnimatorTest extends
         assertEquals(255, alpha);
         assertEquals(0, green);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                animator.cancel();
-            }
-        });
+        mActivityRule.runOnUiThread(animator::cancel);
     }
 
+    @Test
     public void testGetPropertyName() throws Throwable {
         Object object = mActivity.view.newBall;
         String propertyName = "backgroundColor";
@@ -251,6 +255,7 @@ public class ObjectAnimatorTest extends
         assertEquals(propertyName, actualPropertyName);
     }
 
+    @Test
     public void testSetFloatValues() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -266,12 +271,13 @@ public class ObjectAnimatorTest extends
         objAnimator.setInterpolator(new AccelerateInterpolator());
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
         startAnimation(objAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         float y = mActivity.view.newBall.getY();
         assertTrue( y >= startY);
         assertTrue( y <= endY);
     }
 
+    @Test
     public void testGetTarget() throws Throwable {
         Object object = mActivity.view.newBall;
         String propertyName = "backgroundColor";
@@ -285,6 +291,7 @@ public class ObjectAnimatorTest extends
         assertEquals(object, target);
     }
 
+    @Test
     public void testClone() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -306,6 +313,7 @@ public class ObjectAnimatorTest extends
         assertEquals(interpolator, cloneAnimator.getInterpolator());
     }
 
+    @Test
     public void testOfFloat_Path() throws Throwable {
         // Test for ObjectAnimator.ofFloat(Object, String, String, Path)
         // Create a path that contains two disconnected line segments. Check that the animated
@@ -328,55 +336,43 @@ public class ObjectAnimatorTest extends
             public void setY(float y) {
             }
         };
-        final CountDownLatch endLatch = new CountDownLatch(1);
 
         final ObjectAnimator anim = ObjectAnimator.ofFloat(target, "x", "y", path);
         anim.setDuration(200);
         // Linear interpolator
         anim.setInterpolator(null);
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float fraction = animation.getAnimatedFraction();
-                float x = (Float) animation.getAnimatedValue("x");
-                float y = (Float) animation.getAnimatedValue("y");
+        anim.addUpdateListener((ValueAnimator animation) -> {
+            float fraction = animation.getAnimatedFraction();
+            float x = (Float) animation.getAnimatedValue("x");
+            float y = (Float) animation.getAnimatedValue("y");
 
-                // Check that the point is on the path.
-                if (x <= 0) {
-                    // First line segment is a horizontal line.
-                    assertTrue(x >= LINE1_START);
-                    assertTrue(x <= LINE1_END);
-                    assertEquals(LINE1_Y, y);
+            // Check that the point is on the path.
+            if (x <= 0) {
+                // First line segment is a horizontal line.
+                assertTrue(x >= LINE1_START);
+                assertTrue(x <= LINE1_END);
+                assertEquals(LINE1_Y, y, 0.0f);
 
-                    // Check that the time animation stays on the first segment is proportional to
-                    // the length of the first line segment.
-                    assertTrue(fraction < firstSegEndFraction + delta);
-                } else {
-                    assertTrue(x >= LINE2_START);
-                    assertTrue(x <= LINE2_END);
-                    assertEquals(x, y);
+                // Check that the time animation stays on the first segment is proportional to
+                // the length of the first line segment.
+                assertTrue(fraction < firstSegEndFraction + delta);
+            } else {
+                assertTrue(x >= LINE2_START);
+                assertTrue(x <= LINE2_END);
+                assertEquals(x, y, 0.0f);
 
-                    // Check that the time animation stays on the second segment is proportional to
-                    // the length of the second line segment.
-                    assertTrue(fraction > firstSegEndFraction - delta);
-                }
+                // Check that the time animation stays on the second segment is proportional to
+                // the length of the second line segment.
+                assertTrue(fraction > firstSegEndFraction - delta);
             }
         });
-        anim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                endLatch.countDown();
-            }
-        });
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-            }
-        });
-        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+        final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
+        anim.addListener(listener);
+        mActivityRule.runOnUiThread(anim::start);
+        verify(listener, within(400)).onAnimationEnd(anim);
     }
 
+    @Test
     public void testOfInt_Path() throws Throwable {
         // Test for ObjectAnimator.ofInt(Object, String, String, Path)
         // Create a path that contains two disconnected line segments. Check that the animated
@@ -400,33 +396,30 @@ public class ObjectAnimatorTest extends
 
         // Linear interpolator
         anim.setInterpolator(null);
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float fraction = animation.getAnimatedFraction();
-                int x = (Integer) animation.getAnimatedValue("x");
-                int y = (Integer) animation.getAnimatedValue("y");
+        anim.addUpdateListener((ValueAnimator animation) -> {
+            float fraction = animation.getAnimatedFraction();
+            int x = (Integer) animation.getAnimatedValue("x");
+            int y = (Integer) animation.getAnimatedValue("y");
 
-                // Check that the point is on the path.
-                if (x <= 0) {
-                    // Check that the time animation stays on the first segment is proportional to
-                    // the length of the first line segment.
-                    assertTrue(x >= LINE1_START);
-                    assertTrue(x <= LINE1_END);
-                    assertEquals(x, -y);
+            // Check that the point is on the path.
+            if (x <= 0) {
+                // Check that the time animation stays on the first segment is proportional to
+                // the length of the first line segment.
+                assertTrue(x >= LINE1_START);
+                assertTrue(x <= LINE1_END);
+                assertEquals(x, -y);
 
-                    // First line segment is 3 times as long as the second line segment, so the
-                    // 3/4 of the animation duration will be spent on the first line segment.
-                    assertTrue(fraction <= 0.75f);
-                } else {
-                    // Check that the time animation stays on the second segment is proportional to
-                    // the length of the second line segment.
-                    assertTrue(x >= LINE2_START);
-                    assertTrue(x <= LINE2_END);
-                    assertEquals(x, y);
+                // First line segment is 3 times as long as the second line segment, so the
+                // 3/4 of the animation duration will be spent on the first line segment.
+                assertTrue(fraction <= 0.75f);
+            } else {
+                // Check that the time animation stays on the second segment is proportional to
+                // the length of the second line segment.
+                assertTrue(x >= LINE2_START);
+                assertTrue(x <= LINE2_END);
+                assertEquals(x, y);
 
-                    assertTrue(fraction >= 0.75f);
-                }
+                assertTrue(fraction >= 0.75f);
             }
         });
         anim.addListener(new AnimatorListenerAdapter() {
@@ -435,16 +428,11 @@ public class ObjectAnimatorTest extends
                 endLatch.countDown();
             }
         });
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-            }
-        });
+        mActivityRule.runOnUiThread(anim::start);
         assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
-
     }
 
+    @Test
     public void testOfMultiFloat_Path() throws Throwable {
         // Test for ObjectAnimator.ofMultiFloat(Object, String, Path);
         // Create a quadratic bezier curve that are symmetric about the vertical line (x = 50).
@@ -459,18 +447,10 @@ public class ObjectAnimatorTest extends
             }
         };
 
-        final CountDownLatch endLatch = new CountDownLatch(1);
         final ObjectAnimator anim = ObjectAnimator.ofMultiFloat(target, "position", path);
         // Linear interpolator
         anim.setInterpolator(null);
         anim.setDuration(200);
-
-        anim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                endLatch.countDown();
-            }
-        });
 
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             float lastFraction = 0;
@@ -505,15 +485,13 @@ public class ObjectAnimatorTest extends
                 lastFraction = fraction;
             }
         });
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-            }
-        });
-        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+        final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
+        anim.addListener(listener);
+        mActivityRule.runOnUiThread(anim::start);
+        verify(listener, within(400)).onAnimationEnd(anim);
     }
 
+    @Test
     public void testOfMultiFloat() throws Throwable {
         // Test for ObjectAnimator.ofMultiFloat(Object, String, float[][]);
         final float[][] data = new float[10][];
@@ -539,30 +517,23 @@ public class ObjectAnimatorTest extends
             }
         });
 
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float fraction = animation.getAnimatedFraction();
-                float[] values = (float[]) animation.getAnimatedValue();
-                assertEquals(3, values.length);
+        anim.addUpdateListener((ValueAnimator animation) -> {
+            float fraction = animation.getAnimatedFraction();
+            float[] values = (float[]) animation.getAnimatedValue();
+            assertEquals(3, values.length);
 
-                float expectedX = fraction * (data.length - 1);
+            float expectedX = fraction * (data.length - 1);
 
-                assertEquals(expectedX, values[0], EPSILON);
-                assertEquals(expectedX * 2, values[1], EPSILON);
-                assertEquals(0f, values[2]);
-            }
+            assertEquals(expectedX, values[0], EPSILON);
+            assertEquals(expectedX * 2, values[1], EPSILON);
+            assertEquals(0f, values[2], 0.0f);
         });
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-            }
-        });
+        mActivityRule.runOnUiThread(anim::start);
         assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
     }
 
+    @Test
     public void testOfMultiInt_Path() throws Throwable {
         // Test for ObjectAnimator.ofMultiInt(Object, String, Path);
         // Create a quadratic bezier curve that are symmetric about the vertical line (x = 50).
@@ -577,18 +548,10 @@ public class ObjectAnimatorTest extends
             }
         };
 
-        final CountDownLatch endLatch = new CountDownLatch(1);
         final ObjectAnimator anim = ObjectAnimator.ofMultiInt(target, "position", path);
         // Linear interpolator
         anim.setInterpolator(null);
         anim.setDuration(200);
-
-        anim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                endLatch.countDown();
-            }
-        });
 
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             float lastFraction = 0;
@@ -623,15 +586,13 @@ public class ObjectAnimatorTest extends
                 lastFraction = fraction;
             }
         });
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-            }
-        });
-        assertTrue(endLatch.await(400, TimeUnit.MILLISECONDS));
+        final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
+        anim.addListener(listener);
+        mActivityRule.runOnUiThread(anim::start);
+        verify(listener, within(400)).onAnimationEnd(anim);
     }
 
+    @Test
     public void testOfMultiInt() throws Throwable {
         // Test for ObjectAnimator.ofMultiFloat(Object, String, int[][]);
         final int[][] data = new int[10][];
@@ -657,32 +618,25 @@ public class ObjectAnimatorTest extends
             }
         });
 
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float fraction = animation.getAnimatedFraction();
-                int[] values = (int[]) animation.getAnimatedValue();
-                assertEquals(3, values.length);
+        anim.addUpdateListener((ValueAnimator animation) -> {
+            float fraction = animation.getAnimatedFraction();
+            int[] values = (int[]) animation.getAnimatedValue();
+            assertEquals(3, values.length);
 
-                int expectedX = Math.round(fraction * (data.length - 1));
-                int expectedY = Math.round(fraction * (data.length - 1) * 2);
+            int expectedX = Math.round(fraction * (data.length - 1));
+            int expectedY = Math.round(fraction * (data.length - 1) * 2);
 
-                // Allow a delta of 1 for rounding errors.
-                assertEquals(expectedX, values[0], 1);
-                assertEquals(expectedY, values[1], 1);
-                assertEquals(0, values[2]);
-            }
+            // Allow a delta of 1 for rounding errors.
+            assertEquals(expectedX, values[0], 1);
+            assertEquals(expectedY, values[1], 1);
+            assertEquals(0, values[2]);
         });
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-            }
-        });
+        mActivityRule.runOnUiThread(anim::start);
         assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
     }
 
+    @Test
     public void testOfObject_Converter() throws Throwable {
         // Test for ObjectAnimator.ofObject(Object, String, TypeConverter<T, V>, Path)
         // Create a path that contains two disconnected line segments. Check that the animated
@@ -739,7 +693,7 @@ public class ObjectAnimatorTest extends
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float fraction = anim1.getAnimatedFraction();
-                assertEquals(fraction, anim2.getAnimatedFraction());
+                assertEquals(fraction, anim2.getAnimatedFraction(), 0.0f);
                 float distance = (Float) anim1.getAnimatedValue();
                 PointF position = (PointF) anim2.getAnimatedValue();
 
@@ -761,18 +715,16 @@ public class ObjectAnimatorTest extends
             }
         });
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim1.start();
-                anim2.start();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            anim1.start();
+            anim2.start();
         });
 
         // Wait until both of the animations finish
         assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
     }
 
+    @Test
     public void testIsStarted() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -785,11 +737,12 @@ public class ObjectAnimatorTest extends
         objAnimator.setInterpolator(interpolator);
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
         startAnimation(objAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         assertTrue(objAnimator.isStarted());
-        Thread.sleep(100);
+        SystemClock.sleep(100);
     }
 
+    @Test
     public void testSetStartEndValues() throws Throwable {
         final float startValue = 100, endValue = 500;
         final AnimTarget target = new AnimTarget();
@@ -798,15 +751,12 @@ public class ObjectAnimatorTest extends
         anim1.setupStartValues();
         target.setTestValue(endValue);
         anim1.setupEndValues();
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim1.start();
-                assertEquals(startValue, (Float) anim1.getAnimatedValue());
-                anim1.setCurrentFraction(1);
-                assertEquals(endValue, (Float) anim1.getAnimatedValue());
-                anim1.cancel();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            anim1.start();
+            assertEquals(startValue, (float) anim1.getAnimatedValue(), 0.0f);
+            anim1.setCurrentFraction(1);
+            assertEquals(endValue, (float) anim1.getAnimatedValue(), 0.0f);
+            anim1.cancel();
         });
 
         final Property property = AnimTarget.TEST_VALUE;
@@ -817,15 +767,12 @@ public class ObjectAnimatorTest extends
         target.setTestValue(endValue);
         final float endValueExpected = (Float) property.get(target);
         anim2.setupEndValues();
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim2.start();
-                assertEquals(startValueExpected, (Float) anim2.getAnimatedValue());
-                anim2.setCurrentFraction(1);
-                assertEquals(endValueExpected, (Float) anim2.getAnimatedValue());
-                anim2.cancel();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            anim2.start();
+            assertEquals(startValueExpected, (float) anim2.getAnimatedValue(), 0.0f);
+            anim2.setCurrentFraction(1);
+            assertEquals(endValueExpected, (float) anim2.getAnimatedValue(), 0.0f);
+            anim2.cancel();
         });
 
         // This is a test that ensures that the values set on a Property-based animator
@@ -839,55 +786,47 @@ public class ObjectAnimatorTest extends
         target.setTestValue(endValue);
         final float endValueExpected3 = (Float) doubler.get(target);
         anim3.setupEndValues();
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim3.start();
-                assertEquals(startValueExpected3, (Float) anim3.getAnimatedValue());
-                anim3.setCurrentFraction(1);
-                assertEquals(endValueExpected3, (Float) anim3.getAnimatedValue());
-                anim3.cancel();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            anim3.start();
+            assertEquals(startValueExpected3, (float) anim3.getAnimatedValue(), 0.0f);
+            anim3.setCurrentFraction(1);
+            assertEquals(endValueExpected3, (float) anim3.getAnimatedValue(), 0.0f);
+            anim3.cancel();
         });
     }
 
+    @Test
     public void testCachedValues() throws Throwable {
         final AnimTarget target = new AnimTarget();
         final ObjectAnimator anim = ObjectAnimator.ofFloat(target, "testValue", 100);
         anim.setDuration(200);
         final CountDownLatch twoFramesLatch = new CountDownLatch(2);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-                final View decor = getActivity().getWindow().getDecorView();
-                decor.postOnAnimation(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (twoFramesLatch.getCount() > 0) {
-                            twoFramesLatch.countDown();
-                            decor.postOnAnimation(this);
-                        }
+        mActivityRule.runOnUiThread(() -> {
+            anim.start();
+            final View decor = mActivity.getWindow().getDecorView();
+            decor.postOnAnimation(new Runnable() {
+                @Override
+                public void run() {
+                    if (twoFramesLatch.getCount() > 0) {
+                        twoFramesLatch.countDown();
+                        decor.postOnAnimation(this);
                     }
-                });
-            }
+                }
+            });
         });
 
         assertTrue("Animation didn't start in a reasonable time",
                 twoFramesLatch.await(100, TimeUnit.MILLISECONDS));
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                assertTrue("Start value should readjust to current position",
-                        target.getTestValue() != 0);
-                anim.cancel();
-                anim.setupStartValues();
-                anim.start();
-                assertTrue("Start value should readjust to current position",
-                        target.getTestValue() != 0);
-                anim.cancel();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue("Start value should readjust to current position",
+                    target.getTestValue() != 0);
+            anim.cancel();
+            anim.setupStartValues();
+            anim.start();
+            assertTrue("Start value should readjust to current position",
+                    target.getTestValue() != 0);
+            anim.cancel();
         });
     }
 
@@ -931,20 +870,11 @@ public class ObjectAnimatorTest extends
     }
 
     private void startAnimation(final ObjectAnimator mObjectAnimator) throws Throwable {
-        Thread mAnimationRunnable = new Thread() {
-            public void run() {
-                mActivity.startAnimation(mObjectAnimator);
-            }
-        };
-        this.runTestOnUiThread(mAnimationRunnable);
+        mActivityRule.runOnUiThread(() -> mActivity.startAnimation(mObjectAnimator));
     }
+
     private void startAnimation(final ObjectAnimator mObjectAnimator, final
             ObjectAnimator colorAnimator) throws Throwable {
-        Thread mAnimationRunnable = new Thread() {
-            public void run() {
-                mActivity.startAnimation(mObjectAnimator, colorAnimator);
-            }
-        };
-        this.runTestOnUiThread(mAnimationRunnable);
+        mActivityRule.runOnUiThread(() -> mActivity.startAnimation(mObjectAnimator, colorAnimator));
     }
 }

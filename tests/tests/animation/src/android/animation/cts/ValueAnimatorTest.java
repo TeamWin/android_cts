@@ -15,43 +15,66 @@
  */
 package android.animation.cts;
 
+import static android.cts.util.CtsMockitoUtils.within;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.graphics.Color;
-import android.test.ActivityInstrumentationTestCase2;
+import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.LargeTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class ValueAnimatorTest extends
-        ActivityInstrumentationTestCase2<AnimationActivity> {
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class ValueAnimatorTest {
+    private static final float EPSILON = 0.0001f;
+
     private AnimationActivity mActivity;
     private ValueAnimator mValueAnimator;
-    private long mDuration = 2000;
+    private final long mDuration = 2000;
 
-    public ValueAnimatorTest() {
-        super(AnimationActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<AnimationActivity> mActivityRule =
+            new ActivityTestRule<>(AnimationActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        setActivityInitialTouchMode(false);
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
+        mActivity = mActivityRule.getActivity();
         mValueAnimator = mActivity.createAnimatorWithDuration(mDuration);
     }
 
+    @Test
     public void testDuration() throws Throwable {
-        final long duration = 2000;
-        ValueAnimator valueAnimatorLocal = mActivity.createAnimatorWithDuration(duration);
+        ValueAnimator valueAnimatorLocal = mActivity.createAnimatorWithDuration(mDuration);
         startAnimation(valueAnimatorLocal);
-        assertEquals(duration, valueAnimatorLocal.getDuration());
+        assertEquals(mDuration, valueAnimatorLocal.getDuration());
     }
 
+    @Test
     public void testIsRunning() throws Throwable {
         assertFalse(mValueAnimator.isRunning());
         startAnimation(mValueAnimator);
@@ -59,6 +82,7 @@ public class ValueAnimatorTest extends
         assertTrue(valueAnimatorReturned.isRunning());
     }
 
+    @Test
     public void testIsStarted() throws Throwable {
         assertFalse(mValueAnimator.isRunning());
         assertFalse(mValueAnimator.isStarted());
@@ -69,6 +93,7 @@ public class ValueAnimatorTest extends
         assertTrue(mValueAnimator.isStarted());
     }
 
+    @Test
     public void testRepeatMode() throws Throwable {
         ValueAnimator mValueAnimator = mActivity.createAnimatorWithRepeatMode(
             ValueAnimator.RESTART);
@@ -76,6 +101,7 @@ public class ValueAnimatorTest extends
         assertEquals(ValueAnimator.RESTART, mValueAnimator.getRepeatMode());
     }
 
+    @Test
     public void testRepeatCount() throws Throwable {
         int repeatCount = 2;
         ValueAnimator mValueAnimator = mActivity.createAnimatorWithRepeatCount(repeatCount);
@@ -83,203 +109,165 @@ public class ValueAnimatorTest extends
         assertEquals(repeatCount, mValueAnimator.getRepeatCount());
     }
 
+    @Test
     public void testStartDelay() {
         long startDelay = 1000;
         mValueAnimator.setStartDelay(startDelay);
         assertEquals(startDelay, mValueAnimator.getStartDelay());
     }
 
+    @Test
     public void testGetCurrentPlayTime() throws Throwable {
         startAnimation(mValueAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         long currentPlayTime = mValueAnimator.getCurrentPlayTime();
         assertTrue(currentPlayTime  >  0);
     }
 
-    /**
-     * Test for equality within some epsilon. This accounts for minor differences
-     * due to floating-point accuracy.
-     */
-    private void assertRoughlyEqual(float expected, float actual) {
-        final float epsilon = .001f;
-        assertTrue(actual > (expected - epsilon) && actual < (expected + epsilon));
-    }
-
+    @Test
     public void testSetCurrentPlayTime() throws Throwable {
         final ValueAnimator anim = ValueAnimator.ofFloat(0, 100).setDuration(mDuration);
         final ValueAnimator delayedAnim = ValueAnimator.ofFloat(0, 100).setDuration(mDuration);
         delayedAnim.setStartDelay(mDuration);
         final long proposedCurrentPlayTime = mDuration / 2;
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.setCurrentPlayTime(mDuration / 2);
-                long currentPlayTime = anim.getCurrentPlayTime();
-                float currentFraction = anim.getAnimatedFraction();
-                float currentValue = (Float) anim.getAnimatedValue();
-                assertEquals(proposedCurrentPlayTime, currentPlayTime);
-                assertRoughlyEqual(.5f, currentFraction);
-                assertRoughlyEqual(50, currentValue);
+        mActivityRule.runOnUiThread(() -> {
+            anim.setCurrentPlayTime(mDuration / 2);
+            long currentPlayTime = anim.getCurrentPlayTime();
+            float currentFraction = anim.getAnimatedFraction();
+            float currentValue = (Float) anim.getAnimatedValue();
+            assertEquals(proposedCurrentPlayTime, currentPlayTime);
+            assertEquals(.5f, currentFraction, EPSILON);
+            assertEquals(50, currentValue, EPSILON);
 
-                delayedAnim.setCurrentPlayTime(mDuration / 2);
-                currentPlayTime = delayedAnim.getCurrentPlayTime();
-                currentFraction = delayedAnim.getAnimatedFraction();
-                currentValue = (Float) delayedAnim.getAnimatedValue();
-                assertEquals(proposedCurrentPlayTime, currentPlayTime);
-                assertRoughlyEqual(.5f, currentFraction);
-                assertRoughlyEqual(50, currentValue);
-            }
+            delayedAnim.setCurrentPlayTime(mDuration / 2);
+            currentPlayTime = delayedAnim.getCurrentPlayTime();
+            currentFraction = delayedAnim.getAnimatedFraction();
+            currentValue = (Float) delayedAnim.getAnimatedValue();
+            assertEquals(proposedCurrentPlayTime, currentPlayTime);
+            assertEquals(.5f, currentFraction, EPSILON);
+            assertEquals(50, currentValue, EPSILON);
         });
         // Now make sure that it's still true a little later, to test that we're
         // getting a result based on the seek time, not the wall clock time
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         long currentPlayTime = anim.getCurrentPlayTime();
         float currentFraction = anim.getAnimatedFraction();
         float currentValue = (Float) anim.getAnimatedValue();
         assertEquals(proposedCurrentPlayTime, currentPlayTime);
-        assertRoughlyEqual(.5f, currentFraction);
-        assertRoughlyEqual(50, currentValue);
+        assertEquals(.5f, currentFraction, EPSILON);
+        assertEquals(50, currentValue, EPSILON);
 
         currentPlayTime = delayedAnim.getCurrentPlayTime();
         currentFraction = delayedAnim.getAnimatedFraction();
         currentValue = (Float) delayedAnim.getAnimatedValue();
         assertEquals(proposedCurrentPlayTime, currentPlayTime);
-        assertRoughlyEqual(.5f, currentFraction);
-        assertRoughlyEqual(50, currentValue);
+        assertEquals(.5f, currentFraction, EPSILON);
+        assertEquals(50, currentValue, EPSILON);
 
         // Finally, start() the delayed animation and check that the play time was
         // not affected by playing during the delay
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                delayedAnim.start();
-                long currentPlayTime = delayedAnim.getCurrentPlayTime();
-                float currentFraction = delayedAnim.getAnimatedFraction();
-                float currentValue = (Float) delayedAnim.getAnimatedValue();
-                assertEquals(proposedCurrentPlayTime, currentPlayTime);
-                assertRoughlyEqual(.5f, currentFraction);
-                assertRoughlyEqual(50, currentValue);
-            }
+        mActivityRule.runOnUiThread(() -> {
+            delayedAnim.start();
+            assertEquals(proposedCurrentPlayTime, delayedAnim.getCurrentPlayTime());
+            assertEquals(.5f, delayedAnim.getAnimatedFraction(), EPSILON);
+            assertEquals(50, (float) delayedAnim.getAnimatedValue(), EPSILON);
         });
 
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         currentPlayTime = delayedAnim.getCurrentPlayTime();
         currentFraction = delayedAnim.getAnimatedFraction();
         currentValue = (Float) delayedAnim.getAnimatedValue();
         assertEquals(proposedCurrentPlayTime, currentPlayTime);
-        assertRoughlyEqual(.5f, currentFraction);
-        assertRoughlyEqual(50, currentValue);
+        assertEquals(.5f, currentFraction, EPSILON);
+        assertEquals(50, currentValue, EPSILON);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                delayedAnim.cancel();
-            }
-        });
+        mActivityRule.runOnUiThread(delayedAnim::cancel);
     }
 
+    @Test
     public void testSetCurrentPlayTimeAfterStart() throws Throwable {
         // This test sets current play time right after start() is called on a non-delayed animation
         final long duration = 100;
         final float seekFraction = 0.2f;
         final CountDownLatch frameUpdateLatch = new CountDownLatch(1);
-        final CountDownLatch endLatch = new CountDownLatch(1);
 
         final ValueAnimator anim  = ValueAnimator.ofFloat(0, 1).setDuration(duration);
         anim.setInterpolator(null);
-        anim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                endLatch.countDown();
-            }
-        });
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.start();
-                anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    float fractionOnFirstFrame = -1f;
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator animation) {
-                        if (fractionOnFirstFrame < 0) {
-                            // First frame:
-                            fractionOnFirstFrame = animation.getAnimatedFraction();
-                            assertRoughlyEqual(seekFraction, fractionOnFirstFrame);
-                            frameUpdateLatch.countDown();
-                        } else {
-                            assertTrue(animation.getAnimatedFraction() >= fractionOnFirstFrame);
-                        }
+        final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
+        anim.addListener(listener);
+        mActivityRule.runOnUiThread(() -> {
+            anim.start();
+            anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                float fractionOnFirstFrame = -1f;
+
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    if (fractionOnFirstFrame < 0) {
+                        // First frame:
+                        fractionOnFirstFrame = animation.getAnimatedFraction();
+                        assertEquals(seekFraction, fractionOnFirstFrame, EPSILON);
+                        frameUpdateLatch.countDown();
+                    } else {
+                        assertTrue(animation.getAnimatedFraction() >= fractionOnFirstFrame);
                     }
-                });
-                long currentPlayTime = (long) (seekFraction * (float) duration);
-                anim.setCurrentPlayTime(currentPlayTime);
-            }
+                }
+            });
+            long currentPlayTime = (long) (seekFraction * (float) duration);
+            anim.setCurrentPlayTime(currentPlayTime);
         });
         assertTrue(frameUpdateLatch.await(100, TimeUnit.MILLISECONDS));
-        assertTrue(endLatch.await(200, TimeUnit.MILLISECONDS));
+        verify(listener, within(200)).onAnimationEnd(anim);
     }
 
+    @Test
     public void testSetCurrentFraction() throws Throwable {
         final ValueAnimator anim = ValueAnimator.ofFloat(0, 100).setDuration(mDuration);
         final long proposedCurrentPlayTime = mDuration / 2;
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                anim.setCurrentFraction(.5f);
-                long currentPlayTime = anim.getCurrentPlayTime();
-                float currentFraction = anim.getAnimatedFraction();
-                float currentValue = (Float) anim.getAnimatedValue();
-                assertEquals(proposedCurrentPlayTime, currentPlayTime);
-                assertRoughlyEqual(.5f, currentFraction);
-                assertRoughlyEqual(50, currentValue);
-            }
+        mActivityRule.runOnUiThread(() -> {
+            anim.setCurrentFraction(.5f);
+            long currentPlayTime = anim.getCurrentPlayTime();
+            float currentFraction = anim.getAnimatedFraction();
+            float currentValue = (Float) anim.getAnimatedValue();
+            assertEquals(proposedCurrentPlayTime, currentPlayTime);
+            assertEquals(.5f, currentFraction, EPSILON);
+            assertEquals(50, currentValue, EPSILON);
         });
         // Now make sure that it's still true a little later, to test that we're
         // getting a result based on the seek time, not the wall clock time
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         long currentPlayTime = anim.getCurrentPlayTime();
         float currentFraction = anim.getAnimatedFraction();
         float currentValue = (Float) anim.getAnimatedValue();
         assertEquals(proposedCurrentPlayTime, currentPlayTime);
-        assertRoughlyEqual(.5f, currentFraction);
-        assertRoughlyEqual(50, currentValue);
+        assertEquals(.5f, currentFraction, EPSILON);
+        assertEquals(50, currentValue, EPSILON);
     }
 
-    public void testReverseRightAfterStart() throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Reverse() right after start() should trigger immediate end() at fraction 0.
-                final ValueAnimator anim = ValueAnimator.ofFloat(0, 100).setDuration(mDuration);
-                anim.start();
-                assertTrue(anim.isStarted());
-                anim.reverse();
-                assertFalse(anim.isStarted());
-                assertEquals(0f, anim.getAnimatedFraction());
-            }
-        });
+    @UiThreadTest
+    @Test
+    public void testReverseRightAfterStart() {
+        // Reverse() right after start() should trigger immediate end() at fraction 0.
+        final ValueAnimator anim = ValueAnimator.ofFloat(0, 100).setDuration(mDuration);
+        anim.start();
+        assertTrue(anim.isStarted());
+        anim.reverse();
+        assertFalse(anim.isStarted());
+        assertEquals(0f, anim.getAnimatedFraction(), 0.0f);
     }
 
+    @Test
     public void testGetFrameDelay() throws Throwable {
         final long frameDelay = 10;
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mValueAnimator.setFrameDelay(frameDelay);
-            }
-        });
+        mActivityRule.runOnUiThread(() -> mValueAnimator.setFrameDelay(frameDelay));
         startAnimation(mValueAnimator);
-        Thread.sleep(100);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                long actualFrameDelay = mValueAnimator.getFrameDelay();
-                assertEquals(frameDelay, actualFrameDelay);
-            }
+        SystemClock.sleep(100);
+        mActivityRule.runOnUiThread(() -> {
+            long actualFrameDelay = mValueAnimator.getFrameDelay();
+            assertEquals(frameDelay, actualFrameDelay);
         });
     }
 
+    @Test
     public void testSetInterpolator() throws Throwable {
         AccelerateInterpolator interpolator = new AccelerateInterpolator();
         ValueAnimator mValueAnimator = mActivity.createAnimatorWithInterpolator(interpolator);
@@ -287,13 +275,15 @@ public class ValueAnimatorTest extends
         assertTrue(interpolator.equals(mValueAnimator.getInterpolator()));
     }
 
+    @Test
     public void testCancel() throws Throwable {
         startAnimation(mValueAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         cancelAnimation(mValueAnimator);
         assertFalse(mValueAnimator.isRunning());
     }
 
+    @Test
     public void testEnd() throws Throwable {
         Object object = mActivity.view.newBall;
         String property = "y";
@@ -305,12 +295,13 @@ public class ValueAnimatorTest extends
         objAnimator.setInterpolator(new AccelerateInterpolator());
         objAnimator.setRepeatMode(ValueAnimator.REVERSE);
         startAnimation(objAnimator);
-        Thread.sleep(100);
+        SystemClock.sleep(100);
         endAnimation(objAnimator);
         float y = mActivity.view.newBall.getY();
-        assertEquals(y, endY);
+        assertEquals(y, endY, 0.0f);
     }
 
+    @Test
     public void testGetAnimatedFraction() throws Throwable {
         ValueAnimator objAnimator = getAnimator();
         startAnimation(objAnimator);
@@ -323,6 +314,7 @@ public class ValueAnimatorTest extends
         }
     }
 
+    @Test
     public void testGetAnimatedValue() throws Throwable {
         ValueAnimator objAnimator = getAnimator();
         startAnimation(objAnimator);
@@ -333,6 +325,8 @@ public class ValueAnimatorTest extends
             assertTrue(errorMessage(animatedValues), animatedValues[j + 1] >= animatedValues[j]);
         }
     }
+
+    @Test
     public void testGetAnimatedValue_PropertyName() throws Throwable {
         String property = "y";
 
@@ -346,6 +340,7 @@ public class ValueAnimatorTest extends
         }
     }
 
+    @Test
     public void testOfFloat() throws Throwable {
         float start = 0.0f;
         float end = 1.0f;
@@ -356,12 +351,8 @@ public class ValueAnimatorTest extends
         valueAnimatorLocal.setInterpolator(new AccelerateInterpolator());
         valueAnimatorLocal.setRepeatMode(ValueAnimator.RESTART);
 
-        this.runTestOnUiThread(new Runnable(){
-            public void run() {
-                valueAnimatorLocal.start();
-            }
-        });
-        Thread.sleep(100);
+        mActivityRule.runOnUiThread(valueAnimatorLocal::start);
+        SystemClock.sleep(100);
         boolean isRunning = valueAnimatorLocal.isRunning();
         assertTrue(isRunning);
 
@@ -370,6 +361,7 @@ public class ValueAnimatorTest extends
         assertTrue(animatedValue <= end);
     }
 
+    @Test
     public void testOfInt() throws Throwable {
         int start = 0;
         int end = 10;
@@ -380,12 +372,8 @@ public class ValueAnimatorTest extends
         valueAnimatorLocal.setInterpolator(new AccelerateInterpolator());
         valueAnimatorLocal.setRepeatMode(ValueAnimator.RESTART);
 
-        this.runTestOnUiThread(new Runnable(){
-            public void run() {
-                valueAnimatorLocal.start();
-            }
-        });
-        Thread.sleep(100);
+        mActivityRule.runOnUiThread(valueAnimatorLocal::start);
+        SystemClock.sleep(100);
         boolean isRunning = valueAnimatorLocal.isRunning();
         assertTrue(isRunning);
 
@@ -394,6 +382,7 @@ public class ValueAnimatorTest extends
         assertTrue(animatedValue <= end);
     }
 
+    @Test
     public void testOfArgb() throws Throwable {
         int start = 0xffff0000;
         int end = 0xff0000ff;
@@ -406,20 +395,13 @@ public class ValueAnimatorTest extends
         valueAnimatorLocal.setDuration(mDuration);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        valueAnimatorLocal.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                if (animation.getAnimatedFraction() > .05f) {
-                    latch.countDown();
-                }
+        valueAnimatorLocal.addUpdateListener((ValueAnimator animation) -> {
+            if (animation.getAnimatedFraction() > .05f) {
+                latch.countDown();
             }
         });
 
-        this.runTestOnUiThread(new Runnable(){
-            public void run() {
-                valueAnimatorLocal.start();
-            }
-        });
+        mActivityRule.runOnUiThread(valueAnimatorLocal::start);
         boolean isRunning = valueAnimatorLocal.isRunning();
         assertTrue(isRunning);
 
@@ -437,39 +419,26 @@ public class ValueAnimatorTest extends
         assertEquals(255, alpha);
         assertEquals(0, green);
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                valueAnimatorLocal.cancel();
-            }
-        });
+        mActivityRule.runOnUiThread(valueAnimatorLocal::cancel);
     }
 
+    @Test
     public void testNoDelayOnSeekAnimation() throws Throwable {
         ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
         animator.setInterpolator(new LinearInterpolator());
         animator.setStartDelay(1000);
         animator.setDuration(300);
         animator.setCurrentPlayTime(150);
-        EventWatcher watcher = new EventWatcher();
+        final Animator.AnimatorListener watcher = mock(Animator.AnimatorListener.class);
         animator.addListener(watcher);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                animator.start();
-            }
-        });
-        assertTrue(watcher.start.await(0, TimeUnit.MILLISECONDS));
+        mActivityRule.runOnUiThread(animator::start);
+        verify(watcher, times(1)).onAnimationStart(animator);
         assertTrue(((Float)animator.getAnimatedValue()) >= 0.5f);
         assertTrue(animator.getAnimatedFraction() >= 0.5f);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                animator.cancel();
-            }
-        });
+        mActivityRule.runOnUiThread(animator::cancel);
     }
 
+    @Test
     public void testNotifiesAfterEnd() throws Throwable {
         final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
         animator.addListener(new AnimatorListenerAdapter() {
@@ -486,12 +455,9 @@ public class ValueAnimatorTest extends
                 super.onAnimationEnd(animation);
             }
         });
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                animator.start();
-                animator.end();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            animator.start();
+            animator.end();
         });
     }
 
@@ -512,7 +478,7 @@ public class ValueAnimatorTest extends
             long sleepTime, String property) throws InterruptedException {
         float[] values = new float[n];
         for(int i = 0; i < n; i++){
-            Thread.sleep(sleepTime);
+            SystemClock.sleep(sleepTime);
             float value = 0.0f;
             if(methodName.equals("getAnimatedFraction()")) {
                 value = animator.getAnimatedFraction();
@@ -527,27 +493,15 @@ public class ValueAnimatorTest extends
     }
 
     private void startAnimation(final ValueAnimator animator) throws Throwable {
-        this.runTestOnUiThread(new Runnable() {
-            public void run() {
-                mActivity.startAnimation(animator);
-            }
-        });
+        mActivityRule.runOnUiThread(() -> mActivity.startAnimation(animator));
     }
 
     private void endAnimation(final ValueAnimator animator) throws Throwable {
-        this.runTestOnUiThread(new Runnable() {
-            public void run() {
-                animator.end();
-            }
-        });
+        mActivityRule.runOnUiThread(animator::end);
     }
 
     private void cancelAnimation(final ValueAnimator animator) throws Throwable {
-        this.runTestOnUiThread(new Runnable() {
-            public void run() {
-                animator.cancel();
-            }
-        });
+        mActivityRule.runOnUiThread(animator::cancel);
     }
 
     private String errorMessage(float[] values) {
@@ -556,28 +510,5 @@ public class ValueAnimatorTest extends
             message.append(values[i]).append(" ");
         }
         return message.toString();
-    }
-
-    class EventWatcher implements Animator.AnimatorListener {
-        public CountDownLatch start = new CountDownLatch(1);
-        public CountDownLatch end = new CountDownLatch(1);
-        public CountDownLatch cancel = new CountDownLatch(1);
-        public CountDownLatch repeat = new CountDownLatch(1);
-
-        public void onAnimationCancel(Animator animation) {
-            cancel.countDown();
-        }
-
-        public void onAnimationEnd(Animator animation) {
-            end.countDown();
-        }
-
-        public void onAnimationRepeat(Animator animation) {
-            repeat.countDown();
-        }
-
-        public void onAnimationStart(Animator animation) {
-            start.countDown();
-        }
     }
 }
