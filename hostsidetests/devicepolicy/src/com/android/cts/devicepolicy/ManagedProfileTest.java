@@ -697,6 +697,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mParentUserId));
     }
 
+    public void testRingtoneSync() throws Exception {
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".RingtoneSyncTest",
+                "testRingtoneSync", mProfileUserId));
+    }
+
     public void testTrustAgentInfo() throws Exception {
         if (!mHasFeature) {
             return;
