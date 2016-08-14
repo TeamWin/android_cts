@@ -23,11 +23,11 @@ import android.os.Handler;
 import android.widget.TextView;
 
 public class ViewGroupCtsActivity extends Activity {
-
     public static final String ACTION_INVALIDATE_CHILD = "invalidateChild";
 
     private final Handler mHandler = new Handler();
     private static CTSResult sResult;
+
     public static void setResult(CTSResult result) {
         sResult = result;
     }
@@ -36,7 +36,7 @@ public class ViewGroupCtsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(android.view.cts.R.layout.viewgrouptest_stub);
-        TextView textView = (TextView)findViewById(android.view.cts.R.id.viewgrouptest_stub);
+        TextView textView = (TextView) findViewById(android.view.cts.R.id.viewgrouptest_stub);
         textView.setText("test");
     }
 
@@ -46,18 +46,15 @@ public class ViewGroupCtsActivity extends Activity {
 
         String action = getIntent().getAction();
         if (action.equals(ACTION_INVALIDATE_CHILD)) {
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    MockLinearLayout mll =
-                        (MockLinearLayout) findViewById(android.view.cts.R.id.
-                                                                        mocklinearlayout);
-                    if (!mll.mIsInvalidateChildInParentCalled) {
-                        fail();
-                        return;
-                    }
-                    sResult.setResult(CTSResult.RESULT_OK);
-                    finish();
+            mHandler.postDelayed(() -> {
+                MockLinearLayout mll =
+                        (MockLinearLayout) findViewById(R.id.mocklinearlayout);
+                if (!mll.mIsInvalidateChildInParentCalled) {
+                    fail();
+                    return;
                 }
+                sResult.setResult(CTSResult.RESULT_OK);
+                finish();
             }, 2000);
         }
     }
