@@ -439,36 +439,6 @@ public class AnimatorSetTest {
     }
 
     @Test
-    public void testSetSynchronized() throws Throwable {
-        final TargetObj obj1 = new TargetObj();
-        final TargetObj obj2 = new TargetObj();
-        ObjectAnimator anim1 = ObjectAnimator.ofFloat(obj1, "val", 0, 1);
-        ObjectAnimator anim2 = ObjectAnimator.ofFloat(obj1, "val", 0, 1);
-        ObjectAnimator anim3 = ObjectAnimator.ofFloat(obj1, "val", 0, 1);
-        anim1.setStartDelay(100);
-        anim2.setStartDelay(400);
-        anim3.setStartDelay(700);
-        final AnimatorSet combined1 = new AnimatorSet();
-        combined1.playTogether(anim1, anim2, anim3);
-
-        ObjectAnimator anim4 = ObjectAnimator.ofFloat(obj2, "val", 0, 1);
-        ObjectAnimator anim5 = ObjectAnimator.ofFloat(obj2, "val", 0, 1);
-        ObjectAnimator anim6 = ObjectAnimator.ofFloat(obj2, "val", 0, 1);
-        final AnimatorSet combined2 = new AnimatorSet();
-        combined2.playSequentially(anim4, anim5, anim6);
-        combined2.setStartDelay(100);
-
-        mActivityRule.runOnUiThread(() -> {
-            combined1.start();
-            combined2.start();
-        });
-
-        while (combined1.isRunning()) {
-            mActivityRule.runOnUiThread(() -> assertEquals(obj1.value, obj2.value, 0.0f));
-        }
-    }
-
-    @Test
     public void testNotifiesAfterEnd() throws Throwable {
         final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
         Animator.AnimatorListener listener = new AnimatorListenerAdapter() {
