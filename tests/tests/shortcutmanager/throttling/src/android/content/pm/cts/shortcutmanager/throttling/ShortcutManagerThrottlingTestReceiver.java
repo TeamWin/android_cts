@@ -17,6 +17,8 @@ package android.content.pm.cts.shortcutmanager.throttling;
 
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.list;
 
+import static junit.framework.Assert.assertTrue;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -68,6 +70,13 @@ public class ShortcutManagerThrottlingTestReceiver extends BroadcastReceiver {
                     break;
                 case Constants.TEST_FG_SERVICE_UNTHROTTLED:
                     testFgServiceUnthrottled(context, replyAction);
+                    break;
+
+                case Constants.TEST_INLINE_REPLY_SHOW:
+                    testInlineReplyShow(context, replyAction);
+                    break;
+                case Constants.TEST_INLINE_REPLY_CHECK:
+                    testInlineReplyCheck(context, replyAction);
                     break;
 
                 default:
@@ -133,6 +142,24 @@ public class ShortcutManagerThrottlingTestReceiver extends BroadcastReceiver {
             ThrottledTests.ensureThrottled(context);
 
             FgService.start(context, replyAction);
+        });
+    }
+
+    public void testInlineReplyShow(Context context, String replyAction) {
+        ReplyUtil.runTestAndReply(context, replyAction, () -> {
+            // First make sure the self is throttled.
+            ThrottledTests.ensureThrottled(context);
+
+            InlineReply.showNotificationWithInlineReply(context);
+        });
+    }
+
+    public void testInlineReplyCheck(Context context, String replyAction) {
+        ReplyUtil.runTestAndReply(context, replyAction, () -> {
+            // Throttling should be reset, can make calls now.
+            assertTrue(context.getSystemService(ShortcutManager.class).setDynamicShortcuts(list()));
+            assertTrue(context.getSystemService(ShortcutManager.class).addDynamicShortcuts(list()));
+            assertTrue(context.getSystemService(ShortcutManager.class).updateShortcuts(list()));
         });
     }
 }

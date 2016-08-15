@@ -32,6 +32,8 @@
         <service android:name=".BgService" />
 
         <service android:name=".FgService" />
+
+        <receiver android:name=".InlineReply" />
     </application>
 </manifest>
 

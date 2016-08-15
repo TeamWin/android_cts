@@ -16,6 +16,8 @@
 package android.content.pm.cts.shortcutmanager;
 
 
+import static android.content.pm.cts.shortcutmanager.common.Constants.INLINE_REPLY_REMOTE_INPUT_CAPTION;
+
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.resetThrottling;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.retryUntil;
 
@@ -25,7 +27,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.cts.shortcutmanager.common.Constants;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.view.KeyEvent;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -36,6 +43,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @SmallTest
 public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
+
+    private static final int UI_TIMEOUT = 5000;
+
     private void callTest(String method) {
 
         final AtomicReference<Intent> ret = new AtomicReference<>();
@@ -108,5 +118,51 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         resetThrottling(getInstrumentation());
 
         callTest(Constants.TEST_FG_SERVICE_UNTHROTTLED);
+    }
+
+    public void testInlineReply() throws Exception {
+        resetThrottling(getInstrumentation());
+
+        clearNotifications();
+
+        callTest(Constants.TEST_INLINE_REPLY_SHOW);
+
+        performInlineReply();
+
+        callTest(Constants.TEST_INLINE_REPLY_CHECK);
+    }
+
+    private void clearNotifications() throws InterruptedException {
+        final UiDevice ud = UiDevice.getInstance(getInstrumentation());
+        ud.openNotification();
+
+        final UiObject2 clearAll = ud.wait(Until.findObject(By.text("CLEAR ALL")), UI_TIMEOUT);
+
+        // Just skip if not found.
+        if (clearAll != null) {
+            clearAll.clear();
+            Thread.sleep(1000);
+        }
+        ud.pressHome();
+        Thread.sleep(1000);
+    }
+
+    private void performInlineReply() throws InterruptedException {
+        final UiDevice ud = UiDevice.getInstance(getInstrumentation());
+
+        Thread.sleep(1000);
+        ud.openNotification();
+
+        ud.wait(Until.findObject(By.text(INLINE_REPLY_REMOTE_INPUT_CAPTION)), UI_TIMEOUT).click();
+
+        Thread.sleep(1000);
+
+        ud.pressKeyCode(KeyEvent.KEYCODE_A);
+        ud.pressKeyCode(KeyEvent.KEYCODE_B);
+        ud.pressKeyCode(KeyEvent.KEYCODE_C);
+        ud.pressEnter();
+
+        Thread.sleep(1000);
+        ud.pressHome();
     }
 }
