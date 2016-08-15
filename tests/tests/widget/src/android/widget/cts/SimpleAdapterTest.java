@@ -164,6 +164,7 @@ public class SimpleAdapterTest {
         assertEquals(20, mSimpleAdapter.getItemId(20));
     }
 
+    @UiThreadTest
     @Test
     public void testGetView() {
         // use the layout passed in to constructor
@@ -201,18 +202,21 @@ public class SimpleAdapterTest {
         assertEquals("01", ((TextView) result).getText().toString());
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetViewIndexTooLow() {
         View result = mSimpleAdapter.getView(0, null, mAdapterHost);
         mSimpleAdapter.getView(-1, result, null);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetViewIndexTooHigh() {
         View result = mSimpleAdapter.getView(0, null, mAdapterHost);
         mSimpleAdapter.getView(20, result, null);
     }
 
+    @UiThreadTest
     @Test
     public void testSetDropDownViewResource() {
         mSimpleAdapter.setDropDownViewResource(android.R.layout.simple_list_item_2);
@@ -236,6 +240,7 @@ public class SimpleAdapterTest {
         assertEquals("191", ((TextView) result).getText().toString());
     }
 
+    @UiThreadTest
     @Test
     public void testGetDropDownView() {
         View result = mSimpleAdapter.getDropDownView(0, null, mAdapterHost);
@@ -272,12 +277,14 @@ public class SimpleAdapterTest {
         assertEquals("191", ((TextView) result).getText().toString());
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetDropDownViewIndexTooLow() {
         View result = mSimpleAdapter.getDropDownView(0, null, mAdapterHost);
         mSimpleAdapter.getDropDownView(-1, result, null);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetDropDownViewIndexTooHigh() {
         View result = mSimpleAdapter.getDropDownView(0, null, mAdapterHost);
@@ -367,6 +374,7 @@ public class SimpleAdapterTest {
         }
     }
 
+    @UiThreadTest
     @Test
     public void testSetViewText() {
         TextView view = new TextView(mContext);

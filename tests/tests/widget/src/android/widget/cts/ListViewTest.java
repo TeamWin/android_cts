@@ -109,6 +109,8 @@ public class ListViewTest {
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private ListView mListView;
+    private TextView mTextView;
+    private TextView mSecondTextView;
 
     private AttributeSet mAttributeSet;
     private ArrayAdapter<String> mAdapter_countries;
@@ -303,22 +305,25 @@ public class ListViewTest {
 
     @Test
     public void testAccessFooterView() throws Throwable {
-        final TextView footerView1 = new TextView(mActivity);
-        footerView1.setText("footerview1");
-        final TextView footerView2 = new TextView(mActivity);
-        footerView2.setText("footerview2");
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = new TextView(mActivity);
+            mTextView.setText("footerview1");
+            mSecondTextView = new TextView(mActivity);
+            mSecondTextView.setText("footerview2");
+        });
+        mInstrumentation.waitForIdleSync();
 
         mActivityRule.runOnUiThread(() -> mListView.setFooterDividersEnabled(true));
         assertTrue(mListView.areFooterDividersEnabled());
         assertEquals(0, mListView.getFooterViewsCount());
 
-        mActivityRule.runOnUiThread(() -> mListView.addFooterView(footerView1, null, true));
+        mActivityRule.runOnUiThread(() -> mListView.addFooterView(mTextView, null, true));
         assertTrue(mListView.areFooterDividersEnabled());
         assertEquals(1, mListView.getFooterViewsCount());
 
         mActivityRule.runOnUiThread(() -> {
             mListView.setFooterDividersEnabled(false);
-            mListView.addFooterView(footerView2);
+            mListView.addFooterView(mSecondTextView);
         });
         assertFalse(mListView.areFooterDividersEnabled());
         assertEquals(2, mListView.getFooterViewsCount());
@@ -327,12 +332,12 @@ public class ListViewTest {
                 () -> mListView.setAdapter(mAdapter_countries));
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
-                () -> mListView.removeFooterView(footerView1));
+                () -> mListView.removeFooterView(mTextView));
         assertFalse(mListView.areFooterDividersEnabled());
         assertEquals(1, mListView.getFooterViewsCount());
 
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
-                () -> mListView.removeFooterView(footerView2));
+                () -> mListView.removeFooterView(mSecondTextView));
         assertFalse(mListView.areFooterDividersEnabled());
         assertEquals(0, mListView.getFooterViewsCount());
     }
@@ -363,7 +368,8 @@ public class ListViewTest {
 
     @Test
     public void testHeaderFooterType() throws Throwable {
-        final TextView headerView = new TextView(mActivity);
+        mActivityRule.runOnUiThread(() -> mTextView = new TextView(mActivity));
+        mInstrumentation.waitForIdleSync();
         final List<Pair<View, View>> mismatch = new ArrayList<>();
         final ArrayAdapter adapter = new ArrayAdapter<String>(mActivity,
                 android.R.layout.simple_list_item_1, mNameList) {
@@ -376,10 +382,10 @@ public class ListViewTest {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 if (position == 0) {
-                    if (convertView != null && convertView != headerView) {
-                        mismatch.add(new Pair<>(headerView, convertView));
+                    if (convertView != null && convertView != mTextView) {
+                        mismatch.add(new Pair<>(mTextView, convertView));
                     }
-                    return headerView;
+                    return mTextView;
                 } else {
                     return super.getView(position - 1, convertView, parent);
                 }
@@ -390,6 +396,7 @@ public class ListViewTest {
                 return super.getCount() + 1;
             }
         };
+
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(adapter));
 
@@ -451,13 +458,15 @@ public class ListViewTest {
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setSelection(2));
 
-        final TextView child = (TextView) mAdapter_countries.getView(2, null, mListView);
-        assertNotNull(child);
-        assertEquals(mCountryList[2], child.getText().toString());
+        mActivityRule.runOnUiThread(() ->
+                mTextView = (TextView) mAdapter_countries.getView(2, null, mListView));
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(mTextView);
+        assertEquals(mCountryList[2], mTextView.getText().toString());
         final long itemID = mAdapter_countries.getItemId(2);
         assertEquals(2, itemID);
 
-        mActivityRule.runOnUiThread(() -> mListView.performItemClick(child, 2, itemID));
+        mActivityRule.runOnUiThread(() -> mListView.performItemClick(mTextView, 2, itemID));
         mInstrumentation.waitForIdleSync();
 
         OnItemClickListener onClickListener = mock(OnItemClickListener.class);
@@ -465,10 +474,10 @@ public class ListViewTest {
         verify(onClickListener, never()).onItemClick(any(AdapterView.class), any(View.class),
                 anyInt(), anyLong());
 
-        mActivityRule.runOnUiThread(() -> mListView.performItemClick(child, 2, itemID));
+        mActivityRule.runOnUiThread(() -> mListView.performItemClick(mTextView, 2, itemID));
         mInstrumentation.waitForIdleSync();
 
-        verify(onClickListener, times(1)).onItemClick(mListView, child, 2, 2L);
+        verify(onClickListener, times(1)).onItemClick(mListView, mTextView, 2, 2L);
         verifyNoMoreInteractions(onClickListener);
     }
 
@@ -530,12 +539,14 @@ public class ListViewTest {
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mListView,
                 () -> mListView.setAdapter(mAdapter_countries));
 
-        TextView child = (TextView) mAdapter_countries.getView(0, null, mListView);
-        assertNotNull(child);
-        assertEquals(mCountryList[0], child.getText().toString());
+        mActivityRule.runOnUiThread(() ->
+                mTextView = (TextView) mAdapter_countries.getView(0, null, mListView));
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(mTextView);
+        assertEquals(mCountryList[0], mTextView.getText().toString());
 
         Rect rect = new Rect(0, 0, 10, 10);
-        assertFalse(mListView.requestChildRectangleOnScreen(child, rect, false));
+        assertFalse(mListView.requestChildRectangleOnScreen(mTextView, rect, false));
 
         // TODO: how to check?
     }
@@ -1164,10 +1175,10 @@ public class ListViewTest {
 
     @LargeTest
     @Test
-    public void testSmoothScrollByOffset() {
+    public void testSmoothScrollByOffset() throws Throwable {
         final int itemCount = mLongCountryList.length;
 
-        mActivity.runOnUiThread(() -> mListView.setAdapter(mAdapter_longCountries));
+        mActivityRule.runOnUiThread(() -> mListView.setAdapter(mAdapter_longCountries));
         mInstrumentation.waitForIdleSync();
 
         assertEquals(0, mListView.getFirstVisiblePosition());
@@ -1200,7 +1211,7 @@ public class ListViewTest {
             }
         });
         int offset = positionToScrollTo - lastVisiblePosition;
-        mActivity.runOnUiThread(() -> mListView.smoothScrollByOffset(offset));
+        mActivityRule.runOnUiThread(() -> mListView.smoothScrollByOffset(offset));
 
         boolean result = false;
         try {

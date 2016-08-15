@@ -140,6 +140,7 @@ public class TabWidgetTest {
         }
     }
 
+    @UiThreadTest
     @Test
     public void testChildDrawableStateChanged() {
         MockTabWidget mockTabWidget = new MockTabWidget(mActivity);
@@ -237,6 +238,7 @@ public class TabWidgetTest {
         assertTrue(mTabWidget.getChildAt(1).isEnabled());
     }
 
+    @UiThreadTest
     @Test
     public void testAddView() {
         MockTabWidget mockTabWidget = new MockTabWidget(mActivity);

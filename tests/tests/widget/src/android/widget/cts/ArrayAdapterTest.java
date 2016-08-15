@@ -25,10 +25,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Resources.Theme;
 import android.database.DataSetObserver;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -138,6 +138,7 @@ public class ArrayAdapterTest {
         verify(mockDataSetObserver, times(3)).onChanged();
     }
 
+    @UiThreadTest
     @Test
     public void testAccessView() {
         final TextView textView = new TextView(mContext);
@@ -163,24 +164,28 @@ public class ArrayAdapterTest {
         assertEquals(STR1, textView.getText());
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetViewOutOfBoundsLow() {
         final TextView textView = new TextView(mContext);
         mArrayAdapter.getView(-1, textView, null);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testDropDownGetViewOutOfBoundsLow() {
         final TextView textView = new TextView(mContext);
         mArrayAdapter.getDropDownView(-1, textView, null);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testGetViewOutOfBoundsHigh() {
         final TextView textView = new TextView(mContext);
         mArrayAdapter.getView(mArrayAdapter.getCount(), textView, null);
     }
 
+    @UiThreadTest
     @Test(expected=IndexOutOfBoundsException.class)
     public void testDropDownGetViewOutOfBoundsHigh() {
         final TextView textView = new TextView(mContext);
@@ -198,10 +203,11 @@ public class ArrayAdapterTest {
     }
 
     /**
-     * just simple change the resource id from which the drop view inflate from
+     * Just simple change the resource id from which the drop view inflate from
      * we set a xml that not contain a textview, so exception should throw to lete us know
      * sucessfully change the dropdown xml, but should not affect the normal view by getview
      */
+    @UiThreadTest
     @Test
     public void testSetDropDownViewResource() {
         mArrayAdapter.add(STR1);
@@ -215,6 +221,7 @@ public class ArrayAdapterTest {
         mArrayAdapter.setDropDownViewResource(INVALID_ID);
     }
 
+    @UiThreadTest
     @Test(expected=IllegalStateException.class)
     public void testSetDropDownViewResourceIllegal() {
         mArrayAdapter.add(STR1);

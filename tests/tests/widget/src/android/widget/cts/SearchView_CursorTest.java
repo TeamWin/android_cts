@@ -181,7 +181,7 @@ public class SearchView_CursorTest {
         // Emulate click on the first suggestion - which should be Dido
         final int suggestionRowHeight = mActivity.getResources().getDimensionPixelSize(
                 R.dimen.search_view_suggestion_row_height);
-        CtsTouchUtils.emulateTapOnScreen(mInstrumentation, mSearchView, mSearchView.getWidth() / 2,
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mSearchView, mSearchView.getWidth() / 2,
                 mSearchView.getHeight() + suggestionRowHeight / 2);
 
         // At this point we expect the click on the first suggestion to have activated a sequence

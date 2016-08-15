@@ -74,6 +74,7 @@ public class TableRowTest {
         new TableRow(mActivity, null);
     }
 
+    @UiThreadTest
     @Test
     public void testSetOnHierarchyChangeListener() {
         TableRow tableRow = new TableRow(mActivity);
