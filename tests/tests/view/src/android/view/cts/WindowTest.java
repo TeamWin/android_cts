@@ -243,26 +243,24 @@ public class WindowTest {
      * getLayoutInflater: Quick access to the {@link LayoutInflater} instance that this Window
      *    retrieved from its Context.
      */
+    @UiThreadTest
     @Test
-    public void testAddContentView() throws Throwable {
+    public void testAddContentView() {
         final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(VIEWGROUP_LAYOUT_WIDTH,
                 VIEWGROUP_LAYOUT_HEIGHT);
         // The LayoutInflater instance will be inflated to a view and used by
         // addContentView,
         // id of this view should be same with inflated id.
         final LayoutInflater inflater = mActivity.getLayoutInflater();
-        mActivity.runOnUiThread(() -> {
-            TextView addedView = (TextView) mWindow.findViewById(R.id.listview_addwindow);
-            assertNull(addedView);
-            mWindow.addContentView(inflater.inflate(R.layout.windowstub_addlayout, null), lp);
-            TextView view = (TextView) mWindow.findViewById(R.id.listview_window);
-            addedView = (TextView) mWindow.findViewById(R.id.listview_addwindow);
-            assertNotNull(view);
-            assertNotNull(addedView);
-            assertEquals(R.id.listview_window, view.getId());
-            assertEquals(R.id.listview_addwindow, addedView.getId());
-        });
-        mInstrumentation.waitForIdleSync();
+        TextView addedView = (TextView) mWindow.findViewById(R.id.listview_addwindow);
+        assertNull(addedView);
+        mWindow.addContentView(inflater.inflate(R.layout.windowstub_addlayout, null), lp);
+        TextView view = (TextView) mWindow.findViewById(R.id.listview_window);
+        addedView = (TextView) mWindow.findViewById(R.id.listview_addwindow);
+        assertNotNull(view);
+        assertNotNull(addedView);
+        assertEquals(R.id.listview_window, view.getId());
+        assertEquals(R.id.listview_addwindow, addedView.getId());
     }
 
     /**
@@ -272,21 +270,19 @@ public class WindowTest {
      * 1. Set focus view to null, get current focus, it should be null
      * 2. Set listview_window as focus view, get it and compare.
      */
+    @UiThreadTest
     @Test
-    public void testGetCurrentFocus() throws Throwable {
-        mActivity.runOnUiThread(() -> {
-            TextView v = (TextView) mWindow.findViewById(R.id.listview_window);
-            v.clearFocus();
-            assertNull(mWindow.getCurrentFocus());
+    public void testGetCurrentFocus() {
+        TextView v = (TextView) mWindow.findViewById(R.id.listview_window);
+        v.clearFocus();
+        assertNull(mWindow.getCurrentFocus());
 
-            v.setFocusable(true);
-            assertTrue(v.isFocusable());
-            assertTrue(v.requestFocus());
-            View focus = mWindow.getCurrentFocus();
-            assertNotNull(focus);
-            assertEquals(R.id.listview_window, focus.getId());
-        });
-        mInstrumentation.waitForIdleSync();
+        v.setFocusable(true);
+        assertTrue(v.isFocusable());
+        assertTrue(v.requestFocus());
+        View focus = mWindow.getCurrentFocus();
+        assertNotNull(focus);
+        assertEquals(R.id.listview_window, focus.getId());
     }
 
     /**

@@ -2687,12 +2687,7 @@ public class ViewTest {
         view.reset();
         mActivityRule.runOnUiThread(view::invalidate);
         mInstrumentation.waitForIdleSync();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return view.hasCalledOnDraw();
-            }
-        }.run();
+        PollingCheck.waitFor(view::hasCalledOnDraw);
 
         view.reset();
         mActivityRule.runOnUiThread(() -> {
@@ -2719,12 +2714,7 @@ public class ViewTest {
                 view.getLeft() + view.getWidth() / 2, view.getTop() + view.getHeight() / 2);
         mActivityRule.runOnUiThread(() -> view.invalidate(dirty));
         mInstrumentation.waitForIdleSync();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return view.hasCalledOnDraw();
-            }
-        }.run();
+        PollingCheck.waitFor(view::hasCalledOnDraw);
 
         view.reset();
         mActivityRule.runOnUiThread(() -> {
@@ -2746,12 +2736,7 @@ public class ViewTest {
         mActivityRule.runOnUiThread(
                 () -> view.invalidate(dirty.left, dirty.top, dirty.right, dirty.bottom));
         mInstrumentation.waitForIdleSync();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return view.hasCalledOnDraw();
-            }
-        }.run();
+        PollingCheck.waitFor(view::hasCalledOnDraw);
 
         view.reset();
         mActivityRule.runOnUiThread(() -> {
@@ -3727,12 +3712,7 @@ public class ViewTest {
         mActivityRule.runOnUiThread(() -> imm.showSoftInput(editText, 0));
         mInstrumentation.waitForIdleSync();
 
-        new PollingCheck(TIMEOUT_DELTA) {
-            @Override
-            protected boolean check() {
-                return editText.hasCalledOnCreateInputConnection();
-            }
-        }.run();
+        PollingCheck.waitFor(TIMEOUT_DELTA, editText::hasCalledOnCreateInputConnection);
 
         assertTrue(editText.hasCalledOnCheckIsTextEditor());
 

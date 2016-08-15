@@ -84,7 +84,7 @@ public class ActionModeTest {
     }
 
     @Test
-    public void testInvalidateContentRectOnFloatingCallsCallback() {
+    public void testInvalidateContentRectOnFloatingCallsCallback() throws Throwable {
         final View view = mActivity.contentView;
         final ActionMode.Callback2 mockCallback = mock(ActionMode.Callback2.class);
         doReturn(Boolean.TRUE).when(mockCallback).onCreateActionMode(
@@ -92,7 +92,7 @@ public class ActionModeTest {
         doReturn(Boolean.TRUE).when(mockCallback).onPrepareActionMode(
                 any(ActionMode.class), any(Menu.class));
 
-        mActivity.runOnUiThread(() -> {
+        mActivityRule.runOnUiThread(() -> {
             ActionMode mode = view.startActionMode(mockCallback, ActionMode.TYPE_FLOATING);
             assertNotNull(mode);
             mode.invalidateContentRect();
