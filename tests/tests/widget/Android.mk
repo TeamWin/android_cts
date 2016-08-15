@@ -23,7 +23,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-test \
-    mockito-target \
+    mockito-target-minus-junit4 \
     android-common \
     ctsdeviceutil \
     ctstestrunner \

@@ -32,7 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     ctsdeviceutil \
     ctstestrunner \
-    mockito-target \
+    mockito-target-minus-junit4 \
     platform-test-annotations \
     ub-uiautomator
 

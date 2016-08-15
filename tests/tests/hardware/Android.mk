@@ -59,7 +59,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctsdeviceutil \
     compatibility-device-util \
     ctstestrunner \
-    mockito-target \
+    mockito-target-minus-junit4 \
     android-ex-camera2
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
