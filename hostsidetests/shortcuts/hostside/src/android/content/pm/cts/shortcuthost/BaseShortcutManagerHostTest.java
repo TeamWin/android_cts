@@ -31,11 +31,14 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 abstract public class BaseShortcutManagerHostTest extends DeviceTestCase implements IBuildReceiver {
+    protected static final boolean DUMPSYS_IN_TEARDOWN = false; // DO NOT SUBMIT WITH TRUE
 
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
 
@@ -50,6 +53,25 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
     protected void setUp() throws Exception {
         super.setUp();
         assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
+    }
+
+    protected void dumpsys(String label) throws DeviceNotAvailableException {
+        CLog.w("dumpsys shortcuts #" + label);
+
+        CLog.w(getDevice().executeShellCommand("dumpsys shortcut"));
+    }
+
+    protected String executeShellCommandWithLog(String command) throws DeviceNotAvailableException {
+        CLog.i("Executing command: " + command);
+        final String output = getDevice().executeShellCommand(command);
+        CLog.i(output);
+        return output;
+    }
+
+    protected void clearShortcuts(String packageName, int userId) throws Exception {
+        assertContainsRegex("Success",
+                getDevice().executeShellCommand("cmd shortcut clear-shortcuts --user " + userId
+                        + " " + packageName));
     }
 
     protected void installAppAsUser(String appFileName, int userId) throws FileNotFoundException,
@@ -67,21 +89,21 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
     }
 
     /** Returns true if the specified tests passed. Tests are run as given user. */
-    protected boolean runDeviceTestsAsUser(
+    protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, int userId)
             throws DeviceNotAvailableException {
-        return runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
+        runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
     }
 
     /** Returns true if the specified tests passed. Tests are run as given user. */
-    protected boolean runDeviceTestsAsUser(
+    protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, String testMethodName, int userId)
             throws DeviceNotAvailableException {
         Map<String, String> params = Collections.emptyMap();
-        return runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
+        runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
     }
 
-    protected boolean runDeviceTestsAsUser(String pkgName, @Nullable String testClassName,
+    protected void runDeviceTestsAsUser(String pkgName, @Nullable String testClassName,
             @Nullable String testMethodName, int userId,
             Map<String, String> params) throws DeviceNotAvailableException {
         if (testClassName != null && testClassName.startsWith(".")) {
@@ -104,15 +126,18 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
         assertTrue(getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener));
 
         TestRunResult runResult = listener.getCurrentRunResults();
+        if (runResult.getTestResults().size() == 0) {
+            fail("No tests have been executed.");
+            return;
+        }
+
         printTestResult(runResult);
-        return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
+        if (runResult.hasFailedTests() || runResult.getNumTestsInState(TestStatus.PASSED) == 0) {
+            fail("Some tests have been failed.");
+        }
     }
 
     private void printTestResult(TestRunResult runResult) {
-        if (runResult.getTestResults().size() == 0) {
-            CLog.e("No tests have been executed.");
-            return;
-        }
         for (Map.Entry<TestIdentifier, TestResult> testEntry :
                 runResult.getTestResults().entrySet()) {
             TestResult testResult = testEntry.getValue();
@@ -125,5 +150,71 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
                 CLog.e(testResult.getStackTrace());
             }
         }
+    }
+
+    /**
+     * Variant of {@link #assertContainsRegex(String,String,String)} using a
+     * generic message.
+     */
+    public MatchResult assertContainsRegex(
+            String expectedRegex, String actual) {
+        return assertContainsRegex(null, expectedRegex, actual);
+    }
+
+    /**
+     * Asserts that {@code expectedRegex} matches any substring of {@code actual}
+     * and fails with {@code message} if it does not.  The Matcher is returned in
+     * case the test needs access to any captured groups.  Note that you can also
+     * use this for a literal string, by wrapping your expected string in
+     * {@link Pattern#quote}.
+     */
+    public MatchResult assertContainsRegex(
+            String message, String expectedRegex, String actual) {
+        if (actual == null) {
+            failNotContains(message, expectedRegex, actual);
+        }
+        Matcher matcher = getMatcher(expectedRegex, actual);
+        if (!matcher.find()) {
+            failNotContains(message, expectedRegex, actual);
+        }
+        return matcher;
+    }
+
+    /**
+     * Asserts that {@code expectedRegex} does not exactly match {@code actual},
+     * and fails with {@code message} if it does. Note that you can also use
+     * this for a literal string, by wrapping your expected string in
+     * {@link Pattern#quote}.
+     */
+    public void assertNotMatchesRegex(
+            String message, String expectedRegex, String actual) {
+        Matcher matcher = getMatcher(expectedRegex, actual);
+        if (matcher.matches()) {
+            failMatch(message, expectedRegex, actual);
+        }
+    }
+
+    private Matcher getMatcher(String expectedRegex, String actual) {
+        Pattern pattern = Pattern.compile(expectedRegex);
+        return pattern.matcher(actual);
+    }
+
+    private void failMatch(
+            String message, String expectedRegex, String actual) {
+        failWithMessage(message, "expected not to match regex:<" + expectedRegex
+                + "> but was:<" + actual + '>');
+    }
+
+    private void failWithMessage(String userMessage, String ourMessage) {
+        fail((userMessage == null)
+                ? ourMessage
+                : userMessage + ' ' + ourMessage);
+    }
+
+    private void failNotContains(
+            String message, String expectedRegex, String actual) {
+        String actualDesc = (actual == null) ? "null" : ('<' + actual + '>');
+        failWithMessage(message, "expected to contain regex:<" + expectedRegex
+                + "> but was:" + actualDesc);
     }
 }

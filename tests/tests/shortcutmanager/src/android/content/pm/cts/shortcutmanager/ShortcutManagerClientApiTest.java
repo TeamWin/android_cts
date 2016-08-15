@@ -1482,6 +1482,31 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getManifestShortcuts())
                     .isEmpty();
         });
+
+        // Re-publish will implicitly re-enable.
+        runWithCaller(mPackageContext2, () -> {
+            getManager().addDynamicShortcuts(list(makeShortcut("s2", "re-published")));
+        });
+
+        runWithCaller(mPackageContext2, () -> {
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s3", "s2")
+                    .forShortcutWithId("s3", si -> {
+                        assertEquals("3b", si.getShortLabel());
+                    })
+                    .forShortcutWithId("s2", si -> {
+                        assertEquals("re-published", si.getShortLabel());
+                    })
+            ;
+            assertWith(getManager().getPinnedShortcuts())
+                    .areAllPinned()
+                    .haveIds("s1", "s2")
+            ;
+            assertWith(getManager().getManifestShortcuts())
+                    .isEmpty();
+        });
     }
 
     public void testImmutableShortcuts() {
