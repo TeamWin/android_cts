@@ -18,6 +18,7 @@ package android.content.pm.cts.shortcutmanager;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.assertExpectException;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.assertWith;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.list;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.parceled;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.retryUntil;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.set;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
@@ -1771,6 +1772,39 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     })
                     ;
         });
+    }
+
+    public void testMiscShortcutInfo() {
+        final Icon icon1 = Icon.createWithBitmap(BitmapFactory.decodeResource(
+                getTestContext().getResources(), R.drawable.black_16x64));
+        final ShortcutInfo source = makeShortcutBuilder("s1")
+                .setShortLabel("shortlabel")
+                .setLongLabel("longlabel")
+                .setIcon(icon1)
+                .setActivity(getActivity("Launcher"))
+                .setDisabledMessage("disabledmessage")
+                .setIntents(new Intent[]{new Intent("view").putExtra("k1", "v1")})
+                .setExtras(makePersistableBundle("ek1", "ev1"))
+                .setCategories(set("cat1"))
+                .build();
+
+        final ShortcutInfo clone = parceled(source);
+
+        // Check each field.
+        assertWith(list(clone))
+                .forShortcutWithId("s1", si ->{
+                    assertEquals("shortlabel", si.getShortLabel());
+                    assertEquals("longlabel", si.getLongLabel());
+                    assertEquals(getActivity("Launcher"), si.getActivity());
+                    assertEquals("disabledmessage", si.getDisabledMessage());
+                    assertEquals(1, si.getIntents().length);
+                    assertEquals("view", si.getIntents()[0].getAction());
+                    assertEquals("v1", si.getIntents()[0].getStringExtra("k1"));
+                    assertEquals("ev1", si.getExtras().getString("ek1"));
+                    assertEquals(set("cat1"), si.getCategories());
+
+                    assertEquals(getUserHandle(), si.getUserHandle());
+                });
     }
 
     // TODO Test auto rank adjustment.
