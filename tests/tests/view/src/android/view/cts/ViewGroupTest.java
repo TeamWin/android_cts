@@ -43,6 +43,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -85,14 +86,22 @@ public class ViewGroupTest implements CTSResult {
     private MotionEvent mMotionEvent;
     private int mResultCode;
 
-    private Sync mSync = new Sync();
+    private MockViewGroup mMockViewGroup;
+    private TextView mTextView;
+    private MockTextView mMockTextView;
+
+    private final Sync mSync = new Sync();
     private static class Sync {
         boolean mHasNotify;
     }
 
+    @UiThreadTest
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getTargetContext();
+        mMockViewGroup = new MockViewGroup(mContext);
+        mTextView = new TextView(mContext);
+        mMockTextView = new MockTextView(mContext);
     }
 
     @Test
@@ -102,610 +111,565 @@ public class ViewGroupTest implements CTSResult {
         new MockViewGroup(mContext, null, 0);
     }
 
+    @UiThreadTest
     @Test
     public void testAddFocusables() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setFocusable(true);
+        mMockViewGroup.setFocusable(true);
 
-        ArrayList<View> list = new ArrayList<View>();
-        TextView textView = new TextView(mContext);
-        list.add(textView);
-        vg.addView(textView);
-        vg.addFocusables(list, 0);
+        ArrayList<View> list = new ArrayList<>();
+        list.add(mTextView);
+        mMockViewGroup.addView(mTextView);
+        mMockViewGroup.addFocusables(list, 0);
 
         assertEquals(2, list.size());
 
-        list = new ArrayList<View>();
-        list.add(textView);
-        vg.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        vg.setFocusable(false);
-        vg.addFocusables(list, 0);
+        list = new ArrayList<>();
+        list.add(mTextView);
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        mMockViewGroup.setFocusable(false);
+        mMockViewGroup.addFocusables(list, 0);
         assertEquals(1, list.size());
     }
 
+    @UiThreadTest
     @Test
     public void testAddStatesFromChildren() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
-        vg.addView(textView);
-        assertFalse(vg.addStatesFromChildren());
+        mMockViewGroup.addView(mTextView);
+        assertFalse(mMockViewGroup.addStatesFromChildren());
 
-        vg.setAddStatesFromChildren(true);
-        textView.performClick();
-        assertTrue(vg.addStatesFromChildren());
-        assertTrue(vg.isDrawableStateChangedCalled);
+        mMockViewGroup.setAddStatesFromChildren(true);
+        mTextView.performClick();
+        assertTrue(mMockViewGroup.addStatesFromChildren());
+        assertTrue(mMockViewGroup.isDrawableStateChangedCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testAddTouchables() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setFocusable(true);
+        mMockViewGroup.setFocusable(true);
 
-        ArrayList<View> list = new ArrayList<View>();
-        TextView textView = new TextView(mContext);
-        textView.setVisibility(View.VISIBLE);
-        textView.setClickable(true);
-        textView.setEnabled(true);
+        ArrayList<View> list = new ArrayList<>();
+        mTextView.setVisibility(View.VISIBLE);
+        mTextView.setClickable(true);
+        mTextView.setEnabled(true);
 
-        list.add(textView);
-        vg.addView(textView);
-        vg.addTouchables(list);
+        list.add(mTextView);
+        mMockViewGroup.addView(mTextView);
+        mMockViewGroup.addTouchables(list);
 
         assertEquals(2, list.size());
 
-        View v = vg.getChildAt(0);
-        assertSame(textView, v);
+        View v = mMockViewGroup.getChildAt(0);
+        assertSame(mTextView, v);
 
-        v = vg.getChildAt(-1);
+        v = mMockViewGroup.getChildAt(-1);
         assertNull(v);
 
-        v = vg.getChildAt(1);
+        v = mMockViewGroup.getChildAt(1);
         assertNull(v);
 
-        v = vg.getChildAt(100);
+        v = mMockViewGroup.getChildAt(100);
         assertNull(v);
 
-        v = vg.getChildAt(-100);
+        v = mMockViewGroup.getChildAt(-100);
         assertNull(v);
     }
 
+    @UiThreadTest
     @Test
     public void testAddView() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        assertEquals(0, vg.getChildCount());
-
-        vg.addView(textView);
-        assertEquals(1, vg.getChildCount());
+        mMockViewGroup.addView(mTextView);
+        assertEquals(1, mMockViewGroup.getChildCount());
     }
 
+    @UiThreadTest
     @Test
     public void testAddViewWithParaViewInt() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        assertEquals(0, vg.getChildCount());
-
-        vg.addView(textView, -1);
-        assertEquals(1, vg.getChildCount());
+        mMockViewGroup.addView(mTextView, -1);
+        assertEquals(1, mMockViewGroup.getChildCount());
     }
 
+    @UiThreadTest
     @Test
     public void testAddViewWithParaViewLayoutPara() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        assertEquals(0, vg.getChildCount());
+        mMockViewGroup.addView(mTextView, new ViewGroup.LayoutParams(100, 200));
 
-        vg.addView(textView, new ViewGroup.LayoutParams(100, 200));
-
-        assertEquals(1, vg.getChildCount());
+        assertEquals(1, mMockViewGroup.getChildCount());
     }
 
+    @UiThreadTest
     @Test
     public void testAddViewWithParaViewIntInt() {
         final int width = 100;
         final int height = 200;
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
 
-        assertEquals(0, vg.getChildCount());
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        vg.addView(textView, width, height);
-        assertEquals(width, textView.getLayoutParams().width);
-        assertEquals(height, textView.getLayoutParams().height);
+        mMockViewGroup.addView(mTextView, width, height);
+        assertEquals(width, mTextView.getLayoutParams().width);
+        assertEquals(height, mTextView.getLayoutParams().height);
 
-        assertEquals(1, vg.getChildCount());
+        assertEquals(1, mMockViewGroup.getChildCount());
     }
 
+    @UiThreadTest
     @Test
     public void testAddViewWidthParaViewIntLayoutParam() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        assertEquals(0, vg.getChildCount());
+        mMockViewGroup.addView(mTextView, -1, new ViewGroup.LayoutParams(100, 200));
 
-        vg.addView(textView, -1, new ViewGroup.LayoutParams(100, 200));
-
-        assertEquals(1, vg.getChildCount());
+        assertEquals(1, mMockViewGroup.getChildCount());
     }
 
+    @UiThreadTest
     @Test
     public void testAddViewInLayout() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        assertEquals(0, vg.getChildCount());
-
-        assertTrue(vg.isRequestLayoutCalled);
-        vg.isRequestLayoutCalled = false;
-        assertTrue(vg.addViewInLayout(textView, -1, new ViewGroup.LayoutParams(100, 200)));
-        assertEquals(1, vg.getChildCount());
+        assertTrue(mMockViewGroup.isRequestLayoutCalled);
+        mMockViewGroup.isRequestLayoutCalled = false;
+        assertTrue(mMockViewGroup.addViewInLayout(
+                mTextView, -1, new ViewGroup.LayoutParams(100, 200)));
+        assertEquals(1, mMockViewGroup.getChildCount());
         // check that calling addViewInLayout() does not trigger a
         // requestLayout() on this ViewGroup
-        assertFalse(vg.isRequestLayoutCalled);
+        assertFalse(mMockViewGroup.isRequestLayoutCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testAttachLayoutAnimationParameters() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         ViewGroup.LayoutParams param = new ViewGroup.LayoutParams(10, 10);
 
-        vg.attachLayoutAnimationParameters(null, param, 1, 2);
+        mMockViewGroup.attachLayoutAnimationParameters(null, param, 1, 2);
         assertEquals(2, param.layoutAnimationParameters.count);
         assertEquals(1, param.layoutAnimationParameters.index);
     }
 
+    @UiThreadTest
     @Test
     public void testAttachViewToParent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setFocusable(true);
-        assertEquals(0, vg.getChildCount());
+        mMockViewGroup.setFocusable(true);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
         ViewGroup.LayoutParams param = new ViewGroup.LayoutParams(10, 10);
 
-        TextView child = new TextView(mContext);
-        child.setFocusable(true);
-        vg.attachViewToParent(child, -1, param);
-        assertSame(vg, child.getParent());
-        assertEquals(1, vg.getChildCount());
-        assertSame(child, vg.getChildAt(0));
+        mTextView.setFocusable(true);
+        mMockViewGroup.attachViewToParent(mTextView, -1, param);
+        assertSame(mMockViewGroup, mTextView.getParent());
+        assertEquals(1, mMockViewGroup.getChildCount());
+        assertSame(mTextView, mMockViewGroup.getChildAt(0));
     }
 
+    @UiThreadTest
     @Test
     public void testAddViewInLayoutWithParamViewIntLayB() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        assertEquals(0, vg.getChildCount());
+        assertTrue(mMockViewGroup.isRequestLayoutCalled);
+        mMockViewGroup.isRequestLayoutCalled = false;
+        assertTrue(mMockViewGroup.addViewInLayout(
+                mTextView, -1, new ViewGroup.LayoutParams(100, 200), true));
 
-        assertTrue(vg.isRequestLayoutCalled);
-        vg.isRequestLayoutCalled = false;
-        assertTrue(vg.addViewInLayout(textView, -1, new ViewGroup.LayoutParams(100, 200), true));
-
-        assertEquals(1, vg.getChildCount());
+        assertEquals(1, mMockViewGroup.getChildCount());
         // check that calling addViewInLayout() does not trigger a
         // requestLayout() on this ViewGroup
-        assertFalse(vg.isRequestLayoutCalled);
+        assertFalse(mMockViewGroup.isRequestLayoutCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testBringChildToFront() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView1 = new TextView(mContext);
         TextView textView2 = new TextView(mContext);
 
-        assertEquals(0, vg.getChildCount());
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        vg.addView(textView1);
-        vg.addView(textView2);
-        assertEquals(2, vg.getChildCount());
+        mMockViewGroup.addView(textView1);
+        mMockViewGroup.addView(textView2);
+        assertEquals(2, mMockViewGroup.getChildCount());
 
-        vg.bringChildToFront(textView1);
-        assertEquals(vg, textView1.getParent());
-        assertEquals(2, vg.getChildCount());
-        assertNotNull(vg.getChildAt(0));
-        assertSame(textView2, vg.getChildAt(0));
+        mMockViewGroup.bringChildToFront(textView1);
+        assertEquals(mMockViewGroup, textView1.getParent());
+        assertEquals(2, mMockViewGroup.getChildCount());
+        assertNotNull(mMockViewGroup.getChildAt(0));
+        assertSame(textView2, mMockViewGroup.getChildAt(0));
 
-        vg.bringChildToFront(textView2);
-        assertEquals(vg, textView2.getParent());
-        assertEquals(2, vg.getChildCount());
-        assertNotNull(vg.getChildAt(0));
-        assertSame(textView1, vg.getChildAt(0));
+        mMockViewGroup.bringChildToFront(textView2);
+        assertEquals(mMockViewGroup, textView2.getParent());
+        assertEquals(2, mMockViewGroup.getChildCount());
+        assertNotNull(mMockViewGroup.getChildAt(0));
+        assertSame(textView1, mMockViewGroup.getChildAt(0));
     }
 
+    @UiThreadTest
     @Test
     public void testCanAnimate() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-
-        assertFalse(vg.canAnimate());
+        assertFalse(mMockViewGroup.canAnimate());
 
         RotateAnimation animation = new RotateAnimation(0.1f, 0.1f);
         LayoutAnimationController la = new LayoutAnimationController(animation);
-        vg.setLayoutAnimation(la);
-        assertTrue(vg.canAnimate());
+        mMockViewGroup.setLayoutAnimation(la);
+        assertTrue(mMockViewGroup.canAnimate());
     }
 
+    @UiThreadTest
     @Test
     public void testCheckLayoutParams() {
-        MockViewGroup view = new MockViewGroup(mContext);
-        assertFalse(view.checkLayoutParams(null));
+        assertFalse(mMockViewGroup.checkLayoutParams(null));
 
-        assertTrue(view.checkLayoutParams(new ViewGroup.LayoutParams(100, 200)));
+        assertTrue(mMockViewGroup.checkLayoutParams(new ViewGroup.LayoutParams(100, 200)));
     }
 
+    @UiThreadTest
     @Test
     public void testChildDrawableStateChanged() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setAddStatesFromChildren(true);
+        mMockViewGroup.setAddStatesFromChildren(true);
 
-        vg.childDrawableStateChanged(null);
-        assertTrue(vg.isRefreshDrawableStateCalled);
+        mMockViewGroup.childDrawableStateChanged(null);
+        assertTrue(mMockViewGroup.isRefreshDrawableStateCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testCleanupLayoutState() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertTrue(mTextView.isLayoutRequested());
 
-        assertTrue(textView.isLayoutRequested());
-
-        vg.cleanupLayoutState(textView);
-        assertFalse(textView.isLayoutRequested());
+        mMockViewGroup.cleanupLayoutState(mTextView);
+        assertFalse(mTextView.isLayoutRequested());
     }
 
+    @UiThreadTest
     @Test
     public void testClearChildFocus() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        mMockViewGroup.addView(mTextView);
+        mMockViewGroup.requestChildFocus(mTextView, null);
 
-        vg.addView(textView);
-        vg.requestChildFocus(textView, null);
+        View focusedView = mMockViewGroup.getFocusedChild();
+        assertSame(mTextView, focusedView);
 
-        View focusedView = vg.getFocusedChild();
-        assertSame(textView, focusedView);
-
-        vg.clearChildFocus(textView);
-        assertNull(vg.getFocusedChild());
+        mMockViewGroup.clearChildFocus(mTextView);
+        assertNull(mMockViewGroup.getFocusedChild());
     }
 
+    @UiThreadTest
     @Test
     public void testClearDisappearingChildren() {
         Canvas canvas = new Canvas();
-        MockViewGroup vg = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
         child.setAnimation(new MockAnimation());
-        vg.addView(child);
-        assertEquals(1, vg.getChildCount());
+        mMockViewGroup.addView(child);
+        assertEquals(1, mMockViewGroup.getChildCount());
 
         assertNotNull(child.getAnimation());
-        vg.dispatchDraw(canvas);
-        assertEquals(1, vg.drawChildCalledTime);
+        mMockViewGroup.dispatchDraw(canvas);
+        assertEquals(1, mMockViewGroup.drawChildCalledTime);
 
         child.setAnimation(new MockAnimation());
-        vg.removeAllViewsInLayout();
+        mMockViewGroup.removeAllViewsInLayout();
 
-        vg.drawChildCalledTime = 0;
-        vg.dispatchDraw(canvas);
-        assertEquals(1, vg.drawChildCalledTime);
+        mMockViewGroup.drawChildCalledTime = 0;
+        mMockViewGroup.dispatchDraw(canvas);
+        assertEquals(1, mMockViewGroup.drawChildCalledTime);
 
         child.setAnimation(new MockAnimation());
-        vg.clearDisappearingChildren();
+        mMockViewGroup.clearDisappearingChildren();
 
-        vg.drawChildCalledTime = 0;
-        vg.dispatchDraw(canvas);
-        assertEquals(0, vg.drawChildCalledTime);
+        mMockViewGroup.drawChildCalledTime = 0;
+        mMockViewGroup.dispatchDraw(canvas);
+        assertEquals(0, mMockViewGroup.drawChildCalledTime);
     }
 
+    @UiThreadTest
     @Test
     public void testClearFocus() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-
-        vg.addView(textView);
-        vg.requestChildFocus(textView, null);
-        vg.clearFocus();
-        assertTrue(textView.isClearFocusCalled);
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.requestChildFocus(mMockTextView, null);
+        mMockViewGroup.clearFocus();
+        assertTrue(mMockTextView.isClearFocusCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testDetachAllViewsFromParent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
-
-        vg.addView(textView);
-        assertEquals(1, vg.getChildCount());
-        assertSame(vg, textView.getParent());
-        vg.detachAllViewsFromParent();
-        assertEquals(0, vg.getChildCount());
-        assertNull(textView.getParent());
+        mMockViewGroup.addView(mTextView);
+        assertEquals(1, mMockViewGroup.getChildCount());
+        assertSame(mMockViewGroup, mTextView.getParent());
+        mMockViewGroup.detachAllViewsFromParent();
+        assertEquals(0, mMockViewGroup.getChildCount());
+        assertNull(mTextView.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testDetachViewFromParent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        mMockViewGroup.addView(mTextView);
+        assertEquals(1, mMockViewGroup.getChildCount());
 
-        vg.addView(textView);
-        assertEquals(1, vg.getChildCount());
+        mMockViewGroup.detachViewFromParent(0);
 
-        vg.detachViewFromParent(0);
-
-        assertEquals(0, vg.getChildCount());
-        assertNull(textView.getParent());
+        assertEquals(0, mMockViewGroup.getChildCount());
+        assertNull(mTextView.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testDetachViewFromParentWithParamView() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        mMockViewGroup.addView(mTextView);
+        assertEquals(1, mMockViewGroup.getChildCount());
+        assertSame(mMockViewGroup, mTextView.getParent());
 
-        vg.addView(textView);
-        assertEquals(1, vg.getChildCount());
-        assertSame(vg, textView.getParent());
+        mMockViewGroup.detachViewFromParent(mTextView);
 
-        vg.detachViewFromParent(textView);
-
-        assertEquals(0, vg.getChildCount());
-        assertNull(vg.getParent());
+        assertEquals(0, mMockViewGroup.getChildCount());
+        assertNull(mMockViewGroup.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testDetachViewsFromParent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         TextView textView1 = new TextView(mContext);
         TextView textView2 = new TextView(mContext);
         TextView textView3 = new TextView(mContext);
 
-        vg.addView(textView1);
-        vg.addView(textView2);
-        vg.addView(textView3);
-        assertEquals(3, vg.getChildCount());
+        mMockViewGroup.addView(textView1);
+        mMockViewGroup.addView(textView2);
+        mMockViewGroup.addView(textView3);
+        assertEquals(3, mMockViewGroup.getChildCount());
 
-        vg.detachViewsFromParent(0, 2);
+        mMockViewGroup.detachViewsFromParent(0, 2);
 
-        assertEquals(1, vg.getChildCount());
+        assertEquals(1, mMockViewGroup.getChildCount());
         assertNull(textView1.getParent());
         assertNull(textView2.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchDraw() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         Canvas canvas = new Canvas();
 
-        vg.draw(canvas);
-        assertTrue(vg.isDispatchDrawCalled);
-        assertSame(canvas, vg.canvas);
+        mMockViewGroup.draw(canvas);
+        assertTrue(mMockViewGroup.isDispatchDrawCalled);
+        assertSame(canvas, mMockViewGroup.canvas);
     }
 
-    @SuppressWarnings("unchecked")
+    @UiThreadTest
     @Test
     public void testDispatchFreezeSelfOnly() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setId(1);
-        vg.setSaveEnabled(true);
+        mMockViewGroup.setId(1);
+        mMockViewGroup.setSaveEnabled(true);
 
         SparseArray container = new SparseArray();
         assertEquals(0, container.size());
-        vg.dispatchFreezeSelfOnly(container);
+        mMockViewGroup.dispatchFreezeSelfOnly(container);
         assertEquals(1, container.size());
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchKeyEvent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER);
-        assertFalse(vg.dispatchKeyEvent(event));
+        assertFalse(mMockViewGroup.dispatchKeyEvent(event));
 
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
-        vg.requestChildFocus(textView, null);
-        textView.layout(1, 1, 100, 100);
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.requestChildFocus(mMockTextView, null);
+        mMockTextView.layout(1, 1, 100, 100);
 
-        assertTrue(vg.dispatchKeyEvent(event));
+        assertTrue(mMockViewGroup.dispatchKeyEvent(event));
     }
 
-    @SuppressWarnings("unchecked")
+    @UiThreadTest
     @Test
     public void testDispatchSaveInstanceState() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setId(2);
-        vg.setSaveEnabled(true);
-        MockTextView textView = new MockTextView(mContext);
-        textView.setSaveEnabled(true);
-        textView.setId(1);
-        vg.addView(textView);
+        mMockViewGroup.setId(2);
+        mMockViewGroup.setSaveEnabled(true);
+        mMockTextView.setSaveEnabled(true);
+        mMockTextView.setId(1);
+        mMockViewGroup.addView(mMockTextView);
 
         SparseArray array = new SparseArray();
-        vg.dispatchSaveInstanceState(array);
+        mMockViewGroup.dispatchSaveInstanceState(array);
 
         assertTrue(array.size() > 0);
         assertNotNull(array.get(2));
 
         array = new SparseArray();
-        vg.dispatchRestoreInstanceState(array);
-        assertTrue(textView.isDispatchRestoreInstanceStateCalled);
+        mMockViewGroup.dispatchRestoreInstanceState(array);
+        assertTrue(mMockTextView.isDispatchRestoreInstanceStateCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchSetPressed() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        mMockViewGroup.addView(mMockTextView);
 
-        vg.dispatchSetPressed(true);
-        assertTrue(textView.isPressed());
+        mMockViewGroup.dispatchSetPressed(true);
+        assertTrue(mMockTextView.isPressed());
 
-        vg.dispatchSetPressed(false);
-        assertFalse(textView.isPressed());
+        mMockViewGroup.dispatchSetPressed(false);
+        assertFalse(mMockTextView.isPressed());
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchSetSelected() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        mMockViewGroup.addView(mMockTextView);
 
-        vg.dispatchSetSelected(true);
-        assertTrue(textView.isSelected());
+        mMockViewGroup.dispatchSetSelected(true);
+        assertTrue(mMockTextView.isSelected());
 
-        vg.dispatchSetSelected(false);
-        assertFalse(textView.isSelected());
+        mMockViewGroup.dispatchSetSelected(false);
+        assertFalse(mMockTextView.isSelected());
     }
 
-    @SuppressWarnings("unchecked")
+    @UiThreadTest
     @Test
     public void testDispatchThawSelfOnly() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setId(1);
+        mMockViewGroup.setId(1);
         SparseArray array = new SparseArray();
         array.put(1, BaseSavedState.EMPTY_STATE);
 
-        vg.dispatchThawSelfOnly(array);
-        assertTrue(vg.isOnRestoreInstanceStateCalled);
+        mMockViewGroup.dispatchThawSelfOnly(array);
+        assertTrue(mMockViewGroup.isOnRestoreInstanceStateCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchTouchEvent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-
         DisplayMetrics metrics = new DisplayMetrics();
         WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         Display d = wm.getDefaultDisplay();
         d.getMetrics(metrics);
         int screenWidth = metrics.widthPixels;
         int screenHeight = metrics.heightPixels;
-        vg.layout(0, 0, screenWidth, screenHeight);
-        vg.setLayoutParams(new ViewGroup.LayoutParams(screenWidth, screenHeight));
+        mMockViewGroup.layout(0, 0, screenWidth, screenHeight);
+        mMockViewGroup.setLayoutParams(new ViewGroup.LayoutParams(screenWidth, screenHeight));
 
-        MockTextView textView = new MockTextView(mContext);
         mMotionEvent = null;
-        textView.setOnTouchListener((View v, MotionEvent event) -> {
+        mMockTextView.setOnTouchListener((View v, MotionEvent event) -> {
             mMotionEvent = event;
             return true;
         });
 
-        textView.setVisibility(View.VISIBLE);
-        textView.setEnabled(true);
+        mMockTextView.setVisibility(View.VISIBLE);
+        mMockTextView.setEnabled(true);
 
-        vg.addView(textView, new LayoutParams(screenWidth, screenHeight));
+        mMockViewGroup.addView(mMockTextView, new LayoutParams(screenWidth, screenHeight));
 
-        vg.requestDisallowInterceptTouchEvent(true);
+        mMockViewGroup.requestDisallowInterceptTouchEvent(true);
         MotionEvent me = MotionEvent.obtain(SystemClock.uptimeMillis(),
                 SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN,
                 screenWidth / 2, screenHeight / 2, 0);
 
-        assertFalse(vg.dispatchTouchEvent(me));
+        assertFalse(mMockViewGroup.dispatchTouchEvent(me));
         assertNull(mMotionEvent);
 
-        textView.layout(0, 0, screenWidth, screenHeight);
-        assertTrue(vg.dispatchTouchEvent(me));
+        mMockTextView.layout(0, 0, screenWidth, screenHeight);
+        assertTrue(mMockViewGroup.dispatchTouchEvent(me));
         assertSame(me, mMotionEvent);
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchTrackballEvent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         MotionEvent me = MotionEvent.obtain(SystemClock.uptimeMillis(),
                 SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, 100, 100,
                 0);
-        assertFalse(vg.dispatchTrackballEvent(me));
+        assertFalse(mMockViewGroup.dispatchTrackballEvent(me));
 
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
-        textView.layout(1, 1, 100, 100);
-        vg.requestChildFocus(textView, null);
-        assertTrue(vg.dispatchTrackballEvent(me));
+        mMockViewGroup.addView(mMockTextView);
+        mMockTextView.layout(1, 1, 100, 100);
+        mMockViewGroup.requestChildFocus(mMockTextView, null);
+        assertTrue(mMockViewGroup.dispatchTrackballEvent(me));
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchUnhandledMove() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        assertFalse(vg.dispatchUnhandledMove(textView, View.FOCUS_DOWN));
+        assertFalse(mMockViewGroup.dispatchUnhandledMove(mMockTextView, View.FOCUS_DOWN));
 
-        vg.addView(textView);
-        textView.layout(1, 1, 100, 100);
-        vg.requestChildFocus(textView, null);
-        assertTrue(vg.dispatchUnhandledMove(textView, View.FOCUS_DOWN));
+        mMockViewGroup.addView(mMockTextView);
+        mMockTextView.layout(1, 1, 100, 100);
+        mMockViewGroup.requestChildFocus(mMockTextView, null);
+        assertTrue(mMockViewGroup.dispatchUnhandledMove(mMockTextView, View.FOCUS_DOWN));
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchWindowFocusChanged() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
+        mMockViewGroup.addView(mMockTextView);
+        mMockTextView.setPressed(true);
+        assertTrue(mMockTextView.isPressed());
 
-        vg.addView(textView);
-        textView.setPressed(true);
-        assertTrue(textView.isPressed());
-
-        vg.dispatchWindowFocusChanged(false);
-        assertFalse(textView.isPressed());
+        mMockViewGroup.dispatchWindowFocusChanged(false);
+        assertFalse(mMockTextView.isPressed());
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchWindowVisibilityChanged() {
         int expected = 10;
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
 
-        vg.addView(textView);
-        vg.dispatchWindowVisibilityChanged(expected);
-        assertEquals(expected, textView.visibility);
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.dispatchWindowVisibilityChanged(expected);
+        assertEquals(expected, mMockTextView.visibility);
     }
 
+    @UiThreadTest
     @Test
     public void testDrawableStateChanged() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        textView.setDuplicateParentStateEnabled(true);
+        mMockTextView.setDuplicateParentStateEnabled(true);
 
-        vg.addView(textView);
-        vg.setAddStatesFromChildren(false);
-        vg.drawableStateChanged();
-        assertTrue(textView.mIsRefreshDrawableStateCalled);
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.setAddStatesFromChildren(false);
+        mMockViewGroup.drawableStateChanged();
+        assertTrue(mMockTextView.mIsRefreshDrawableStateCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testDrawChild() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        mMockViewGroup.addView(mMockTextView);
 
         MockCanvas canvas = new MockCanvas();
-        textView.setBackgroundDrawable(new BitmapDrawable(Bitmap.createBitmap(100, 100,
+        mMockTextView.setBackgroundDrawable(new BitmapDrawable(Bitmap.createBitmap(100, 100,
                 Config.ALPHA_8)));
-        assertFalse(vg.drawChild(canvas, textView, 100));
+        assertFalse(mMockViewGroup.drawChild(canvas, mMockTextView, 100));
         // test whether child's draw method is called.
-        assertTrue(textView.isDrawCalled);
+        assertTrue(mMockTextView.isDrawCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testFindFocus() {
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertNull(mMockViewGroup.findFocus());
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        mMockViewGroup.setFocusable(true);
+        mMockViewGroup.setVisibility(View.VISIBLE);
+        mMockViewGroup.setFocusableInTouchMode(true);
+        assertTrue(mMockViewGroup.requestFocus(1, new Rect()));
 
-        assertNull(vg.findFocus());
-        vg.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        vg.setFocusable(true);
-        vg.setVisibility(View.VISIBLE);
-        vg.setFocusableInTouchMode(true);
-        assertTrue(vg.requestFocus(1, new Rect()));
-
-        assertSame(vg, vg.findFocus());
+        assertSame(mMockViewGroup, mMockViewGroup.findFocus());
     }
 
+    @UiThreadTest
     @Test
     public void testFitSystemWindows() {
         Rect rect = new Rect(1, 1, 100, 100);
-        MockViewGroup vg = new MockViewGroup(mContext);
-        assertFalse(vg.fitSystemWindows(rect));
+        assertFalse(mMockViewGroup.fitSystemWindows(rect));
 
-        vg = new MockViewGroup(mContext, null, 0);
+        mMockViewGroup = new MockViewGroup(mContext, null, 0);
         MockView mv = new MockView(mContext);
-        vg.addView(mv);
-        assertTrue(vg.fitSystemWindows(rect));
+        mMockViewGroup.addView(mv);
+        assertTrue(mMockViewGroup.fitSystemWindows(rect));
     }
 
     static class MockView extends ViewGroup {
@@ -735,80 +699,78 @@ public class ViewGroupTest implements CTSResult {
         }
     }
 
+    @UiThreadTest
     @Test
     public void testFocusableViewAvailable() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         MockView child = new MockView(mContext);
-        vg.addView(child);
+        mMockViewGroup.addView(child);
 
         child.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
-        child.focusableViewAvailable(vg);
+        child.focusableViewAvailable(mMockViewGroup);
 
-        assertTrue(vg.isFocusableViewAvailable);
+        assertTrue(mMockViewGroup.isFocusableViewAvailable);
     }
 
+    @UiThreadTest
     @Test
     public void testFocusSearch() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
         MockView child = new MockView(mContext);
-        vg.addView(child);
-        child.addView(textView);
-        assertNotNull(child.focusSearch(textView, 1));
-        assertSame(textView, child.focusSearch(textView, 1));
+        mMockViewGroup.addView(child);
+        child.addView(mMockTextView);
+        assertNotNull(child.focusSearch(mMockTextView, 1));
+        assertSame(mMockTextView, child.focusSearch(mMockTextView, 1));
     }
 
+    @UiThreadTest
     @Test
     public void testGatherTransparentRegion() {
         Region region = new Region();
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        textView.setAnimation(new AlphaAnimation(mContext, null));
-        textView.setVisibility(100);
-        vg.addView(textView);
-        assertEquals(1, vg.getChildCount());
+        mMockTextView.setAnimation(new AlphaAnimation(mContext, null));
+        mMockTextView.setVisibility(100);
+        mMockViewGroup.addView(mMockTextView);
+        assertEquals(1, mMockViewGroup.getChildCount());
 
-        assertTrue(vg.gatherTransparentRegion(region));
-        assertTrue(vg.gatherTransparentRegion(null));
+        assertTrue(mMockViewGroup.gatherTransparentRegion(region));
+        assertTrue(mMockViewGroup.gatherTransparentRegion(null));
     }
 
+    @UiThreadTest
     @Test
     public void testGenerateDefaultLayoutParams(){
-        MockViewGroup vg = new MockViewGroup(mContext);
-        LayoutParams lp = vg.generateDefaultLayoutParams();
+        LayoutParams lp = mMockViewGroup.generateDefaultLayoutParams();
 
         assertEquals(LayoutParams.WRAP_CONTENT, lp.width);
         assertEquals(LayoutParams.WRAP_CONTENT, lp.height);
     }
 
+    @UiThreadTest
     @Test
     public void testGenerateLayoutParamsWithParaAttributeSet() throws Exception {
-        MockViewGroup vg = new MockViewGroup(mContext);
         XmlResourceParser set = mContext.getResources().getLayout(
                 android.view.cts.R.layout.abslistview_layout);
         XmlUtils.beginDocument(set, "ViewGroup_Layout");
-        LayoutParams lp = vg.generateLayoutParams(set);
+        LayoutParams lp = mMockViewGroup.generateLayoutParams(set);
         assertNotNull(lp);
         assertEquals(25, lp.height);
         assertEquals(25, lp.width);
     }
 
+    @UiThreadTest
     @Test
     public void testGenerateLayoutParams() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         LayoutParams p = new LayoutParams(LayoutParams.WRAP_CONTENT,
                 LayoutParams.MATCH_PARENT);
-        LayoutParams generatedParams = vg.generateLayoutParams(p);
+        LayoutParams generatedParams = mMockViewGroup.generateLayoutParams(p);
         assertEquals(generatedParams.getClass(), p.getClass());
         assertEquals(p.width, generatedParams.width);
         assertEquals(p.height, generatedParams.height);
     }
 
+    @UiThreadTest
     @Test
     public void testGetChildDrawingOrder() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        assertEquals(1, vg.getChildDrawingOrder(0, 1));
-        assertEquals(2, vg.getChildDrawingOrder(0, 2));
+        assertEquals(1, mMockViewGroup.getChildDrawingOrder(0, 1));
+        assertEquals(2, mMockViewGroup.getChildDrawingOrder(0, 2));
     }
 
     @Test
@@ -825,56 +787,52 @@ public class ViewGroupTest implements CTSResult {
                 ViewGroup.getChildMeasureSpec(spec, padding, childDimension));
     }
 
+    @UiThreadTest
     @Test
     public void testGetChildStaticTransformation() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        assertFalse(vg.getChildStaticTransformation(null, null));
+        assertFalse(mMockViewGroup.getChildStaticTransformation(null, null));
     }
 
+    @UiThreadTest
     @Test
     public void testGetChildVisibleRect() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-
-        textView.layout(1, 1, 100, 100);
+        mMockTextView.layout(1, 1, 100, 100);
         Rect rect = new Rect(1, 1, 50, 50);
         Point p = new Point();
-        assertFalse(vg.getChildVisibleRect(textView, rect, p));
+        assertFalse(mMockViewGroup.getChildVisibleRect(mMockTextView, rect, p));
 
-        textView.layout(0, 0, 0, 0);
-        vg.layout(20, 20, 60, 60);
+        mMockTextView.layout(0, 0, 0, 0);
+        mMockViewGroup.layout(20, 20, 60, 60);
         rect = new Rect(10, 10, 40, 40);
         p = new Point();
-        assertTrue(vg.getChildVisibleRect(textView, rect, p));
+        assertTrue(mMockViewGroup.getChildVisibleRect(mMockTextView, rect, p));
     }
 
+    @UiThreadTest
     @Test
     public void testGetDescendantFocusability() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         final int FLAG_MASK_FOCUSABILITY = 0x60000;
-        assertFalse((vg.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
+        assertFalse((mMockViewGroup.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
 
-        vg.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        assertFalse((vg.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        assertFalse((mMockViewGroup.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
     }
 
+    @UiThreadTest
     @Test
     public void testGetLayoutAnimation() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-
-        assertNull(vg.getLayoutAnimation());
+        assertNull(mMockViewGroup.getLayoutAnimation());
         RotateAnimation animation = new RotateAnimation(0.1f, 0.1f);
         LayoutAnimationController la = new LayoutAnimationController(animation);
-        vg.setLayoutAnimation(la);
-        assertTrue(vg.canAnimate());
-        assertSame(la, vg.getLayoutAnimation());
+        mMockViewGroup.setLayoutAnimation(la);
+        assertTrue(mMockViewGroup.canAnimate());
+        assertSame(la, mMockViewGroup.getLayoutAnimation());
     }
 
+    @UiThreadTest
     @Test
     public void testGetLayoutAnimationListener() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-
-        assertNull(vg.getLayoutAnimationListener());
+        assertNull(mMockViewGroup.getLayoutAnimationListener());
 
         AnimationListener al = new AnimationListener() {
             @Override
@@ -889,53 +847,49 @@ public class ViewGroupTest implements CTSResult {
             public void onAnimationStart(Animation animation) {
             }
         };
-        vg.setLayoutAnimationListener(al);
-        assertSame(al, vg.getLayoutAnimationListener());
+        mMockViewGroup.setLayoutAnimationListener(al);
+        assertSame(al, mMockViewGroup.getLayoutAnimationListener());
     }
 
+    @UiThreadTest
     @Test
     public void testGetPersistentDrawingCache() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         final int mPersistentDrawingCache1 = 2;
         final int mPersistentDrawingCache2 = 3;
-        assertEquals(mPersistentDrawingCache1, vg.getPersistentDrawingCache());
+        assertEquals(mPersistentDrawingCache1, mMockViewGroup.getPersistentDrawingCache());
 
-        vg.setPersistentDrawingCache(mPersistentDrawingCache2);
-        assertEquals(mPersistentDrawingCache2, vg.getPersistentDrawingCache());
+        mMockViewGroup.setPersistentDrawingCache(mPersistentDrawingCache2);
+        assertEquals(mPersistentDrawingCache2, mMockViewGroup.getPersistentDrawingCache());
     }
 
+    @UiThreadTest
     @Test
     public void testHasFocus() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        assertFalse(vg.hasFocus());
+        assertFalse(mMockViewGroup.hasFocus());
 
-        TextView textView = new TextView(mContext);
+        mMockViewGroup.addView(mTextView);
+        mMockViewGroup.requestChildFocus(mTextView, null);
 
-        vg.addView(textView);
-        vg.requestChildFocus(textView, null);
-
-        assertTrue(vg.hasFocus());
+        assertTrue(mMockViewGroup.hasFocus());
     }
 
+    @UiThreadTest
     @Test
     public void testHasFocusable() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        assertFalse(vg.hasFocusable());
+        assertFalse(mMockViewGroup.hasFocusable());
 
-        vg.setVisibility(View.VISIBLE);
-        vg.setFocusable(true);
-        assertTrue(vg.hasFocusable());
+        mMockViewGroup.setVisibility(View.VISIBLE);
+        mMockViewGroup.setFocusable(true);
+        assertTrue(mMockViewGroup.hasFocusable());
     }
 
+    @UiThreadTest
     @Test
     public void testIndexOfChild() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        assertEquals(-1, mMockViewGroup.indexOfChild(mTextView));
 
-        assertEquals(-1, vg.indexOfChild(textView));
-
-        vg.addView(textView);
-        assertEquals(0, vg.indexOfChild(textView));
+        mMockViewGroup.addView(mTextView);
+        assertEquals(0, mMockViewGroup.indexOfChild(mTextView));
     }
 
     @LargeTest
@@ -964,80 +918,78 @@ public class ViewGroupTest implements CTSResult {
         }
     }
 
+    @UiThreadTest
     @Test
     public void testIsAlwaysDrawnWithCacheEnabled() {
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertTrue(mMockViewGroup.isAlwaysDrawnWithCacheEnabled());
 
-        assertTrue(vg.isAlwaysDrawnWithCacheEnabled());
-
-        vg.setAlwaysDrawnWithCacheEnabled(false);
-        assertFalse(vg.isAlwaysDrawnWithCacheEnabled());
-        vg.setAlwaysDrawnWithCacheEnabled(true);
-        assertTrue(vg.isAlwaysDrawnWithCacheEnabled());
+        mMockViewGroup.setAlwaysDrawnWithCacheEnabled(false);
+        assertFalse(mMockViewGroup.isAlwaysDrawnWithCacheEnabled());
+        mMockViewGroup.setAlwaysDrawnWithCacheEnabled(true);
+        assertTrue(mMockViewGroup.isAlwaysDrawnWithCacheEnabled());
     }
 
+    @UiThreadTest
     @Test
     public void testIsAnimationCacheEnabled() {
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertTrue(mMockViewGroup.isAnimationCacheEnabled());
 
-        assertTrue(vg.isAnimationCacheEnabled());
-
-        vg.setAnimationCacheEnabled(false);
-        assertFalse(vg.isAnimationCacheEnabled());
-        vg.setAnimationCacheEnabled(true);
-        assertTrue(vg.isAnimationCacheEnabled());
+        mMockViewGroup.setAnimationCacheEnabled(false);
+        assertFalse(mMockViewGroup.isAnimationCacheEnabled());
+        mMockViewGroup.setAnimationCacheEnabled(true);
+        assertTrue(mMockViewGroup.isAnimationCacheEnabled());
     }
 
+    @UiThreadTest
     @Test
     public void testIsChildrenDrawnWithCacheEnabled() {
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertFalse(mMockViewGroup.isChildrenDrawnWithCacheEnabled());
 
-        assertFalse(vg.isChildrenDrawnWithCacheEnabled());
-
-        vg.setChildrenDrawnWithCacheEnabled(true);
-        assertTrue(vg.isChildrenDrawnWithCacheEnabled());
+        mMockViewGroup.setChildrenDrawnWithCacheEnabled(true);
+        assertTrue(mMockViewGroup.isChildrenDrawnWithCacheEnabled());
     }
 
+    @UiThreadTest
     @Test
     public void testMeasureChild() {
         final int width = 100;
         final int height = 200;
-        MockViewGroup vg = new MockViewGroup(mContext);
         MockView child = new MockView(mContext);
         child.setLayoutParams(new LayoutParams(width, height));
         child.forceLayout();
-        vg.addView(child);
+        mMockViewGroup.addView(child);
 
         final int parentWidthMeasureSpec = 1;
         final int parentHeightMeasureSpec = 2;
-        vg.measureChild(child, parentWidthMeasureSpec, parentHeightMeasureSpec);
+        mMockViewGroup.measureChild(child, parentWidthMeasureSpec, parentHeightMeasureSpec);
         assertEquals(ViewGroup.getChildMeasureSpec(parentWidthMeasureSpec, 0, width),
                 child.mWidthMeasureSpec);
         assertEquals(ViewGroup.getChildMeasureSpec(parentHeightMeasureSpec, 0, height),
                 child.mHeightMeasureSpec);
     }
 
+    @UiThreadTest
     @Test
     public void testMeasureChildren() {
         final int widthMeasureSpec = 100;
         final int heightMeasureSpec = 200;
-        MockViewGroup vg = new MockViewGroup(mContext);
         MockTextView textView1 = new MockTextView(mContext);
 
-        vg.addView(textView1);
-        vg.measureChildCalledTime = 0;
-        vg.measureChildren(widthMeasureSpec, heightMeasureSpec);
-        assertEquals(1, vg.measureChildCalledTime);
+        mMockViewGroup.addView(textView1);
+        mMockViewGroup.measureChildCalledTime = 0;
+        mMockViewGroup.measureChildren(widthMeasureSpec, heightMeasureSpec);
+        assertEquals(1, mMockViewGroup.measureChildCalledTime);
 
         MockTextView textView2 = new MockTextView(mContext);
         textView2.setVisibility(View.GONE);
-        vg.addView(textView2);
+        mMockViewGroup.addView(textView2);
 
-        vg.measureChildCalledTime = 0;
-        vg.measureChildren(widthMeasureSpec, heightMeasureSpec);
-        assertEquals(1, vg.measureChildCalledTime);
+        mMockViewGroup.measureChildCalledTime = 0;
+        mMockViewGroup.measureChildren(widthMeasureSpec, heightMeasureSpec);
+        assertEquals(1, mMockViewGroup.measureChildCalledTime);
     }
 
+    @UiThreadTest
     @Test
     public void testMeasureChildWithMargins() {
         final int width = 10;
@@ -1046,73 +998,70 @@ public class ViewGroupTest implements CTSResult {
         final int widthUsed = 2;
         final int parentHeightMeasureSpec = 3;
         final int heightUsed = 4;
-        MockViewGroup vg = new MockViewGroup(mContext);
         MockView child = new MockView(mContext);
 
-        vg.addView(child);
+        mMockViewGroup.addView(child);
         child.setLayoutParams(new ViewGroup.LayoutParams(width, height));
         try {
-            vg.measureChildWithMargins(child, parentWidthMeasureSpec, widthUsed,
+            mMockViewGroup.measureChildWithMargins(child, parentWidthMeasureSpec, widthUsed,
                     parentHeightMeasureSpec, heightUsed);
             fail("measureChildWithMargins should throw out class cast exception");
         } catch (RuntimeException e) {
         }
         child.setLayoutParams(new ViewGroup.MarginLayoutParams(width, height));
 
-        vg.measureChildWithMargins(child, parentWidthMeasureSpec, widthUsed, parentHeightMeasureSpec,
-                heightUsed);
+        mMockViewGroup.measureChildWithMargins(child, parentWidthMeasureSpec, widthUsed,
+                parentHeightMeasureSpec, heightUsed);
         assertEquals(ViewGroup.getChildMeasureSpec(parentWidthMeasureSpec, parentHeightMeasureSpec,
                 width), child.mWidthMeasureSpec);
         assertEquals(ViewGroup.getChildMeasureSpec(widthUsed, heightUsed, height),
                 child.mHeightMeasureSpec);
     }
 
+    @UiThreadTest
     @Test
     public void testOffsetDescendantRectToMyCoords() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-
         try {
-            vg.offsetDescendantRectToMyCoords(textView, new Rect());
+            mMockViewGroup.offsetDescendantRectToMyCoords(mMockTextView, new Rect());
             fail("offsetDescendantRectToMyCoords should throw out "
                     + "IllegalArgumentException");
         } catch (RuntimeException e) {
             // expected
         }
-        vg.addView(textView);
-        textView.layout(1, 2, 3, 4);
+        mMockViewGroup.addView(mMockTextView);
+        mMockTextView.layout(1, 2, 3, 4);
         Rect rect = new Rect();
-        vg.offsetDescendantRectToMyCoords(textView, rect);
+        mMockViewGroup.offsetDescendantRectToMyCoords(mMockTextView, rect);
         assertEquals(2, rect.bottom);
         assertEquals(2, rect.top);
         assertEquals(1, rect.left);
         assertEquals(1, rect.right);
     }
 
+    @UiThreadTest
     @Test
     public void testOffsetRectIntoDescendantCoords() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.layout(10, 20, 30, 40);
-        MockTextView textView = new MockTextView(mContext);
+        mMockViewGroup.layout(10, 20, 30, 40);
 
         try {
-            vg.offsetRectIntoDescendantCoords(textView, new Rect());
+            mMockViewGroup.offsetRectIntoDescendantCoords(mMockTextView, new Rect());
             fail("offsetRectIntoDescendantCoords should throw out "
                     + "IllegalArgumentException");
         } catch (RuntimeException e) {
             // expected
         }
-        textView.layout(1, 2, 3, 4);
-        vg.addView(textView);
+        mMockTextView.layout(1, 2, 3, 4);
+        mMockViewGroup.addView(mMockTextView);
 
         Rect rect = new Rect(5, 6, 7, 8);
-        vg.offsetRectIntoDescendantCoords(textView, rect);
+        mMockViewGroup.offsetRectIntoDescendantCoords(mMockTextView, rect);
         assertEquals(6, rect.bottom);
         assertEquals(4, rect.top);
         assertEquals(4, rect.left);
         assertEquals(6, rect.right);
     }
 
+    @UiThreadTest
     @Test
     public void testOnAnimationEnd() {
         // this function is a call back function it should be tested in ViewGroup#drawChild.
@@ -1144,6 +1093,7 @@ public class ViewGroupTest implements CTSResult {
         }
     }
 
+    @UiThreadTest
     @Test
     public void testOnAnimationStart() {
         // This is a call back method. It should be tested in ViewGroup#drawChild.
@@ -1165,71 +1115,68 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(child.isOnAnimationStartCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testOnCreateDrawableState() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         // Call back function. Called in View#getDrawableState()
-        int[] data = vg.getDrawableState();
-        assertTrue(vg.isOnCreateDrawableStateCalled);
+        int[] data = mMockViewGroup.getDrawableState();
+        assertTrue(mMockViewGroup.isOnCreateDrawableStateCalled);
         assertEquals(1, data.length);
     }
 
+    @UiThreadTest
     @Test
     public void testOnInterceptTouchEvent() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         MotionEvent me = MotionEvent.obtain(SystemClock.uptimeMillis(),
-                SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, 100, 100,
-                0);
+                SystemClock.uptimeMillis(), MotionEvent.ACTION_DOWN, 100, 100, 0);
 
-        assertFalse(vg.dispatchTouchEvent(me));
-        assertTrue(vg.isOnInterceptTouchEventCalled);
+        assertFalse(mMockViewGroup.dispatchTouchEvent(me));
+        assertTrue(mMockViewGroup.isOnInterceptTouchEventCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testOnLayout() {
         final int left = 1;
         final int top = 2;
         final int right = 100;
         final int bottom = 200;
-        MockViewGroup mv = new MockViewGroup(mContext);
-        mv.layout(left, top, right, bottom);
-        assertEquals(left, mv.left);
-        assertEquals(top, mv.top);
-        assertEquals(right, mv.right);
-        assertEquals(bottom, mv.bottom);
+        mMockViewGroup.layout(left, top, right, bottom);
+        assertEquals(left, mMockViewGroup.left);
+        assertEquals(top, mMockViewGroup.top);
+        assertEquals(right, mMockViewGroup.right);
+        assertEquals(bottom, mMockViewGroup.bottom);
     }
 
+    @UiThreadTest
     @Test
     public void testOnRequestFocusInDescendants() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-
-        vg.requestFocus(View.FOCUS_DOWN, new Rect());
-        assertTrue(vg.isOnRequestFocusInDescendantsCalled);
+        mMockViewGroup.requestFocus(View.FOCUS_DOWN, new Rect());
+        assertTrue(mMockViewGroup.isOnRequestFocusInDescendantsCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveAllViews() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        assertEquals(0, vg.getChildCount());
+        assertEquals(0, mMockViewGroup.getChildCount());
 
-        vg.addView(textView);
-        assertEquals(1, vg.getChildCount());
+        mMockViewGroup.addView(mMockTextView);
+        assertEquals(1, mMockViewGroup.getChildCount());
 
-        vg.removeAllViews();
-        assertEquals(0, vg.getChildCount());
-        assertNull(textView.getParent());
+        mMockViewGroup.removeAllViews();
+        assertEquals(0, mMockViewGroup.getChildCount());
+        assertNull(mMockTextView.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveAllViewsInLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
         MockViewGroup child = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
 
         assertEquals(0, parent.getChildCount());
 
-        child.addView(textView);
+        child.addView(mMockTextView);
         parent.addView(child);
         assertEquals(1, parent.getChildCount());
 
@@ -1237,9 +1184,10 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(0, parent.getChildCount());
         assertEquals(1, child.getChildCount());
         assertNull(child.getParent());
-        assertSame(child, textView.getParent());
+        assertSame(child, mMockTextView.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveDetachedView() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1259,6 +1207,7 @@ public class ViewGroupTest implements CTSResult {
         inOrder.verify(listener, times(1)).onChildViewRemoved(parent, child1);
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveView() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1274,6 +1223,7 @@ public class ViewGroupTest implements CTSResult {
         assertNull(child.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveViewAt() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1297,6 +1247,7 @@ public class ViewGroupTest implements CTSResult {
         assertNull(child.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveViewInLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1312,6 +1263,7 @@ public class ViewGroupTest implements CTSResult {
         assertNull(child.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveViews() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1348,6 +1300,7 @@ public class ViewGroupTest implements CTSResult {
         assertNull(child2.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRemoveViewsInLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1384,45 +1337,43 @@ public class ViewGroupTest implements CTSResult {
         assertNull(child2.getParent());
     }
 
+    @UiThreadTest
     @Test
     public void testRequestChildFocus() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        TextView textView = new TextView(mContext);
+        mMockViewGroup.addView(mTextView);
+        mMockViewGroup.requestChildFocus(mTextView, null);
 
-        vg.addView(textView);
-        vg.requestChildFocus(textView, null);
+        assertNotNull(mMockViewGroup.getFocusedChild());
 
-        assertNotNull(vg.getFocusedChild());
-
-        vg.clearChildFocus(textView);
-        assertNull(vg.getFocusedChild());
+        mMockViewGroup.clearChildFocus(mTextView);
+        assertNull(mMockViewGroup.getFocusedChild());
     }
 
+    @UiThreadTest
     @Test
     public void testRequestChildRectangleOnScreen() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        assertFalse(vg.requestChildRectangleOnScreen(null, null, false));
+        assertFalse(mMockViewGroup.requestChildRectangleOnScreen(null, null, false));
     }
 
+    @UiThreadTest
     @Test
     public void testRequestDisallowInterceptTouchEvent() {
-        MockViewGroup parent = new MockViewGroup(mContext);
         MockView child = new MockView(mContext);
 
-        parent.addView(child);
+        mMockViewGroup.addView(child);
         child.requestDisallowInterceptTouchEvent(true);
         child.requestDisallowInterceptTouchEvent(false);
-        assertTrue(parent.isRequestDisallowInterceptTouchEventCalled);
+        assertTrue(mMockViewGroup.isRequestDisallowInterceptTouchEventCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testRequestFocus() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-
-        vg.requestFocus(View.FOCUS_DOWN, new Rect());
-        assertTrue(vg.isOnRequestFocusInDescendantsCalled);
+        mMockViewGroup.requestFocus(View.FOCUS_DOWN, new Rect());
+        assertTrue(mMockViewGroup.isOnRequestFocusInDescendantsCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testRequestTransparentRegion() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1434,66 +1385,63 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(parent.isRequestTransparentRegionCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testScheduleLayoutAnimation() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         Animation animation = new AlphaAnimation(mContext, null);
 
         LayoutAnimationController al = spy(new LayoutAnimationController(animation));
-        vg.setLayoutAnimation(al);
-        vg.scheduleLayoutAnimation();
-        vg.dispatchDraw(new Canvas());
+        mMockViewGroup.setLayoutAnimation(al);
+        mMockViewGroup.scheduleLayoutAnimation();
+        mMockViewGroup.dispatchDraw(new Canvas());
         verify(al, times(1)).start();
     }
 
+    @UiThreadTest
     @Test
     public void testSetAddStatesFromChildren() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setAddStatesFromChildren(true);
-        assertTrue(vg.addStatesFromChildren());
+        mMockViewGroup.setAddStatesFromChildren(true);
+        assertTrue(mMockViewGroup.addStatesFromChildren());
 
-        vg.setAddStatesFromChildren(false);
-        assertFalse(vg.addStatesFromChildren());
+        mMockViewGroup.setAddStatesFromChildren(false);
+        assertFalse(mMockViewGroup.addStatesFromChildren());
     }
 
+    @UiThreadTest
     @Test
     public void testSetChildrenDrawingCacheEnabled() {
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertTrue(mMockViewGroup.isAnimationCacheEnabled());
 
-        assertTrue(vg.isAnimationCacheEnabled());
+        mMockViewGroup.setAnimationCacheEnabled(false);
+        assertFalse(mMockViewGroup.isAnimationCacheEnabled());
 
-        vg.setAnimationCacheEnabled(false);
-        assertFalse(vg.isAnimationCacheEnabled());
-
-        vg.setAnimationCacheEnabled(true);
-        assertTrue(vg.isAnimationCacheEnabled());
+        mMockViewGroup.setAnimationCacheEnabled(true);
+        assertTrue(mMockViewGroup.isAnimationCacheEnabled());
     }
 
+    @UiThreadTest
     @Test
     public void testSetChildrenDrawnWithCacheEnabled() {
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertFalse(mMockViewGroup.isChildrenDrawnWithCacheEnabled());
 
-        assertFalse(vg.isChildrenDrawnWithCacheEnabled());
+        mMockViewGroup.setChildrenDrawnWithCacheEnabled(true);
+        assertTrue(mMockViewGroup.isChildrenDrawnWithCacheEnabled());
 
-        vg.setChildrenDrawnWithCacheEnabled(true);
-        assertTrue(vg.isChildrenDrawnWithCacheEnabled());
-
-        vg.setChildrenDrawnWithCacheEnabled(false);
-        assertFalse(vg.isChildrenDrawnWithCacheEnabled());
+        mMockViewGroup.setChildrenDrawnWithCacheEnabled(false);
+        assertFalse(mMockViewGroup.isChildrenDrawnWithCacheEnabled());
     }
 
+    @UiThreadTest
     @Test
     public void testSetClipChildren() {
         Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
-        MockViewGroup vg = new MockViewGroup(mContext);
-        MockTextView textView = new MockTextView(mContext);
-        textView.layout(1, 2, 30, 40);
-        vg.layout(1, 1, 100, 200);
-        vg.setClipChildren(true);
+        mMockTextView.layout(1, 2, 30, 40);
+        mMockViewGroup.layout(1, 1, 100, 200);
+        mMockViewGroup.setClipChildren(true);
 
         MockCanvas canvas = new MockCanvas(bitmap);
-        vg.drawChild(canvas, textView, 100);
+        mMockViewGroup.drawChild(canvas, mMockTextView, 100);
         Rect rect = canvas.getClipBounds();
         assertEquals(0, rect.top);
         assertEquals(100, rect.bottom);
@@ -1540,23 +1488,23 @@ public class ViewGroupTest implements CTSResult {
         }
     }
 
+    @UiThreadTest
     @Test
     public void testSetClipToPadding() {
         final int frameLeft = 1;
         final int frameTop = 2;
         final int frameRight = 100;
         final int frameBottom = 200;
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.layout(frameLeft, frameTop, frameRight, frameBottom);
+        mMockViewGroup.layout(frameLeft, frameTop, frameRight, frameBottom);
 
-        vg.setClipToPadding(true);
+        mMockViewGroup.setClipToPadding(true);
         MockCanvas canvas = new MockCanvas();
         final int paddingLeft = 10;
         final int paddingTop = 20;
         final int paddingRight = 100;
         final int paddingBottom = 200;
-        vg.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-        vg.dispatchDraw(canvas);
+        mMockViewGroup.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+        mMockViewGroup.dispatchDraw(canvas);
         //check that the clip region does not contain the padding area
         assertTrue(canvas.mIsSaveCalled);
         assertEquals(10, canvas.mLeft);
@@ -1564,9 +1512,9 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(-frameLeft, canvas.mRight);
         assertEquals(-frameTop, canvas.mBottom);
 
-        vg.setClipToPadding(false);
+        mMockViewGroup.setClipToPadding(false);
         canvas = new MockCanvas();
-        vg.dispatchDraw(canvas);
+        mMockViewGroup.dispatchDraw(canvas);
         assertFalse(canvas.mIsSaveCalled);
         assertEquals(0, canvas.mLeft);
         assertEquals(0, canvas.mTop);
@@ -1574,21 +1522,22 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(0, canvas.mBottom);
     }
 
+    @UiThreadTest
     @Test
     public void testSetDescendantFocusability() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         final int FLAG_MASK_FOCUSABILITY = 0x60000;
-        assertFalse((vg.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
+        assertFalse((mMockViewGroup.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
 
-        vg.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        assertFalse((vg.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        assertFalse((mMockViewGroup.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
 
-        vg.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
-        assertFalse((vg.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
-        assertFalse((vg.getDescendantFocusability() &
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+        assertFalse((mMockViewGroup.getDescendantFocusability() & FLAG_MASK_FOCUSABILITY) == 0);
+        assertFalse((mMockViewGroup.getDescendantFocusability() &
                 ViewGroup.FOCUS_BEFORE_DESCENDANTS) == 0);
     }
 
+    @UiThreadTest
     @Test
     public void testSetOnHierarchyChangeListener() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1604,6 +1553,7 @@ public class ViewGroupTest implements CTSResult {
         inOrder.verify(listener, times(1)).onChildViewRemoved(parent, child);
     }
 
+    @UiThreadTest
     @Test
     public void testSetPadding() {
         final int left = 1;
@@ -1611,39 +1561,38 @@ public class ViewGroupTest implements CTSResult {
         final int right = 3;
         final int bottom = 4;
 
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertEquals(0, mMockViewGroup.getPaddingBottom());
+        assertEquals(0, mMockViewGroup.getPaddingTop());
+        assertEquals(0, mMockViewGroup.getPaddingLeft());
+        assertEquals(0, mMockViewGroup.getPaddingRight());
+        assertEquals(0, mMockViewGroup.getPaddingStart());
+        assertEquals(0, mMockViewGroup.getPaddingEnd());
 
-        assertEquals(0, vg.getPaddingBottom());
-        assertEquals(0, vg.getPaddingTop());
-        assertEquals(0, vg.getPaddingLeft());
-        assertEquals(0, vg.getPaddingRight());
-        assertEquals(0, vg.getPaddingStart());
-        assertEquals(0, vg.getPaddingEnd());
+        mMockViewGroup.setPadding(left, top, right, bottom);
 
-        vg.setPadding(left, top, right, bottom);
+        assertEquals(bottom, mMockViewGroup.getPaddingBottom());
+        assertEquals(top, mMockViewGroup.getPaddingTop());
+        assertEquals(left, mMockViewGroup.getPaddingLeft());
+        assertEquals(right, mMockViewGroup.getPaddingRight());
 
-        assertEquals(bottom, vg.getPaddingBottom());
-        assertEquals(top, vg.getPaddingTop());
-        assertEquals(left, vg.getPaddingLeft());
-        assertEquals(right, vg.getPaddingRight());
-
-        assertEquals(left, vg.getPaddingStart());
-        assertEquals(right, vg.getPaddingEnd());
-        assertEquals(false, vg.isPaddingRelative());
+        assertEquals(left, mMockViewGroup.getPaddingStart());
+        assertEquals(right, mMockViewGroup.getPaddingEnd());
+        assertEquals(false, mMockViewGroup.isPaddingRelative());
 
         // force RTL direction
-        vg.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        mMockViewGroup.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
 
-        assertEquals(bottom, vg.getPaddingBottom());
-        assertEquals(top, vg.getPaddingTop());
-        assertEquals(left, vg.getPaddingLeft());
-        assertEquals(right, vg.getPaddingRight());
+        assertEquals(bottom, mMockViewGroup.getPaddingBottom());
+        assertEquals(top, mMockViewGroup.getPaddingTop());
+        assertEquals(left, mMockViewGroup.getPaddingLeft());
+        assertEquals(right, mMockViewGroup.getPaddingRight());
 
-        assertEquals(right, vg.getPaddingStart());
-        assertEquals(left, vg.getPaddingEnd());
-        assertEquals(false, vg.isPaddingRelative());
+        assertEquals(right, mMockViewGroup.getPaddingStart());
+        assertEquals(left, mMockViewGroup.getPaddingEnd());
+        assertEquals(false, mMockViewGroup.isPaddingRelative());
     }
 
+    @UiThreadTest
     @Test
     public void testSetPaddingRelative() {
         final int start = 1;
@@ -1651,69 +1600,68 @@ public class ViewGroupTest implements CTSResult {
         final int end = 3;
         final int bottom = 4;
 
-        MockViewGroup vg = new MockViewGroup(mContext);
+        assertEquals(0, mMockViewGroup.getPaddingBottom());
+        assertEquals(0, mMockViewGroup.getPaddingTop());
+        assertEquals(0, mMockViewGroup.getPaddingLeft());
+        assertEquals(0, mMockViewGroup.getPaddingRight());
+        assertEquals(0, mMockViewGroup.getPaddingStart());
+        assertEquals(0, mMockViewGroup.getPaddingEnd());
 
-        assertEquals(0, vg.getPaddingBottom());
-        assertEquals(0, vg.getPaddingTop());
-        assertEquals(0, vg.getPaddingLeft());
-        assertEquals(0, vg.getPaddingRight());
-        assertEquals(0, vg.getPaddingStart());
-        assertEquals(0, vg.getPaddingEnd());
+        mMockViewGroup.setPaddingRelative(start, top, end, bottom);
 
-        vg.setPaddingRelative(start, top, end, bottom);
+        assertEquals(bottom, mMockViewGroup.getPaddingBottom());
+        assertEquals(top, mMockViewGroup.getPaddingTop());
+        assertEquals(start, mMockViewGroup.getPaddingLeft());
+        assertEquals(end, mMockViewGroup.getPaddingRight());
 
-        assertEquals(bottom, vg.getPaddingBottom());
-        assertEquals(top, vg.getPaddingTop());
-        assertEquals(start, vg.getPaddingLeft());
-        assertEquals(end, vg.getPaddingRight());
-
-        assertEquals(start, vg.getPaddingStart());
-        assertEquals(end, vg.getPaddingEnd());
-        assertEquals(true, vg.isPaddingRelative());
+        assertEquals(start, mMockViewGroup.getPaddingStart());
+        assertEquals(end, mMockViewGroup.getPaddingEnd());
+        assertEquals(true, mMockViewGroup.isPaddingRelative());
 
         // force RTL direction after setting relative padding
-        vg.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        mMockViewGroup.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
 
-        assertEquals(bottom, vg.getPaddingBottom());
-        assertEquals(top, vg.getPaddingTop());
-        assertEquals(end, vg.getPaddingLeft());
-        assertEquals(start, vg.getPaddingRight());
+        assertEquals(bottom, mMockViewGroup.getPaddingBottom());
+        assertEquals(top, mMockViewGroup.getPaddingTop());
+        assertEquals(end, mMockViewGroup.getPaddingLeft());
+        assertEquals(start, mMockViewGroup.getPaddingRight());
 
-        assertEquals(start, vg.getPaddingStart());
-        assertEquals(end, vg.getPaddingEnd());
-        assertEquals(true, vg.isPaddingRelative());
+        assertEquals(start, mMockViewGroup.getPaddingStart());
+        assertEquals(end, mMockViewGroup.getPaddingEnd());
+        assertEquals(true, mMockViewGroup.isPaddingRelative());
 
         // force RTL direction before setting relative padding
-        vg = new MockViewGroup(mContext);
-        vg.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        mMockViewGroup = new MockViewGroup(mContext);
+        mMockViewGroup.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
 
-        assertEquals(0, vg.getPaddingBottom());
-        assertEquals(0, vg.getPaddingTop());
-        assertEquals(0, vg.getPaddingLeft());
-        assertEquals(0, vg.getPaddingRight());
-        assertEquals(0, vg.getPaddingStart());
-        assertEquals(0, vg.getPaddingEnd());
+        assertEquals(0, mMockViewGroup.getPaddingBottom());
+        assertEquals(0, mMockViewGroup.getPaddingTop());
+        assertEquals(0, mMockViewGroup.getPaddingLeft());
+        assertEquals(0, mMockViewGroup.getPaddingRight());
+        assertEquals(0, mMockViewGroup.getPaddingStart());
+        assertEquals(0, mMockViewGroup.getPaddingEnd());
 
-        vg.setPaddingRelative(start, top, end, bottom);
+        mMockViewGroup.setPaddingRelative(start, top, end, bottom);
 
-        assertEquals(bottom, vg.getPaddingBottom());
-        assertEquals(top, vg.getPaddingTop());
-        assertEquals(end, vg.getPaddingLeft());
-        assertEquals(start, vg.getPaddingRight());
+        assertEquals(bottom, mMockViewGroup.getPaddingBottom());
+        assertEquals(top, mMockViewGroup.getPaddingTop());
+        assertEquals(end, mMockViewGroup.getPaddingLeft());
+        assertEquals(start, mMockViewGroup.getPaddingRight());
 
-        assertEquals(start, vg.getPaddingStart());
-        assertEquals(end, vg.getPaddingEnd());
-        assertEquals(true, vg.isPaddingRelative());
+        assertEquals(start, mMockViewGroup.getPaddingStart());
+        assertEquals(end, mMockViewGroup.getPaddingEnd());
+        assertEquals(true, mMockViewGroup.isPaddingRelative());
     }
 
+    @UiThreadTest
     @Test
     public void testSetPersistentDrawingCache() {
-        MockViewGroup vg = new MockViewGroup(mContext);
-        vg.setPersistentDrawingCache(1);
-        assertEquals(1 & ViewGroup.PERSISTENT_ALL_CACHES, vg
+        mMockViewGroup.setPersistentDrawingCache(1);
+        assertEquals(1 & ViewGroup.PERSISTENT_ALL_CACHES, mMockViewGroup
                 .getPersistentDrawingCache());
     }
 
+    @UiThreadTest
     @Test
     public void testShowContextMenuForChild() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1724,6 +1672,7 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(parent.isShowContextMenuForChildCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testShowContextMenuForChild_WithXYCoords() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1734,19 +1683,20 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(parent.isShowContextMenuForChildCalledWithXYCoords);
     }
 
+    @UiThreadTest
     @Test
     public void testStartLayoutAnimation() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         RotateAnimation animation = new RotateAnimation(0.1f, 0.1f);
         LayoutAnimationController la = new LayoutAnimationController(animation);
-        vg.setLayoutAnimation(la);
+        mMockViewGroup.setLayoutAnimation(la);
 
-        vg.layout(1, 1, 100, 100);
-        assertFalse(vg.isLayoutRequested());
-        vg.startLayoutAnimation();
-        assertTrue(vg.isLayoutRequested());
+        mMockViewGroup.layout(1, 1, 100, 100);
+        assertFalse(mMockViewGroup.isLayoutRequested());
+        mMockViewGroup.startLayoutAnimation();
+        assertTrue(mMockViewGroup.isLayoutRequested());
     }
 
+    @UiThreadTest
     @Test
     public void testUpdateViewLayout() {
         MockViewGroup parent = new MockViewGroup(mContext);
@@ -1759,6 +1709,7 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(param.height, child.getLayoutParams().height);
     }
 
+    @UiThreadTest
     @Test
     public void testDebug() {
         final int EXPECTED = 100;
@@ -1770,45 +1721,44 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(EXPECTED + 1, child.debugDepth);
     }
 
+    @UiThreadTest
     @Test
     public void testDispatchKeyEventPreIme() {
-        MockViewGroup vg = new MockViewGroup(mContext);
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER);
-        assertFalse(vg.dispatchKeyEventPreIme(event));
-        assertFalse(vg.dispatchKeyShortcutEvent(event));
-        MockTextView textView = new MockTextView(mContext);
+        assertFalse(mMockViewGroup.dispatchKeyEventPreIme(event));
+        assertFalse(mMockViewGroup.dispatchKeyShortcutEvent(event));
 
-        vg.addView(textView);
-        vg.requestChildFocus(textView, null);
-        vg.layout(0, 0, 100, 200);
-        assertFalse(vg.dispatchKeyEventPreIme(event));
-        assertFalse(vg.dispatchKeyShortcutEvent(event));
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.requestChildFocus(mMockTextView, null);
+        mMockViewGroup.layout(0, 0, 100, 200);
+        assertFalse(mMockViewGroup.dispatchKeyEventPreIme(event));
+        assertFalse(mMockViewGroup.dispatchKeyShortcutEvent(event));
 
-        vg.requestChildFocus(textView, null);
-        textView.layout(0, 0, 50, 50);
-        assertTrue(vg.dispatchKeyEventPreIme(event));
-        assertTrue(vg.dispatchKeyShortcutEvent(event));
+        mMockViewGroup.requestChildFocus(mMockTextView, null);
+        mMockTextView.layout(0, 0, 50, 50);
+        assertTrue(mMockViewGroup.dispatchKeyEventPreIme(event));
+        assertTrue(mMockViewGroup.dispatchKeyShortcutEvent(event));
 
-        vg.setStaticTransformationsEnabled(true);
+        mMockViewGroup.setStaticTransformationsEnabled(true);
         Canvas canvas = new Canvas();
-        vg.drawChild(canvas, textView, 100);
-        assertTrue(vg.isGetChildStaticTransformationCalled);
-        vg.isGetChildStaticTransformationCalled = false;
-        vg.setStaticTransformationsEnabled(false);
-        vg.drawChild(canvas, textView, 100);
-        assertFalse(vg.isGetChildStaticTransformationCalled);
+        mMockViewGroup.drawChild(canvas, mMockTextView, 100);
+        assertTrue(mMockViewGroup.isGetChildStaticTransformationCalled);
+        mMockViewGroup.isGetChildStaticTransformationCalled = false;
+        mMockViewGroup.setStaticTransformationsEnabled(false);
+        mMockViewGroup.drawChild(canvas, mMockTextView, 100);
+        assertFalse(mMockViewGroup.isGetChildStaticTransformationCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testStartActionModeForChildRespectsSubclassModeOnPrimary() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
         vg.shouldReturnOwnTypelessActionMode = true;
         vgParent.addView(vg);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        vg.addView(mMockTextView);
 
-        textView.startActionMode(NO_OP_ACTION_MODE_CALLBACK, ActionMode.TYPE_PRIMARY);
+        mMockTextView.startActionMode(NO_OP_ACTION_MODE_CALLBACK, ActionMode.TYPE_PRIMARY);
 
         assertTrue(vg.isStartActionModeForChildTypedCalled);
         assertTrue(vg.isStartActionModeForChildTypelessCalled);
@@ -1816,16 +1766,16 @@ public class ViewGroupTest implements CTSResult {
         assertFalse(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testStartActionModeForChildIgnoresSubclassModeOnFloating() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
         vg.shouldReturnOwnTypelessActionMode = true;
         vgParent.addView(vg);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        vg.addView(mMockTextView);
 
-        textView.startActionMode(NO_OP_ACTION_MODE_CALLBACK, ActionMode.TYPE_FLOATING);
+        mMockTextView.startActionMode(NO_OP_ACTION_MODE_CALLBACK, ActionMode.TYPE_FLOATING);
 
         assertTrue(vg.isStartActionModeForChildTypedCalled);
         assertFalse(vg.isStartActionModeForChildTypelessCalled);
@@ -1833,41 +1783,42 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testStartActionModeForChildTypedBubblesUpToParent() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
         vgParent.addView(vg);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        vg.addView(mMockTextView);
 
-        textView.startActionMode(NO_OP_ACTION_MODE_CALLBACK, ActionMode.TYPE_FLOATING);
+        mMockTextView.startActionMode(NO_OP_ACTION_MODE_CALLBACK, ActionMode.TYPE_FLOATING);
 
         assertTrue(vg.isStartActionModeForChildTypedCalled);
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testStartActionModeForChildTypelessBubblesUpToParent() {
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
         MockViewGroupSubclass vg = new MockViewGroupSubclass(mContext);
         vgParent.addView(vg);
-        MockTextView textView = new MockTextView(mContext);
-        vg.addView(textView);
+        vg.addView(mMockTextView);
 
-        textView.startActionMode(NO_OP_ACTION_MODE_CALLBACK);
+        mMockTextView.startActionMode(NO_OP_ACTION_MODE_CALLBACK);
 
         assertTrue(vg.isStartActionModeForChildTypedCalled);
         assertTrue(vg.isStartActionModeForChildTypelessCalled);
         assertTrue(vgParent.isStartActionModeForChildTypedCalled);
     }
 
+    @UiThreadTest
     @Test
     public void testTemporaryDetach() {
         // [vgParent]
         //   - [viewParent1]
         //   - [viewParent1]
-        //   - [vg]
+        //   - [mMockViewGroup]
         //     - [view1]
         //     - [view2]
         MockViewGroupSubclass vgParent = new MockViewGroupSubclass(mContext);
@@ -1907,7 +1858,7 @@ public class ViewGroupTest implements CTSResult {
         // [vgParent]
         //   - [viewParent1]
         //   - [viewParent1]
-        //   - [vg]           <- dispatchStartTemporaryDetach()
+        //   - [mMockViewGroup]           <- dispatchStartTemporaryDetach()
         //     - [view1]
         //     - [view2]
         vg.dispatchStartTemporaryDetach();
@@ -1936,7 +1887,7 @@ public class ViewGroupTest implements CTSResult {
         // [vgParent]
         //   - [viewParent1]
         //   - [viewParent1]
-        //   - [vg]           <- dispatchFinishTemporaryDetach()
+        //   - [mMockViewGroup]           <- dispatchFinishTemporaryDetach()
         //     - [view1]
         //     - [view2]
         vg.dispatchFinishTemporaryDetach();
@@ -1965,7 +1916,7 @@ public class ViewGroupTest implements CTSResult {
         // [vgParent]         <- dispatchStartTemporaryDetach()
         //   - [viewParent1]
         //   - [viewParent1]
-        //   - [vg]
+        //   - [mMockViewGroup]
         //     - [view1]
         //     - [view2]
         vgParent.dispatchStartTemporaryDetach();
@@ -1994,7 +1945,7 @@ public class ViewGroupTest implements CTSResult {
         // [vgParent]         <- dispatchFinishTemporaryDetach()
         //   - [viewParent1]
         //   - [viewParent1]
-        //   - [vg]
+        //   - [mMockViewGroup]
         //     - [view1]
         //     - [view2]
         vgParent.dispatchFinishTemporaryDetach();
@@ -2139,11 +2090,11 @@ public class ViewGroupTest implements CTSResult {
         resetResolvedDrawablesCount = 0;
     }
 
+    @UiThreadTest
     @Test
     public void testResetRtlProperties() {
         clearRtlCounters();
 
-        MockViewGroup vg = new MockViewGroup(mContext);
         MockView2 v1 = new MockView2(mContext);
         MockView2 v2 = new MockView2(mContext);
 
@@ -2159,9 +2110,9 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(1, resetResolvedDrawablesCount);
 
         clearRtlCounters();
-        vg.addView(v1);
-        vg.addView(v2);
-        vg.addView(v3);
+        mMockViewGroup.addView(v1);
+        mMockViewGroup.addView(v2);
+        mMockViewGroup.addView(v3);
 
         assertEquals(3, resetRtlPropertiesCount); // for v1 / v2 / v3 only
         assertEquals(4, resetResolvedLayoutDirectionCount); // for v1 / v2 / v3 / v4
@@ -2171,11 +2122,12 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(4, resetResolvedDrawablesCount);
 
         clearRtlCounters();
-        vg.resetRtlProperties();
-        assertEquals(1, resetRtlPropertiesCount); // for vg only
+        mMockViewGroup.resetRtlProperties();
+        assertEquals(1, resetRtlPropertiesCount); // for mMockViewGroup only
         assertEquals(5, resetResolvedLayoutDirectionCount); // for all
         assertEquals(5, resetResolvedTextDirectionCount);
-        assertEquals(1, resetResolvedTextAlignmentCount); // for vg only as TextAlignment is not inherited (default is Gravity)
+        // for mMockViewGroup only as TextAlignment is not inherited (default is Gravity)
+        assertEquals(1, resetResolvedTextAlignmentCount);
         assertEquals(5, resetResolvedPaddingCount);
         assertEquals(5, resetResolvedDrawablesCount);
     }

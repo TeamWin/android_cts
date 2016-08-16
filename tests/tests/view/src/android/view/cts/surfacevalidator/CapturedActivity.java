@@ -32,9 +32,11 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
+import android.view.cts.R;
 import android.widget.FrameLayout;
 
-import android.view.cts.R;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CapturedActivity extends Activity {
     public static class TestResult {
@@ -50,7 +52,6 @@ public class CapturedActivity extends Activity {
     private VirtualDisplay mVirtualDisplay;
 
     private SurfacePixelValidator mSurfacePixelValidator;
-    private final Object mLock = new Object();
 
     private static final long START_CAPTURE_DELAY_MS = 1000;
     private static final long END_CAPTURE_DELAY_MS = START_CAPTURE_DELAY_MS + 4000;
@@ -161,22 +162,24 @@ public class CapturedActivity extends Activity {
             mVirtualDisplay = null;
         }, END_CAPTURE_DELAY_MS);
 
+        final CountDownLatch latch = new CountDownLatch(1);
         mHandler.postDelayed(() -> {
             Log.d(TAG, "Ending test case");
             animationTestCase.end();
-            synchronized (mLock) {
-                mSurfacePixelValidator.finish(testResult);
-                mLock.notify();
-            }
+            mSurfacePixelValidator.finish(testResult);
+            latch.countDown();
             mSurfacePixelValidator = null;
         }, END_DELAY_MS);
 
-        synchronized (mLock) {
-            try {
-                mLock.wait(TIME_OUT_MS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        boolean latchResult = false;
+        try {
+            latchResult = latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (!latchResult) {
+            testResult.passFrames = 0;
+            testResult.failFrames = 1000;
         }
         Log.d(TAG, "Test finished, passFrames " + testResult.passFrames
                 + ", failFrames " + testResult.failFrames);

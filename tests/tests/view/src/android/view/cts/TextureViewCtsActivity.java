@@ -44,7 +44,7 @@ import javax.microedition.khronos.egl.EGLSurface;
 
 public class TextureViewCtsActivity extends Activity implements SurfaceTextureListener {
     private final static long TIME_OUT_MS = 10000;
-    private Object mLock = new Object();
+    private final Object mLock = new Object();
 
     private View mPreview;
     private TextureView mTextureView;
