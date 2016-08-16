@@ -53,7 +53,8 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
     private Call mCall1, mCall2;
     private MockConnection mConnection1, mConnection2;
     MockInCallService mInCallService;
-    MockConference mConferenceObject;
+    Conference mConferenceObject;
+    MockConference mConferenceVerficationObject;
 
     @Override
     protected void setUp() throws Exception {
@@ -61,8 +62,9 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         if (mShouldTestTelecom) {
             addOutgoingCalls();
             addConferenceCall(mCall1, mCall2);
-            // Use vanilla conference object so that the CTS coverage tool detects the useage.
-            mConferenceObject = verifyConferenceForOutgoingCall();
+            mConferenceVerficationObject = verifyConferenceForOutgoingCall();
+            // Use vanilla conference object so that the CTS coverage tool detects the usage.
+            mConferenceObject = mConferenceVerficationObject;
             verifyConferenceObject(mConferenceObject, mConnection1, mConnection2);
         }
     }
@@ -329,7 +331,7 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
         extras.putString(TEST_EXTRA_KEY_1, TEST_EXTRA_VALUE_1);
         extras.putInt(TEST_EXTRA_KEY_2, TEST_EXTRA_VALUE_2);
         conf.putExtras(extras);
-        mConferenceObject.mOnExtrasChanged.waitForCount(1);
+        mConferenceVerficationObject.mOnExtrasChanged.waitForCount(1);
 
         assertTrue(areBundlesEqual(extras, mConferenceObject.getExtras()));
     }
