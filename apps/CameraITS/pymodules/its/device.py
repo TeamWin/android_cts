@@ -67,9 +67,17 @@ class ItsSession(object):
     PACKAGE = 'com.android.cts.verifier.camera.its'
     INTENT_START = 'com.android.cts.verifier.camera.its.START'
     ACTION_ITS_RESULT = 'com.android.cts.verifier.camera.its.ACTION_ITS_RESULT'
+    EXTRA_VERSION = 'camera.its.extra.VERSION'
+    CURRENT_ITS_VERSION = '1.0' # version number to sync with CtsVerifier
     EXTRA_CAMERA_ID = 'camera.its.extra.CAMERA_ID'
-    EXTRA_SUCCESS = 'camera.its.extra.SUCCESS'
-    EXTRA_SUMMARY = 'camera.its.extra.SUMMARY'
+    EXTRA_RESULTS = 'camera.its.extra.RESULTS'
+
+    RESULT_PASS = 'PASS'
+    RESULT_FAIL = 'FAIL'
+    RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
+    RESULT_VALUES = {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}
+    RESULT_KEY = 'result'
+    SUMMARY_KEY = 'summary'
 
     adb = "adb -d"
     device_id = ""
@@ -790,34 +798,43 @@ def get_device_id():
 
     return device_id
 
-def report_result(device_id, camera_id, success, summary_path=None):
+def report_result(device_id, camera_id, results):
     """Send a pass/fail result to the device, via an intent.
 
     Args:
         device_id: The ID string of the device to report the results to.
         camera_id: The ID string of the camera for which to report pass/fail.
-        success: Boolean, indicating if the result was pass or fail.
-        summary_path: (Optional) path to ITS summary file on host PC
-
+        results: a dictionary contains all ITS scenes as key and result/summary
+                 of current ITS run. See test_report_result unit test for
+                 an example.
     Returns:
         Nothing.
     """
     adb = "adb -s " + device_id
-    device_summary_path = "/sdcard/camera_" + camera_id + "_its_summary.txt"
-    if summary_path is not None:
-        _run("%s push %s %s" % (
-                adb, summary_path, device_summary_path))
-        _run("%s shell am broadcast -a %s --es %s %s --es %s %s --es %s %s" % (
-                adb, ItsSession.ACTION_ITS_RESULT,
-                ItsSession.EXTRA_CAMERA_ID, camera_id,
-                ItsSession.EXTRA_SUCCESS, 'True' if success else 'False',
-                ItsSession.EXTRA_SUMMARY, device_summary_path))
-    else:
-        _run("%s shell am broadcast -a %s --es %s %s --es %s %s --es %s %s" % (
-                adb, ItsSession.ACTION_ITS_RESULT,
-                ItsSession.EXTRA_CAMERA_ID, camera_id,
-                ItsSession.EXTRA_SUCCESS, 'True' if success else 'False',
-                ItsSession.EXTRA_SUMMARY, "null"))
+    # Validate/process results argument
+    for scene in results:
+        result_key = ItsSession.RESULT_KEY
+        summary_key = ItsSession.SUMMARY_KEY
+        if result_key not in results[scene]:
+            raise its.error.Error('ITS result not found for ' + scene)
+        if results[scene][result_key] not in ItsSession.RESULT_VALUES:
+            raise its.error.Error('Unknown ITS result for %s: %s' % (
+                    scene, results[result_key]))
+        if summary_key in results[scene]:
+            device_summary_path = "/sdcard/its_camera%s_%s.txt" % (
+                    camera_id, scene)
+            _run("%s push %s %s" % (
+                    adb, results[scene][summary_key], device_summary_path))
+            results[scene][summary_key] = device_summary_path
+    json_results = json.dumps(results)
+    cmd = "%s shell am broadcast -a %s --es %s %s --es %s %s --es %s \'%s\'" % (
+            adb, ItsSession.ACTION_ITS_RESULT,
+            ItsSession.EXTRA_VERSION, ItsSession.CURRENT_ITS_VERSION,
+            ItsSession.EXTRA_CAMERA_ID, camera_id,
+            ItsSession.EXTRA_RESULTS, json_results)
+    if len(cmd) > 4095:
+        print "ITS command string might be too long! len:", len(cmd)
+    _run(cmd)
 
 def _run(cmd):
     """Replacement for os.system, with hiding of stdout+stderr messages.
@@ -830,8 +847,20 @@ class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """
 
-    # TODO: Add some unit tests.
-    None
+    """
+    # TODO: this test currently needs connected device to pass
+    #       Need to remove that dependency before enabling the test
+    def test_report_result(self):
+        device_id = get_device_id()
+        camera_id = "1"
+        result_key = ItsSession.RESULT_KEY
+        results = {"scene0":{result_key:"PASS"},
+                   "scene1":{result_key:"PASS"},
+                   "scene2":{result_key:"PASS"},
+                   "scene3":{result_key:"PASS"},
+                   "sceneNotExist":{result_key:"FAIL"}}
+        report_result(device_id, camera_id, results)
+    """
 
 if __name__ == '__main__':
     unittest.main()

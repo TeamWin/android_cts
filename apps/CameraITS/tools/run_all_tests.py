@@ -20,6 +20,7 @@ import time
 import sys
 import textwrap
 import its.device
+from its.device import ItsSession
 
 def main():
     """Run all the automated tests, saving intermediate files, and producing
@@ -61,9 +62,7 @@ def main():
         "sensor_fusion":[]
     }
 
-    # Get all the scene0 and scene1 tests, which can be run using the same
-    # physical setup.
-    scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5"]
+    all_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5"]
 
     auto_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4"]
 
@@ -145,11 +144,6 @@ def main():
     device_id_arg = "device=" + device_id
     print "Testing device " + device_id
 
-    camera_ids = []
-    for s in sys.argv[1:]:
-        if s[:7] == "camera=" and len(s) > 7:
-            camera_ids.append(s[7:])
-
     # user doesn't specify camera id, run through all cameras
     if not camera_ids:
         camera_ids_path = os.path.join(topdir, "camera_ids.txt")
@@ -163,7 +157,7 @@ def main():
             for line in f:
                 camera_ids.append(line.replace('\n', ''))
 
-    print "Running ITS on the following cameras:", camera_ids
+    print "Running ITS on camera: %s, scene %s" % (camera_ids, scenes)
 
     if auto_scene_switch:
         print 'Waking up chart screen: ', chart_host_id
@@ -182,17 +176,18 @@ def main():
         for d in scenes:
             os.mkdir(os.path.join(topdir, camera_id, d))
 
-        print "Start running ITS on camera: ", camera_id
-        # Run each test, capturing stdout and stderr.
-        summary = "ITS test result summary for camera " + camera_id + "\n"
-        numpass = 0
-        numskip = 0
-        numnotmandatedfail = 0
-        numfail = 0
+        for scene in scenes:
+            tests = [(s[:-3],os.path.join("tests", scene, s))
+                     for s in os.listdir(os.path.join("tests",scene))
+                     if s[-3:] == ".py" and s[:4] == "test"]
+            tests.sort()
 
-        prev_scene = ""
-        for (scene,testname,testpath) in tests:
-            if scene != prev_scene and scene_req[scene] != None:
+            summary = "Cam" + camera_id + " " + scene + "\n"
+            numpass = 0
+            numskip = 0
+            num_not_mandated_fail = 0
+            numfail = 0
+            if scene_req[scene] != None:
                 out_path = os.path.join(topdir, camera_id, scene+".jpg")
                 out_arg = "out=" + out_path
                 if auto_scene_switch:
@@ -259,42 +254,31 @@ def main():
                 skipstr = ", %d test%s skipped" % (
                         numskip, "s" if numskip > 1 else "")
             else:
-                retstr = "FAIL "
-                numfail += 1
+                skipstr = ""
 
-            msg = "%s %s/%s [%.1fs]" % (retstr, scene, testname, t1-t0)
-            print msg
-            summary += msg + "\n"
-            if retcode != 0 and retcode != SKIP_RET_CODE:
-                # Dump the stderr if the test fails
-                with open (errpath, "r") as error_file:
-                    errors = error_file.read()
-                    summary += errors + "\n"
+            test_result = "\n%d / %d tests passed (%.1f%%)%s" % (
+                    numpass + num_not_mandated_fail, len(tests) - numskip,
+                    100.0 * float(numpass + num_not_mandated_fail) /
+                            (len(tests) - numskip)
+                            if len(tests) != numskip else 100.0,
+                    skipstr)
+            print test_result
 
-        if numskip > 0:
-            skipstr = ", %d test%s skipped" % (numskip, "s" if numskip > 1 else "")
-        else:
-            skipstr = ""
+            if num_not_mandated_fail > 0:
+                msg = "(*) tests are not yet mandated"
+                print msg
 
-        test_result = "\n%d / %d tests passed (%.1f%%)%s" % (
-                numpass + numnotmandatedfail, len(tests) - numskip,
-                100.0 * float(numpass + numnotmandatedfail) / (len(tests) - numskip)
-                    if len(tests) != numskip else 100.0,
-                skipstr)
-        print test_result
-        summary += test_result + "\n"
+            summary_path = os.path.join(topdir, camera_id, scene, "summary.txt")
+            with open(summary_path, "w") as f:
+                f.write(summary)
 
-        if numnotmandatedfail > 0:
-            msg = "(*) tests are not yet mandated"
-            print msg
-            summary += msg + "\n"
+            passed = numfail == 0
+            results[scene][result_key] = (ItsSession.RESULT_PASS if passed
+                    else ItsSession.RESULT_FAIL)
+            results[scene][ItsSession.SUMMARY_KEY] = summary_path
 
-        result = numfail == 0
         print "Reporting ITS result to CtsVerifier"
-        summary_path = os.path.join(topdir, camera_id, "summary.txt")
-        with open(summary_path, "w") as f:
-            f.write(summary)
-        its.device.report_result(device_id, camera_id, result, summary_path)
+        its.device.report_result(device_id, camera_id, results)
 
     if auto_scene_switch:
         print 'Shutting down chart screen: ', chart_host_id
