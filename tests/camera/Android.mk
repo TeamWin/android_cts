@@ -25,7 +25,7 @@ LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil \
 	ctstestrunner \
-	mockito-target \
+	mockito-target-minus-junit4 \
 	android-ex-camera2
 
 LOCAL_JNI_SHARED_LIBRARIES := \

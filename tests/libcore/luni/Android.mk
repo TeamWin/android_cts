@@ -24,7 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     core-tests \
     cts-core-test-runner \
     jsr166-tests \
-    mockito-target \
+    mockito-target-minus-junit4 \
     tzdata_update-tests
 
 # Don't include this package in any target

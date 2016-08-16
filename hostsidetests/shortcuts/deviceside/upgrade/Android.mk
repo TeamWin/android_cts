@@ -37,7 +37,7 @@ LOCAL_RESOURCE_DIR :=  $(LOCAL_PATH)/version1/res
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     android-support-v4 \
-    mockito-target \
+    mockito-target-minus-junit4 \
     ctsdeviceutil \
     ctstestrunner \
     ub-uiautomator \
@@ -68,7 +68,7 @@ LOCAL_RESOURCE_DIR :=  $(LOCAL_PATH)/version2/res
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     android-support-v4 \
-    mockito-target \
+    mockito-target-minus-junit4 \
     ctsdeviceutil \
     ctstestrunner \
     ub-uiautomator \
