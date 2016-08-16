@@ -32,6 +32,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test runner for native gTests.
@@ -162,7 +163,7 @@ public class GeeTest implements IBuildReceiver, IDeviceTest, IRemoteTest {
 
         try {
             mDevice.executeShellCommand(String.format("%s %s", fullPath, flags), resultParser,
-                    mMaxTestTimeMs /* maxTimeToShellOutputResponse */,
+                    mMaxTestTimeMs /* maxTimeToShellOutputResponse */, TimeUnit.MILLISECONDS,
                     0 /* retryAttempts */);
         } catch (DeviceNotAvailableException e) {
             resultParser.flush();
