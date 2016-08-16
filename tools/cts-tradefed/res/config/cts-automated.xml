@@ -27,5 +27,6 @@
 
     <!-- Tell all HostTests to only list the tests -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.HostTest:exclude-annotation:android.platform.test.annotations.RestrictedBuildTest" />
+    <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:exclude-annotation:android.platform.test.annotations.RestrictedBuildTest" />
 
 </configuration>
