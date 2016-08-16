@@ -244,7 +244,7 @@ public class PropertyValuesHolderTest {
     @Test
     public void testOfFloat_Property() throws Throwable {
         float[] values = {mStartY, mEndY};
-        ShapeHolderYProperty property=new ShapeHolderYProperty(ShapeHolder.class.getClass(),"y");
+        ShapeHolderYProperty property=new ShapeHolderYProperty(ShapeHolder.class,"y");
         property.setObject(mObject);
         PropertyValuesHolder pVHolder = PropertyValuesHolder.ofFloat(property, values);
         assertNotNull(pVHolder);
@@ -284,7 +284,7 @@ public class PropertyValuesHolderTest {
         int endColor = mActivity.view.BLUE;
         int values[] = {startColor, endColor};
 
-        ViewColorProperty colorProperty=new ViewColorProperty(Integer.class.getClass(),property);
+        ViewColorProperty colorProperty=new ViewColorProperty(Integer.class,property);
         colorProperty.setObject(object);
         PropertyValuesHolder pVHolder = PropertyValuesHolder.ofInt(colorProperty, values);
         assertNotNull(pVHolder);
@@ -682,7 +682,7 @@ public class PropertyValuesHolderTest {
     @Test
     public void testSetProperty() throws Throwable {
         float[] values = {mStartY, mEndY};
-        ShapeHolderYProperty property=new ShapeHolderYProperty(ShapeHolder.class.getClass(),"y");
+        ShapeHolderYProperty property=new ShapeHolderYProperty(ShapeHolder.class,"y");
         property.setObject(mObject);
         PropertyValuesHolder pVHolder = PropertyValuesHolder.ofFloat("", values);
         pVHolder.setProperty(property);
@@ -696,7 +696,7 @@ public class PropertyValuesHolderTest {
 
     class ShapeHolderYProperty extends Property {
         private ShapeHolder shapeHolder ;
-        private Class type = Float.class.getClass();
+        private Class type = Float.class;
         private String name = "y";
         @SuppressWarnings("unchecked")
         public ShapeHolderYProperty(Class type, String name) throws Exception {
@@ -740,7 +740,7 @@ public class PropertyValuesHolderTest {
 
     class ViewColorProperty extends Property {
         private View view ;
-        private Class type = Integer.class.getClass();
+        private Class type = Integer.class;
         private String name = "backgroundColor";
         @SuppressWarnings("unchecked")
         public ViewColorProperty(Class type, String name) throws Exception {
