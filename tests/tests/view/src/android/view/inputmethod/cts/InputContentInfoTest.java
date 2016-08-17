@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import android.content.ClipDescription;
 import android.net.Uri;
@@ -45,6 +46,7 @@ public class InputContentInfoTest {
         assertEquals("image/png", info.getDescription().getMimeType(0));
         assertEquals("sample content", info.getDescription().getLabel());
         assertEquals(Uri.parse("https://example.com"), info.getLinkUri());
+        assertEquals(0, info.describeContents());
 
         Parcel p = Parcel.obtain();
         info.writeToParcel(p, 0);
@@ -59,6 +61,20 @@ public class InputContentInfoTest {
                 targetInfo.getDescription().getMimeType(0));
         assertEquals(info.getDescription().getLabel(), targetInfo.getDescription().getLabel());
         assertEquals(info.getLinkUri(), targetInfo.getLinkUri());
+        assertEquals(info.describeContents(), targetInfo.describeContents());
+    }
+
+    public void testOptionalConstructorParam() {
+        InputContentInfo info = new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}));
+
+        assertEquals(Uri.parse("content://com.example/path"), info.getContentUri());
+        assertEquals(1, info.getDescription().getMimeTypeCount());
+        assertEquals("image/png", info.getDescription().getMimeType(0));
+        assertEquals("sample content", info.getDescription().getLabel());
+        assertNull(info.getLinkUri());
+        assertEquals(0, info.describeContents());
     }
 
     @Test(expected=NullPointerException.class)
@@ -121,4 +137,24 @@ public class InputContentInfoTest {
                  new ClipDescription("sample content", new String[]{"image/png"}),
                  Uri.parse("content://com.example/path"));
     }
+
+    public void testRequestAndReleasePermission() {
+        InputContentInfo info = new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com"));
+
+        // Here we only assert that {request, release}Permission() do not crash, because ensuring
+        // the entire functionality of these methods requires end-to-end IME test environment, which
+        // we do not have yet in CTS.
+        // Note it is actually intentional that calling these methods here has no effect.  Those
+        // methods would have effect only after the object is passed from the IME process to the
+        // application process.
+        // TODO: Create an end-to-end CTS test for this functionality.
+        info.requestPermission();
+        info.releasePermission();
+        info.requestPermission();
+        info.releasePermission();
+    }
+
 }

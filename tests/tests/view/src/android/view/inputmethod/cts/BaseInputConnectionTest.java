@@ -23,8 +23,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
+import android.content.ClipDescription;
 import android.content.Context;
 import android.cts.util.PollingCheck;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -43,6 +45,7 @@ import android.view.cts.R;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.InputConnectionTestUtils;
 import android.widget.EditText;
@@ -481,5 +484,14 @@ public class BaseInputConnectionTest {
         verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 0, "0[><]456789");
         verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 0, 1, "01[><]56789");
         verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 1, "0[><]56789");
+    }
+
+    public void testCommitContent() {
+        final InputContentInfo inputContentInfo = new InputContentInfo(
+                Uri.parse("content://com.example/path"),
+                new ClipDescription("sample content", new String[]{"image/png"}),
+                Uri.parse("https://example.com"));
+        // The default implementation should do nothing and just return false.
+        assertFalse(mConnection.commitContent(inputContentInfo, 0 /* flags */, null /* opts */));
     }
 }

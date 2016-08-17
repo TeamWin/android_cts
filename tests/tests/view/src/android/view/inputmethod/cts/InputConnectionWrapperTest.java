@@ -164,7 +164,7 @@ public class InputConnectionWrapperTest {
                 Uri.parse("content://com.example/path"),
                 new ClipDescription("sample content", new String[]{"image/png"}),
                 Uri.parse("https://example.com"));
-        assertTrue(inputConnection.commitContent(inputContentInfo, 0 /* flags */, null /* opt */));
+        wrapper.commitContent(inputContentInfo, 0 /* flags */, null /* opt */);
         verify(inputConnection, times(1)).commitContent(inputContentInfo, 0, null);
     }
 }
