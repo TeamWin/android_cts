@@ -19,6 +19,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaRouter;
@@ -38,17 +40,18 @@ public class MediaRouterTest extends InstrumentationTestCase {
 
     private MediaRouter mMediaRouter;
     private RouteCategory mTestCategory;
+    private Drawable mTestIconDrawable;
     private static final String TEST_ROUTE_CATEGORY_NAME = "test_route_category_name";
     private static final String TEST_ROUTE_NAME = "test_user_route_name";
     private static final String TEST_ROUTE_DESCRIPTION = "test_user_route_description";
     private static final String TEST_STATUS = "test_user_route_status";
     private static final int TEST_MAX_VOLUME = 100;
     private static final int TEST_VOLUME = 17;
+    private static final int TEST_VOLUME_DIRECTION = -2;
     private static final int TEST_PLAYBACK_STREAM = AudioManager.STREAM_ALARM;
     private static final int TEST_VOLUME_HANDLING = RouteInfo.PLAYBACK_VOLUME_VARIABLE;
     private static final int TEST_PLAYBACK_TYPE = RouteInfo.PLAYBACK_TYPE_LOCAL;
-    private static final Drawable TEST_ICON_DRAWABLE =
-            Resources.getSystem().getDrawable(android.R.drawable.ic_media_next, null);
+    private static final int TEST_ICON_RESOURCE_ID = android.R.drawable.ic_media_next;
 
     @Override
     protected void setUp() throws Exception {
@@ -56,6 +59,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
         final Context context = getInstrumentation().getContext();
         mMediaRouter = (MediaRouter) context.getSystemService(Context.MEDIA_ROUTER_SERVICE);
         mTestCategory = mMediaRouter.createRouteCategory(TEST_ROUTE_CATEGORY_NAME, false);
+        mTestIconDrawable = Resources.getSystem().getDrawable(TEST_ICON_RESOURCE_ID, null);
     }
 
     protected void tearDown() throws Exception {
@@ -134,14 +138,21 @@ public class MediaRouterTest extends InstrumentationTestCase {
         userRoute.setName(TEST_ROUTE_NAME);
         userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
         userRoute.setStatus(TEST_STATUS);
-        userRoute.setIconDrawable(TEST_ICON_DRAWABLE);
         userRoute.setPlaybackStream(TEST_PLAYBACK_STREAM);
 
         assertEquals(TEST_ROUTE_NAME, userRoute.getName());
         assertEquals(TEST_ROUTE_DESCRIPTION, userRoute.getDescription());
         assertEquals(TEST_STATUS, userRoute.getStatus());
-        assertEquals(TEST_ICON_DRAWABLE, userRoute.getIconDrawable());
         assertEquals(TEST_PLAYBACK_STREAM, userRoute.getPlaybackStream());
+
+        userRoute.setIconDrawable(mTestIconDrawable);
+        assertEquals(mTestIconDrawable, userRoute.getIconDrawable());
+
+        userRoute.setIconDrawable(null);
+        assertNull(userRoute.getIconDrawable());
+
+        userRoute.setIconResource(TEST_ICON_RESOURCE_ID);
+        assertTrue(getBitmap(mTestIconDrawable).sameAs(getBitmap(userRoute.getIconDrawable())));
 
         Object tag = new Object();
         userRoute.setTag(tag);
@@ -188,5 +199,69 @@ public class MediaRouterTest extends InstrumentationTestCase {
 
         RouteInfo route = routesInCategory.get(0);
         assertEquals(userRoute, route);
+    }
+
+    /**
+     * Test {@link MediaRouter.VolumeCallback)}.
+     */
+    public void testVolumeCallback() {
+        UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
+        userRoute.setVolumeHandling(RouteInfo.PLAYBACK_VOLUME_VARIABLE);
+        MediaRouterVolumeCallback callback = new MediaRouterVolumeCallback();
+        userRoute.setVolumeCallback(callback);
+
+        userRoute.requestSetVolume(TEST_VOLUME);
+        assertTrue(callback.mOnVolumeSetRequestCalled);
+        assertEquals(userRoute, callback.mRouteInfo);
+        assertEquals(TEST_VOLUME, callback.mVolume);
+
+        callback.reset();
+        userRoute.requestUpdateVolume(TEST_VOLUME_DIRECTION);
+        assertTrue(callback.mOnVolumeUpdateRequestCalled);
+        assertEquals(userRoute, callback.mRouteInfo);
+        assertEquals(TEST_VOLUME_DIRECTION, callback.mDirection);
+    }
+
+    private Bitmap getBitmap(Drawable drawable) {
+        int width = drawable.getIntrinsicWidth();
+        int height = drawable.getIntrinsicHeight();
+
+        Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(result);
+
+        drawable.setBounds(0, 0, width, height);
+        drawable.draw(canvas);
+
+        return result;
+    }
+
+    private class MediaRouterVolumeCallback extends MediaRouter.VolumeCallback {
+        private boolean mOnVolumeUpdateRequestCalled;
+        private boolean mOnVolumeSetRequestCalled;
+        private RouteInfo mRouteInfo;
+        private int mDirection;
+        private int mVolume;
+
+        public void reset() {
+            mOnVolumeUpdateRequestCalled = false;
+            mOnVolumeSetRequestCalled = false;
+            mRouteInfo = null;
+            mDirection = 0;
+            mVolume = 0;
+        }
+
+        @Override
+        public void onVolumeUpdateRequest(RouteInfo info, int direction) {
+            mOnVolumeUpdateRequestCalled = true;
+            mRouteInfo = info;
+            mDirection = direction;
+        }
+
+        @Override
+        public void onVolumeSetRequest(RouteInfo info, int volume) {
+            mOnVolumeSetRequestCalled = true;
+            mRouteInfo = info;
+            mVolume = volume;
+        }
     }
 }
