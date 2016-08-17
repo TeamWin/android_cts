@@ -3710,7 +3710,7 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
                 assertTrue(mCalledOnStartTemporaryDetach);
                 assertFalse(mCalledOnFinishTemporaryDetach);
 
-                assertTrue(isTemporarilyDetached());
+                assertFalse(isTemporarilyDetached());
 
                 mCalledOnFinishTemporaryDetach = true;
             }
