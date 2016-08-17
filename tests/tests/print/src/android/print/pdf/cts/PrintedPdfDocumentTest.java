@@ -23,7 +23,7 @@ import android.print.PrintAttributes;
 import android.print.pdf.PrintedPdfDocument;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,30 +38,29 @@ import static org.junit.Assert.assertEquals;
 public class PrintedPdfDocumentTest {
     private static final PrintAttributes.Margins ZERO_MARGINS = new PrintAttributes.Margins(0, 0, 0,
             0);
-    private Context mContext;
+    private static Context sContext;
 
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @BeforeClass
+    public static void setUp() {
+        sContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test
     public void createWithNullAttributes() throws Throwable {
-        assertException(() -> new PrintedPdfDocument(mContext, null), NullPointerException.class);
+        assertException(() -> new PrintedPdfDocument(sContext, null), NullPointerException.class);
     }
 
     @Test
     public void createWithNullMediaSize() throws Throwable {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS).build();
-        assertException(() -> new PrintedPdfDocument(mContext, attr),
-                NullPointerException.class);
+        assertException(() -> new PrintedPdfDocument(sContext, attr), NullPointerException.class);
     }
 
     @Test
     public void createWithNullMargins() throws Throwable {
         PrintAttributes attr = new PrintAttributes.Builder()
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
-        assertException(() -> new PrintedPdfDocument(mContext, attr),
+        assertException(() -> new PrintedPdfDocument(sContext, attr),
                 NullPointerException.class);
     }
 
@@ -80,7 +79,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         PdfDocument.Page page = doc.startPage(0);
         doc.finishPage(page);
         doc.close();
@@ -91,7 +90,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(new PrintAttributes.MediaSize("oneMil", "oneMil", 1, 1)).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
 
         // We get an illegal argument exception here as a single mil of page size is converted to 0
         // pts.
@@ -117,7 +116,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         assertEquals(milsToPts(attr.getMediaSize().getWidthMils()), doc.getPageWidth());
         doc.close();
     }
@@ -127,7 +126,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         assertEquals(milsToPts(attr.getMediaSize().getHeightMils()), doc.getPageHeight());
         doc.close();
     }
@@ -137,7 +136,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         assertEquals(new Rect(0, 0, milsToPts(attr.getMediaSize().getWidthMils()),
                 milsToPts(attr.getMediaSize().getHeightMils())), doc.getPageContentRect());
         doc.close();
@@ -149,12 +148,11 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(margins)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         assertEquals(new Rect(milsToPts(margins.getLeftMils()), milsToPts(margins.getTopMils()),
-                        milsToPts(attr.getMediaSize().getWidthMils()) - milsToPts(margins.getRightMils()),
-                        milsToPts(attr.getMediaSize().getHeightMils()) -
-                                milsToPts(margins.getBottomMils())),
-                doc.getPageContentRect());
+                milsToPts(attr.getMediaSize().getWidthMils()) - milsToPts(margins.getRightMils()),
+                milsToPts(attr.getMediaSize().getHeightMils()) -
+                        milsToPts(margins.getBottomMils())), doc.getPageContentRect());
         doc.close();
     }
 
@@ -163,7 +161,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         doc.close();
         assertEquals(milsToPts(attr.getMediaSize().getHeightMils()), doc.getPageHeight());
     }
@@ -173,7 +171,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         doc.close();
         assertEquals(milsToPts(attr.getMediaSize().getWidthMils()), doc.getPageWidth());
     }
@@ -183,7 +181,7 @@ public class PrintedPdfDocumentTest {
         PrintAttributes attr = new PrintAttributes.Builder().setMinMargins(ZERO_MARGINS)
                 .setMediaSize(PrintAttributes.MediaSize.ISO_A4).build();
 
-        PrintedPdfDocument doc = new PrintedPdfDocument(mContext, attr);
+        PrintedPdfDocument doc = new PrintedPdfDocument(sContext, attr);
         doc.close();
         assertEquals(new Rect(0, 0, milsToPts(attr.getMediaSize().getWidthMils()),
                 milsToPts(attr.getMediaSize().getHeightMils())), doc.getPageContentRect());
