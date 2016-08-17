@@ -19,16 +19,11 @@ package android.print.cts;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.os.ParcelFileDescriptor;
-import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
 import android.print.PrintAttributes.MediaSize;
 import android.print.PrintAttributes.Resolution;
 import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentAdapter.LayoutResultCallback;
-import android.print.PrintDocumentAdapter.WriteResultCallback;
-import android.print.PrintDocumentInfo;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
 import android.print.PrinterInfo;
@@ -37,9 +32,12 @@ import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
 import android.text.TextUtils;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +45,7 @@ import java.util.List;
 /**
  * Tests all allowed types of printerInfo
  */
+@RunWith(AndroidJUnit4.class)
 public class PrinterInfoTest extends BasePrintTest {
     private static final String NAMED_PRINTERS_NAME_PREFIX = "Printer ";
 
@@ -315,11 +314,8 @@ public class PrinterInfoTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected.
      */
-    public void testPrinterInfos()
-            throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Test
+    public void printerInfos() throws Exception {
         // Create the session of the printers that we will be checking.
         PrinterDiscoverySessionCallbacks sessionCallbacks
                 = createFirstMockPrinterDiscoverySessionCallbacks();

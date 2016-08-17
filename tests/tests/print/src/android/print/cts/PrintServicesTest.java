@@ -46,21 +46,24 @@ import android.print.cts.services.StubbablePrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
+import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.print.cts.Utils.assertException;
-import static android.print.cts.Utils.eventually;
-import static android.print.cts.Utils.getPrintJob;
-import static android.print.cts.Utils.runOnMainThread;
+import static android.print.cts.Utils.*;
+import static org.junit.Assert.*;
 
 /**
  * Test the interface from a print service to the print manager
  */
+@RunWith(AndroidJUnit4.class)
 public class PrintServicesTest extends BasePrintTest {
     private static final String PRINTER_NAME = "Test printer";
 
@@ -176,7 +179,7 @@ public class PrintServicesTest extends BasePrintTest {
      */
     private void checkNotification(float desiredProgress, CharSequence desiredStatus)
             throws Throwable {
-        eventually(() -> assertEquals(desiredProgress, getProgress()));
+        eventually(() -> assertEquals(desiredProgress, getProgress(), 0.1));
         eventually(() -> assertEquals(desiredStatus.toString(), getStatus().toString()));
     }
 
@@ -240,10 +243,8 @@ public class PrintServicesTest extends BasePrintTest {
      *
      * @throws Throwable If anything is unexpected.
      */
-    public void testProgress() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Test
+    public void progress() throws Throwable {
         // Create the session callbacks that we will be checking.
         PrinterDiscoverySessionCallbacks sessionCallbacks
                 = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME);
@@ -348,10 +349,8 @@ public class PrintServicesTest extends BasePrintTest {
      *
      * @throws Throwable If anything is unexpected.
      */
-    public void testUpdateIcon() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Test
+    public void updateIcon() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks sessionCallbacks
                 = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME);
@@ -403,6 +402,10 @@ public class PrintServicesTest extends BasePrintTest {
                 (new PrinterInfo.Builder(sPrinter)).setHasCustomPrinterIcon(true).build());
 
         assertThatIconIs(renderDrawable(mIcon.loadDrawable(getActivity())));
+
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
@@ -410,10 +413,8 @@ public class PrintServicesTest extends BasePrintTest {
      *
      * @throws Throwable If anything is unexpected.
      */
-    public void testCannotUseAttachBaseContext() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Test
+    public void cannotUseAttachBaseContext() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks sessionCallbacks
                 = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME);
@@ -440,6 +441,10 @@ public class PrintServicesTest extends BasePrintTest {
                 IllegalStateException.class);
         assertException(() -> serviceCallbacks.getService().callAttachBaseContext(getActivity()),
                 IllegalStateException.class);
+
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
     /**
@@ -447,95 +452,98 @@ public class PrintServicesTest extends BasePrintTest {
      *
      * @throws Throwable If anything is unexpected.
      */
-    public void testGetActivePrintJobs() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
+    @Test
+    public void getActivePrintJobs() throws Throwable {
+        clearPrintSpoolerData();
+
+        try {
+            PrintManager pm = (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
+
+            // Configure first print service
+            PrinterDiscoverySessionCallbacks sessionCallbacks1
+                    = createMockPrinterDiscoverySessionCallbacks("Printer1");
+            PrintServiceCallbacks serviceCallbacks1 = createMockPrinterServiceCallbacks(
+                    sessionCallbacks1);
+            FirstPrintService.setCallbacks(serviceCallbacks1);
+
+            // Configure second print service
+            PrinterDiscoverySessionCallbacks sessionCallbacks2
+                    = createMockPrinterDiscoverySessionCallbacks("Printer2");
+            PrintServiceCallbacks serviceCallbacks2 = createMockPrinterServiceCallbacks(
+                    sessionCallbacks2);
+            SecondPrintService.setCallbacks(serviceCallbacks2);
+
+            // Create a print adapter that respects the print contract.
+            PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
+
+            runOnMainThread(() -> pm.print("job1", adapter, null));
+
+            // Init services
+            waitForPrinterDiscoverySessionCreateCallbackCalled();
+            StubbablePrintService firstService = serviceCallbacks1.getService();
+
+            waitForWriteAdapterCallback(1);
+            selectPrinter("Printer1");
+
+            // Job is not yet confirmed, hence it is not yet "active"
+            runOnMainThread(() -> assertEquals(0, firstService.callGetActivePrintJobs().size()));
+
+            clickPrintButton();
+            answerPrintServicesWarning(true);
+            onPrintJobQueuedCalled();
+
+            eventually(() -> runOnMainThread(
+                    () -> assertEquals(1, firstService.callGetActivePrintJobs().size())));
+
+            // Add another print job to first service
+            resetCounters();
+            runOnMainThread(() -> pm.print("job2", adapter, null));
+            waitForWriteAdapterCallback(1);
+            clickPrintButton();
+            onPrintJobQueuedCalled();
+
+            eventually(() -> runOnMainThread(
+                    () -> assertEquals(2, firstService.callGetActivePrintJobs().size())));
+
+            // Create print job in second service
+            resetCounters();
+            runOnMainThread(() -> pm.print("job3", adapter, null));
+
+            waitForPrinterDiscoverySessionCreateCallbackCalled();
+
+            StubbablePrintService secondService = serviceCallbacks2.getService();
+            runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
+
+            waitForWriteAdapterCallback(1);
+            selectPrinter("Printer2");
+            clickPrintButton();
+            answerPrintServicesWarning(true);
+            onPrintJobQueuedCalled();
+
+            eventually(() -> runOnMainThread(
+                    () -> assertEquals(1, secondService.callGetActivePrintJobs().size())));
+            runOnMainThread(() -> assertEquals(2, firstService.callGetActivePrintJobs().size()));
+
+            // Block last print job. Blocked jobs are still considered active
+            runOnMainThread(() -> sPrintJob.block(null));
+            eventually(() -> runOnMainThread(() -> assertTrue(sPrintJob.isBlocked())));
+            runOnMainThread(() -> assertEquals(1, secondService.callGetActivePrintJobs().size()));
+
+            // Fail last print job. Failed job are not active
+            runOnMainThread(() -> sPrintJob.fail(null));
+            eventually(() -> runOnMainThread(() -> assertTrue(sPrintJob.isFailed())));
+            runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
+
+            // Cancel job. Canceled jobs are not active
+            runOnMainThread(() -> assertEquals(2, firstService.callGetActivePrintJobs().size()));
+            android.print.PrintJob job2 = getPrintJob(pm, "job2");
+            runOnMainThread(job2::cancel);
+            eventually(() -> runOnMainThread(() -> assertTrue(job2.isCancelled())));
+            runOnMainThread(() -> assertEquals(1, firstService.callGetActivePrintJobs().size()));
+
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        } finally {
+            clearPrintSpoolerData();
         }
-
-        PrintManager pm = (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
-
-        // Configure first print service
-        PrinterDiscoverySessionCallbacks sessionCallbacks1
-                = createMockPrinterDiscoverySessionCallbacks("Printer1");
-        PrintServiceCallbacks serviceCallbacks1 = createMockPrinterServiceCallbacks(
-                sessionCallbacks1);
-        FirstPrintService.setCallbacks(serviceCallbacks1);
-
-        // Configure second print service
-        PrinterDiscoverySessionCallbacks sessionCallbacks2
-                = createMockPrinterDiscoverySessionCallbacks("Printer2");
-        PrintServiceCallbacks serviceCallbacks2 = createMockPrinterServiceCallbacks(
-                sessionCallbacks2);
-        SecondPrintService.setCallbacks(serviceCallbacks2);
-
-        // Create a print adapter that respects the print contract.
-        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
-
-        runOnMainThread(() -> pm.print("job1", adapter, null));
-
-        // Init services
-        waitForPrinterDiscoverySessionCreateCallbackCalled();
-        StubbablePrintService firstService = serviceCallbacks1.getService();
-
-        waitForWriteAdapterCallback(1);
-        selectPrinter("Printer1");
-
-        // Job is not yet confirmed, hence it is not yet "active"
-        runOnMainThread(() -> assertEquals(0, firstService.callGetActivePrintJobs().size()));
-
-        clickPrintButton();
-        answerPrintServicesWarning(true);
-        onPrintJobQueuedCalled();
-
-        eventually(() -> runOnMainThread(
-                () -> assertEquals(1, firstService.callGetActivePrintJobs().size())));
-
-        // Add another print job to first service
-        resetCounters();
-        runOnMainThread(() -> pm.print("job2", adapter, null));
-        waitForWriteAdapterCallback(1);
-        clickPrintButton();
-        onPrintJobQueuedCalled();
-
-        eventually(() -> runOnMainThread(
-                () -> assertEquals(2, firstService.callGetActivePrintJobs().size())));
-
-        // Create print job in second service
-        resetCounters();
-        runOnMainThread(() -> pm.print("job3", adapter, null));
-
-        waitForPrinterDiscoverySessionCreateCallbackCalled();
-
-        StubbablePrintService secondService = serviceCallbacks2.getService();
-        runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
-
-        waitForWriteAdapterCallback(1);
-        selectPrinter("Printer2");
-        clickPrintButton();
-        answerPrintServicesWarning(true);
-        onPrintJobQueuedCalled();
-
-        eventually(() -> runOnMainThread(
-                () -> assertEquals(1, secondService.callGetActivePrintJobs().size())));
-        runOnMainThread(() -> assertEquals(2, firstService.callGetActivePrintJobs().size()));
-
-        // Block last print job. Blocked jobs are still considered active
-        runOnMainThread(() -> sPrintJob.block(null));
-        eventually(() -> runOnMainThread(() -> assertTrue(sPrintJob.isBlocked())));
-        runOnMainThread(() -> assertEquals(1, secondService.callGetActivePrintJobs().size()));
-
-        // Fail last print job. Failed job are not active
-        runOnMainThread(() -> sPrintJob.fail(null));
-        eventually(() -> runOnMainThread(() -> assertTrue(sPrintJob.isFailed())));
-        runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
-
-        // Cancel job. Canceled jobs are not active
-        runOnMainThread(() -> assertEquals(2, firstService.callGetActivePrintJobs().size()));
-        android.print.PrintJob job2 = getPrintJob(pm, "job2");
-        runOnMainThread(job2::cancel);
-        eventually(() -> runOnMainThread(() -> assertTrue(job2.isCancelled())));
-        runOnMainThread(() -> assertEquals(1, firstService.callGetActivePrintJobs().size()));
-
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 }

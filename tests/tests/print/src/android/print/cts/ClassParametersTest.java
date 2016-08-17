@@ -24,10 +24,8 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static android.print.cts.Utils.assertException;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static android.print.cts.Utils.*;
+import static org.junit.Assert.*;
 
 /**
  * Test that the print attributes can be constructed correctly. This does not test that the
@@ -41,7 +39,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesColorMode() throws Throwable {
+    public void illegalPrintAttributesColorMode() throws Throwable {
         assertException(() -> (new PrintAttributes.Builder()).setColorMode(-1),
                 IllegalArgumentException.class);
         assertException(() -> (new PrintAttributes.Builder()).setColorMode(0),
@@ -57,7 +55,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesDuplexMode() throws Throwable {
+    public void illegalPrintAttributesDuplexMode() throws Throwable {
         assertException(() -> (new PrintAttributes.Builder()).setDuplexMode(-1),
                 IllegalArgumentException.class);
         assertException(() -> (new PrintAttributes.Builder()).setDuplexMode(0),
@@ -73,7 +71,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesResolution() throws Throwable {
+    public void illegalPrintAttributesResolution() throws Throwable {
         assertException(() -> new Resolution(null, "label", 10, 10),
                 IllegalArgumentException.class);
         assertException(() -> new Resolution("", "label", 10, 10),
@@ -98,7 +96,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testLegalPrintAttributesResolution() throws Exception {
+    public void legalPrintAttributesResolution() throws Exception {
         // Small resolution
         Resolution testResolution = new Resolution("testId", "testLabel", 1, 2);
         assertEquals("testId", testResolution.getId());
@@ -128,7 +126,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintAttributesMediaSize() throws Throwable {
+    public void illegalPrintAttributesMediaSize() throws Throwable {
         assertException(() -> new MediaSize(null, "label", 10, 10),
                 IllegalArgumentException.class);
         assertException(() -> new MediaSize("", "label", 10, 10),
@@ -153,7 +151,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testLegalPrintAttributesMediaSize() throws Exception {
+    public void legalPrintAttributesMediaSize() throws Exception {
         // Small portrait paper
         MediaSize testMediaSize1 = new MediaSize("testId", "testLabel", 1, 2);
         assertEquals("testId", testMediaSize1.getId());
@@ -228,7 +226,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testIllegalPrintDocumentInfo() throws Throwable {
+    public void illegalPrintDocumentInfo() throws Throwable {
         assertException(() -> new PrintDocumentInfo.Builder(null),
                 IllegalArgumentException.class);
         assertException(() -> new PrintDocumentInfo.Builder(""),
@@ -244,7 +242,7 @@ public class ClassParametersTest {
      * @throws Exception If anything is unexpected
      */
     @Test
-    public void testLegalPrintDocumentInfo() throws Exception {
+    public void legalPrintDocumentInfo() throws Exception {
         PrintDocumentInfo defaultInfo = new PrintDocumentInfo.Builder("doc").build();
         assertEquals(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT, defaultInfo.getContentType());
         assertEquals(PrintDocumentInfo.PAGE_COUNT_UNKNOWN, defaultInfo.getPageCount());
