@@ -106,6 +106,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
+
+            // Press the HOME key to close any alart dialog that may be shown.
+            getDevice().executeShellCommand("input keyevent 3");
         }
         super.tearDown();
     }
