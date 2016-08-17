@@ -215,13 +215,14 @@ class Utils {
         b.getPixels(bPx, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
 
         int badPixels = 0;
-        for (int i = 0; i < a.getWidth() * a.getHeight(); i++) {
+        int totalPixels = a.getWidth() * a.getHeight();
+        for (int i = 0; i < totalPixels; i++) {
             if (aPx[i] != bPx[i]) {
                 badPixels++;
             }
         }
 
-        return ((float) badPixels) / (a.getWidth() * a.getHeight());
+        return ((float) badPixels) / totalPixels;
     }
 
     /**

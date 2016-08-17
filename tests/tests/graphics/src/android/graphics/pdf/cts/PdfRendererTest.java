@@ -28,13 +28,14 @@ import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
+import static android.graphics.pdf.cts.Utils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -51,41 +52,41 @@ public class PdfRendererTest {
             R.raw.a5_portrait_rgbb_1_6_printscaling_none;
     private static final int TWO_PAGES = R.raw.two_pages;
 
-    private Context mContext;
+    private static Context sContext;
 
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @BeforeClass
+    public static void setUp() {
+        sContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test
     public void constructRendererNull() throws Exception {
-        Utils.assertException(() -> new PdfRenderer(null), NullPointerException.class);
+        assertException(() -> new PdfRenderer(null), NullPointerException.class);
     }
 
     @Test
     @Ignore("Makes all subsequent tests fail")
     public void constructRendererFromNonPDF() throws Exception {
         // Open jpg as if it was a PDF
-        ParcelFileDescriptor fd = mContext.getResources().openRawResourceFd(R.raw.testimage)
+        ParcelFileDescriptor fd = sContext.getResources().openRawResourceFd(R.raw.testimage)
                 .getParcelFileDescriptor();
-        Utils.assertException(() -> new PdfRenderer(fd), IOException.class);
+        assertException(() -> new PdfRenderer(fd), IOException.class);
     }
 
     @Test
     public void useRendererAfterClose() throws Exception {
-        PdfRenderer renderer = Utils.createRenderer(Utils.A4_PORTRAIT, mContext);
+        PdfRenderer renderer = createRenderer(A4_PORTRAIT, sContext);
         renderer.close();
 
-        Utils.assertException(renderer::close, IllegalStateException.class);
-        Utils.assertException(renderer::getPageCount, IllegalStateException.class);
-        Utils.assertException(renderer::shouldScaleForPrinting, IllegalStateException.class);
-        Utils.assertException(() -> renderer.openPage(0), IllegalStateException.class);
+        assertException(renderer::close, IllegalStateException.class);
+        assertException(renderer::getPageCount, IllegalStateException.class);
+        assertException(renderer::shouldScaleForPrinting, IllegalStateException.class);
+        assertException(() -> renderer.openPage(0), IllegalStateException.class);
     }
 
     @Test
     public void usePageAfterClose() throws Exception {
-        PdfRenderer renderer = Utils.createRenderer(Utils.A4_PORTRAIT, mContext);
+        PdfRenderer renderer = createRenderer(A4_PORTRAIT, sContext);
         Page page = renderer.openPage(0);
         page.close();
 
@@ -94,11 +95,11 @@ public class PdfRendererTest {
         page.getHeight();
         page.getWidth();
         page.getIndex();
-        Utils.assertException(page::close, IllegalStateException.class);
+        assertException(page::close, IllegalStateException.class);
 
         // Legacy support. An IllegalStateException would be nice by unfortunately the legacy
         // implementation returned NullPointerException
-        Utils.assertException(() -> page.render(null, null, null, Page.RENDER_MODE_FOR_DISPLAY),
+        assertException(() -> page.render(null, null, null, Page.RENDER_MODE_FOR_DISPLAY),
                 NullPointerException.class);
 
         renderer.close();
@@ -106,10 +107,10 @@ public class PdfRendererTest {
 
     @Test
     public void closeWithOpenPage() throws Exception {
-        PdfRenderer renderer = Utils.createRenderer(Utils.A4_PORTRAIT, mContext);
+        PdfRenderer renderer = createRenderer(A4_PORTRAIT, sContext);
         Page page = renderer.openPage(0);
 
-        Utils.assertException(renderer::close, IllegalStateException.class);
+        assertException(renderer::close, IllegalStateException.class);
 
         page.close();
         renderer.close();
@@ -117,10 +118,10 @@ public class PdfRendererTest {
 
     @Test
     public void openTwoPages() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(TWO_PAGES, mContext)) {
+        try (PdfRenderer renderer = createRenderer(TWO_PAGES, sContext)) {
             // Cannot open two pages at once
             Page page = renderer.openPage(0);
-            Utils.assertException(() -> renderer.openPage(1), IllegalStateException.class);
+            assertException(() -> renderer.openPage(1), IllegalStateException.class);
 
             page.close();
         }
@@ -128,51 +129,50 @@ public class PdfRendererTest {
 
     @Test
     public void testPageCount() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(TWO_PAGES, mContext)) {
+        try (PdfRenderer renderer = createRenderer(TWO_PAGES, sContext)) {
             assertEquals(2, renderer.getPageCount());
         }
     }
 
     @Test
     public void testOpenPage() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(TWO_PAGES, mContext)) {
-            Utils.assertException(() -> renderer.openPage(-1), IllegalArgumentException.class);
+        try (PdfRenderer renderer = createRenderer(TWO_PAGES, sContext)) {
+            assertException(() -> renderer.openPage(-1), IllegalArgumentException.class);
             Page page0 = renderer.openPage(0);
             page0.close();
             Page page1 = renderer.openPage(1);
             page1.close();
-            Utils.assertException(() -> renderer.openPage(2), IllegalArgumentException.class);
+            assertException(() -> renderer.openPage(2), IllegalArgumentException.class);
         }
     }
 
     @Test
     public void testPageSize() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(Utils.A4_PORTRAIT, mContext)) {
+        try (PdfRenderer renderer = createRenderer(A4_PORTRAIT, sContext)) {
             try (Page page = renderer.openPage(0)) {
-                assertEquals(Utils.A4_HEIGHT_PTS, page.getHeight());
-                assertEquals(Utils.A4_WIDTH_PTS, page.getWidth());
+                assertEquals(A4_HEIGHT_PTS, page.getHeight());
+                assertEquals(A4_WIDTH_PTS, page.getWidth());
             }
         }
     }
 
     @Test
     public void testPrintScaleDefault() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(Utils.A5_PORTRAIT, mContext)) {
+        try (PdfRenderer renderer = createRenderer(A5_PORTRAIT, sContext)) {
             assertTrue(renderer.shouldScaleForPrinting());
         }
     }
 
     @Test
     public void testPrintScalePDF16Default() throws Exception {
-        try (PdfRenderer renderer = Utils
-                .createRenderer(A5_PORTRAIT_PRINTSCALING_DEFAULT, mContext)) {
+        try (PdfRenderer renderer = createRenderer(A5_PORTRAIT_PRINTSCALING_DEFAULT, sContext)) {
             assertTrue(renderer.shouldScaleForPrinting());
         }
     }
 
     @Test
     public void testPrintScalePDF16None() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(A5_PORTRAIT_PRINTSCALING_NONE, mContext)) {
+        try (PdfRenderer renderer = createRenderer(A5_PORTRAIT_PRINTSCALING_NONE, sContext)) {
             assertFalse(renderer.shouldScaleForPrinting());
         }
     }
@@ -217,8 +217,8 @@ public class PdfRendererTest {
      * @throws Exception If anything was unexpected
      */
     private void renderNoTransformationAndComparePoints(int renderMode) throws Exception {
-        Bitmap bm = Utils.renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS,
-                Utils.A4_PORTRAIT, null, null, renderMode, mContext);
+        Bitmap bm = renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
+                renderMode, sContext);
         int[] probes = getColorProbes(bm);
 
         // Compare rendering to expected result. This ensures that all other tests in this class do
@@ -257,10 +257,9 @@ public class PdfRendererTest {
 
         transform.setValues(new float[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 });
 
-        Utils.assertException(() -> Utils
-                        .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS,
-                                Utils.A4_PORTRAIT, null, transform, Page.RENDER_MODE_FOR_DISPLAY,
-                                mContext), IllegalArgumentException.class);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, transform,
+                        Page.RENDER_MODE_FOR_DISPLAY, sContext), IllegalArgumentException.class);
     }
 
     @Test
@@ -269,91 +268,87 @@ public class PdfRendererTest {
         // Rotate on top left corner
         transform.postRotate(45);
         // Move
-        transform.postTranslate(Utils.A4_WIDTH_PTS / 4, Utils.A4_HEIGHT_PTS / 4);
+        transform.postTranslate(A4_WIDTH_PTS / 4, A4_HEIGHT_PTS / 4);
         // Scale to 75%
         transform.postScale(0.75f, 0.75f);
         // Clip
-        Rect clip = new Rect(20, 20, Utils.A4_WIDTH_PTS - 20, Utils.A4_HEIGHT_PTS - 20);
+        Rect clip = new Rect(20, 20, A4_WIDTH_PTS - 20, A4_HEIGHT_PTS - 20);
 
-        Utils.renderAndCompare(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS, Utils.A4_PORTRAIT, clip,
-                transform, Page.RENDER_MODE_FOR_DISPLAY, mContext);
+        renderAndCompare(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, transform,
+                Page.RENDER_MODE_FOR_DISPLAY, sContext);
     }
 
     @Test
     public void renderStreched() throws Exception {
-        Utils.renderAndCompare(Utils.A4_WIDTH_PTS * 4 / 3, Utils.A4_HEIGHT_PTS * 3 / 4,
-                Utils.A4_PORTRAIT, null, null, Page.RENDER_MODE_FOR_DISPLAY, mContext);
+        renderAndCompare(A4_WIDTH_PTS * 4 / 3, A4_HEIGHT_PTS * 3 / 4, A4_PORTRAIT, null, null,
+                Page.RENDER_MODE_FOR_DISPLAY, sContext);
     }
 
     @Test
     public void renderWithClip() throws Exception {
-        Rect clip = new Rect(20, 20, Utils.A4_WIDTH_PTS - 50, Utils.A4_HEIGHT_PTS - 50);
-        Utils.renderAndCompare(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS,
-                Utils.A4_PORTRAIT, clip, null, Page.RENDER_MODE_FOR_DISPLAY, mContext);
+        Rect clip = new Rect(20, 20, A4_WIDTH_PTS - 50, A4_HEIGHT_PTS - 50);
+        renderAndCompare(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
+                Page.RENDER_MODE_FOR_DISPLAY, sContext);
     }
 
     @Test
     public void renderWithAllClipped() throws Exception {
-        Rect clip = new Rect(Utils.A4_WIDTH_PTS / 2, Utils.A4_HEIGHT_PTS / 2,
-                Utils.A4_WIDTH_PTS / 2, Utils.A4_HEIGHT_PTS / 2);
-        Utils.renderAndCompare(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS, Utils.A4_PORTRAIT, clip,
-                null, Page.RENDER_MODE_FOR_DISPLAY, mContext);
+        Rect clip = new Rect(A4_WIDTH_PTS / 2, A4_HEIGHT_PTS / 2, A4_WIDTH_PTS / 2,
+                A4_HEIGHT_PTS / 2);
+        renderAndCompare(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
+                Page.RENDER_MODE_FOR_DISPLAY, sContext);
     }
 
     @Test
     public void renderWithBadLowerCornerOfClip() throws Exception {
-        Rect clip = new Rect(0, 0, Utils.A4_WIDTH_PTS + 20, Utils.A4_HEIGHT_PTS + 20);
-        Utils.assertException(() -> Utils
-                        .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS,
-                                Utils.A4_PORTRAIT, clip, null, Page.RENDER_MODE_FOR_DISPLAY,
-                                mContext),
-                IllegalArgumentException.class);
+        Rect clip = new Rect(0, 0, A4_WIDTH_PTS + 20, A4_HEIGHT_PTS + 20);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
+                        Page.RENDER_MODE_FOR_DISPLAY, sContext), IllegalArgumentException.class);
     }
 
     @Test
     public void renderWithBadUpperCornerOfClip() throws Exception {
-        Rect clip = new Rect(-20, -20, Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS);
-        Utils.assertException(() -> Utils
-                        .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS,
-                                Utils.A4_PORTRAIT, clip, null, Page.RENDER_MODE_FOR_DISPLAY,
-                                mContext),
-                IllegalArgumentException.class);
+        Rect clip = new Rect(-20, -20, A4_WIDTH_PTS, A4_HEIGHT_PTS);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, clip, null,
+                        Page.RENDER_MODE_FOR_DISPLAY, sContext), IllegalArgumentException.class);
     }
 
     @Test
     public void renderTwoModes() throws Exception {
-        Utils.assertException(() -> Utils
-                .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS, Utils.A4_PORTRAIT,
-                        null, null, Page.RENDER_MODE_FOR_DISPLAY | Page.RENDER_MODE_FOR_PRINT,
-                        mContext), IllegalArgumentException.class);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
+                        Page.RENDER_MODE_FOR_DISPLAY | Page.RENDER_MODE_FOR_PRINT, sContext),
+                IllegalArgumentException.class);
     }
 
     @Test
     public void renderBadMode() throws Exception {
-        Utils.assertException(() -> Utils
-                .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS, Utils.A4_PORTRAIT,
-                        null, null, 1 << 30, mContext), IllegalArgumentException.class);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null,
+                        1 << 30, sContext), IllegalArgumentException.class);
     }
 
     @Test
     public void renderAllModes() throws Exception {
-        Utils.assertException(() -> Utils
-                .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS, Utils.A4_PORTRAIT,
-                        null, null, -1, mContext), IllegalArgumentException.class);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null, -1,
+                        sContext), IllegalArgumentException.class);
     }
 
     @Test
     public void renderNoMode() throws Exception {
-        Utils.assertException(() -> Utils
-                .renderWithTransform(Utils.A4_WIDTH_PTS, Utils.A4_HEIGHT_PTS, Utils.A4_PORTRAIT,
-                        null, null, 0, mContext), IllegalArgumentException.class);
+        assertException(
+                () -> renderWithTransform(A4_WIDTH_PTS, A4_HEIGHT_PTS, A4_PORTRAIT, null, null, 0,
+                        sContext), IllegalArgumentException.class);
     }
 
     @Test
     public void renderOnNullBitmap() throws Exception {
-        try (PdfRenderer renderer = Utils.createRenderer(Utils.A4_PORTRAIT, mContext)) {
+        try (PdfRenderer renderer = createRenderer(A4_PORTRAIT, sContext)) {
             try (Page page = renderer.openPage(0)) {
-                Utils.assertException(() -> page.render(null, null, null, Page.RENDER_MODE_FOR_DISPLAY),
+                assertException(() -> page.render(null, null, null, Page.RENDER_MODE_FOR_DISPLAY),
                         NullPointerException.class);
             }
         }

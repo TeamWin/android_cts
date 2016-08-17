@@ -24,7 +24,7 @@ import android.graphics.pdf.PdfRenderer.Page;
 import android.support.annotation.Nullable;
 import android.support.annotation.RawRes;
 import android.support.test.InstrumentationRegistry;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,12 +32,14 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static android.graphics.pdf.cts.Utils.*;
+
 /**
  * Test for the {@link PdfRenderer}
  */
 @RunWith(Parameterized.class)
 public class PdfRendererTransformTest {
-    private Context mContext;
+    private static Context sContext;
     private int mWidth;
     private int mHeight;
     private int mDocRes;
@@ -57,14 +59,12 @@ public class PdfRendererTransformTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getParameters() {
-        int[] widths = new int[] { Utils.A4_WIDTH_PTS * 3 / 4, Utils.A4_WIDTH_PTS,
-                Utils.A4_WIDTH_PTS * 4 / 3
+        int[] widths = new int[] { A4_WIDTH_PTS * 3 / 4, A4_WIDTH_PTS, A4_WIDTH_PTS * 4 / 3
         };
-        int[] heights = new int[] { Utils.A4_HEIGHT_PTS * 3 / 4, Utils.A4_HEIGHT_PTS,
-                Utils.A4_HEIGHT_PTS * 4 / 3
+        int[] heights = new int[] { A4_HEIGHT_PTS * 3 / 4, A4_HEIGHT_PTS, A4_HEIGHT_PTS * 4 / 3
         };
         int[] rotations = new int[] { 0, 15, 90, 180 };
-        int[] translations = new int[] { -Utils.A4_HEIGHT_PTS / 2, 0, Utils.A4_HEIGHT_PTS / 2 };
+        int[] translations = new int[] { -A4_HEIGHT_PTS / 2, 0, A4_HEIGHT_PTS / 2 };
         float[] scales = { -0.5f, 0, 1, 1.5f };
 
         Collection<Object[]> params = new ArrayList<>();
@@ -94,7 +94,7 @@ public class PdfRendererTransformTest {
                             for (int width : widths) {
                                 for (int height : heights) {
                                     params.add(
-                                            new Object[] { width, height, Utils.A4_PORTRAIT, null,
+                                            new Object[] { width, height, A4_PORTRAIT, null,
                                                     transformation, Page.RENDER_MODE_FOR_DISPLAY
                                             });
                                 }
@@ -108,14 +108,14 @@ public class PdfRendererTransformTest {
         return params;
     }
 
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @BeforeClass
+    public static void setUp() {
+        sContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test
     public void test() throws Exception {
-        Utils.renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
-                mContext);
+        renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
+                sContext);
     }
 }

@@ -24,7 +24,7 @@ import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,7 +32,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-import static android.graphics.pdf.cts.Utils.assertException;
+import static android.graphics.pdf.cts.Utils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -41,11 +41,11 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(AndroidJUnit4.class)
 public class PdfDocumentTest {
-    private Context mContext;
+    private static Context sContext;
 
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @BeforeClass
+    public static void setUp() {
+        sContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     @Test
@@ -69,8 +69,8 @@ public class PdfDocumentTest {
         PdfDocument doc = new PdfDocument();
         doc.close();
 
-        OutputStream os = new FileOutputStream(File.createTempFile("tmp", "pdf",
-                mContext.getCacheDir()));
+        OutputStream os = new FileOutputStream(
+                File.createTempFile("tmp", "pdf", sContext.getCacheDir()));
 
         assertException(() -> doc.writeTo(os), IllegalStateException.class);
     }
@@ -112,7 +112,7 @@ public class PdfDocumentTest {
         PdfDocument doc = new PdfDocument();
 
         // Legacy behavior. Writing an empty doc does not fail.
-        File pdfFile = File.createTempFile("tmp", "pdf", mContext.getCacheDir());
+        File pdfFile = File.createTempFile("tmp", "pdf", sContext.getCacheDir());
         try (OutputStream os = new FileOutputStream(pdfFile)) {
             doc.writeTo(os);
         }
@@ -126,7 +126,7 @@ public class PdfDocumentTest {
         PdfDocument.Page page = doc
                 .startPage(new PdfDocument.PageInfo.Builder(100, 100, 0).create());
 
-        File pdfFile = File.createTempFile("tmp", "pdf", mContext.getCacheDir());
+        File pdfFile = File.createTempFile("tmp", "pdf", sContext.getCacheDir());
         try (OutputStream os = new FileOutputStream(pdfFile)) {
             assertException(() -> doc.writeTo(os), IllegalStateException.class);
         }
@@ -179,7 +179,7 @@ public class PdfDocumentTest {
         doc.finishPage(page1);
         assertEquals(2, doc.getPages().size());
 
-        File pdfFile = File.createTempFile("tmp", "pdf", mContext.getCacheDir());
+        File pdfFile = File.createTempFile("tmp", "pdf", sContext.getCacheDir());
         try (OutputStream os = new FileOutputStream(pdfFile)) {
             doc.writeTo(os);
         }
@@ -232,7 +232,7 @@ public class PdfDocumentTest {
         assertEquals(1, doc.getPages().size());
         assertTrue(pageInfoEquals(page0.getInfo(), doc.getPages().get(0)));
 
-        File page1File = File.createTempFile("tmp", "pdf", mContext.getCacheDir());
+        File page1File = File.createTempFile("tmp", "pdf", sContext.getCacheDir());
         try (OutputStream os = new FileOutputStream(page1File)) {
             doc.writeTo(os);
         }
@@ -256,7 +256,7 @@ public class PdfDocumentTest {
         assertTrue(pageInfoEquals(page0.getInfo(), doc.getPages().get(0)));
         assertTrue(pageInfoEquals(page1.getInfo(), doc.getPages().get(1)));
 
-        File page2File = File.createTempFile("tmp", "pdf", mContext.getCacheDir());
+        File page2File = File.createTempFile("tmp", "pdf", sContext.getCacheDir());
         try (OutputStream os = new FileOutputStream(page2File)) {
             doc.writeTo(os);
         }
@@ -334,37 +334,34 @@ public class PdfDocumentTest {
     @Test
     public void contentRectLeftNegative() throws Exception {
         assertException(() -> new PdfDocument.PageInfo.Builder(100, 200, 0)
-                        .setContentRect(new Rect(-1, 0, 100, 200)),
-                IllegalArgumentException.class);
+                .setContentRect(new Rect(-1, 0, 100, 200)), IllegalArgumentException.class);
     }
 
     @Test
     public void contentRectTopNegative() throws Exception {
         assertException(() -> new PdfDocument.PageInfo.Builder(100, 200, 0)
-                        .setContentRect(new Rect(0, -1, 100, 200)),
-                IllegalArgumentException.class);
+                .setContentRect(new Rect(0, -1, 100, 200)), IllegalArgumentException.class);
     }
 
     @Test
     public void contentRectRightToHigh() throws Exception {
         assertException(() -> new PdfDocument.PageInfo.Builder(100, 200, 0)
-                        .setContentRect(new Rect(0, 0, 101, 200)),
-                IllegalArgumentException.class);
+                .setContentRect(new Rect(0, 0, 101, 200)), IllegalArgumentException.class);
     }
 
     @Test
     public void contentRectBottomToHigh() throws Exception {
         assertException(() -> new PdfDocument.PageInfo.Builder(100, 200, 0)
-                        .setContentRect(new Rect(0, 0, 100, 201)),
-                IllegalArgumentException.class);
+                .setContentRect(new Rect(0, 0, 100, 201)), IllegalArgumentException.class);
     }
 
     @Test
     public void createPageWithFullContentRect() throws Exception {
         PdfDocument doc = new PdfDocument();
         Rect contentRect = new Rect(0, 0, 100, 200);
-        PdfDocument.Page page = doc.startPage((new PdfDocument.PageInfo.Builder(100, 200, 0))
-                .setContentRect(contentRect).create());
+        PdfDocument.Page page = doc.startPage(
+                (new PdfDocument.PageInfo.Builder(100, 200, 0)).setContentRect(contentRect)
+                        .create());
         assertEquals(page.getInfo().getContentRect(), contentRect);
         assertEquals(100, page.getCanvas().getWidth());
         assertEquals(200, page.getCanvas().getHeight());
@@ -376,8 +373,9 @@ public class PdfDocumentTest {
     public void createPageWithPartialContentRect() throws Exception {
         PdfDocument doc = new PdfDocument();
         Rect contentRect = new Rect(10, 20, 90, 180);
-        PdfDocument.Page page = doc.startPage((new PdfDocument.PageInfo.Builder(100, 200, 0))
-                .setContentRect(contentRect).create());
+        PdfDocument.Page page = doc.startPage(
+                (new PdfDocument.PageInfo.Builder(100, 200, 0)).setContentRect(contentRect)
+                        .create());
         assertEquals(page.getInfo().getContentRect(), contentRect);
         assertEquals(80, page.getCanvas().getWidth());
         assertEquals(160, page.getCanvas().getHeight());
@@ -389,8 +387,9 @@ public class PdfDocumentTest {
     public void createPageWithEmptyContentRect() throws Exception {
         PdfDocument doc = new PdfDocument();
         Rect contentRect = new Rect(50, 100, 50, 100);
-        PdfDocument.Page page = doc.startPage((new PdfDocument.PageInfo.Builder(100, 200, 0))
-                .setContentRect(contentRect).create());
+        PdfDocument.Page page = doc.startPage(
+                (new PdfDocument.PageInfo.Builder(100, 200, 0)).setContentRect(contentRect)
+                        .create());
         assertEquals(page.getInfo().getContentRect(), contentRect);
         assertEquals(0, page.getCanvas().getWidth());
         assertEquals(0, page.getCanvas().getHeight());
@@ -406,8 +405,9 @@ public class PdfDocumentTest {
         // sense for a content rect. For legacy reasons this is treated as we have a empty content
         // rect.
         Rect contentRect = new Rect(90, 180, 10, 20);
-        PdfDocument.Page page = doc.startPage((new PdfDocument.PageInfo.Builder(100, 200, 0))
-                .setContentRect(contentRect).create());
+        PdfDocument.Page page = doc.startPage(
+                (new PdfDocument.PageInfo.Builder(100, 200, 0)).setContentRect(contentRect)
+                        .create());
         assertEquals(page.getInfo().getContentRect(), contentRect);
         assertEquals(0, page.getCanvas().getWidth());
         assertEquals(0, page.getCanvas().getHeight());
@@ -418,7 +418,7 @@ public class PdfDocumentTest {
 
     @Test
     public void defaultContentRectIsFullRect() throws Exception {
-        PdfDocument.PageInfo info =(new PdfDocument.PageInfo.Builder(100, 200, 0)).create();
+        PdfDocument.PageInfo info = (new PdfDocument.PageInfo.Builder(100, 200, 0)).create();
         assertEquals(info.getContentRect(), new Rect(0, 0, 100, 200));
     }
 }
