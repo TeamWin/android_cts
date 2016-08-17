@@ -217,6 +217,7 @@ public class ModuleDef implements IModuleDef {
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         IModuleListener moduleListener = new ModuleListener(this, listener);
 
+        CLog.d("Running module %s", toString());
         // Setup
         for (ITargetPreparer preparer : mPreparers) {
             String preparerName = preparer.getClass().getCanonicalName();
