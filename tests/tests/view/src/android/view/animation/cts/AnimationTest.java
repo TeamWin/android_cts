@@ -23,13 +23,22 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.res.XmlResourceParser;
 import android.cts.util.PollingCheck;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -63,14 +72,13 @@ public class AnimationTest {
     private static final float COMPARISON_DELTA = 0.001f;
 
     /** It is defined in R.anim.accelerate_alpha */
-    private static final long ACCELERATE_ALPHA_DURATION = 1000;
+    private static final int ACCELERATE_ALPHA_DURATION = 1000;
 
     /** It is defined in R.anim.decelerate_alpha */
-    private static final long DECELERATE_ALPHA_DURATION = 2000;
+    private static final int DECELERATE_ALPHA_DURATION = 2000;
 
     private Instrumentation mInstrumentation;
     private Activity mActivity;
-    private Object mLockObject = new Object();
 
     @Rule
     public ActivityTestRule<AnimationTestCtsActivity> mActivityRule =
@@ -543,6 +551,7 @@ public class AnimationTest {
         assertEquals(-10, animation.getDuration());
     }
 
+    @LargeTest
     @Test
     public void testSetAnimationListener() throws Throwable {
         final View animWindow = mActivity.findViewById(R.id.anim_window);
@@ -554,43 +563,37 @@ public class AnimationTest {
         //      android:toAlpha="0.9"
         //      android:duration="1000" />
         final Animation anim = AnimationUtils.loadAnimation(mActivity, R.anim.accelerate_alpha);
-        MockAnimationListener listener = new MockAnimationListener();
+        final AnimationListener listener = mock(AnimationListener.class);
         anim.setAnimationListener(listener);
-        assertFalse(listener.hasAnimationStarted());
-        assertFalse(listener.hasAnimationEnded());
-        assertFalse(listener.hasAnimationRepeated());
+        verifyZeroInteractions(listener);
 
         AnimationTestUtils.assertRunAnimation(mInstrumentation, mActivityRule, animWindow, anim);
-        assertTrue(listener.hasAnimationStarted());
-        assertTrue(listener.hasAnimationEnded());
-        assertFalse(listener.hasAnimationRepeated());
+        verify(listener, times(1)).onAnimationStart(anim);
+        verify(listener, times(1)).onAnimationEnd(anim);
+        verify(listener, never()).onAnimationRepeat(anim);
 
-        listener.reset();
+        reset(listener);
         anim.setRepeatCount(2);
         anim.setRepeatMode(Animation.REVERSE);
 
         AnimationTestUtils.assertRunAnimation(mInstrumentation, mActivityRule, animWindow, anim,
                 3000);
-        assertTrue(listener.hasAnimationStarted());
-        assertTrue(listener.hasAnimationRepeated());
-        assertTrue(listener.hasAnimationEnded());
+        verify(listener, times(1)).onAnimationStart(anim);
+        verify(listener, times(2)).onAnimationRepeat(anim);
+        verify(listener, times(1)).onAnimationEnd(anim);
 
-        listener.reset();
+        reset(listener);
         // onAnimationEnd will not be invoked and animation should not end
         anim.setRepeatCount(Animation.INFINITE);
 
         mActivityRule.runOnUiThread(() -> animWindow.startAnimation(anim));
-        synchronized(mLockObject) {
-            try {
-                mLockObject.wait(4 * ACCELERATE_ALPHA_DURATION);
-            } catch (InterruptedException e) {
-                fail("thrown unexpected InterruptedException");
-            }
-        }
+        // Verify that our animation doesn't call listener's onAnimationEnd even after a long
+        // period of time. We just sleep and then verify what's happened with the listener.
+        SystemClock.sleep(4 * ACCELERATE_ALPHA_DURATION);
 
-        assertTrue(listener.hasAnimationStarted());
-        assertTrue(listener.hasAnimationRepeated());
-        assertFalse(listener.hasAnimationEnded());
+        verify(listener, times(1)).onAnimationStart(anim);
+        verify(listener, atLeastOnce()).onAnimationRepeat(anim);
+        verify(listener, never()).onAnimationEnd(anim);
     }
 
     @Test
@@ -742,43 +745,6 @@ public class AnimationTest {
         public boolean getTransformation(long currentTime, Transformation outTransformation) {
             mStillAnimating = true;
             return super.getTransformation(currentTime, outTransformation);
-        }
-    }
-
-    private class MockAnimationListener implements AnimationListener {
-        private boolean mHasAnimationStarted = false;
-        private boolean mHasAnimationEnded = false;
-        private boolean mHasAnimationRepeated = false;
-
-        public void onAnimationStart(Animation animation) {
-            mHasAnimationStarted = true;
-        }
-        public void onAnimationEnd(Animation animation) {
-            synchronized(mLockObject) {
-                mHasAnimationEnded = true;
-                mLockObject.notifyAll();
-            }
-        }
-        public void onAnimationRepeat(Animation animation) {
-            mHasAnimationRepeated = true;
-        }
-
-        public boolean hasAnimationStarted() {
-            return mHasAnimationStarted;
-        }
-
-        public boolean hasAnimationEnded() {
-            return mHasAnimationEnded;
-        }
-
-        public boolean hasAnimationRepeated() {
-            return mHasAnimationRepeated;
-        }
-
-        public void reset() {
-            mHasAnimationStarted = false;
-            mHasAnimationEnded = false;
-            mHasAnimationRepeated = false;
         }
     }
 }

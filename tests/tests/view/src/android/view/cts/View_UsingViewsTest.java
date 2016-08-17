@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static android.cts.util.CtsMockitoUtils.within;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -198,8 +199,7 @@ public class View_UsingViewsTest {
         parent.addView(v);
         v.refreshDrawableState();
 
-        assertEquals(parent.getDrawableState().length, v.getDrawableState().length);
-        assertEquals(parent.getDrawableState().toString(), v.getDrawableState().toString());
+        assertArrayEquals(parent.getDrawableState(), v.getDrawableState());
         parent.removeView(v);
 
         // setEnabled
