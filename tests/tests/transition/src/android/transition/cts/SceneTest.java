@@ -15,38 +15,52 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.Scene;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class SceneTest extends BaseTransitionTest {
     /**
      * Test Scene(ViewGroup) with enterAction and exitAction
      */
+    @Test
     public void testDynamicConstructor() throws Throwable {
         Scene scene = new Scene(mSceneRoot);
         assertEquals(mSceneRoot, scene.getSceneRoot());
-        CallCheck enterCheck = new CallCheck() {
-            @Override
-            public void run() {
-                super.run();
-                mActivity.getLayoutInflater().inflate(R.layout.scene1, mSceneRoot, true);
-            }
-        };
+        Runnable enterCheck = mock(Runnable.class);
+        doAnswer((InvocationOnMock invocation) -> mActivity.getLayoutInflater().inflate(
+                R.layout.scene1, mSceneRoot, true)).when(enterCheck).run();
         scene.setEnterAction(enterCheck);
-        CallCheck exitCheck = new CallCheck();
+        Runnable exitCheck = mock(Runnable.class);
         scene.setExitAction(exitCheck);
         enterScene(scene);
 
-        assertTrue(enterCheck.wasRun);
-        assertFalse(exitCheck.wasRun);
+        verify(enterCheck, times(1)).run();
+        verifyZeroInteractions(exitCheck);
 
         View redSquare = mActivity.findViewById(R.id.redSquare);
         assertNotNull(redSquare);
 
         exitScene(scene);
         assertNotNull(mSceneRoot.findViewById(R.id.redSquare));
-        assertTrue(exitCheck.wasRun);
+        verify(exitCheck, times(1)).run();
 
         enterScene(R.layout.scene4);
         assertNull(mSceneRoot.findViewById(R.id.redSquare));
@@ -55,6 +69,7 @@ public class SceneTest extends BaseTransitionTest {
     /**
      * Test Scene(ViewGroup, View)
      */
+    @Test
     public void testViewConstructor() throws Throwable {
         View view = loadLayout(R.layout.scene1);
         constructorTest(new Scene(mSceneRoot, view));
@@ -63,6 +78,7 @@ public class SceneTest extends BaseTransitionTest {
     /**
      * Test Scene(ViewGroup, ViewGroup)
      */
+    @Test
     public void testDeprecatedConstructor() throws Throwable {
         View view = loadLayout(R.layout.scene1);
         constructorTest(new Scene(mSceneRoot, (ViewGroup) view));
@@ -71,6 +87,7 @@ public class SceneTest extends BaseTransitionTest {
     /**
      * Test Scene.getSceneForLayout
      */
+    @Test
     public void testFactory() throws Throwable {
         Scene scene = loadScene(R.layout.scene1);
         constructorTest(scene);
@@ -81,30 +98,21 @@ public class SceneTest extends BaseTransitionTest {
      */
     private void constructorTest(Scene scene) throws Throwable {
         assertEquals(mSceneRoot, scene.getSceneRoot());
-        CallCheck enterCheck = new CallCheck();
+        Runnable enterCheck = mock(Runnable.class);
         scene.setEnterAction(enterCheck);
-        CallCheck exitCheck = new CallCheck();
+        Runnable exitCheck = mock(Runnable.class);
         scene.setExitAction(exitCheck);
         enterScene(scene);
 
-        assertTrue(enterCheck.wasRun);
-        assertFalse(exitCheck.wasRun);
+        verify(enterCheck, times(1)).run();
+        verifyZeroInteractions(exitCheck);
 
         View redSquare = mActivity.findViewById(R.id.redSquare);
         assertNotNull(redSquare);
 
         exitScene(scene);
         assertNotNull(mSceneRoot.findViewById(R.id.redSquare));
-        assertTrue(exitCheck.wasRun);
-    }
-
-    private static class CallCheck implements Runnable {
-        public boolean wasRun;
-
-        @Override
-        public void run() {
-            wasRun = true;
-        }
+        verify(exitCheck, times(1)).run();
     }
 }
 

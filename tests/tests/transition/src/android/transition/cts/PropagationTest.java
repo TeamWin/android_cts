@@ -15,7 +15,12 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Rect;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.CircularPropagation;
 import android.transition.SidePropagation;
 import android.transition.Transition;
@@ -23,13 +28,19 @@ import android.transition.TransitionValues;
 import android.view.Gravity;
 import android.view.View;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class PropagationTest extends BaseTransitionTest {
+    @Test
     public void testCircularPropagation() throws Throwable {
         enterScene(R.layout.scene10);
         CircularPropagation propagation = new CircularPropagation();
         mTransition.setPropagation(propagation);
         final TransitionValues redValues = new TransitionValues();
-        redValues.view = getActivity().findViewById(R.id.redSquare);
+        redValues.view = mActivity.findViewById(R.id.redSquare);
         propagation.captureValues(redValues);
 
         // Only the reported propagation properties are set
@@ -74,6 +85,7 @@ public class PropagationTest extends BaseTransitionTest {
         assertEquals(0, getDelay(R.id.blueSquare));
     }
 
+    @Test
     public void testSidePropagationBottom() throws Throwable {
         SidePropagation propagation = new SidePropagation();
         propagation.setSide(Gravity.BOTTOM);
@@ -109,6 +121,7 @@ public class PropagationTest extends BaseTransitionTest {
         assertEquals(0, getDelay(R.id.blueSquare));
     }
 
+    @Test
     public void testSidePropagationTop() throws Throwable {
         SidePropagation propagation = new SidePropagation();
         propagation.setSide(Gravity.TOP);
@@ -140,6 +153,7 @@ public class PropagationTest extends BaseTransitionTest {
         assertTrue(blueDelay > greenDelay);
     }
 
+    @Test
     public void testSidePropagationRight() throws Throwable {
         SidePropagation propagation = new SidePropagation();
         propagation.setSide(Gravity.RIGHT);
@@ -171,6 +185,7 @@ public class PropagationTest extends BaseTransitionTest {
         assertTrue(greenDelay > blueDelay);
     }
 
+    @Test
     public void testSidePropagationLeft() throws Throwable {
         SidePropagation propagation = new SidePropagation();
         propagation.setSide(Gravity.LEFT);

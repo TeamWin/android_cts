@@ -15,18 +15,29 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.Fade;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * This tests the public API for Fade. The alpha cannot be easily tested as part of CTS,
  * so those are implementation tests.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class FadeTest extends BaseTransitionTest {
     Fade mFade;
 
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        super.setup();
         resetTransition();
     }
 
@@ -37,6 +48,7 @@ public class FadeTest extends BaseTransitionTest {
         resetListener();
     }
 
+    @Test
     public void testMode() throws Throwable {
         // Should animate in and out by default
         enterScene(R.layout.scene4);

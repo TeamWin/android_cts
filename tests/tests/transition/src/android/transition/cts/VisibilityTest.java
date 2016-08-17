@@ -15,28 +15,42 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import android.animation.Animator;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class VisibilityTest extends BaseTransitionTest {
     Visibility mVisibilityTransition;
 
-    public VisibilityTest() {
-    }
-
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        super.setup();
         mVisibilityTransition = (Visibility) mTransition;
     }
 
+    @Test
     public void testMode() throws Throwable {
         assertEquals(Visibility.MODE_IN | Visibility.MODE_OUT, mVisibilityTransition.getMode());
 
@@ -76,6 +90,7 @@ public class VisibilityTest extends BaseTransitionTest {
         waitForEnd(400);
     }
 
+    @Test
     public void testIsVisible() throws Throwable {
         assertFalse(mVisibilityTransition.isVisible(null));
 
@@ -86,31 +101,22 @@ public class VisibilityTest extends BaseTransitionTest {
         mTransition.captureStartValues(visibleValues);
 
         assertTrue(mVisibilityTransition.isVisible(visibleValues));
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                redSquare.setVisibility(View.INVISIBLE);
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(() -> redSquare.setVisibility(View.INVISIBLE));
+        mInstrumentation.waitForIdleSync();
         TransitionValues invisibleValues = new TransitionValues();
         invisibleValues.view = redSquare;
         mTransition.captureStartValues(invisibleValues);
         assertFalse(mVisibilityTransition.isVisible(invisibleValues));
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                redSquare.setVisibility(View.GONE);
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(() -> redSquare.setVisibility(View.GONE));
+        mInstrumentation.waitForIdleSync();
         TransitionValues goneValues = new TransitionValues();
         goneValues.view = redSquare;
         mTransition.captureStartValues(goneValues);
         assertFalse(mVisibilityTransition.isVisible(goneValues));
     }
 
+    @Test
     public void testOnAppear() throws Throwable {
         enterScene(R.layout.scene4);
         AppearTransition transition = new AppearTransition();
@@ -122,6 +128,7 @@ public class VisibilityTest extends BaseTransitionTest {
         // any animators.
     }
 
+    @Test
     public void testOnDisppear() throws Throwable {
         // First, test with overlay
         enterScene(R.layout.scene5);
@@ -138,13 +145,10 @@ public class VisibilityTest extends BaseTransitionTest {
         transition = new DisappearTransition(false);
         mTransition = transition;
         resetListener();
-        final View text = getActivity().findViewById(R.id.text);
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                TransitionManager.beginDelayedTransition(mSceneRoot, mTransition);
-                text.setVisibility(View.GONE);
-            }
+        final View text = mActivity.findViewById(R.id.text);
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.beginDelayedTransition(mSceneRoot, mTransition);
+            text.setVisibility(View.GONE);
         });
         assertTrue(transition.onDisppearCalled.await(500, TimeUnit.MILLISECONDS));
         // No need to end the transition since DisappearTransition doesn't create

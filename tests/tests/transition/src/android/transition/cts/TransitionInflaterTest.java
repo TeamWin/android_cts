@@ -15,10 +15,17 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.ArcMotion;
 import android.transition.AutoTransition;
 import android.transition.ChangeBounds;
@@ -38,16 +45,20 @@ import android.transition.TransitionManager;
 import android.transition.TransitionSet;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
-import android.transition.cts.R;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class TransitionInflaterTest extends BaseTransitionTest {
+    @Test
     public void testInflationConstructors() throws Throwable {
         TransitionInflater inflater = TransitionInflater.from(mActivity);
         Transition transition = inflater.inflateTransition(R.transition.transition_constructors);
@@ -56,30 +67,32 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertEquals(10, set.getTransitionCount());
     }
 
+    @Test
     public void testInflation() {
         TransitionInflater inflater = TransitionInflater.from(mActivity);
-        assureFadeProperties(inflater.inflateTransition(R.transition.fade));
-        assureChangeBoundsProperties(inflater.inflateTransition(R.transition.change_bounds));
-        assureSlideProperties(inflater.inflateTransition(R.transition.slide));
-        assureExplodeProperties(inflater.inflateTransition(R.transition.explode));
-        assureChangeImageTransformProperties(
+        verifyFadeProperties(inflater.inflateTransition(R.transition.fade));
+        verifyChangeBoundsProperties(inflater.inflateTransition(R.transition.change_bounds));
+        verifySlideProperties(inflater.inflateTransition(R.transition.slide));
+        verifyExplodeProperties(inflater.inflateTransition(R.transition.explode));
+        verifyChangeImageTransformProperties(
                 inflater.inflateTransition(R.transition.change_image_transform));
-        assureChangeTransformProperties(inflater.inflateTransition(R.transition.change_transform));
-        assureChangeClipBoundsProperties(
+        verifyChangeTransformProperties(inflater.inflateTransition(R.transition.change_transform));
+        verifyChangeClipBoundsProperties(
                 inflater.inflateTransition(R.transition.change_clip_bounds));
-        assureAutoTransitionProperties(inflater.inflateTransition(R.transition.auto_transition));
-        assureChangeScrollProperties(inflater.inflateTransition(R.transition.change_scroll));
-        assureTransitionSetProperties(inflater.inflateTransition(R.transition.transition_set));
-        assureCustomTransitionProperties(
+        verifyAutoTransitionProperties(inflater.inflateTransition(R.transition.auto_transition));
+        verifyChangeScrollProperties(inflater.inflateTransition(R.transition.change_scroll));
+        verifyTransitionSetProperties(inflater.inflateTransition(R.transition.transition_set));
+        verifyCustomTransitionProperties(
                 inflater.inflateTransition(R.transition.custom_transition));
-        testTargetIds(inflater.inflateTransition(R.transition.target_ids));
-        testTargetNames(inflater.inflateTransition(R.transition.target_names));
-        testTargetClass(inflater.inflateTransition(R.transition.target_classes));
-        testArcMotion(inflater.inflateTransition(R.transition.arc_motion));
-        testCustomPathMotion(inflater.inflateTransition(R.transition.custom_path_motion));
-        testPatternPathMotion(inflater.inflateTransition(R.transition.pattern_path_motion));
+        verifyTargetIds(inflater.inflateTransition(R.transition.target_ids));
+        verifyTargetNames(inflater.inflateTransition(R.transition.target_names));
+        verifyTargetClass(inflater.inflateTransition(R.transition.target_classes));
+        verifyArcMotion(inflater.inflateTransition(R.transition.arc_motion));
+        verifyCustomPathMotion(inflater.inflateTransition(R.transition.custom_path_motion));
+        verifyPatternPathMotion(inflater.inflateTransition(R.transition.pattern_path_motion));
     }
 
+    @Test
     public void testInflateTransitionManager() throws Throwable {
         TransitionInflater inflater = TransitionInflater.from(mActivity);
         TransitionManager transitionManager =
@@ -98,54 +111,54 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertTrue(transition instanceof ChangeBounds);
     }
 
-    private void assureFadeProperties(Transition transition) {
+    private void verifyFadeProperties(Transition transition) {
         assertTrue(transition instanceof Fade);
         Fade fade = (Fade) transition;
         assertEquals(Fade.OUT, fade.getMode());
     }
 
-    private void assureChangeBoundsProperties(Transition transition) {
+    private void verifyChangeBoundsProperties(Transition transition) {
         assertTrue(transition instanceof ChangeBounds);
         ChangeBounds changeBounds = (ChangeBounds) transition;
         assertTrue(changeBounds.getResizeClip());
     }
 
-    private void assureSlideProperties(Transition transition) {
+    private void verifySlideProperties(Transition transition) {
         assertTrue(transition instanceof Slide);
         Slide slide = (Slide) transition;
         assertEquals(Gravity.TOP, slide.getSlideEdge());
     }
 
-    private void assureExplodeProperties(Transition transition) {
+    private void verifyExplodeProperties(Transition transition) {
         assertTrue(transition instanceof Explode);
         Visibility visibility = (Visibility) transition;
         assertEquals(Visibility.MODE_IN, visibility.getMode());
     }
 
-    private void assureChangeImageTransformProperties(Transition transition) {
+    private void verifyChangeImageTransformProperties(Transition transition) {
         assertTrue(transition instanceof ChangeImageTransform);
     }
 
-    private void assureChangeTransformProperties(Transition transition) {
+    private void verifyChangeTransformProperties(Transition transition) {
         assertTrue(transition instanceof ChangeTransform);
         ChangeTransform changeTransform = (ChangeTransform) transition;
         assertFalse(changeTransform.getReparent());
         assertFalse(changeTransform.getReparentWithOverlay());
     }
 
-    private void assureChangeClipBoundsProperties(Transition transition) {
+    private void verifyChangeClipBoundsProperties(Transition transition) {
         assertTrue(transition instanceof ChangeClipBounds);
     }
 
-    private void assureAutoTransitionProperties(Transition transition) {
+    private void verifyAutoTransitionProperties(Transition transition) {
         assertTrue(transition instanceof AutoTransition);
     }
 
-    private void assureChangeScrollProperties(Transition transition) {
+    private void verifyChangeScrollProperties(Transition transition) {
         assertTrue(transition instanceof ChangeScroll);
     }
 
-    private void assureTransitionSetProperties(Transition transition) {
+    private void verifyTransitionSetProperties(Transition transition) {
         assertTrue(transition instanceof TransitionSet);
         TransitionSet set = (TransitionSet) transition;
         assertEquals(TransitionSet.ORDERING_SEQUENTIAL, set.getOrdering());
@@ -154,11 +167,11 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertTrue(set.getTransitionAt(1) instanceof Fade);
     }
 
-    private void assureCustomTransitionProperties(Transition transition) {
+    private void verifyCustomTransitionProperties(Transition transition) {
         assertTrue(transition instanceof CustomTransition);
     }
 
-    private void testTargetIds(Transition transition) {
+    private void verifyTargetIds(Transition transition) {
         List<Integer> targets = transition.getTargetIds();
         assertNotNull(targets);
         assertEquals(2, targets.size());
@@ -166,7 +179,7 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertEquals(R.id.world, (int) targets.get(1));
     }
 
-    private void testTargetNames(Transition transition) {
+    private void verifyTargetNames(Transition transition) {
         List<String> targets = transition.getTargetNames();
         assertNotNull(targets);
         assertEquals(2, targets.size());
@@ -174,7 +187,7 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertEquals("world", targets.get(1));
     }
 
-    private void testTargetClass(Transition transition) {
+    private void verifyTargetClass(Transition transition) {
         List<Class> targets = transition.getTargetTypes();
         assertNotNull(targets);
         assertEquals(2, targets.size());
@@ -182,7 +195,7 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertEquals(ImageView.class, targets.get(1));
     }
 
-    private void testArcMotion(Transition transition) {
+    private void verifyArcMotion(Transition transition) {
         assertNotNull(transition);
         PathMotion motion = transition.getPathMotion();
         assertNotNull(motion);
@@ -193,14 +206,14 @@ public class TransitionInflaterTest extends BaseTransitionTest {
         assertEquals(53f, arcMotion.getMaximumAngle(), 0.01f);
     }
 
-    private void testCustomPathMotion(Transition transition) {
+    private void verifyCustomPathMotion(Transition transition) {
         assertNotNull(transition);
         PathMotion motion = transition.getPathMotion();
         assertNotNull(motion);
         assertTrue(motion instanceof CustomPathMotion);
     }
 
-    private void testPatternPathMotion(Transition transition) {
+    private void verifyPatternPathMotion(Transition transition) {
         assertNotNull(transition);
         PathMotion motion = transition.getPathMotion();
         assertNotNull(motion);
@@ -222,12 +235,10 @@ public class TransitionInflaterTest extends BaseTransitionTest {
 
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
-
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
-
         }
     }
 

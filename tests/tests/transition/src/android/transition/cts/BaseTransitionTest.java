@@ -15,41 +15,46 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
-import android.test.ActivityInstrumentationTestCase2;
+import android.app.Instrumentation;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.transition.Scene;
 import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
-import android.view.Choreographer;
-import android.view.Choreographer.FrameCallback;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import org.junit.Before;
+import org.junit.Rule;
+
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class BaseTransitionTest extends ActivityInstrumentationTestCase2<TransitionActivity> {
+public abstract class BaseTransitionTest {
+    protected Instrumentation mInstrumentation;
     protected TransitionActivity mActivity;
     protected FrameLayout mSceneRoot;
     public float mAnimatedValue;
-    protected ArrayList<View> mTargets = new ArrayList<View>();
+    protected ArrayList<View> mTargets = new ArrayList<>();
     protected Transition mTransition;
     protected SimpleTransitionListener mListener;
 
-    public BaseTransitionTest() {
-        super(TransitionActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<TransitionActivity> mActivityRule =
+            new ActivityTestRule<>(TransitionActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        setActivityInitialTouchMode(false);
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mInstrumentation.setInTouchMode(false);
+        mActivity = mActivityRule.getActivity();
         mSceneRoot = (FrameLayout) mActivity.findViewById(R.id.container);
         mTargets.clear();
         mTransition = new TestTransition();
@@ -67,7 +72,7 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
 
     protected void waitForEnd(long waitMillis) throws InterruptedException {
         waitForEnd(mListener, waitMillis);
-        getInstrumentation().waitForIdleSync();
+        mInstrumentation.waitForIdleSync();
     }
 
     protected static void waitForEnd(SimpleTransitionListener listener, long waitMillis)
@@ -78,36 +83,23 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     protected View loadLayout(final int layout) throws Throwable {
         View[] root = new View[1];
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                root[0] = mActivity.getLayoutInflater().inflate(layout, mSceneRoot, false);
-            }
-        });
+        mActivityRule.runOnUiThread(
+                () -> root[0] = mActivity.getLayoutInflater().inflate(layout, mSceneRoot, false));
 
         return root[0];
     }
 
     protected Scene loadScene(final View layout) throws Throwable {
         final Scene[] scene = new Scene[1];
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scene[0] = new Scene(mSceneRoot, layout);
-            }
-        });
+        mActivityRule.runOnUiThread(() -> scene[0] = new Scene(mSceneRoot, layout));
 
         return scene[0];
     }
 
     protected Scene loadScene(final int layoutId) throws Throwable {
         final Scene scene[] = new Scene[1];
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scene[0] = Scene.getSceneForLayout(mSceneRoot, layoutId, mActivity);
-            }
-        });
+        mActivityRule.runOnUiThread(
+                () -> scene[0] = Scene.getSceneForLayout(mSceneRoot, layoutId, mActivity));
         return scene[0];
     }
 
@@ -116,22 +108,12 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     }
 
     protected void startTransition(final Scene scene) throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                TransitionManager.go(scene, mTransition);
-            }
-        });
+        mActivityRule.runOnUiThread(() -> TransitionManager.go(scene, mTransition));
         waitForStart();
     }
 
     protected void endTransition() throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                TransitionManager.endTransitions(mSceneRoot);
-            }
-        });
+        mActivityRule.runOnUiThread(() -> TransitionManager.endTransitions(mSceneRoot));
     }
 
     protected void enterScene(final int layoutId) throws Throwable {
@@ -139,23 +121,13 @@ public class BaseTransitionTest extends ActivityInstrumentationTestCase2<Transit
     }
 
     protected void enterScene(final Scene scene) throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scene.enter();
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(scene::enter);
+        mInstrumentation.waitForIdleSync();
     }
 
     protected void exitScene(final Scene scene) throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scene.exit();
-            }
-        });
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(scene::exit);
+        mInstrumentation.waitForIdleSync();
     }
 
     protected void resetListener() {

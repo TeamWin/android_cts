@@ -15,15 +15,21 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.graphics.Path;
-import android.graphics.PathMeasure;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.ArcMotion;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
 public class ArcMotionTest extends PathMotionTest {
-
-    public void test90Quadrants() throws Throwable {
+    @Test
+    public void test90Quadrants() {
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMaximumAngle(90);
 
@@ -44,7 +50,8 @@ public class ArcMotionTest extends PathMotionTest {
         assertPathMatches(expected, path);
     }
 
-    public void test345Triangles() throws Throwable {
+    @Test
+    public void test345Triangles() {
         // 3-4-5 triangles are easy to calculate the control points
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMaximumAngle(90);
@@ -84,7 +91,7 @@ public class ArcMotionTest extends PathMotionTest {
         assertPathMatches(expected, path);
     }
 
-    private Path arcWithPoint(float startX, float startY, float endX, float endY,
+    private static Path arcWithPoint(float startX, float startY, float endX, float endY,
             float eX, float eY) {
         float c1x = (eX + startX)/2;
         float c1y = (eY + startY)/2;
@@ -96,10 +103,11 @@ public class ArcMotionTest extends PathMotionTest {
         return path;
     }
 
-    public void testMaximumAngle() throws Throwable {
+    @Test
+    public void testMaximumAngle() {
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMaximumAngle(45f);
-        assertEquals(45f, arcMotion.getMaximumAngle());
+        assertEquals(45f, arcMotion.getMaximumAngle(), 0.0f);
 
         float ratio = (float) Math.tan(Math.PI/8);
         float ex = 50 + (50 * ratio);
@@ -110,10 +118,11 @@ public class ArcMotionTest extends PathMotionTest {
         assertPathMatches(expected, path);
     }
 
-    public void testMinimumHorizontalAngle() throws Throwable {
+    @Test
+    public void testMinimumHorizontalAngle() {
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMinimumHorizontalAngle(45);
-        assertEquals(45f, arcMotion.getMinimumHorizontalAngle());
+        assertEquals(45f, arcMotion.getMinimumHorizontalAngle(), 0.0f);
 
         float ey = (float)(Math.tan(Math.PI/8) * 50);
         float ex = 50;
@@ -127,10 +136,11 @@ public class ArcMotionTest extends PathMotionTest {
         assertPathMatches(expected, path);
     }
 
-    public void testMinimumVerticalAngle() throws Throwable {
+    @Test
+    public void testMinimumVerticalAngle() {
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMinimumVerticalAngle(45);
-        assertEquals(45f, arcMotion.getMinimumVerticalAngle());
+        assertEquals(45f, arcMotion.getMinimumVerticalAngle(), 0.0f);
 
         float ex = (float)(Math.tan(Math.PI/8) * 50);
         float ey = 50;

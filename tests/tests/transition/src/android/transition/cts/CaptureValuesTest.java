@@ -15,8 +15,12 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.support.test.filters.MediumTest;
-import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.AutoTransition;
 import android.transition.ChangeBounds;
 import android.transition.ChangeClipBounds;
@@ -32,7 +36,11 @@ import android.transition.TransitionSet;
 import android.transition.TransitionValues;
 import android.util.ArrayMap;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class CaptureValuesTest extends BaseTransitionTest {
     private ArrayMap<Class<?>, Boolean> mStartCaptured = new ArrayMap<>();
     private ArrayMap<Class<?>, Boolean> mEndCaptured = new ArrayMap<>();
@@ -40,6 +48,7 @@ public class CaptureValuesTest extends BaseTransitionTest {
     /**
      * Ensures captureValues is called on all Transitions and the proper values are captured.
      */
+    @Test
     public void testCaptureValues() throws Throwable {
         final TransitionSetCaptureValues set = new TransitionSetCaptureValues();
         set.addTransition(new FadeCaptureValues());
@@ -53,15 +62,12 @@ public class CaptureValuesTest extends BaseTransitionTest {
         set.addTransition(new SlideCaptureValues());
 
         enterScene(R.layout.scene11);
-        set.addTarget(getActivity().findViewById(R.id.redSquare));
+        set.addTarget(mActivity.findViewById(R.id.redSquare));
         mTransition = set;
         resetListener();
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                TransitionManager.beginDelayedTransition(mSceneRoot, set);
-                mSceneRoot.invalidate();
-            }
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.beginDelayedTransition(mSceneRoot, set);
+            mSceneRoot.invalidate();
         });
         waitForStart();
         // no transition needs to run, but they should have all captured values.
@@ -78,7 +84,7 @@ public class CaptureValuesTest extends BaseTransitionTest {
         assertNotNull(mEndCaptured.get(set.getClass()));
     }
 
-    private void testCapturedValues(Transition transition, TransitionValues values,
+    private void verifyCapturedValues(Transition transition, TransitionValues values,
             boolean isStart) {
         String[] properties = transition.getTransitionProperties();
         if (transition instanceof TransitionSet) {
@@ -104,13 +110,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -123,13 +129,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -137,13 +143,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -151,13 +157,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -165,13 +171,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -179,13 +185,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -193,13 +199,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -207,13 +213,13 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 
@@ -221,26 +227,26 @@ public class CaptureValuesTest extends BaseTransitionTest {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
     public class TransitionSetCaptureValues extends TransitionSet {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {
             super.captureStartValues(transitionValues);
-            testCapturedValues(this, transitionValues, true);
+            verifyCapturedValues(this, transitionValues, true);
         }
 
         @Override
         public void captureEndValues(TransitionValues transitionValues) {
             super.captureEndValues(transitionValues);
-            testCapturedValues(this, transitionValues, false);
+            verifyCapturedValues(this, transitionValues, false);
         }
     }
 }
