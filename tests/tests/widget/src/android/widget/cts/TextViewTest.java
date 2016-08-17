@@ -4678,7 +4678,7 @@ public class TextViewTest {
 
         // a selection range
         final String spannableText = "text";
-        mInstrumentation.runOnMainSync(() ->  mTextView = new TextView(mActivity));
+        mActivityRule.runOnUiThread(() ->  mTextView = new TextView(mActivity));
         mInstrumentation.waitForIdleSync();
 
         mActivityRule.runOnUiThread(
@@ -6116,7 +6116,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickSingleTapInside() {
+    public void testClickableSpanOnClickSingleTapInside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         CtsTouchUtils.emulateTapOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
                 spanDetails.mYPosInside);
@@ -6125,7 +6125,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickDoubleTapInside() {
+    public void testClickableSpanOnClickDoubleTapInside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         CtsTouchUtils.emulateDoubleTapOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
                 spanDetails.mYPosInside);
@@ -6133,7 +6133,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickSingleTapOutside() {
+    public void testClickableSpanOnClickSingleTapOutside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         CtsTouchUtils.emulateTapOnView(mInstrumentation, mTextView, spanDetails.mXPosOutside,
                 spanDetails.mYPosOutside);
@@ -6142,7 +6142,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickDragOutside() {
+    public void testClickableSpanOnClickDragOutside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         final int[] viewOnScreenXY = new int[2];
         mTextView.getLocationOnScreen(viewOnScreenXY);
@@ -6157,7 +6157,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickDragInsideFromOutside() {
+    public void testClickableSpanOnClickDragInsideFromOutside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         final int[] viewOnScreenXY = new int[2];
         mTextView.getLocationOnScreen(viewOnScreenXY);
@@ -6172,7 +6172,7 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickDragInsideOutsideInside() {
+    public void testClickableSpanOnClickDragInsideOutsideInside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         final int[] viewOnScreenXY = new int[2];
         mTextView.getLocationOnScreen(viewOnScreenXY);
@@ -6191,11 +6191,8 @@ public class TextViewTest {
     }
 
     @Test
-    public void testClickableSpanOnClickLongPress() {
+    public void testClickableSpanOnClickLongPress() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        final int[] viewOnScreenXY = new int[2];
-        mTextView.getLocationOnScreen(viewOnScreenXY);
-
         CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
                 spanDetails.mYPosInside);
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
@@ -6207,8 +6204,8 @@ public class TextViewTest {
      * TextView and returns the ClickableSpan and position details about it to be used in individual
      * tests.
      */
-    private ClickableSpanTestDetails prepareAndRetrieveClickableSpanDetails() {
-        mInstrumentation.runOnMainSync(() -> {
+    private ClickableSpanTestDetails prepareAndRetrieveClickableSpanDetails() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             LinearLayout ll = (LinearLayout) mActivity.findViewById(R.id.layout_textviewtest);
             ll.removeAllViews();
             mTextView = new TextView(mActivity);
@@ -6229,7 +6226,7 @@ public class TextViewTest {
         SpannableString spannableString = new SpannableString(textViewContent);
         final int endPos = clickableString.length();
         spannableString.setSpan(mockTextLink, startPos, endPos, 0);
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setText(spannableString);
             mTextView.setMovementMethod(LinkMovementMethod.getInstance());
         });
