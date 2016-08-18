@@ -16,9 +16,6 @@
 package android.content.pm.cts.shortcuthost;
 
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
-
 public class ShortcutManagerUpgradeTest extends BaseShortcutManagerHostTest {
     private static final String VERSION1_APK = "CtsShortcutUpgradeVersion1.apk";
     private static final String VERSION2_APK = "CtsShortcutUpgradeVersion2.apk";
