@@ -71,7 +71,7 @@ public class Within implements VerificationMode {
         }
 
         throw new MockitoAssertionError(
-                "Timed out while waiting for " + data.getWanted().toString());
+                "Timed out while waiting " + mTimeout + "ms for " + data.getWanted().toString());
     }
 
     private void markAllInvocationsAsVerified(VerificationData data) {

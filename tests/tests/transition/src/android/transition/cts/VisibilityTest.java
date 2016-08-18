@@ -21,6 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
 import android.support.test.filters.MediumTest;
@@ -57,19 +60,19 @@ public class VisibilityTest extends BaseTransitionTest {
         // Should animate in and out
         enterScene(R.layout.scene4);
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
 
         resetListener();
         startTransition(R.layout.scene4);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
 
         // Now only animate in
         resetListener();
         mVisibilityTransition.setMode(Visibility.MODE_IN);
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
 
         // No animation since it should only animate in
@@ -86,7 +89,7 @@ public class VisibilityTest extends BaseTransitionTest {
         // but it should animate out
         resetListener();
         startTransition(R.layout.scene4);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
     }
 

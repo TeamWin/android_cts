@@ -15,7 +15,12 @@
  */
 package android.transition.cts;
 
-import static org.junit.Assert.assertTrue;
+import static android.cts.util.CtsMockitoUtils.within;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
@@ -35,16 +40,15 @@ import org.junit.Before;
 import org.junit.Rule;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 public abstract class BaseTransitionTest {
     protected Instrumentation mInstrumentation;
     protected TransitionActivity mActivity;
     protected FrameLayout mSceneRoot;
-    public float mAnimatedValue;
+    private float mAnimatedValue;
     protected ArrayList<View> mTargets = new ArrayList<>();
     protected Transition mTransition;
-    protected SimpleTransitionListener mListener;
+    protected Transition.TransitionListener mListener;
 
     @Rule
     public ActivityTestRule<TransitionActivity> mActivityRule =
@@ -58,7 +62,7 @@ public abstract class BaseTransitionTest {
         mSceneRoot = (FrameLayout) mActivity.findViewById(R.id.container);
         mTargets.clear();
         mTransition = new TestTransition();
-        mListener = new SimpleTransitionListener();
+        mListener = mock(Transition.TransitionListener.class);
         mTransition.addListener(mListener);
     }
 
@@ -66,18 +70,21 @@ public abstract class BaseTransitionTest {
         waitForStart(mListener);
     }
 
-    protected void waitForStart(SimpleTransitionListener listener) throws InterruptedException {
-        assertTrue(listener.startLatch.await(4000, TimeUnit.MILLISECONDS));
+    protected static void waitForStart(Transition.TransitionListener listener) {
+        verify(listener, within(4000)).onTransitionStart(any());
     }
 
-    protected void waitForEnd(long waitMillis) throws InterruptedException {
+    protected void waitForEnd(long waitMillis) {
         waitForEnd(mListener, waitMillis);
         mInstrumentation.waitForIdleSync();
     }
 
-    protected static void waitForEnd(SimpleTransitionListener listener, long waitMillis)
-            throws InterruptedException {
-        listener.endLatch.await(waitMillis, TimeUnit.MILLISECONDS);
+    protected static void waitForEnd(Transition.TransitionListener listener, long waitMillis) {
+        if (waitMillis == 0) {
+            verify(listener, times(1)).onTransitionEnd(any());
+        } else {
+            verify(listener, within(waitMillis)).onTransitionEnd(any());
+        }
     }
 
     protected View loadLayout(final int layout) throws Throwable {
@@ -132,8 +139,12 @@ public abstract class BaseTransitionTest {
 
     protected void resetListener() {
         mTransition.removeListener(mListener);
-        mListener = new SimpleTransitionListener();
+        mListener = mock(Transition.TransitionListener.class);
         mTransition.addListener(mListener);
+    }
+
+    public void setAnimatedValue(float animatedValue) {
+        mAnimatedValue = animatedValue;
     }
 
     public class TestTransition extends Visibility {
@@ -145,14 +156,14 @@ public abstract class BaseTransitionTest {
         public Animator onAppear(ViewGroup sceneRoot, View view, TransitionValues startValues,
                 TransitionValues endValues) {
             mTargets.add(endValues.view);
-            return ObjectAnimator.ofFloat(BaseTransitionTest.this, "mAnimatedValue", 0, 1);
+            return ObjectAnimator.ofFloat(BaseTransitionTest.this, "animatedValue", 0, 1);
         }
 
         @Override
         public Animator onDisappear(ViewGroup sceneRoot, View view, TransitionValues startValues,
                 TransitionValues endValues) {
             mTargets.add(startValues.view);
-            return ObjectAnimator.ofFloat(BaseTransitionTest.this, "mAnimatedValue", 1, 0);
+            return ObjectAnimator.ofFloat(BaseTransitionTest.this, "animatedValue", 1, 0);
         }
     }
 }

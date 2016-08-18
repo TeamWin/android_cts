@@ -15,12 +15,19 @@
  */
 package android.transition.cts;
 
+import static android.cts.util.CtsMockitoUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.Slide;
+import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.view.Gravity;
 import android.view.View;
@@ -64,7 +71,8 @@ public class SlideEdgeTest extends BaseTransitionTest  {
         for (int i = 0; i < sSlideEdgeArray.length; i++) {
             final int slideEdge = (Integer) (sSlideEdgeArray[i][0]);
             final Slide slide = new Slide(slideEdge);
-            final SimpleTransitionListener listener = new SimpleTransitionListener();
+            final Transition.TransitionListener listener =
+                    mock(Transition.TransitionListener.class);
             slide.addListener(listener);
 
             mActivityRule.runOnUiThread(() -> mActivity.setContentView(R.layout.scene1));
@@ -81,8 +89,8 @@ public class SlideEdgeTest extends BaseTransitionTest  {
                 greenSquare.setVisibility(View.INVISIBLE);
                 hello.setVisibility(View.INVISIBLE);
             });
-            assertTrue(listener.startLatch.await(1, TimeUnit.SECONDS));
-            assertEquals(1, listener.endLatch.getCount());
+            verify(listener, within(1000)).onTransitionStart(any());
+            verify(listener, never()).onTransitionEnd(any());
             assertEquals(View.VISIBLE, redSquare.getVisibility());
             assertEquals(View.VISIBLE, greenSquare.getVisibility());
             assertEquals(View.VISIBLE, hello.getVisibility());
@@ -121,7 +129,7 @@ public class SlideEdgeTest extends BaseTransitionTest  {
                             redStartY < redSquare.getTranslationY());
                     break;
             }
-            assertTrue(listener.endLatch.await(1, TimeUnit.SECONDS));
+            verify(listener, within(1000)).onTransitionEnd(any());
             mInstrumentation.waitForIdleSync();
 
             verifyNoTranslation(redSquare);
@@ -138,7 +146,8 @@ public class SlideEdgeTest extends BaseTransitionTest  {
         for (int i = 0; i < sSlideEdgeArray.length; i++) {
             final int slideEdge = (Integer) (sSlideEdgeArray[i][0]);
             final Slide slide = new Slide(slideEdge);
-            final SimpleTransitionListener listener = new SimpleTransitionListener();
+            final Transition.TransitionListener listener =
+                    mock(Transition.TransitionListener.class);
             slide.addListener(listener);
 
             mActivityRule.runOnUiThread(() -> mActivity.setContentView(R.layout.scene1));
@@ -163,9 +172,9 @@ public class SlideEdgeTest extends BaseTransitionTest  {
                 greenSquare.setVisibility(View.VISIBLE);
                 hello.setVisibility(View.VISIBLE);
             });
-            assertTrue(listener.startLatch.await(1, TimeUnit.SECONDS));
+            verify(listener, within(1000)).onTransitionStart(any());
 
-            assertEquals(1, listener.endLatch.getCount());
+            verify(listener, never()).onTransitionEnd(any());
             assertEquals(View.VISIBLE, redSquare.getVisibility());
             assertEquals(View.VISIBLE, greenSquare.getVisibility());
             assertEquals(View.VISIBLE, hello.getVisibility());
@@ -204,7 +213,7 @@ public class SlideEdgeTest extends BaseTransitionTest  {
                             redStartY > redSquare.getTranslationY());
                     break;
             }
-            assertTrue(listener.endLatch.await(1, TimeUnit.SECONDS));
+            verify(listener, within(1000)).onTransitionEnd(any());
             mInstrumentation.waitForIdleSync();
 
             verifyNoTranslation(redSquare);

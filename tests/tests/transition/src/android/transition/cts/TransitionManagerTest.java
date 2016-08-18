@@ -19,17 +19,26 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.Scene;
+import android.transition.Transition;
 import android.transition.TransitionManager;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -48,12 +57,14 @@ public class TransitionManagerTest extends BaseTransitionTest {
 
         waitForStart();
         waitForEnd(300);
-        assertEquals(1, mListener.resumeLatch.getCount());
-        assertEquals(1, mListener.pauseLatch.getCount());
-        assertEquals(1, mListener.cancelLatch.getCount());
-        assertNotNull(mListener.transition);
-        assertEquals(TestTransition.class, mListener.transition.getClass());
-        assertTrue(mTransition != mListener.transition);
+        verify(mListener, never()).onTransitionResume(any());
+        verify(mListener, never()).onTransitionPause(any());
+        verify(mListener, never()).onTransitionCancel(any());
+        ArgumentCaptor<Transition> transitionArgumentCaptor =
+                ArgumentCaptor.forClass(Transition.class);
+        verify(mListener, times(1)).onTransitionStart(transitionArgumentCaptor.capture());
+        assertEquals(TestTransition.class, transitionArgumentCaptor.getValue().getClass());
+        assertTrue(mTransition != transitionArgumentCaptor.getValue());
         mActivityRule.runOnUiThread(() -> {
             assertNotNull(mActivity.findViewById(R.id.redSquare));
             assertNotNull(mActivity.findViewById(R.id.greenSquare));
@@ -102,12 +113,14 @@ public class TransitionManagerTest extends BaseTransitionTest {
         waitForStart();
         waitForEnd(300);
 
-        assertEquals(1, mListener.resumeLatch.getCount());
-        assertEquals(1, mListener.pauseLatch.getCount());
-        assertEquals(1, mListener.cancelLatch.getCount());
-        assertNotNull(mListener.transition);
-        assertEquals(TestTransition.class, mListener.transition.getClass());
-        assertTrue(mTransition != mListener.transition);
+        verify(mListener, never()).onTransitionResume(any());
+        verify(mListener, never()).onTransitionPause(any());
+        verify(mListener, never()).onTransitionCancel(any());
+        ArgumentCaptor<Transition> transitionArgumentCaptor =
+                ArgumentCaptor.forClass(Transition.class);
+        verify(mListener, times(1)).onTransitionStart(transitionArgumentCaptor.capture());
+        assertEquals(TestTransition.class, transitionArgumentCaptor.getValue().getClass());
+        assertTrue(mTransition != transitionArgumentCaptor.getValue());
         mActivityRule.runOnUiThread(() -> {
             assertNotNull(mActivity.findViewById(R.id.redSquare));
             assertNotNull(mActivity.findViewById(R.id.greenSquare));
@@ -146,21 +159,23 @@ public class TransitionManagerTest extends BaseTransitionTest {
 
         waitForStart();
         waitForEnd(300);
-        assertEquals(1, mListener.resumeLatch.getCount());
-        assertEquals(1, mListener.pauseLatch.getCount());
-        assertEquals(1, mListener.cancelLatch.getCount());
-        assertNotNull(mListener.transition);
-        assertEquals(TestTransition.class, mListener.transition.getClass());
-        assertTrue(mTransition != mListener.transition);
+        verify(mListener, never()).onTransitionResume(any());
+        verify(mListener, never()).onTransitionPause(any());
+        verify(mListener, never()).onTransitionCancel(any());
+        ArgumentCaptor<Transition> transitionArgumentCaptor =
+                ArgumentCaptor.forClass(Transition.class);
+        verify(mListener, times(1)).onTransitionStart(transitionArgumentCaptor.capture());
+        assertEquals(TestTransition.class, transitionArgumentCaptor.getValue().getClass());
+        assertTrue(mTransition != transitionArgumentCaptor.getValue());
         mActivityRule.runOnUiThread(() -> {
-            mListener.startLatch = new CountDownLatch(1);
-            mListener.endLatch = new CountDownLatch(1);
+            reset(mListener);
             assertNotNull(mActivity.findViewById(R.id.redSquare));
             assertNotNull(mActivity.findViewById(R.id.greenSquare));
             Scene scene = Scene.getSceneForLayout(mSceneRoot, R.layout.scene2, mActivity);
             transitionManager.transitionTo(scene);
         });
-        assertFalse(mListener.startLatch.await(50, TimeUnit.MILLISECONDS));
+        SystemClock.sleep(50);
+        verify(mListener, never()).onTransitionStart(any());
         endTransition();
     }
 
@@ -176,24 +191,27 @@ public class TransitionManagerTest extends BaseTransitionTest {
             transitionManager.setTransition(scenes[0], scenes[1], mTransition);
             transitionManager.transitionTo(scenes[0]);
         });
-        assertFalse(mListener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        SystemClock.sleep(100);
+        verify(mListener, never()).onTransitionStart(any());
 
         mActivityRule.runOnUiThread(() -> transitionManager.transitionTo(scenes[1]));
 
         waitForStart();
         waitForEnd(300);
-        assertEquals(1, mListener.resumeLatch.getCount());
-        assertEquals(1, mListener.pauseLatch.getCount());
-        assertEquals(1, mListener.cancelLatch.getCount());
-        assertNotNull(mListener.transition);
-        assertEquals(TestTransition.class, mListener.transition.getClass());
-        assertTrue(mTransition != mListener.transition);
+        verify(mListener, never()).onTransitionResume(any());
+        verify(mListener, never()).onTransitionPause(any());
+        verify(mListener, never()).onTransitionCancel(any());
+        ArgumentCaptor<Transition> transitionArgumentCaptor =
+                ArgumentCaptor.forClass(Transition.class);
+        verify(mListener, times(1)).onTransitionStart(transitionArgumentCaptor.capture());
+        assertEquals(TestTransition.class, transitionArgumentCaptor.getValue().getClass());
+        assertTrue(mTransition != transitionArgumentCaptor.getValue());
         mActivityRule.runOnUiThread(() -> {
-            mListener.startLatch = new CountDownLatch(1);
-            mListener.endLatch = new CountDownLatch(1);
+            reset(mListener);
             transitionManager.transitionTo(scenes[2]);
         });
-        assertFalse(mListener.startLatch.await(50, TimeUnit.MILLISECONDS));
+        SystemClock.sleep(50);
+        verify(mListener, never()).onTransitionStart(any());
         endTransition();
     }
 
@@ -216,8 +234,10 @@ public class TransitionManagerTest extends BaseTransitionTest {
             TransitionManager.go(scene, mTransition);
             TransitionManager.endTransitions(mSceneRoot);
         });
-        assertFalse(mListener.startLatch.await(100, TimeUnit.MILLISECONDS));
-        assertFalse(mListener.endLatch.await(10, TimeUnit.MILLISECONDS));
+        SystemClock.sleep(100);
+        verify(mListener, never()).onTransitionStart(any());
+        SystemClock.sleep(10);
+        verify(mListener, never()).onTransitionEnd(any());
     }
 }
 

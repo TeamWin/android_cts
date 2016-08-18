@@ -15,15 +15,21 @@
  */
 package android.transition.cts;
 
+import static android.cts.util.CtsMockitoUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.support.test.filters.MediumTest;
@@ -62,7 +68,7 @@ public class TransitionTest extends BaseTransitionTest {
         startTransition(R.layout.scene1);
         waitForStart();
 
-        final SimpleTransitionListener listener2 = new SimpleTransitionListener();
+        final Transition.TransitionListener listener2 = mock(Transition.TransitionListener.class);
 
         mActivityRule.runOnUiThread(() -> {
             AutoTransition autoTransition = new AutoTransition();
@@ -74,17 +80,17 @@ public class TransitionTest extends BaseTransitionTest {
 
         waitForStart(listener2);
 
-        assertEquals(0, mListener.pauseLatch.getCount());
-        assertEquals(0, mListener.resumeLatch.getCount());
-        assertEquals(1, mListener.cancelLatch.getCount());
-        assertEquals(1, mListener.endLatch.getCount());
-        assertEquals(0, mListener.startLatch.getCount());
+        verify(mListener, times(1)).onTransitionPause(any());
+        verify(mListener, times(1)).onTransitionResume(any());
+        verify(mListener, never()).onTransitionCancel(any());
+        verify(mListener, never()).onTransitionEnd(any());
+        verify(mListener, times(1)).onTransitionStart(any());
 
-        assertEquals(1, listener2.pauseLatch.getCount());
-        assertEquals(1, listener2.resumeLatch.getCount());
-        assertEquals(1, listener2.cancelLatch.getCount());
-        assertEquals(1, listener2.endLatch.getCount());
-        assertEquals(0, listener2.startLatch.getCount());
+        verify(listener2, never()).onTransitionPause(any());
+        verify(listener2, never()).onTransitionResume(any());
+        verify(listener2, never()).onTransitionCancel(any());
+        verify(listener2, never()).onTransitionEnd(any());
+        verify(listener2, times(1)).onTransitionStart(any());
         endTransition();
     }
 
@@ -95,7 +101,8 @@ public class TransitionTest extends BaseTransitionTest {
 
         mActivityRule.runOnUiThread(() -> mTransition.removeListener(mListener));
 
-        assertFalse(mListener.endLatch.await(250, TimeUnit.MILLISECONDS));
+        SystemClock.sleep(250);
+        verify(mListener, never()).onTransitionEnd(any());
     }
 
     @Test
@@ -291,13 +298,14 @@ public class TransitionTest extends BaseTransitionTest {
         View holder2 = layout2.findViewById(R.id.holder);
         mTransition.excludeChildren(holder2, true);
         startTransition(scene2);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         mTransition.excludeChildren(holder1, false); // remove it
         mTransition.excludeChildren(holder2, false); // remove it
         resetListener();
         startTransition(scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // it is running as expected
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -306,12 +314,13 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeChildren(R.id.holder, true);
         startTransition(R.layout.scene2);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         resetListener();
         mTransition.excludeChildren(R.id.holder, false); // remove it
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // It is running
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -320,12 +329,13 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeChildren(RelativeLayout.class, true);
         startTransition(R.layout.scene2);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         resetListener();
         mTransition.excludeChildren(RelativeLayout.class, false); // remove it
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // It is running
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -337,12 +347,13 @@ public class TransitionTest extends BaseTransitionTest {
         View redSquare1 = layout1.findViewById(R.id.redSquare);
         mTransition.excludeTarget(redSquare1, true);
         startTransition(R.layout.scene7);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         mTransition.excludeTarget(redSquare1, false); // remove it
         resetListener();
         startTransition(scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // it is running as expected
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -351,12 +362,13 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeTarget(R.id.redSquare, true);
         startTransition(R.layout.scene7);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         resetListener();
         mTransition.excludeTarget(R.id.redSquare, false); // remove it
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // It is running
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -365,12 +377,13 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeTarget(TextView.class, true);
         startTransition(R.layout.scene3);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         resetListener();
         mTransition.excludeTarget(TextView.class, false); // remove it
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // It is running
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -379,12 +392,13 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeTarget("hello", true);
         startTransition(R.layout.scene3);
-        waitForEnd(0); // Should already be ended, since no children are transitioning
+        // Should already be ended, since no children are transitioning
+        verify(mListener, times(1)).onTransitionEnd(any());
 
         resetListener();
         mTransition.excludeTarget("hello", false); // remove it
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount()); // It is running
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         endTransition();
     }
 
@@ -429,8 +443,8 @@ public class TransitionTest extends BaseTransitionTest {
         startTransition(R.layout.scene4);
         assertFalse(transition.animators.isEmpty());
         Animator animator = transition.animators.get(redSquare);
-        AnimationStartListener listener = transition.listeners.get(redSquare);
-        assertTrue(listener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        Animator.AnimatorListener listener = transition.listeners.get(redSquare);
+        verify(listener, within(100)).onAnimationStart(any());
         assertSame(interpolator, animator.getInterpolator());
         endTransition();
     }
@@ -486,8 +500,8 @@ public class TransitionTest extends BaseTransitionTest {
         startTransition(R.layout.scene4);
         Animator redSquareAnimator = transition.animators.get(redSquare);
         Animator greenSquareAnimator = transition.animators.get(greenSquare);
-        AnimationStartListener listener = transition.listeners.get(redSquare);
-        assertTrue(listener.startLatch.await(100, TimeUnit.MILLISECONDS));
+        Animator.AnimatorListener listener = transition.listeners.get(redSquare);
+        verify(listener, within(100)).onAnimationStart(any());
         assertEquals(0, redSquareAnimator.getStartDelay());
         assertEquals(diffTop, greenSquareAnimator.getStartDelay());
         endTransition();
@@ -518,8 +532,8 @@ public class TransitionTest extends BaseTransitionTest {
 
         Animator animator = transition.animators.get(redSquare);
         assertFalse(animator.isRunning());
-        AnimationStartListener listener = transition.listeners.get(redSquare);
-        assertTrue(listener.startLatch.await(250, TimeUnit.MILLISECONDS));
+        Animator.AnimatorListener listener = transition.listeners.get(redSquare);
+        verify(listener, within(250)).onAnimationStart(any());
         endTransition();
     }
 
@@ -552,7 +566,7 @@ public class TransitionTest extends BaseTransitionTest {
 
         resetListener();
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any()); // it is running as expected
         waitForEnd(400);
     }
 
@@ -572,7 +586,7 @@ public class TransitionTest extends BaseTransitionTest {
         mTransition = transition;
         resetListener();
         startTransition(R.layout.scene1);
-        assertTrue(mListener.endLatch.await(500, TimeUnit.MILLISECONDS));
+        verify(mListener, within(500)).onTransitionEnd(any());
         // createAnimator shouldn't have been called.
         assertEquals(1, transition.latch.getCount());
 
@@ -590,7 +604,7 @@ public class TransitionTest extends BaseTransitionTest {
 
     private class CaptureAnimatorTransition extends TestTransition {
         public HashMap<View, Animator> animators = new HashMap<>();
-        public HashMap<View, AnimationStartListener> listeners = new HashMap<>();
+        public HashMap<View, Animator.AnimatorListener> listeners = new HashMap<>();
 
         @Override
         public Animator onAppear(ViewGroup sceneRoot, View view, TransitionValues startValues,
@@ -608,7 +622,7 @@ public class TransitionTest extends BaseTransitionTest {
 
         private Animator setupAnimator(Animator animator, View view) {
             animators.put(view, animator);
-            AnimationStartListener listener = new AnimationStartListener();
+            Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
             animator.addListener(listener);
             listeners.put(view, listener);
             return animator;
@@ -634,15 +648,6 @@ public class TransitionTest extends BaseTransitionTest {
             assertNull(getTransitionValues(startValues.view, false));
             assertEquals(startValues, getTransitionValues(startValues.view, true));
             return super.onDisappear(sceneRoot, view, startValues, endValues);
-        }
-    }
-
-    private class AnimationStartListener extends AnimatorListenerAdapter {
-        public CountDownLatch startLatch = new CountDownLatch(1);
-
-        @Override
-        public void onAnimationStart(Animator animation) {
-            startLatch.countDown();
         }
     }
 
