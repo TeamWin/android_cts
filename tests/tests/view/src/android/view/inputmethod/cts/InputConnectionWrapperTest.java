@@ -95,7 +95,7 @@ public class InputConnectionWrapperTest extends AndroidTestCase {
         wrapper.closeConnection();
         assertTrue(inputConnection.isCloseConnectionCalled);
         assertFalse(inputConnection.isGetHandlerCalled);
-        assertNull(inputConnection.getHandler());
+        assertNull(wrapper.getHandler());
         assertTrue(inputConnection.isGetHandlerCalled);
         assertFalse(inputConnection.isCommitContentCalled);
         final InputContentInfo inputContentInfo = new InputContentInfo(
