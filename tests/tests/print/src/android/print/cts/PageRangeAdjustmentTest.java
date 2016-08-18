@@ -16,6 +16,7 @@
 
 package android.print.cts;
 
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -42,6 +43,10 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 
 import java.util.ArrayList;
@@ -52,17 +57,43 @@ import java.util.List;
  * page ranges to be printed depending whether the app gave
  * the requested pages, more pages, etc.
  */
+@RunWith(AndroidJUnit4.class)
 public class PageRangeAdjustmentTest extends BasePrintTest {
 
     private static final int MAX_PREVIEW_PAGES_BATCH = 50;
     private static final int PAGE_COUNT = 60;
     private static final String FIRST_PRINTER = "First printer";
 
-    public void testAllPagesWantedAndAllPagesWritten() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
+    private static boolean sIsDefaultPrinterSet;
 
+    @Before
+    public void setDefaultPrinter() throws Exception {
+        if (!sIsDefaultPrinterSet) {
+            // Create a callback for the target print service.
+            PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
+                    invocation -> createMockFirstPrinterDiscoverySessionCallbacks(),
+                    invocation -> {
+                        PrintJob printJob = (PrintJob) invocation.getArguments()[0];
+                        printJob.complete();
+                        return null;
+                    }, null);
+
+            // Configure the print services.
+            FirstPrintService.setCallbacks(firstServiceCallbacks);
+            SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+
+            // Create a mock print adapter.
+            final PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(PAGE_COUNT);
+
+            makeDefaultPrinter(adapter, FIRST_PRINTER);
+            resetCounters();
+
+            sIsDefaultPrinterSet = true;
+        }
+    }
+
+    @Test
+    public void allPagesWantedAndAllPagesWritten() throws Exception {
         // Create a callback for the target print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
                 invocation -> createMockFirstPrinterDiscoverySessionCallbacks(),
@@ -88,17 +119,8 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         // Wait for write.
         waitForWriteAdapterCallback(1);
 
-        // Select the first printer.
-        selectPrinter(FIRST_PRINTER);
-
-        // Wait for layout as the printer has different capabilities.
-        waitForLayoutAdapterCallbackCount(2);
-
         // Click the print button.
         clickPrintButton();
-
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
 
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();
@@ -118,11 +140,8 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 any(PrintJob.class));
     }
 
-    public void testSomePagesWantedAndAllPagesWritten() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
+    @Test
+    public void somePagesWantedAndAllPagesWritten() throws Exception {
         // Create a callback for the target print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
                 invocation -> createMockFirstPrinterDiscoverySessionCallbacks(),
@@ -183,20 +202,11 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         // Open the print options.
         openPrintOptions();
 
-        // Select the first printer.
-        selectPrinter(FIRST_PRINTER);
-
-        // Wait for layout as the printer has different capabilities.
-        waitForLayoutAdapterCallbackCount(2);
-
         // Select only the second page.
         selectPages("2", PAGE_COUNT);
 
         // Click the print button.
         clickPrintButton();
-
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
 
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();
@@ -216,12 +226,9 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 any(PrintJob.class));
     }
 
-    public void testSomePagesWantedAndSomeMorePagesWritten() throws Exception {
+    @Test
+    public void somePagesWantedAndSomeMorePagesWritten() throws Exception {
         final int REQUESTED_PAGE = 55;
-
-        if (!supportsPrinting()) {
-            return;
-        }
 
         // Create a callback for the target print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
@@ -300,20 +307,11 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         // Open the print options.
         openPrintOptions();
 
-        // Select the first printer.
-        selectPrinter(FIRST_PRINTER);
-
-        // Wait for layout as the printer has different capabilities.
-        waitForLayoutAdapterCallbackCount(2);
-
         // Select a page not written for preview.
         selectPages(Integer.valueOf(REQUESTED_PAGE).toString(), PAGE_COUNT);
 
         // Click the print button.
         clickPrintButton();
-
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
 
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();
@@ -333,11 +331,8 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 any(PrintJob.class));
     }
 
-    public void testSomePagesWantedAndNotWritten() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
+    @Test
+    public void somePagesWantedAndNotWritten() throws Exception {
         // Create a callback for the target print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
                 invocation -> createMockFirstPrinterDiscoverySessionCallbacks(),
@@ -411,11 +406,8 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
                 any(PrintJob.class));
     }
 
-    public void testWantedPagesAlreadyWrittenForPreview() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
+    @Test
+    public void wantedPagesAlreadyWrittenForPreview() throws Exception {
         // Create a callback for the target print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
                 invocation -> createMockFirstPrinterDiscoverySessionCallbacks(), invocation -> {
@@ -484,20 +476,11 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         // Open the print options.
         openPrintOptions();
 
-        // Select the first printer.
-        selectPrinter(FIRST_PRINTER);
-
-        // Wait for layout as the printer has different capabilities.
-        waitForLayoutAdapterCallbackCount(2);
-
         // Select a page not written for preview.
         selectPages("3", PAGE_COUNT);
 
         // Click the print button.
         clickPrintButton();
-
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
 
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();
@@ -549,7 +532,10 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
             }
 
             return null;
-        }, null, null, null, null, null, null);
+        }, null, null, null, null, null, invocation -> {
+            onPrinterDiscoverySessionDestroyCalled();
+            return null;
+        });
     }
 
     private PrintServiceCallbacks createSecondMockPrintServiceCallbacks() {

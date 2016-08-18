@@ -16,8 +16,8 @@
 
 package android.print.cts;
 
-import static android.print.cts.Utils.eventually;
-import static android.print.cts.Utils.runOnMainThread;
+import static android.print.cts.Utils.*;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.inOrder;
 
 import android.print.PrintAttributes;
@@ -36,6 +36,10 @@ import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrinterDiscoverySession;
 
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.exceptions.verification.VerificationInOrderFailure;
 
@@ -47,6 +51,7 @@ import java.util.List;
  * This test verifies that the system respects the {@link PrinterDiscoverySession}
  * contract is respected.
  */
+@RunWith(AndroidJUnit4.class)
 public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
     private static final String FIRST_PRINTER_NAME = "First printer";
     private static final String SECOND_PRINTER_NAME = "Second printer";
@@ -56,10 +61,13 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
     private static StubbablePrinterDiscoverySession sSession;
 
-    public void testNormalLifecycle() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Before
+    public void clearPrintSpoolerState() throws Exception {
+        clearPrintSpoolerData();
+    }
+
+    @Test
+    public void normalLifecycle() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
                 createFirstMockPrinterDiscoverySessionCallbacks();
@@ -164,10 +172,8 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    public void testCancelPrintServicesAlertDialog() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Test
+    public void cancelPrintServicesAlertDialog() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
                 createFirstMockPrinterDiscoverySessionCallbacks();
@@ -256,10 +262,8 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    public void testStartPrinterDiscoveryWithHistoricalPrinters() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
+    @Test
+    public void startPrinterDiscoveryWithHistoricalPrinters() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
                 createFirstMockPrinterDiscoverySessionCallbacks();
@@ -384,11 +388,8 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onDestroy();
     }
 
-    public void testAddRemovePrinters() throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
-
+    @Test
+    public void addRemovePrinters() throws Throwable {
         StubbablePrinterDiscoverySession[] session = new StubbablePrinterDiscoverySession[1];
 
         // Create the session callbacks that we will be checking.

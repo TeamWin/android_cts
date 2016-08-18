@@ -16,7 +16,6 @@
 
 package android.print.cts;
 
-import static android.print.cts.Utils.eventually;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
@@ -43,11 +42,14 @@ import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,18 +58,23 @@ import java.util.List;
  * This test verifies that the system respects the {@link PrintDocumentAdapter}
  * contract and invokes all callbacks as expected.
  */
+@RunWith(AndroidJUnit4.class)
 public class PrintDocumentAdapterContractTest extends BasePrintTest {
-
     private static final String LOG_TAG = "PrintDocumentAdapterContractTest";
 
-    public void testNoPrintOptionsOrPrinterChange() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
+    @Before
+    public void setDefaultPrinter() throws Exception {
         FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
+    }
 
+    @Before
+    public void clearPrintSpoolerState() throws Exception {
+        clearPrintSpoolerData();
+    }
+
+    @Test
+    public void noPrintOptionsOrPrinterChange() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -175,14 +182,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testNoPrintOptionsOrPrinterChangeCanceled() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void noPrintOptionsOrPrinterChangeCanceled() throws Exception {
         // Create a mock print adapter.
         PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
@@ -232,15 +233,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testNonCallingBackWrite() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void nonCallingBackWrite() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
         final boolean[] isWriteBroken = new boolean[1];
 
@@ -303,14 +297,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testPrintOptionsChangeAndNoPrinterChange() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void printOptionsChangeAndNoPrinterChange() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -498,14 +486,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testPrintOptionsChangeAndPrinterChange() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void printOptionsChangeAndPrinterChange() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -653,15 +635,9 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testPrintOptionsChangeAndNoPrinterChangeAndContentChange()
+    @Test
+    public void printOptionsChangeAndNoPrinterChangeAndContentChange()
             throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -778,14 +754,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testNewPrinterSupportsSelectedPrintOptions() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void newPrinterSupportsSelectedPrintOptions() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -878,14 +848,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testNothingChangesAllPagesWrittenFirstTime() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void nothingChangesAllPagesWrittenFirstTime() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -999,14 +963,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testCancelLongRunningLayout() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void cancelLongRunningLayout() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1068,14 +1026,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testCancelLongRunningWrite() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void cancelLongRunningWrite() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1156,14 +1108,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testFailedLayout() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void failedLayout() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1220,14 +1166,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testFailedWrite() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void failedWrite() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1297,14 +1237,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testUnexpectedLayoutCancel() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void unexpectedLayoutCancel() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
         final int[] numLayoutCalls = new int[1];
 
@@ -1368,14 +1302,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testUnexpectedWriteCancel() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void unexpectedWriteCancel() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
         final int[] numWriteCalls = new int[1];
 
@@ -1441,14 +1369,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
-    public void testRequestedPagesNotWritten() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void requestedPagesNotWritten() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -1524,14 +1446,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testLayoutCallbackNotCalled() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void layoutCallbackNotCalled() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1585,14 +1501,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testWriteCallbackNotCalled() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void writeCallbackNotCalled() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1661,14 +1571,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testLayoutCallbackCalledTwice() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void layoutCallbackCalledTwice() throws Exception {
         // Create a mock print adapter.
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
                 invocation -> {
@@ -1736,14 +1640,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         verifyNoMoreInteractions(adapter);
     }
 
-    public void testWriteCallbackCalledTwice() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-        // Configure the print services.
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void writeCallbackCalledTwice() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         // Create a mock print adapter.
@@ -1834,14 +1732,8 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testNotEnoughPages() throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
-        FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
+    @Test
+    public void notEnoughPages() throws Exception {
         final PrintAttributes[] printAttributes = new PrintAttributes[1];
 
         final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
@@ -1888,194 +1780,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Wait for the session to be destroyed to isolate tests.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
-    }
-
-    /**
-     * Executes a print process with a given print document info
-     *
-     * @param name The name of the document info
-     * @param contentType The content type of the document
-     * @param pageCount The number of pages in the document
-     */
-    private void printDocumentBaseTest(String name, Integer contentType, Integer pageCount)
-            throws Throwable {
-        if (!supportsPrinting()) {
-            return;
-        }
-
-        PrintDocumentInfo.Builder b = new PrintDocumentInfo.Builder(name);
-        if (contentType != null) {
-            b.setContentType(contentType);
-        }
-        if (pageCount != null) {
-            b.setPageCount(pageCount);
-        }
-        PrintDocumentInfo info = b.build();
-
-        PrintDocumentInfo queuedInfo[] = new PrintDocumentInfo[1];
-        ParcelFileDescriptor queuedData[] = new ParcelFileDescriptor[1];
-
-        PrinterDiscoverySessionCallbacks printerDiscoverySessionCallbacks =
-                createFirstMockDiscoverySessionCallbacks();
-        PrintServiceCallbacks printServiceCallbacks = createMockPrintServiceCallbacks(
-                invocation -> printerDiscoverySessionCallbacks,
-                invocation -> {
-                    PrintJob printJob = (PrintJob) invocation.getArguments()[0];
-                    queuedInfo[0] = printJob.getDocument().getInfo();
-                    queuedData[0] = printJob.getDocument().getData();
-                    printJob.complete();
-                    return null;
-                }, null);
-
-        FirstPrintService.setCallbacks(printServiceCallbacks);
-        SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-
-        final PrintAttributes[] printAttributes = new PrintAttributes[1];
-
-        // Create a mock print adapter.
-        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
-                invocation -> {
-                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
-                    LayoutResultCallback callback = (LayoutResultCallback) invocation
-                            .getArguments()[3];
-                    callback.onLayoutFinished(info, false);
-                    // Mark layout was called.
-                    onLayoutCalled();
-                    return null;
-                }, invocation -> {
-                    Object[] args = invocation.getArguments();
-                    PageRange[] pages = (PageRange[]) args[0];
-                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
-                    WriteResultCallback callback = (WriteResultCallback) args[3];
-                    writeBlankPages(printAttributes[0], fd, 0, 1);
-                    fd.close();
-                    callback.onWriteFinished(pages);
-                    return null;
-                }, invocation -> null);
-
-        // Start printing.
-        print(adapter);
-
-        // Select the second printer.
-        selectPrinter("Second printer");
-
-        // Wait for layout.
-        waitForLayoutAdapterCallbackCount(2);
-
-        // Click the print button.
-        clickPrintButton();
-
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
-
-        // Wait for the session to be destroyed to isolate tests.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
-
-        // Check that the document name was carried over 1:1
-        eventually(() -> assertEquals(name, queuedInfo[0].getName()));
-
-        // Content type is set to document by default, but is otherwise unrestricted
-        if (contentType != null) {
-            assertEquals(contentType, Integer.valueOf(queuedInfo[0].getContentType()));
-        } else {
-            assertEquals(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT, queuedInfo[0].getContentType());
-        }
-
-        // Page count is set to the real value if unknown, 0 or unset.
-        // Otherwise the set value is used
-        if (pageCount != null && pageCount != PrintDocumentInfo.PAGE_COUNT_UNKNOWN
-                && pageCount != 0) {
-            assertEquals(pageCount, Integer.valueOf(queuedInfo[0].getPageCount()));
-        } else {
-            assertEquals(2, queuedInfo[0].getPageCount());
-        }
-
-        // Verify data (== pdf file) size
-        assertTrue(queuedInfo[0].getDataSize() > 0);
-
-        long bytesRead = 0;
-        try (FileInputStream is = new FileInputStream(queuedData[0].getFileDescriptor())) {
-            while (true) {
-                int ret = is.read();
-                if (ret == -1) {
-                    break;
-                }
-                bytesRead++;
-            }
-        }
-        assertEquals(queuedInfo[0].getDataSize(), bytesRead);
-    }
-
-    /**
-     * Test that the default values of the PrintDocumentInfo are fine.
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoNothingSet() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, null);
-    }
-
-    /**
-     * Test that a unknown page count is handled correctly.
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoUnknownPageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, PrintDocumentInfo.PAGE_COUNT_UNKNOWN);
-    }
-
-    /**
-     * Test that zero page count is handled correctly.
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoZeroPageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 0);
-    }
-
-    /**
-     * Test that page count one is handled correctly. (The document has two pages)
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoOnePageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 1);
-    }
-
-    /**
-     * Test that page count three is handled correctly. (The document has two pages)
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoThreePageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 3);
-    }
-
-    /**
-     * Test that a photo content type is handled correctly.
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoContentTypePhoto() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_PHOTO, null);
-    }
-
-    /**
-     * Test that a unknown content type is handled correctly.
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoContentTypeUnknown() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null);
-    }
-
-    /**
-     * Test that a undefined content type is handled correctly.
-     *
-     * @throws Exception If anything unexpected happens
-     */
-    public void testDocumentInfoContentTypeNonDefined() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, -23, null);
     }
 
     private PrinterDiscoverySessionCallbacks createFirstMockDiscoverySessionCallbacks() {

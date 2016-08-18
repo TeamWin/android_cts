@@ -36,15 +36,22 @@ import android.print.cts.services.SecondPrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.*;
+
 /**
  * Test that the print attributes are correctly propagated through the print framework
  */
+@RunWith(AndroidJUnit4.class)
 public class PrintAttributesTest extends BasePrintTest {
     private static final String LOG_TAG = "PrintAttributesTest";
     private final String PRINTER_NAME = "Test printer";
@@ -76,6 +83,7 @@ public class PrintAttributesTest extends BasePrintTest {
      * Stores the {@link PrintAttributes} passed to the layout method
      */
     private PrintAttributes mLayoutAttributes;
+    private static boolean sHasBeenSetup;
 
     /**
      * Create a new {@link PrintAttributes} object with the given properties.
@@ -311,6 +319,26 @@ public class PrintAttributesTest extends BasePrintTest {
         return false;
     }
 
+    @Before
+    public void setUpServicesAndAdapter() throws Exception {
+        if (!sHasBeenSetup) {
+            // Set up printer with supported and default attributes
+            PrintDocumentAdapter adapter =
+                    setUpPrinter(MIN_MARGINS[0], MEDIA_SIZES, MEDIA_SIZES[0], COLOR_MODES,
+                            COLOR_MODES[0], DUPLEX_MODES, DUPLEX_MODES[0], RESOLUTIONS,
+                            RESOLUTIONS[0]);
+
+            Log.d(LOG_TAG, "makeDefaultPrinter");
+            // Make printer default. This is necessary as a different default printer might pre-select
+            // its default attributes and thereby overrides the defaults of the tested printer.
+            makeDefaultPrinter(adapter, PRINTER_NAME);
+
+            sHasBeenSetup = true;
+        }
+
+        resetCounters();
+    }
+
     /**
      * Flexible base test for all print attribute tests.
      *
@@ -338,19 +366,9 @@ public class PrintAttributesTest extends BasePrintTest {
             int defaultColorMode, int suggestedColorMode, int duplexModes[],
             int defaultDuplexMode, int suggestedDuplexMode, Resolution resolutions[],
             Resolution defaultResolution, Resolution suggestedResolution) throws Exception {
-        if (!supportsPrinting()) {
-            return;
-        }
-
-        // Set up printer with supported and default attributes
         PrintDocumentAdapter adapter =
                 setUpPrinter(minMargins, mediaSizes, defaultMediaSize, colorModes, defaultColorMode,
                         duplexModes, defaultDuplexMode, resolutions, defaultResolution);
-
-        Log.d(LOG_TAG, "makeDefaultPrinter");
-        // Make printer default. This is necessary as a different default printer might pre-select
-        // its default attributes and thereby overrides the defaults of the tested printer.
-        makeDefaultPrinter(adapter, PRINTER_NAME);
 
         // Select suggested attributes
         PrintAttributes suggestedAttributes = createAttributes(suggestedMediaSize,
@@ -361,11 +379,11 @@ public class PrintAttributesTest extends BasePrintTest {
         Log.d(LOG_TAG, "print");
         print(adapter, suggestedAttributes);
         Log.d(LOG_TAG, "waitForWriteAdapterCallback");
-        waitForWriteAdapterCallback(2);
+        waitForWriteAdapterCallback(1);
         Log.d(LOG_TAG, "clickPrintButton");
         clickPrintButton();
         Log.d(LOG_TAG, "waitForPrinterDiscoverySessionDestroyCallbackCalled");
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
 
         // It does not make sense to suggest minMargins, hence the print framework always picks
         // the one set up for the printer.
@@ -413,7 +431,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testDefaultMatchesSuggested0() throws Exception {
+    @Test
+    public void defaultMatchesSuggested0() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[0],
                  MEDIA_SIZES,  MEDIA_SIZES[0],  MEDIA_SIZES[0],
@@ -429,7 +448,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testDefaultMatchesSuggested1() throws Exception {
+    @Test
+    public void defaultMatchesSuggested1() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[1],
                  MEDIA_SIZES,  MEDIA_SIZES[1],  MEDIA_SIZES[1],
@@ -445,7 +465,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testDefaultMatchesSuggested2() throws Exception {
+    @Test
+    public void defaultMatchesSuggested2() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[2],
                  MEDIA_SIZES,  MEDIA_SIZES[2],  MEDIA_SIZES[2],
@@ -462,7 +483,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testNoSuggestion0() throws Exception {
+    @Test
+    public void noSuggestion0() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[0],
                  MEDIA_SIZES,  MEDIA_SIZES[0],  null,
@@ -478,7 +500,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testNoSuggestion1() throws Exception {
+    @Test
+    public void noSuggestion1() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[1],
                  MEDIA_SIZES,  MEDIA_SIZES[1],  null,
@@ -494,7 +517,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testNoSuggestion2() throws Exception {
+    @Test
+    public void noSuggestion2() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[2],
                  MEDIA_SIZES,  MEDIA_SIZES[2],  null,
@@ -512,7 +536,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testMediaSizeSuggestion0() throws Exception {
+    @Test
+    public void mediaSizeSuggestion0() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[0],
                  MEDIA_SIZES,  MEDIA_SIZES[0],  MEDIA_SIZES[1],
@@ -529,7 +554,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testMediaSizeSuggestion1() throws Exception {
+    @Test
+    public void mediaSizeSuggestion1() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[1],
                  MEDIA_SIZES,  MEDIA_SIZES[1],  MEDIA_SIZES[0],
@@ -546,7 +572,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testDuplexModeSuggestion0() throws Exception {
+    @Test
+    public void duplexModeSuggestion0() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[0],
                  MEDIA_SIZES,  MEDIA_SIZES[0],  null,
@@ -563,7 +590,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testDuplexModeSuggestion1() throws Exception {
+    @Test
+    public void duplexModeSuggestion1() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[1],
                  MEDIA_SIZES,  MEDIA_SIZES[1],  null,
@@ -578,7 +606,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testSuggestedDifferentFromDefault() throws Exception {
+    @Test
+    public void suggestedDifferentFromDefault() throws Exception {
         //       available     default          suggestion
         baseTest(              MIN_MARGINS[0],
                  MEDIA_SIZES,  MEDIA_SIZES[0],  MEDIA_SIZES[1],
@@ -593,7 +622,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testUnsupportedSuggested() throws Exception {
+    @Test
+    public void unsupportedSuggested() throws Exception {
         //       available                               default          suggestion
         baseTest(                                        MIN_MARGINS[0],
                  Arrays.copyOfRange(MEDIA_SIZES, 0, 1),  MEDIA_SIZES[0],  MEDIA_SIZES[1],
@@ -608,7 +638,8 @@ public class PrintAttributesTest extends BasePrintTest {
      *
      * @throws Exception If anything is unexpected
      */
-    public void testNegativeMargins() throws Exception {
+    @Test
+    public void negativeMargins() throws Exception {
         //       available     default                          suggestion
         baseTest(              new Margins(-10, -10, -10, -10),
                  MEDIA_SIZES,  MEDIA_SIZES[1],                  null,
