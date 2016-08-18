@@ -486,6 +486,25 @@ public class BaseInputConnectionTest {
         verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 1, "0[><]56789");
     }
 
+    public void testCloseConnection() {
+        final CharSequence source = "0123456789";
+        mConnection.commitText(source, source.length());
+        final Editable text = mConnection.getEditable();
+        BaseInputConnection.setComposingSpans(text, 2, 5);
+        assertEquals(2, BaseInputConnection.getComposingSpanStart(text));
+        assertEquals(5, BaseInputConnection.getComposingSpanEnd(text));
+
+        // BaseInputConnection#closeConnection() must clear the on-going composition.
+        mConnection.closeConnection();
+        assertEquals(-1, BaseInputConnection.getComposingSpanStart(text));
+        assertEquals(-1, BaseInputConnection.getComposingSpanEnd(text));
+    }
+
+    public void testGetHandler() {
+        // BaseInputConnection must not implement getHandler().
+        assertNull(mConnection.getHandler());
+    }
+
     public void testCommitContent() {
         final InputContentInfo inputContentInfo = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
