@@ -1014,48 +1014,56 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         }
 
         public boolean testIntraRefresh(int width, int height) {
-            final int refreshPeriod = 10;
             if (!mCaps.isFeatureSupported(CodecCapabilities.FEATURE_IntraRefresh)) {
                 return false;
             }
 
-            Function<MediaFormat, Boolean> updateConfigFormatHook =
-                    new Function<MediaFormat, Boolean>() {
-                public Boolean apply(MediaFormat fmt) {
-                    // set i-frame-interval to 10000 so encoded video only has 1 i-frame.
-                    fmt.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10000);
-                    fmt.setInteger(MediaFormat.KEY_INTRA_REFRESH_PERIOD, refreshPeriod);
-                    return true;
-                }
-            };
+            final int refreshPeriod[] = new int[] {10, 13, 17, 22, 29, 38, 50, 60};
 
-            Function<MediaFormat, Boolean> checkOutputFormatHook =
-                    new Function<MediaFormat, Boolean>() {
-                public Boolean apply(MediaFormat fmt) {
-                    int intraPeriod = fmt.getInteger(MediaFormat.KEY_INTRA_REFRESH_PERIOD);
-                    // Make sure intra period is correct and carried in the output format.
-                    // intraPeriod must be larger than 0 and not larger than what has been set.
-                    if (intraPeriod > refreshPeriod) {
-                        throw new RuntimeException("Intra period mismatch");
+            // Test the support of refresh periods in the range of 10 - 60 frames
+            for (int period : refreshPeriod) {
+                Function<MediaFormat, Boolean> updateConfigFormatHook =
+                new Function<MediaFormat, Boolean>() {
+                    public Boolean apply(MediaFormat fmt) {
+                        // set i-frame-interval to 10000 so encoded video only has 1 i-frame.
+                        fmt.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10000);
+                        fmt.setInteger(MediaFormat.KEY_INTRA_REFRESH_PERIOD, period);
+                        return true;
                     }
-                    return true;
+                };
+
+                Function<MediaFormat, Boolean> checkOutputFormatHook =
+                new Function<MediaFormat, Boolean>() {
+                    public Boolean apply(MediaFormat fmt) {
+                        int intraPeriod = fmt.getInteger(MediaFormat.KEY_INTRA_REFRESH_PERIOD);
+                        // Make sure intra period is correct and carried in the output format.
+                        // intraPeriod must be larger than 0 and operate within 20% of refresh period.
+                        if (intraPeriod > 1.2 * period || intraPeriod < 0.8 * period) {
+                            throw new RuntimeException("Intra period mismatch");
+                        }
+                        return true;
+                    }
+                };
+
+                String testName =
+                mName + '_' + width + "x" + height + '_' + "flexYUV_intraRefresh";
+
+                Consumer<VideoProcessorBase> configureVideoProcessor =
+                new Consumer<VideoProcessorBase>() {
+                    public void accept(VideoProcessorBase processor) {
+                        processor.setProcessorName(testName);
+                        processor.setUpdateConfigHook(updateConfigFormatHook);
+                        processor.setCheckOutputFormatHook(checkOutputFormatHook);
+                    }
+                };
+
+                if (!test(width, height, 0 /* frameRate */, 0 /* bitRate */, true /* optional */,
+                    true /* flex */, configureVideoProcessor)) {
+                    return false;
                 }
-            };
+            }
 
-            String testName =
-                    mName + '_' + width + "x" + height + '_' + "flexYUV_intraRefresh";
-
-            Consumer<VideoProcessorBase> configureVideoProcessor =
-                    new Consumer<VideoProcessorBase>() {
-                public void accept(VideoProcessorBase processor) {
-                    processor.setProcessorName(testName);
-                    processor.setUpdateConfigHook(updateConfigFormatHook);
-                    processor.setCheckOutputFormatHook(checkOutputFormatHook);
-                }
-            };
-
-            return test(width, height, 0 /* frameRate */, 0 /* bitRate */, true /* optional */,
-                    true /* flex */, configureVideoProcessor);
+            return true;
         }
 
         public boolean testDetailed(
