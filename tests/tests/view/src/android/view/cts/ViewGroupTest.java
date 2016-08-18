@@ -182,6 +182,7 @@ public class ViewGroupTest implements CTSResult {
 
         mMockViewGroup.addView(mTextView);
         assertEquals(1, mMockViewGroup.getChildCount());
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -191,6 +192,7 @@ public class ViewGroupTest implements CTSResult {
 
         mMockViewGroup.addView(mTextView, -1);
         assertEquals(1, mMockViewGroup.getChildCount());
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -201,6 +203,7 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.addView(mTextView, new ViewGroup.LayoutParams(100, 200));
 
         assertEquals(1, mMockViewGroup.getChildCount());
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -216,6 +219,7 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(height, mTextView.getLayoutParams().height);
 
         assertEquals(1, mMockViewGroup.getChildCount());
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -226,6 +230,7 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.addView(mTextView, -1, new ViewGroup.LayoutParams(100, 200));
 
         assertEquals(1, mMockViewGroup.getChildCount());
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -241,6 +246,7 @@ public class ViewGroupTest implements CTSResult {
         // check that calling addViewInLayout() does not trigger a
         // requestLayout() on this ViewGroup
         assertFalse(mMockViewGroup.isRequestLayoutCalled);
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -282,6 +288,7 @@ public class ViewGroupTest implements CTSResult {
         // check that calling addViewInLayout() does not trigger a
         // requestLayout() on this ViewGroup
         assertFalse(mMockViewGroup.isRequestLayoutCalled);
+        assertTrue(mMockViewGroup.isOnViewAddedCalled);
     }
 
     @UiThreadTest
@@ -1221,6 +1228,7 @@ public class ViewGroupTest implements CTSResult {
         parent.removeView(child);
         assertEquals(0, parent.getChildCount());
         assertNull(child.getParent());
+        assertTrue(parent.isOnViewRemovedCalled);
     }
 
     @UiThreadTest
@@ -1245,6 +1253,7 @@ public class ViewGroupTest implements CTSResult {
         parent.removeViewAt(0);
         assertEquals(0, parent.getChildCount());
         assertNull(child.getParent());
+        assertTrue(parent.isOnViewRemovedCalled);
     }
 
     @UiThreadTest
@@ -1261,6 +1270,7 @@ public class ViewGroupTest implements CTSResult {
         parent.removeViewInLayout(child);
         assertEquals(0, parent.getChildCount());
         assertNull(child.getParent());
+        assertTrue(parent.isOnViewRemovedCalled);
     }
 
     @UiThreadTest
@@ -1298,6 +1308,7 @@ public class ViewGroupTest implements CTSResult {
         parent.removeViews(0, 1);
         assertEquals(0, parent.getChildCount());
         assertNull(child2.getParent());
+        assertTrue(parent.isOnViewRemovedCalled);
     }
 
     @UiThreadTest
@@ -1335,6 +1346,7 @@ public class ViewGroupTest implements CTSResult {
         parent.removeViewsInLayout(0, 1);
         assertEquals(0, parent.getChildCount());
         assertNull(child2.getParent());
+        assertTrue(parent.isOnViewRemovedCalled);
     }
 
     @UiThreadTest
@@ -1476,6 +1488,12 @@ public class ViewGroupTest implements CTSResult {
         public int save() {
             mIsSaveCalled = true;
             return super.save();
+        }
+
+        @Override
+        public int save(int saveFlags) {
+            mIsSaveCalled = true;
+            return super.save(saveFlags);
         }
 
         @Override
@@ -2217,6 +2235,8 @@ public class ViewGroupTest implements CTSResult {
         public boolean isOnCreateDrawableStateCalled;
         public boolean isOnInterceptTouchEventCalled;
         public boolean isOnRequestFocusInDescendantsCalled;
+        public boolean isOnViewAddedCalled;
+        public boolean isOnViewRemovedCalled;
         public boolean isFocusableViewAvailable;
         public boolean isDispatchDrawCalled;
         public boolean isRequestDisallowInterceptTouchEventCalled;
@@ -2452,6 +2472,18 @@ public class ViewGroupTest implements CTSResult {
                 Rect previouslyFocusedRect) {
             isOnRequestFocusInDescendantsCalled = true;
             return super.onRequestFocusInDescendants(direction, previouslyFocusedRect);
+        }
+
+        @Override
+        public void onViewAdded(View child) {
+            isOnViewAddedCalled = true;
+            super.onViewAdded(child);
+        }
+
+        @Override
+        public void onViewRemoved(View child) {
+            isOnViewRemovedCalled = true;
+            super.onViewRemoved(child);
         }
 
         @Override
