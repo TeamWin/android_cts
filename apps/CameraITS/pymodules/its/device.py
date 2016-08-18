@@ -754,15 +754,24 @@ def get_device_id():
     Return the device ID provided in the command line if it's connected. If no
     device ID is provided in the command line and there is only one device
     connected, return the device ID by parsing the result of "adb devices".
+    Also, if the environment variable ANDROID_SERIAL is set, use it as device
+    id. When both ANDROID_SERIAL and device argument present, device argument
+    takes priority.
 
     Raise an exception if no device is connected; or the device ID provided in
     the command line is not connected; or no device ID is provided in the
-    command line and there are more than 1 device connected.
+    command line or environment variable and there are more than 1 device
+    connected.
 
     Returns:
         Device ID string.
     """
     device_id = None
+
+    # Check if device id is set in env
+    if "ANDROID_SERIAL" in os.environ:
+        device_id = os.environ["ANDROID_SERIAL"]
+
     for s in sys.argv[1:]:
         if s[:7] == "device=" and len(s) > 7:
             device_id = str(s[7:])
