@@ -24,6 +24,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaRouter;
+import android.media.MediaRouter.RouteGroup;
 import android.media.MediaRouter.RouteCategory;
 import android.media.MediaRouter.RouteInfo;
 import android.media.MediaRouter.UserRouteInfo;
@@ -40,8 +41,10 @@ public class MediaRouterTest extends InstrumentationTestCase {
 
     private MediaRouter mMediaRouter;
     private RouteCategory mTestCategory;
+    private RouteCategory mTestGroupableCategory;
     private Drawable mTestIconDrawable;
     private static final String TEST_ROUTE_CATEGORY_NAME = "test_route_category_name";
+    private static final String TEST_GROUPABLE_ROUTE_CATEGORY_NAME = "test_groupable_category_name";
     private static final String TEST_ROUTE_NAME = "test_user_route_name";
     private static final String TEST_ROUTE_DESCRIPTION = "test_user_route_description";
     private static final String TEST_STATUS = "test_user_route_status";
@@ -59,6 +62,8 @@ public class MediaRouterTest extends InstrumentationTestCase {
         final Context context = getInstrumentation().getContext();
         mMediaRouter = (MediaRouter) context.getSystemService(Context.MEDIA_ROUTER_SERVICE);
         mTestCategory = mMediaRouter.createRouteCategory(TEST_ROUTE_CATEGORY_NAME, false);
+        mTestGroupableCategory = mMediaRouter.createRouteCategory(
+                TEST_GROUPABLE_ROUTE_CATEGORY_NAME, true);
         mTestIconDrawable = Resources.getSystem().getDrawable(TEST_ICON_RESOURCE_ID, null);
     }
 
@@ -175,6 +180,78 @@ public class MediaRouterTest extends InstrumentationTestCase {
 
         userRoute.setPlaybackType(TEST_PLAYBACK_TYPE);
         assertEquals(TEST_PLAYBACK_TYPE, userRoute.getPlaybackType());
+    }
+
+    /**
+     * Test {@link MediaRouter.RouteGroup}.
+     */
+    public void testRouteGroup() {
+        // Create a route with a groupable category.
+        // A route does not belong to any group until it is added to a media router or to a group.
+        UserRouteInfo userRoute0 = mMediaRouter.createUserRoute(mTestGroupableCategory);
+        assertNull(userRoute0.getGroup());
+
+        // Call addUserRoute(UserRouteInfo).
+        // For the route whose category is groupable, this method does not directly add the route in
+        // the media router. Instead, it creates a RouteGroup, adds the group in the media router,
+        // and puts the route inside that group.
+        mMediaRouter.addUserRoute(userRoute0);
+        RouteGroup routeGroup = userRoute0.getGroup();
+        assertNotNull(routeGroup);
+        assertEquals(1, routeGroup.getRouteCount());
+        assertEquals(userRoute0, routeGroup.getRouteAt(0));
+
+        // Create another two routes with the same category.
+        UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestGroupableCategory);
+        UserRouteInfo userRoute2 = mMediaRouter.createUserRoute(mTestGroupableCategory);
+
+        // Add userRoute2 at the end of the group.
+        routeGroup.addRoute(userRoute2);
+        assertSame(routeGroup, userRoute2.getGroup());
+        assertEquals(2, routeGroup.getRouteCount());
+        assertEquals(userRoute0, routeGroup.getRouteAt(0));
+        assertEquals(userRoute2, routeGroup.getRouteAt(1));
+
+        // To place routes in order, add userRoute1 to the group between userRoute0 and userRoute2.
+        routeGroup.addRoute(userRoute1, 1);
+        assertSame(routeGroup, userRoute1.getGroup());
+        assertEquals(3, routeGroup.getRouteCount());
+        assertEquals(userRoute0, routeGroup.getRouteAt(0));
+        assertEquals(userRoute1, routeGroup.getRouteAt(1));
+        assertEquals(userRoute2, routeGroup.getRouteAt(2));
+
+        // Remove userRoute0.
+        routeGroup.removeRoute(userRoute0);
+        assertNull(userRoute0.getGroup());
+        assertEquals(2, routeGroup.getRouteCount());
+        assertEquals(userRoute1, routeGroup.getRouteAt(0));
+        assertEquals(userRoute2, routeGroup.getRouteAt(1));
+
+        // Remove userRoute1 which is the first route in the group now.
+        routeGroup.removeRoute(0);
+        assertNull(userRoute1.getGroup());
+        assertEquals(1, routeGroup.getRouteCount());
+        assertEquals(userRoute2, routeGroup.getRouteAt(0));
+
+        // Routes in different categories cannot be added to the same group.
+        UserRouteInfo userRouteInAnotherCategory = mMediaRouter.createUserRoute(mTestCategory);
+        try {
+            // This will throw an IllegalArgumentException.
+            routeGroup.addRoute(userRouteInAnotherCategory);
+            fail();
+        } catch (IllegalArgumentException exception) {
+            // Expected
+        }
+
+        // Set an icon for the group.
+        routeGroup.setIconDrawable(mTestIconDrawable);
+        assertEquals(mTestIconDrawable, routeGroup.getIconDrawable());
+
+        routeGroup.setIconDrawable(null);
+        assertNull(routeGroup.getIconDrawable());
+
+        routeGroup.setIconResource(TEST_ICON_RESOURCE_ID);
+        assertTrue(getBitmap(mTestIconDrawable).sameAs(getBitmap(routeGroup.getIconDrawable())));
     }
 
     /**
