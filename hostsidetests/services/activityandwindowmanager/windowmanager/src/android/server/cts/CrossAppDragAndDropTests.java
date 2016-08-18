@@ -236,8 +236,16 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
         final String output = outputReceiver.getOutput();
         for (String line : output.split("\\n")) {
-            if (line.contains(name)) {
-                return line;
+            final String truncatedLine;
+            // Only look for the activity name before the "topActivity" string.
+            final int pos = line.indexOf("topActivity");
+            if (pos > 0) {
+                truncatedLine = line.substring(0, pos);
+            } else {
+                truncatedLine = line;
+            }
+            if (truncatedLine.contains(name)) {
+                return truncatedLine;
             }
         }
         return "";
