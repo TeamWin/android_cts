@@ -307,6 +307,8 @@ public class MediaUtils {
             Log.w(TAG, "not supported mime: " + mime);
             codec.release();
             return false;
+        } finally {
+            codec.release();
         }
 
         return cap.isFormatSupported(format);
