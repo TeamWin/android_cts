@@ -263,6 +263,26 @@ public class ModuleRepoTest extends TestCase {
         assertArrayEquals(EXPECTED_MODULE_IDS, mRepo.getModuleIds());
     }
 
+    public void testIsPrepared() {
+        mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES, mBuild);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        mRepo.setPrepared(true);
+        mRepo.setPrepared(true);
+        mRepo.setPrepared(true); // each shard should call setPrepared() once
+        assertTrue(mRepo.isPrepared());
+    }
+
+    public void testIsNotPrepared() {
+        mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES, mBuild);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        mRepo.setPrepared(true);
+        mRepo.setPrepared(false); // mRepo should return false for setPrepared() after third call
+        mRepo.setPrepared(true);
+        assertFalse(mRepo.isPrepared());
+    }
+
     private void assertArrayEquals(Object[] expected, Object[] actual) {
         assertEquals(Arrays.asList(expected), Arrays.asList(actual));
     }

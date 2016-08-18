@@ -343,13 +343,23 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
 
             // Set values and run preconditions
+            boolean isPrepared = true; // whether the device has been successfully prepared
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);
                 module.setBuild(mBuildHelper.getBuildInfo());
                 module.setDevice(mDevice);
                 module.setPreparerWhitelist(mPreparerWhitelist);
-                module.prepare(mSkipPreconditions);
+                isPrepared &= (module.prepare(mSkipPreconditions));
             }
+            mModuleRepo.setPrepared(isPrepared);
+
+            if (!mModuleRepo.isPrepared()) {
+                CLog.logAndDisplay(LogLevel.ERROR,
+                        "Incorrect preparation detected, exiting test run from %s",
+                        mDevice.getSerialNumber());
+                return;
+            }
+
             // Run the tests
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);

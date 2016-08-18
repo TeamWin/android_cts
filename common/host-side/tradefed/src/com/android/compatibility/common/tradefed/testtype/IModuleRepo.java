@@ -29,6 +29,16 @@ import java.util.Set;
 public interface IModuleRepo {
 
     /**
+     * @return true after each shard has prepared successfully.
+     */
+    boolean isPrepared();
+
+    /**
+     * Indicates to the repo whether a shard is prepared to run.
+     */
+    void setPrepared(boolean isPrepared);
+
+    /**
      * @return true if this repository has been initialized.
      */
     boolean isInitialized();
