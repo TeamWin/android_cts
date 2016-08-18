@@ -28,10 +28,12 @@ import android.system.Os;
 import android.system.OsConstants;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -45,14 +47,24 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private static final double DIFFERENCE_TOLERANCE = .001;
 
-    // List of files.
+    private static final String EXTERNAL_BASE_DIRECTORY = "/test/images/";
+
+    // This base directory is needed for the files listed below.
+    // These files will be available for download in Android O release.
+    // Link: https://source.android.com/compatibility/cts/downloads.html#cts-media-files
     private static final String EXIF_BYTE_ORDER_II_JPEG = "image_exif_byte_order_ii.jpg";
     private static final String EXIF_BYTE_ORDER_MM_JPEG = "image_exif_byte_order_mm.jpg";
     private static final String LG_G4_ISO_800_DNG = "lg_g4_iso_800.dng";
-    private static final int[] IMAGE_RESOURCES = new int[] {
-            R.raw.image_exif_byte_order_ii,  R.raw.image_exif_byte_order_mm, R.raw.lg_g4_iso_800 };
-    private static final String[] IMAGE_FILENAMES = new String[] {
-            EXIF_BYTE_ORDER_II_JPEG, EXIF_BYTE_ORDER_MM_JPEG, LG_G4_ISO_800_DNG };
+    private static final String SONY_RX_100_ARW = "sony_rx_100.arw";
+    private static final String CANON_G7X_CR2 = "canon_g7x.cr2";
+    private static final String FUJI_X20_RAF = "fuji_x20.raf";
+    private static final String NIKON_1AW1_NEF = "nikon_1aw1.nef";
+    private static final String NIKON_P330_NRW = "nikon_p330.nrw";
+    private static final String OLYMPUS_E_PL3_ORF = "olympus_e_pl3.orf";
+    private static final String PANASONIC_GM5_RW2 = "panasonic_gm5.rw2";
+    private static final String PENTAX_K5_PEF = "pentax_k5.pef";
+    private static final String SAMSUNG_NX3000_SRW = "samsung_nx3000.srw";
+    private static final String VOLANTIS_JPEG = "volantis.jpg";
 
     private static final String[] EXIF_TAGS = {
             ExifInterface.TAG_MAKE,
@@ -160,55 +172,13 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        for (int i = 0; i < IMAGE_RESOURCES.length; ++i) {
-            String outputPath = new File(Environment.getExternalStorageDirectory(),
-                    IMAGE_FILENAMES[i]).getAbsolutePath();
-            try (InputStream inputStream = getContext().getResources().openRawResource(
-                    IMAGE_RESOURCES[i])) {
-                try (FileOutputStream outputStream = new FileOutputStream(outputPath)) {
-                    Streams.copy(inputStream, outputStream);
-                }
-            }
-        }
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        for (int i = 0; i < IMAGE_RESOURCES.length; ++i) {
-            String imageFilePath = new File(Environment.getExternalStorageDirectory(),
-                    IMAGE_FILENAMES[i]).getAbsolutePath();
-            File imageFile = new File(imageFilePath);
-            if (imageFile.exists()) {
-                imageFile.delete();
-            }
-        }
-
-        super.tearDown();
-    }
-
-    public void testReadExifDataFromExifByteOrderIIJpeg() throws Throwable {
-        testExifInterfaceForJpeg(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_jpg);
-    }
-
-    public void testReadExifDataFromExifByteOrderMMJpeg() throws Throwable {
-        testExifInterfaceForJpeg(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_jpg);
-    }
-
-    public void testReadExifDataFromLgG4Iso800Dng() throws Throwable {
-        testExifInterfaceForRaw(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
-    }
-
     private void printExifTagsAndValues(String fileName, ExifInterface exifInterface) {
         // Prints thumbnail information.
         if (exifInterface.hasThumbnail()) {
-            byte[] thumbnailBytes = exifInterface.getThumbnail();
+            byte[] thumbnailBytes = exifInterface.getThumbnailBytes();
             if (thumbnailBytes != null) {
                 Log.v(TAG, fileName + " Thumbnail size = " + thumbnailBytes.length);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(
-                        thumbnailBytes, 0, thumbnailBytes.length);
+                Bitmap bitmap = exifInterface.getThumbnailBitmap();
                 if (bitmap == null) {
                     Log.e(TAG, fileName + " Corrupted thumbnail!");
                 } else {
@@ -220,7 +190,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
                         + "A thumbnail is expected.");
             }
         } else {
-            if (exifInterface.getThumbnail() != null) {
+            if (exifInterface.getThumbnailBytes() != null) {
                 Log.e(TAG, fileName + " Unexpected result: A thumbnail was found. "
                         + "No thumbnail is expected.");
             } else {
@@ -274,10 +244,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         // Checks a thumbnail image.
         assertEquals(expectedValue.hasThumbnail, exifInterface.hasThumbnail());
         if (expectedValue.hasThumbnail) {
-            byte[] thumbnailBytes = exifInterface.getThumbnail();
+            byte[] thumbnailBytes = exifInterface.getThumbnailBytes();
             assertNotNull(thumbnailBytes);
-            Bitmap thumbnailBitmap =
-                    BitmapFactory.decodeByteArray(thumbnailBytes, 0, thumbnailBytes.length);
+            Bitmap thumbnailBitmap = exifInterface.getThumbnailBitmap();
             assertNotNull(thumbnailBitmap);
             assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
             assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
@@ -322,8 +291,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         assertIntTag(exifInterface, ExifInterface.TAG_WHITE_BALANCE, expectedValue.whiteBalance);
     }
 
-    private void testExifInterfaceCommon(File imageFile, ExpectedValue expectedValue)
+    private void testExifInterfaceCommon(String fileName, ExpectedValue expectedValue)
             throws IOException {
+        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
         String verboseTag = imageFile.getName();
 
         // Creates via path.
@@ -331,18 +301,8 @@ public class ExifInterfaceTest extends AndroidTestCase {
         assertNotNull(exifInterface);
         compareWithExpectedValue(exifInterface, expectedValue, verboseTag);
 
-        // Creates from an asset file.
         InputStream in = null;
-        try {
-            in = getContext().getAssets().open(imageFile.getName());
-            exifInterface = new ExifInterface(in);
-            compareWithExpectedValue(exifInterface, expectedValue, verboseTag);
-        } finally {
-            IoUtils.closeQuietly(in);
-        }
-
         // Creates via InputStream.
-        in = null;
         try {
             in = new BufferedInputStream(new FileInputStream(imageFile.getAbsolutePath()));
             exifInterface = new ExifInterface(in);
@@ -364,8 +324,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
     }
 
-    private void testSaveAttributes_withFileName(File imageFile, ExpectedValue expectedValue)
+    private void testSaveAttributes_withFileName(String fileName, ExpectedValue expectedValue)
             throws IOException {
+        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
         String verboseTag = imageFile.getName();
 
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
@@ -386,8 +347,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         compareWithExpectedValue(exifInterface, expectedValue, verboseTag);
     }
 
-    private void testSaveAttributes_withFileDescriptor(File imageFile, ExpectedValue expectedValue)
+    private void testSaveAttributes_withFileDescriptor(String fileName, ExpectedValue expectedValue)
             throws IOException {
+        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
         String verboseTag = imageFile.getName();
 
         FileDescriptor fd = null;
@@ -419,48 +381,95 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
     }
 
-    private void testSaveAttributes_withInputStream(File imageFile, ExpectedValue expectedValue)
-            throws IOException {
-        InputStream in = null;
-        try {
-            in = getContext().getAssets().open(imageFile.getName());
-            ExifInterface exifInterface = new ExifInterface(in);
-            exifInterface.saveAttributes();
-        } catch (UnsupportedOperationException e) {
-            // Expected. saveAttributes is not supported with an ExifInterface object which was
-            // created with InputStream.
-            return;
-        } finally {
-            IoUtils.closeQuietly(in);
-        }
-        fail("Should not reach here!");
-    }
-
     private void testExifInterfaceForJpeg(String fileName, int typedArrayResourceId)
             throws IOException {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
-        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
 
-        // Test for reading from various inputs.
-        testExifInterfaceCommon(imageFile, expectedValue);
+        // Test for reading from external data storage.
+        fileName = EXTERNAL_BASE_DIRECTORY + fileName;
+        testExifInterfaceCommon(fileName, expectedValue);
 
         // Test for saving attributes.
-        testSaveAttributes_withFileName(imageFile, expectedValue);
-        testSaveAttributes_withFileDescriptor(imageFile, expectedValue);
-        testSaveAttributes_withInputStream(imageFile, expectedValue);
+        testSaveAttributes_withFileName(fileName, expectedValue);
+        testSaveAttributes_withFileDescriptor(fileName, expectedValue);
     }
 
     private void testExifInterfaceForRaw(String fileName, int typedArrayResourceId)
             throws IOException {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
-        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
 
-        // Test for reading from various inputs.
-        testExifInterfaceCommon(imageFile, expectedValue);
+        // Test for reading from external data storage.
+        fileName = EXTERNAL_BASE_DIRECTORY + fileName;
+        testExifInterfaceCommon(fileName, expectedValue);
 
         // Since ExifInterface does not support for saving attributes for RAW files, do not test
         // about writing back in here.
+    }
+
+    public void testReadExifDataFromExifByteOrderIIJpeg() throws Throwable {
+        testExifInterfaceForJpeg(EXIF_BYTE_ORDER_II_JPEG, R.array.exifbyteorderii_jpg);
+    }
+
+    public void testReadExifDataFromExifByteOrderMMJpeg() throws Throwable {
+        testExifInterfaceForJpeg(EXIF_BYTE_ORDER_MM_JPEG, R.array.exifbyteordermm_jpg);
+    }
+
+    public void testReadExifDataFromLgG4Iso800Dng() throws Throwable {
+        testExifInterfaceForRaw(LG_G4_ISO_800_DNG, R.array.lg_g4_iso_800_dng);
+    }
+
+    public void testDoNotFailOnCorruptedImage() throws Throwable {
+        // To keep the compatibility with old versions of ExifInterface, even on a corrupted image,
+        // it shouldn't raise any exceptions except an IOException when unable to open a file.
+        byte[] bytes = new byte[1024];
+        try {
+            new ExifInterface(new ByteArrayInputStream(bytes));
+            // Always success
+        } catch (IOException e) {
+            fail("Should not reach here!");
+        }
+    }
+
+    public void testReadExifDataFromVolantisJpg() throws Throwable {
+        // Test if it is possible to parse the volantis generated JPEG smoothly.
+        testExifInterfaceForJpeg(VOLANTIS_JPEG, R.array.volantis_jpg);
+    }
+
+    public void testReadExifDataFromSonyRX100Arw() throws Throwable {
+        testExifInterfaceForRaw(SONY_RX_100_ARW, R.array.sony_rx_100_arw);
+    }
+
+    public void testReadExifDataFromCanonG7XCr2() throws Throwable {
+        testExifInterfaceForRaw(CANON_G7X_CR2, R.array.canon_g7x_cr2);
+    }
+
+    public void testReadExifDataFromFujiX20Raf() throws Throwable {
+        testExifInterfaceForRaw(FUJI_X20_RAF, R.array.fuji_x20_raf);
+    }
+
+    public void testReadExifDataFromNikon1AW1Nef() throws Throwable {
+        testExifInterfaceForRaw(NIKON_1AW1_NEF, R.array.nikon_1aw1_nef);
+    }
+
+    public void testReadExifDataFromNikonP330Nrw() throws Throwable {
+        testExifInterfaceForRaw(NIKON_P330_NRW, R.array.nikon_p330_nrw);
+    }
+
+    public void testReadExifDataFromOlympusEPL3Orf() throws Throwable {
+        testExifInterfaceForRaw(OLYMPUS_E_PL3_ORF, R.array.olympus_e_pl3_orf);
+    }
+
+    public void testReadExifDataFromPanasonicGM5Rw2() throws Throwable {
+        testExifInterfaceForRaw(PANASONIC_GM5_RW2, R.array.panasonic_gm5_rw2);
+    }
+
+    public void testReadExifDataFromPentaxK5Pef() throws Throwable {
+        testExifInterfaceForRaw(PENTAX_K5_PEF, R.array.pentax_k5_pef);
+    }
+
+    public void testReadExifDataFromSamsungNX3000Srw() throws Throwable {
+        testExifInterfaceForRaw(SAMSUNG_NX3000_SRW, R.array.samsung_nx3000_srw);
     }
 }
