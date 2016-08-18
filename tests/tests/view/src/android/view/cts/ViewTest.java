@@ -3648,7 +3648,7 @@ public class ViewTest {
                 assertTrue(mCalledOnStartTemporaryDetach);
                 assertFalse(mCalledOnFinishTemporaryDetach);
 
-                assertTrue(isTemporarilyDetached());
+                assertFalse(isTemporarilyDetached());
 
                 mCalledOnFinishTemporaryDetach = true;
             }
