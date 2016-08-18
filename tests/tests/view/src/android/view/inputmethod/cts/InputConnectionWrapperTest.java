@@ -154,7 +154,7 @@ public class InputConnectionWrapperTest {
         verify(inputConnection, times(1)).closeConnection();
 
         verify(inputConnection, never()).getHandler();
-        assertNull(inputConnection.getHandler());
+        assertNull(wrapper.getHandler());
         verify(inputConnection, times(1)).getHandler();
 
         verify(inputConnection, never()).commitContent(any(InputContentInfo.class), anyInt(),
