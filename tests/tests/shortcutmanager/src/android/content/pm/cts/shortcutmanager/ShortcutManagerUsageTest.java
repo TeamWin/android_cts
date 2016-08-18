@@ -32,7 +32,7 @@ public class ShortcutManagerUsageTest extends ShortcutManagerCtsTestsBase {
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
 
     // We need some allowance due to b/30415390.
-    private static long USAGE_STATS_RANGE_ALLOWANCE = 2 * 1000;
+    private static long USAGE_STATS_RANGE_ALLOWANCE = 60 * 1000;
 
     @Override
     protected void setUp() throws Exception {
