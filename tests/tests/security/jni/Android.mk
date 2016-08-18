@@ -51,7 +51,7 @@ LOCAL_SHARED_LIBRARIES := libnativehelper \
 		libgui \
 		libaudioutils \
 		libnbaio \
-		libpcre \
+		libpcre2 \
 		libpackagelistparser \
 		libpowermanager \
 		libbase \
