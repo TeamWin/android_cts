@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,6 +74,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     private String mPackageVerifier;
     private HashSet<String> mAvailableFeatures;
 
+    /** Packages installed as part of the tests */
+    private Set<String> mFixedPackages;
+
     /** Whether DPM is supported. */
     protected boolean mHasFeature;
     protected int mPrimaryUserId;
@@ -95,6 +99,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mHasFeature = getDevice().getApiLevel() >= 21 /* Build.VERSION_CODES.L */
                 && hasDeviceFeature("android.software.device_admin");
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
+        mFixedPackages = getDevice().getInstalledPackageNames();
 
         // disable the package verifier to avoid the dialog when installing an app
         mPackageVerifier = getDevice().executeShellCommand(
@@ -119,6 +124,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 + mPackageVerifier);
         removeOwners();
         removeTestUsers();
+        removeTestPackages();
         super.tearDown();
     }
 
@@ -211,6 +217,17 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             if (!mFixedUsers.contains(userId)) {
                 removeUser(userId);
             }
+        }
+    }
+
+    /** Removes any packages that were installed during the test. */
+    protected void removeTestPackages() throws Exception {
+        for (String packageName : getDevice().getUninstallablePackageNames()) {
+            if (mFixedPackages.contains(packageName)) {
+                continue;
+            }
+            CLog.w("removing leftover package: " + packageName);
+            getDevice().uninstallPackage(packageName);
         }
     }
 
