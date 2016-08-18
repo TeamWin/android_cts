@@ -15,12 +15,26 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.transition.ChangeBounds;
 import android.util.TypedValue;
 import android.view.View;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class ChangeBoundsTest extends BaseTransitionTest {
     private static final int SMALL_SQUARE_SIZE_DP = 10;
     private static final int LARGE_SQUARE_SIZE_DP = 30;
@@ -28,12 +42,10 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
     ChangeBounds mChangeBounds;
 
-    public ChangeBoundsTest() {
-    }
-
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        super.setup();
         resetChangeBoundsTransition();
     }
 
@@ -45,6 +57,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         mTransition = mChangeBounds;
     }
 
+    @Test
     public void testBasicChangeBounds() throws Throwable {
         enterScene(R.layout.scene1);
 
@@ -60,6 +73,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene6();
     }
 
+    @Test
     public void testResizeClip() throws Throwable {
         assertEquals(false, mChangeBounds.getResizeClip());
         mChangeBounds.setResizeClip(true);
@@ -78,6 +92,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene6();
     }
 
+    @Test
     public void testResizeClipSmaller() throws Throwable {
         mChangeBounds.setResizeClip(true);
         enterScene(R.layout.scene6);
@@ -94,6 +109,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene1();
     }
 
+    @Test
     public void testInterruptSameDestination() throws Throwable {
         enterScene(R.layout.scene1);
 
@@ -111,6 +127,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene6();
     }
 
+    @Test
     public void testInterruptSameDestinationResizeClip() throws Throwable {
         mChangeBounds.setResizeClip(true);
         enterScene(R.layout.scene1);
@@ -132,6 +149,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene6();
     }
 
+    @Test
     public void testInterruptWithReverse() throws Throwable {
         enterScene(R.layout.scene1);
 
@@ -150,6 +168,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene1();
     }
 
+    @Test
     public void testInterruptWithReverseResizeClip() throws Throwable {
         mChangeBounds.setResizeClip(true);
         enterScene(R.layout.scene1);

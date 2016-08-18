@@ -15,12 +15,12 @@
  */
 package android.transition.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 
-import junit.framework.TestCase;
-
-public class PathMotionTest extends TestCase {
+public abstract class PathMotionTest {
     public static void assertPathMatches(Path expectedPath, Path path) {
         PathMeasure expectedMeasure = new PathMeasure(expectedPath, false);
         PathMeasure pathMeasure = new PathMeasure(path, false);
