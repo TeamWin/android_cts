@@ -16,14 +16,15 @@
 
 package android.util.cts;
 
+import static org.junit.Assert.assertEquals;
+
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Size;
 import android.util.SizeF;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.*;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -39,27 +40,25 @@ public class SizeTest {
         assertEquals(200, sizeF.getHeight(), 0f);
     }
 
+    @Test(expected=NumberFormatException.class)
+    public void testParseSizeInvalid() {
+        Size.parseSize("2by4");
+    }
+
     @Test
     public void testParseSize() {
-        try {
-            Size.parseSize("2by4");
-            fail("Should not be able to parse");
-        } catch (NumberFormatException ignored) {
-        }
-
         assertEquals(new Size(100, 200), Size.parseSize("100*200"));
         assertEquals(new Size(10, 20), Size.parseSize("10x20"));
         assertEquals(new SizeF(9999, 9999), SizeF.parseSizeF("9999x9999"));
     }
 
+    @Test(expected=NumberFormatException.class)
+    public void testParseSizeFInvalid() {
+        SizeF.parseSizeF("2by4");
+    }
+
     @Test
     public void testParseSizeF() {
-        try {
-            SizeF.parseSizeF("2by4");
-            fail("Should not be able to parse");
-        } catch (NumberFormatException ignored) {
-        }
-
         assertEquals(new SizeF(100f, 200f), SizeF.parseSizeF("100*200"));
         assertEquals(new SizeF(10f, 20f), SizeF.parseSizeF("10x20"));
         assertEquals(new SizeF(1000000f, 2.4f), SizeF.parseSizeF("1e6x2.4"));

@@ -15,14 +15,22 @@
  */
 package android.util.cts;
 
+import static org.junit.Assert.assertEquals;
+
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.TimeUtils;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import junit.framework.TestCase;
-
-public class TimeUtilsTest extends TestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class TimeUtilsTest {
+    @Test
     public void testUnitedStates() throws Exception {
         String[] mainstream = new String[] {
             "America/New_York", // Eastern
@@ -48,6 +56,7 @@ public class TimeUtilsTest extends TestCase {
         }
     }
 
+    @Test
     public void testWeirdUnitedStates() throws Exception {
         String[] weird = new String[] {
             "America/Phoenix", // Mountain, no DST
@@ -65,6 +74,7 @@ public class TimeUtilsTest extends TestCase {
         }
     }
 
+    @Test
     public void testOld() throws Exception {
         String[] old = new String[] {
             "America/Indiana/Indianapolis", // Eastern, formerly no DST
@@ -81,6 +91,7 @@ public class TimeUtilsTest extends TestCase {
         }
     }
 
+    @Test
     public void testWorldWeird() throws Exception {
         String[] world = new String[] {
             // Distinguisable from Sydney only when DST not in effect
