@@ -18,6 +18,10 @@ package android.transition.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -231,8 +235,7 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
             imageView.setScaleType(endScale);
         });
         waitForStart();
-        int expectedEndCount = (startScale == endScale) ? 0 : 1;
-        assertEquals(expectedEndCount, mListener.endLatch.getCount());
+        verify(mListener, (startScale == endScale) ? times(1) : never()).onTransitionEnd(any());
         waitForEnd(200);
     }
 

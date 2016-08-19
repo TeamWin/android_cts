@@ -16,6 +16,9 @@
 package android.transition.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -53,12 +56,12 @@ public class FadeTest extends BaseTransitionTest {
         // Should animate in and out by default
         enterScene(R.layout.scene4);
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
 
         resetListener();
         startTransition(R.layout.scene4);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
 
         // Now only animate in
@@ -66,7 +69,7 @@ public class FadeTest extends BaseTransitionTest {
         mTransition = mFade;
         resetListener();
         startTransition(R.layout.scene1);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
 
         // No animation since it should only animate in
@@ -84,7 +87,7 @@ public class FadeTest extends BaseTransitionTest {
         // but it should animate out
         resetListener();
         startTransition(R.layout.scene4);
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         waitForEnd(400);
     }
 }

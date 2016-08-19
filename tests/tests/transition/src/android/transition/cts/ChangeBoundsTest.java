@@ -20,12 +20,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.ChangeBounds;
+import android.transition.Transition;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -50,7 +52,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     }
 
     private void resetChangeBoundsTransition() {
-        mListener = new SimpleTransitionListener();
+        mListener = mock(Transition.TransitionListener.class);
         mChangeBounds = new ChangeBounds();
         mChangeBounds.setDuration(400);
         mChangeBounds.addListener(mListener);

@@ -17,6 +17,9 @@ package android.transition.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -62,7 +65,7 @@ public class ExplodeTest extends BaseTransitionTest {
             yellowSquare.setVisibility(View.INVISIBLE);
         });
         waitForStart();
-        assertEquals(1, mListener.endLatch.getCount());
+        verify(mListener, never()).onTransitionEnd(any());
         assertEquals(View.VISIBLE, redSquare.getVisibility());
         assertEquals(View.VISIBLE, greenSquare.getVisibility());
         assertEquals(View.VISIBLE, blueSquare.getVisibility());
