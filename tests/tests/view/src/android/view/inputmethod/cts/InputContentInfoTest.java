@@ -57,7 +57,6 @@ public class InputContentInfoTest extends AndroidTestCase {
         assertEquals(info.describeContents(), targetInfo.describeContents());
     }
 
-    @Test
     public void testOptionalConstructorParam() {
         InputContentInfo info = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
@@ -162,7 +161,6 @@ public class InputContentInfoTest extends AndroidTestCase {
         }
     }
 
-    @Test
     public void testRequestAndReleasePermission() {
         InputContentInfo info = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
