@@ -160,6 +160,10 @@ public class ShortcutManagerThrottlingTestReceiver extends BroadcastReceiver {
             assertTrue(context.getSystemService(ShortcutManager.class).setDynamicShortcuts(list()));
             assertTrue(context.getSystemService(ShortcutManager.class).addDynamicShortcuts(list()));
             assertTrue(context.getSystemService(ShortcutManager.class).updateShortcuts(list()));
+
+            // Make sure it's not considered to be in the FG -> so eventually the caller should be
+            // throttled.
+            ThrottledTests.ensureThrottled(context);
         });
     }
 }

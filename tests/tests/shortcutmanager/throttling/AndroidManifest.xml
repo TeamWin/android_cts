@@ -18,6 +18,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.content.pm.cts.shortcutmanager.throttling">
 
+    <!-- BG services will stop working on O, so set target to 25. -->
+    <uses-sdk android:minSdkVersion="25" android:targetSdkVersion="25" />
+
     <application>
         <receiver
             android:name="ShortcutManagerThrottlingTestReceiver"

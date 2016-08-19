@@ -20,6 +20,7 @@ import static android.content.pm.cts.shortcutmanager.common.Constants.INLINE_REP
 
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.resetThrottling;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.retryUntil;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.runCommandForNoOutput;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -45,6 +46,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
 
     private static final int UI_TIMEOUT = 5000;
+
+    private static final String TARGET_PACKAGE =
+            "android.content.pm.cts.shortcutmanager.throttling";
 
     private void callTest(String method) {
 
@@ -72,13 +76,12 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
             i.putExtra(Constants.EXTRA_METHOD, method);
             i.putExtra(Constants.EXTRA_REPLY_ACTION, replyAction);
             i.setComponent(ComponentName.unflattenFromString(
-                    "android.content.pm.cts.shortcutmanager.throttling/"
-                            + ".ShortcutManagerThrottlingTestReceiver"
-                    ));
+                    TARGET_PACKAGE + "/.ShortcutManagerThrottlingTestReceiver"));
             getTestContext().sendBroadcast(i);
 
             // Wait for the response.
-            retryUntil(() -> ret.get() != null, "Didn't receiver result broadcast");
+            retryUntil(() -> ret.get() != null, "Didn't receive result broadcast",
+                    120); // Wait much longer
 
             if (ret.get().getExtras().getBoolean("success")) {
                 return;
@@ -89,40 +92,40 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         }
     }
 
-    public void testThrottling() throws InterruptedException {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
         resetThrottling(getInstrumentation());
 
+        runCommandForNoOutput(getInstrumentation(), "am force-stop " + TARGET_PACKAGE);
+    }
+
+    public void testSetDynamicShortcuts() throws InterruptedException {
         callTest(Constants.TEST_SET_DYNAMIC_SHORTCUTS);
+    }
 
-        // --------------------------------------
-        resetThrottling(getInstrumentation());
-
+    public void testAddDynamicShortcuts() throws InterruptedException {
         callTest(Constants.TEST_ADD_DYNAMIC_SHORTCUTS);
+    }
 
-        // --------------------------------------
-        resetThrottling(getInstrumentation());
-
+    public void testUpdateShortcuts() throws InterruptedException {
         callTest(Constants.TEST_UPDATE_SHORTCUTS);
+    }
 
-        // --------------------------------------
-        resetThrottling(getInstrumentation());
-
+    public void testBgServiceThrottled() throws InterruptedException {
         callTest(Constants.TEST_BG_SERVICE_THROTTLED);
+    }
 
-        // --------------------------------------
-        resetThrottling(getInstrumentation());
-
+    public void testActivityUnthrottled() throws InterruptedException {
         callTest(Constants.TEST_ACTIVITY_UNTHROTTLED);
+    }
 
-        // --------------------------------------
-        resetThrottling(getInstrumentation());
-
+    public void testFgServiceUnthrottled() throws InterruptedException {
         callTest(Constants.TEST_FG_SERVICE_UNTHROTTLED);
     }
 
     public void testInlineReply() throws Exception {
-        resetThrottling(getInstrumentation());
-
         clearNotifications();
 
         callTest(Constants.TEST_INLINE_REPLY_SHOW);
@@ -134,15 +137,20 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
 
     private void clearNotifications() throws InterruptedException {
         final UiDevice ud = UiDevice.getInstance(getInstrumentation());
+
+        // Open the notification shade.
         ud.openNotification();
 
+        // Press "clear all", if found.
         final UiObject2 clearAll = ud.wait(Until.findObject(By.text("CLEAR ALL")), UI_TIMEOUT);
 
         // Just skip if not found.
         if (clearAll != null) {
             clearAll.clear();
+            ud.wait(Until.gone(By.text("CLEAR ALL")), UI_TIMEOUT);
             Thread.sleep(1000);
         }
+        // Close the notification.
         ud.pressHome();
         Thread.sleep(1000);
     }
@@ -150,13 +158,16 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
     private void performInlineReply() throws InterruptedException {
         final UiDevice ud = UiDevice.getInstance(getInstrumentation());
 
+        // Open the notification shade.
         Thread.sleep(1000);
         ud.openNotification();
 
+        // Find the inline reply part.
         ud.wait(Until.findObject(By.text(INLINE_REPLY_REMOTE_INPUT_CAPTION)), UI_TIMEOUT).click();
 
         Thread.sleep(1000);
 
+        // Type something.
         ud.pressKeyCode(KeyEvent.KEYCODE_A);
         ud.pressKeyCode(KeyEvent.KEYCODE_B);
         ud.pressKeyCode(KeyEvent.KEYCODE_C);
@@ -164,5 +175,9 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
 
         Thread.sleep(1000);
         ud.pressHome();
+
+        ud.wait(Until.gone(By.text(INLINE_REPLY_REMOTE_INPUT_CAPTION)), UI_TIMEOUT);
+
+        Thread.sleep(1000);
     }
 }
