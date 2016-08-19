@@ -64,6 +64,7 @@ public class InputContentInfoTest {
         assertEquals(info.describeContents(), targetInfo.describeContents());
     }
 
+    @Test
     public void testOptionalConstructorParam() {
         InputContentInfo info = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
@@ -138,6 +139,7 @@ public class InputContentInfoTest {
                  Uri.parse("content://com.example/path"));
     }
 
+    @Test
     public void testRequestAndReleasePermission() {
         InputContentInfo info = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
