@@ -16,7 +16,14 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
 import android.cts.util.CtsKeyEventUtil;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -24,11 +31,16 @@ import android.text.Spanned;
 import android.text.method.DigitsKeyListener;
 import android.view.KeyEvent;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link DigitsKeyListener}.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class DigitsKeyListenerTest extends KeyListenerTestCase {
-
+    @Test
     public void testConstructor() {
         new DigitsKeyListener();
 
@@ -45,6 +57,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      * 5. filter Spanned("-a1.b2c3d"), return Spanned("123") and copy spans.
      * 6. filter "", return null
      */
+    @Test
     public void testFilter1() {
         String source = "123456";
         String destString = "dest string";
@@ -102,6 +115,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      * 13. filter "-123456" but dest has '-' before dstart, return "123456"
      * 14. filter "+123456" but dest has '-' before dstart, return "123456"
      */
+    @Test
     public void testFilter2() {
         String source = "-123456";
         String destString = "dest string without sign and decimal";
@@ -200,6 +214,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      * 8. filter "123.456" but dest has '.' after dend, return "123456"
      * 9. filter "123.456" but dest has '.' before dstart, return "123456"
      */
+    @Test
     public void testFilter3() {
         String source = "123.456";
         String destString = "dest string without sign and decimal";
@@ -279,6 +294,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      * 16. filter "-123.456" but dest has '-' before dstart, return "123.456"
      * 17. filter "+123.456" but dest has '-' before dstart, return "123.456"
      */
+    @Test
     public void testFilter4() {
         String source = "-123.456";
         String destString = "dest string without sign and decimal";
@@ -388,6 +404,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      *  3. Press '.' key and this key could not be accepted.
      *  4. Press '2' key and check if the content of TextView becomes "12"
      */
+    @Test
     public void testDigitsKeyListener1() {
         final DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance();
 
@@ -422,6 +439,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      *  6. Press '-' key and this key could not be accepted,
      *     because text view accepts minus sign iff it at the beginning.
      */
+    @Test
     public void testDigitsKeyListener2() {
         final DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(true, false);
 
@@ -464,6 +482,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      *  6. Press '.' key and this key could not be accepted,
      *     because text view accepts only one decimal point per field.
      */
+    @Test
     public void testDigitsKeyListener3() {
         final DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(false, true);
 
@@ -508,6 +527,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      *  6. Press '.' key and this key could not be accepted,
      *     because text view accepts only one decimal point per field.
      */
+    @Test
     public void testDigitsKeyListener4() {
         final DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(true, true);
 
@@ -548,7 +568,8 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      *  4. Press '-' key and this key could not be accepted.
      *  5. remove DigitsKeyListener and Press '5' key, this key will not be accepted
      */
-    public void testDigitsKeyListener5() {
+    @Test
+    public void testDigitsKeyListener5() throws Throwable {
         final String accepted = "56789";
         final DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(accepted);
 
@@ -572,7 +593,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertEquals("5", mTextView.getText().toString());
 
         // remove DigitsKeyListener
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setKeyListener(null);
             mTextView.requestFocus();
         });
@@ -584,6 +605,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertEquals("5", mTextView.getText().toString());
     }
 
+    @Test
     public void testGetInstance1() {
         DigitsKeyListener listener1 = DigitsKeyListener.getInstance();
         DigitsKeyListener listener2 = DigitsKeyListener.getInstance();
@@ -593,6 +615,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertSame(listener1, listener2);
     }
 
+    @Test
     public void testGetInstance2() {
         DigitsKeyListener listener1 = DigitsKeyListener.getInstance(true, true);
         DigitsKeyListener listener2 = DigitsKeyListener.getInstance(true, true);
@@ -609,6 +632,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertSame(listener1, listener2);
     }
 
+    @Test
     public void testGetInstance3() {
         DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance("abcdefg");
         assertNotNull(digitsKeyListener);
@@ -617,6 +641,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertNotNull(digitsKeyListener);
     }
 
+    @Test
     public void testGetAcceptedChars() {
         MockDigitsKeyListener mockDigitsKeyListener = new MockDigitsKeyListener();
 
@@ -639,6 +664,7 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         TextMethodUtils.assertEquals(expected[3], mockDigitsKeyListener.getAcceptedChars());
     }
 
+    @Test
     public void testGetInputType() {
         DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(false, false);
         int expected = InputType.TYPE_CLASS_NUMBER;

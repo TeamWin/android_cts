@@ -16,15 +16,23 @@
 
 package android.text.method.cts;
 
-import android.support.test.filters.SmallTest;
+import static org.junit.Assert.assertTrue;
+
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.method.BaseKeyListener;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test backspace key handling of {@link android.text.method.BaseKeyListener}.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class BackspaceTest extends KeyListenerTestCase {
     private static final BaseKeyListener mKeyListener = new BaseKeyListener() {
         public int getInputType() {
@@ -34,8 +42,8 @@ public class BackspaceTest extends KeyListenerTestCase {
 
     // Sync the state to the TextView and call onKeyDown with KEYCODE_DEL key event.
     // Then update the state to the result of TextView.
-    private void backspace(final EditorState state, int modifiers) {
-        mInstrumentation.runOnMainSync(() -> {
+    private void backspace(final EditorState state, int modifiers) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setText(state.mText, BufferType.EDITABLE);
             mTextView.setKeyListener(mKeyListener);
             mTextView.setSelection(state.mSelectionStart, state.mSelectionEnd);
@@ -44,7 +52,7 @@ public class BackspaceTest extends KeyListenerTestCase {
         assertTrue(mTextView.hasWindowFocus());
 
         final KeyEvent keyEvent = getKey(KeyEvent.KEYCODE_DEL, modifiers);
-        mInstrumentation.runOnMainSync(() -> mTextView.onKeyDown(keyEvent.getKeyCode(), keyEvent));
+        mActivityRule.runOnUiThread(() -> mTextView.onKeyDown(keyEvent.getKeyCode(), keyEvent));
         mInstrumentation.waitForIdleSync();
 
         state.mText = mTextView.getText();
@@ -52,8 +60,8 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.mSelectionEnd = mTextView.getSelectionEnd();
     }
 
-    @SmallTest
-    public void testCRLF() {
+    @Test
+    public void testCRLF() throws Throwable {
         EditorState state = new EditorState();
 
         // U+000A is LINE FEED.
@@ -77,8 +85,8 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.assertEquals("|");
     }
 
-    @SmallTest
-    public void testSurrogatePairs() {
+    @Test
+    public void testSurrogatePairs() throws Throwable {
         EditorState state = new EditorState();
 
         state.setByString("U+1F441 |");
@@ -92,8 +100,8 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.assertEquals("|");
     }
 
-    @SmallTest
-    public void testReplacementSpan() {
+    @Test
+    public void testReplacementSpan() throws Throwable {
         EditorState state = new EditorState();
 
         // ReplacementSpan will be set to "()" region.
@@ -134,8 +142,8 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.assertEquals("| 'g'");
     }
 
-    @SmallTest
-    public void testCombiningEnclosingKeycaps() {
+    @Test
+    public void testCombiningEnclosingKeycaps() throws Throwable {
         EditorState state = new EditorState();
 
         // U+20E3 is COMBINING ENCLOSING KEYCAP.
@@ -149,8 +157,8 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.assertEquals("|");
     }
 
-    @SmallTest
-    public void testVariationSelector() {
+    @Test
+    public void testVariationSelector() throws Throwable {
         EditorState state = new EditorState();
 
         // U+FE0F is VARIATION SELECTOR-16.
@@ -164,8 +172,8 @@ public class BackspaceTest extends KeyListenerTestCase {
         state.assertEquals("|");
     }
 
-    @SmallTest
-    public void testFlags() {
+    @Test
+    public void testFlags() throws Throwable {
         EditorState state = new EditorState();
 
         // U+1F1FA is REGIONAL INDICATOR SYMBOL LETTER U.

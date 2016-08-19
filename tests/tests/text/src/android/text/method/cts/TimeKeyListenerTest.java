@@ -16,18 +16,30 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+
 import android.cts.util.CtsKeyEventUtil;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.method.TimeKeyListener;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
-public class TimeKeyListenerTest extends KeyListenerTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class TimeKeyListenerTest extends KeyListenerTestCase {
+    @Test
     public void testConstructor() {
         new TimeKeyListener();
     }
 
+    @Test
     public void testGetInstance() {
         TimeKeyListener listener1 = TimeKeyListener.getInstance();
         TimeKeyListener listener2 = TimeKeyListener.getInstance();
@@ -37,12 +49,14 @@ public class TimeKeyListenerTest extends KeyListenerTestCase {
         assertSame(listener1, listener2);
     }
 
+    @Test
     public void testGetAcceptedChars() {
         MockTimeKeyListener mockTimeKeyListener = new MockTimeKeyListener();
         TextMethodUtils.assertEquals(TimeKeyListener.CHARACTERS,
                 mockTimeKeyListener.getAcceptedChars());
     }
 
+    @Test
     public void testGetInputType() {
         TimeKeyListener listener = TimeKeyListener.getInstance();
         int expected = InputType.TYPE_CLASS_DATETIME
@@ -60,6 +74,7 @@ public class TimeKeyListenerTest extends KeyListenerTestCase {
      * 6. Press an unaccepted key if it exists and this key could not be entered.
      * 7. Remove TimeKeyListener, '1' key will not be accepted.
      */
+    @Test
     public void testTimeKeyListener() {
         final TimeKeyListener timeKeyListener = TimeKeyListener.getInstance();
         String expectedText = "";

@@ -16,21 +16,33 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+
 import android.cts.util.CtsKeyEventUtil;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.method.DateTimeKeyListener;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link android.text.method.DateTimeKeyListener}.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class DateTimeKeyListenerTest extends KeyListenerTestCase {
-
+    @Test
     public void testConstructor() {
         new DateTimeKeyListener();
     }
 
+    @Test
     public void testGetInstance() {
         DateTimeKeyListener listener1 = DateTimeKeyListener.getInstance();
         DateTimeKeyListener listener2 = DateTimeKeyListener.getInstance();
@@ -40,6 +52,7 @@ public class DateTimeKeyListenerTest extends KeyListenerTestCase {
         assertSame(listener1, listener2);
     }
 
+    @Test
     public void testGetAcceptedChars() {
         MockDateTimeKeyListener mockDateTimeKeyListener = new MockDateTimeKeyListener();
 
@@ -47,6 +60,7 @@ public class DateTimeKeyListenerTest extends KeyListenerTestCase {
                 mockDateTimeKeyListener.getAcceptedChars());
     }
 
+    @Test
     public void testGetInputType() {
         DateTimeKeyListener listener = DateTimeKeyListener.getInstance();
 
@@ -65,6 +79,7 @@ public class DateTimeKeyListenerTest extends KeyListenerTestCase {
      * 6. Press an unaccepted key if it exists. and this key will not be accepted.
      * 7. Remove DateKeyListener and Press '1' key, this key will not be accepted
      */
+    @Test
     public void testDateTimeKeyListener() {
         final DateTimeKeyListener dateTimeKeyListener = DateTimeKeyListener.getInstance();
         setKeyListenerSync(dateTimeKeyListener);

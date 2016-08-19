@@ -16,8 +16,14 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.cts.util.CtsKeyEventUtil;
 import android.os.SystemClock;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Selection;
@@ -28,17 +34,23 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link android.text.method.BaseKeyListener}.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class BaseKeyListenerTest extends KeyListenerTestCase {
     private static final CharSequence TEST_STRING = "123456";
 
-    public void testBackspace() {
-        testBackspace(0);
+    @Test
+    public void testBackspace() throws Throwable {
+        verifyBackspace(0);
     }
 
-    private void testBackspace(int modifiers) {
+    private void verifyBackspace(int modifiers) throws Throwable {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
         final KeyEvent event = getKey(KeyEvent.KEYCODE_DEL, modifiers);
         Editable content = Editable.Factory.getInstance().newEditable(TEST_STRING);
@@ -96,11 +108,13 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         assertEquals("\u05D6\u05D4\u0020Anroid\u0020\u05E2\u05D5\u05D1", content.toString());
     }
 
-    public void testBackspace_withShift() {
-        testBackspace(KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON);
+    @Test
+    public void testBackspace_withShift() throws Throwable {
+        verifyBackspace(KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON);
     }
 
-    public void testBackspace_withAlt() {
+    @Test
+    public void testBackspace_withAlt() throws Throwable {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
         Editable content = Editable.Factory.getInstance().newEditable(TEST_STRING);
 
@@ -124,7 +138,8 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         assertEquals("", content.toString());
     }
 
-    public void testBackspace_withSendKeys() {
+    @Test
+    public void testBackspace_withSendKeys() throws Throwable {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // Delete the first character '1'
@@ -155,12 +170,13 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         assertEquals(TEST_STRING, mTextView.getText().toString());
     }
 
-    private void assertCursorPosition(Editable content, int offset) {
+    private void verifyCursorPosition(Editable content, int offset) {
         assertEquals(offset, Selection.getSelectionStart(content));
         assertEquals(offset, Selection.getSelectionEnd(content));
     }
 
-    public void testBackspace_withCtrl() {
+    @Test
+    public void testBackspace_withCtrl() throws Throwable {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // If the contents only having symbolic characters, delete all characters.
@@ -169,7 +185,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         prepTextViewSync(content, mockBaseKeyListener, false, testText.length(), testText.length());
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // Latin ASCII text
         testText = "Hello, World. This is Android.";
@@ -179,32 +195,32 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         prepTextViewSync(content, mockBaseKeyListener, false, 0, 0);
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, World. This is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         prepTextViewSync(content, mockBaseKeyListener, false, testText.length(), testText.length());
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, World. This is ", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, World. This ", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, World. ", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, ", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // Latin ASCII, cursor is middle of the text.
         testText = "Hello, World. This is Android.";
@@ -215,19 +231,19 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, World.  is Android.", content.toString());
-        assertCursorPosition(content, content.toString().length() - charsFromTail);
+        verifyCursorPosition(content, content.toString().length() - charsFromTail);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello,  is Android.", content.toString());
-        assertCursorPosition(content, content.toString().length() - charsFromTail);
+        verifyCursorPosition(content, content.toString().length() - charsFromTail);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals(" is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals(" is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // Latin ASCII, cursor is inside word.
         testText = "Hello, World. This is Android.";
@@ -239,19 +255,19 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, World. is is Android.", content.toString());
-        assertCursorPosition(content, content.toString().length() - charsFromTail);
+        verifyCursorPosition(content, content.toString().length() - charsFromTail);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("Hello, is is Android.", content.toString());
-        assertCursorPosition(content, content.toString().length() - charsFromTail);
+        verifyCursorPosition(content, content.toString().length() - charsFromTail);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("is is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("is is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // Hebrew Text
         // The deletion works on a Logical direction basis.
@@ -263,24 +279,24 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05E9\u05DC\u05D5\u05DD\u0020\u05D4\u05E2\u05D5\u05DC\u05DD\u002E\u0020" +
                      "\u05D6\u05D4\u0020", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05E9\u05DC\u05D5\u05DD\u0020\u05D4\u05E2\u05D5\u05DC\u05DD\u002E\u0020",
                      content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05E9\u05DC\u05D5\u05DD\u0020", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // BiDi Text
         // The deletion works on a Logical direction basis.
@@ -292,30 +308,31 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05D6\u05D4\u0020\u05DC\u002D\u0020\u0041Android\u0020\u05E2\u05D5\u05D1" +
                      "\u05D3\u0020", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05D6\u05D4\u0020\u05DC\u002D\u0020\u0041Android\u0020", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05D6\u05D4\u0020\u05DC\u002D\u0020", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("\u05D6\u05D4\u0020", content.toString());
-        assertCursorPosition(content, content.toString().length());
+        verifyCursorPosition(content, content.toString().length());
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlBackspace(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
     }
 
-    public void testForwardDelete_withCtrl() {
+    @Test
+    public void testForwardDelete_withCtrl() throws Throwable {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // If the contents only having symbolic characters, delete all characters.
@@ -324,7 +341,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         prepTextViewSync(content, mockBaseKeyListener, false, 0, 0);
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // Latin ASCII text
         testText = "Hello, World. This is Android.";
@@ -334,36 +351,36 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         prepTextViewSync(content, mockBaseKeyListener, false, testText.length(), testText.length());
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. This is Android.", content.toString());
-        assertCursorPosition(content, testText.length());
+        verifyCursorPosition(content, testText.length());
 
         prepTextViewSync(content, mockBaseKeyListener, false, 0, 0);
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals(", World. This is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals(". This is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals(" is Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals(" Android.", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals(".", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // Latin ASCII, cursor is middle of the text.
         testText = "Hello, World. This is Android.";
@@ -373,23 +390,23 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World.  is Android.", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World.  Android.", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. .", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. ", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. ", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         // Latin ASCII, cursor is inside word.
         testText = "Hello, World. This is Android.";
@@ -399,23 +416,23 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. Th is Android.", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. Th Android.", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. Th.", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. Th", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("Hello, World. Th", content.toString());
-        assertCursorPosition(content, charsFromHead);
+        verifyCursorPosition(content, charsFromHead);
 
         // Hebrew Text
         // The deletion works on a Logical direction basis.
@@ -427,29 +444,29 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u0020\u05D4\u05E2\u05D5\u05DC\u05DD\u002E\u0020\u05D6\u05D4\u0020\u05D0" +
                      "\u05E0\u05D3\u05E8\u05D5\u05D0\u05D9\u05D3\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u002E\u0020\u05D6\u05D4\u0020\u05D0\u05E0\u05D3\u05E8\u05D5\u05D0\u05D9" +
                 "\u05D3\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u0020\u05D0\u05E0\u05D3\u05E8\u05D5\u05D0\u05D9\u05D3\u002E",
                      content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         // BiDi Text
         // The deletion works on a Logical direction basis.
@@ -461,33 +478,33 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u0020\u05DC\u002D\u0020\u0041Android\u0020\u05E2\u05D5\u05D1\u05D3\u0020" +
                      "\u05D4\u05D9\u05D8\u05D1\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u002D\u0020\u0041Android\u0020\u05E2\u05D5\u05D1\u05D3\u0020\u05D4\u05D9" +
                      "\u05D8\u05D1\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u0020\u05E2\u05D5\u05D1\u05D3\u0020\u05D4\u05D9\u05D8\u05D1\u002E",
                      content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u0020\u05D4\u05D9\u05D8\u05D1\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("\u002E", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
 
         executeCtrlForwardDelete(content, mockBaseKeyListener);
         assertEquals("", content.toString());
-        assertCursorPosition(content, 0);
+        verifyCursorPosition(content, 0);
     }
 
     /*
@@ -496,7 +513,8 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
      * 2. Set a selection and press DEL key, the selection is deleted.
      * 3. ACTION_MULTIPLE KEYCODE_UNKNOWN by inserting the event's text into the content.
      */
-    public void testPressKey() {
+    @Test
+    public void testPressKey() throws Throwable {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
 
         // press '0' key.
@@ -519,6 +537,7 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
 //        assertEquals("13abcd456", mTextView.getText().toString());
     }
 
+    @Test
     public void testOnKeyOther() {
         final BaseKeyListener mockBaseKeyListener = new MockBaseKeyListener();
         final String string = "abc";
@@ -565,8 +584,9 @@ public class BaseKeyListenerTest extends KeyListenerTestCase {
      * the UI thread.
      */
     private void prepTextViewSync(final CharSequence content, final BaseKeyListener keyListener,
-            final boolean selectInTextView, final int selectionStart, final int selectionEnd) {
-        mInstrumentation.runOnMainSync(() -> {
+            final boolean selectInTextView, final int selectionStart, final int selectionEnd)
+                    throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setText(content, BufferType.EDITABLE);
             mTextView.setKeyListener(keyListener);
             Selection.setSelection(

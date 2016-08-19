@@ -16,6 +16,21 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import android.support.test.filters.LargeTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.Selection;
 import android.text.Spannable;
@@ -25,12 +40,18 @@ import android.text.method.TextKeyListener.Capitalize;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@LargeTest
+@RunWith(AndroidJUnit4.class)
 public class MultiTapKeyListenerTest extends KeyListenerTestCase {
     /**
      * time out of MultiTapKeyListener. longer than 2000ms in case the system is sluggish.
      */
     private static final long TIME_OUT = 3000;
 
+    @Test
     public void testConstructor() {
         new MultiTapKeyListener(Capitalize.NONE, true);
 
@@ -39,21 +60,24 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         new MultiTapKeyListener(null, false);
     }
 
-    public void testOnSpanAdded() {
-        final MockMultiTapKeyListener mockMultiTapKeyListener
-                = new MockMultiTapKeyListener(Capitalize.CHARACTERS, true);
+    @Test
+    public void testOnSpanAdded() throws Throwable {
+        final MultiTapKeyListener mockMultiTapKeyListener
+                = spy(new MultiTapKeyListener(Capitalize.CHARACTERS, true));
         final Spannable text = new SpannableStringBuilder("123456");
 
-        assertFalse(mockMultiTapKeyListener.hadAddedSpan());
-        mInstrumentation.runOnMainSync(() -> {
+        verify(mockMultiTapKeyListener, never()).onSpanAdded(any(), any(), anyInt(), anyInt());
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setKeyListener(mockMultiTapKeyListener);
             mTextView.setText(text, BufferType.EDITABLE);
         });
         mInstrumentation.waitForIdleSync();
 
-        assertTrue(mockMultiTapKeyListener.hadAddedSpan());
+        verify(mockMultiTapKeyListener, atLeastOnce()).onSpanAdded(
+                any(), any(), anyInt(), anyInt());
     }
 
+    @Test
     public void testOnSpanChanged() {
         final MultiTapKeyListener multiTapKeyListener
                 = MultiTapKeyListener.getInstance(true, Capitalize.CHARACTERS);
@@ -68,7 +92,8 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         }
     }
 
-    public void testOnKeyDown_capitalizeNone() {
+    @Test
+    public void testOnKeyDown_capitalizeNone() throws Throwable {
         MultiTapKeyListener keyListener = MultiTapKeyListener.getInstance(false, Capitalize.NONE);
 
         prepareEmptyTextView();
@@ -89,7 +114,8 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         assertEquals("hello", mTextView.getText().toString());
     }
 
-    public void testOnKeyDown_capitalizeCharacters() {
+    @Test
+    public void testOnKeyDown_capitalizeCharacters() throws Throwable {
         MultiTapKeyListener keyListener = MultiTapKeyListener.getInstance(false,
                 Capitalize.CHARACTERS);
 
@@ -111,7 +137,8 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         assertEquals("HELLO", mTextView.getText().toString());
     }
 
-    public void testOnKeyDown_capitalizeSentences() {
+    @Test
+    public void testOnKeyDown_capitalizeSentences() throws Throwable {
         MultiTapKeyListener keyListener = MultiTapKeyListener.getInstance(false,
                 Capitalize.SENTENCES);
 
@@ -138,7 +165,8 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         assertEquals("Hi. Bye", mTextView.getText().toString());
     }
 
-    public void testOnKeyDown_capitalizeWords() {
+    @Test
+    public void testOnKeyDown_capitalizeWords() throws Throwable {
         MultiTapKeyListener keyListener = MultiTapKeyListener.getInstance(false,
                 Capitalize.WORDS);
 
@@ -162,8 +190,8 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         assertEquals("Hi Bye", mTextView.getText().toString());
     }
 
-    private void prepareEmptyTextView() {
-        mInstrumentation.runOnMainSync(() -> {
+    private void prepareEmptyTextView() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setText("", BufferType.EDITABLE);
             Selection.setSelection(mTextView.getEditableText(), 0, 0);
         });
@@ -172,8 +200,8 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
     }
 
     private void callOnKeyDown(final MultiTapKeyListener keyListener, final int keyCode,
-            final int numTimes) {
-        mInstrumentation.runOnMainSync(() -> {
+            final int numTimes) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
             for (int i = 0; i < numTimes; i++) {
                 keyListener.onKeyDown(mTextView, mTextView.getEditableText(), keyCode,
                         new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
@@ -189,11 +217,12 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         }
     }
 
-    private void addSpace() {
-        mInstrumentation.runOnMainSync(() -> mTextView.append(" "));
+    private void addSpace() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mTextView.append(" "));
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testGetInstance() {
         MultiTapKeyListener listener1 = MultiTapKeyListener.getInstance(false, Capitalize.NONE);
         MultiTapKeyListener listener2 = MultiTapKeyListener.getInstance(false, Capitalize.NONE);
@@ -209,6 +238,7 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         assertNotSame(listener4, listener1);
     }
 
+    @Test
     public void testOnSpanRemoved() {
         MultiTapKeyListener multiTapKeyListener =
                 new MultiTapKeyListener(Capitalize.CHARACTERS, true);
@@ -216,6 +246,7 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
         multiTapKeyListener.onSpanRemoved(text, new Object(), 0, 0);
     }
 
+    @Test
     public void testGetInputType() {
         MultiTapKeyListener listener = MultiTapKeyListener.getInstance(false, Capitalize.NONE);
         int expected = InputType.TYPE_CLASS_TEXT;
@@ -226,28 +257,5 @@ public class MultiTapKeyListenerTest extends KeyListenerTestCase {
                 | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
                 | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT;
         assertEquals(expected, listener.getInputType());
-    }
-
-    /**
-     * A mocked {@link android.text.method.MultiTapKeyListener} for testing purposes.
-     *
-     * Tracks whether {@link MockMultiTapKeyListener#onSpanAdded()} has been called.
-     */
-    private class MockMultiTapKeyListener extends MultiTapKeyListener {
-        private boolean mHadAddedSpan;
-
-        public MockMultiTapKeyListener(Capitalize cap, boolean autotext) {
-            super(cap, autotext);
-        }
-
-        @Override
-        public void onSpanAdded(Spannable s, Object what, int start, int end) {
-            mHadAddedSpan = true;
-            super.onSpanAdded(s, what, start, end);
-        }
-
-        public boolean hadAddedSpan() {
-            return mHadAddedSpan;
-        }
     }
 }

@@ -16,20 +16,32 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+
 import android.cts.util.CtsKeyEventUtil;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.method.DateKeyListener;
 import android.view.KeyEvent;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link android.text.method.DateKeyListener}.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class DateKeyListenerTest extends KeyListenerTestCase {
-
+    @Test
     public void testConstructor() {
         new DateKeyListener();
     }
 
+    @Test
     public void testGetInstance() {
         DateKeyListener listener1 = DateKeyListener.getInstance();
         DateKeyListener listener2 = DateKeyListener.getInstance();
@@ -39,6 +51,7 @@ public class DateKeyListenerTest extends KeyListenerTestCase {
         assertSame(listener1, listener2);
     }
 
+    @Test
     public void testGetAcceptedChars() {
         MockDateKeyListener mockDateKeyListener = new MockDateKeyListener();
 
@@ -46,6 +59,7 @@ public class DateKeyListenerTest extends KeyListenerTestCase {
                 mockDateKeyListener.getAcceptedChars());
     }
 
+    @Test
     public void testGetInputType() {
         DateKeyListener dateKeyListener = new DateKeyListener();
 
@@ -62,6 +76,7 @@ public class DateKeyListenerTest extends KeyListenerTestCase {
      * 5. Press '/' key and check if the content of TextView becomes "12-/"
      * 6. remove DateKeyListener and Press '/' key, this key will not be accepted
      */
+    @Test
     public void testDateTimeKeyListener() {
         final DateKeyListener dateKeyListener = DateKeyListener.getInstance();
 

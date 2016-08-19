@@ -16,9 +16,17 @@
 
 package android.text.method.cts;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
@@ -30,10 +38,16 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link MetaKeyKeyListener}.
  */
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
+    @Test
     public void testPressKey() {
         final CharSequence str = "123456";
         final MetaKeyKeyListener numberKeyListener = new DateKeyListener();
@@ -59,6 +73,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals('3', content.charAt(3));
     }
 
+    @Test
     public void testReleaseKey() {
         final CharSequence str = "123456";
         final MetaKeyKeyListener numberKeyListener = new DateKeyListener();
@@ -84,6 +99,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(str.charAt(3), content.charAt(3));
     }
 
+    @Test
     public void testAdjustMetaAfterKeypress() {
         CharSequence str = "123456";
         Spannable content = Editable.Factory.getInstance().newEditable(str);
@@ -113,6 +129,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(Spanned.SPAN_POINT_POINT, content.getSpanFlags(Selection.SELECTION_END));
     }
 
+    @Test
     public void testAdjustMetaAfterKeypress2() {
         long state = MetaKeyKeyListener.adjustMetaAfterKeypress(MetaKeyKeyListener.META_SHIFT_ON);
         assertEquals(MetaKeyKeyListener.META_SHIFT_ON, state);
@@ -127,6 +144,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(0, state);
     }
 
+    @Test
     public void testResetMetaState() {
         CharSequence str = "123456";
         Spannable text = Editable.Factory.getInstance().newEditable(str);
@@ -153,6 +171,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(Spanned.SPAN_POINT_POINT, text.getSpanFlags(Selection.SELECTION_END));
     }
 
+    @Test
     public void testGetMetaState() {
         assertEquals(0, MetaKeyKeyListener.getMetaState("123456"));
         assertEquals(0, MetaKeyKeyListener.getMetaState("abc"));
@@ -179,6 +198,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
                 MetaKeyKeyListener.getMetaState("@#$$#^$^", MetaKeyKeyListener.META_SYM_ON));
     }
 
+    @Test
     public void testGetMetaState2() {
         assertEquals(0, MetaKeyKeyListener.getMetaState(0));
         assertEquals(MetaKeyKeyListener.META_SHIFT_ON,
@@ -193,6 +213,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
                 MetaKeyKeyListener.META_SYM_ON));
     }
 
+    @Test
     public void testGetMetaState_withCharSequenceAndKeyEvent() {
         KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 0,
                 KeyEvent.META_SHIFT_MASK);
@@ -201,6 +222,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(KeyEvent.META_SHIFT_MASK, MetaKeyKeyListener.getMetaState("", event));
     }
 
+    @Test
     public void testGetMetaState_withCharSequenceAndMetaAndKeyEvent() {
         KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 0,
                 KeyEvent.META_CTRL_ON);
@@ -224,18 +246,21 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
                 event));
     }
 
+    @Test
     public void testIsMetaTracker() {
         assertFalse(MetaKeyKeyListener.isMetaTracker("123456", new Object()));
         assertFalse(MetaKeyKeyListener.isMetaTracker("abc", new Object()));
         assertFalse(MetaKeyKeyListener.isMetaTracker("@#$$#^$^", new Object()));
     }
 
+    @Test
     public void testIsSelectingMetaTracker() {
         assertFalse(MetaKeyKeyListener.isSelectingMetaTracker("123456", new Object()));
         assertFalse(MetaKeyKeyListener.isSelectingMetaTracker("abc", new Object()));
         assertFalse(MetaKeyKeyListener.isSelectingMetaTracker("@#$$#^$^", new Object()));
     }
 
+    @Test
     public void testResetLockedMeta() {
         MockMetaKeyKeyListener mockMetaKeyKeyListener = new MockMetaKeyKeyListener();
 
@@ -259,6 +284,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         }
     }
 
+    @Test
     public void testResetLockedMeta2() {
         long state = MetaKeyKeyListener.resetLockedMeta(MetaKeyKeyListener.META_CAP_LOCKED);
         assertEquals(0, state);
@@ -279,6 +305,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(MetaKeyKeyListener.META_SYM_ON, state);
     }
 
+    @Test
     public void testClearMetaKeyState() {
         final MetaKeyKeyListener numberKeyListener = new DateKeyListener();
         CharSequence str = "123456";
@@ -306,6 +333,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(Spanned.SPAN_POINT_POINT, text.getSpanFlags(Selection.SELECTION_END));
     }
 
+    @Test
     public void testClearMetaKeyState2() {
         CharSequence str = "123456";
         Editable text = Editable.Factory.getInstance().newEditable(str);
@@ -332,6 +360,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(Spanned.SPAN_POINT_POINT, text.getSpanFlags(Selection.SELECTION_END));
     }
 
+    @Test
     public void testClearMetaKeyState3() {
         final MetaKeyKeyListener metaKeyKeyListener = new MetaKeyKeyListener() {};
         long state = metaKeyKeyListener.clearMetaKeyState(MetaKeyKeyListener.META_CAP_LOCKED,
@@ -359,6 +388,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(MetaKeyKeyListener.META_SYM_ON, state);
     }
 
+    @Test
     public void testHandleKeyDown() {
         KeyEvent fullEvent = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT,
                 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0);
@@ -367,6 +397,7 @@ public class MetaKeyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(0, state);
     }
 
+    @Test
     public void testHandleKeyUp() {
         KeyEvent fullEvent = new KeyEvent(0, 0, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT,
                 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0);

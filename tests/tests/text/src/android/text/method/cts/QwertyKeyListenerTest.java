@@ -16,6 +16,13 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputType;
 import android.text.Selection;
 import android.text.Spannable;
@@ -25,7 +32,13 @@ import android.text.method.TextKeyListener.Capitalize;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class QwertyKeyListenerTest extends KeyListenerTestCase {
+    @Test
     public void testConstructor() {
         new QwertyKeyListener(Capitalize.NONE, false);
 
@@ -34,6 +47,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         new QwertyKeyListener(null, true);
     }
 
+    @Test
     public void testOnKeyDown_capitalizeNone() {
         final QwertyKeyListener keyListener = QwertyKeyListener.getInstance(false, Capitalize.NONE);
 
@@ -55,6 +69,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         assertEquals("hello", mTextView.getText().toString());
     }
 
+    @Test
     public void testOnKeyDown_capitalizeCharacters() {
         final QwertyKeyListener keyListener = QwertyKeyListener.getInstance(false,
                 Capitalize.CHARACTERS);
@@ -77,6 +92,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         assertEquals("HELLO", mTextView.getText().toString());
     }
 
+    @Test
     public void testOnKeyDown_capitalizeSentences() {
         final QwertyKeyListener keyListener = QwertyKeyListener.getInstance(false,
                 Capitalize.SENTENCES);
@@ -105,6 +121,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         assertEquals("Hi. Bye", mTextView.getText().toString());
     }
 
+    @Test
     public void testOnKeyDown_capitalizeWords() {
         final QwertyKeyListener keyListener = QwertyKeyListener.getInstance(false,
                 Capitalize.WORDS);
@@ -146,6 +163,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
     public void testGetInstance() {
         final QwertyKeyListener listener1 = QwertyKeyListener.getInstance(true, Capitalize.WORDS);
         final QwertyKeyListener listener2 = QwertyKeyListener.getInstance(true, Capitalize.WORDS);
@@ -162,6 +180,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         assertNotSame(listener4, listener3);
     }
 
+    @Test
     public void testGetInstanceForFullKeyboard() {
         final QwertyKeyListener listener = QwertyKeyListener.getInstanceForFullKeyboard();
 
@@ -170,6 +189,7 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(InputType.TYPE_CLASS_TEXT, listener.getInputType());
     }
 
+    @Test
     public void testMarkAsReplaced() {
         final SpannableStringBuilder content = new SpannableStringBuilder("123456");
 
@@ -189,20 +209,19 @@ public class QwertyKeyListenerTest extends KeyListenerTestCase {
         assertEquals(1, content.getSpanStart(repl[0]));
         assertEquals(2, content.getSpanEnd(repl[0]));
         assertEquals(Spannable.SPAN_EXCLUSIVE_EXCLUSIVE, content.getSpanFlags(repl[0]));
-
-        try {
-            QwertyKeyListener.markAsReplaced(null, 1, 2, "abcd");
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
-
-        try {
-            QwertyKeyListener.markAsReplaced(content, 1, 2, null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testMarkAsReplacedNullContent() {
+        QwertyKeyListener.markAsReplaced(null, 1, 2, "abcd");
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testMarkAsReplacedNullOriginal() {
+        QwertyKeyListener.markAsReplaced(new SpannableStringBuilder("123456"), 1, 2, null);
+    }
+
+    @Test
     public void testGetInputType() {
         QwertyKeyListener listener = QwertyKeyListener.getInstance(false, Capitalize.NONE);
         assertEquals(InputType.TYPE_CLASS_TEXT, listener.getInputType());

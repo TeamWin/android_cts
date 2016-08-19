@@ -16,8 +16,24 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import android.cts.util.CtsKeyEventUtil;
 import android.os.SystemClock;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.UiThreadTest;
 import android.text.Editable;
 import android.text.InputType;
@@ -30,20 +46,25 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
 
-import static org.mockito.Mockito.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@MediumTest
+@RunWith(AndroidJUnit4.class)
 public class TextKeyListenerTest extends KeyListenerTestCase {
     /**
      * time out of MultiTapKeyListener. longer than 2000ms in case the system is sluggish.
      */
     private static final long TIME_OUT = 3000;
 
+    @Test
     public void testConstructor() {
         new TextKeyListener(Capitalize.NONE, true);
 
         new TextKeyListener(null, true);
     }
 
+    @Test
     public void testShouldCap() {
         String str = "hello world! man";
 
@@ -68,21 +89,21 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         assertFalse(TextKeyListener.shouldCap(Capitalize.SENTENCES, str, 14));
         assertFalse(TextKeyListener.shouldCap(Capitalize.WORDS, str, 14));
         assertTrue(TextKeyListener.shouldCap(Capitalize.CHARACTERS, str, 14));
-
-        try {
-            TextKeyListener.shouldCap(Capitalize.WORDS, null, 16);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
     }
 
-    public void testOnSpanAdded() {
+    @Test(expected=NullPointerException.class)
+    public void testShouldCapNull() {
+        TextKeyListener.shouldCap(Capitalize.WORDS, null, 16);
+    }
+
+    @Test
+    public void testOnSpanAdded() throws Throwable {
         final TextKeyListener mockTextKeyListener = spy(
                 new TextKeyListener(Capitalize.CHARACTERS, true));
         final Spannable text = new SpannableStringBuilder("123456");
 
         verify(mockTextKeyListener, never()).onSpanAdded(any(), any(), anyInt(), anyInt());
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setKeyListener(mockTextKeyListener);
             mTextView.setText(text, BufferType.EDITABLE);
         });
@@ -92,6 +113,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         mockTextKeyListener.release();
     }
 
+    @Test
     public void testGetInstance1() {
         TextKeyListener listener1 = TextKeyListener.getInstance(true, Capitalize.WORDS);
         TextKeyListener listener2 = TextKeyListener.getInstance(true, Capitalize.WORDS);
@@ -112,6 +134,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         listener4.release();
     }
 
+    @Test
     public void testGetInstance2() {
         TextKeyListener listener1 = TextKeyListener.getInstance();
         TextKeyListener listener2 = TextKeyListener.getInstance();
@@ -124,21 +147,23 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         listener2.release();
     }
 
+    @Test
     public void testOnSpanChanged() {
         TextKeyListener textKeyListener = TextKeyListener.getInstance();
         final Spannable text = new SpannableStringBuilder("123456");
         textKeyListener.onSpanChanged(text, Selection.SELECTION_END, 0, 0, 0, 0);
 
-        try {
-            textKeyListener.onSpanChanged(null, Selection.SELECTION_END, 0, 0, 0, 0);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
-
         textKeyListener.release();
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testOnSpanChangedNull() {
+        TextKeyListener textKeyListener = TextKeyListener.getInstance();
+        textKeyListener.onSpanChanged(null, Selection.SELECTION_END, 0, 0, 0, 0);
+    }
+
     @UiThreadTest
+    @Test
     public void testClear() {
         CharSequence text = "123456";
         mTextView.setText(text, BufferType.EDITABLE);
@@ -150,6 +175,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         assertEquals("", content.toString());
     }
 
+    @Test
     public void testOnSpanRemoved() {
         TextKeyListener textKeyListener = new TextKeyListener(Capitalize.CHARACTERS, true);
         final Spannable text = new SpannableStringBuilder("123456");
@@ -174,11 +200,12 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
      * 1. press KEYCODE_4 once. if it's ALPHA key board, text will be "4", if it's
      *    NUMERIC key board, text will be "g", else text will be "".
      */
-    public void testPressKey() {
+    @Test
+    public void testPressKey() throws Throwable {
         final TextKeyListener textKeyListener
                 = TextKeyListener.getInstance(false, Capitalize.NONE);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setText("", BufferType.EDITABLE);
             Selection.setSelection(mTextView.getText(), 0, 0);
             mTextView.setKeyListener(textKeyListener);
@@ -203,12 +230,13 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         textKeyListener.release();
     }
 
-    public void testOnKeyOther() {
+    @Test
+    public void testOnKeyOther() throws Throwable {
         final String text = "abcd";
         final TextKeyListener textKeyListener
                 = TextKeyListener.getInstance(false, Capitalize.NONE);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             mTextView.setText("", BufferType.EDITABLE);
             Selection.setSelection(mTextView.getText(), 0, 0);
             mTextView.setKeyListener(textKeyListener);
@@ -227,6 +255,7 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
         textKeyListener.release();
     }
 
+    @Test
     public void testGetInputType() {
         TextKeyListener listener = TextKeyListener.getInstance(false, Capitalize.NONE);
         int expected = InputType.TYPE_CLASS_TEXT;
@@ -239,5 +268,4 @@ public class TextKeyListenerTest extends KeyListenerTestCase {
 
         listener.release();
     }
-
 }

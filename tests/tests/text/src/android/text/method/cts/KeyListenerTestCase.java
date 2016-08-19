@@ -17,55 +17,36 @@
 package android.text.method.cts;
 
 import android.app.Instrumentation;
-import android.test.ActivityInstrumentationTestCase2;
+import android.cts.util.PollingCheck;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.text.cts.R;
-import android.text.format.DateUtils;
 import android.text.method.KeyListener;
 import android.view.KeyEvent;
 import android.widget.EditText;
 
+import org.junit.Before;
+import org.junit.Rule;
+
 /**
  * Base class for various KeyListener tests.
- * {@link BaseKeyListenerTest}
- * {@link DateKeyListenerTest}
- * {@link DateTimeKeyListenerTest}
- * {@link DigitsKeyListenerTest}
- * {@link MultiTapKeyListenerTest}
- * {@link NumberKeyListenerTest}
- * {@link QwertyKeyListenerTest}
- * {@link TextKeyListenerTest}
- *
- * @see BaseKeyListenerTest
- * @see DateKeyListenerTest
- * @see DateTimeKeyListenerTest
- * @see DigitsKeyListenerTest
- * @see MultiTapKeyListenerTest
- * @see NumberKeyListenerTest
- * @see QwertyKeyListenerTest
- * @see TextKeyListenerTest
  */
-public abstract class KeyListenerTestCase extends
-        ActivityInstrumentationTestCase2<KeyListenerCtsActivity> {
+public abstract class KeyListenerTestCase {
     protected KeyListenerCtsActivity mActivity;
     protected Instrumentation mInstrumentation;
     protected EditText mTextView;
 
-    public KeyListenerTestCase() {
-        super("com.android.cts.text", KeyListenerCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<KeyListenerCtsActivity> mActivityRule =
+            new ActivityTestRule<>(KeyListenerCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mActivity = getActivity();
-        mInstrumentation = getInstrumentation();
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
         mTextView = (EditText) mActivity.findViewById(R.id.keylistener_textview);
 
-        // Ensure that the screen is on for this test.
-        mInstrumentation.runOnMainSync(() -> mTextView.setKeepScreenOn(true));
-        mInstrumentation.waitForIdleSync();
-        assertTrue(mActivity.waitForWindowFocus(5 * DateUtils.SECOND_IN_MILLIS));
+        PollingCheck.waitFor(5000, mActivity::hasWindowFocus);
     }
 
     /**
