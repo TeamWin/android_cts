@@ -16,11 +16,16 @@
 
 package android.text.util.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.support.test.filters.SmallTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.util.Rfc822Token;
 import android.text.util.Rfc822Tokenizer;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +33,15 @@ import java.util.List;
 /**
  * Test {@link Rfc822Tokenizer}.
  */
-public class Rfc822TokenizerTest extends AndroidTestCase {
-
-    @SmallTest
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class Rfc822TokenizerTest {
+    @Test
     public void testConstructor() {
         new Rfc822Tokenizer();
     }
 
-    @SmallTest
+    @Test
     public void testFindTokenStart() {
         Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
 
@@ -68,7 +74,7 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testFindTokenEnd() {
         Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
 
@@ -95,16 +101,16 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         final int TOKEN_END_POS_4 = text2.indexOf(token4) + token4.length();
         assertEquals(TOKEN_END_POS_2, rfc822Tokenizer.findTokenEnd(text2, 0));
         assertEquals(TOKEN_END_POS_4, rfc822Tokenizer.findTokenEnd(text2, TOKEN_END_POS_2 + 1));
-
-        try {
-            rfc822Tokenizer.findTokenEnd(null, 0);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // issue 1695243, not clear what is supposed to happen if text is null.
-        }
     }
 
-    @SmallTest
+    @Test(expected=NullPointerException.class)
+    public void testFindTokenEndNull() {
+        Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
+
+        rfc822Tokenizer.findTokenEnd(null, 0);
+    }
+
+    @Test
     public void testTerminateToken() {
         Rfc822Tokenizer rfc822Tokenizer = new Rfc822Tokenizer();
 
@@ -119,7 +125,7 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         assertEquals(text + comma + space, rfc822Tokenizer.terminateToken(null));
     }
 
-    @SmallTest
+    @Test
     public void testTokenize() {
         Rfc822Token[] tokens = Rfc822Tokenizer.tokenize("");
         assertEquals(0, tokens.length);
@@ -127,24 +133,22 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         String text = "\"Berg\" (home) <berg\\@example.com>, tom\\@example.com (work)";
         tokens = Rfc822Tokenizer.tokenize(text);
         assertEquals(2, tokens.length);
-        localAssertEquals(tokens[0], "Berg", "berg\\@example.com", "home");
-        localAssertEquals(tokens[1], null, "tom\\@example.com", "work");
+        verifyLocalAssertEquals(tokens[0], "Berg", "berg\\@example.com", "home");
+        verifyLocalAssertEquals(tokens[1], null, "tom\\@example.com", "work");
 
         text = "Foo Bar (something) <foo\\@example.com>, blah\\@example.com (something)";
         tokens = Rfc822Tokenizer.tokenize(text);
         assertEquals(2, tokens.length);
-        localAssertEquals(tokens[0], "Foo Bar", "foo\\@example.com", "something");
-        localAssertEquals(tokens[1], null, "blah\\@example.com", "something");
-
-        try {
-            Rfc822Tokenizer.tokenize(null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // issue 1695243, not clear what is supposed result if text is null
-        }
+        verifyLocalAssertEquals(tokens[0], "Foo Bar", "foo\\@example.com", "something");
+        verifyLocalAssertEquals(tokens[1], null, "blah\\@example.com", "something");
     }
 
-    @SmallTest
+    @Test(expected=NullPointerException.class)
+    public void testTokenizeNull() {
+        Rfc822Tokenizer.tokenize(null);
+    }
+
+    @Test
     public void testTokenize_withListParam() {
         final List<Rfc822Token> list = new ArrayList<>();
         Rfc822Tokenizer.tokenize("", list);
@@ -153,21 +157,21 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
         String text = "\"Berg\" (home) <berg\\@example.com>, tom\\@example.com (work)";
         Rfc822Tokenizer.tokenize(text, list);
         assertEquals(2, list.size());
-        localAssertEquals(list.get(0), "Berg", "berg\\@example.com", "home");
-        localAssertEquals(list.get(1), null, "tom\\@example.com", "work");
+        verifyLocalAssertEquals(list.get(0), "Berg", "berg\\@example.com", "home");
+        verifyLocalAssertEquals(list.get(1), null, "tom\\@example.com", "work");
 
         text = "Foo Bar (something) <foo\\@example.com>, blah\\@example.com (something)";
         list.clear();
         Rfc822Tokenizer.tokenize(text, list);
         assertEquals(2, list.size());
-        localAssertEquals(list.get(0), "Foo Bar", "foo\\@example.com", "something");
-        localAssertEquals(list.get(1), null, "blah\\@example.com", "something");
+        verifyLocalAssertEquals(list.get(0), "Foo Bar", "foo\\@example.com", "something");
+        verifyLocalAssertEquals(list.get(1), null, "blah\\@example.com", "something");
+    }
 
-        try {
-            Rfc822Tokenizer.tokenize(null);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-        }
+
+    @Test(expected=NullPointerException.class)
+    public void testTokenize_withListParamNull() {
+        Rfc822Tokenizer.tokenize(null);
     }
 
     /**
@@ -177,7 +181,7 @@ public class Rfc822TokenizerTest extends AndroidTestCase {
      * @param address expected address.
      * @param comment expected comment.
      */
-    private void localAssertEquals(Rfc822Token token, String name,
+    private void verifyLocalAssertEquals(Rfc822Token token, String name,
             String address, String comment) {
         assertEquals(name, token.getName());
         assertEquals(address, token.getAddress());
