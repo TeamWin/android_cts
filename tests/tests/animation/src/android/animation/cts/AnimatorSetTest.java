@@ -196,6 +196,38 @@ public class AnimatorSetTest {
     }
 
     @Test
+    public void testListenerCallbackOnEmptySet() throws Throwable {
+        // Create an AnimatorSet that only contains one empty AnimatorSet, and checks the callback
+        // sequence by checking the time stamps of the callbacks.
+        final AnimatorSet emptySet = new AnimatorSet();
+        final AnimatorSet set = new AnimatorSet();
+        set.play(emptySet);
+        MyListener listener = new MyListener() {
+            long startTime = 0;
+            long endTime = 0;
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                startTime = SystemClock.currentThreadTimeMillis();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                endTime = SystemClock.currentThreadTimeMillis();
+                assertTrue(endTime >= startTime);
+                assertTrue(startTime != 0);
+            }
+        };
+        set.addListener(listener);
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+        });
+        assertTrue(listener.mStartIsCalled);
+        assertTrue(listener.mEndIsCalled);
+    }
+
+    @Test
     public void testPauseAndResume() throws Throwable {
         final AnimatorSet set = new AnimatorSet();
         ValueAnimator a1 = ValueAnimator.ofFloat(0f, 100f);
