@@ -486,7 +486,6 @@ public class BaseInputConnectionTest {
         verifyDeleteSurroundingTextInCodePointsMain("01[><]456789", 1, 1, "0[><]56789");
     }
 
-    @Test
     public void testCloseConnection() {
         final CharSequence source = "0123456789";
         mConnection.commitText(source, source.length());
@@ -501,13 +500,11 @@ public class BaseInputConnectionTest {
         assertEquals(-1, BaseInputConnection.getComposingSpanEnd(text));
     }
 
-    @Test
     public void testGetHandler() {
         // BaseInputConnection must not implement getHandler().
         assertNull(mConnection.getHandler());
     }
 
-    @Test
     public void testCommitContent() {
         final InputContentInfo inputContentInfo = new InputContentInfo(
                 Uri.parse("content://com.example/path"),
