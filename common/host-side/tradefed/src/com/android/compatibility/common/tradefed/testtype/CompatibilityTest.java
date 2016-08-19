@@ -90,6 +90,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
     public static final String PRIMARY_ABI_RUN = "primary-abi-only";
     public static final String DEVICE_TOKEN_OPTION = "device-token";
+    public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
     private static final String URL = "dynamic-config-url";
 
     /* API Key for compatibility test project, used for dynamic configuration */
@@ -185,6 +186,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Option(name = "logcat-on-failure",
             description = "Take a logcat snapshot on every test failure.")
     private boolean mLogcatOnFailure = false;
+
+    @Option(name = LOGCAT_ON_FAILURE_SIZE_OPTION,
+            description = "The max number of logcat data in bytes to capture when "
+            + "--logcat-on-failure is on. Should be an amount that can comfortably fit in memory.")
+    private int mMaxLogcatBytes = 500 * 1024; // 500K
 
     @Option(name = "screenshot-on-failure",
             description = "Take a screenshot on every test failure.")
@@ -316,7 +322,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             List<IModuleDef> modules = mModuleRepo.getModules(getDevice().getSerialNumber());
 
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
-                    mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure);
+                    mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure, mMaxLogcatBytes);
             int moduleCount = modules.size();
             CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
                     (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
