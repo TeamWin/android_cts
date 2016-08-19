@@ -16,22 +16,31 @@
 
 package android.util.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.os.Process;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.EventLog;
 import android.util.EventLog.Event;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import junit.framework.TestCase;
-
-public class EventLogTest extends TestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class EventLogTest {
     private static final int ANSWER_TAG = 42;
     private static final int PI_TAG = 314;
     private static final int E_TAG = 2718;
 
+    @Test
     public void testWriteEvent() throws Exception {
         long markerData = System.currentTimeMillis();
         EventLog.writeEvent(ANSWER_TAG, markerData);
@@ -57,6 +66,7 @@ public class EventLogTest extends TestCase {
         assertEquals("Test", arr[3]);
     }
 
+    @Test
     public void testWriteEventWithOversizeValue() throws Exception {
         StringBuilder longString = new StringBuilder();
         for (int i = 0; i < 1000; i++) longString.append("xyzzy");
@@ -118,11 +128,12 @@ public class EventLogTest extends TestCase {
         assertEquals(12345, arr6[arr6.length - 1]);
     }
 
+    @Test
     public void testWriteNullEvent() throws Exception {
         Long markerData = System.currentTimeMillis();
         EventLog.writeEvent(ANSWER_TAG, markerData);
         EventLog.writeEvent(ANSWER_TAG, (String) null);
-        EventLog.writeEvent(ANSWER_TAG, 12345, (String) null);
+        EventLog.writeEvent(ANSWER_TAG, 12345, null);
 
         List<EventLog.Event> events = getEventsAfterMarker(markerData, ANSWER_TAG);
         assertEquals(2, events.size());
@@ -134,6 +145,7 @@ public class EventLogTest extends TestCase {
         assertEquals("NULL", arr[1]);
     }
 
+    @Test
     public void testReadEvents() throws Exception {
         Long markerData = System.currentTimeMillis();
         EventLog.writeEvent(ANSWER_TAG, markerData);
@@ -149,24 +161,24 @@ public class EventLogTest extends TestCase {
 
         List<Event> events = getEventsAfterMarker(markerData, ANSWER_TAG, PI_TAG, E_TAG);
         assertEquals(3, events.size());
-        assertEvent(events.get(0), ANSWER_TAG, data0);
-        assertEvent(events.get(1), PI_TAG, data1);
-        assertEvent(events.get(2), E_TAG, data2);
+        verifyEvent(events.get(0), ANSWER_TAG, data0);
+        verifyEvent(events.get(1), PI_TAG, data1);
+        verifyEvent(events.get(2), E_TAG, data2);
 
         events = getEventsAfterMarker(markerData, ANSWER_TAG, E_TAG);
         assertEquals(2, events.size());
-        assertEvent(events.get(0), ANSWER_TAG, data0);
-        assertEvent(events.get(1), E_TAG, data2);
+        verifyEvent(events.get(0), ANSWER_TAG, data0);
+        verifyEvent(events.get(1), E_TAG, data2);
 
         events = getEventsAfterMarker(markerData, ANSWER_TAG);
         assertEquals(1, events.size());
-        assertEvent(events.get(0), ANSWER_TAG, data0);
+        verifyEvent(events.get(0), ANSWER_TAG, data0);
     }
 
     /** Return elements after and the event that has the marker data and matching tag. */
     private List<Event> getEventsAfterMarker(Object marker, int... tags)
             throws IOException, InterruptedException {
-        List<Event> events = new ArrayList<Event>();
+        List<Event> events = new ArrayList<>();
         // Give the message some time to show up in the log
         Thread.sleep(20);
         EventLog.readEvents(tags, events);
@@ -179,19 +191,19 @@ public class EventLogTest extends TestCase {
             }
         }
 
-        assertEventTimes(events);
+        verifyEventTimes(events);
 
         return events;
     }
 
-    private void assertEvent(Event event, int expectedTag, Object expectedData) {
+    private void verifyEvent(Event event, int expectedTag, Object expectedData) {
         assertEquals(Process.myPid(), event.getProcessId());
         assertEquals(Process.myTid(), event.getThreadId());
         assertEquals(expectedTag, event.getTag());
         assertEquals(expectedData, event.getData());
     }
 
-    private void assertEventTimes(List<Event> events) {
+    private void verifyEventTimes(List<Event> events) {
         for (int i = 0; i + 1 < events.size(); i++) {
             long time = events.get(i).getTimeNanos();
             long nextTime = events.get(i).getTimeNanos();
@@ -199,6 +211,7 @@ public class EventLogTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetTagName() throws Exception {
         assertEquals("answer", EventLog.getTagName(ANSWER_TAG));
         assertEquals("pi", EventLog.getTagName(PI_TAG));
@@ -206,6 +219,7 @@ public class EventLogTest extends TestCase {
         assertEquals(null, EventLog.getTagName(999999999));
     }
 
+    @Test
     public void testGetTagCode() throws Exception {
         assertEquals(ANSWER_TAG, EventLog.getTagCode("answer"));
         assertEquals(PI_TAG, EventLog.getTagCode("pi"));

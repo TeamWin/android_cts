@@ -16,12 +16,18 @@
 
 package android.util.cts;
 
+import static org.junit.Assert.fail;
+
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.ArrayMap;
 import android.util.Log;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,7 +37,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class ArrayMapTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ArrayMapTest {
     static final boolean DEBUG = false;
 
     static final int OP_ADD = 1;
@@ -332,9 +340,10 @@ public class ArrayMapTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testBasicArrayMap() {
-        HashMap<ControlledHash, Integer> hashMap = new HashMap<ControlledHash, Integer>();
-        ArrayMap<ControlledHash, Integer> arrayMap = new ArrayMap<ControlledHash, Integer>();
+        HashMap<ControlledHash, Integer> hashMap = new HashMap<>();
+        ArrayMap<ControlledHash, Integer> arrayMap = new ArrayMap<>();
         Bundle bundle = new Bundle();
 
         for (int i=0; i<OPS.length; i++) {
@@ -406,11 +415,9 @@ public class ArrayMapTest extends AndroidTestCase {
             dump(hashMap, arrayMap);
             fail(msg);
         }
-
-        //Log.e("test", "Test successful; printing final map.");
-        //dump(hashMap, arrayMap);
     }
 
+    @Test
     public void testCopyArrayMap() {
         // map copy constructor test
         ArrayMap newMap = new ArrayMap<Integer, String>();
@@ -428,10 +435,11 @@ public class ArrayMapTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testEqualsArrayMap() {
-        ArrayMap<Integer, String> map1 = new ArrayMap<Integer, String>();
-        ArrayMap<Integer, String> map2 = new ArrayMap<Integer, String>();
-        HashMap<Integer, String> map3 = new HashMap<Integer, String>();
+        ArrayMap<Integer, String> map1 = new ArrayMap<>();
+        ArrayMap<Integer, String> map2 = new ArrayMap<>();
+        HashMap<Integer, String> map3 = new HashMap<>();
         if (!compare(map1, map2) || !compare(map1, map3) || !compare(map3, map2)) {
             fail("ArrayMap equals failure for empty maps " + map1 + ", " +
                     map2 + ", " + map3);
@@ -465,6 +473,7 @@ public class ArrayMapTest extends AndroidTestCase {
      * Test creating a malformed array map with duplicated keys and that we will catch this
      * when unparcelling.
      */
+    @Test
     public void testDuplicateKeys() throws NoSuchMethodException,
             InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         ArrayMap<String, Object> map1 = new ArrayMap(2);
