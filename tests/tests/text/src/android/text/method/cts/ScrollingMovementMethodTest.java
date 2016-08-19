@@ -16,9 +16,22 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.cts.util.WidgetTestUtils;
 import android.os.SystemClock;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -34,6 +47,11 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test {@link ScrollingMovementMethod}. The class is an implementation of interface
  * {@link MovementMethod}. The typical usage of {@link MovementMethod} is tested in
@@ -42,35 +60,40 @@ import android.widget.TextView.BufferType;
  *
  * @see android.widget.cts.TextViewTest
  */
-public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase2<CtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class ScrollingMovementMethodTest {
     private static final int LITTLE_SPACE = 20;
 
     private static final String THREE_LINES_TEXT = "first line\nsecond line\nlast line";
 
+    private Instrumentation mInstrumentation;
+    private Activity mActivity;
     private TextView mTextView;
-
     private Spannable mSpannable;
-
     private int mScaledTouchSlop;
 
-    public ScrollingMovementMethodTest() {
-        super("android.text.cts", CtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<CtsActivity> mActivityRule = new ActivityTestRule<>(CtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mTextView = new TextViewNoIme(getActivity());
+    @UiThreadTest
+    @Before
+    public void setup() throws Throwable {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mActivity = mActivityRule.getActivity();
+        mTextView = new TextViewNoIme(mActivity);
         mTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         mTextView.setText(THREE_LINES_TEXT, BufferType.EDITABLE);
         mSpannable = (Spannable) mTextView.getText();
-        mScaledTouchSlop = ViewConfiguration.get(getActivity()).getScaledTouchSlop();
+        mScaledTouchSlop = ViewConfiguration.get(mActivity).getScaledTouchSlop();
     }
 
+    @Test
     public void testConstructor() {
         new ScrollingMovementMethod();
     }
 
+    @Test
     public void testGetInstance() {
         final MovementMethod method0 = ScrollingMovementMethod.getInstance();
         assertTrue(method0 instanceof ScrollingMovementMethod);
@@ -79,14 +102,15 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         assertSame(method0, method1);
     }
 
+    @Test
     public void testOnTouchEventHorizontalMotion() throws Throwable {
         final ScrollingMovementMethod method = new ScrollingMovementMethod();
         runActionOnUiThread(() -> {
             mTextView.setText("hello world", BufferType.SPANNABLE);
             mTextView.setSingleLine();
             mSpannable = (Spannable) mTextView.getText();
-            final int width = WidgetTestUtils.convertDipToPixels(getActivity(), LITTLE_SPACE);
-            getActivity().setContentView(mTextView,
+            final int width = WidgetTestUtils.convertDipToPixels(mActivity, LITTLE_SPACE);
+            mActivity.setContentView(mTextView,
                     new LayoutParams(width, LayoutParams.WRAP_CONTENT));
         });
         assertNotNull(mTextView.getLayout());
@@ -175,11 +199,12 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         }));
     }
 
+    @Test
     public void testOnTouchEventVerticalMotion() throws Throwable {
         final ScrollingMovementMethod method = new ScrollingMovementMethod();
         runActionOnUiThread(() -> {
             mTextView.setLines(1);
-            getActivity().setContentView(mTextView,
+            mActivity.setContentView(mTextView,
                     new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         });
         assertNotNull(mTextView.getLayout());
@@ -268,10 +293,11 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         }));
     }
 
+    @Test
     public void testOnTouchEventExceptional() throws Throwable {
         runActionOnUiThread(() -> {
-            final int width = WidgetTestUtils.convertDipToPixels(getActivity(), LITTLE_SPACE);
-            getActivity().setContentView(mTextView,
+            final int width = WidgetTestUtils.convertDipToPixels(mActivity, LITTLE_SPACE);
+            mActivity.setContentView(mTextView,
                     new LayoutParams(width, LayoutParams.WRAP_CONTENT));
         });
         assertNotNull(mTextView.getLayout());
@@ -330,31 +356,34 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         });
     }
 
+    @Test
     public void testCanSelectArbitrarily() {
         assertFalse(new ScrollingMovementMethod().canSelectArbitrarily());
     }
 
+    @Test
     public void testOnKeyDownVerticalMovement() throws Throwable {
-        runActionOnUiThread(() -> getActivity().setContentView(mTextView));
+        runActionOnUiThread(() -> mActivity.setContentView(mTextView));
         assertNotNull(mTextView.getLayout());
 
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
         final MyScrollingMovementMethod method = new MyScrollingMovementMethod();
         runActionOnUiThread(() -> method.onKeyDown(mTextView, null, KeyEvent.KEYCODE_DPAD_DOWN,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN)));
-        assertVisibleLineInTextView(1);
+        verifyVisibleLineInTextView(1);
 
         runActionOnUiThread(() -> method.onKeyDown(mTextView, null, KeyEvent.KEYCODE_DPAD_UP,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP)));
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
     }
 
+    @Test
     public void testOnKeyDownHorizontalMovement() throws Throwable {
         runActionOnUiThread(() -> {
             mTextView.setText("short");
             mTextView.setSingleLine();
-            final int width = WidgetTestUtils.convertDipToPixels(getActivity(), LITTLE_SPACE);
-            getActivity().setContentView(mTextView,
+            final int width = WidgetTestUtils.convertDipToPixels(mActivity, LITTLE_SPACE);
+            mActivity.setContentView(mTextView,
                     new LayoutParams(width, LayoutParams.WRAP_CONTENT));
         });
         assertNotNull(mTextView.getLayout());
@@ -373,15 +402,16 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         assertTrue(mTextView.getScrollX() < previousScrollX);
 
         previousScrollX = mTextView.getScrollX();
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
         runActionOnUiThread(() -> assertFalse(method.onKeyDown(mTextView, mSpannable, 0,
                 new KeyEvent(KeyEvent.ACTION_DOWN, 0))));
         assertEquals(previousScrollX, mTextView.getScrollX());
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
     }
 
+    @Test
     public void testOnKeyDownExceptions() throws Throwable {
-        runActionOnUiThread(() -> getActivity().setContentView(mTextView));
+        runActionOnUiThread(() -> mActivity.setContentView(mTextView));
         assertNotNull(mTextView.getLayout());
 
         final MyScrollingMovementMethod method = new MyScrollingMovementMethod();
@@ -408,11 +438,12 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         });
     }
 
+    @Test
     public void testVerticalMovement() throws Throwable {
         final MyScrollingMovementMethod method = new MyScrollingMovementMethod();
         runActionOnUiThread(() -> {
             mTextView.setLines(1);
-            getActivity().setContentView(mTextView,
+            mActivity.setContentView(mTextView,
                     new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         });
         assertNotNull(mTextView.getLayout());
@@ -422,42 +453,42 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
                 mResult = method.down(mTextView, mSpannable);
             }
         }));
-        assertVisibleLineInTextView(1);
+        verifyVisibleLineInTextView(1);
 
         assertTrue(getActionResult(new ActionRunnerWithResult() {
             public void run() {
                 mResult = method.down(mTextView, mSpannable);
             }
         }));
-        assertVisibleLineInTextView(2);
+        verifyVisibleLineInTextView(2);
 
         assertFalse(getActionResult(new ActionRunnerWithResult() {
             public void run() {
                 mResult = method.down(mTextView, mSpannable);
             }
         }));
-        assertVisibleLineInTextView(2);
+        verifyVisibleLineInTextView(2);
 
         assertTrue(getActionResult(new ActionRunnerWithResult() {
             public void run() {
                 mResult = method.up(mTextView, mSpannable);
             }
         }));
-        assertVisibleLineInTextView(1);
+        verifyVisibleLineInTextView(1);
 
         assertTrue(getActionResult(new ActionRunnerWithResult() {
             public void run() {
                 mResult = method.up(mTextView, mSpannable);
             }
         }));
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
 
         assertFalse(getActionResult(new ActionRunnerWithResult() {
             public void run() {
                 mResult = method.up(mTextView, mSpannable);
             }
         }));
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
 
         runActionOnUiThread(() -> {
             try {
@@ -486,6 +517,7 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         });
     }
 
+    @Test
     public void testMovementWithNullLayout() {
         assertNull(mTextView.getLayout());
         try {
@@ -531,10 +563,12 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         }
     }
 
+    @Test
     public void testInitialize() {
         new ScrollingMovementMethod().initialize(null, null);
     }
 
+    @Test
     public void testOnTrackballEvent() {
         final long now = SystemClock.uptimeMillis();
         final MotionEvent event = MotionEvent.obtain(now, now, 0, 2, -2, 0);
@@ -546,11 +580,13 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         assertFalse(mockMethod.onTrackballEvent(mTextView, null, event));
     }
 
+    @UiThreadTest
+    @Test
     public void testOnKeyUp() {
         final ScrollingMovementMethod method = new ScrollingMovementMethod();
         final SpannableString spannable = new SpannableString("Test Content");
         final KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
-        final TextView view = new TextViewNoIme(getActivity());
+        final TextView view = new TextViewNoIme(mActivity);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
 
         assertFalse(method.onKeyUp(view, spannable, KeyEvent.KEYCODE_0, event));
@@ -561,6 +597,7 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         assertFalse(method.onKeyUp(view, spannable, KeyEvent.KEYCODE_0, null));
     }
 
+    @Test
     public void testOnTakeFocus() throws Throwable {
         final ScrollingMovementMethod method = new ScrollingMovementMethod();
         // wait until the text view gets layout
@@ -572,8 +609,8 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         }
 
         runActionOnUiThread(() -> {
-            final int height = WidgetTestUtils.convertDipToPixels(getActivity(), LITTLE_SPACE);
-            getActivity().setContentView(mTextView,
+            final int height = WidgetTestUtils.convertDipToPixels(mActivity, LITTLE_SPACE);
+            mActivity.setContentView(mTextView,
                     new LayoutParams(LayoutParams.MATCH_PARENT,
                             height));
         });
@@ -583,12 +620,12 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         int previousScrollY = mTextView.getScrollY();
         runActionOnUiThread(() -> method.onTakeFocus(mTextView, mSpannable, View.FOCUS_BACKWARD));
         assertTrue(mTextView.getScrollY() >= previousScrollY);
-        assertVisibleLineInTextView(2);
+        verifyVisibleLineInTextView(2);
 
         previousScrollY = mTextView.getScrollY();
         runActionOnUiThread(() -> method.onTakeFocus(mTextView, mSpannable, View.FOCUS_FORWARD));
         assertTrue(mTextView.getScrollY() <= previousScrollY);
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
 
         runActionOnUiThread(() -> {
             try {
@@ -605,14 +642,15 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         });
     }
 
+    @Test
     public void testHorizontalMovement() throws Throwable {
         final MyScrollingMovementMethod method = new MyScrollingMovementMethod();
         runActionOnUiThread(() -> {
             mTextView.setText("short");
             mTextView.setSingleLine();
-            final DisplayMetrics dm = getActivity().getResources().getDisplayMetrics();
+            final DisplayMetrics dm = mActivity.getResources().getDisplayMetrics();
             final int width = (int) (LITTLE_SPACE * dm.scaledDensity);
-            getActivity().setContentView(mTextView,
+            mActivity.setContentView(mTextView,
                     new LayoutParams(width, LayoutParams.WRAP_CONTENT));
         });
         assertNotNull(mTextView.getLayout());
@@ -651,24 +689,25 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
         assertEquals(previousScrollX, mTextView.getScrollX());
     }
 
+    @Test
     public void testOnKeyOther() throws Throwable {
-        runActionOnUiThread(() -> getActivity().setContentView(mTextView));
+        runActionOnUiThread(() -> mActivity.setContentView(mTextView));
         assertNotNull(mTextView.getLayout());
 
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
         final MyScrollingMovementMethod method = new MyScrollingMovementMethod();
         runActionOnUiThread(() -> method.onKeyOther(mTextView, null,
                 new KeyEvent(0, 0, KeyEvent.ACTION_MULTIPLE,
                         KeyEvent.KEYCODE_DPAD_DOWN, 2)));
-        assertVisibleLineInTextView(1);
+        verifyVisibleLineInTextView(1);
 
         runActionOnUiThread(() -> method.onKeyOther(mTextView, null,
                 new KeyEvent(0, 0, KeyEvent.ACTION_MULTIPLE,
                         KeyEvent.KEYCODE_DPAD_UP, 2)));
-        assertVisibleLineInTextView(0);
+        verifyVisibleLineInTextView(0);
     }
 
-    private void assertVisibleLineInTextView(int line) {
+    private void verifyVisibleLineInTextView(int line) {
         final Layout layout = mTextView.getLayout();
         final int scrollY = mTextView.getScrollY();
         final int padding = mTextView.getTotalPaddingTop() + mTextView.getTotalPaddingBottom();
@@ -682,8 +721,8 @@ public class ScrollingMovementMethodTest extends ActivityInstrumentationTestCase
     }
 
     private void runActionOnUiThread(Runnable actionRunner) throws Throwable {
-        runTestOnUiThread(actionRunner);
-        getInstrumentation().waitForIdleSync();
+        mActivityRule.runOnUiThread(actionRunner);
+        mInstrumentation.waitForIdleSync();
     }
 
     private static abstract class ActionRunnerWithResult implements Runnable {
