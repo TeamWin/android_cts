@@ -33,6 +33,7 @@ import com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.Shortc
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 @SmallTest
 public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTestsBase {
@@ -91,9 +92,22 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             return called;
         }
 
-        public ShortcutListAsserter assertCalled(Context clientContext) {
+        public synchronized ShortcutListAsserter assertCalled(Context clientContext) {
             assertEquals(clientContext.getPackageName(), lastPackage);
             return assertWith(lastShortcuts);
+        }
+
+        public synchronized List<ShortcutInfo> getList() {
+            return lastShortcuts;
+        }
+
+        public synchronized boolean isShortcutById(String id, Predicate<ShortcutInfo> predicate) {
+            for (ShortcutInfo si : lastShortcuts) {
+                if (id.equals(si.getId()) && predicate.test(si)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -102,9 +116,16 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
-            getLauncherApps().registerCallback(c, new Handler(Looper.getMainLooper()));
-        });
+        final Handler handler = new Handler(Looper.getMainLooper());
+
+        final Runnable reset = () -> {
+            runWithCaller(mLauncherContext1, () -> {
+                getLauncherApps().unregisterCallback(c);
+                c.reset();
+                getLauncherApps().registerCallback(c, handler);
+            });
+        };
+        reset.run();
         try {
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -117,7 +138,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "s2")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -129,7 +150,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "s2", "sx")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -141,7 +162,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "s2", "sx")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -153,7 +174,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "s2", "sx")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -165,7 +186,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "s2", "sx", "ms1")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -177,7 +198,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "s2", "sx", "ms1", "ms21", "ms22")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             // Pin some shortcuts.
@@ -193,7 +214,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             });
 
             setDefaultLauncher(getInstrumentation(), mLauncherContext1);
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -205,7 +226,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "sx", "ms1", "ms21", "ms22")
                     .areAllEnabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
@@ -224,14 +245,15 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
                     .revertToOriginalList()
                     .selectByIds("ms21")
                     .areAllDisabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
                 getManager().disableShortcuts(list("s1"));
             });
-            retryUntil(() -> c.isCalled(), "callback not called.");
-            retryUntil(() -> c.isCalled(), "callback not called.");
+            retryUntil(() -> (c.isCalled() && c.isShortcutById("s1", si -> !si.isEnabled())),
+                    "s1 not disabled");
+
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "sx", "ms1", "ms21")
 
@@ -241,14 +263,13 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
                     .revertToOriginalList()
                     .selectByIds("s1", "ms21")
                     .areAllDisabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
                 getManager().enableShortcuts(list("s1"));
             });
             retryUntil(() -> c.isCalled(), "callback not called.");
-            retryUntil(() -> c.isCalled(), "callback not called.");
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "sx", "ms1", "ms21")
 
@@ -258,14 +279,13 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
                     .revertToOriginalList()
                     .selectByIds("ms21")
                     .areAllDisabled();
-            c.reset();
+            reset.run();
 
             //-----------------------
             runWithCaller(mPackageContext1, () -> {
                 getManager().enableShortcuts(list("s2"));
             });
             retryUntil(() -> c.isCalled(), "callback not called.");
-            retryUntil(() -> c.isCalled(), "callback not called.");
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "sx", "ms1", "ms21")
 
@@ -275,7 +295,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
                     .revertToOriginalList()
                     .selectByIds("ms21")
                     .areAllDisabled();
-            c.reset();
+            reset.run();
 
         } finally {
             runWithCaller(mLauncherContext1, () -> {
