@@ -29,6 +29,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.regex.MatchResult;
@@ -44,6 +45,10 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
 
     private IBuildInfo mCtsBuild;
 
+    protected boolean mIsMultiuserSupported;
+
+    private ArrayList<Integer> mOriginalUsers;
+
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         mCtsBuild = buildInfo;
@@ -53,6 +58,18 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
     protected void setUp() throws Exception {
         super.setUp();
         assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
+
+        mIsMultiuserSupported = getDevice().isMultiUserSupported();
+
+        if (mIsMultiuserSupported) {
+            mOriginalUsers = new ArrayList<>(getDevice().listUsers());
+        }
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        removeTestUsers();
+        super.tearDown();
     }
 
     protected void dumpsys(String label) throws DeviceNotAvailableException {
@@ -150,6 +167,41 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
                 CLog.e(testResult.getStackTrace());
             }
         }
+    }
+
+    private void removeTestUsers() throws Exception {
+        if (!mIsMultiuserSupported) {
+            return;
+        }
+        getDevice().switchUser(getPrimaryUserId());
+        for (int userId : getDevice().listUsers()) {
+            if (!mOriginalUsers.contains(userId)) {
+                getDevice().removeUser(userId);
+            }
+        }
+    }
+
+    protected int createUser() throws Exception{
+        return getDevice().createUser("TestUser_" + System.currentTimeMillis());
+    }
+
+    protected int createProfile(int parentUserId) throws Exception{
+        final String command = "pm create-user --profileOf " + parentUserId
+                + " --managed TestUser_" + System.currentTimeMillis();
+        CLog.d("Starting command: " + command);
+        final String output = getDevice().executeShellCommand(command);
+        CLog.d("Output for command " + command + ": " + output);
+
+        if (output.startsWith("Success")) {
+            try {
+                return Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+            } catch (NumberFormatException e) {
+                CLog.e("Failed to parse result: %s", output);
+            }
+        } else {
+            CLog.e("Failed to create user: %s", output);
+        }
+        throw new IllegalStateException();
     }
 
     /**

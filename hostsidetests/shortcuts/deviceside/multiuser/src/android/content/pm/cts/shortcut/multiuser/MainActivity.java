@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.content.pm.cts.shortcut.upgrade;
-
-import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
+package android.content.pm.cts.shortcut.multiuser;
 
 import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Context;
+import android.os.Bundle;
 
-public class Launcher extends Activity {
-    public static void setAsDefaultLauncher(Instrumentation instrumentation, Context context) {
-        setDefaultLauncher(instrumentation,
-                context.getPackageName() + "/" + Launcher.class.getName());
+public class MainActivity extends Activity {
+    private static volatile long sLastCreateTime;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        sLastCreateTime = System.currentTimeMillis();
+
+        finish();
+    }
+
+    public static long getLastCreateTime() {
+        return sLastCreateTime;
     }
 }

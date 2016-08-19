@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.content.pm.cts.shortcut.upgrade;
+package android.content.pm.cts.shortcut.multiuser;
 
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 

@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.content.pm.cts.shortcut.upgrade;
+package android.content.pm.cts.shortcut.multiuser;
 
-import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
-
-import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Context;
-
-public class Launcher extends Activity {
-    public static void setAsDefaultLauncher(Instrumentation instrumentation, Context context) {
-        setDefaultLauncher(instrumentation,
-                context.getPackageName() + "/" + Launcher.class.getName());
+public class Consts {
+    private Consts() {
     }
+
+    public static final String TAG = "ShortcutMultiuserCTS";
 }
