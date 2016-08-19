@@ -263,6 +263,8 @@ public class PrintJobStateTransitionsTest extends BasePrintTest {
     @Before
     public void setPrinter() throws Exception {
         if (!sHasBeenSetUp) {
+            createActivity();
+
             resetCounters();
             PrinterDiscoverySessionCallbacks sessionCallbacks
                     = createFirstMockPrinterDiscoverySessionCallbacks();
@@ -295,6 +297,7 @@ public class PrintJobStateTransitionsTest extends BasePrintTest {
      * @throws Exception If anything is unexpected.
      */
     @Test
+    @NoActivity
     public void stateTransitions() throws Exception {
         // No need to repeat what previously failed
         if(sKnownFailures[mState1][mState2] || sKnownFailures[mState2][mState3]) {
@@ -302,6 +305,9 @@ public class PrintJobStateTransitionsTest extends BasePrintTest {
             return;
         } else {
             Log.i(LOG_TAG, "Test " + mState1 + " -> " + mState2 + " -> " + mState3);
+            if (getActivity() == null) {
+                createActivity();
+            }
         }
 
         // Create the session of the printers that we will be checking.
