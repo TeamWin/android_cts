@@ -68,6 +68,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 import org.mockito.InOrder;
 import org.mockito.stubbing.Answer;
 
@@ -77,6 +80,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -104,6 +112,8 @@ abstract class BasePrintTest {
     private static PrintDocumentActivity sActivity;
     private static Instrumentation sInstrumentation;
     private static UiDevice sUiDevice;
+
+    public final @Rule ShouldStartActivity mShouldStartActivityRule = new ShouldStartActivity();
 
     /**
      * Return the UI device
@@ -188,19 +198,36 @@ abstract class BasePrintTest {
                 .getTargetContext().getCacheDir().getPath());
 
         Log.d(LOG_TAG, "disable animations");
-        sWindowAnimationScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
-                sInstrumentation, "settings get global window_animation_scale"));
-        sTransitionAnimationScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
-                sInstrumentation, "settings get global transition_animation_scale"));
-        sAnimatiorDurationScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
-                sInstrumentation, "settings get global animator_duration_scale"));
+        try {
+            sWindowAnimationScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
+                    sInstrumentation, "settings get global window_animation_scale"));
 
-        SystemUtil.runShellCommand(sInstrumentation,
-                "settings put global window_animation_scale 0");
-        SystemUtil.runShellCommand(sInstrumentation,
-                "settings put global transition_animation_scale 0");
-        SystemUtil.runShellCommand(sInstrumentation,
-                "settings put global animator_duration_scale 0");
+            SystemUtil.runShellCommand(sInstrumentation,
+                    "settings put global window_animation_scale 0");
+        } catch (NumberFormatException e) {
+            Log.e(LOG_TAG, "Could not read window_animation_scale", e);
+            sWindowAnimationScaleBefore = Float.NaN;
+        }
+        try {
+            sTransitionAnimationScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
+                    sInstrumentation, "settings get global transition_animation_scale"));
+
+            SystemUtil.runShellCommand(sInstrumentation,
+                    "settings put global transition_animation_scale 0");
+        } catch (NumberFormatException e) {
+            Log.e(LOG_TAG, "Could not read transition_animation_scale", e);
+            sTransitionAnimationScaleBefore = Float.NaN;
+        }
+        try {
+            sAnimatiorDurationScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
+                    sInstrumentation, "settings get global animator_duration_scale"));
+
+            SystemUtil.runShellCommand(sInstrumentation,
+                    "settings put global animator_duration_scale 0");
+        } catch (NumberFormatException e) {
+            Log.e(LOG_TAG, "Could not read animator_duration_scale", e);
+            sAnimatiorDurationScaleBefore = Float.NaN;
+        }
 
         Log.d(LOG_TAG, "setUpClass() done");
     }
@@ -220,9 +247,11 @@ abstract class BasePrintTest {
         mCreateSessionCallCounter = new CallCounter();
         mDestroySessionCallCounter = new CallCounter();
 
-        // Create the activity for the right locale.
-        Log.d(LOG_TAG, "createActivity()");
-        createActivity();
+        // Create the activity if needed
+        if (!mShouldStartActivityRule.noActivity) {
+            createActivity();
+        }
+
         Log.d(LOG_TAG, "setUp() done");
     }
 
@@ -231,9 +260,13 @@ abstract class BasePrintTest {
         Log.d(LOG_TAG, "tearDown()");
 
         // Done with the activity.
-        Log.d(LOG_TAG, "finish activity");
-        if (!getActivity().isFinishing()) {
-            getActivity().finish();
+        if (getActivity() != null) {
+            Log.d(LOG_TAG, "finish activity");
+            if (!getActivity().isFinishing()) {
+                getActivity().finish();
+            }
+
+            sActivity = null;
         }
 
         Log.d(LOG_TAG, "tearDown() done");
@@ -251,13 +284,19 @@ abstract class BasePrintTest {
         clearPrintSpoolerData();
 
         Log.d(LOG_TAG, "enable animations");
-        SystemUtil.runShellCommand(sInstrumentation,
-                "settings put global window_animation_scale " + sWindowAnimationScaleBefore);
-        SystemUtil.runShellCommand(sInstrumentation,
-                "settings put global transition_animation_scale " +
-                        sTransitionAnimationScaleBefore);
-        SystemUtil.runShellCommand(sInstrumentation,
-                "settings put global animator_duration_scale " + sAnimatiorDurationScaleBefore);
+        if (sWindowAnimationScaleBefore != Float.NaN) {
+            SystemUtil.runShellCommand(sInstrumentation,
+                    "settings put global window_animation_scale " + sWindowAnimationScaleBefore);
+        }
+        if (sTransitionAnimationScaleBefore != Float.NaN) {
+            SystemUtil.runShellCommand(sInstrumentation,
+                    "settings put global transition_animation_scale " +
+                            sTransitionAnimationScaleBefore);
+        }
+        if (sAnimatiorDurationScaleBefore != Float.NaN) {
+            SystemUtil.runShellCommand(sInstrumentation,
+                    "settings put global animator_duration_scale " + sAnimatiorDurationScaleBefore);
+        }
 
         Log.d(LOG_TAG, "tearDownClass() done");
     }
@@ -606,7 +645,9 @@ abstract class BasePrintTest {
         return sActivity;
     }
 
-    private void createActivity() {
+    protected void createActivity() {
+        Log.d(LOG_TAG, "createActivity()");
+
         int createBefore = getActivityCreateCallbackCallCount();
 
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -887,7 +928,6 @@ abstract class BasePrintTest {
         Log.d(LOG_TAG, "getActivity().finish()");
         getActivity().finish();
 
-        Log.d(LOG_TAG, "createActivity");
         createActivity();
     }
 
@@ -960,6 +1000,32 @@ abstract class BasePrintTest {
                 return PrintAttributes.MediaSize.ISO_A4;
             default:
                 throw new Exception("Unknown default media size " + defaultMediaSizeName);
+        }
+    }
+
+    /**
+     * Annotation used to signal that a test does not need an activity.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    @interface NoActivity { }
+
+    /**
+     * Rule that handles the {@link NoActivity} annotation.
+     */
+    private static class ShouldStartActivity implements TestRule {
+        boolean noActivity;
+
+        @Override
+        public Statement apply(Statement base, org.junit.runner.Description description) {
+            for (Annotation annotation : description.getAnnotations()) {
+                if (annotation instanceof NoActivity) {
+                    noActivity = true;
+                    break;
+                }
+            }
+
+            return base;
         }
     }
 }
