@@ -23,6 +23,7 @@ import junit.framework.Assert;
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
 import android.server.cts.WindowManagerState.WindowStack;
+import android.server.cts.WindowManagerState.WindowState;
 import android.server.cts.WindowManagerState.WindowTask;
 
 import java.awt.Rectangle;
@@ -33,6 +34,9 @@ import java.util.Objects;
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.WindowManagerState.DUMP_MODE_APPS;
+import static android.server.cts.WindowManagerState.DUMP_MODE_VISIBLE;
+import static android.server.cts.WindowManagerState.DUMP_MODE_VISIBLE_APPS;
 
 /** Combined state of the activity manager and window manager. */
 public class ActivityAndWindowManagersState extends Assert {
@@ -107,6 +111,34 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     /**
+     * Compute AM and WM state of device, wait for the activity records to be added, and
+     * wait for debugger window to show up.
+     *
+     * This should only be used when starting with -D (debugger) option, where we pop up the
+     * waiting-for-debugger window, but real activity window won't show up since we're waiting
+     * for debugger.
+     */
+    void waitForDebuggerWindowVisible(
+            ITestDevice device, String[] waitForActivityRecords) throws Exception {
+        int retriesLeft = 5;
+        do {
+            mAmState.computeState(device);
+            mWmState.computeState(device, DUMP_MODE_VISIBLE);
+            if (shouldWaitForDebuggerWindow() ||
+                    shouldWaitForActivityRecords(waitForActivityRecords)) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+    }
+
+    /**
      * Wait for consistent state in AM and WM.
      *
      * @param device test device.
@@ -123,7 +155,8 @@ public class ActivityAndWindowManagersState extends Assert {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
             // requesting dump in some intermediate state.
             mAmState.computeState(device);
-            mWmState.computeState(device, visibleOnly);
+            mWmState.computeState(device, visibleOnly?
+                    DUMP_MODE_VISIBLE_APPS : DUMP_MODE_APPS);
             if (shouldWaitForValidStacks(compareTaskAndStackBounds)
                     || shouldWaitForActivities(waitForActivitiesVisible, stackIds)) {
                 log("***Waiting for valid stacks and activities states...");
@@ -234,6 +267,32 @@ public class ActivityAndWindowManagersState extends Assert {
             }
         }
         return !allActivityWindowsVisible || !tasksInCorrectStacks;
+    }
+
+    private boolean shouldWaitForDebuggerWindow() {
+        List<WindowManagerState.WindowState> matchingWindowStates = new ArrayList<>();
+        mWmState.getMatchingWindowState("android.server.cts", matchingWindowStates);
+        for (WindowState ws : matchingWindowStates) {
+            if (ws.isDebuggerWindow()) {
+                return false;
+            }
+        }
+        log("Debugger window not available yet");
+        return true;
+    }
+
+    private boolean shouldWaitForActivityRecords(String[] waitForActivityRecords) {
+        if (waitForActivityRecords == null || waitForActivityRecords.length == 0) {
+            return false;
+        }
+        // Check if the activity records we're looking for is already added.
+        for (int i = 0; i < waitForActivityRecords.length; i++) {
+            if (!mAmState.isActivityVisible(waitForActivityRecords[i])) {
+                log("ActivityRecord " + waitForActivityRecords[i] + " not visible yet");
+                return true;
+            }
+        }
+        return false;
     }
 
     ActivityManagerState getAmState() {

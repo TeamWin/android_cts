@@ -28,18 +28,25 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private static final String SINGLE_TASK_ACTIVITY_NAME = "SingleTaskActivity";
 
     public void testDashD() throws Exception {
-        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
-        AmStartLogcatVerifier verifier = new AmStartLogcatVerifier("android.server.cts", TEST_ACTIVITY_NAME);
+        final String activityComponentName =
+                ActivityManagerTestBase.getActivityComponentName(TEST_ACTIVITY_NAME);
+
+        final String[] waitForActivityRecords = new String[] {activityComponentName};
 
         // Run at least 2 rounds to verify that -D works with an existing process.
         // -D could fail in this case if the force stop of process is broken.
+        int prevProcId = -1;
         for (int i = 0; i < 2; i++) {
-            clearLogcat();
             executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME) + " -D");
 
-            // visibleOnly=false as the first window popping up will be the debugger window.
-            mAmWmState.computeState(mDevice, false, waitForActivitiesVisible);
-            verifier.verifyDashD();
+            mAmWmState.waitForDebuggerWindowVisible(mDevice, waitForActivityRecords);
+            int procId = mAmWmState.getAmState().getActivityProcId(activityComponentName);
+
+            assertTrue("Invalid ProcId.", procId >= 0);
+            if (i > 0) {
+                assertTrue("Run " + i + " didn't start new proc.", prevProcId != procId);
+            }
+            prevProcId = procId;
         }
     }
 
@@ -53,29 +60,18 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
 
     private void testDashW(final String entryActivity, final String actualActivity)
             throws Exception {
-        AmStartLogcatVerifier verifier = new AmStartLogcatVerifier("android.server.cts", actualActivity);
-
         // Test cold start
-        startActivityAndVerifyResult(verifier, entryActivity, actualActivity, true);
+        startActivityAndVerifyResult(entryActivity, actualActivity, true);
 
         // Test warm start
         pressHomeButton();
-        startActivityAndVerifyResult(verifier, entryActivity, actualActivity, false);
+        startActivityAndVerifyResult(entryActivity, actualActivity, false);
 
         // Test "hot" start (app already in front)
-        startActivityAndVerifyResult(verifier, entryActivity, actualActivity, false);
+        startActivityAndVerifyResult(entryActivity, actualActivity, false);
     }
 
-    private static final Pattern sNotStartedWarningPattern = Pattern.compile(
-            "Warning: Activity not started(.*)");
-    private static final Pattern sStatusPattern = Pattern.compile(
-            "Status: (.*)");
-    private static final Pattern sActivityPattern = Pattern.compile(
-            "Activity: (.*)");
-    private static final String sStatusOk = "ok";
-
-    private void startActivityAndVerifyResult(
-            final AmStartLogcatVerifier verifier, final String entryActivity,
+    private void startActivityAndVerifyResult(final String entryActivity,
             final String actualActivity, boolean shouldStart) throws Exception {
         clearLogcat();
 
@@ -90,8 +86,16 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         verifyShellOutput(result, actualActivity, shouldStart);
 
         // Verify adb logcat log
-        verifier.verifyDashW(shouldStart);
+        verifyLogcat(actualActivity, shouldStart);
     }
+
+    private static final Pattern sNotStartedWarningPattern = Pattern.compile(
+            "Warning: Activity not started(.*)");
+    private static final Pattern sStatusPattern = Pattern.compile(
+            "Status: (.*)");
+    private static final Pattern sActivityPattern = Pattern.compile(
+            "Activity: (.*)");
+    private static final String sStatusOk = "ok";
 
     private void verifyShellOutput(
             final String result, final String activity, boolean shouldStart) {
@@ -129,99 +133,38 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         }
     }
 
-    private static final Pattern sStartProcPattern =
-            Pattern.compile("(.+): Start proc (\\d+):(.*) for activity (.*)");
-    private static final Pattern sKillingPattern =
-            Pattern.compile("(.+): Killing (\\d+):(.*)");
-    private static final Pattern sWaitingForDebuggerPattern =
-            Pattern.compile("(.+): Application (.+) is waiting for the debugger (.*)");
     private static final Pattern sDisplayTimePattern =
             Pattern.compile("(.+): Displayed (.*): (\\+{0,1})([0-9]+)ms(.*)");
 
-    private class AmStartLogcatVerifier {
-        private String mPrevProcId;
-        private final String mPackageName;
-        private final String mActivityName;
+    void verifyLogcat(String actualActivityName, boolean shouldStart)
+            throws DeviceNotAvailableException {
+        int displayCount = 0;
+        String activityName = null;
 
-        AmStartLogcatVerifier(String packageName, String activityName) {
-            mPackageName = packageName;
-            mActivityName = activityName;
-        }
+        for (String line : getDeviceLogsForComponent("ActivityManager")) {
+            line = line.trim();
 
-        void verifyDashD() throws DeviceNotAvailableException {
-            boolean prevProcKilled = false;;
-            boolean waitingForDebugger = false;
-            String newProcId = null;
-            final String[] componentNames = new String[] {"ActivityManager", "ActivityThread"};
-
-            for (String line : getDeviceLogsForComponents(componentNames)) {
-                line = line.trim();
-
-                Matcher matcher = sStartProcPattern.matcher(line);
-                if (matcher.matches()) {
-                    final String activity = matcher.group(4);
-                    if (activity.contains(mActivityName)) {
-                        newProcId = matcher.group(2);
-                    }
+            Matcher matcher = sDisplayTimePattern.matcher(line);
+            if (matcher.matches()) {
+                activityName = matcher.group(2);
+                // Ignore activitiy displays from other packages, we don't
+                // want some random activity starts to ruin our test.
+                if (!activityName.startsWith("android.server.cts")) {
                     continue;
                 }
-
-                matcher = sKillingPattern.matcher(line);
-                if (matcher.matches()) {
-                    final String procId = matcher.group(2);
-                    if (procId.equals(mPrevProcId)) {
-                        prevProcKilled = true;
-                    }
-                    continue;
+                if (!shouldStart) {
+                    fail("Shouldn't display anything but displayed " + activityName);
                 }
-
-                matcher = sWaitingForDebuggerPattern.matcher(line);
-                if (matcher.matches()) {
-                    final String packageName = matcher.group(2);
-                    if (packageName.equals(mPackageName)) {
-                        waitingForDebugger = true;
-                    }
-                    continue;
-                }
+                displayCount++;
             }
-
-            assertTrue("Didn't kill exisiting proc " + mPrevProcId + ".",
-                    mPrevProcId == null || prevProcKilled);
-            assertTrue("Didn't start new proc.", newProcId != null);
-            assertTrue("Didn't wait for debugger.", waitingForDebugger);
-
-            mPrevProcId = newProcId;
         }
-
-        void verifyDashW(boolean shouldStart) throws DeviceNotAvailableException {
-            int displayCount = 0;
-            String activityName = null;
-
-            for (String line : getDeviceLogsForComponent("ActivityManager")) {
-                line = line.trim();
-
-                Matcher matcher = sDisplayTimePattern.matcher(line);
-                if (matcher.matches()) {
-                    activityName = matcher.group(2);
-                    // Ignore activitiy displays from other packages, we don't
-                    // want some random activity starts to ruin our test.
-                    if (!activityName.startsWith("android.server.cts")) {
-                        continue;
-                    }
-                    if (!shouldStart) {
-                        fail("Shouldn't display anything but displayed " + activityName);
-                    }
-                    displayCount++;
-                }
-            }
-            final String expectedActivityName = getActivityComponentName(mActivityName);
-            if (shouldStart) {
-                if (displayCount != 1) {
-                    fail("Should display exactly one activity but displayed " + displayCount);
-                } else if (!expectedActivityName.equals(activityName)) {
-                    fail("Should display " + expectedActivityName +
-                            " but displayed " + activityName);
-                }
+        final String expectedActivityName = getActivityComponentName(actualActivityName);
+        if (shouldStart) {
+            if (displayCount != 1) {
+                fail("Should display exactly one activity but displayed " + displayCount);
+            } else if (!expectedActivityName.equals(activityName)) {
+                fail("Should display " + expectedActivityName +
+                        " but displayed " + activityName);
             }
         }
     }
