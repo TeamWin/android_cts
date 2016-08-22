@@ -20,6 +20,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaPlayer;
@@ -65,6 +67,12 @@ public class CapturedActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mOnWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (mOnWatch) {
+            // Don't try and set up test/capture infrastructure - they're not supported
+            return;
+        }
+
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
@@ -75,8 +83,6 @@ public class CapturedActivity extends Activity {
 
         mMediaPlayer = MediaPlayer.create(this, R.raw.colors_video);
         mMediaPlayer.setLooping(true);
-
-        mOnWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     /**
@@ -98,6 +104,8 @@ public class CapturedActivity extends Activity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (mOnWatch) return;
+
         if (requestCode != PERMISSION_CODE) {
             throw new IllegalStateException("Unknown request code: " + requestCode);
         }
@@ -143,6 +151,7 @@ public class CapturedActivity extends Activity {
             DisplayMetrics metrics = new DisplayMetrics();
             display.getRealSize(size);
             display.getMetrics(metrics);
+
 
             mSurfacePixelValidator = new SurfacePixelValidator(CapturedActivity.this,
                     size, animationTestCase.getChecker());
