@@ -33,6 +33,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.test.suitebuilder.annotation.Suppress;
 import android.view.KeyEvent;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -125,6 +126,7 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         callTest(Constants.TEST_FG_SERVICE_UNTHROTTLED);
     }
 
+    @Suppress
     public void testInlineReply() throws Exception {
         clearNotifications();
 
