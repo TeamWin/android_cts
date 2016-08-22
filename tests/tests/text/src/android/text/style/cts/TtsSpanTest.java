@@ -16,29 +16,35 @@
 
 package android.text.style.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.os.Parcel;
 import android.os.PersistableBundle;
 import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.style.TtsSpan;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class TtsSpanTest extends TestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class TtsSpanTest {
+    private PersistableBundle mBundle;
 
-    PersistableBundle bundle;
-
-    @Override
-    protected void setUp() {
-        bundle = new PersistableBundle();
-        bundle.putString("argument.one", "value.one");
-        bundle.putString("argument.two", "value.two");
-        bundle.putLong("argument.three", 3);
-        bundle.putLong("argument.four", 4);
+    @Before
+    public void setup() {
+        mBundle = new PersistableBundle();
+        mBundle.putString("argument.one", "value.one");
+        mBundle.putString("argument.two", "value.two");
+        mBundle.putLong("argument.three", 3);
+        mBundle.putLong("argument.four", 4);
     }
 
-    @SmallTest
+    @Test
     public void testGetArgs() {
-        TtsSpan t = new TtsSpan("test.type.one", bundle);
+        TtsSpan t = new TtsSpan("test.type.one", mBundle);
         final PersistableBundle args = t.getArgs();
         assertEquals(4, args.size());
         assertEquals("value.one", args.getString("argument.one"));
@@ -47,29 +53,29 @@ public class TtsSpanTest extends TestCase {
         assertEquals(4, args.getLong("argument.four"));
     }
 
-    @SmallTest
+    @Test
     public void testGetType() {
-        TtsSpan t = new TtsSpan("test.type.two", bundle);
+        TtsSpan t = new TtsSpan("test.type.two", mBundle);
         assertEquals("test.type.two", t.getType());
     }
 
-    @SmallTest
+    @Test
     public void testDescribeContents() {
-        TtsSpan span = new TtsSpan("test.type.three", bundle);
+        TtsSpan span = new TtsSpan("test.type.three", mBundle);
         span.describeContents();
     }
 
-    @SmallTest
+    @Test
     public void testGetSpanTypeId() {
-        TtsSpan span = new TtsSpan("test.type.four", bundle);
+        TtsSpan span = new TtsSpan("test.type.four", mBundle);
         span.getSpanTypeId();
     }
 
-    @SmallTest
+    @Test
     public void testWriteAndReadParcel() {
         Parcel p = Parcel.obtain();
         try {
-            TtsSpan span = new TtsSpan("test.type.five", bundle);
+            TtsSpan span = new TtsSpan("test.type.five", mBundle);
             span.writeToParcel(p, 0);
             p.setDataPosition(0);
 
@@ -87,7 +93,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testBuilder() {
         final TtsSpan t = new TtsSpan.Builder<>("test.type.builder")
                 .setStringArgument("argument.string", "value")
@@ -102,7 +108,7 @@ public class TtsSpanTest extends TestCase {
         assertEquals(Long.MAX_VALUE, args.getLong("argument.long"));
     }
 
-    @SmallTest
+    @Test
     public void testSemioticClassBuilder() {
         final TtsSpan t = new TtsSpan.SemioticClassBuilder<>("test.type.semioticClassBuilder")
                 .setGender(TtsSpan.GENDER_FEMALE)
@@ -119,7 +125,7 @@ public class TtsSpanTest extends TestCase {
         assertEquals(TtsSpan.CASE_NOMINATIVE, args.getString(TtsSpan.ARG_CASE));
     }
 
-    @SmallTest
+    @Test
     public void testTextBuilder() {
         {
             final TtsSpan t = new TtsSpan.TextBuilder()
@@ -139,7 +145,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testCardinalBuilder() {
         {
             final TtsSpan t = new TtsSpan.CardinalBuilder()
@@ -175,7 +181,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testOrdinalBuilder() {
         {
             final TtsSpan t = new TtsSpan.OrdinalBuilder()
@@ -211,7 +217,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testDecimalBuilder() {
         {
             final TtsSpan t = new TtsSpan.DecimalBuilder()
@@ -316,7 +322,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testFractionBuilder() {
         {
             final TtsSpan t = new TtsSpan.FractionBuilder()
@@ -371,7 +377,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testMeasureBuilder() {
         {
             final TtsSpan t = new TtsSpan.MeasureBuilder()
@@ -441,7 +447,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testTimeBuilder() {
         {
             final TtsSpan t = new TtsSpan.TimeBuilder()
@@ -464,7 +470,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testDateBuilder() {
         {
             final TtsSpan t = new TtsSpan.DateBuilder()
@@ -501,7 +507,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testMoneyBuilder() {
         {
             final TtsSpan t = new TtsSpan.MoneyBuilder()
@@ -534,7 +540,7 @@ public class TtsSpanTest extends TestCase {
 
     }
 
-    @SmallTest
+    @Test
     public void testTelephoneBuilder() {
         {
             final TtsSpan t = new TtsSpan.TelephoneBuilder()
@@ -558,7 +564,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testElectronicBuilder() {
         {
             final TtsSpan t = new TtsSpan.ElectronicBuilder()
@@ -595,7 +601,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testDigitsBuilder() {
         {
             final TtsSpan t = new TtsSpan.DigitsBuilder()
@@ -615,7 +621,7 @@ public class TtsSpanTest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testVerbatimBuilder() {
         {
             final TtsSpan t = new TtsSpan.VerbatimBuilder()

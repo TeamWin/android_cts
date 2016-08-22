@@ -19,35 +19,37 @@ package android.text.style.cts;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.style.ReplacementSpan;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ReplacementSpanTest extends TestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ReplacementSpanTest {
+    @Test
     public void testUpdateMeasureState() {
         ReplacementSpan replacementSpan = new MockReplacementSpan();
         replacementSpan.updateMeasureState(null);
     }
 
+    @Test
     public void testUpdateDrawState() {
         ReplacementSpan replacementSpan = new MockReplacementSpan();
         replacementSpan.updateDrawState(null);
     }
 
-    /**
-     * MockReplacementSpan for test.
-     */
     private class MockReplacementSpan extends ReplacementSpan {
         @Override
         public void draw(Canvas canvas, CharSequence text, int start, int end,
                 float x, int top, int y, int bottom, Paint paint) {
-            // implement abstract method
         }
 
         @Override
         public int getSize(Paint paint, CharSequence text, int start, int end,
                 FontMetricsInt fm) {
-            // implement abstract method
             return 0;
         }
     }

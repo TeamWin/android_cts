@@ -16,18 +16,27 @@
 
 package android.text.style.cts;
 
+import static org.junit.Assert.assertEquals;
+
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.style.TabStopSpan;
 import android.text.style.TabStopSpan.Standard;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class TabStopSpan_StandardTest extends TestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class TabStopSpan_StandardTest {
+    @Test
     public void testConstructor() {
         new TabStopSpan.Standard(3);
 
         new TabStopSpan.Standard(-3);
     }
 
+    @Test
     public void testGetTabStop() {
         Standard standard = new Standard(3);
         assertEquals(3, standard.getTabStop());
