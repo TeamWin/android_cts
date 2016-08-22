@@ -16,9 +16,19 @@
 
 package android.text.cts;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyChar;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.LoginFilter;
 import android.text.LoginFilter.UsernameFilterGeneric;
 import android.text.SpannableString;
@@ -27,13 +37,13 @@ import android.text.SpannedString;
 
 import junit.framework.TestCase;
 
-public class LoginFilterTest extends TestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class LoginFilterTest {
+    @Test
     public void testFilter() {
         CharSequence result;
         LoginFilter loginFilter = spy(new UsernameFilterGeneric());
@@ -121,6 +131,7 @@ public class LoginFilterTest extends TestCase {
 
     // This method does nothing. we only test onInvalidCharacter function here,
     // the callback should be tested in testFilter()
+    @Test
     public void testOnInvalidCharacter() {
         LoginFilter loginFilter = new UsernameFilterGeneric();
         loginFilter.onInvalidCharacter('a');
@@ -128,6 +139,7 @@ public class LoginFilterTest extends TestCase {
 
     // This method does nothing. we only test onStop function here,
     // the callback should be tested in testFilter()
+    @Test
     public void testOnStop() {
         LoginFilter loginFilter = new UsernameFilterGeneric();
         loginFilter.onStop();
@@ -135,6 +147,7 @@ public class LoginFilterTest extends TestCase {
 
     // This method does nothing. we only test onStart function here,
     // the callback should be tested in testFilter()
+    @Test
     public void testOnStart() {
         LoginFilter loginFilter = new UsernameFilterGeneric();
         loginFilter.onStart();

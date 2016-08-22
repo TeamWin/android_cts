@@ -17,8 +17,14 @@
 package android.text.cts;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.support.test.filters.SmallTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Selection;
@@ -33,63 +39,60 @@ import android.text.style.SubscriptSpan;
 import android.text.style.TabStopSpan;
 import android.text.style.UnderlineSpan;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.Arrays;
 
 /**
  * Test {@link SpannableStringBuilder}.
  */
-public class SpannableStringBuilderTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class SpannableStringBuilderTest {
     private StrikethroughSpan mStrikethroughSpan;
     private UnderlineSpan mUnderlineSpan;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
         mUnderlineSpan = new UnderlineSpan();
         mStrikethroughSpan = new StrikethroughSpan();
     }
 
-    public void testConstructor1() {
-        @SuppressWarnings("unused")
-        SpannableStringBuilder dummy = new SpannableStringBuilder();
-        dummy = new SpannableStringBuilder("test");
-
-        try {
-            dummy = new SpannableStringBuilder(null);
-            fail("should throw NullPointerException");
-        } catch (NullPointerException e) {
-            // expected exception
-        }
+    @Test
+    public void testConstructor() {
+        new SpannableStringBuilder();
+        new SpannableStringBuilder("test");
     }
 
-    public void testConstructor2() {
-        @SuppressWarnings("unused")
-        SpannableStringBuilder dummy = new SpannableStringBuilder("Text", 0, "Text".length());
-        dummy = new SpannableStringBuilder(new SpannableString("test"), 0, "Text".length());
-
-        try {
-            dummy = new SpannableStringBuilder("Text", 0, 10);
-            fail("should throw StringIndexOutOfBoundsException");
-        } catch (StringIndexOutOfBoundsException e) {
-            // expected exception
-        }
-
-        try {
-            dummy = new SpannableStringBuilder("Text", -3, 3);
-            fail("should throw StringIndexOutOfBoundsException");
-        } catch (StringIndexOutOfBoundsException e) {
-            // expected exception
-        }
-
-        try {
-            dummy = new SpannableStringBuilder("Text", 3, 0);
-            fail("should throw StringIndexOutOfBoundsException");
-        } catch (StringIndexOutOfBoundsException e) {
-            // expected exception
-        }
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNullString() {
+         new SpannableStringBuilder(null);
     }
 
+    @Test
+    public void testConstructorStartEnd() {
+        new SpannableStringBuilder("Text", 0, "Text".length());
+        new SpannableStringBuilder(new SpannableString("test"), 0, "Text".length());
+    }
+
+    @Test(expected=StringIndexOutOfBoundsException.class)
+    public void testConstructorStartEndEndTooLarge() {
+        new SpannableStringBuilder("Text", 0, 10);
+    }
+
+    @Test(expected=StringIndexOutOfBoundsException.class)
+    public void testConstructorStartEndStartTooLow() {
+        new SpannableStringBuilder("Text", -3, 3);
+    }
+
+    @Test(expected=StringIndexOutOfBoundsException.class)
+    public void testConstructorStartEndEndTooLow() {
+        new SpannableStringBuilder("Text", 3, 0);
+    }
+
+    @Test
     public void testGetSpanFlags() {
         SpannableStringBuilder builder = new SpannableStringBuilder("spannable string");
         assertEquals(0, builder.getSpanFlags(mUnderlineSpan));
@@ -103,6 +106,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(0, builder.getSpanFlags(new Object()));
     }
 
+    @Test
     public void testNextSpanTransition() {
         SpannableStringBuilder builder = new SpannableStringBuilder("spannable string");
 
@@ -118,6 +122,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(1, builder.nextSpanTransition(3, 1, UnderlineSpan.class));
     }
 
+    @Test
     public void testSetSpan() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
         try {
@@ -145,27 +150,25 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(Spanned.SPAN_EXCLUSIVE_EXCLUSIVE, builder.getSpanFlags(mUnderlineSpan));
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testValueOfNull() {
+        SpannableStringBuilder.valueOf(null);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testValueOfNullBuilder() {
+        SpannableStringBuilder.valueOf((SpannableStringBuilder) null);
+    }
+
+    @Test
     public void testValueOf() {
-        try {
-            SpannableStringBuilder.valueOf(null);
-            fail("should throw NullPointerException here");
-        } catch (NullPointerException e) {
-            // expected exception
-        }
-
-        try {
-            SpannableStringBuilder.valueOf((SpannableStringBuilder) null);
-            fail("should throw NullPointerException here");
-        } catch (NullPointerException e) {
-            // expected exception
-        }
-
         assertNotNull(SpannableStringBuilder.valueOf("hello, string"));
 
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
         assertSame(builder, SpannableStringBuilder.valueOf(builder));
     }
 
+    @Test
     public void testReplace1() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world!");
         CharSequence text = "hi";
@@ -198,6 +201,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testReplace2() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
         CharSequence text = "ahiabc";
@@ -273,6 +277,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSubSequence() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
         CharSequence text = builder.subSequence(0, 2);
@@ -287,6 +292,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetChars() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         char[] buf = new char[4];
@@ -320,6 +326,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAppend1() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.append(",world");
@@ -332,6 +339,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAppend2() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.append(",world", 1, 3);
@@ -363,6 +371,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAppend3() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.append('a');
@@ -378,7 +387,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testAppend_textWithSpan() {
         final QuoteSpan span = new QuoteSpan();
         final SpannableStringBuilder builder = new SpannableStringBuilder("hello ");
@@ -400,6 +409,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
                 spanEnd, builder.getSpanEnd(spans[0]));
     }
 
+    @Test
     public void testClearSpans() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
 
@@ -414,6 +424,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(0, builder.getSpanFlags(mUnderlineSpan));
     }
 
+    @Test
     public void testGetSpanStart() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.setSpan(mUnderlineSpan, 1, 3, 0);
@@ -422,6 +433,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(-1, builder.getSpanStart(null));
     }
 
+    @Test
     public void testAccessFilters() {
         InputFilter[] filters = new InputFilter[100];
         SpannableStringBuilder builder = new SpannableStringBuilder();
@@ -436,6 +448,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testRemoveSpan() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
 
@@ -458,6 +471,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         builder.removeSpan(null);
     }
 
+    @Test
     public void testToString() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         assertEquals("hello", builder.toString());
@@ -466,6 +480,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals("", builder.toString());
     }
 
+    @Test
     public void testGetSpanEnd() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.setSpan(mUnderlineSpan, 1, 3, 0);
@@ -474,6 +489,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(-1, builder.getSpanEnd(null));
     }
 
+    @Test
     public void testCharAt() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         assertEquals('h', builder.charAt(0));
@@ -493,6 +509,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testInsert1() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.insert(1, "abcd", 1, 3);
@@ -538,6 +555,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testInsert2() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.insert(1, "abcd");
@@ -569,6 +587,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testClear() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         assertEquals("hello", builder.toString());
@@ -576,6 +595,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals("", builder.toString());
     }
 
+    @Test
     public void testGetSpans() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello, world");
         UnderlineSpan span1 = new UnderlineSpan();
@@ -600,7 +620,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         builder.getSpans(4, 1, UnderlineSpan.class);
     }
 
-    @SmallTest
+    @Test
     public void testGetSpans_returnsEmptyIfSetSpanIsNotCalled() {
         String text = "p_in_s";
         SpannableStringBuilder builder = new SpannableStringBuilder(text);
@@ -608,7 +628,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(0, spans.length);
     }
 
-    @SmallTest
+    @Test
     public void testGetSpans_returnsSpansInInsertionOrderWhenTheLaterCoversTheFirst() {
         String text = "p_in_s";
         SpannableStringBuilder builder = new SpannableStringBuilder(text);
@@ -626,7 +646,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(second, spans[1]);
     }
 
-    @SmallTest
+    @Test
     public void testGetSpans_returnsSpansSortedFirstByPriorityThenByInsertionOrder() {
         String text = "p_in_s";
         SpannableStringBuilder builder = new SpannableStringBuilder(text);
@@ -653,7 +673,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(third, spans[3]);
     }
 
-    @SmallTest
+    @Test
     public void testGetSpans_returnsSpansInInsertionOrderAfterRemoveSpanCalls() {
         String text = "p_in_s";
         SpannableStringBuilder builder = new SpannableStringBuilder(text);
@@ -678,7 +698,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(fourth, spans[1]);
     }
 
-    @SmallTest
+    @Test
     public void testGetSpans_sortsByPriorityEvenWhenSortParamIsFalse() {
         String text = "p_in_s";
         SpannableStringBuilder builder = new SpannableStringBuilder(text);
@@ -704,6 +724,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(first, spans[3]);
     }
 
+    @Test
     public void testLength() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         assertEquals(5, builder.length());
@@ -711,6 +732,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(0, builder.length());
     }
 
+    @Test
     public void testReplace_shouldNotThrowIndexOutOfBoundsExceptionForLongText() {
         final char[] charArray = new char[75000];
         Arrays.fill(charArray, 'a');
@@ -724,6 +746,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         assertEquals(copiedText.length(), spannable.length());
     }
 
+    @Test
     public void testDelete() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello,world");
         assertEquals("hello,world", builder.toString());
@@ -782,6 +805,7 @@ public class SpannableStringBuilderTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetTextWatcherDepth() {
         SpannableStringBuilder builder = new SpannableStringBuilder("hello");
         builder.setSpan(new MockTextWatcher(), 0, builder.length(), 0);

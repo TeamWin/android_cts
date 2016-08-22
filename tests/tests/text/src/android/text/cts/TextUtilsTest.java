@@ -19,8 +19,16 @@ package android.text.cts;
 import static android.view.View.LAYOUT_DIRECTION_LTR;
 import static android.view.View.LAYOUT_DIRECTION_RTL;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -31,7 +39,9 @@ import android.graphics.Typeface;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.GetChars;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -46,6 +56,10 @@ import android.text.style.TextAppearanceSpan;
 import android.text.style.URLSpan;
 import android.util.StringBuilderPrinter;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,14 +69,17 @@ import java.util.regex.Pattern;
 /**
  * Test {@link TextUtils}.
  */
-public class TextUtilsTest extends AndroidTestCase {
-    private static String mEllipsis;
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class TextUtilsTest  {
+    private Context mContext;
+    private String mEllipsis;
     private int mStart;
     private int mEnd;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         mEllipsis = getEllipsis();
         resetRange();
     }
@@ -76,7 +93,7 @@ public class TextUtilsTest extends AndroidTestCase {
      * Get the ellipsis from system.
      * @return the string of ellipsis.
      */
-    private String getEllipsis() {
+    private static String getEllipsis() {
         String text = "xxxxx";
         TextPaint p = new TextPaint();
         float width = p.measureText(text.substring(1));
@@ -87,7 +104,7 @@ public class TextUtilsTest extends AndroidTestCase {
     /**
      * @return the number of times the code unit appears in the CharSequence.
      */
-    private int countChars(CharSequence s, char c) {
+    private static int countChars(CharSequence s, char c) {
         int count = 0;
         for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) == c) {
@@ -97,8 +114,8 @@ public class TextUtilsTest extends AndroidTestCase {
         return count;
     }
 
+    @Test
     public void testListEllipsize() {
-        final Context context = getContext();
         final TextPaint paint = new TextPaint();
         final int moreId = R.plurals.list_ellipsize_test;  // "one more" for 1, "%d more" for other
 
@@ -107,11 +124,11 @@ public class TextUtilsTest extends AndroidTestCase {
         final String fullString = TextUtils.join(separator, fullList);
         final float fullWidth = paint.measureText(fullString);
         assertEquals("",
-            TextUtils.listEllipsize(context, null, separator, paint, fullWidth, moreId));
+            TextUtils.listEllipsize(mContext, null, separator, paint, fullWidth, moreId));
 
-        final List<CharSequence> emptyList = new ArrayList<CharSequence>();
+        final List<CharSequence> emptyList = new ArrayList<>();
         assertEquals("",
-            TextUtils.listEllipsize(context, emptyList, separator, paint, fullWidth, moreId));
+            TextUtils.listEllipsize(mContext, emptyList, separator, paint, fullWidth, moreId));
 
         // Null context should cause ellipsis to be used at the end.
         final String ellipsizedWithNull = TextUtils.listEllipsize(
@@ -120,20 +137,20 @@ public class TextUtilsTest extends AndroidTestCase {
 
         // Test that the empty string gets returned if there's no space.
         assertEquals("",
-                TextUtils.listEllipsize(context, fullList, separator, paint, 1.0f, moreId));
+                TextUtils.listEllipsize(mContext, fullList, separator, paint, 1.0f, moreId));
 
         // Test that the full string itself can get returned if there's enough space.
         assertEquals(fullString,
-                TextUtils.listEllipsize(context, fullList, separator, paint, fullWidth, moreId)
+                TextUtils.listEllipsize(mContext, fullList, separator, paint, fullWidth, moreId)
                         .toString());
         assertEquals(fullString,
-                TextUtils.listEllipsize(context, fullList, separator, paint, fullWidth * 2,
+                TextUtils.listEllipsize(mContext, fullList, separator, paint, fullWidth * 2,
                         moreId).toString());
 
         final float epsilon = fullWidth / 20;
         for (float width = epsilon; width < fullWidth - epsilon / 2; width += epsilon) {
             final String ellipsized = TextUtils.listEllipsize(
-                    context, fullList, separator, paint, width, moreId).toString();
+                    mContext, fullList, separator, paint, width, moreId).toString();
             // Since we don't have the full space, test that we are not getting the full string.
             assertFalse(fullString.equals(ellipsized));
 
@@ -154,9 +171,9 @@ public class TextUtilsTest extends AndroidTestCase {
         }
 }
 
+    @Test
     public void testListEllipsize_rtl() {
-        final Context context = getContext();
-        final Resources res = context.getResources();
+        final Resources res = mContext.getResources();
         final Configuration newConfig = new Configuration(res.getConfiguration());
 
         // save the locales and set them to just Arabic
@@ -178,7 +195,7 @@ public class TextUtilsTest extends AndroidTestCase {
             final float enoughWidth = paint.measureText(expectedString);
 
             assertEquals(expectedString,
-                    TextUtils.listEllipsize(context, fullList, separator, paint, enoughWidth,
+                    TextUtils.listEllipsize(mContext, fullList, separator, paint, enoughWidth,
                                             moreId).toString());
         } finally {
             // Restore the original locales
@@ -187,6 +204,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCommaEllipsize() {
         TextPaint p = new TextPaint();
         String text = "long, string, to, truncate";
@@ -239,6 +257,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testConcat() {
         // issue 1695243
         // the javadoc for concat() doesn't describe the expected result when parameter is empty.
@@ -275,15 +294,14 @@ public class TextUtilsTest extends AndroidTestCase {
         // issue 1695243, the javadoc for concat() doesn't describe
         // the expected result when parameters are null.
         assertEquals(null, TextUtils.concat((CharSequence) null));
-
-        try {
-            TextUtils.concat((CharSequence[]) null);
-            fail("Should throw NullPointerException");
-        } catch (NullPointerException e) {
-            // expected
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConcatNullArray() {
+        TextUtils.concat((CharSequence[]) null);
+    }
+
+    @Test
     public void testCopySpansFrom() {
         Object[] spans;
         String text = "content";
@@ -426,6 +444,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testEllipsize() {
         TextPaint p = new TextPaint();
 
@@ -478,6 +497,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testEllipsizeCallback() {
         TextPaint p = new TextPaint();
 
@@ -613,7 +633,7 @@ public class TextUtilsTest extends AndroidTestCase {
      * @param len - int length of string.
      * @return a blank string which is filled up by '\uFEFF'.
      */
-    private String getBlankString(boolean isNeedStart, int len) {
+    private static String getBlankString(boolean isNeedStart, int len) {
         StringBuilder buf = new StringBuilder();
 
         int i = 0;
@@ -628,6 +648,7 @@ public class TextUtilsTest extends AndroidTestCase {
         return buf.toString();
     }
 
+    @Test
     public void testEquals() {
         // compare with itself.
         // String is a subclass of CharSequence and overrides equals().
@@ -667,6 +688,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertFalse(TextUtils.equals(null, string));
     }
 
+    @Test
     public void testExpandTemplate() {
         // ^1 at the start of template string.
         assertEquals("value1 template to be expanded",
@@ -717,66 +739,55 @@ public class TextUtilsTest extends AndroidTestCase {
         } catch (IllegalArgumentException e) {
             // expect
         }
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testExpandTemplateCaret0WithValue() {
         // template string is ^0
-        try {
-            TextUtils.expandTemplate("template ^0 to be expanded", "value1");
-        } catch (IllegalArgumentException e) {
-            // issue 1695243, doesn't discuss the case that ^0 in template string.
-        }
+        TextUtils.expandTemplate("template ^0 to be expanded", "value1");
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testExpandTemplateCaret0NoValues() {
         // template string is ^0
-        try {
-            TextUtils.expandTemplate("template ^0 to be expanded");
-        } catch (IllegalArgumentException e) {
-            // issue 1695243, doesn't discuss the case that ^0 in template string.
-        }
+        TextUtils.expandTemplate("template ^0 to be expanded");
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testExpandTemplateNotEnoughValues() {
         // the template requests 2 values but only 1 is provided
-        try {
-            TextUtils.expandTemplate("template ^2 to be expanded", "value1");
-            fail("Should throw IllegalArgumentException!");
-        } catch (IllegalArgumentException e) {
-            // expect
-        }
+        TextUtils.expandTemplate("template ^2 to be expanded", "value1");
+    }
 
+    @Test(expected=NullPointerException.class)
+    public void testExpandTemplateNullValues() {
         // values is null
-        try {
-            TextUtils.expandTemplate("template ^2 to be expanded", (CharSequence[]) null);
-        } catch (NullPointerException e) {
-            // expected
-        }
+        TextUtils.expandTemplate("template ^2 to be expanded", (CharSequence[]) null);
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testExpandTemplateNotEnoughValuesAndFirstIsNull() {
         // the template requests 2 values but only one null value is provided
-        try {
-            TextUtils.expandTemplate("template ^2 to be expanded", (CharSequence) null);
-            fail("Should throw IllegalArgumentException!");
-        } catch (IllegalArgumentException e) {
-            // expect
-        }
+        TextUtils.expandTemplate("template ^2 to be expanded", (CharSequence) null);
+    }
 
+    @Test(expected=NullPointerException.class)
+    public void testExpandTemplateAllValuesAreNull() {
         // the template requests 2 values and 2 values is provided, but all values are null.
-        try {
-            TextUtils.expandTemplate("template ^2 to be expanded",
-                    (CharSequence) null, (CharSequence) null);
-        } catch (NullPointerException e) {
-            // expected
-        }
+        TextUtils.expandTemplate("template ^2 to be expanded",
+                (CharSequence) null, (CharSequence) null);
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testExpandTemplateNoValues() {
         // the template requests 2 values but no value is provided.
-        try {
-            TextUtils.expandTemplate("template ^2 to be expanded");
-            fail("Should throw IllegalArgumentException!");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+        TextUtils.expandTemplate("template ^2 to be expanded");
+    }
 
+    @Test(expected=NullPointerException.class)
+    public void testExpandTemplateNullTemplate() {
         // template is null
-        try {
-            TextUtils.expandTemplate(null, "value1");
-        } catch (NullPointerException e) {
-            // expected
-        }
+        TextUtils.expandTemplate(null, "value1");
     }
 
     /**
@@ -785,7 +796,7 @@ public class TextUtilsTest extends AndroidTestCase {
      * @return The char sequence array with the specified length.
      * The value of each item is "value[index+1]"
      */
-    private CharSequence[] createCharSequenceArray(int len) {
+    private static CharSequence[] createCharSequenceArray(int len) {
         CharSequence array[] = new CharSequence[len];
 
         for (int i = 0; i < len; i++) {
@@ -795,6 +806,7 @@ public class TextUtilsTest extends AndroidTestCase {
         return array;
     }
 
+    @Test
     public void testGetChars() {
         char[] destOriginal = "destination".toCharArray();
         char[] destResult = destOriginal.clone();
@@ -1014,6 +1026,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffsetAfter() {
         // the first '\uD800' is index 9, the second 'uD800' is index 16
         // the '\uDBFF' is index 26
@@ -1061,6 +1074,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffsetBefore() {
         // the first '\uDC00' is index 10, the second 'uDC00' is index 17
         // the '\uDFFF' is index 27
@@ -1108,6 +1122,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetReverse() {
         String source = "string to be reversed";
         assertEquals("gnirts", TextUtils.getReverse(source, 0, "string".length()).toString());
@@ -1162,6 +1177,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetTrimmedLength() {
         assertEquals("normalstring".length(), TextUtils.getTrimmedLength("normalstring"));
         assertEquals("normal string".length(), TextUtils.getTrimmedLength("normal string"));
@@ -1169,33 +1185,31 @@ public class TextUtilsTest extends AndroidTestCase {
         assertEquals("blank after".length(), TextUtils.getTrimmedLength("blank after   \n    "));
         assertEquals("blank both".length(), TextUtils.getTrimmedLength(" \t   blank both  \n "));
 
-        char[] allTrimmedChars = new char[] {
+        char[] allTrimmedChars = new char[]{
                 '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007',
                 '\u0008', '\u0009', '\u0010', '\u0011', '\u0012', '\u0013', '\u0014', '\u0015',
                 '\u0016', '\u0017', '\u0018', '\u0019', '\u0020'
         };
         assertEquals(0, TextUtils.getTrimmedLength(String.valueOf(allTrimmedChars)));
-
-        try {
-            TextUtils.getTrimmedLength(null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expected
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testGetTrimmedLengthNull() {
+        TextUtils.getTrimmedLength(null);
+    }
+
+    @Test
     public void testHtmlEncode() {
         assertEquals("&lt;_html_&gt;\\ &amp;&quot;&#39;string&#39;&quot;",
                 TextUtils.htmlEncode("<_html_>\\ &\"'string'\""));
-
-         try {
-             TextUtils.htmlEncode(null);
-             fail("Should throw NullPointerException!");
-         } catch (NullPointerException e) {
-             // expected
-         }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testHtmlEncodeNull() {
+         TextUtils.htmlEncode(null);
+    }
+
+    @Test
     public void testIndexOf1() {
         String searchString = "string to be searched";
         final int INDEX_OF_FIRST_R = 2;     // first occurrence of 'r'
@@ -1222,6 +1236,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertEquals(INDEX_OF_FIRST_R, TextUtils.indexOf(mockCharSequence, 'r'));
     }
 
+    @Test
     public void testIndexOf2() {
         String searchString = "string to be searched";
         final int INDEX_OF_FIRST_R = 2;
@@ -1256,6 +1271,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 INDEX_OF_FIRST_R + 1));
     }
 
+    @Test
     public void testIndexOf3() {
         String searchString = "string to be searched";
         final int INDEX_OF_FIRST_R = 2;
@@ -1301,6 +1317,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 INDEX_OF_FIRST_R + 1, searchString.length()));
     }
 
+    @Test
     public void testIndexOf4() {
         String searchString = "string to be searched by string";
         final int SEARCH_INDEX = 13;
@@ -1324,6 +1341,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertEquals(SEARCH_INDEX, TextUtils.indexOf(mockCharSequence, "search"));
     }
 
+    @Test
     public void testIndexOf5() {
         String searchString = "string to be searched by string";
         final int INDEX_OF_FIRST_STRING = 0;
@@ -1368,6 +1386,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 INDEX_OF_FIRST_STRING + 1));
     }
 
+    @Test
     public void testIndexOf6() {
         String searchString = "string to be searched by string";
         final int INDEX_OF_FIRST_STRING = 0;
@@ -1419,6 +1438,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 INDEX_OF_FIRST_STRING + 1, searchString.length()));
     }
 
+    @Test
     public void testIsDigitsOnly() {
         assertTrue(TextUtils.isDigitsOnly(""));
         assertFalse(TextUtils.isDigitsOnly("no digit"));
@@ -1433,15 +1453,14 @@ public class TextUtilsTest extends AndroidTestCase {
 
         assertFalse(TextUtils.isDigitsOnly("\uD801")); // lonely lead surrogate
         assertFalse(TextUtils.isDigitsOnly("\uDCA0")); // lonely trailing surrogate
-
-        try {
-            TextUtils.isDigitsOnly(null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // issue 1695243, not clear what is supposed result if the CharSequence is null.
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testIsDigitsOnlyNull() {
+        TextUtils.isDigitsOnly(null);
+    }
+
+    @Test
     public void testIsEmpty() {
         assertFalse(TextUtils.isEmpty("not empty"));
         assertFalse(TextUtils.isEmpty("    "));
@@ -1449,6 +1468,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertTrue(TextUtils.isEmpty(null));
     }
 
+    @Test
     public void testIsGraphicChar() {
         assertTrue(TextUtils.isGraphic('a'));
         assertTrue(TextUtils.isGraphic('\uBA00'));
@@ -1470,15 +1490,14 @@ public class TextUtilsTest extends AndroidTestCase {
 
         // SPACE_SEPARATOR
         assertFalse(TextUtils.isGraphic('\u0020'));
-
-        try {
-            assertFalse(TextUtils.isGraphic((Character) null));
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expected
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testIsGraphicCharNull() {
+        assertFalse(TextUtils.isGraphic((Character) null));
+    }
+
+    @Test
     public void testIsGraphicCharSequence() {
         assertTrue(TextUtils.isGraphic("printable characters"));
 
@@ -1490,18 +1509,16 @@ public class TextUtilsTest extends AndroidTestCase {
         assertFalse(TextUtils.isGraphic("\uDB40\uDC01")); // U+E0000 (unassigned)
         assertFalse(TextUtils.isGraphic("\uDB3D")); // unpaired high surrogate
         assertFalse(TextUtils.isGraphic("\uDC0C")); // unpaired low surrogate
-
-        try {
-            TextUtils.isGraphic(null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expected
-        }
     }
 
-    @SuppressWarnings("unchecked")
-    public void testJoin1() {
-        ArrayList<CharSequence> charTokens = new ArrayList<CharSequence>();
+    @Test(expected=NullPointerException.class)
+    public void testIsGraphicCharSequenceNull() {
+        TextUtils.isGraphic(null);
+    }
+
+    @Test
+    public void testJoinIterable() {
+        ArrayList<CharSequence> charTokens = new ArrayList<>();
         charTokens.add("string1");
         charTokens.add("string2");
         charTokens.add("string3");
@@ -1511,12 +1528,6 @@ public class TextUtilsTest extends AndroidTestCase {
 
         // issue 1695243, not clear what is supposed result if the delimiter or tokens are null.
         assertEquals("string1nullstring2nullstring3", TextUtils.join(null, charTokens));
-        try {
-            TextUtils.join("|", (Iterable) null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expect
-        }
 
         ArrayList<SpannableString> spannableStringTokens = new ArrayList<SpannableString>();
         spannableStringTokens.add(new SpannableString("span 1"));
@@ -1525,7 +1536,13 @@ public class TextUtilsTest extends AndroidTestCase {
         assertEquals("span 1;span 2;span 3", TextUtils.join(";", spannableStringTokens));
     }
 
-    public void testJoin2() {
+    @Test(expected=NullPointerException.class)
+    public void testJoinIterableNull() {
+        TextUtils.join("|", (Iterable) null);
+    }
+
+    @Test
+    public void testJoinArray() {
         CharSequence[] charTokens = new CharSequence[] { "string1", "string2", "string3" };
         assertEquals("string1|string2|string3", TextUtils.join("|", charTokens));
         assertEquals("string1; string2; string3", TextUtils.join("; ", charTokens));
@@ -1533,12 +1550,6 @@ public class TextUtilsTest extends AndroidTestCase {
 
         // issue 1695243, not clear what is supposed result if the delimiter or tokens are null.
         assertEquals("string1nullstring2nullstring3", TextUtils.join(null, charTokens));
-        try {
-            TextUtils.join("|", (Object[]) null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expect
-        }
 
         SpannableString[] spannableStringTokens = new SpannableString[] {
                 new SpannableString("span 1"),
@@ -1547,6 +1558,12 @@ public class TextUtilsTest extends AndroidTestCase {
         assertEquals("span 1;span 2;span 3", TextUtils.join(";", spannableStringTokens));
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testJoinArrayNull() {
+        TextUtils.join("|", (Object[]) null);
+    }
+
+    @Test
     public void testLastIndexOf1() {
         String searchString = "string to be searched";
         final int INDEX_OF_LAST_R = 16;
@@ -1572,6 +1589,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertEquals(INDEX_OF_LAST_R, TextUtils.lastIndexOf(mockCharSequence, 'r'));
     }
 
+    @Test
     public void testLastIndexOf2() {
         String searchString = "string to be searched";
         final int INDEX_OF_FIRST_R = 2;
@@ -1606,6 +1624,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 TextUtils.lastIndexOf(mockCharSequence, 'r', INDEX_OF_FIRST_R));
     }
 
+    @Test
     public void testLastIndexOf3() {
         String searchString = "string to be searched";
         final int INDEX_OF_FIRST_R = 2;
@@ -1646,6 +1665,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 INDEX_OF_SECOND_R - 1));
     }
 
+    @Test
     public void testRegionMatches() {
         assertFalse(TextUtils.regionMatches("one", 0, "two", 0, "one".length()));
         assertTrue(TextUtils.regionMatches("one", 0, "one", 0, "one".length()));
@@ -1716,6 +1736,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testReplace() {
         String template = "this is a string to be as the template for replacement";
 
@@ -1766,6 +1787,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSplitPattern() {
         String testString = "abccbadecdebz";
         assertEquals(calculateCharsCount(testString, "c") + 1,
@@ -1784,25 +1806,22 @@ public class TextUtilsTest extends AndroidTestCase {
         // issue 1695243, not clear what is supposed result if the pattern string is empty.
         assertEquals(testString.length() + 2,
                 TextUtils.split(testString, Pattern.compile("")).length);
+    }
 
-        try {
-            TextUtils.split(null, Pattern.compile("a"));
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expect
-        }
-        try {
+    @Test(expected=NullPointerException.class)
+    public void testSplitPatternNullText() {
+        TextUtils.split(null, Pattern.compile("a"));
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testSplitPatternNullPattern() {
             TextUtils.split("abccbadecdebz", (Pattern) null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expect
-        }
     }
 
     /*
      * return the appearance count of searched chars in text.
      */
-    private int calculateCharsCount(CharSequence text, CharSequence searches) {
+    private static int calculateCharsCount(CharSequence text, CharSequence searches) {
         int count = 0;
         int start = TextUtils.indexOf(text, searches, 0);
 
@@ -1813,6 +1832,7 @@ public class TextUtilsTest extends AndroidTestCase {
         return count;
     }
 
+    @Test
     public void testSplitString() {
         String testString = "abccbadecdebz";
         assertEquals(calculateCharsCount(testString, "c") + 1,
@@ -1827,21 +1847,19 @@ public class TextUtilsTest extends AndroidTestCase {
         // issue 1695243, not clear what is supposed result if the pattern string is empty.
         assertEquals(testString.length() + 2,
                 TextUtils.split("abccbadecdebz", "").length);
-
-        try {
-            TextUtils.split(null, "a");
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expect
-        }
-        try {
-            TextUtils.split("abccbadecdebz", (String) null);
-            fail("Should throw NullPointerException!");
-        } catch (NullPointerException e) {
-            // expect
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testSplitStringNullText() {
+        TextUtils.split(null, "a");
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testSplitStringNullPattern() {
+        TextUtils.split("abccbadecdebz", (String) null);
+    }
+
+    @Test
     public void testStringOrSpannedString() {
         assertNull(TextUtils.stringOrSpannedString(null));
 
@@ -1861,6 +1879,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 TextUtils.stringOrSpannedString(stringBuffer).getClass());
     }
 
+    @Test
     public void testSubString() {
         String string = "String";
         assertSame(string, TextUtils.substring(string, 0, string.length()));
@@ -1918,6 +1937,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertTrue(mockGetChars.hasCalledGetChars());
     }
 
+    @Test
     public void testWriteToParcel() {
         Parcelable.Creator<CharSequence> creator = TextUtils.CHAR_SEQUENCE_CREATOR;
         String string = "String";
@@ -2005,6 +2025,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetCapsMode() {
         final int CAP_MODE_ALL = TextUtils.CAP_MODE_CHARACTERS
                 | TextUtils.CAP_MODE_WORDS | TextUtils.CAP_MODE_SENTENCES;
@@ -2089,6 +2110,7 @@ public class TextUtilsTest extends AndroidTestCase {
                 TextUtils.getCapsMode(testString, offset, CAP_MODE_ALL));
     }
 
+    @Test
     public void testGetCapsModeException() {
         String testString = "Start. Sentence word!No space before\n\t" +
                 "Paragraph? (\"\'skip begin\'\"). skip end";
@@ -2115,6 +2137,7 @@ public class TextUtilsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDumpSpans() {
         StringBuilder builder = new StringBuilder();
         StringBuilderPrinter printer = new StringBuilderPrinter(builder);
@@ -2134,6 +2157,7 @@ public class TextUtilsTest extends AndroidTestCase {
         assertTrue(builder.length() > 0);
     }
 
+    @Test
     public void testGetLayoutDirectionFromLocale() {
         assertEquals(LAYOUT_DIRECTION_LTR,
                 TextUtils.getLayoutDirectionFromLocale(null));

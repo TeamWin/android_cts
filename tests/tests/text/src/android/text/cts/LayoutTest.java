@@ -16,6 +16,12 @@
 
 package android.text.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -24,7 +30,7 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.test.filters.SmallTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.Spannable;
@@ -32,10 +38,16 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.style.StrikethroughSpan;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class LayoutTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class LayoutTest {
     private final static int LINE_COUNT = 5;
     private final static int LINE_HEIGHT = 12;
     private final static int LINE_DESCENT = 4;
@@ -43,75 +55,79 @@ public class LayoutTest extends AndroidTestCase {
 
     private int mWidth;
     private Layout.Alignment mAlign;
-    private float mSpacingmult;
-    private float mSpacingadd;
+    private float mSpacingMult;
+    private float mSpacingAdd;
     private SpannableString mSpannedText;
 
     private TextPaint mTextPaint;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
         mTextPaint = new TextPaint();
         mSpannedText = new SpannableString(LAYOUT_TEXT);
         mSpannedText.setSpan(new StrikethroughSpan(), 0, 1, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
         mWidth = 11;
         mAlign = Alignment.ALIGN_CENTER;
-        mSpacingmult = 1;
-        mSpacingadd = 2;
+        mSpacingMult = 1;
+        mSpacingAdd = 2;
     }
 
+    @Test
     public void testConstructor() {
-        new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, mSpacingmult, mSpacingadd);
-
-        try {
-            new MockLayout(null, null, -1, null, 0, 0);
-            fail("should throw IllegalArgumentException here");
-        } catch (IllegalArgumentException e) {
-        }
+        new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, mSpacingMult, mSpacingAdd);
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testConstructorNull() {
+        new MockLayout(null, null, -1, null, 0, 0);
+    }
+
+    @Test
     public void testGetText() {
         CharSequence text = "test case 1";
         Layout layout = new MockLayout(text, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(text, layout.getText());
 
-        layout = new MockLayout(null, mTextPaint, mWidth, mAlign, mSpacingmult, mSpacingadd);
+        layout = new MockLayout(null, mTextPaint, mWidth, mAlign, mSpacingMult, mSpacingAdd);
         assertNull(layout.getText());
     }
 
+    @Test
     public void testGetPaint() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
 
         assertSame(mTextPaint, layout.getPaint());
 
-        layout = new MockLayout(LAYOUT_TEXT, null, mWidth, mAlign, mSpacingmult, mSpacingadd);
+        layout = new MockLayout(LAYOUT_TEXT, null, mWidth, mAlign, mSpacingMult, mSpacingAdd);
         assertNull(layout.getPaint());
     }
 
+    @Test
     public void testGetWidth() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, 10,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(10,  layout.getWidth());
 
-        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, 0, mAlign, mSpacingmult, mSpacingadd);
+        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, 0, mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(0,  layout.getWidth());
     }
 
+    @Test
     public void testGetEllipsizedWidth() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, 15,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(15, layout.getEllipsizedWidth());
 
-        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, 0, mAlign, mSpacingmult, mSpacingadd);
+        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, 0, mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(0,  layout.getEllipsizedWidth());
     }
 
+    @Test
     public void testIncreaseWidthTo() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         int oldWidth = layout.getWidth();
 
         layout.increaseWidthTo(oldWidth);
@@ -127,40 +143,45 @@ public class LayoutTest extends AndroidTestCase {
         assertEquals(oldWidth + 1, layout.getWidth());
     }
 
+    @Test
     public void testGetHeight() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(60, layout.getHeight());
     }
 
+    @Test
     public void testGetAlignment() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertSame(mAlign, layout.getAlignment());
 
-        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, null, mSpacingmult, mSpacingadd);
+        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, null, mSpacingMult, mSpacingAdd);
         assertNull(layout.getAlignment());
     }
 
+    @Test
     public void testGetSpacingMultiplier() {
-        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, -1, mSpacingadd);
-        assertEquals(-1.0f, layout.getSpacingMultiplier());
+        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, -1, mSpacingAdd);
+        assertEquals(-1.0f, layout.getSpacingMultiplier(), 0.0f);
 
-        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, 5, mSpacingadd);
-        assertEquals(5.0f, layout.getSpacingMultiplier());
+        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, 5, mSpacingAdd);
+        assertEquals(5.0f, layout.getSpacingMultiplier(), 0.0f);
     }
 
+    @Test
     public void testGetSpacingAdd() {
-        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, mSpacingmult, -1);
-        assertEquals(-1.0f, layout.getSpacingAdd());
+        Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, mSpacingMult, -1);
+        assertEquals(-1.0f, layout.getSpacingAdd(), 0.0f);
 
-        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, mSpacingmult, 20);
-        assertEquals(20.0f, layout.getSpacingAdd());
+        layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth, mAlign, mSpacingMult, 20);
+        assertEquals(20.0f, layout.getSpacingAdd(), 0.0f);
     }
 
+    @Test
     public void testGetLineBounds() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         Rect bounds = new Rect();
 
         assertEquals(32, layout.getLineBounds(2, bounds));
@@ -170,33 +191,37 @@ public class LayoutTest extends AndroidTestCase {
         assertEquals(36, bounds.bottom);
     }
 
+    @Test
     public void testGetLineForVertical() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(0, layout.getLineForVertical(-1));
         assertEquals(0, layout.getLineForVertical(0));
         assertEquals(0, layout.getLineForVertical(LINE_COUNT));
         assertEquals(LINE_COUNT - 1, layout.getLineForVertical(1000));
     }
 
+    @Test
     public void testGetLineForOffset() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(0, layout.getLineForOffset(-1));
         assertEquals(1, layout.getLineForOffset(1));
         assertEquals(LINE_COUNT - 1, layout.getLineForOffset(LINE_COUNT - 1));
         assertEquals(LINE_COUNT - 1, layout.getLineForOffset(1000));
     }
 
+    @Test
     public void testGetLineEnd() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(2, layout.getLineEnd(1));
     }
 
+    @Test
     public void testGetLineVisibleEnd() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
 
         assertEquals(2, layout.getLineVisibleEnd(1));
         assertEquals(LINE_COUNT, layout.getLineVisibleEnd(LINE_COUNT - 1));
@@ -208,59 +233,67 @@ public class LayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetLineBottom() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(LINE_HEIGHT, layout.getLineBottom(0));
     }
 
+    @Test
     public void testGetLineBaseline() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(8, layout.getLineBaseline(0));
     }
 
+    @Test
     public void testGetLineAscent() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(-8, layout.getLineAscent(0));
     }
 
+    @Test
     public void testGetParagraphAlignment() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertSame(mAlign, layout.getParagraphAlignment(0));
 
         layout = new MockLayout(mSpannedText, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertSame(mAlign, layout.getParagraphAlignment(0));
         assertSame(mAlign, layout.getParagraphAlignment(1));
     }
 
+    @Test
     public void testGetParagraphLeft() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(0, layout.getParagraphLeft(0));
     }
 
+    @Test
     public void testGetParagraphRight() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertEquals(mWidth, layout.getParagraphRight(0));
     }
 
+    @Test
     public void testIsSpanned() {
         MockLayout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         // default is not spanned text
         assertFalse(layout.mockIsSpanned());
 
         // try to create a spanned text
         layout = new MockLayout(mSpannedText, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         assertTrue(layout.mockIsSpanned());
     }
 
+    @Test
     public void testGetDesiredWidthRange() {
         CharSequence textShort = "test";
         CharSequence textLonger = "test\ngetDesiredWidth";
@@ -273,10 +306,11 @@ public class LayoutTest extends AndroidTestCase {
         float widthZero = Layout.getDesiredWidth(textLonger, 5, textShort.length() - 3, paint);
         assertTrue(widthLonger > widthShort);
         assertTrue(widthLongest > widthLonger);
-        assertEquals(0f, widthZero);
+        assertEquals(0f, widthZero, 0.0f);
         assertTrue(widthShort > widthPartShort);
     }
 
+    @Test
     public void testGetDesiredWidth() {
         CharSequence textShort = "test";
         CharSequence textLonger = "test\ngetDesiredWidth";
@@ -361,10 +395,10 @@ public class LayoutTest extends AndroidTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testGetLineWidth() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         for (int i = 0; i < LINE_COUNT; i++) {
             int start = layout.getLineStart(i);
             int end = layout.getLineEnd(i);
@@ -373,10 +407,10 @@ public class LayoutTest extends AndroidTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testGetCursorPath() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         Path path = new Path();
         final float epsilon = 1.0f;
         for (int i = 0; i < LINE_COUNT; i++) {
@@ -388,10 +422,10 @@ public class LayoutTest extends AndroidTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testDraw() {
         Layout layout = new MockLayout(LAYOUT_TEXT, mTextPaint, mWidth,
-                mAlign, mSpacingmult, mSpacingadd);
+                mAlign, mSpacingMult, mSpacingAdd);
         final int width = 256;
         final int height = 256;
         MockCanvas c = new MockCanvas(width, height);
@@ -404,7 +438,7 @@ public class LayoutTest extends AndroidTestCase {
             int end = layout.getLineEnd(i);
             assertEquals(LAYOUT_TEXT.toString().substring(start, end), drawCommand.text);
             float expected_y = (i + 1) * LINE_HEIGHT - LINE_DESCENT;
-            assertEquals(expected_y, drawCommand.y);
+            assertEquals(expected_y, drawCommand.y, 0.0f);
         }
     }
 

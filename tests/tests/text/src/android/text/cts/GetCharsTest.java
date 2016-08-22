@@ -16,14 +16,22 @@
 
 package android.text.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.support.test.filters.SmallTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.GetChars;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 
-public class GetCharsTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class GetCharsTest {
 
     // Returns an array of three GetChars objects, of three different classes:
     // SpannableString, SpannableStringBuilder, and SpannedString.
@@ -34,7 +42,7 @@ public class GetCharsTest extends AndroidTestCase {
                 new SpannedString(s)};
     }
 
-    @SmallTest
+    @Test
     public void testGetChars() {
         final GetChars[] getCharsCases = makeGetChars("\uD83D\uDE00");  // U+1F600 GRINNING FACE
         for (GetChars getChars : getCharsCases) {

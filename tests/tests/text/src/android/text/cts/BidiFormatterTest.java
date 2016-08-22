@@ -16,17 +16,28 @@
 
 package android.text.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.icu.util.ULocale;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.BidiFormatter;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextDirectionHeuristics;
 import android.text.style.RelativeSizeSpan;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.Locale;
 
-public class BidiFormatterTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BidiFormatterTest {
 
     private static final BidiFormatter LTR_FMT = BidiFormatter.getInstance(false /* LTR context */);
     private static final BidiFormatter RTL_FMT = BidiFormatter.getInstance(true /* RTL context */);
@@ -45,6 +56,7 @@ public class BidiFormatterTest extends AndroidTestCase {
     private static final String RLE = "\u202B";
     private static final String PDF = "\u202C";
 
+    @Test
     public void testIsRtlContext() {
         assertEquals(false, LTR_FMT.isRtlContext());
         assertEquals(true, RTL_FMT.isRtlContext());
@@ -53,6 +65,7 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertEquals(true, BidiFormatter.getInstance(true).isRtlContext());
     }
 
+    @Test
     public void testCachedInstances() {
         // Test that we get the same cached static instances for simple cases
         BidiFormatter defaultFormatterInstance = BidiFormatter.getInstance();
@@ -65,11 +78,13 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertEquals(RTL_FMT, BidiFormatter.getInstance(Locale.forLanguageTag("ar")));
     }
 
+    @Test
     public void testBuilderIsRtlContext() {
         assertEquals(false, new BidiFormatter.Builder(false).build().isRtlContext());
         assertEquals(true, new BidiFormatter.Builder(true).build().isRtlContext());
     }
 
+    @Test
     public void testIsRtl() {
         assertEquals(true, BidiFormatter.getInstance(true).isRtl(HE));
         assertEquals(true, BidiFormatter.getInstance(false).isRtl(HE));
@@ -78,6 +93,7 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertEquals(false, BidiFormatter.getInstance(false).isRtl(EN));
     }
 
+    @Test
     public void testMarkAfter() {
         assertEquals("uniform dir matches LTR context",
                 "", LTR_FMT.markAfter(EN, TextDirectionHeuristics.LTR));
@@ -100,6 +116,7 @@ public class BidiFormatterTest extends AndroidTestCase {
                 "", RTL_FMT.markAfter(".", TextDirectionHeuristics.RTL));
     }
 
+    @Test
     public void testMarkBefore() {
         assertEquals("uniform dir matches LTR context",
                 "", LTR_FMT.markBefore(EN, TextDirectionHeuristics.LTR));
@@ -122,6 +139,7 @@ public class BidiFormatterTest extends AndroidTestCase {
                 "", RTL_FMT.markBefore(".", TextDirectionHeuristics.RTL));
     }
 
+    @Test
     public void testUnicodeWrap() {
         // Make sure an input of null doesn't crash anything.
         assertNull(LTR_FMT.unicodeWrap(null));
@@ -238,6 +256,7 @@ public class BidiFormatterTest extends AndroidTestCase {
                 RTL_FMT_EXIT_RESET.unicodeWrap(HE + EN + HE, TextDirectionHeuristics.LTR, false));
     }
 
+    @Test
     public void testGetStereoReset() {
         assertTrue(LTR_FMT.getStereoReset());
         assertTrue(RTL_FMT.getStereoReset());
@@ -245,6 +264,7 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertFalse(RTL_FMT_EXIT_RESET.getStereoReset());
     }
 
+    @Test
     public void testBuilder_construction() {
         final BidiFormatter defaultFmt = new BidiFormatter.Builder().build();
         // Test that the default locale and the BidiFormatter's locale have the same direction.
@@ -264,6 +284,7 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertTrue(arabicFmt.isRtlContext());
     }
 
+    @Test
     public void testBuilder_setTextDirectionHeuristic() {
         final BidiFormatter defaultFmt = new BidiFormatter.Builder().build();
         assertFalse(defaultFmt.isRtl(EN + HE + EN));
@@ -273,6 +294,7 @@ public class BidiFormatterTest extends AndroidTestCase {
         assertTrue(modifiedFmt.isRtl(EN + HE + EN));
     }
 
+    @Test
     public void testCharSequenceApis() {
         final CharSequence CS_HE = new SpannableString(HE);
         assertEquals(true, BidiFormatter.getInstance(true).isRtl(CS_HE));

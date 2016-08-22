@@ -16,8 +16,11 @@
 
 package android.text.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.support.test.filters.SmallTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -27,10 +30,14 @@ import android.text.style.LocaleSpan;
 import android.text.style.QuoteSpan;
 import android.text.style.UnderlineSpan;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.Locale;
 
-public class SpannedTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class SpannedTest {
     // Returns an array of three Spanned objects, of three different classes:
     // SpannableString, SpannableStringBuilder, and SpannedString.
     private static Spanned[] makeSpanned(CharSequence s) {
@@ -40,7 +47,7 @@ public class SpannedTest extends AndroidTestCase {
                 new SpannedString(s)};
     }
 
-    @SmallTest
+    @Test
     public void testCharAt() {
         final Spanned[] spannedCases = makeSpanned("\uD83D\uDE00");  // U+1F600 GRINNING FACE
         for (Spanned spanned : spannedCases) {
@@ -61,7 +68,7 @@ public class SpannedTest extends AndroidTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testNextSpanTransition() {
         final int flags = Spannable.SPAN_INCLUSIVE_INCLUSIVE;
         final SpannableString text = new SpannableString("0123 5678");
