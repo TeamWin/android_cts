@@ -16,28 +16,40 @@
 
 package android.text.format.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateUtils;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class DateUtilsTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class DateUtilsTest {
     private long mBaseTime;
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
         mBaseTime = System.currentTimeMillis();
     }
 
+    @Test
     public void testGetDayOfWeekString() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -58,6 +70,7 @@ public class DateUtilsTest extends AndroidTestCase {
                 DateUtils.getDayOfWeekString(Calendar.SUNDAY, 60));
     }
 
+    @Test
     public void testGetMonthString() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -74,6 +87,7 @@ public class DateUtilsTest extends AndroidTestCase {
         assertEquals("Jan", DateUtils.getMonthString(Calendar.JANUARY, 60));
     }
 
+    @Test
     public void testGetAMPMString() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -85,6 +99,7 @@ public class DateUtilsTest extends AndroidTestCase {
     // This is to test the mapping between DateUtils' public API and
     // libcore/icu4c's implementation. More tests, in different locales, are
     // in libcore's CTS tests.
+    @Test
     public void test_getRelativeTimeSpanString() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -114,12 +129,14 @@ public class DateUtilsTest extends AndroidTestCase {
     // test the mapping between DateUtils's public API and libcore/icu4c's
     // implementation. More tests, in different locales, are in libcore's
     // CTS tests.
+    @Test
     public void test_getRelativeDateTimeString() {
         final long DAY_DURATION = 5 * 24 * 60 * 60 * 1000;
         assertNotNull(DateUtils.getRelativeDateTimeString(mContext, mBaseTime - DAY_DURATION,
                 DateUtils.MINUTE_IN_MILLIS, DateUtils.DAY_IN_MILLIS, DateUtils.FORMAT_NUMERIC_DATE));
     }
 
+    @Test
     public void test_formatElapsedTime() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -127,19 +144,20 @@ public class DateUtilsTest extends AndroidTestCase {
 
         long MINUTES = 60;
         long HOURS = 60 * MINUTES;
-        test_formatElapsedTime("02:01", 2 * MINUTES + 1);
-        test_formatElapsedTime("3:02:01", 3 * HOURS + 2 * MINUTES + 1);
+        verifyFormatElapsedTime("02:01", 2 * MINUTES + 1);
+        verifyFormatElapsedTime("3:02:01", 3 * HOURS + 2 * MINUTES + 1);
         // http://code.google.com/p/android/issues/detail?id=41401
-        test_formatElapsedTime("123:02:01", 123 * HOURS + 2 * MINUTES + 1);
+        verifyFormatElapsedTime("123:02:01", 123 * HOURS + 2 * MINUTES + 1);
     }
 
-    private void test_formatElapsedTime(String expected, long elapsedTime) {
+    private void verifyFormatElapsedTime(String expected, long elapsedTime) {
         assertEquals(expected, DateUtils.formatElapsedTime(elapsedTime));
         StringBuilder sb = new StringBuilder();
         assertEquals(expected, DateUtils.formatElapsedTime(sb, elapsedTime));
         assertEquals(expected, sb.toString());
     }
 
+    @Test
     public void testFormatSameDayTime() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -150,7 +168,6 @@ public class DateUtilsTest extends AndroidTestCase {
 
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         Date dateWithCurrentYear = new Date(currentYear - 1900, 0, 19, 3, 30, 15);
-        long timeWithCurrentYear = dateWithCurrentYear.getTime();
 
         final long DAY_DURATION = 5 * 24 * 60 * 60 * 1000;
         assertEquals("Saturday, January 24, 2009", DateUtils.formatSameDayTime(
@@ -180,6 +197,7 @@ public class DateUtilsTest extends AndroidTestCase {
 
     // This is just to exercise the wrapper that calls the libcore/icu4c implementation.
     // Full testing, in multiple locales, is in libcore's CTS tests.
+    @Test
     public void testFormatDateRange() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
@@ -192,12 +210,14 @@ public class DateUtilsTest extends AndroidTestCase {
                 fixedTime + HOUR_DURATION, DateUtils.FORMAT_SHOW_WEEKDAY));
     }
 
+    @Test
     public void testIsToday() {
         final long ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
         assertTrue(DateUtils.isToday(mBaseTime));
         assertFalse(DateUtils.isToday(mBaseTime - ONE_DAY_IN_MS));
     }
 
+    @Test
     public void test_bug_7548161() {
         if (!LocaleUtils.isCurrentLocale(mContext, Locale.US)) {
             return;
