@@ -98,6 +98,8 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
 
         resetThrottling(getInstrumentation());
 
+        UiDevice.getInstance(getInstrumentation()).pressHome();
+
         runCommandForNoOutput(getInstrumentation(), "am force-stop " + TARGET_PACKAGE);
     }
 

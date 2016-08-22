@@ -33,7 +33,7 @@ public class ShortcutManagerMultiuserTest extends BaseShortcutManagerHostTest {
     }
 
     public void testManagedUser() throws Exception {
-        if (!mIsMultiuserSupported) {
+        if (!mIsMultiuserSupported || !mIsManagedUserSupported) {
             return;
         }
         // First, create users

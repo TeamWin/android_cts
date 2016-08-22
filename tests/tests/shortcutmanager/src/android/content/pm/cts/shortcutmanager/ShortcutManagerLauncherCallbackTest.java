@@ -33,6 +33,7 @@ import com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.Shortc
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 @SmallTest
@@ -111,6 +112,13 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
         }
     }
 
+    public void testRegisterAndUnRegister() {
+        final MyCallback c = new MyCallback();
+        final Handler handler = new Handler(Looper.getMainLooper());
+        getLauncherApps().registerCallback(c, handler);
+        getLauncherApps().unregisterCallback(c);
+    }
+
     public void testCallbacks() {
         final MyCallback c = new MyCallback();
 
@@ -118,11 +126,17 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
 
         final Handler handler = new Handler(Looper.getMainLooper());
 
+        final AtomicBoolean registered = new AtomicBoolean(false);
+
         final Runnable reset = () -> {
             runWithCaller(mLauncherContext1, () -> {
-                getLauncherApps().unregisterCallback(c);
+                if (registered.get()) {
+                    getLauncherApps().unregisterCallback(c);
+                    registered.set(false);
+                }
                 c.reset();
                 getLauncherApps().registerCallback(c, handler);
+                registered.set(true);
             });
         };
         reset.run();
@@ -299,7 +313,10 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
 
         } finally {
             runWithCaller(mLauncherContext1, () -> {
-                getLauncherApps().unregisterCallback(c);
+                if (registered.get()) {
+                    getLauncherApps().unregisterCallback(c);
+                    registered.set(false);
+                }
             });
         }
     }
