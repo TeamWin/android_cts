@@ -16,6 +16,7 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -55,8 +56,7 @@ public class DateKeyListenerTest extends KeyListenerTestCase {
     public void testGetAcceptedChars() {
         MockDateKeyListener mockDateKeyListener = new MockDateKeyListener();
 
-        TextMethodUtils.assertEquals(DateKeyListener.CHARACTERS,
-                mockDateKeyListener.getAcceptedChars());
+        assertArrayEquals(DateKeyListener.CHARACTERS, mockDateKeyListener.getAcceptedChars());
     }
 
     @Test
