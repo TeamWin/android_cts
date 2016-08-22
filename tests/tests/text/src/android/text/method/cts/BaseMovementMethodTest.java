@@ -20,7 +20,9 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.widget.TextView.BufferType.EDITABLE;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.annotation.NonNull;
 import android.app.Activity;
@@ -50,129 +52,127 @@ import org.junit.runner.RunWith;
 /**
  * Test {@link BaseMovementMethod}.
  */
+@MediumTest
 @RunWith(AndroidJUnit4.class)
 public class BaseMovementMethodTest {
-
+    private Instrumentation mInstrumentation;
     private BaseMovementMethod mMovementMethod;
+    private TextView mTextView;
 
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule = new ActivityTestRule<>(CtsActivity.class);
 
-    private Instrumentation mInstrumentation;
-
     @Before
-    public void setUp() throws Exception {
+    public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mMovementMethod = new BaseMovementMethod();
     }
 
-    @MediumTest
     @Test
     public void testOnGenericMotionEvent_horizontalScroll() throws Throwable {
         final String testLine = "some text some text";
         final String testString = testLine + "\n" + testLine;
 
-        final TextView textView = createTextView();
+        mActivityRule.runOnUiThread(() -> mTextView = createTextView());
         // limit lines for horizontal scroll
-        textView.setSingleLine();
-        textView.setText(testString, EDITABLE);
+        mTextView.setSingleLine();
+        mTextView.setText(testString, EDITABLE);
 
         // limit width for horizontal scroll
 
-        setContentView(textView, (int) textView.getPaint().measureText(testLine) / 3);
+        setContentView(mTextView, (int) mTextView.getPaint().measureText(testLine) / 3);
         // assert the default scroll position
-        assertEquals(0, textView.getScrollX());
+        assertEquals(0, mTextView.getScrollX());
 
-        final Spannable text = (Spannable) textView.getText();
-        final double lineSpacing = Math.ceil(textView.getPaint().getFontSpacing());
+        final Spannable text = (Spannable) mTextView.getText();
+        final double lineSpacing = Math.ceil(mTextView.getPaint().getFontSpacing());
 
         // scroll right
         MotionEvent event = createScrollEvent(1, 0);
-        assertTrue(mMovementMethod.onGenericMotionEvent(textView, text, event));
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView, null);
-        assertEquals(lineSpacing, textView.getScrollX(), lineSpacing / 4);
+        assertTrue(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, null);
+        assertEquals(lineSpacing, mTextView.getScrollX(), lineSpacing / 4);
         event.recycle();
 
         // scroll left
         event = createScrollEvent(-1, 0);
-        assertTrue(mMovementMethod.onGenericMotionEvent(textView, text, event));
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView, null);
-        assertEquals(0, textView.getScrollX());
+        assertTrue(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, null);
+        assertEquals(0, mTextView.getScrollX());
         event.recycle();
 
         // cannot scroll to left
         event = createScrollEvent(-1, 0);
-        assertFalse(mMovementMethod.onGenericMotionEvent(textView, text, event));
+        assertFalse(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
         event.recycle();
 
         // cannot scroll to right
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView,
-                () -> textView.scrollTo((int) textView.getLayout().getLineWidth(0), 0));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView,
+                () -> mTextView.scrollTo((int) mTextView.getLayout().getLineWidth(0), 0));
         event = createScrollEvent(1, 0);
-        assertFalse(mMovementMethod.onGenericMotionEvent(textView, text, event));
+        assertFalse(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
         event.recycle();
 
         // meta shift on
         // reset scroll
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView,
-                () -> textView.scrollTo(0, 0));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView,
+                () -> mTextView.scrollTo(0, 0));
 
         // scroll top becomes scroll right
         event = createScrollEvent(0, 1, KeyEvent.META_SHIFT_ON);
-        assertTrue(mMovementMethod.onGenericMotionEvent(textView, text, event));
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView, null);
-        assertEquals(lineSpacing, textView.getScrollX(), lineSpacing / 4);
+        assertTrue(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, null);
+        assertEquals(lineSpacing, mTextView.getScrollX(), lineSpacing / 4);
         event.recycle();
 
         // scroll down becomes scroll left
         event = createScrollEvent(0, -1, KeyEvent.META_SHIFT_ON);
-        assertTrue(mMovementMethod.onGenericMotionEvent(textView, text, event));
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView, null);
-        assertEquals(0, textView.getScrollX());
+        assertTrue(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, null);
+        assertEquals(0, mTextView.getScrollX());
         event.recycle();
     }
 
-    @MediumTest
     @Test
     public void testOnGenericMotionEvent_verticalScroll() throws Throwable {
         final String testLine = "some text some text";
         final String testString = testLine + "\n" + testLine;
 
-        final TextView textView = createTextView();
+        mActivityRule.runOnUiThread(() -> mTextView = createTextView());
         // limit lines for vertical scroll
-        textView.setMaxLines(1);
-        textView.setText(testString, EDITABLE);
-        setContentView(textView, WRAP_CONTENT);
+        mTextView.setMaxLines(1);
+        mTextView.setText(testString, EDITABLE);
+        setContentView(mTextView, WRAP_CONTENT);
         // assert the default scroll positions
-        assertEquals(0, textView.getScrollY());
+        assertEquals(0, mTextView.getScrollY());
 
-        final Spannable text = (Spannable) textView.getText();
-        final int lineHeight = textView.getLineHeight();
+        final Spannable text = (Spannable) mTextView.getText();
+        final int lineHeight = mTextView.getLineHeight();
 
         // scroll down
         MotionEvent event = createScrollEvent(0, -1);
-        assertTrue(mMovementMethod.onGenericMotionEvent(textView, text, event));
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView, null);
-        assertEquals(lineHeight, textView.getScrollY(), lineHeight / 4);
+        assertTrue(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, null);
+        assertEquals(lineHeight, mTextView.getScrollY(), lineHeight / 4);
         event.recycle();
 
         // scroll up
         event = createScrollEvent(0, 1);
-        assertTrue(mMovementMethod.onGenericMotionEvent(textView, text, event));
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView, null);
-        assertEquals(0, textView.getScrollY());
+        assertTrue(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView, null);
+        assertEquals(0, mTextView.getScrollY());
         event.recycle();
 
         // cannot scroll up
         event = createScrollEvent(0, 1);
-        assertFalse(mMovementMethod.onGenericMotionEvent(textView, text, event));
+        assertFalse(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
         event.recycle();
 
         // cannot scroll down
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textView,
-                () -> textView.scrollTo(0, textView.getLayout().getHeight()));
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mTextView,
+                () -> mTextView.scrollTo(0, mTextView.getLayout().getHeight()));
         event = createScrollEvent(0, -1);
-        assertFalse(mMovementMethod.onGenericMotionEvent(textView, text, event));
+        assertFalse(mMovementMethod.onGenericMotionEvent(mTextView, text, event));
         event.recycle();
     }
 

@@ -16,10 +16,26 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import android.app.Activity;
 import android.os.SystemClock;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -34,8 +50,10 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link LinkMovementMethod}. The class is an implementation of interface
@@ -45,35 +63,33 @@ import static org.mockito.Mockito.*;
  *
  * @see android.widget.cts.TextViewTest
  */
-public class LinkMovementMethodTest extends
-        ActivityInstrumentationTestCase2<CtsActivity> {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class LinkMovementMethodTest {
     private static final String CONTENT = "clickable\nunclickable\nclickable";
 
+    private Activity mActivity;
     private LinkMovementMethod mMethod;
-
     private TextView mView;
-
     private Spannable mSpannable;
-
     private ClickableSpan mClickable0;
-
     private ClickableSpan mClickable1;
 
-    public LinkMovementMethodTest() {
-        super("android.text.cts", CtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<CtsActivity> mActivityRule = new ActivityTestRule<>(CtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() throws Throwable {
+        mActivity = mActivityRule.getActivity();
         mMethod = new LinkMovementMethod();
 
         // Set the content view with a text view which contains 3 lines,
-        mView = new TextViewNoIme(getActivity());
+        mActivityRule.runOnUiThread(() -> mView = new TextViewNoIme(mActivity));
         mView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         mView.setText(CONTENT, BufferType.SPANNABLE);
-        getInstrumentation().runOnMainSync(() -> getActivity().setContentView(mView));
-        getInstrumentation().waitForIdleSync();
+
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(mView));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
         mSpannable = (Spannable) mView.getText();
         // make first line clickable
@@ -82,10 +98,12 @@ public class LinkMovementMethodTest extends
         mClickable1 = markClickable(CONTENT.lastIndexOf('\n'), CONTENT.length());
     }
 
+    @Test
     public void testConstructor() {
         new LinkMovementMethod();
     }
 
+    @Test
     public void testGetInstance() {
         MovementMethod method0 = LinkMovementMethod.getInstance();
         assertTrue(method0 instanceof LinkMovementMethod);
@@ -95,13 +113,15 @@ public class LinkMovementMethodTest extends
         assertSame(method0, method1);
     }
 
+    @Test
     public void testOnTakeFocus() {
         LinkMovementMethod method = new LinkMovementMethod();
         Spannable spannable = new SpannableString("test sequence");
         Selection.setSelection(spannable, 0, spannable.length());
 
         assertSelection(spannable, 0, spannable.length());
-        assertTrue("Expected at least 2 spans", 2 <= spannable.getSpans(0, spannable.length(), Object.class).length);
+        assertTrue("Expected at least 2 spans",
+                2 <= spannable.getSpans(0, spannable.length(), Object.class).length);
         method.onTakeFocus(null, spannable, View.FOCUS_UP);
         assertSelection(spannable, -1);
         assertEquals(1, spannable.getSpans(0, spannable.length(), Object.class).length);
@@ -113,7 +133,8 @@ public class LinkMovementMethodTest extends
         // focus forwards
         Selection.setSelection(spannable, 0, spannable.length());
         assertSelection(spannable, 0, spannable.length());
-        assertTrue("Expected at least 3 spans", 3 <= spannable.getSpans(0, spannable.length(), Object.class).length);
+        assertTrue("Expected at least 3 spans",
+                3 <= spannable.getSpans(0, spannable.length(), Object.class).length);
         method.onTakeFocus(null, spannable, View.FOCUS_RIGHT);
         assertSelection(spannable, -1);
         assertEquals(0, spannable.getSpans(0, spannable.length(), Object.class).length);
@@ -123,21 +144,23 @@ public class LinkMovementMethodTest extends
         // param direction is unknown(0)
         Selection.setSelection(spannable, 0, spannable.length());
         assertSelection(spannable, 0, spannable.length());
-        assertTrue("Expected at least 3 spans", 3 <= spannable.getSpans(0, spannable.length(), Object.class).length);
+        assertTrue("Expected at least 3 spans",
+                3 <= spannable.getSpans(0, spannable.length(), Object.class).length);
         method.onTakeFocus(null, spannable, 0);
         assertSelection(spannable, -1);
         assertEquals(0, spannable.getSpans(0, spannable.length(), Object.class).length);
-
-        // null parameters
-        try {
-            method.onTakeFocus(new TextViewNoIme(getActivity()), null, View.FOCUS_RIGHT);
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
     }
 
     @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnTakeFocusNullSpannable() {
+        LinkMovementMethod method = new LinkMovementMethod();
+
+        method.onTakeFocus(new TextViewNoIme(mActivity), null, View.FOCUS_RIGHT);
+    }
+
+    @UiThreadTest
+    @Test
     public void testOnKeyDown() {
         // no selection
         assertSelection(mSpannable, -1);
@@ -225,17 +248,20 @@ public class LinkMovementMethodTest extends
         }
     }
 
+    @UiThreadTest
+    @Test
     public void testOnKeyUp() {
         LinkMovementMethod method = new LinkMovementMethod();
         // always returns false
         assertFalse(method.onKeyUp(null, null, 0, null));
-        assertFalse(method.onKeyUp(new TextViewNoIme(getActivity()), null, 0, null));
+        assertFalse(method.onKeyUp(new TextViewNoIme(mActivity), null, 0, null));
         assertFalse(method.onKeyUp(null, new SpannableString("blahblah"), 0, null));
         assertFalse(method.onKeyUp(null, null, KeyEvent.KEYCODE_0,
                 new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0)));
     }
 
     @UiThreadTest
+    @Test
     public void testOnTouchEvent() {
         assertSelection(mSpannable, -1);
 
@@ -297,6 +323,7 @@ public class LinkMovementMethodTest extends
     }
 
     @UiThreadTest
+    @Test
     public void testUp() {
         final MyLinkMovementMethod method = new MyLinkMovementMethod();
         assertSelection(mSpannable, -1);
@@ -327,6 +354,7 @@ public class LinkMovementMethodTest extends
     }
 
     @UiThreadTest
+    @Test
     public void testDown() {
         final MyLinkMovementMethod method = new MyLinkMovementMethod();
         assertSelection(mSpannable, -1);
@@ -357,6 +385,7 @@ public class LinkMovementMethodTest extends
     }
 
     @UiThreadTest
+    @Test
     public void testLeft() {
         final MyLinkMovementMethod method = new MyLinkMovementMethod();
         assertSelection(mSpannable, -1);
@@ -387,6 +416,7 @@ public class LinkMovementMethodTest extends
     }
 
     @UiThreadTest
+    @Test
     public void testRight() {
         final MyLinkMovementMethod method = new MyLinkMovementMethod();
         assertSelection(mSpannable, -1);
@@ -417,6 +447,7 @@ public class LinkMovementMethodTest extends
     }
 
     @UiThreadTest
+    @Test
     public void testMoveAroundUnclickable() {
         final MyLinkMovementMethod method = new MyLinkMovementMethod();
         mSpannable.removeSpan(mClickable0);
@@ -436,6 +467,7 @@ public class LinkMovementMethodTest extends
         assertSelection(mSpannable, -1);
     }
 
+    @Test
     public void testInitialize() {
         LinkMovementMethod method = new LinkMovementMethod();
         Spannable spannable = new SpannableString("test sequence");
@@ -456,11 +488,11 @@ public class LinkMovementMethodTest extends
         }
     }
 
-    private ClickableSpan markClickable(final int start, final int end) {
+    private ClickableSpan markClickable(final int start, final int end) throws Throwable {
         final ClickableSpan clickableSpan = spy(new MockClickableSpan());
-        getInstrumentation().runOnMainSync(() -> mSpannable.setSpan(clickableSpan, start, end,
+        mActivityRule.runOnUiThread(() -> mSpannable.setSpan(clickableSpan, start, end,
                 Spanned.SPAN_MARK_MARK));
-        getInstrumentation().waitForIdleSync();
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         return clickableSpan;
     }
 
