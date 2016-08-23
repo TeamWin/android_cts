@@ -113,6 +113,13 @@ public class CompatibilityConsole extends Console {
                 splitModules(shards);
             }
         }, "split", "m(?:odules)?", "(\\d+)");
+        trie.put(new Runnable() {
+            @Override
+            public void run() {
+                printLine(String.format("Android %s %s (%s)", SuiteInfo.FULLNAME,
+                        SuiteInfo.VERSION, SuiteInfo.BUILD_NUMBER));
+            }
+        }, "version"); // override tradefed 'version' command to print test suite name and version
 
         // find existing help for 'LIST_PATTERN' commands, and append these commands help
         String listHelp = commandHelp.get(LIST_PATTERN);
