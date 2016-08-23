@@ -46,6 +46,7 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
     private IBuildInfo mCtsBuild;
 
     protected boolean mIsMultiuserSupported;
+    protected boolean mIsManagedUserSupported;
 
     private ArrayList<Integer> mOriginalUsers;
 
@@ -60,6 +61,13 @@ abstract public class BaseShortcutManagerHostTest extends DeviceTestCase impleme
         assertNotNull(mCtsBuild);  // ensure build has been set before test is run.
 
         mIsMultiuserSupported = getDevice().isMultiUserSupported();
+        if (!mIsMultiuserSupported) {
+            CLog.w("Multi user not supporeted");
+        }
+        mIsManagedUserSupported = getDevice().hasFeature("android.software.managed_users");
+        if (!mIsManagedUserSupported) {
+            CLog.w("Managed users not supporeted");
+        }
 
         if (mIsMultiuserSupported) {
             mOriginalUsers = new ArrayList<>(getDevice().listUsers());
