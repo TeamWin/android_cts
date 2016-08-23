@@ -16,26 +16,27 @@
 
 package android.opengl.cts;
 
-import android.app.Activity;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Tests using EGL contexts.
  */
-public class EglContextTest extends ActivityInstrumentationTestCase2<Activity> {
-
-    public EglContextTest() {
-        super(Activity.class);
-    }
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class EglContextTest {
     /**
      * Tests creating then releasing an EGL context.
      */
+    @Test
     public void testCreateAndReleaseContext() {
         EGLDisplay eglDisplay = null;
         EGLContext eglContext = null;

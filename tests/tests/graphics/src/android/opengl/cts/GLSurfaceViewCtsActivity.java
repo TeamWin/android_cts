@@ -47,60 +47,11 @@ public class GLSurfaceViewCtsActivity extends Activity {
 
     private GLSurfaceView mView;
 
-    /** To override the blank renderer, or other settings, these
-     * static set* methods must be called before onCreate() is called.
-     * If using ActivityInstrumentationTestCase2, that means the set
-     * methods need to be called before calling getActivity in the
-     * test setUp().
-     */
-    private static GLSurfaceView.Renderer mRenderer = null;
-    public static void setRenderer(GLSurfaceView.Renderer renderer) {
-        mRenderer = renderer;
-    }
-    public static void resetRenderer() {
-        mRenderer = null;
-    }
-
-    private static int mRenderMode = 0;
-    private static boolean mRenderModeSet = false;
-    public static void setRenderMode(int renderMode) {
-        mRenderModeSet = true;
-        mRenderMode = renderMode;
-    }
-    public static void resetRenderMode() {
-        mRenderModeSet = false;
-        mRenderMode = 0;
-    }
-
-    private static int mGlVersion = 0;
-    private static boolean mGlVersionSet = false;
-    public static void setGlVersion(int glVersion) {
-        mGlVersionSet = true;
-        mGlVersion = glVersion;
-    }
-    public static void resetGlVersion() {
-        mGlVersionSet = false;
-        mGlVersion = 0;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mView = new GLSurfaceView(this);
-        // Only set this if explicitly asked for
-        if (mGlVersionSet) {
-            mView.setEGLContextClientVersion(mGlVersion);
-        }
-        // Use no-op renderer by default
-        if (mRenderer == null) {
-            mView.setRenderer(new Renderer());
-        } else {
-            mView.setRenderer(mRenderer);
-        }
-        // Only set this if explicitly asked for
-        if (mRenderModeSet) {
-            mView.setRenderMode(mRenderMode);
-        }
+        mView.setRenderer(new Renderer());
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(mView);
     }

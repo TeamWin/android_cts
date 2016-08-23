@@ -16,17 +16,24 @@
 
 package android.opengl.cts;
 
-
 import android.opengl.GLSurfaceView;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
+import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.LargeTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Tests for the GLSurfaceView class.
  */
-public class GLSurfaceViewTest extends
-        ActivityInstrumentationTestCase2<GLSurfaceViewCtsActivity> {
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class GLSurfaceViewTest {
 
     private static final int NUM_PAUSE_RESUME_ITERATIONS_WITHOUT_DELAY = 1000;
 
@@ -40,14 +47,13 @@ public class GLSurfaceViewTest extends
 
     private GLSurfaceViewCtsActivity mActivity;
 
-    public GLSurfaceViewTest() {
-        super("android.graphics.cts", GLSurfaceViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<GLSurfaceViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(GLSurfaceViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
     }
 
     /**
@@ -58,10 +64,9 @@ public class GLSurfaceViewTest extends
      * pause/resume sequences without crashing. The delay is used to allow
      * asynchronous events to occur in between the pause and resume operations.
      * </p>
-     *
-     * @throws InterruptedException
      */
     @UiThreadTest
+    @Test
     public void testPauseResumeWithDelay() throws InterruptedException {
         GLSurfaceView view = mActivity.getView();
         for (int i = 0; i < NUM_PAUSE_RESUME_ITERATIONS_WITH_DELAY; i++) {
@@ -87,6 +92,7 @@ public class GLSurfaceViewTest extends
      * </p>
      */
     @UiThreadTest
+    @Test
     public void testPauseResumeWithoutDelay() {
         GLSurfaceView view = mActivity.getView();
         for (int i = 0; i < NUM_PAUSE_RESUME_ITERATIONS_WITHOUT_DELAY; i++) {
