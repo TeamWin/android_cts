@@ -15,15 +15,11 @@
  */
 package android.opengl.cts;
 
-import android.graphics.cts.R;
-
 import android.app.Activity;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.cts.R;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -31,7 +27,7 @@ public class CompressedTextureCtsActivity extends Activity {
 
     private static final String TAG = "CompressedTextureCtsActivity";
 
-    protected Resources mResources;
+    private Resources mResources;
 
     private CompressedTextureSurfaceView mCompressedTextureView = null;
 

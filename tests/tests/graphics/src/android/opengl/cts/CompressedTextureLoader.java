@@ -15,31 +15,19 @@
  */
 package android.opengl.cts;
 
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.Buffer;
-import java.nio.ByteOrder;
-import java.util.HashMap;
-
-import android.graphics.cts.R;
-
-import android.app.Activity;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.os.Bundle;
-import android.util.Log;
-
+import android.graphics.Bitmap;
 import android.opengl.ETC1;
 import android.opengl.ETC1Util;
 import android.opengl.GLES20;
 
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
+import java.io.InputStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.HashMap;
 
 public class CompressedTextureLoader {
-    private static final String TAG = "CompressedTextureLoader";
-
     public static final String TEXTURE_UNCOMPRESSED = "UNCOMPRESSED";
     public static final String TEXTURE_ETC1 = "ETC1";
     public static final String TEXTURE_S3TC = "S3TC";

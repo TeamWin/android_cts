@@ -16,14 +16,25 @@
 
 package android.opengl.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.filters.LargeTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,8 +47,9 @@ import javax.microedition.khronos.egl.EGLDisplay;
 /**
  * Test for checking whether the ro.opengles.version property is set to the correct value.
  */
-public class OpenGlEsVersionTest
-        extends ActivityInstrumentationTestCase2<OpenGlEsVersionCtsActivity> {
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class OpenGlEsVersionTest {
 
     private static final String TAG = OpenGlEsVersionTest.class.getSimpleName();
 
@@ -48,16 +60,20 @@ public class OpenGlEsVersionTest
 
     private OpenGlEsVersionCtsActivity mActivity;
 
-    public OpenGlEsVersionTest() {
-        super("android.graphics.cts", OpenGlEsVersionCtsActivity.class);
+    @Rule
+    public ActivityTestRule<OpenGlEsVersionCtsActivity> mActivityRule =
+            new ActivityTestRule<>(OpenGlEsVersionCtsActivity.class);
+
+    @Rule
+    public ActivityTestRule<OpenGlEsVersionCtsActivity> mActivityRelaunchRule =
+            new ActivityTestRule<>(OpenGlEsVersionCtsActivity.class, false, false);
+
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivity = getActivity();
-    }
-
+    @Test
     public void testOpenGlEsVersion() throws InterruptedException {
         int detectedMajorVersion = getDetectedMajorVersion();
         int reportedVersion = getVersionFromActivityManager(mActivity);
@@ -65,16 +81,17 @@ public class OpenGlEsVersionTest
         assertEquals("Reported OpenGL ES version from ActivityManager differs from PackageManager",
                 reportedVersion, getVersionFromPackageManager(mActivity));
 
-        assertGlVersionString(1, 1);
+        verifyGlVersionString(1, 1);
         if (detectedMajorVersion == 2) {
             restartActivityWithClientVersion(2);
-            assertGlVersionString(2, getMinorVersion(reportedVersion));
+            verifyGlVersionString(2, getMinorVersion(reportedVersion));
         } else if (detectedMajorVersion == 3) {
             restartActivityWithClientVersion(3);
-            assertGlVersionString(3, getMinorVersion(reportedVersion));
+            verifyGlVersionString(3, getMinorVersion(reportedVersion));
         }
     }
 
+    @Test
     public void testRequiredExtensions() throws InterruptedException {
         int reportedVersion = getVersionFromActivityManager(mActivity);
         // We only have required extensions on ES3.1+
@@ -99,6 +116,7 @@ public class OpenGlEsVersionTest
         }
     }
 
+    @Test
     public void testExtensionPack() throws InterruptedException {
         // Requirements:
         // 1. If the device claims support for the system feature, the extension must be available.
@@ -127,6 +145,7 @@ public class OpenGlEsVersionTest
             hasAepFeature, hasAepExtension);
     }
 
+    @Test
     public void testOpenGlEsVersionForVrHighPerformance() throws InterruptedException {
         if (!supportsVrHighPerformance())
             return;
@@ -141,6 +160,7 @@ public class OpenGlEsVersionTest
             (major == 3 && minor >= 2) || major > 3);
     }
 
+    @Test
     public void testRequiredExtensionsForVrHighPerformance() throws InterruptedException {
         if (!supportsVrHighPerformance())
             return;
@@ -285,7 +305,7 @@ public class OpenGlEsVersionTest
      * Check that the version string has the form "OpenGL ES(-CM)? (\d+)\.(\d+)", where the two
      * numbers match the major and minor parameters.
      */
-    private void assertGlVersionString(int major, int minor) throws InterruptedException {
+    private void verifyGlVersionString(int major, int minor) throws InterruptedException {
         Matcher matcher = Pattern.compile("OpenGL ES(?:-CM)? (\\d+)\\.(\\d+).*")
                                  .matcher(mActivity.getVersionString());
         assertTrue("OpenGL ES version string is not of the required form "
@@ -302,15 +322,9 @@ public class OpenGlEsVersionTest
     /** Restart {@link GLSurfaceViewCtsActivity} with a specific client version. */
     private void restartActivityWithClientVersion(int version) {
         mActivity.finish();
-        setActivity(null);
 
-        try {
-            Intent intent = OpenGlEsVersionCtsActivity.createIntent(version);
-            setActivityIntent(intent);
-            mActivity = getActivity();
-        } finally {
-            setActivityIntent(null);
-        }
+        Intent intent = OpenGlEsVersionCtsActivity.createIntent(version);
+        mActivity = mActivityRelaunchRule.launchActivity(intent);
     }
 
     /**

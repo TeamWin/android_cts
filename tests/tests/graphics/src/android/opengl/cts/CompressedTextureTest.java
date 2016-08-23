@@ -16,43 +16,58 @@
 
 package android.opengl.cts;
 
-import android.os.Bundle;
-import android.test.ActivityInstrumentationTestCase2;
+import static org.junit.Assert.assertTrue;
 
-/**
- */
-public class CompressedTextureTest extends ActivityInstrumentationTestCase2<CompressedTextureCtsActivity> {
+import android.content.Intent;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 
-    public CompressedTextureTest() {
-        super("android.graphics.cts", CompressedTextureCtsActivity.class);
-    }
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class CompressedTextureTest {
+    @Rule
+    public ActivityTestRule<CompressedTextureCtsActivity> mActivityRule =
+            new ActivityTestRule<>(CompressedTextureCtsActivity.class, false, false);
 
     private void launchTest(String format) throws Exception {
-        Bundle extras = new Bundle();
-        extras.putString("TextureFormat", format);
-        CompressedTextureCtsActivity activity = launchActivity("android.graphics.cts",
-                CompressedTextureCtsActivity.class, extras);
+        Intent intent = new Intent(InstrumentationRegistry.getTargetContext(),
+                CompressedTextureCtsActivity.class);
+        intent.putExtra("TextureFormat", format);
+        CompressedTextureCtsActivity activity = mActivityRule.launchActivity(intent);
         activity.finish();
         assertTrue(activity.getPassed());
     }
 
+    @Test
     public void testTextureUncompressed() throws Exception {
         launchTest(CompressedTextureLoader.TEXTURE_UNCOMPRESSED);
     }
 
+    @Test
     public void testTextureETC1() throws Exception {
         launchTest(CompressedTextureLoader.TEXTURE_ETC1);
     }
 
+    @Test
     public void testTexturePVRTC() throws Exception {
         launchTest(CompressedTextureLoader.TEXTURE_PVRTC);
     }
 
+    @Test
     public void testTextureS3TC() throws Exception {
         launchTest(CompressedTextureLoader.TEXTURE_S3TC);
     }
 
-    /*public void testTextureATC() throws Exception {
+    @Ignore
+    @Test
+    public void testTextureATC() throws Exception {
         launchTest(CompressedTextureLoader.TEXTURE_ATC);
-    }*/
+    }
 }

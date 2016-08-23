@@ -16,9 +16,19 @@
 
 package android.opengl.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.app.Instrumentation;
-import android.os.Bundle;
-import android.test.ActivityInstrumentationTestCase2;
+import android.content.Intent;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -28,24 +38,24 @@ import javax.microedition.khronos.egl.EGLDisplay;
 /**
  * Test that gets a list of EGL configurations and tries to use each one in a GLSurfaceView.
  */
-public class EglConfigTest extends ActivityInstrumentationTestCase2<EglConfigCtsActivity> {
-
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class EglConfigTest {
     private static final int EGL_OPENGL_ES_BIT = 0x1;
-
     private static final int EGL_OPENGL_ES2_BIT = 0x4;
 
     private Instrumentation mInstrumentation;
 
-    public EglConfigTest() {
-        super("android.graphics.cts", EglConfigCtsActivity.class);
+    @Rule
+    public ActivityTestRule<EglConfigCtsActivity> mActivityRule =
+            new ActivityTestRule<>(EglConfigCtsActivity.class, false, false);
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
-    }
-
+    @Test
     public void testEglConfigs() throws Exception {
         int[] configIds = getEglConfigIds(EGL_OPENGL_ES_BIT);
         int[] configIds2 = getEglConfigIds(EGL_OPENGL_ES2_BIT);
@@ -57,11 +67,12 @@ public class EglConfigTest extends ActivityInstrumentationTestCase2<EglConfigCts
     private void runConfigTests(int[] configIds, int contextClientVersion)
             throws InterruptedException {
         for (int configId : configIds) {
-            Bundle extras = new Bundle();
-            extras.putInt(EglConfigCtsActivity.CONFIG_ID_EXTRA, configId);
-            extras.putInt(EglConfigCtsActivity.CONTEXT_CLIENT_VERSION_EXTRA, contextClientVersion);
-            EglConfigCtsActivity activity = launchActivity("android.graphics.cts",
-                    EglConfigCtsActivity.class, extras);
+            Intent intent = new Intent(InstrumentationRegistry.getTargetContext(),
+                    EglConfigCtsActivity.class);
+            intent.putExtra(EglConfigCtsActivity.CONFIG_ID_EXTRA, configId);
+            intent.putExtra(EglConfigCtsActivity.CONTEXT_CLIENT_VERSION_EXTRA,
+                    contextClientVersion);
+            EglConfigCtsActivity activity = mActivityRule.launchActivity(intent);
             activity.waitToFinishDrawing();
             activity.finish();
             mInstrumentation.waitForIdleSync();

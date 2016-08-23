@@ -16,42 +16,25 @@
 
 package android.opengl.cts;
 
-import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
-import android.graphics.cts.R;
-
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.SurfaceTexture;
-import android.opengl.ETC1;
-import android.opengl.ETC1Util;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
-import android.view.Surface;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-class CompressedTextureSurfaceView extends GLSurfaceView {
-    private static final String TAG = "CompressedTextureSurfaceView";
-    private static final int SLEEP_TIME_MS = 1000;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
+class CompressedTextureSurfaceView extends GLSurfaceView {
     CompressedTextureRender mRenderer;
 
     public CompressedTextureSurfaceView(Context context,
@@ -60,14 +43,9 @@ class CompressedTextureSurfaceView extends GLSurfaceView {
         super(context);
 
         setEGLContextClientVersion(2);
-        mRenderer = new CompressedTextureRender(context, base, compressed);
+        mRenderer = new CompressedTextureRender(base, compressed);
         setRenderer(mRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     public boolean getTestPassed() throws InterruptedException {
@@ -119,12 +97,9 @@ class CompressedTextureSurfaceView extends GLSurfaceView {
         private int muMVPMatrixHandle;
         private int maPositionHandle;
         private int maTextureHandle;
-        private int msTextureHandle;
 
         private int mColorTargetID;
         private int mFrameBufferObjectID;
-
-        private boolean updateSurface = false;
 
         private boolean mTestPassed;
         private CountDownLatch mDoneSignal;
@@ -145,8 +120,7 @@ class CompressedTextureSurfaceView extends GLSurfaceView {
             return mTestPassed;
         }
 
-        public CompressedTextureRender(Context context,
-                                       Bitmap base,
+        public CompressedTextureRender(Bitmap base,
                                        CompressedTextureLoader.Texture compressed) {
             mBaseTexture = base;
             mCompressedTexture = compressed;
@@ -358,10 +332,6 @@ class CompressedTextureSurfaceView extends GLSurfaceView {
                                               mCompressedTexture.getData());
                 checkGlError("glCompressedTexImage2D mTextureID");
             }
-        }
-
-        synchronized public void onFrameAvailable(SurfaceTexture surface) {
-            updateSurface = true;
         }
 
         private int loadShader(int shaderType, String source) {
