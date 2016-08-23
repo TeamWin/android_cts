@@ -16,7 +16,9 @@
 
 package android.graphics.drawable.shapes.cts;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -26,9 +28,15 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.drawable.shapes.OvalShape;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-public class OvalShapeTest extends TestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class OvalShapeTest {
     private static final int TEST_WIDTH  = 100;
     private static final int TEST_HEIGHT = 200;
 
@@ -37,10 +45,12 @@ public class OvalShapeTest extends TestCase {
 
     private static final int TOLERANCE = 4; // tolerance in pixels
 
+    @Test
     public void testConstructor() {
         new OvalShape();
     }
 
+    @Test
     public void testDraw() {
         OvalShape ovalShape = new OvalShape();
         Bitmap bitmap = Bitmap.createBitmap(TEST_WIDTH, TEST_HEIGHT, Config.ARGB_8888);
@@ -68,7 +78,7 @@ public class OvalShapeTest extends TestCase {
         assertEquals((double)SQUARE / Math.sqrt(2), count, TOLERANCE);
     }
 
-    @SmallTest
+    @Test
     public void testGetOutline() {
         Outline outline = new Outline();
         Rect rect = new Rect();
