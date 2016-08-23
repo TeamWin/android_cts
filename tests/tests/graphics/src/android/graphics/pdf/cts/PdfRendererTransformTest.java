@@ -29,7 +29,7 @@ import android.graphics.pdf.PdfRenderer.Page;
 import android.support.annotation.Nullable;
 import android.support.annotation.RawRes;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.LargeTest;
+import android.support.test.filters.SmallTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +42,6 @@ import java.util.Collection;
 /**
  * Test for the {@link PdfRenderer}
  */
-@LargeTest
 @RunWith(Parameterized.class)
 public class PdfRendererTransformTest {
     private Context mContext;
@@ -119,6 +118,9 @@ public class PdfRendererTransformTest {
         mContext = InstrumentationRegistry.getTargetContext();
     }
 
+    // Note that the size annotation refers to the "size" of each individual parameterized run,
+    // and not the "full" run.
+    @SmallTest
     @Test
     public void test() throws Exception {
         renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
