@@ -16,14 +16,22 @@
 
 package android.text.style.cts;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 
 import android.graphics.Rasterizer;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.TextPaint;
 import android.text.style.RasterizerSpan;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class RasterizerSpanTest extends TestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class RasterizerSpanTest {
+    @Test
     public void testConstructor() {
         Rasterizer r = new Rasterizer();
 
@@ -31,6 +39,7 @@ public class RasterizerSpanTest extends TestCase {
         new RasterizerSpan(null);
     }
 
+    @Test
     public void testGetRasterizer() {
         Rasterizer expected = new Rasterizer();
 
@@ -41,6 +50,7 @@ public class RasterizerSpanTest extends TestCase {
         assertNull(rasterizerSpan.getRasterizer());
     }
 
+    @Test
     public void testUpdateDrawState() {
         Rasterizer rasterizer = new Rasterizer();
         RasterizerSpan rasterizerSpan = new RasterizerSpan(rasterizer);
@@ -50,12 +60,13 @@ public class RasterizerSpanTest extends TestCase {
 
         rasterizerSpan.updateDrawState(tp);
         assertSame(rasterizer, tp.getRasterizer());
+    }
 
-        try {
-            rasterizerSpan.updateDrawState(null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-            // expected, test success.
-        }
+    @Test(expected=NullPointerException.class)
+    public void testUpdateDrawStateNull() {
+        Rasterizer rasterizer = new Rasterizer();
+        RasterizerSpan rasterizerSpan = new RasterizerSpan(rasterizer);
+
+        rasterizerSpan.updateDrawState(null);
     }
 }
