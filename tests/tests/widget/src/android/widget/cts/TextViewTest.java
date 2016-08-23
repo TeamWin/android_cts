@@ -204,7 +204,6 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
     }
 
-    @UiThreadTest
     @Test
     public void testConstructor() {
         new TextView(mActivity);
