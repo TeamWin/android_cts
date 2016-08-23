@@ -16,6 +16,8 @@
 
 package android.graphics.pdf.cts;
 
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -39,8 +41,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Map;
-
-import static org.junit.Assert.fail;
 
 /**
  * Utilities for this package
@@ -269,12 +269,12 @@ class Utils {
     }
 
     /**
-     * Run a runnable and expect and exception of a certain type.
+     * Run a runnable and expect an exception of a certain type.
      *
      * @param r             The {@link Invokable} to run
      * @param expectedClass The expected exception type
      */
-    static void assertException(@NonNull Invokable r,
+    static void verifyException(@NonNull Invokable r,
             @NonNull Class<? extends Exception> expectedClass) {
         try {
             r.run();
@@ -283,12 +283,11 @@ class Utils {
                 return;
             } else {
                 Log.e(LOG_TAG, "Incorrect exception", e);
-                throw new AssertionError("Expected: " + expectedClass.getName() + ", got: "
-                        + e.getClass().getName());
+                fail("Expected: " + expectedClass.getName() + ", got: " + e.getClass().getName());
             }
         }
 
-        throw new AssertionError("No exception thrown");
+        fail("Expected to have " + expectedClass.getName() + " exception thrown");
     }
 
     /**

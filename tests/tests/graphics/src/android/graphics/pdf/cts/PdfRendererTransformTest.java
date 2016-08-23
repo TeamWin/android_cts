@@ -16,6 +16,11 @@
 
 package android.graphics.pdf.cts;
 
+import static android.graphics.pdf.cts.Utils.A4_HEIGHT_PTS;
+import static android.graphics.pdf.cts.Utils.A4_PORTRAIT;
+import static android.graphics.pdf.cts.Utils.A4_WIDTH_PTS;
+import static android.graphics.pdf.cts.Utils.renderAndCompare;
+
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -24,7 +29,9 @@ import android.graphics.pdf.PdfRenderer.Page;
 import android.support.annotation.Nullable;
 import android.support.annotation.RawRes;
 import android.support.test.InstrumentationRegistry;
-import org.junit.BeforeClass;
+import android.support.test.filters.LargeTest;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,14 +39,13 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static android.graphics.pdf.cts.Utils.*;
-
 /**
  * Test for the {@link PdfRenderer}
  */
+@LargeTest
 @RunWith(Parameterized.class)
 public class PdfRendererTransformTest {
-    private static Context sContext;
+    private Context mContext;
     private int mWidth;
     private int mHeight;
     private int mDocRes;
@@ -108,14 +114,14 @@ public class PdfRendererTransformTest {
         return params;
     }
 
-    @BeforeClass
-    public static void setUp() {
-        sContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
     }
 
     @Test
     public void test() throws Exception {
         renderAndCompare(mWidth, mHeight, mDocRes, mClipping, mTransformation, mRenderMode,
-                sContext);
+                mContext);
     }
 }
