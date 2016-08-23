@@ -31,4 +31,10 @@ public class Constants {
     public static final String TEST_ACTIVITY_UNTHROTTLED = "testActivityUnthrottled";
     public static final String TEST_FG_SERVICE_UNTHROTTLED = "testFgServiceUnthrottled";
     public static final String TEST_BG_SERVICE_THROTTLED = "testBgServiceThrottled";
+
+    public static final String TEST_INLINE_REPLY_SHOW = "testInlineReplyShow";
+    public static final String TEST_INLINE_REPLY_CHECK = "testInlineReplyCheck";
+
+    public static final String INLINE_REPLY_TITLE = "InlineReplyTestTitle";
+    public static final String INLINE_REPLY_REMOTE_INPUT_CAPTION = "__INLINE_REPLY_REMOTE_INPUT__";
 }
