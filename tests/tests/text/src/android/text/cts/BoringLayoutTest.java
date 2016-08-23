@@ -18,14 +18,26 @@ package android.text.cts;
 
 import static android.cts.util.WidgetTestUtils.sameCharSequence;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyFloat;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.BoringLayout;
 import android.text.BoringLayout.Metrics;
 import android.text.Layout;
@@ -33,7 +45,13 @@ import android.text.Layout.Alignment;
 import android.text.TextPaint;
 import android.text.TextUtils;
 
-public class BoringLayoutTest extends AndroidTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BoringLayoutTest {
     private static final float SPACING_MULT_NO_SCALE = 1.0f;
     private static final float SPACING_ADD_NO_SCALE = 0.0f;
     private static final int DEFAULT_OUTER_WIDTH = 100;
@@ -57,12 +75,12 @@ public class BoringLayoutTest extends AndroidTestCase {
 
     private BoringLayout mBoringLayout;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
         mBoringLayout = makeDefaultBoringLayout();
     }
 
+    @Test
     public void testConstructors() {
         new BoringLayout(DEFAULT_CHAR_SEQUENCE,
                 DEFAULT_PAINT,
@@ -93,6 +111,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertEquals(height + METRICS_TOP, boringLayout.getLineDescent(0));
     }
 
+    @Test
     public void testScale() {
         // no scale
         verifyMultAddScale(1.0f, 0.0f);
@@ -110,6 +129,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         verifyMultAddScale(1.0f, -3.0f);
     }
 
+    @Test
     public void testPreconditions() {
         assertEquals(1, mBoringLayout.getLineCount());
         assertEquals(0, mBoringLayout.getLineTop(0));
@@ -120,7 +140,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertEquals(DEFAULT_CHAR_SEQUENCE.length(), mBoringLayout.getLineStart(10));
         assertEquals(Layout.DIR_LEFT_TO_RIGHT, mBoringLayout.getParagraphDirection(0));
         assertFalse(mBoringLayout.getLineContainsTab(0));
-        assertEquals((float) METRICS_WIDTH, mBoringLayout.getLineMax(0));
+        assertEquals((float) METRICS_WIDTH, mBoringLayout.getLineMax(0), 0.0f);
         assertEquals(Layout.DIR_LEFT_TO_RIGHT, mBoringLayout.getParagraphDirection(0));
         assertEquals(0, mBoringLayout.getEllipsisCount(0));
         mBoringLayout.ellipsized(0, 1);
@@ -129,6 +149,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertEquals(1, mBoringLayout.getEllipsisStart(0));
     }
 
+    @Test
     public void testReplaceOrMake() {
         String source = "This is a SpannableString.";
         BoringLayout layout_1 = mBoringLayout.replaceOrMake(
@@ -158,28 +179,31 @@ public class BoringLayoutTest extends AndroidTestCase {
     }
 
 
+    @Test
     public void testAlignment() {
         BoringLayout boringLayout = makeBoringLayoutAlign(Layout.Alignment.ALIGN_NORMAL);
-        assertEquals(0.0f, boringLayout.getLineLeft(0));
-        assertEquals((float) DEFAULT_METRICS.width, boringLayout.getLineRight(0));
+        assertEquals(0.0f, boringLayout.getLineLeft(0), 0.0f);
+        assertEquals((float) DEFAULT_METRICS.width, boringLayout.getLineRight(0), 0.0f);
 
         boringLayout = makeBoringLayoutAlign(Layout.Alignment.ALIGN_CENTER);
         int expectedWidth = DEFAULT_OUTER_WIDTH - METRICS_WIDTH;
-        assertEquals((float) expectedWidth / 2, boringLayout.getLineLeft(0));
+        assertEquals((float) expectedWidth / 2, boringLayout.getLineLeft(0), 0.0f);
         expectedWidth = DEFAULT_OUTER_WIDTH + METRICS_WIDTH;
-        assertEquals((float) expectedWidth / 2, boringLayout.getLineRight(0));
+        assertEquals((float) expectedWidth / 2, boringLayout.getLineRight(0), 0.0f);
 
         boringLayout = makeBoringLayoutAlign(Layout.Alignment.ALIGN_OPPOSITE);
         expectedWidth = DEFAULT_OUTER_WIDTH - METRICS_WIDTH;
-        assertEquals((float) expectedWidth, boringLayout.getLineLeft(0));
-        assertEquals((float) DEFAULT_OUTER_WIDTH, boringLayout.getLineRight(0));
+        assertEquals((float) expectedWidth, boringLayout.getLineLeft(0), 0.0f);
+        assertEquals((float) DEFAULT_OUTER_WIDTH, boringLayout.getLineRight(0), 0.0f);
     }
 
+    @Test
     public void testGetLineDescent_withIncludePadding() {
         final int height = METRICS_BOTTOM - METRICS_TOP;
         assertEquals(height + METRICS_TOP, mBoringLayout.getLineDescent(0));
     }
 
+    @Test
     public void testGetLineDescent_withoutIncludePadding() {
         BoringLayout boringLayout = new BoringLayout(
                 DEFAULT_CHAR_SEQUENCE,
@@ -195,6 +219,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertEquals(height + METRICS_ASCENT, boringLayout.getLineDescent(0));
     }
 
+    @Test
     public void testIncludePadding() {
         assertEquals(METRICS_TOP - METRICS_ASCENT, mBoringLayout.getTopPadding());
         assertEquals(METRICS_BOTTOM - METRICS_DESCENT, mBoringLayout.getBottomPadding());
@@ -215,6 +240,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertEquals(METRICS_DESCENT - METRICS_ASCENT, boringLayout.getHeight());
     }
 
+    @Test
     public void testIsBoringString() {
         TextPaint paint = new TextPaint();
         assertNotNull(BoringLayout.isBoring("hello android", paint));
@@ -231,6 +257,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertNull(BoringLayout.isBoring("hello android\n\n\n", paint));
     }
 
+    @Test
     public void testIsBoring_resetsFontMetrics() {
         int someInt = 100;
         String text = "some text";
@@ -256,11 +283,13 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertEquals(expectedMetrics.leading, actualMetrics.leading);
     }
 
+    @Test
     public void testGetLineDirections() {
         assertNotNull(mBoringLayout.getLineDirections(0));
         assertNotNull(mBoringLayout.getLineDirections(2));
     }
 
+    @Test
     public void testMake() {
         BoringLayout boringLayout = BoringLayout.make(DEFAULT_CHAR_SEQUENCE,
                 DEFAULT_PAINT,
@@ -272,7 +301,6 @@ public class BoringLayoutTest extends AndroidTestCase {
                 true);
         assertNotNull(boringLayout);
 
-        boringLayout = null;
         boringLayout = BoringLayout.make(DEFAULT_CHAR_SEQUENCE,
                 DEFAULT_PAINT,
                 DEFAULT_OUTER_WIDTH,
@@ -286,6 +314,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         assertNotNull(boringLayout);
     }
 
+    @Test
     public void testDraw() {
         BoringLayout boringLayout = BoringLayout.make(DEFAULT_CHAR_SEQUENCE,
                 DEFAULT_PAINT,
@@ -336,7 +365,7 @@ public class BoringLayoutTest extends AndroidTestCase {
         return metrics;
     }
 
-    private BoringLayout makeDefaultBoringLayout(){
+    private static BoringLayout makeDefaultBoringLayout() {
         return new BoringLayout(DEFAULT_CHAR_SEQUENCE,
                                 DEFAULT_PAINT,
                                 DEFAULT_OUTER_WIDTH,
@@ -347,7 +376,7 @@ public class BoringLayoutTest extends AndroidTestCase {
                                 true);
     }
 
-    private BoringLayout makeBoringLayout(float spacingMult,float spacingAdd){
+    private static BoringLayout makeBoringLayout(float spacingMult,float spacingAdd) {
         return new BoringLayout(DEFAULT_CHAR_SEQUENCE,
                                 DEFAULT_PAINT,
                                 DEFAULT_OUTER_WIDTH,
@@ -358,7 +387,7 @@ public class BoringLayoutTest extends AndroidTestCase {
                                 true);
     }
 
-    private BoringLayout makeBoringLayoutAlign(Alignment align){
+    private static BoringLayout makeBoringLayoutAlign(Alignment align) {
         return new BoringLayout(DEFAULT_CHAR_SEQUENCE,
                                 DEFAULT_PAINT,
                                 DEFAULT_OUTER_WIDTH,

@@ -16,8 +16,15 @@
 
 package android.text.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.graphics.Typeface;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Layout;
 import android.text.Layout.Alignment;
@@ -33,12 +40,18 @@ import android.text.TextUtils.TruncateAt;
 import android.text.method.cts.EditorState;
 import android.text.style.StyleSpan;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class StaticLayoutTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class StaticLayoutTest {
     private static final float SPACE_MULTI = 1.0f;
     private static final float SPACE_ADD = 0.0f;
     private static final int DEFAULT_OUTER_WIDTH = 150;
@@ -67,15 +80,10 @@ public class StaticLayoutTest extends AndroidTestCase {
         // need to have a subclass to insure measurement happens in Java and not C++
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (mDefaultPaint == null) {
-            mDefaultPaint = new TextPaint();
-        }
-        if (mDefaultLayout == null) {
-            mDefaultLayout = createDefaultStaticLayout();
-        }
+    @Before
+    public void setup() {
+        mDefaultPaint = new TextPaint();
+        mDefaultLayout = createDefaultStaticLayout();
     }
 
     private StaticLayout createDefaultStaticLayout() {
@@ -103,6 +111,7 @@ public class StaticLayoutTest extends AndroidTestCase {
     /**
      * Constructor test
      */
+    @Test
     public void testConstructor() {
         new StaticLayout(LAYOUT_TEXT, mDefaultPaint, DEFAULT_OUTER_WIDTH,
                 DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
@@ -112,14 +121,14 @@ public class StaticLayoutTest extends AndroidTestCase {
 
         new StaticLayout(LAYOUT_TEXT, 0, LAYOUT_TEXT.length(), mDefaultPaint,
                 DEFAULT_OUTER_WIDTH, DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, false, null, 0);
-
-        try {
-            new StaticLayout(null, null, -1, null, 0, 0, true);
-            fail("should throw NullPointerException here");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testConstructorNull() {
+        new StaticLayout(null, null, -1, null, 0, 0, true);
+    }
+
+    @Test
     public void testBuilder() {
         {
             // Obtain.
@@ -134,8 +143,8 @@ public class StaticLayoutTest extends AndroidTestCase {
             assertEquals(TextDirectionHeuristics.FIRSTSTRONG_LTR,
                     layout.getTextDirectionHeuristic());
             assertEquals(Alignment.ALIGN_NORMAL, layout.getAlignment());
-            assertEquals(0.0f, layout.getSpacingAdd());
-            assertEquals(1.0f, layout.getSpacingMultiplier());
+            assertEquals(0.0f, layout.getSpacingAdd(), 0.0f);
+            assertEquals(1.0f, layout.getSpacingMultiplier(), 0.0f);
             assertEquals(DEFAULT_OUTER_WIDTH, layout.getEllipsizedWidth());
         }
         {
@@ -179,8 +188,8 @@ public class StaticLayoutTest extends AndroidTestCase {
                     LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
             builder.setLineSpacing(1.0f, 2.0f);
             StaticLayout layout = builder.build();
-            assertEquals(1.0f, layout.getSpacingAdd());
-            assertEquals(2.0f, layout.getSpacingMultiplier());
+            assertEquals(1.0f, layout.getSpacingAdd(), 0.0f);
+            assertEquals(2.0f, layout.getSpacingMultiplier(), 0.0f);
         }
         {
             // setEllipsizedWidth and setEllipsize.
@@ -225,6 +234,7 @@ public class StaticLayoutTest extends AndroidTestCase {
      *  if you ask for a position below the bottom of the text, you get the last line.
      *  Test 4 values containing -1, 0, normal number and > count
      */
+    @Test
     public void testGetLineForVertical() {
         assertEquals(0, mDefaultLayout.getLineForVertical(-1));
         assertEquals(0, mDefaultLayout.getLineForVertical(0));
@@ -235,6 +245,7 @@ public class StaticLayoutTest extends AndroidTestCase {
     /**
      * Return the number of lines of text in this layout.
      */
+    @Test
     public void testGetLineCount() {
         assertEquals(LINE_COUNT, mDefaultLayout.getLineCount());
     }
@@ -245,21 +256,20 @@ public class StaticLayoutTest extends AndroidTestCase {
      * A line of text contains top and bottom in height. this method just get the top of a line
      * Test 4 values containing -1, 0, normal number and > count
      */
+    @Test
     public void testGetLineTop() {
         assertTrue(mDefaultLayout.getLineTop(0) >= 0);
         assertTrue(mDefaultLayout.getLineTop(1) > mDefaultLayout.getLineTop(0));
+    }
 
-        try {
-            mDefaultLayout.getLineTop(-1);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetLineTopBeforeFirst() {
+        mDefaultLayout.getLineTop(-1);
+    }
 
-        try {
-            mDefaultLayout.getLineTop(LARGER_THAN_LINE_COUNT );
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetLineTopAfterLast() {
+        mDefaultLayout.getLineTop(LARGER_THAN_LINE_COUNT );
     }
 
     /**
@@ -267,41 +277,40 @@ public class StaticLayoutTest extends AndroidTestCase {
      * This method just like getLineTop, descent means the bottom pixel of the line
      * Test 4 values containing -1, 0, normal number and > count
      */
+    @Test
     public void testGetLineDescent() {
         assertTrue(mDefaultLayout.getLineDescent(0) > 0);
         assertTrue(mDefaultLayout.getLineDescent(1) > 0);
+    }
 
-        try {
-            mDefaultLayout.getLineDescent(-1);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetLineDescentBeforeFirst() {
+        mDefaultLayout.getLineDescent(-1);
+    }
 
-        try {
-            mDefaultLayout.getLineDescent(LARGER_THAN_LINE_COUNT );
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetLineDescentAfterLast() {
+        mDefaultLayout.getLineDescent(LARGER_THAN_LINE_COUNT );
     }
 
     /**
      * Returns the primary directionality of the paragraph containing the specified line.
      * By default, each line should be same
      */
+    @Test
     public void testGetParagraphDirection() {
         assertEquals(mDefaultLayout.getParagraphDirection(0),
                 mDefaultLayout.getParagraphDirection(1));
-        try {
-            mDefaultLayout.getParagraphDirection(-1);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    }
 
-        try {
-            mDefaultLayout.getParagraphDirection(LARGER_THAN_LINE_COUNT);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetParagraphDirectionBeforeFirst() {
+        mDefaultLayout.getParagraphDirection(-1);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetParagraphDirectionAfterLast() {
+        mDefaultLayout.getParagraphDirection(LARGER_THAN_LINE_COUNT );
     }
 
     /**
@@ -310,41 +319,39 @@ public class StaticLayoutTest extends AndroidTestCase {
      * Test 4 values containing -1, 0, normal number and > count
      * Each line's offset must >= 0
      */
+    @Test
     public void testGetLineStart() {
         assertTrue(mDefaultLayout.getLineStart(0) >= 0);
         assertTrue(mDefaultLayout.getLineStart(1) >= 0);
+    }
 
-        try {
-            mDefaultLayout.getLineStart(-1);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetLineStartBeforeFirst() {
+        mDefaultLayout.getLineStart(-1);
+    }
 
-        try {
-            mDefaultLayout.getLineStart(LARGER_THAN_LINE_COUNT);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetLineStartAfterLast() {
+        mDefaultLayout.getLineStart(LARGER_THAN_LINE_COUNT );
     }
 
     /*
      * Returns whether the specified line contains one or more tabs.
      */
+    @Test
     public void testGetContainsTab() {
         assertTrue(mDefaultLayout.getLineContainsTab(0));
         assertFalse(mDefaultLayout.getLineContainsTab(1));
+    }
 
-        try {
-            mDefaultLayout.getLineContainsTab(-1);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetContainsTabBeforeFirst() {
+        mDefaultLayout.getLineContainsTab(-1);
+    }
 
-        try {
-            mDefaultLayout.getLineContainsTab(LARGER_THAN_LINE_COUNT );
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testGetContainsTabAfterLast() {
+        mDefaultLayout.getLineContainsTab(LARGER_THAN_LINE_COUNT );
     }
 
     /**
@@ -354,27 +361,27 @@ public class StaticLayoutTest extends AndroidTestCase {
      * We can not check the return value, for Directions's field is package private
      * So only check it not null
      */
-    public void testGetLineDirections() {
+    @Test
+    public void testGetLineDirections(){
         assertNotNull(mDefaultLayout.getLineDirections(0));
         assertNotNull(mDefaultLayout.getLineDirections(1));
+    }
 
-        try {
-            mDefaultLayout.getLineDirections(-1);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testGetLineDirectionsBeforeFirst() {
+        mDefaultLayout.getLineDirections(-1);
+    }
 
-        try {
-            mDefaultLayout.getLineDirections(LARGER_THAN_LINE_COUNT);
-            fail("should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException e) {
-        }
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void testGetLineDirectionsAfterLast() {
+        mDefaultLayout.getLineDirections(LARGER_THAN_LINE_COUNT);
     }
 
     /**
      * Returns the (negative) number of extra pixels of ascent padding
      * in the top line of the Layout.
      */
+    @Test
     public void testGetTopPadding() {
         assertTrue(mDefaultLayout.getTopPadding() < 0);
     }
@@ -382,6 +389,7 @@ public class StaticLayoutTest extends AndroidTestCase {
     /**
      * Returns the number of extra pixels of descent padding in the bottom line of the Layout.
      */
+    @Test
     public void testGetBottomPadding() {
         assertTrue(mDefaultLayout.getBottomPadding() > 0);
     }
@@ -390,6 +398,7 @@ public class StaticLayoutTest extends AndroidTestCase {
      * Returns the number of characters to be ellipsized away, or 0 if no ellipsis is to take place.
      * So each line must >= 0
      */
+    @Test
     public void testGetEllipsisCount() {
         // Multilines (6 lines) and TruncateAt.START so no ellipsis at all
         mDefaultLayout = createEllipsizeStaticLayout(LAYOUT_TEXT,
@@ -457,6 +466,7 @@ public class StaticLayoutTest extends AndroidTestCase {
      * relative to the start of the line.
      * (So 0 if the beginning of the line is ellipsized, not getLineStart().)
      */
+    @Test
     public void testGetEllipsisStart() {
         mDefaultLayout = createEllipsizeStaticLayout();
         assertTrue(mDefaultLayout.getEllipsisStart(0) >= 0);
@@ -482,6 +492,7 @@ public class StaticLayoutTest extends AndroidTestCase {
      * ellipsizedWidth if argument is not null
      * outerWidth if argument is null
      */
+    @Test
     public void testGetEllipsizedWidth() {
         int ellipsizedWidth = 60;
         int outerWidth = 100;
@@ -496,6 +507,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         assertEquals(outerWidth, layout.getEllipsizedWidth());
     }
 
+    @Test
     public void testEllipsis_singleLine() {
         {
             // Single line case and TruncateAt.END so that we have some ellipsis
@@ -577,6 +589,7 @@ public class StaticLayoutTest extends AndroidTestCase {
      * 2. change the text
      * 3. Check the text won't change to the StaticLayout
     */
+    @Test
     public void testImmutableStaticLayout() {
         Editable editable =  Editable.Factory.getInstance().newEditable("123\t\n555");
         StaticLayout layout = new StaticLayout(editable, mDefaultPaint,
@@ -623,9 +636,9 @@ public class StaticLayoutTest extends AndroidTestCase {
     };
 
     private List<CharSequence> buildTestCharSequences(String testString, Normalizer.Form[] forms) {
-        List<CharSequence> result = new ArrayList<CharSequence>();
+        List<CharSequence> result = new ArrayList<>();
 
-        List<String> normalizedStrings = new ArrayList<String>();
+        List<String> normalizedStrings = new ArrayList<>();
         for (Normalizer.Form form: forms) {
             normalizedStrings.add(Normalizer.normalize(testString, form));
         }
@@ -664,6 +677,7 @@ public class StaticLayoutTest extends AndroidTestCase {
                 ", Normalization: " + normalized;
     }
 
+    @Test
     public void testGetOffset_ASCII() {
         String testStrings[] = { "abcde", "ab\ncd", "ab\tcd", "ab\n\nc", "ab\n\tc" };
 
@@ -715,6 +729,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE() {
         String testStrings[] = new String[] {
               // Cyrillic alphabets.
@@ -747,6 +762,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE_Normalization() {
         // "A" with acute, circumflex, tilde, diaeresis, ring above.
         String testString = "\u00C1\u00C2\u00C3\u00C4\u00C5";
@@ -805,6 +821,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE_SurrogatePairs() {
         // Emoticons for surrogate pairs tests.
         String testString =
@@ -841,6 +858,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE_Thai() {
         // Thai Characters. The expected cursorable boundary is
         // | \u0E02 | \u0E2D | \u0E1A | \u0E04\u0E38 | \u0E13 |
@@ -869,6 +887,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE_Hebrew() {
         String testString = "\u05DE\u05E1\u05E2\u05D3\u05D4"; // Hebrew Characters
         for (CharSequence seq: buildTestCharSequences(testString, Normalizer.Form.values())) {
@@ -894,6 +913,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE_Arabic() {
         // Arabic Characters. The expected cursorable boundary is
         // | \u0623 \u064F | \u0633 \u0652 | \u0631 \u064E | \u0629 \u064C |";
@@ -928,6 +948,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetOffset_UNICODE_Bidi() {
         // String having RTL characters and LTR characters
 
@@ -1014,6 +1035,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         state.mSelectionStart = state.mSelectionEnd = newOffset;
     }
 
+    @Test
     public void testGetOffset_Emoji() {
         EditorState state = new EditorState();
 
@@ -1138,6 +1160,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         state.assertEquals("| U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8 U+1F1E6 U+1F1E8");
     }
 
+    @Test
     public void testGetOffsetForHorizontal_Multilines() {
         // Emoticons for surrogate pairs tests.
         String testString = "\uD83D\uDE00\uD83D\uDE01\uD83D\uDE02\uD83D\uDE03\uD83D\uDE04";
@@ -1159,6 +1182,7 @@ public class StaticLayoutTest extends AndroidTestCase {
         assertEquals(testString.length(), layout.getOffsetForHorizontal(lineCount - 1, width * 2));
     }
 
+    @Test
     public void testIsRtlCharAt() {
         {
             String testString = "ab(\u0623\u0624)c\u0625";
@@ -1191,21 +1215,23 @@ public class StaticLayoutTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetHorizontal() {
         String testString = "abc\u0623\u0624\u0625def";
         StaticLayout layout = new StaticLayout(testString, mDefaultPaint,
                 DEFAULT_OUTER_WIDTH, DEFAULT_ALIGN, SPACE_MULTI, SPACE_ADD, true);
 
-        assertEquals(layout.getPrimaryHorizontal(0), layout.getSecondaryHorizontal(0));
+        assertEquals(layout.getPrimaryHorizontal(0), layout.getSecondaryHorizontal(0), 0.0f);
         assertTrue(layout.getPrimaryHorizontal(0) < layout.getPrimaryHorizontal(3));
         assertTrue(layout.getPrimaryHorizontal(3) < layout.getSecondaryHorizontal(3));
         assertTrue(layout.getPrimaryHorizontal(4) < layout.getSecondaryHorizontal(3));
-        assertEquals(layout.getPrimaryHorizontal(4), layout.getSecondaryHorizontal(4));
-        assertEquals(layout.getPrimaryHorizontal(3), layout.getSecondaryHorizontal(6));
-        assertEquals(layout.getPrimaryHorizontal(6), layout.getSecondaryHorizontal(3));
-        assertEquals(layout.getPrimaryHorizontal(7), layout.getSecondaryHorizontal(7));
+        assertEquals(layout.getPrimaryHorizontal(4), layout.getSecondaryHorizontal(4), 0.0f);
+        assertEquals(layout.getPrimaryHorizontal(3), layout.getSecondaryHorizontal(6), 0.0f);
+        assertEquals(layout.getPrimaryHorizontal(6), layout.getSecondaryHorizontal(3), 0.0f);
+        assertEquals(layout.getPrimaryHorizontal(7), layout.getSecondaryHorizontal(7), 0.0f);
     }
 
+    @Test
     public void testVeryLargeString() {
         final int MAX_COUNT = 1 << 21;
         final int WORD_SIZE = 32;
@@ -1220,7 +1246,8 @@ public class StaticLayoutTest extends AndroidTestCase {
         assertNotNull(layout);
     }
 
-    public void testDoesntCrashWhenWordStyleOverlap() {
+    @Test
+    public void testNoCrashWhenWordStyleOverlap() {
        // test case where word boundary overlaps multiple style spans
        SpannableStringBuilder text = new SpannableStringBuilder("word boundaries, overlap style");
        // span covers "boundaries"

@@ -16,13 +16,21 @@
 
 package android.text.cts;
 
-import android.test.AndroidTestCase;
+import static org.junit.Assert.assertEquals;
+
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.InputFilter;
 import android.text.InputFilter.LengthFilter;
 import android.text.SpannableStringBuilder;
 
-public class InputFilter_LengthFilterTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class InputFilter_LengthFilterTest {
+    @Test
     public void testFilter() {
         // Define the variables
         CharSequence source;
