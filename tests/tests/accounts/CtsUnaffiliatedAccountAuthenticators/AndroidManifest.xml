@@ -41,6 +41,16 @@
             <meta-data android:name="android.accounts.AccountAuthenticator"
                        android:resource="@xml/standard_authenticator" />
         </service>
+
+        <service
+                android:name=".DefaultAccountAuthService"
+                android:exported="false">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data android:name="android.accounts.AccountAuthenticator"
+                       android:resource="@xml/default_authenticator" />
+        </service>
 <!--
         <service android:name=".CustomAccountAuthService" android:exported="false">
             <intent-filter>
