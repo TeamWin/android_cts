@@ -16,6 +16,7 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -82,7 +83,7 @@ public class DialerKeyListenerTest extends KeyListenerTestCase {
     public void testGetAcceptedChars() {
         MockDialerKeyListener mockDialerKeyListener = new MockDialerKeyListener();
 
-        TextMethodUtils.assertEquals(DialerKeyListener.CHARACTERS,
+        assertArrayEquals(DialerKeyListener.CHARACTERS,
                 mockDialerKeyListener.getAcceptedChars());
     }
 

@@ -16,6 +16,7 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
@@ -40,7 +41,7 @@ public class HideReturnsTransformationMethodTest {
     @Test
     public void testGetOriginal() {
         MyHideReturnsTranformationMethod method = new MyHideReturnsTranformationMethod();
-        TextMethodUtils.assertEquals(new char[] { '\r' }, method.getOriginal());
+        assertArrayEquals(new char[] { '\r' }, method.getOriginal());
     }
 
     @Test
@@ -55,7 +56,7 @@ public class HideReturnsTransformationMethodTest {
     @Test
     public void testGetReplacement() {
         MyHideReturnsTranformationMethod method = new MyHideReturnsTranformationMethod();
-        TextMethodUtils.assertEquals(new char[] { '\uFEFF' }, method.getReplacement());
+        assertArrayEquals(new char[] { '\uFEFF' }, method.getReplacement());
     }
 
     private static class MyHideReturnsTranformationMethod extends HideReturnsTransformationMethod {

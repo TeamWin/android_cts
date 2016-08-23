@@ -16,6 +16,7 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -54,8 +55,8 @@ public class SingleLineTransformationMethodTest {
     @Test
     public void testGetReplacement() {
         MySingleLineTranformationMethod method = new MySingleLineTranformationMethod();
-        TextMethodUtils.assertEquals(new char[] { ' ', '\uFEFF' }, method.getReplacement());
-        TextMethodUtils.assertEquals(new char[] { '\n', '\r' }, method.getOriginal());
+        assertArrayEquals(new char[] { ' ', '\uFEFF' }, method.getReplacement());
+        assertArrayEquals(new char[] { '\n', '\r' }, method.getOriginal());
     }
 
     @UiThreadTest

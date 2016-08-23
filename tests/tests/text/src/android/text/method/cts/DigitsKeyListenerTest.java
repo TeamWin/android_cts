@@ -16,6 +16,7 @@
 
 package android.text.method.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -652,16 +653,16 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
             new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '+', '.' },
         };
 
-        TextMethodUtils.assertEquals(expected[0], mockDigitsKeyListener.getAcceptedChars());
+        assertArrayEquals(expected[0], mockDigitsKeyListener.getAcceptedChars());
 
         mockDigitsKeyListener = new MockDigitsKeyListener(true, false);
-        TextMethodUtils.assertEquals(expected[1], mockDigitsKeyListener.getAcceptedChars());
+        assertArrayEquals(expected[1], mockDigitsKeyListener.getAcceptedChars());
 
         mockDigitsKeyListener = new MockDigitsKeyListener(false, true);
-        TextMethodUtils.assertEquals(expected[2], mockDigitsKeyListener.getAcceptedChars());
+        assertArrayEquals(expected[2], mockDigitsKeyListener.getAcceptedChars());
 
         mockDigitsKeyListener = new MockDigitsKeyListener(true, true);
-        TextMethodUtils.assertEquals(expected[3], mockDigitsKeyListener.getAcceptedChars());
+        assertArrayEquals(expected[3], mockDigitsKeyListener.getAcceptedChars());
     }
 
     @Test
