@@ -33,36 +33,23 @@ import android.server.cts.WindowManagerState.WindowState;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DialogFrameTests extends ActivityManagerTestBase {
-    static final String ACTIVITY_NAME = "DialogTestActivity";
-    static final String INTENT_KEY = "android.server.FrameTestApp.DialogTestCase";
-    static final String baseWindowName =
-        "android.server.FrameTestApp/android.server.FrameTestApp.";
-
+public class DialogFrameTests extends ParentChildTestBase {
     private List<WindowState> mWindowList = new ArrayList();
 
-    public void startTestCase(String testCase) throws Exception{
-        setComponentName("android.server.FrameTestApp");
-        String cmd = getAmStartCmd(ACTIVITY_NAME, INTENT_KEY, testCase);
-        CLog.logAndDisplay(LogLevel.INFO, cmd);
-        executeShellCommand(cmd);
+    @Override
+    String intentKey() {
+        return "android.server.FrameTestApp.DialogTestCase";
     }
 
-    public void startTestCaseDocked(String testCase) throws Exception{
-        setComponentName("android.server.FrameTestApp");
-        String cmd = getAmStartCmd(ACTIVITY_NAME, INTENT_KEY, testCase);
-        CLog.logAndDisplay(LogLevel.INFO, cmd);
-        executeShellCommand(cmd);
-        moveActivityToDockStack("DialogTestActivity");
-    }
-
-    void stopTestCase() throws Exception{
-        executeShellCommand("am force-stop android.server.FrameTestApp");
+    @Override
+    String activityName() {
+        return "DialogTestActivity";
     }
 
     WindowState getSingleWindow(String windowName) {
         try {
-            mAmWmState.getWmState().getMatchingWindowState(baseWindowName + windowName, mWindowList);
+            mAmWmState.getWmState().getMatchingWindowState(
+                    getBaseWindowName() + windowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
             CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + windowName);
@@ -70,11 +57,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         }
     }
 
-    interface DialogWindowTest {
-        void doTest(WindowState parent, WindowState dialog);
-    }
-
-    void doSingleTest(DialogWindowTest t) throws Exception {
+    void doSingleTest(ParentChildTest t) throws Exception {
         final String[] waitForVisible = new String[] { "TestDialog" };
 
         mAmWmState.computeState(mDevice, waitForVisible);
@@ -82,30 +65,12 @@ public class DialogFrameTests extends ActivityManagerTestBase {
         WindowState parent = getSingleWindow("DialogTestActivity");
 
         t.doTest(parent, dialog);
-        stopTestCase();
-    }
-
-    void doFullscreenTest(String testCase, DialogWindowTest t) throws Exception {
-        CLog.logAndDisplay(LogLevel.INFO, "Running test fullscreen");
-        startTestCase(testCase);
-        doSingleTest(t);
-    }
-
-    void doDockedTest(String testCase, DialogWindowTest t) throws Exception {
-        CLog.logAndDisplay(LogLevel.INFO, "Running test docked");
-        startTestCaseDocked(testCase);
-        doSingleTest(t);
-    }
-
-    void doDialogTest(String testCase, DialogWindowTest t) throws Exception {
-        doFullscreenTest(testCase, t);
-        doDockedTest(testCase, t);
     }
 
     // With Width and Height as MATCH_PARENT we should fill
     // the same content frame as the main activity window
     public void testMatchParentDialog() throws Exception {
-        doDialogTest("MatchParent",
+        doParentChildTest("MatchParent",
             (WindowState parent, WindowState dialog) -> {
                 assertEquals(parent.getContentFrame(), dialog.getFrame());
             });
@@ -115,7 +80,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // we will not be constrained to the insets and so we will be the same size
     // as the main window main frame.
     public void testMatchParentDialogLayoutInOverscan() throws Exception {
-        doDialogTest("MatchParentLayoutInOverscan",
+        doParentChildTest("MatchParentLayoutInOverscan",
             (WindowState parent, WindowState dialog) -> {
                 assertEquals(parent.getFrame(), dialog.getFrame());
             });
@@ -125,7 +90,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
 
     // The default gravity for dialogs should center them.
     public void testExplicitSizeDefaultGravity() throws Exception {
-        doDialogTest("ExplicitSize",
+        doParentChildTest("ExplicitSize",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -137,7 +102,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     }
 
     public void testExplicitSizeTopLeftGravity() throws Exception {
-        doDialogTest("ExplicitSizeTopLeftGravity",
+        doParentChildTest("ExplicitSizeTopLeftGravity",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -150,7 +115,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     }
 
     public void testExplicitSizeBottomRightGravity() throws Exception {
-        doDialogTest("ExplicitSizeBottomRightGravity",
+        doParentChildTest("ExplicitSizeBottomRightGravity",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -166,7 +131,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // probably in the default dialog flags:
     // b/30127373
     //    public void testOversizedDimensions() throws Exception {
-    //        doDialogTest("OversizedDimensions",
+    //        doParentChildTest("OversizedDimensions",
     //            (WindowState parent, WindowState dialog) -> {
     // With the default flags oversize should result in clipping to
     // parent frame.
@@ -178,7 +143,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // With FLAG_LAYOUT_NO_LIMITS  we should get the size we request, even if its much
     // larger than the screen.
     public void testOversizedDimensionsNoLimits() throws Exception {
-        doDialogTest("OversizedDimensionsNoLimits",
+        doParentChildTest("OversizedDimensionsNoLimits",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(contentFrame.x, contentFrame.y,
@@ -191,7 +156,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // able to fit all of our content, so we should be adjusted to just fit the
     // content frame.
     public void testExplicitPositionMatchParent() throws Exception {
-        doDialogTest("ExplicitPositionMatchParent",
+        doParentChildTest("ExplicitPositionMatchParent",
              (WindowState parent, WindowState dialog) -> {
                     assertEquals(parent.getContentFrame(),
                             dialog.getFrame());
@@ -202,7 +167,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     // be honored.
     public void testExplicitPositionMatchParentNoLimits() throws Exception {
         final int explicitPosition = 100;
-        doDialogTest("ExplicitPositionMatchParentNoLimits",
+        doParentChildTest("ExplicitPositionMatchParentNoLimits",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(contentFrame.x + explicitPosition,
@@ -231,7 +196,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     public void testMarginsArePercentagesOfContentFrame() throws Exception {
         float horizontalMargin = .25f;
         float verticalMargin = .35f;
-        doDialogTest("WithMargins",
+        doParentChildTest("WithMargins",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle frame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
@@ -244,7 +209,7 @@ public class DialogFrameTests extends ActivityManagerTestBase {
     }
 
     public void testDialogPlacedAboveParent() throws Exception {
-        doDialogTest("MatchParent",
+        doParentChildTest("MatchParent",
             (WindowState parent, WindowState dialog) -> {
                 // Not only should the dialog be higher, but it should be
                 // leave multiple layers of space inbetween for DimLayers,
