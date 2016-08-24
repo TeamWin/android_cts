@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCase {
+    protected static final String TAG = "ShortcutCTS";
 
     private static final boolean DUMPSYS_IN_TEARDOWN = false; // DO NOT SUBMIT WITH true
 
@@ -500,6 +501,10 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
 
     protected Icon loadCallerDrawableIcon(String resName) throws Exception {
         return loadPackageDrawableIcon(getCurrentCallerContext(), resName);
+    }
+
+    protected List<ShortcutInfo> getShortcutsAsLauncher(int flags, String packageName) {
+        return getShortcutsAsLauncher(flags, packageName, null, 0, null);
     }
 
     protected List<ShortcutInfo> getShortcutsAsLauncher(
