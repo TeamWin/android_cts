@@ -185,9 +185,11 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     public void testBackupAndRestore_withNoUninstall() throws Exception {
 
         installAppAsUser(PUBLISHER1_APK, getPrimaryUserId());
+        installAppAsUser(PUBLISHER3_APK, getPrimaryUserId());
 
         // Prepare shortcuts
         runDeviceTestsAsUser(PUBLISHER1_PKG, ".ShortcutManagerPreBackupTest", getPrimaryUserId());
+        runDeviceTestsAsUser(PUBLISHER3_PKG, ".ShortcutManagerPreBackupTest", getPrimaryUserId());
 
         // Backup & restore.
         doBackup();
@@ -195,6 +197,10 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
 
         // Make sure the manifest shortcuts are re-published.
         runDeviceTestsAsUser(PUBLISHER1_PKG, ".ShortcutManagerPostBackupTest",
+                "testWithNoUninstall",
+                getPrimaryUserId());
+
+        runDeviceTestsAsUser(PUBLISHER3_PKG, ".ShortcutManagerPostBackupTest",
                 "testWithNoUninstall",
                 getPrimaryUserId());
     }
