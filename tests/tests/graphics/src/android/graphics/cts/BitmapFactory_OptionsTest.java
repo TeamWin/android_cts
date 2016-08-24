@@ -15,14 +15,25 @@
  */
 package android.graphics.cts;
 
-import android.graphics.BitmapFactory;
-import android.test.AndroidTestCase;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public class BitmapFactory_OptionsTest extends AndroidTestCase{
+import android.graphics.BitmapFactory;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BitmapFactory_OptionsTest {
+    @Test
     public void testOptions(){
         new BitmapFactory.Options();
     }
 
+    @Test
     public void testRequestCancelDecode(){
         BitmapFactory.Options option = new BitmapFactory.Options();
 

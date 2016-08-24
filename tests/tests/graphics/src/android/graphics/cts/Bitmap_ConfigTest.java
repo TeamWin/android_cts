@@ -15,12 +15,22 @@
  */
 package android.graphics.cts;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-public class Bitmap_ConfigTest extends TestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class Bitmap_ConfigTest {
+    @Test
     public void testValueOf(){
         assertEquals(Config.ALPHA_8, Config.valueOf("ALPHA_8"));
         assertEquals(Config.RGB_565, Config.valueOf("RGB_565"));
@@ -28,6 +38,7 @@ public class Bitmap_ConfigTest extends TestCase {
         assertEquals(Config.ARGB_8888, Config.valueOf("ARGB_8888"));
     }
 
+    @Test
     public void testValues(){
         Config[] config = Config.values();
 
