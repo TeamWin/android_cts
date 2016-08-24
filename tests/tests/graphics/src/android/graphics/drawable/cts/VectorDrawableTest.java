@@ -16,8 +16,8 @@
 
 package android.graphics.drawable.cts;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
@@ -32,18 +32,26 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.VectorDrawable;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class VectorDrawableTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class VectorDrawableTest {
     private static final String LOGTAG = "VectorDrawableTest";
 
     // Separate the test assets into different groups such that we could isolate the issue faster.
@@ -187,38 +195,42 @@ public class VectorDrawableTest extends AndroidTestCase {
     private Bitmap mBitmap;
     private Canvas mCanvas;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setup() {
         final int width = IMAGE_WIDTH;
         final int height = IMAGE_HEIGHT;
 
         mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         mCanvas = new Canvas(mBitmap);
-        mResources = mContext.getResources();
+        mResources = InstrumentationRegistry.getTargetContext().getResources();
     }
 
     @MediumTest
+    @Test
     public void testBasicVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(BASIC_ICON_RES_IDS, BASIC_GOLDEN_IMAGES, null);
     }
 
     @MediumTest
+    @Test
     public void testLMVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(L_M_ICON_RES_IDS, L_M_GOLDEN_IMAGES, null);
     }
 
     @MediumTest
+    @Test
     public void testNVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(N_ICON_RES_IDS, N_GOLDEN_IMAGES, null);
     }
 
     @MediumTest
+    @Test
     public void testVectorDrawableGradient() throws XmlPullParserException, IOException {
         verifyVectorDrawables(GRADIENT_ICON_RES_IDS, GRADIENT_GOLDEN_IMAGES, null);
     }
 
     @MediumTest
+    @Test
     public void testColorStateList() throws XmlPullParserException, IOException {
         for (int i = 0; i < STATEFUL_STATE_SETS.length; i++) {
             verifyVectorDrawables(
@@ -321,12 +333,11 @@ public class VectorDrawableTest extends AndroidTestCase {
             return "";
         }
 
-        final Resources res = getContext().getResources();
         final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < stateSet.length; i++) {
             builder.append('_');
 
-            final String state = res.getResourceName(stateSet[i]);
+            final String state = mResources.getResourceName(stateSet[i]);
             final int stateIndex = state.indexOf("state_");
             if (stateIndex >= 0) {
                 builder.append(state.substring(stateIndex + 6));
@@ -339,6 +350,7 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testGetChangingConfigurations() {
         VectorDrawable vectorDrawable = new VectorDrawable();
         ConstantState constantState = vectorDrawable.getConstantState();
@@ -363,6 +375,7 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testGetConstantState() {
         VectorDrawable vectorDrawable = new VectorDrawable();
         ConstantState constantState = vectorDrawable.getConstantState();
@@ -376,12 +389,12 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testMutate() {
-        Resources resources = mContext.getResources();
         // d1 and d2 will be mutated, while d3 will not.
-        VectorDrawable d1 = (VectorDrawable) resources.getDrawable(R.drawable.vector_icon_create);
-        VectorDrawable d2 = (VectorDrawable) resources.getDrawable(R.drawable.vector_icon_create);
-        VectorDrawable d3 = (VectorDrawable) resources.getDrawable(R.drawable.vector_icon_create);
+        VectorDrawable d1 = (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
+        VectorDrawable d2 = (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
+        VectorDrawable d3 = (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
         int originalAlpha = d2.getAlpha();
 
         d1.setAlpha(0x80);
@@ -409,6 +422,7 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testColorFilter() {
         PorterDuffColorFilter filter = new PorterDuffColorFilter(Color.RED, Mode.SRC_IN);
         VectorDrawable vectorDrawable = new VectorDrawable();
@@ -418,17 +432,18 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final Resources res = getContext().getResources();
-        final int densityDpi = res.getConfiguration().densityDpi;
+        final int densityDpi = mResources.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res, densityDpi);
+            verifyPreloadDensityInner(mResources, densityDpi);
         } finally {
-            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
         }
     }
 
     @SmallTest
+    @Test
     public void testGetOpacity () throws XmlPullParserException, IOException {
         VectorDrawable vectorDrawable = new VectorDrawable();
 
@@ -442,7 +457,7 @@ public class VectorDrawableTest extends AndroidTestCase {
                 vectorDrawable.getOpacity());
     }
 
-    private void testPreloadDensityInner(Resources res, int densityDpi)
+    private void verifyPreloadDensityInner(Resources res, int densityDpi)
             throws XmlPullParserException, IOException {
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
