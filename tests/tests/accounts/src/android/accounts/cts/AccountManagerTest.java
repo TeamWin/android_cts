@@ -2317,7 +2317,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
      * started. When Activity is provided, AccountManager would start the
      * resolution Intent and return the final result which contains an encrypted
      * session bundle, account password and status token. Callback should be
-     * triggered with the result regardless of a handler is provided or not.
+     * triggered with the result regardless of a handled is provided or not.
      */
     public void testStartAddAccountSessionWithCallbackAndHandlerWithIntervene()
             throws IOException, AuthenticatorException, OperationCanceledException {
@@ -3007,6 +3007,18 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         validateOptions(null, mockAuthenticator.mOptionsFinishSession);
     }
 
+    private void validateIsCredentialsUpdateSuggestedParametersAndOptions(Account account) {
+        assertEquals(account, mockAuthenticator.getAccount());
+        assertEquals(ACCOUNT_STATUS_TOKEN, mockAuthenticator.getStatusToken());
+
+        validateOptions(null, mockAuthenticator.mOptionsUpdateCredentials);
+        validateOptions(null, mockAuthenticator.mOptionsConfirmCredentials);
+        validateOptions(null, mockAuthenticator.mOptionsGetAuthToken);
+        validateOptions(null, mockAuthenticator.mOptionsAddAccount);
+        validateOptions(null, mockAuthenticator.mOptionsStartUpdateCredentialsSession);
+        validateOptions(null, mockAuthenticator.mOptionsStartAddAccountSession);
+    }
+
     private void validateSessionBundleAndPasswordAndStatusTokenResult(Bundle resultBundle) {
         Bundle sessionBundle = resultBundle.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
         assertNotNull(sessionBundle);
@@ -3205,7 +3217,6 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
                     null /* handler */);
             fail("Should have thrown AuthenticatorException when failed to decrypt sessionBundle");
         } catch (AuthenticatorException e) {
-
         }
     }
 
@@ -3850,5 +3861,214 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         validateOptions(null, mockAuthenticator.mOptionsAddAccount);
         validateOptions(null, mockAuthenticator.mOptionsStartAddAccountSession);
         validateOptions(null, mockAuthenticator.mOptionsStartUpdateCredentialsSession);
+    }
+
+    /**
+     * Tests a basic isCredentialsUpdateSuggested() which returns a bundle containing boolean true.
+     */
+    public void testIsCredentialsUpdateSuggested_Success()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        Account account = new Account(accountName, ACCOUNT_TYPE);
+
+        Boolean result = isCredentialsUpdateSuggested(
+                am,
+                account,
+                ACCOUNT_STATUS_TOKEN,
+                null /* callback */,
+                null /* handler */);
+
+        // Assert parameters has been passed correctly
+        validateIsCredentialsUpdateSuggestedParametersAndOptions(account);
+
+        // Assert returned result
+        assertTrue(result);
+    }
+
+    /**
+     * Tests isCredentialsUpdateSuggested() when account is null.
+     * It should throw IllegalArgumentationException.
+     */
+    public void testIsCredentialsUpdateSuggestedNullAccount_IllegalArgumentationException()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+
+        try {
+            isCredentialsUpdateSuggested(
+                    am,
+                    null /* account */,
+                    ACCOUNT_STATUS_TOKEN,
+                    null /* callback */,
+                    null /* handler */);
+            fail("Should have thrown IllegalArgumentation when calling with null account!");
+        } catch (IllegalArgumentException e) {
+        }
+    }
+
+    /**
+     * Tests isCredentialsUpdateSuggested() when statusToken is empty.
+     * It should throw IllegalArgumentationException.
+     */
+    public void testIsCredentialsUpdateSuggestedEmptyToken_IllegalArgumentationException()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        Account account = new Account(accountName, ACCOUNT_TYPE);
+        try {
+            isCredentialsUpdateSuggested(
+                    am,
+                    account,
+                    "" /* statusToken */,
+                    null /* callback */,
+                    null /* handler */);
+            fail("Should have thrown IllegalArgumentation when calling with empty statusToken!");
+        } catch (IllegalArgumentException e) {
+        }
+    }
+
+    /**
+     * Tests isCredentialsUpdateSuggested() error case. AuthenticatorException is expected when
+     * authenticator return {@link AccountManager#ERROR_CODE_INVALID_RESPONSE} error code.
+     */
+    public void testIsCredentialsUpdateSuggested_Error()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        String accountName = Fixtures.PREFIX_NAME_ERROR + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        Account account = new Account(accountName, ACCOUNT_TYPE);
+
+        try {
+            isCredentialsUpdateSuggested(
+                    am,
+                    account,
+                    ACCOUNT_STATUS_TOKEN,
+                    null /* callback */,
+                    null /* handler */);
+            fail("Should have thrown AuthenticatorException in error case.");
+        } catch (AuthenticatorException e) {
+        }
+    }
+
+    /**
+     * Tests isCredentialsUpdateSuggested() with callback and handler. A boolean should be included
+     * in the result. Callback should be triggered with the result regardless of a handler is
+     * provided or not.
+     */
+    public void testIsCredentialsUpdateSuggestedWithCallbackAndHandler()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        testIsCredentialsUpdateSuggestedWithCallbackAndHandler(null /* handler */);
+        testIsCredentialsUpdateSuggestedWithCallbackAndHandler(
+                new Handler(Looper.getMainLooper()));
+    }
+
+    /**
+     * Tests isCredentialsUpdateSuggested() error case with callback and handler.
+     * AuthenticatorException is expected when authenticator return
+     * {@link AccountManager#ERROR_CODE_INVALID_RESPONSE} error code.
+     */
+    public void testIsCredentialsUpdateSuggestedErrorWithCallbackAndHandler()
+            throws IOException, OperationCanceledException, AuthenticatorException {
+        testIsCredentialsUpdateSuggestedErrorWithCallbackAndHandler(null /* handler */);
+        testIsCredentialsUpdateSuggestedErrorWithCallbackAndHandler(
+                new Handler(Looper.getMainLooper()));
+    }
+
+    private void testIsCredentialsUpdateSuggestedWithCallbackAndHandler(Handler handler)
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Account account = new Account(accountName, ACCOUNT_TYPE);
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
+            @Override
+            public void run(AccountManagerFuture<Boolean> booleanFuture) {
+                Boolean result = false;
+                try {
+                    result = booleanFuture.getResult();
+                } catch (OperationCanceledException e) {
+                    fail("should not throw an OperationCanceledException");
+                } catch (IOException e) {
+                    fail("should not throw an IOException");
+                } catch (AuthenticatorException e) {
+                    fail("should not throw an AuthenticatorException");
+                }
+
+                // Assert parameters has been passed correctly
+                validateIsCredentialsUpdateSuggestedParametersAndOptions(account);
+
+                // Assert returned result
+                assertTrue(result);
+
+                latch.countDown();
+            }
+        };
+
+        isCredentialsUpdateSuggested(
+                am,
+                account,
+                ACCOUNT_STATUS_TOKEN,
+                callback,
+                handler);
+
+        // Wait with timeout for the callback to do its work
+        waitForLatch(latch);
+    }
+
+    private void testIsCredentialsUpdateSuggestedErrorWithCallbackAndHandler(Handler handler)
+            throws IOException, OperationCanceledException, AuthenticatorException {
+        String accountName = Fixtures.PREFIX_NAME_ERROR + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        final Account account = new Account(accountName, ACCOUNT_TYPE);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
+            @Override
+            public void run(AccountManagerFuture<Boolean> booleanFuture) {
+                try {
+                    booleanFuture.getResult();
+                    // AuthenticatorException should be thrown when authenticator
+                    // returns AccountManager.ERROR_CODE_INVALID_RESPONSE.
+                    fail("should have thrown an AuthenticatorException");
+                } catch (OperationCanceledException e) {
+                    fail("should not throw an OperationCanceledException");
+                } catch (IOException e) {
+                    fail("should not throw an IOException");
+                } catch (AuthenticatorException e) {
+                    // Test passed as AuthenticatorException is expected.
+                } finally {
+                    latch.countDown();
+                }
+            }
+        };
+
+        isCredentialsUpdateSuggested(
+                am,
+                account,
+                ACCOUNT_STATUS_TOKEN,
+                callback,
+                handler);
+
+        // Wait with timeout for the callback to do its work
+        waitForLatch(latch);
+    }
+
+    private Boolean isCredentialsUpdateSuggested(
+            AccountManager am,
+            Account account,
+            String statusToken,
+            AccountManagerCallback<Boolean> callback,
+            Handler handler)
+                    throws IOException, AuthenticatorException, OperationCanceledException {
+
+        AccountManagerFuture<Boolean> booleanFuture = am.isCredentialsUpdateSuggested(
+                account,
+                statusToken,
+                callback,
+                handler);
+
+        Boolean result = false;
+        if (callback == null) {
+            result = booleanFuture.getResult();
+            assertTrue(booleanFuture.isDone());
+        }
+
+        return result;
     }
 }

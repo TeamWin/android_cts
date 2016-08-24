@@ -35,6 +35,7 @@ public final class Fixtures {
 
     public static final String PREFIX_TOKEN = "token:";
     public static final String PREFIX_PASSWORD = "password:";
+    public static final String PREFIX_STATUS_TOKEN = "status_token:";
 
     public static final String SUFFIX_NAME_FIXTURE = "fixture.com";
     public static final String SUFFIX_NAME_TEST = "test.com";

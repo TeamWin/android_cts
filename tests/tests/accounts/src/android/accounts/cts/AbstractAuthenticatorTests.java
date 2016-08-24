@@ -16,6 +16,7 @@
 
 package android.accounts.cts;
 
+import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
@@ -278,5 +279,26 @@ public class AbstractAuthenticatorTests extends AndroidTestCase {
     private void validateNullPasswordAndStatusToken(Bundle result) {
         assertNull(result.getString(AccountManager.KEY_PASSWORD));
         assertNull(result.getString(AccountManager.KEY_ACCOUNT_STATUS_TOKEN));
+    }
+
+    /**
+     * Tests isCredentialsUpdateSuggested default implementation.
+     * A bundle with boolean false should be returned.
+     */
+    public void testIsCredentialsUpdateSuggestedDefaultImpl()
+            throws OperationCanceledException, AuthenticatorException, IOException,
+            RemoteException {
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        Account account = new Account(accountName, Fixtures.TYPE_DEFAULT);
+        String statusToken = Fixtures.PREFIX_STATUS_TOKEN + accountName;
+
+        AccountManagerFuture<Boolean> future = mAccountManager.isCredentialsUpdateSuggested(
+                account,
+                statusToken,
+                null /* callback */,
+                null /* handler */);
+
+        assertFalse(future.getResult());
+        assertTrue(future.isDone());
     }
 }

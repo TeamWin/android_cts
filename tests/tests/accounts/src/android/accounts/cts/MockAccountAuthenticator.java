@@ -62,6 +62,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
     public Bundle mOptionsFinishSession;
     Account mAccount;
     String[] mFeatures;
+    String mStatusToken;
 
     final ArrayList<String> mockFeatureList = new ArrayList<String>();
     private final long mTokenDurationMillis = 1000; // 1 second
@@ -111,6 +112,10 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
         return mFeatures;
     }
 
+    public String getStatusToken() {
+        return mStatusToken;
+    }
+
     public void clearData() {
         mResponse = null;
         mAccountType = null;
@@ -125,6 +130,7 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
         mOptionsFinishSession = null;
         mAccount = null;
         mFeatures = null;
+        mStatusToken = null;
     }
 
     public void callAccountAuthenticated() {
@@ -485,5 +491,33 @@ public class MockAccountAuthenticator extends AbstractAccountAuthenticator {
         }
         result.putInt(AccountManager.KEY_ERROR_CODE, errorCode);
         result.putString(AccountManager.KEY_ERROR_MESSAGE, errorMsg);
+    }
+
+    /**
+     * Checks if the credentials of the account should be updated.
+     */
+    @Override
+    public Bundle isCredentialsUpdateSuggested(
+            final AccountAuthenticatorResponse response,
+            Account account,
+            String statusToken) throws NetworkErrorException {
+        this.mResponse = response;
+        this.mAccount = account;
+        this.mStatusToken = statusToken;
+
+        Bundle result = new Bundle();
+        if (account.name.startsWith(Fixtures.PREFIX_NAME_SUCCESS)) {
+            // fill bundle with a success result.
+            result.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, true);
+        } else {
+            // fill with error
+            int errorCode = AccountManager.ERROR_CODE_INVALID_RESPONSE;
+            String errorMsg = "Default Error Message";
+            result.putInt(AccountManager.KEY_ERROR_CODE, errorCode);
+            result.putString(AccountManager.KEY_ERROR_MESSAGE, errorMsg);
+        }
+
+        response.onResult(result);
+        return null;
     }
 }
