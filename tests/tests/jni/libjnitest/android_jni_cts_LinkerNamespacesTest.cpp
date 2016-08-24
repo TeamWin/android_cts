@@ -61,7 +61,7 @@ static std::vector<std::string> kSystemLibraries = {
     "libutils.so",
   };
 
-static bool is_directory(const std::string path) {
+static bool is_directory(const std::string& path) {
   struct stat sb;
   if (stat(path.c_str(), &sb) != -1) {
     return S_ISDIR(sb.st_mode);
@@ -70,7 +70,7 @@ static bool is_directory(const std::string path) {
   return false;
 }
 
-static bool is_libdl(const std::string path) {
+static bool is_libdl(const std::string& path) {
   return kSystemLibraryPath + "/libdl.so" == path;
 }
 
@@ -125,7 +125,7 @@ static bool check_lib(const std::string& path,
 }
 
 static bool check_path(const std::string& library_path,
-                       const std::unordered_set<std::string> libraries,
+                       const std::unordered_set<std::string>& libraries,
                        std::vector<std::string>* errors) {
   bool success = true;
   std::list<std::string> dirs = { library_path };
