@@ -204,20 +204,24 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
     }
 
+    @UiThreadTest
     @Test
-    public void testConstructor() {
+    public void testConstructorOnUiThread() {
+        verifyConstructor();
+    }
+
+    @Test
+    public void testConstructorOffUiThread() {
+        verifyConstructor();
+    }
+
+    private void verifyConstructor() {
         new TextView(mActivity);
-
         new TextView(mActivity, null);
-
         new TextView(mActivity, null, android.R.attr.textViewStyle);
-
         new TextView(mActivity, null, 0, android.R.style.Widget_DeviceDefault_TextView);
-
         new TextView(mActivity, null, 0, android.R.style.Widget_DeviceDefault_Light_TextView);
-
         new TextView(mActivity, null, 0, android.R.style.Widget_Material_TextView);
-
         new TextView(mActivity, null, 0, android.R.style.Widget_Material_Light_TextView);
     }
 
