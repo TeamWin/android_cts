@@ -16,10 +16,14 @@
 
 package android.graphics.drawable.cts;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.graphics.BitmapFactory;
@@ -32,7 +36,9 @@ import android.graphics.cts.R;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.Callback;
 import android.net.Uri;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.StateSet;
@@ -48,21 +54,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SmallTest
-public class DrawableTest extends AndroidTestCase {
-    Resources mResources;
+@RunWith(AndroidJUnit4.class)
+public class DrawableTest {
+    private Context mContext;
+    private Resources mResources;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
         mResources = mContext.getResources();
     }
 
+    @Test
     public void testClearColorFilter() {
         Drawable mockDrawable = new MockDrawable();
         mockDrawable.clearColorFilter();
@@ -76,6 +92,7 @@ public class DrawableTest extends AndroidTestCase {
         assertNull(mockDrawable.getColorFilter());
     }
 
+    @Test
     public void testCopyBounds() {
         Drawable mockDrawable = new MockDrawable();
         Rect rect1 = mockDrawable.copyBounds();
@@ -123,6 +140,7 @@ public class DrawableTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCreateFromPath() throws IOException {
         assertNull(Drawable.createFromPath(null));
 
@@ -142,29 +160,17 @@ public class DrawableTest extends AndroidTestCase {
     }
 
     private void writeSampleImage(File imagefile) throws IOException {
-        InputStream source = null;
-        OutputStream target = null;
-
-        try {
-            source = mResources.openRawResource(R.raw.testimage);
-            target = new FileOutputStream(imagefile);
-
+        try (InputStream source = mResources.openRawResource(R.raw.testimage);
+             OutputStream target = new FileOutputStream(imagefile)) {
             byte[] buffer = new byte[1024];
             for (int len = source.read(buffer); len >= 0; len = source.read(buffer)) {
                 target.write(buffer, 0, len);
             }
-        } finally {
-            if (target != null) {
-                target.close();
-            }
-
-            if (source != null) {
-                source.close();
-            }
         }
     }
 
-    public void testCreateFromStream() throws FileNotFoundException, IOException {
+    @Test
+    public void testCreateFromStream() throws IOException {
         FileInputStream inputEmptyStream = null;
         FileInputStream inputStream = null;
         File imageFile = null;
@@ -189,7 +195,6 @@ public class DrawableTest extends AndroidTestCase {
             inputStream = new FileInputStream(imageFile);
             assertNotNull(Drawable.createFromStream(inputStream, "Sample"));
         } finally {
-
             if (null != outputEmptyStream) {
                 outputEmptyStream.close();
             }
@@ -208,13 +213,14 @@ public class DrawableTest extends AndroidTestCase {
         }
     }
 
-    public void testCreateFromResourceStream1() throws FileNotFoundException, IOException {
+    @Test
+    public void testCreateFromResourceStream1() throws IOException {
         FileInputStream inputEmptyStream = null;
         FileInputStream inputStream = null;
         File imageFile = null;
         OutputStream outputEmptyStream = null;
 
-        assertNull(Drawable.createFromResourceStream(null, null, inputStream, "test.bmp"));
+        assertNull(Drawable.createFromResourceStream(null, null, null, "test.bmp"));
 
         File emptyFile = new File(mContext.getFilesDir(), "tempemptyimage.jpg");
 
@@ -236,7 +242,6 @@ public class DrawableTest extends AndroidTestCase {
             assertNotNull(Drawable.createFromResourceStream(mResources, value, inputStream,
                     "Sample"));
         } finally {
-
             if (null != outputEmptyStream) {
                 outputEmptyStream.close();
             }
@@ -255,7 +260,8 @@ public class DrawableTest extends AndroidTestCase {
         }
     }
 
-    public void testCreateFromResourceStream2() throws FileNotFoundException, IOException {
+    @Test
+    public void testCreateFromResourceStream2() throws IOException {
         FileInputStream inputEmptyStream = null;
         FileInputStream inputStream = null;
         File imageFile = null;
@@ -264,7 +270,7 @@ public class DrawableTest extends AndroidTestCase {
         BitmapFactory.Options opt = new BitmapFactory.Options();
         opt.inScaled = false;
 
-        assertNull(Drawable.createFromResourceStream(null, null, inputStream, "test.bmp", opt));
+        assertNull(Drawable.createFromResourceStream(null, null, null, "test.bmp", opt));
 
         File emptyFile = new File(mContext.getFilesDir(), "tempemptyimage.jpg");
 
@@ -286,7 +292,6 @@ public class DrawableTest extends AndroidTestCase {
             assertNotNull(Drawable.createFromResourceStream(mResources, value, inputStream,
                     "Sample", opt));
         } finally {
-
             if (null != outputEmptyStream) {
                 outputEmptyStream.close();
             }
@@ -305,6 +310,7 @@ public class DrawableTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCreateFromXml() throws XmlPullParserException, IOException {
         XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable);
         Drawable drawable = Drawable.createFromXml(mResources, parser);
@@ -315,6 +321,7 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(expected.getIntrinsicHeight(), drawable.getIntrinsicHeight());
     }
 
+    @Test
     public void testCreateFromXmlThemed() throws XmlPullParserException, IOException {
         XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable_theme);
         Theme theme = mResources.newTheme();
@@ -327,6 +334,7 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(expected.getIntrinsicHeight(), drawable.getIntrinsicHeight());
     }
 
+    @Test
     public void testCreateFromXmlInner() throws XmlPullParserException, IOException {
         XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable);
         while (parser.next() != XmlPullParser.START_TAG) {
@@ -341,6 +349,7 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(expected.getIntrinsicHeight(), drawable.getIntrinsicHeight());
     }
 
+    @Test
     public void testCreateFromXmlInnerThemed() throws XmlPullParserException, IOException {
         XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable_theme);
         while (parser.next() != XmlPullParser.START_TAG) {
@@ -357,6 +366,7 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(expected.getIntrinsicHeight(), drawable.getIntrinsicHeight());
     }
 
+    @Test
     public void testAccessBounds() {
         Drawable mockDrawable = new MockDrawable();
         mockDrawable.setBounds(0, 0, 100, 100);
@@ -380,6 +390,7 @@ public class DrawableTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessChangingConfigurations() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(0, mockDrawable.getChangingConfigurations());
@@ -394,26 +405,31 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(Integer.MIN_VALUE, mockDrawable.getChangingConfigurations());
     }
 
+    @Test
     public void testGetConstantState() {
         Drawable mockDrawable = new MockDrawable();
         assertNull(mockDrawable.getConstantState());
     }
 
+    @Test
     public void testGetCurrent() {
         Drawable mockDrawable = new MockDrawable();
         assertSame(mockDrawable, mockDrawable.getCurrent());
     }
 
+    @Test
     public void testGetIntrinsicHeight() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(-1, mockDrawable.getIntrinsicHeight());
     }
 
+    @Test
     public void testGetIntrinsicWidth() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(-1, mockDrawable.getIntrinsicWidth());
     }
 
+    @Test
     public void testAccessLevel() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(0, mockDrawable.getLevel());
@@ -431,16 +447,19 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(10000, mockDrawable.getLevel());
     }
 
+    @Test
     public void testGetMinimumHeight() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(0, mockDrawable.getMinimumHeight());
     }
 
+    @Test
     public void testGetMinimumWidth() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(0, mockDrawable.getMinimumWidth());
     }
 
+    @Test
     public void testGetPadding() {
         Drawable mockDrawable = new MockDrawable();
         Rect r = new Rect(10, 10, 20, 20);
@@ -457,6 +476,7 @@ public class DrawableTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessState() {
         Drawable mockDrawable = new MockDrawable();
         assertEquals(StateSet.WILD_CARD, mockDrawable.getState());
@@ -468,11 +488,13 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.setState(null);
     }
 
+    @Test
     public void testGetTransparentRegion() {
         Drawable mockDrawable = new MockDrawable();
         assertNull(mockDrawable.getTransparentRegion());
     }
 
+    @Test
     public void testInflate() throws XmlPullParserException, IOException {
         Drawable mockDrawable = new MockDrawable();
 
@@ -487,23 +509,26 @@ public class DrawableTest extends AndroidTestCase {
         assertFalse(mockDrawable.isVisible());
     }
 
+    @Test
     public void testInvalidateSelf() {
         Drawable mockDrawable = new MockDrawable();
         // if setCallback() is not called, invalidateSelf() would do nothing,
         // so just call it to check whether it throws exceptions.
         mockDrawable.invalidateSelf();
 
-        MockCallback mockCallback = new MockCallback();
+        Drawable.Callback mockCallback = mock(Drawable.Callback.class);
         mockDrawable.setCallback(mockCallback);
         mockDrawable.invalidateSelf();
-        assertEquals(mockDrawable, mockCallback.getInvalidateDrawable());
+        verify(mockCallback, times(1)).invalidateDrawable(mockDrawable);
     }
 
+    @Test
     public void testIsStateful() {
         Drawable mockDrawable = new MockDrawable();
         assertFalse(mockDrawable.isStateful());
     }
 
+    @Test
     public void testVisible() {
         Drawable mockDrawable = new MockDrawable();
         assertTrue(mockDrawable.isVisible());
@@ -518,6 +543,7 @@ public class DrawableTest extends AndroidTestCase {
         assertTrue(mockDrawable.isVisible());
     }
 
+    @Test
     public void testOnBoundsChange() {
         MockDrawable mockDrawable = new MockDrawable();
 
@@ -525,16 +551,19 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.onBoundsChange(new Rect(0, 0, 10, 10));
     }
 
+    @Test
     public void testOnLevelChange() {
         MockDrawable mockDrawable = new MockDrawable();
         assertFalse(mockDrawable.onLevelChange(0));
     }
 
+    @Test
     public void testOnStateChange() {
         MockDrawable mockDrawable = new MockDrawable();
         assertFalse(mockDrawable.onStateChange(null));
     }
 
+    @Test
     public void testResolveOpacity() {
         assertEquals(PixelFormat.TRANSLUCENT,
                 Drawable.resolveOpacity(PixelFormat.TRANSLUCENT, PixelFormat.TRANSLUCENT));
@@ -548,6 +577,7 @@ public class DrawableTest extends AndroidTestCase {
                 Drawable.resolveOpacity(PixelFormat.RGB_888, PixelFormat.RGB_565));
     }
 
+    @Test
     public void testScheduleSelf() {
         Drawable mockDrawable = new MockDrawable();
         mockDrawable.scheduleSelf(null, 1000L);
@@ -567,6 +597,7 @@ public class DrawableTest extends AndroidTestCase {
         verify(mockCallback).scheduleDrawable(eq(mockDrawable), eq(runnable), eq(-1000L));
     }
 
+    @Test
     public void testAccessCallback() {
         Drawable mockDrawable = new MockDrawable();
         Callback mockCallback = mock(Callback.class);
@@ -578,11 +609,13 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(null, mockDrawable.getCallback());
     }
 
+    @Test
     public void testSetColorFilter() {
         Drawable mockDrawable = new MockDrawable();
         mockDrawable.setColorFilter(5, PorterDuff.Mode.CLEAR);
     }
 
+    @Test
     public void testSetDither() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -590,6 +623,7 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.setDither(false);
     }
 
+    @Test
     public void testSetHotspotBounds() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -597,6 +631,7 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.setHotspotBounds(10, 15, 100, 150);
     }
 
+    @Test
     public void testGetHotspotBounds() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -604,6 +639,7 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.getHotspotBounds(new Rect());
     }
 
+    @Test
     public void testAccessLayoutDirection() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -614,6 +650,7 @@ public class DrawableTest extends AndroidTestCase {
         assertEquals(View.LAYOUT_DIRECTION_RTL, mockDrawable.getLayoutDirection());
     }
 
+    @Test
     public void testOnLayoutDirectionChanged() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -621,6 +658,7 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.onLayoutDirectionChanged(View.LAYOUT_DIRECTION_LTR);
     }
 
+    @Test
     public void testSetFilterBitmap() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -628,6 +666,7 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.setFilterBitmap(false);
     }
 
+    @Test
     public void testIsFilterBitmap() {
         Drawable mockDrawable = new MockDrawable();
 
@@ -635,39 +674,48 @@ public class DrawableTest extends AndroidTestCase {
         mockDrawable.isFilterBitmap();
     }
 
+    @Test
     public void testUnscheduleSelf() {
         Drawable mockDrawable = new MockDrawable();
-        MockCallback mockCallback = new MockCallback();
+        Drawable.Callback mockCallback = mock(Drawable.Callback.class);
         mockDrawable.setCallback(mockCallback);
         mockDrawable.unscheduleSelf(null);
-        assertEquals(mockDrawable, mockCallback.getScheduleDrawable());
-        assertNull(mockCallback.getRunnable());
+        verify(mockCallback, times(1)).unscheduleDrawable(mockDrawable, null);
     }
 
+    @Test
     public void testMutate() {
         Drawable mockDrawable = new MockDrawable();
         assertSame(mockDrawable, mockDrawable.mutate());
     }
 
+    // Since Mockito can't mock or spy on protected methods, we have a custom extension
+    // of Drawable to track calls to protected methods. This class also has empty implementations
+    // of the base abstract methods.
     private static class MockDrawable extends Drawable {
         private ColorFilter mColorFilter;
 
+        @Override
         public void draw(Canvas canvas) {
         }
 
+        @Override
         public void setAlpha(int alpha) {
         }
 
+        @Override
         public void setColorFilter(ColorFilter cf) {
             mColorFilter = cf;
         }
 
+        @Override
         public ColorFilter getColorFilter() {
             return mColorFilter;
         }
 
+        @Override
         public int getOpacity() {
-            return 0;
+            return PixelFormat.OPAQUE;
         }
 
         protected void onBoundsChange(Rect bounds) {
@@ -680,47 +728,6 @@ public class DrawableTest extends AndroidTestCase {
 
         protected boolean onStateChange(int[] state) {
             return super.onStateChange(state);
-        }
-    }
-
-    private static class MockCallback implements Drawable.Callback {
-        private Drawable mInvalidateDrawable;
-        private Drawable mScheduleDrawable;
-        private Runnable mRunnable;
-        private long mWhen;
-
-        public MockCallback() {
-        }
-
-        public Drawable getInvalidateDrawable() {
-            return mInvalidateDrawable;
-        }
-
-        public Drawable getScheduleDrawable() {
-            return mScheduleDrawable;
-        }
-
-        public Runnable getRunnable() {
-            return mRunnable;
-        }
-
-        public long getWhen() {
-            return mWhen;
-        }
-
-        public void invalidateDrawable(Drawable who) {
-            mInvalidateDrawable = who;
-        }
-
-        public void scheduleDrawable(Drawable who, Runnable what, long when) {
-            mScheduleDrawable = who;
-            mRunnable = what;
-            mWhen = when;
-        }
-
-        public void unscheduleDrawable(Drawable who, Runnable what) {
-            mScheduleDrawable = who;
-            mRunnable = what;
         }
     }
 }
