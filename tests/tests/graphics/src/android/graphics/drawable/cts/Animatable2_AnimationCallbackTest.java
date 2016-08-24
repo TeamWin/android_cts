@@ -16,14 +16,17 @@
 
 package android.graphics.drawable.cts;
 
-import junit.framework.TestCase;
-
 import android.graphics.drawable.Animatable2.AnimationCallback;
 import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
-public class Animatable2_AnimationCallbackTest extends TestCase {
-
+@RunWith(AndroidJUnit4.class)
+public class Animatable2_AnimationCallbackTest {
+    @Test
     public void testCallback() {
         // These are no-op methods. Just make sure they don't crash.
         AnimationCallback callback = new AnimationCallback() {};
