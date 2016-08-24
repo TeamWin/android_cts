@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -32,6 +33,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -42,10 +44,11 @@ public class CapturedActivity extends Activity {
     public static class TestResult {
         public int passFrames;
         public int failFrames;
+        public final SparseArray<Bitmap> failures = new SparseArray<>();
     }
 
     private static final String TAG = "CapturedActivity";
-    private static final long TIME_OUT_MS = 10000;
+    private static final long TIME_OUT_MS = 20000;
     private static final int PERMISSION_CODE = 1;
     private MediaProjectionManager mProjectionManager;
     private MediaProjection mMediaProjection;
@@ -54,9 +57,11 @@ public class CapturedActivity extends Activity {
     private SurfacePixelValidator mSurfacePixelValidator;
     private final Object mLock = new Object();
 
-    private static final long START_CAPTURE_DELAY_MS = 1000;
-    private static final long END_CAPTURE_DELAY_MS = START_CAPTURE_DELAY_MS + 4000;
-    private static final long END_DELAY_MS = END_CAPTURE_DELAY_MS + 500;
+    public static final long CAPTURE_DURATION_MS = 10000;
+
+    private static final long START_CAPTURE_DELAY_MS = 1500;
+    private static final long END_CAPTURE_DELAY_MS = START_CAPTURE_DELAY_MS + CAPTURE_DURATION_MS;
+    private static final long END_DELAY_MS = END_CAPTURE_DELAY_MS + 1000;
 
     private MediaPlayer mMediaPlayer;
 
@@ -104,6 +109,8 @@ public class CapturedActivity extends Activity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (mOnWatch) return;
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
         if (requestCode != PERMISSION_CODE) {
             throw new IllegalStateException("Unknown request code: " + requestCode);
