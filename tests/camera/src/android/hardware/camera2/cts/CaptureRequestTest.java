@@ -2622,7 +2622,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             }
         }
 
-        mSession.stopRepeating();
+        stopPreview();
     }
 
     /**
