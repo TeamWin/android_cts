@@ -19,6 +19,10 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
@@ -34,9 +38,11 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -160,4 +166,45 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
         }
         return object;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
+        int numTests = countTestCases();
+        long startTime = System.currentTimeMillis();
+        listener.testRunStarted(getClass().getName(), numTests);
+        super.run(new HostTestListener(listener));
+        listener.testRunEnded(System.currentTimeMillis() - startTime, Collections.emptyMap());
+    }
+
+    /**
+     * Wrapper listener that forwards all events except testRunStarted() and testRunEnded() to
+     * the embedded listener. Each test class in the jar will invoke these events, which
+     * HostTestListener withholds from listeners for console logging and result reporting.
+     */
+    public class HostTestListener extends ResultForwarder {
+
+        public HostTestListener(ITestInvocationListener listener) {
+            super(listener);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void testRunStarted(String name, int numTests) {
+            CLog.d("HostTestListener.testRunStarted(%s, %d)", name, numTests);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
+            CLog.d("HostTestListener.testRunEnded(%d, %s)", elapsedTime, metrics.toString());
+        }
+    }
+
 }
