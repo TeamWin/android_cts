@@ -16,6 +16,18 @@
 
 package android.graphics.drawable.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -25,23 +37,29 @@ import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.ShapeDrawable.ShaderFactory;
 import android.graphics.drawable.shapes.RectShape;
 import android.graphics.drawable.shapes.Shape;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.Xml;
 
-import android.graphics.cts.R;
-
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 
-public class ShapeDrawableTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ShapeDrawableTest {
+    @Test
     public void testConstructors() {
         new ShapeDrawable();
 
@@ -50,16 +68,14 @@ public class ShapeDrawableTest extends AndroidTestCase {
         new ShapeDrawable(new RectShape());
     }
 
+    @Test(expected=NullPointerException.class)
     public void testDraw() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
 
-        try {
-            shapeDrawable.draw(null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
+        shapeDrawable.draw(null);
     }
 
+    @Test
     public void testGetChangingConfigurations() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertEquals(0, shapeDrawable.getChangingConfigurations());
@@ -79,6 +95,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals(3, shapeDrawable.getChangingConfigurations());
     }
 
+    @Test
     public void testGetConstantState() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
 
@@ -88,6 +105,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals(1, constantState.getChangingConfigurations());
     }
 
+    @Test
     public void testAccessIntrinsicHeight() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertEquals(0, shapeDrawable.getIntrinsicHeight());
@@ -102,6 +120,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals(Integer.MAX_VALUE, shapeDrawable.getIntrinsicHeight());
     }
 
+    @Test
     public void testAccessIntrinsicWidth() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertEquals(0, shapeDrawable.getIntrinsicWidth());
@@ -116,6 +135,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals(Integer.MAX_VALUE, shapeDrawable.getIntrinsicWidth());
     }
 
+    @Test
     public void testGetOpacity() {
         ShapeDrawable shapeDrawable = new ShapeDrawable(new RectShape());
         assertEquals(PixelFormat.TRANSLUCENT, shapeDrawable.getOpacity());
@@ -131,6 +151,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals(PixelFormat.TRANSLUCENT, shapeDrawable.getOpacity());
     }
 
+    @Test
     public void testAccessPadding() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         Rect padding = new Rect();
@@ -167,14 +188,15 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals(0, padding.top);
         assertEquals(0, padding.right);
         assertEquals(0, padding.bottom);
-
-        try {
-            shapeDrawable.getPadding(null);
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
     }
 
+    @Test
+    public void testGetPaddingNull() {
+        ShapeDrawable shapeDrawable = new ShapeDrawable();
+        shapeDrawable.getPadding(null);
+    }
+
+    @Test
     public void testGetPaint() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertNotNull(shapeDrawable.getPaint());
@@ -182,6 +204,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
                 | Paint.EMBEDDED_BITMAP_TEXT_FLAG, shapeDrawable.getPaint().getFlags());
     }
 
+    @Test
     public void testAccessShaderFactory() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertNull(shapeDrawable.getShaderFactory());
@@ -200,6 +223,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessShape() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         assertNull(shapeDrawable.getShape());
@@ -212,8 +236,9 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertNull(shapeDrawable.getShape());
     }
 
+    @Test
     public void testInflate() throws XmlPullParserException, IOException {
-        final Resources res = mContext.getResources();
+        final Resources res = InstrumentationRegistry.getTargetContext().getResources();
 
         XmlPullParser parser = res.getXml(R.drawable.shapedrawable_test);
         while (parser.next() != XmlPullParser.START_TAG) {
@@ -235,10 +260,8 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertTrue(shapeDrawable.extendedAttrsSet);
     }
 
-    public void testOnBoundsChange() {
-        // implementation details, do not test.
-    }
-
+    // Since Mockito can't mock or spy on protected methods, we have a custom extension
+    // of StateListDrawable to track calls to protected inflateTag method.
     private class MockShapeDrawable extends ShapeDrawable {
         public boolean inflateTagCalled;
         public boolean extendedAttrsSet;
@@ -266,36 +289,30 @@ public class ShapeDrawableTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testOnDraw() {
+        Shape mockShape = spy(new MockShape());
+        MockShapeDrawable shapeDrawable = new MockShapeDrawable(mockShape);
+        verify(mockShape, never()).draw(any(), any());
+        shapeDrawable.onDraw(mockShape, new Canvas(), new Paint());
+        verify(mockShape, times(1)).draw(any(), any());
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testOnDrawNull() {
         MockShape mockShape = new MockShape();
         MockShapeDrawable shapeDrawable = new MockShapeDrawable(mockShape);
-        assertFalse(mockShape.hasDrawCalled());
-        shapeDrawable.onDraw(mockShape, new Canvas(), new Paint());
-        assertTrue(mockShape.hasDrawCalled());
 
-        try {
-            shapeDrawable.onDraw(null, null, new Paint());
-            fail("should throw NullPointerException.");
-        } catch (NullPointerException e) {
-        }
+        shapeDrawable.onDraw(null, null, new Paint());
     }
 
     private static class MockShape extends Shape {
-        private boolean mDrawCalled = false;
-
-        public boolean hasDrawCalled() {
-            return mDrawCalled;
-        }
-
-        public void reset() {
-            mDrawCalled = false;
-        }
-
+        @Override
         public void draw(Canvas canvas, Paint paint) {
-            mDrawCalled = true;
         }
     }
 
+    @Test
     public void testSetAlpha() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         shapeDrawable.setAlpha(0);
@@ -304,6 +321,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         shapeDrawable.setAlpha(256);
     }
 
+    @Test
     public void testSetColorFilter() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
 
@@ -315,6 +333,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertNull(shapeDrawable.getPaint().getColorFilter());
     }
 
+    @Test
     public void testSetTint() {
         final ShapeDrawable d = new ShapeDrawable(new RectShape());
         d.setTint(Color.BLACK);
@@ -322,6 +341,7 @@ public class ShapeDrawableTest extends AndroidTestCase {
         assertEquals("Shape is tinted", Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
     }
 
+    @Test
     public void testSetDither() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
 
@@ -330,9 +350,5 @@ public class ShapeDrawableTest extends AndroidTestCase {
 
         shapeDrawable.setDither(false);
         assertFalse(shapeDrawable.getPaint().isDither());
-    }
-
-    public void testMutate() {
-        // How to load a ShapeDrawable from resources.
     }
 }

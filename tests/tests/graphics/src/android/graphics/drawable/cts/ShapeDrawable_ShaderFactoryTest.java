@@ -16,15 +16,20 @@
 
 package android.graphics.drawable.cts;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertNull;
 
 import android.graphics.Shader;
 import android.graphics.drawable.ShapeDrawable.ShaderFactory;
 import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
-public class ShapeDrawable_ShaderFactoryTest extends TestCase {
-
+@RunWith(AndroidJUnit4.class)
+public class ShapeDrawable_ShaderFactoryTest {
+    @Test
     public void testResize() {
         // This is an abstract function, but coverage
         // complains if we don't call it.
@@ -33,7 +38,6 @@ public class ShapeDrawable_ShaderFactoryTest extends TestCase {
     }
 
     private class ShaderFactoryImpl extends ShaderFactory {
-
         @Override
         public Shader resize(int width, int height) {
             return null;
