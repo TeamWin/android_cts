@@ -128,6 +128,9 @@ public class ShortcutManagerThrottlingTest extends ShortcutManagerCtsTestsBase {
         callTest(Constants.TEST_FG_SERVICE_UNTHROTTLED);
     }
 
+    /**
+     * Flakey and may not work on OEM devices, so disabled.
+     */
     @Suppress
     public void testInlineReply() throws Exception {
         clearNotifications();
