@@ -16,6 +16,12 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -26,11 +32,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
-import android.test.InstrumentationTestCase;
-import android.util.Log;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-import android.graphics.cts.R;
-
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -40,23 +49,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-public class BitmapRegionDecoderTest extends InstrumentationTestCase {
-    private static final String TAG = "BitmapRegionDecoderTest";
-    private ArrayList<File> mFilesCreated = new ArrayList<File>(
-            NAMES_TEMP_FILES.length);
-
-    private Resources mRes;
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BitmapRegionDecoderTest {
     // The test images, including baseline JPEGs and progressive JPEGs, a PNG,
     // a WEBP, a GIF and a BMP.
-    private static int[] RES_IDS = new int[] {
+    private static final int[] RES_IDS = new int[] {
             R.drawable.baseline_jpeg, R.drawable.progressive_jpeg,
             R.drawable.baseline_restart_jpeg,
             R.drawable.progressive_restart_jpeg,
             R.drawable.png_test, R.drawable.webp_test,
             R.drawable.gif_test, R.drawable.bmp_test
     };
-    private static String[] NAMES_TEMP_FILES = new String[] {
+    private static final String[] NAMES_TEMP_FILES = new String[] {
         "baseline_temp.jpg", "progressive_temp.jpg", "baseline_restart_temp.jpg",
         "progressive_restart_temp.jpg", "png_temp.png", "webp_temp.webp",
         "gif_temp.gif", "bmp_temp.bmp"
@@ -64,47 +69,49 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
 
     // The width and height of the above image.
     // -1 denotes that the image format is not supported by BitmapRegionDecoder
-    private static int WIDTHS[] = new int[] {
+    private static final int WIDTHS[] = new int[] {
             1280, 1280, 1280, 1280, 640, 640, -1, -1};
-    private static int HEIGHTS[] = new int[] {960, 960, 960, 960, 480, 480, -1, -1};
+    private static final int HEIGHTS[] = new int[] {960, 960, 960, 960, 480, 480, -1, -1};
 
     // The number of test images, format of which is supported by BitmapRegionDecoder
-    private static int NUM_TEST_IMAGES = 6;
+    private static final int NUM_TEST_IMAGES = 6;
 
-    private static int TILE_SIZE = 256;
+    private static final int TILE_SIZE = 256;
 
     // Configurations for BitmapFactory.Options
-    private static Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888,
+    private static final Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888,
             Config.RGB_565};
-    private static int[] SAMPLESIZES = new int[] {1, 4};
-
-    private int[] mExpectedColors = new int [TILE_SIZE * TILE_SIZE];
-    private int[] mActualColors = new int [TILE_SIZE * TILE_SIZE];
+    private static final int[] SAMPLESIZES = new int[] {1, 4};
 
     // We allow a certain degree of discrepancy between the tile-based decoding
     // result and the regular decoding result, because the two decoders may have
     // different implementations. The allowable discrepancy is set to a mean
     // square error of 3 * (1 * 1) among the RGB values.
-    private int mMseMargin = 3 * (1 * 1);
+    private static final int MSE_MARGIN = 3 * (1 * 1);
 
     // MSE margin for WebP Region-Decoding for 'Config.RGB_565' is little bigger.
-    private int mMseMarginWebPConfigRgb565 = 8;
+    private static final int MSE_MARGIN_WEB_P_CONFIG_RGB_565 = 8;
 
+    private final int[] mExpectedColors = new int [TILE_SIZE * TILE_SIZE];
+    private final int[] mActualColors = new int [TILE_SIZE * TILE_SIZE];
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mRes = getInstrumentation().getTargetContext().getResources();
+    private ArrayList<File> mFilesCreated = new ArrayList<>(NAMES_TEMP_FILES.length);
+
+    private Resources mRes;
+
+    @Before
+    public void setup() {
+        mRes = InstrumentationRegistry.getTargetContext().getResources();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void teardown() {
         for (File file : mFilesCreated) {
             file.delete();
         }
-        super.tearDown();
     }
 
+    @Test
     public void testNewInstanceInputStream() throws IOException {
         for (int i = 0; i < RES_IDS.length; ++i) {
             InputStream is = obtainInputStream(RES_IDS[i]);
@@ -124,6 +131,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testNewInstanceByteArray() throws IOException {
         for (int i = 0; i < RES_IDS.length; ++i) {
             byte[] imageData = obtainByteArray(RES_IDS[i]);
@@ -139,6 +147,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testNewInstanceStringAndFileDescriptor() throws IOException {
         for (int i = 0; i < RES_IDS.length; ++i) {
             String filepath = obtainPath(i);
@@ -161,6 +170,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeRegionInputStream() throws IOException {
         Options opts = new BitmapFactory.Options();
         for (int i = 0; i < NUM_TEST_IMAGES; ++i) {
@@ -175,10 +185,10 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
                     Bitmap wholeImage = BitmapFactory.decodeStream(is2, null, opts);
 
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
-                        compareRegionByRegion(decoder, opts, mMseMarginWebPConfigRgb565,
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
                                               wholeImage);
                     } else {
-                        compareRegionByRegion(decoder, opts, mMseMargin, wholeImage);
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN, wholeImage);
                     }
                     wholeImage.recycle();
                 }
@@ -186,6 +196,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeRegionInputStreamInBitmap() throws IOException {
         Options opts = new BitmapFactory.Options();
         for (int i = 0; i < NUM_TEST_IMAGES; ++i) {
@@ -205,10 +216,10 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
                             wholeImage.getWidth(), wholeImage.getHeight(), opts.inPreferredConfig);
 
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
-                        compareRegionByRegion(decoder, opts, mMseMarginWebPConfigRgb565,
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
                                               wholeImage);
                     } else {
-                        compareRegionByRegion(decoder, opts, mMseMargin, wholeImage);
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN, wholeImage);
                     }
                     wholeImage.recycle();
                 }
@@ -216,6 +227,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeRegionByteArray() throws IOException {
         Options opts = new BitmapFactory.Options();
         for (int i = 0; i < NUM_TEST_IMAGES; ++i) {
@@ -231,10 +243,10 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
                             0, imageData.length, opts);
 
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
-                        compareRegionByRegion(decoder, opts, mMseMarginWebPConfigRgb565,
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
                                               wholeImage);
                     } else {
-                        compareRegionByRegion(decoder, opts, mMseMargin, wholeImage);
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN, wholeImage);
                     }
                     wholeImage.recycle();
                 }
@@ -242,6 +254,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeRegionStringAndFileDescriptor() throws IOException {
         Options opts = new BitmapFactory.Options();
         for (int i = 0; i < NUM_TEST_IMAGES; ++i) {
@@ -255,10 +268,10 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
                         BitmapRegionDecoder.newInstance(filepath, false);
                     Bitmap wholeImage = BitmapFactory.decodeFile(filepath, opts);
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
-                        compareRegionByRegion(decoder, opts, mMseMarginWebPConfigRgb565,
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
                                               wholeImage);
                     } else {
-                        compareRegionByRegion(decoder, opts, mMseMargin, wholeImage);
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN, wholeImage);
                     }
 
                     ParcelFileDescriptor pfd1 = obtainParcelDescriptor(filepath);
@@ -267,10 +280,10 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
                     ParcelFileDescriptor pfd2 = obtainParcelDescriptor(filepath);
                     FileDescriptor fd2 = pfd2.getFileDescriptor();
                     if (RES_IDS[i] == R.drawable.webp_test && COLOR_CONFIGS[k] == Config.RGB_565) {
-                        compareRegionByRegion(decoder, opts, mMseMarginWebPConfigRgb565,
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN_WEB_P_CONFIG_RGB_565,
                                               wholeImage);
                     } else {
-                        compareRegionByRegion(decoder, opts, mMseMargin, wholeImage);
+                        compareRegionByRegion(decoder, opts, MSE_MARGIN, wholeImage);
                     }
                     wholeImage.recycle();
                 }
@@ -278,6 +291,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testRecycle() throws IOException {
         InputStream is = obtainInputStream(RES_IDS[0]);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
@@ -312,6 +326,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
     //     (2) The width, height, and Config of inBitmap are never changed.
     //     (3) All of the pixels decoded into inBitmap exactly match the pixels
     //         of a decode where inBitmap is NULL.
+    @Test
     public void testInBitmapReuse() throws IOException {
         Options defaultOpts = new BitmapFactory.Options();
         Options reuseOpts = new BitmapFactory.Options();
@@ -418,7 +433,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
-    private Bitmap cropBitmap(Bitmap wholeImage, Rect rect) {
+    private static Bitmap cropBitmap(Bitmap wholeImage, Rect rect) {
         Bitmap cropped = Bitmap.createBitmap(rect.width(), rect.height(),
                 wholeImage.getConfig());
         Canvas canvas = new Canvas(cropped);
@@ -446,7 +461,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
     }
 
     private String obtainPath(int idx) throws IOException {
-        File dir = getInstrumentation().getTargetContext().getFilesDir();
+        File dir = InstrumentationRegistry.getTargetContext().getFilesDir();
         dir.mkdirs();
         File file = new File(dir, NAMES_TEMP_FILES[idx]);
         InputStream is = obtainInputStream(RES_IDS[idx]);
@@ -462,11 +477,10 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         return (file.getPath());
     }
 
-    private ParcelFileDescriptor obtainParcelDescriptor(String path)
+    private static ParcelFileDescriptor obtainParcelDescriptor(String path)
             throws IOException {
         File file = new File(path);
-        return(ParcelFileDescriptor.open(file,
-                ParcelFileDescriptor.MODE_READ_ONLY));
+        return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
     }
 
 
@@ -513,7 +527,7 @@ public class BitmapRegionDecoderTest extends InstrumentationTestCase {
         }
     }
 
-    private double distance(int exp, int actual) {
+    private static double distance(int exp, int actual) {
         int r = Color.red(actual) - Color.red(exp);
         int g = Color.green(actual) - Color.green(exp);
         int b = Color.blue(actual) - Color.blue(exp);

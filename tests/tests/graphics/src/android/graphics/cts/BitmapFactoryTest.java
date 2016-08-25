@@ -16,22 +16,33 @@
 
 package android.graphics.cts;
 
-import android.graphics.cts.R;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,36 +53,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-public class BitmapFactoryTest extends InstrumentationTestCase {
-    private Resources mRes;
-    // opt for non-null
-    private BitmapFactory.Options mOpt1;
-    // opt for null
-    private BitmapFactory.Options mOpt2;
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BitmapFactoryTest {
     // height and width of start.jpg
     private static final int START_HEIGHT = 31;
     private static final int START_WIDTH = 31;
-    private int mDefaultDensity;
-    private int mTargetDensity;
 
     // The test images, including baseline JPEG, a PNG, a GIF, a BMP AND a WEBP.
-    private static int[] RES_IDS = new int[] {
+    private static final int[] RES_IDS = new int[] {
             R.drawable.baseline_jpeg, R.drawable.png_test, R.drawable.gif_test,
             R.drawable.bmp_test, R.drawable.webp_test
     };
 
     // The width and height of the above image.
-    private static int WIDTHS[] = new int[] { 1280, 640, 320, 320, 640 };
-    private static int HEIGHTS[] = new int[] { 960, 480, 240, 240, 480 };
+    private static final int WIDTHS[] = new int[] { 1280, 640, 320, 320, 640 };
+    private static final int HEIGHTS[] = new int[] { 960, 480, 240, 240, 480 };
 
     // Configurations for BitmapFactory.Options
-    private static Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888, Config.RGB_565};
-    private static int[] COLOR_TOLS = new int[] {16, 49, 576};
+    private static final Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888, Config.RGB_565};
+    private static final int[] COLOR_TOLS = new int[] {16, 49, 576};
 
-    private static Config[] COLOR_CONFIGS_RGBA = new Config[] {Config.ARGB_8888};
-    private static int[] COLOR_TOLS_RGBA = new int[] {72, 124};
+    private static final Config[] COLOR_CONFIGS_RGBA = new Config[] {Config.ARGB_8888};
+    private static final int[] COLOR_TOLS_RGBA = new int[] {72, 124};
 
-    private static int[] RAW_COLORS = new int[] {
+    private static final int[] RAW_COLORS = new int[] {
         // raw data from R.drawable.premul_data
         Color.argb(255, 0, 0, 0),
         Color.argb(128, 255, 0, 0),
@@ -79,7 +85,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         Color.argb(2, 255, 254, 253),
     };
 
-    private static int[] DEPREMUL_COLORS = new int[] {
+    private static final int[] DEPREMUL_COLORS = new int[] {
         // data from R.drawable.premul_data, after premultiplied store + un-premultiplied load
         Color.argb(255, 0, 0, 0),
         Color.argb(128, 255, 0, 0),
@@ -87,10 +93,17 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         Color.argb(2, 255, 255, 255),
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mRes = getInstrumentation().getTargetContext().getResources();
+    private Resources mRes;
+    // opt for non-null
+    private BitmapFactory.Options mOpt1;
+    // opt for null
+    private BitmapFactory.Options mOpt2;
+    private int mDefaultDensity;
+    private int mTargetDensity;
+
+    @Before
+    public void setup() {
+        mRes = InstrumentationRegistry.getTargetContext().getResources();
         mDefaultDensity = DisplayMetrics.DENSITY_DEFAULT;
         mTargetDensity = mRes.getDisplayMetrics().densityDpi;
 
@@ -101,11 +114,12 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         mOpt2.inJustDecodeBounds = true;
     }
 
+    @Test
     public void testConstructor() {
-        // new the BitmapFactory instance
         new BitmapFactory();
     }
 
+    @Test
     public void testDecodeResource1() {
         Bitmap b = BitmapFactory.decodeResource(mRes, R.drawable.start,
                 mOpt1);
@@ -117,6 +131,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertNull(BitmapFactory.decodeResource(mRes, R.drawable.start, mOpt2));
     }
 
+    @Test
     public void testDecodeResource2() {
         Bitmap b = BitmapFactory.decodeResource(mRes, R.drawable.start);
         assertNotNull(b);
@@ -125,6 +140,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(START_WIDTH * mTargetDensity / mDefaultDensity, b.getWidth(), 1.1);
     }
 
+    @Test
     public void testDecodeResourceStream() {
         InputStream is = obtainInputStream();
         Rect r = new Rect(1, 1, 1, 1);
@@ -136,6 +152,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
+    @Test
     public void testDecodeByteArray1() {
         byte[] array = obtainArray();
         Bitmap b = BitmapFactory.decodeByteArray(array, 0, array.length, mOpt1);
@@ -147,6 +164,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertNull(BitmapFactory.decodeByteArray(array, 0, array.length, mOpt2));
     }
 
+    @Test
     public void testDecodeByteArray2() {
         byte[] array = obtainArray();
         Bitmap b = BitmapFactory.decodeByteArray(array, 0, array.length);
@@ -156,6 +174,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
+    @Test
     public void testDecodeStream1() {
         InputStream is = obtainInputStream();
         Rect r = new Rect(1, 1, 1, 1);
@@ -168,6 +187,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertNull(BitmapFactory.decodeStream(is, r, mOpt2));
     }
 
+    @Test
     public void testDecodeStream2() {
         InputStream is = obtainInputStream();
         Bitmap b = BitmapFactory.decodeStream(is);
@@ -177,7 +197,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
-    public void testDecodeStream3() throws IOException {
+    @Test
+    public void testDecodeStream3() {
         for (int i = 0; i < RES_IDS.length; ++i) {
             InputStream is = obtainInputStream(RES_IDS[i]);
             Bitmap b = BitmapFactory.decodeStream(is);
@@ -188,7 +209,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
-    public void testDecodeStream4() throws IOException {
+    @Test
+    public void testDecodeStream4() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         for (int k = 0; k < COLOR_CONFIGS.length; ++k) {
             options.inPreferredConfig = COLOR_CONFIGS[k];
@@ -222,7 +244,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
-    public void testDecodeStream5() throws IOException {
+    @Test
+    public void testDecodeStream5() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         for (int k = 0; k < COLOR_CONFIGS_RGBA.length; ++k) {
             options.inPreferredConfig = COLOR_CONFIGS_RGBA[k];
@@ -259,6 +282,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeFileDescriptor1() throws IOException {
         ParcelFileDescriptor pfd = obtainParcelDescriptor(obtainPath());
         FileDescriptor input = pfd.getFileDescriptor();
@@ -272,6 +296,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertNull(BitmapFactory.decodeFileDescriptor(input, r, mOpt2));
     }
 
+    @Test
     public void testDecodeFileDescriptor2() throws IOException {
         ParcelFileDescriptor pfd = obtainParcelDescriptor(obtainPath());
         FileDescriptor input = pfd.getFileDescriptor();
@@ -282,6 +307,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
+    @Test
     public void testDecodeFileDescriptor3() throws IOException {
         // Arbitrary offsets to use. If the offset of the FD matches the offset of the image,
         // decoding should succeed, but if they do not match, decoding should fail.
@@ -326,6 +352,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeFile1() throws IOException {
         Bitmap b = BitmapFactory.decodeFile(obtainPath(), mOpt1);
         assertNotNull(b);
@@ -336,6 +363,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertNull(BitmapFactory.decodeFile(obtainPath(), mOpt2));
     }
 
+    @Test
     public void testDecodeFile2() throws IOException {
         Bitmap b = BitmapFactory.decodeFile(obtainPath());
         assertNotNull(b);
@@ -344,7 +372,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
-    public void testDecodeReuseBasic() throws IOException {
+    @Test
+    public void testDecodeReuseBasic() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
         options.inSampleSize = 0; // treated as 1
@@ -388,7 +417,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(output.hasAlpha(), hasAlpha);
     }
 
-    public void testDecodeReuseHasAlpha() throws IOException {
+    @Test
+    public void testDecodeReuseHasAlpha() {
         final int bitmapSize = 31; // size in pixels of start, pass, and alpha resources
         final int pixelCount = bitmapSize * bitmapSize;
 
@@ -408,7 +438,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         decodeResourceWithReuse(bitmap, R.drawable.alpha, true);
     }
 
-    public void testDecodeReuseFormats() throws IOException {
+    @Test
+    public void testDecodeReuseFormats() {
         // reuse should support all image formats
         for (int i = 0; i < RES_IDS.length; ++i) {
             Bitmap reuseBuffer = Bitmap.createBitmap(1000000, 1, Bitmap.Config.ALPHA_8);
@@ -422,7 +453,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
-    public void testDecodeReuseFailure() throws IOException {
+    @Test
+    public void testDecodeReuseFailure() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
         options.inScaled = false;
@@ -432,13 +464,14 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         options.inBitmap = reduced;
         options.inSampleSize = 1;
         try {
-            Bitmap original = BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
+            BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
             fail("should throw exception due to lack of space");
         } catch (IllegalArgumentException e) {
         }
     }
 
-    public void testDecodeReuseScaling() throws IOException {
+    @Test
+    public void testDecodeReuseScaling() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
         options.inScaled = false;
@@ -455,7 +488,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(originalSize, reduced.getByteCount() * 16);
     }
 
-    public void testDecodeReuseDoubleScaling() throws IOException {
+    @Test
+    public void testDecodeReuseDoubleScaling() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
         options.inScaled = false;
@@ -476,7 +510,8 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(originalSize, doubleScaled.getByteCount());
     }
 
-    public void testDecodeReuseEquivalentScaling() throws IOException {
+    @Test
+    public void testDecodeReuseEquivalentScaling() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
         options.inScaled = true;
@@ -495,12 +530,14 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertSame(densityReduced, scaleReduced);
     }
 
-    public void testDecodePremultipliedDefault() throws IOException {
+    @Test
+    public void testDecodePremultipliedDefault() {
         Bitmap simplePremul = BitmapFactory.decodeResource(mRes, R.drawable.premul_data);
         assertTrue(simplePremul.isPremultiplied());
     }
 
-    public void testDecodePremultipliedData() throws IOException {
+    @Test
+    public void testDecodePremultipliedData() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         Bitmap premul = BitmapFactory.decodeResource(mRes, R.drawable.premul_data, options);
@@ -520,6 +557,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testDecodeInPurgeableAllocationCount() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 1;
@@ -542,6 +580,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertEquals(b.getDensity(), mDefaultCreationDensity);
     }
 
+    @Test
     public void testDecodeScaling() {
         BitmapFactory.Options defaultOpt = new BitmapFactory.Options();
 
@@ -573,6 +612,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
     }
 
     // Test that writing an index8 bitmap to a Parcel succeeds.
+    @Test
     public void testParcel() {
         // Turn off scaling, which would convert to an 8888 bitmap, which does not expose
         // the bug.
@@ -598,6 +638,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         assertTrue(b2.compress(Bitmap.CompressFormat.JPEG, 50, baos));
     }
 
+    @Test
     public void testConfigs() {
         // The output Config of a BitmapFactory decode depends on the request from the
         // client and the properties of the image to be decoded.
@@ -697,7 +738,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
-    private Bitmap grayToARGB(Bitmap gray) {
+    private static Bitmap grayToARGB(Bitmap gray) {
         Bitmap argb = Bitmap.createBitmap(gray.getWidth(), gray.getHeight(), Config.ARGB_8888);
         for (int y = 0; y < argb.getHeight(); y++) {
             for (int x = 0; x < argb.getWidth(); x++) {
@@ -725,11 +766,9 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         return mRes.openRawResource(resId);
     }
 
-    private ParcelFileDescriptor obtainParcelDescriptor(String path)
-            throws IOException {
+    private static ParcelFileDescriptor obtainParcelDescriptor(String path) throws IOException {
         File file = new File(path);
-        return(ParcelFileDescriptor.open(file,
-                ParcelFileDescriptor.MODE_READ_ONLY));
+        return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
     }
 
     private String obtainPath() throws IOException {
@@ -744,7 +783,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
      *               with an offset. Must be less than or equal to 1024
      */
     private String obtainPath(int resId, long offset) throws IOException {
-        File dir = getInstrumentation().getTargetContext().getFilesDir();
+        File dir = InstrumentationRegistry.getTargetContext().getFilesDir();
         dir.mkdirs();
         // The suffix does not necessarily represent theactual file type.
         File file = new File(dir, "test.jpg");
@@ -771,7 +810,7 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
     // Compare expected to actual to see if their diff is less then mseMargin.
     // lessThanMargin is to indicate whether we expect the mean square error
     // to be "less than" or "no less than".
-    private void compareBitmaps(Bitmap expected, Bitmap actual,
+    private static void compareBitmaps(Bitmap expected, Bitmap actual,
             int mseMargin, boolean lessThanMargin, boolean isPremultiplied) {
         final int width = expected.getWidth();
         final int height = expected.getHeight();
@@ -806,13 +845,13 @@ public class BitmapFactoryTest extends InstrumentationTestCase {
         }
     }
 
-    private int multiplyAlpha(int color, int alpha) {
+    private static int multiplyAlpha(int color, int alpha) {
         return (color * alpha + 127) / 255;
     }
 
     // For the Bitmap with Alpha, multiply the Alpha values to get the effective
     // RGB colors and then compute the color-distance.
-    private double distance(int expect, int actual, boolean isPremultiplied) {
+    private static double distance(int expect, int actual, boolean isPremultiplied) {
         if (isPremultiplied) {
             final int a1 = Color.alpha(actual);
             final int a2 = Color.alpha(expect);

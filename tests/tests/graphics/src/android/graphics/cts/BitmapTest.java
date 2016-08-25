@@ -15,22 +15,32 @@
  */
 package android.graphics.cts;
 
-import android.graphics.cts.R;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.res.Resources;
 import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.Bitmap.Config;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -38,124 +48,94 @@ import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
-public class BitmapTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class BitmapTest {
+    // small alpha values cause color values to be pre-multiplied down, losing accuracy
+    private static final int PREMUL_COLOR = Color.argb(2, 255, 254, 253);
+    private static final int PREMUL_ROUNDED_COLOR = Color.argb(2, 255, 255, 255);
+    private static final int PREMUL_STORED_COLOR = Color.argb(2, 2, 2, 2);
+
     private Resources mRes;
     private Bitmap mBitmap;
     private BitmapFactory.Options mOptions;
 
-    // small alpha values cause color values to be pre-multiplied down, losing accuracy
-    private final int PREMUL_COLOR = Color.argb(2, 255, 254, 253);
-    private final int PREMUL_ROUNDED_COLOR = Color.argb(2, 255, 255, 255);
-    private final int PREMUL_STORED_COLOR = Color.argb(2, 2, 2, 2);
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mRes = getContext().getResources();
+    @Before
+    public void setup() {
+        mRes = InstrumentationRegistry.getTargetContext().getResources();
         mOptions = new BitmapFactory.Options();
         mOptions.inScaled = false;
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
     }
 
-    public void testCompress(){
+    @Test(expected=IllegalStateException.class)
+    public void testCompressRecycled() {
         mBitmap.recycle();
+        mBitmap.compress(CompressFormat.JPEG, 0, null);
+    }
 
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.compress(CompressFormat.JPEG, 0, null);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+    @Test(expected=NullPointerException.class)
+    public void testCompressNullStream() {
+        mBitmap.compress(CompressFormat.JPEG, 0, null);
+    }
 
-        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
+    @Test(expected=IllegalArgumentException.class)
+    public void testCompressQualityTooLow() {
+        mBitmap.compress(CompressFormat.JPEG, -1, new ByteArrayOutputStream());
+    }
 
-        // abnormal case: out stream is null
-        try{
-            mBitmap.compress(CompressFormat.JPEG, 0, null);
-            fail("shouldn't come to here");
-        }catch(NullPointerException e){
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testCompressQualityTooHigh() {
+        mBitmap.compress(CompressFormat.JPEG, 101, new ByteArrayOutputStream());
+    }
 
-        // abnormal case: quality less than 0
-        try{
-            mBitmap.compress(CompressFormat.JPEG, -1, new ByteArrayOutputStream());
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
-
-        // abnormal case: quality bigger than 100
-        try{
-            mBitmap.compress(CompressFormat.JPEG, 101, new ByteArrayOutputStream());
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
-
-        //normal case
+    @Test
+    public void testCompress() {
         assertTrue(mBitmap.compress(CompressFormat.JPEG, 50, new ByteArrayOutputStream()));
     }
 
-    public void testCopy(){
+    @Test(expected=IllegalStateException.class)
+    public void testCopyRecycled() {
         mBitmap.recycle();
+        mBitmap.copy(Config.RGB_565, false);
+    }
 
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.copy(Config.RGB_565, false);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-            // expected
-        }
-
+    @Test
+    public void testCopy() {
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         Bitmap bitmap = mBitmap.copy(Config.ARGB_8888, false);
         WidgetTestUtils.assertEquals(mBitmap, bitmap);
     }
 
-    public void testCopyPixelsToBuffer(){
+    @Test(expected=RuntimeException.class)
+    public void testCopyPixelsToBufferUnsupportedBufferClass() {
+        final int pixSize = mBitmap.getRowBytes() * mBitmap.getHeight();
+
+        mBitmap.copyPixelsToBuffer(CharBuffer.allocate(pixSize));
+    }
+
+    @Test(expected=RuntimeException.class)
+    public void testCopyPixelsToBufferBufferTooSmall() {
         final int pixSize = mBitmap.getRowBytes() * mBitmap.getHeight();
         final int tooSmall = pixSize / 2;
 
-        // abnormal case: unsupported Buffer subclass
-        try{
-            mBitmap.copyPixelsToBuffer(CharBuffer.allocate(pixSize));
-            fail("shouldn't come to here");
-        }catch(RuntimeException e1){
-        }
+        mBitmap.copyPixelsToBuffer(ByteBuffer.allocate(tooSmall));
+    }
 
-        // abnormal case: Buffer not large enough for pixels
-        try{
-            mBitmap.copyPixelsToBuffer(ByteBuffer.allocate(tooSmall));
-            fail("shouldn't come to here");
-        }catch(RuntimeException e2){
-        }
+    @Test
+    public void testCopyPixelsToBuffer() {
+        final int pixSize = mBitmap.getRowBytes() * mBitmap.getHeight();
 
-        // normal case
         ByteBuffer byteBuf = ByteBuffer.allocate(pixSize);
         assertEquals(0, byteBuf.position());
         mBitmap.copyPixelsToBuffer(byteBuf);
         assertEquals(pixSize, byteBuf.position());
 
-        // abnormal case: Buffer not large enough for pixels
-        try{
-            mBitmap.copyPixelsToBuffer(ByteBuffer.allocate(tooSmall));
-            fail("shouldn't come to here");
-        }catch(RuntimeException e3){
-        }
-
-        // normal case
         ShortBuffer shortBuf = ShortBuffer.allocate(pixSize);
         assertEquals(0, shortBuf.position());
         mBitmap.copyPixelsToBuffer(shortBuf);
         assertEquals(pixSize >> 1, shortBuf.position());
 
-        // abnormal case: Buffer not large enough for pixels
-        try{
-            mBitmap.copyPixelsToBuffer(ByteBuffer.allocate(tooSmall));
-            fail("shouldn't come to here");
-        }catch(RuntimeException e4){
-        }
-
-        // normal case
         IntBuffer intBuf1 = IntBuffer.allocate(pixSize);
         assertEquals(0, intBuf1.position());
         mBitmap.copyPixelsToBuffer(intBuf1);
@@ -178,7 +158,8 @@ public class BitmapTest extends AndroidTestCase {
         }
     }
 
-    public void testCreateBitmap1(){
+    @Test
+    public void testCreateBitmap1() {
         int[] colors = createColors(100);
         Bitmap bitmap = Bitmap.createBitmap(colors, 10, 10, Config.RGB_565);
         Bitmap ret = Bitmap.createBitmap(bitmap);
@@ -188,14 +169,13 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(Config.RGB_565, ret.getConfig());
     }
 
-    public void testCreateBitmap2(){
-        //abnormal case: Illegal Argument
-        try{
-            Bitmap.createBitmap(mBitmap, -100, 50, 50, 200);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapNegativeX() {
+        Bitmap.createBitmap(mBitmap, -100, 50, 50, 200);
+    }
 
+    @Test
+    public void testCreateBitmap2() {
         // special case: output bitmap is equal to the input bitmap
         mBitmap = Bitmap.createBitmap(new int[100 * 100], 100, 100, Config.ARGB_8888);
         Bitmap ret = Bitmap.createBitmap(mBitmap, 0, 0, 100, 100);
@@ -209,37 +189,40 @@ public class BitmapTest extends AndroidTestCase {
         assertFalse(mBitmap.equals(ret));
     }
 
-    public void testCreateBitmap3(){
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapNegativeXY() {
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
 
-        //abnormal case: x and/or y less than 0
-        try{
-            Bitmap.createBitmap(mBitmap, -1, -1, 10, 10, null, false);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        // abnormal case: x and/or y less than 0
+        Bitmap.createBitmap(mBitmap, -1, -1, 10, 10, null, false);
+    }
 
-        //abnormal case: width and/or height less than 0
-        try{
-            Bitmap.createBitmap(mBitmap, 1, 1, -10, -10, null, false);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapNegativeWidthHeight() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
 
-        //abnormal case: (x + width) bigger than source bitmap's width
-        try{
-            Bitmap.createBitmap(mBitmap, 10, 10, 95, 50, null, false);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        // abnormal case: width and/or height less than 0
+        Bitmap.createBitmap(mBitmap, 1, 1, -10, -10, null, false);
+    }
 
-        //abnormal case: (y + height) bigger than source bitmap's height
-        try{
-            Bitmap.createBitmap(mBitmap, 10, 10, 50, 95, null, false);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapXRegionTooWide() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
 
+        // abnormal case: (x + width) bigger than source bitmap's width
+        Bitmap.createBitmap(mBitmap, 10, 10, 95, 50, null, false);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapYRegionTooTall() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+
+        // abnormal case: (y + height) bigger than source bitmap's height
+        Bitmap.createBitmap(mBitmap, 10, 10, 50, 95, null, false);
+    }
+
+    @Test
+    public void testCreateBitmap3() {
         // special case: output bitmap is equal to the input bitmap
         mBitmap = Bitmap.createBitmap(new int[100 * 100], 100, 100, Config.ARGB_8888);
         Bitmap ret = Bitmap.createBitmap(mBitmap, 0, 0, 100, 100, null, false);
@@ -253,7 +236,8 @@ public class BitmapTest extends AndroidTestCase {
         assertFalse(mBitmap.equals(ret));
     }
 
-    public void testCreateBitmap4(){
+    @Test
+    public void testCreateBitmap4() {
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
         assertNotNull(ret);
         assertEquals(100, ret.getWidth());
@@ -261,43 +245,49 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(Config.RGB_565, ret.getConfig());
     }
 
-    public void testCreateBitmap6(){
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapFromColorsNegativeWidthHeight() {
         int[] colors = createColors(100);
 
-        //abnormal case: width and/or height less than 0
-        try{
-            Bitmap.createBitmap(colors, 0, 100, -1, 100, Config.RGB_565);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        // abnormal case: width and/or height less than 0
+        Bitmap.createBitmap(colors, 0, 100, -1, 100, Config.RGB_565);
+    }
 
-        //abnormal case: stride less than width and bigger than -width
-        try{
-            Bitmap.createBitmap(colors, 10, 10, 100, 100, Config.RGB_565);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateBitmapFromColorsIllegalStride() {
+        int[] colors = createColors(100);
 
-        //abnormal case: offset less than 0
-        try{
-            Bitmap.createBitmap(colors, -10, 100, 100, 100, Config.RGB_565);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+        // abnormal case: stride less than width and bigger than -width
+        Bitmap.createBitmap(colors, 10, 10, 100, 100, Config.RGB_565);
+    }
 
-        //abnormal case: (offset + width) bigger than colors' length
-        try{
-            Bitmap.createBitmap(colors, 10, 100, 100, 100, Config.RGB_565);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testCreateBitmapFromColorsNegativeOffset() {
+        int[] colors = createColors(100);
 
-        //abnormal case: (lastScanline + width) bigger than colors' length
-        try{
-            Bitmap.createBitmap(colors, 10, 100, 50, 100, Config.RGB_565);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+        // abnormal case: offset less than 0
+        Bitmap.createBitmap(colors, -10, 100, 100, 100, Config.RGB_565);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testCreateBitmapFromColorsOffsetTooLarge() {
+        int[] colors = createColors(100);
+
+        // abnormal case: (offset + width) bigger than colors' length
+        Bitmap.createBitmap(colors, 10, 100, 100, 100, Config.RGB_565);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testCreateBitmapFromColorsScalnlineTooLarge() {
+        int[] colors = createColors(100);
+
+        // abnormal case: (lastScanline + width) bigger than colors' length
+        Bitmap.createBitmap(colors, 10, 100, 50, 100, Config.RGB_565);
+    }
+
+    @Test
+    public void testCreateBitmap6() {
+        int[] colors = createColors(100);
 
         // normal case
         Bitmap ret = Bitmap.createBitmap(colors, 5, 10, 10, 5, Config.RGB_565);
@@ -307,7 +297,8 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(Config.RGB_565, ret.getConfig());
     }
 
-    public void testCreateScaledBitmap(){
+    @Test
+    public void testCreateScaledBitmap() {
         mBitmap = Bitmap.createBitmap(100, 200, Config.RGB_565);
         Bitmap ret = Bitmap.createScaledBitmap(mBitmap, 50, 100, false);
         assertNotNull(ret);
@@ -315,29 +306,28 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(100, ret.getHeight());
     }
 
-    public void testDescribeContents(){
+    @Test
+    public void testDescribeContents() {
         assertEquals(0, mBitmap.describeContents());
     }
 
-    public void testEraseColor(){
+    @Test(expected=IllegalStateException.class)
+    public void testEraseColorOnRecycled() {
         mBitmap.recycle();
 
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.eraseColor(0);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.eraseColor(0);
+    }
 
+    @Test(expected=IllegalStateException.class)
+    public void testEraseColorOnImmutable() {
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
 
         //abnormal case: bitmap is immutable
-        try{
-            mBitmap.eraseColor(0);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.eraseColor(0);
+    }
 
+    @Test
+    public void testEraseColor() {
         // normal case
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         mBitmap.eraseColor(0xffff0000);
@@ -345,16 +335,15 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(0xffff0000, mBitmap.getPixel(50, 50));
     }
 
-    public void testExtractAlpha1(){
+    @Test(expected=IllegalStateException.class)
+    public void testExtractAlphaFromRecycled() {
         mBitmap.recycle();
 
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.extractAlpha();
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.extractAlpha();
+    }
 
+    @Test
+    public void testExtractAlpha() {
         // normal case
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
         Bitmap ret = mBitmap.extractAlpha();
@@ -365,16 +354,15 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(0xFF, Color.alpha(result));
     }
 
-    public void testExtractAlpha2(){
+    @Test(expected=IllegalStateException.class)
+    public void testExtractAlphaWithPaintAndOffsetFromRecycled() {
         mBitmap.recycle();
 
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.extractAlpha(new Paint(), new int[]{0, 1});
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.extractAlpha(new Paint(), new int[]{0, 1});
+    }
 
+    @Test
+    public void testExtractAlphaWithPaintAndOffset() {
         // normal case
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
         Bitmap ret = mBitmap.extractAlpha(new Paint(), new int[]{0, 1});
@@ -385,6 +373,7 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(0xFF, Color.alpha(result));
     }
 
+    @Test
     public void testGetAllocationByteCount() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ALPHA_8);
         int alloc = mBitmap.getAllocationByteCount();
@@ -401,7 +390,8 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(mBitmap.getAllocationByteCount(), alloc);
     }
 
-    public void testGetConfig(){
+    @Test
+    public void testGetConfig() {
         Bitmap bm0 = Bitmap.createBitmap(100, 200, Bitmap.Config.ALPHA_8);
         Bitmap bm1 = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         Bitmap bm2 = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
@@ -414,41 +404,44 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(Bitmap.Config.ARGB_8888, bm3.getConfig());
     }
 
-    public void testGetHeight(){
+    @Test
+    public void testGetHeight() {
         assertEquals(31, mBitmap.getHeight());
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         assertEquals(200, mBitmap.getHeight());
     }
 
-    public void testGetNinePatchChunk(){
+    @Test
+    public void testGetNinePatchChunk() {
         assertNull(mBitmap.getNinePatchChunk());
     }
 
-    public void testGetPixel(){
+    @Test(expected=IllegalStateException.class)
+    public void testGetPixelFromRecycled() {
         mBitmap.recycle();
 
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.getPixel(10, 16);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.getPixel(10, 16);
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testGetPixelXTooLarge() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
 
-        //abnormal case: x bigger than the source bitmap's width
-        try{
-            mBitmap.getPixel(200, 16);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        // abnormal case: x bigger than the source bitmap's width
+        mBitmap.getPixel(200, 16);
+    }
 
-        //abnormal case: y bigger than the source bitmap's height
-        try{
-            mBitmap.getPixel(10, 300);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testGetPixelYTooLarge() {
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
+
+        // abnormal case: y bigger than the source bitmap's height
+        mBitmap.getPixel(10, 300);
+    }
+
+    @Test
+    public void testGetPixel() {
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
 
         // normal case 565
         mBitmap.setPixel(10, 16, 0xFF << 24);
@@ -468,7 +461,8 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(0x1F1F1F1F, mBitmap.getPixel(5, 5));
     }
 
-    public void testGetRowBytes(){
+    @Test
+    public void testGetRowBytes() {
         Bitmap bm0 = Bitmap.createBitmap(100, 200, Bitmap.Config.ALPHA_8);
         Bitmap bm1 = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         Bitmap bm2 = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
@@ -481,30 +475,35 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(400, bm3.getRowBytes());
     }
 
-    public void testGetWidth(){
+    @Test
+    public void testGetWidth() {
         assertEquals(31, mBitmap.getWidth());
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         assertEquals(100, mBitmap.getWidth());
     }
 
-    public void testHasAlpha(){
+    @Test
+    public void testHasAlpha() {
         assertFalse(mBitmap.hasAlpha());
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         assertTrue(mBitmap.hasAlpha());
     }
 
-    public void testIsMutable(){
+    @Test
+    public void testIsMutable() {
         assertFalse(mBitmap.isMutable());
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         assertTrue(mBitmap.isMutable());
     }
 
-    public void testIsRecycled(){
+    @Test
+    public void testIsRecycled() {
         assertFalse(mBitmap.isRecycled());
         mBitmap.recycle();
         assertTrue(mBitmap.isRecycled());
     }
 
+    @Test
     public void testReconfigure() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
         int alloc = mBitmap.getAllocationByteCount();
@@ -513,21 +512,18 @@ public class BitmapTest extends AndroidTestCase {
         mBitmap.reconfigure(50, 100, Bitmap.Config.ALPHA_8);
         assertEquals(mBitmap.getAllocationByteCount(), alloc);
         assertEquals(mBitmap.getByteCount() * 8, alloc);
+    }
 
-        // test expanding
-        try {
-            mBitmap.reconfigure(101, 201, Bitmap.Config.ARGB_8888);
-            fail("shouldn't come to here");
-        } catch (IllegalArgumentException e) {
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testReconfigureExpanding() {
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
+        mBitmap.reconfigure(101, 201, Bitmap.Config.ARGB_8888);
+    }
 
-        // test mutable
+    @Test(expected=IllegalStateException.class)
+    public void testReconfigureMutable() {
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
-        try {
-            mBitmap.reconfigure(1, 1, Bitmap.Config.ALPHA_8);
-            fail("shouldn't come to here");
-        } catch (IllegalStateException e) {
-        }
+        mBitmap.reconfigure(1, 1, Bitmap.Config.ALPHA_8);
     }
 
     // Used by testAlphaAndPremul. FIXME: Should we also test Index8? That would require decoding a
@@ -538,6 +534,7 @@ public class BitmapTest extends AndroidTestCase {
 
     // test that reconfigure, setHasAlpha, and setPremultiplied behave as expected with
     // respect to alpha and premultiplied.
+    @Test
     public void testAlphaAndPremul() {
         boolean falseTrue[] = new boolean[] { false, true };
         for (Config fromConfig : CONFIGS) {
@@ -557,7 +554,7 @@ public class BitmapTest extends AndroidTestCase {
                         bitmap.setHasAlpha(hasAlpha);
                         bitmap.setPremultiplied(isPremul);
 
-                        checkAlphaAndPremul(bitmap, hasAlpha, isPremul, false);
+                        verifyAlphaAndPremul(bitmap, hasAlpha, isPremul, false);
 
                         // reconfigure to a smaller size so the function will still succeed when
                         // going to a Config that requires more bits.
@@ -570,7 +567,7 @@ public class BitmapTest extends AndroidTestCase {
 
                         // Check that the alpha and premultiplied state has not changed (unless
                         // we expected it to).
-                        checkAlphaAndPremul(bitmap, hasAlpha, isPremul, fromConfig == Config.RGB_565);
+                        verifyAlphaAndPremul(bitmap, hasAlpha, isPremul, fromConfig == Config.RGB_565);
                     }
                 }
             }
@@ -590,7 +587,7 @@ public class BitmapTest extends AndroidTestCase {
      *          reconfigured from RGB_565. If true, and bitmap is now a Config that supports alpha,
      *          hasAlpha() is expected to be true even if expectedAlpha is false.
      */
-    private void checkAlphaAndPremul(Bitmap bitmap, boolean expectedAlpha, boolean expectedPremul,
+    private void verifyAlphaAndPremul(Bitmap bitmap, boolean expectedAlpha, boolean expectedPremul,
             boolean convertedFrom565) {
         switch (bitmap.getConfig()) {
             case ARGB_4444:
@@ -626,6 +623,7 @@ public class BitmapTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSetConfig() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
         int alloc = mBitmap.getAllocationByteCount();
@@ -634,23 +632,23 @@ public class BitmapTest extends AndroidTestCase {
         mBitmap.setConfig(Bitmap.Config.ALPHA_8);
         assertEquals(mBitmap.getAllocationByteCount(), alloc);
         assertEquals(mBitmap.getByteCount() * 2, alloc);
-
-        // test expanding
-        try {
-            mBitmap.setConfig(Bitmap.Config.ARGB_8888);
-            fail("shouldn't come to here");
-        } catch (IllegalArgumentException e) {
-        }
-
-        // test mutable
-        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
-        try {
-            mBitmap.setConfig(Bitmap.Config.ALPHA_8);
-            fail("shouldn't come to here");
-        } catch (IllegalStateException e) {
-        }
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetConfigExpanding() {
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
+        // test expanding
+        mBitmap.setConfig(Bitmap.Config.ARGB_8888);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testSetConfigMutable() {
+        // test mutable
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
+        mBitmap.setConfig(Bitmap.Config.ALPHA_8);
+    }
+
+    @Test
     public void testSetHeight() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         int alloc = mBitmap.getAllocationByteCount();
@@ -659,153 +657,167 @@ public class BitmapTest extends AndroidTestCase {
         mBitmap.setHeight(100);
         assertEquals(mBitmap.getAllocationByteCount(), alloc);
         assertEquals(mBitmap.getByteCount() * 2, alloc);
-
-        // test expanding
-        try {
-            mBitmap.setHeight(201);
-            fail("shouldn't come to here");
-        } catch (IllegalArgumentException e) {
-        }
-
-        // test mutable
-        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
-        try {
-            mBitmap.setHeight(1);
-            fail("shouldn't come to here");
-        } catch (IllegalStateException e) {
-        }
     }
 
-    public void testSetPixel(){
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetHeightExpanding() {
+        // test expanding
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
+        mBitmap.setHeight(201);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testSetHeightMutable() {
+        // test mutable
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
+        mBitmap.setHeight(1);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testSetPixelOnRecycled() {
         int color = 0xff << 24;
 
         mBitmap.recycle();
-
-        //abnormal case: the bitmap has been recycled
-        try{
-            mBitmap.setPixel(10, 16, color);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
-
-        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
-
-        //abnormal case: the bitmap is immutable
-        try{
-            mBitmap.setPixel(10, 16, color);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
-
-        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
-
-        //abnormal case: x bigger than the source bitmap's width
-        try{
-            mBitmap.setPixel(200, 16, color);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
-
-        //abnormal case: y bigger than the source bitmap's height
-        try{
-            mBitmap.setPixel(10, 300, color);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
-
-        // normal case
-        mBitmap.setPixel(10, 16, 0xFF << 24);
-        assertEquals(0xFF << 24, mBitmap.getPixel(10, 16));
+        mBitmap.setPixel(10, 16, color);
     }
 
-    public void testSetPixels(){
-        int[] colors = createColors(100);
-
-        //abnormal case: the bitmap has been recycled
-        mBitmap.recycle();
-
-        try{
-            mBitmap.setPixels(colors, 0, 0, 0, 0, 0, 0);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
-
+    @Test(expected=IllegalStateException.class)
+    public void testSetPixelOnImmutable() {
+        int color = 0xff << 24;
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
 
-        // abnormal case: the bitmap is immutable
-        try{
-            mBitmap.setPixels(colors, 0, 0, 0, 0, 0, 0);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.setPixel(10, 16, color);
+    }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelXIsTooLarge() {
+        int color = 0xff << 24;
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
+
+        // abnormal case: x bigger than the source bitmap's width
+        mBitmap.setPixel(200, 16, color);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelYIsTooLarge() {
+        int color = 0xff << 24;
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
+
+        // abnormal case: y bigger than the source bitmap's height
+        mBitmap.setPixel(10, 300, color);
+    }
+
+    @Test
+    public void testSetPixel() {
+        int color = 0xff << 24;
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.RGB_565);
+
+        // normal case
+        mBitmap.setPixel(10, 16, color);
+        assertEquals(color, mBitmap.getPixel(10, 16));
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testSetPixelsOnRecycled() {
+        int[] colors = createColors(100);
+
+        mBitmap.recycle();
+        mBitmap.setPixels(colors, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testSetPixelsOnImmutable() {
+        int[] colors = createColors(100);
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
+
+        mBitmap.setPixels(colors, 0, 0, 0, 0, 0, 0);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelsXYNegative() {
+        int[] colors = createColors(100);
         mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: x and/or y less than 0
-        try{
-            mBitmap.setPixels(colors, 0, 0, -1, -1, 200, 16);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        mBitmap.setPixels(colors, 0, 0, -1, -1, 200, 16);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelsWidthHeightNegative() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: width and/or height less than 0
-        try{
-            mBitmap.setPixels(colors, 0, 0, 0, 0, -1, -1);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        mBitmap.setPixels(colors, 0, 0, 0, 0, -1, -1);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelsXTooHigh() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: (x + width) bigger than the source bitmap's width
-        try{
-            mBitmap.setPixels(colors, 0, 0, 10, 10, 95, 50);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        mBitmap.setPixels(colors, 0, 0, 10, 10, 95, 50);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelsYTooHigh() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: (y + height) bigger than the source bitmap's height
-        try{
-            mBitmap.setPixels(colors, 0, 0, 10, 10, 50, 95);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        mBitmap.setPixels(colors, 0, 0, 10, 10, 50, 95);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetPixelsStrideIllegal() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: stride less than width and bigger than -width
-        try{
-            mBitmap.setPixels(colors, 0, 10, 10, 10, 50, 50);
-            fail("shouldn't come to here");
-        }catch(IllegalArgumentException e){
-        }
+        mBitmap.setPixels(colors, 0, 10, 10, 10, 50, 50);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testSetPixelsOffsetNegative() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: offset less than 0
-        try{
-            mBitmap.setPixels(colors, -1, 50, 10, 10, 50, 50);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+        mBitmap.setPixels(colors, -1, 50, 10, 10, 50, 50);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testSetPixelsOffsetTooBig() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: (offset + width) bigger than the length of colors
-        try{
-            mBitmap.setPixels(colors, 60, 50, 10, 10, 50, 50);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+        mBitmap.setPixels(colors, 60, 50, 10, 10, 50, 50);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testSetPixelsLastScanlineNegative() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: lastScanline less than 0
-        try{
-            mBitmap.setPixels(colors, 10, -50, 10, 10, 50, 50);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+        mBitmap.setPixels(colors, 10, -50, 10, 10, 50, 50);
+    }
+
+    @Test(expected=ArrayIndexOutOfBoundsException.class)
+    public void testSetPixelsLastScanlineTooBig() {
+        int[] colors = createColors(100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
 
         // abnormal case: (lastScanline + width) bigger than the length of colors
-        try{
-            mBitmap.setPixels(colors, 10, 50, 10, 10, 50, 50);
-            fail("shouldn't come to here");
-        }catch(ArrayIndexOutOfBoundsException e){
-        }
+        mBitmap.setPixels(colors, 10, 50, 10, 10, 50, 50);
+    }
 
-        // normal case
-        colors = createColors(100 * 100);
+    @Test
+    public void testSetPixels() {
+        int[] colors = createColors(100 * 100);
+        mBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         mBitmap.setPixels(colors, 0, 100, 0, 0, 100, 100);
         int[] ret = new int[100 * 100];
         mBitmap.getPixels(ret, 0, 100, 0, 0, 100, 100);
@@ -815,7 +827,7 @@ public class BitmapTest extends AndroidTestCase {
         }
     }
 
-    private void checkPremultipliedBitmapConfig(Config config, boolean expectedPremul) {
+    private void verifyPremultipliedBitmapConfig(Config config, boolean expectedPremul) {
         Bitmap bitmap = Bitmap.createBitmap(1, 1, config);
         bitmap.setPremultiplied(true);
         bitmap.setPixel(0, 0, Color.TRANSPARENT);
@@ -825,13 +837,15 @@ public class BitmapTest extends AndroidTestCase {
         assertFalse(bitmap.isPremultiplied());
     }
 
+    @Test
     public void testSetPremultipliedSimple() {
-        checkPremultipliedBitmapConfig(Bitmap.Config.ALPHA_8, true);
-        checkPremultipliedBitmapConfig(Bitmap.Config.RGB_565, false);
-        checkPremultipliedBitmapConfig(Bitmap.Config.ARGB_4444, true);
-        checkPremultipliedBitmapConfig(Bitmap.Config.ARGB_8888, true);
+        verifyPremultipliedBitmapConfig(Bitmap.Config.ALPHA_8, true);
+        verifyPremultipliedBitmapConfig(Bitmap.Config.RGB_565, false);
+        verifyPremultipliedBitmapConfig(Bitmap.Config.ARGB_4444, true);
+        verifyPremultipliedBitmapConfig(Bitmap.Config.ARGB_8888, true);
     }
 
+    @Test
     public void testSetPremultipliedData() {
         // with premul, will store 2,2,2,2, so it doesn't get value correct
         Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
@@ -853,6 +867,7 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(bitmap.getPixel(0, 0), PREMUL_COLOR);
     }
 
+    @Test
     public void testPremultipliedCanvas() {
         Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
         bitmap.setHasAlpha(true);
@@ -879,6 +894,7 @@ public class BitmapTest extends AndroidTestCase {
         bitmap.copyPixelsFromBuffer(buffer);
     }
 
+    @Test
     public void testSetPremultipliedToBuffer() {
         Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
         bitmap.setPixel(0, 0, PREMUL_COLOR);
@@ -891,6 +907,7 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(getBitmapRawInt(bitmap), storedPremul);
     }
 
+    @Test
     public void testSetPremultipliedFromBuffer() {
         Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
         bitmap.setPremultiplied(false);
@@ -903,6 +920,7 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(bitmap.getPixel(0, 0), PREMUL_COLOR);
     }
 
+    @Test
     public void testSetWidth() {
         mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
         int alloc = mBitmap.getAllocationByteCount();
@@ -911,42 +929,42 @@ public class BitmapTest extends AndroidTestCase {
         mBitmap.setWidth(50);
         assertEquals(mBitmap.getAllocationByteCount(), alloc);
         assertEquals(mBitmap.getByteCount() * 2, alloc);
-
-        // test expanding
-        try {
-            mBitmap.setWidth(101);
-            fail("shouldn't come to here");
-        } catch (IllegalArgumentException e) {
-        }
-
-        // test mutable
-        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
-        try {
-            mBitmap.setWidth(1);
-            fail("shouldn't come to here");
-        } catch (IllegalStateException e) {
-        }
     }
 
-    public void testWriteToParcel(){
+    @Test(expected=IllegalArgumentException.class)
+    public void testSetWidthExpanding() {
+        // test expanding
+        mBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888);
+
+        mBitmap.setWidth(101);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testSetWidthMutable() {
+        // test mutable
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
+
+        mBitmap.setWidth(1);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testWriteToParcelRecycled() {
         mBitmap.recycle();
 
-        // abnormal case: the bitmap to be written has been recycled
-        try{
-            mBitmap.writeToParcel(null, 0);
-            fail("shouldn't come to here");
-        }catch(IllegalStateException e){
-        }
+        mBitmap.writeToParcel(null, 0);
+    }
 
+    @Test
+    public void testWriteToParcel() {
         // abnormal case: failed to unparcel Bitmap
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, mOptions);
         Parcel p = Parcel.obtain();
         mBitmap.writeToParcel(p, 0);
 
-        try{
+        try {
             Bitmap.CREATOR.createFromParcel(p);
             fail("shouldn't come to here");
-        }catch(RuntimeException e){
+        } catch(RuntimeException e){
         }
 
         // normal case
@@ -956,6 +974,7 @@ public class BitmapTest extends AndroidTestCase {
         mBitmap.equals(Bitmap.CREATOR.createFromParcel(p));
     }
 
+    @Test
     public void testGetScaledHeight1() {
         int dummyDensity = 5;
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
@@ -964,14 +983,16 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(scaledHeight, ret.getScaledHeight(dummyDensity));
     }
 
+    @Test
     public void testGetScaledHeight2() {
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
-        DisplayMetrics metrics = new DisplayMetrics();
-        metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics =
+                InstrumentationRegistry.getTargetContext().getResources().getDisplayMetrics();
         int scaledHeight = scaleFromDensity(ret.getHeight(), ret.getDensity(), metrics.densityDpi);
         assertEquals(scaledHeight, ret.getScaledHeight(metrics));
     }
 
+    @Test
     public void testGetScaledHeight3() {
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
         Bitmap mMutableBitmap = Bitmap.createBitmap(100, 200, Config.ARGB_8888);
@@ -983,6 +1004,7 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(scaledHeight, ret.getScaledHeight(mCanvas));
     }
 
+    @Test
     public void testGetScaledWidth1() {
         int dummyDensity = 5;
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
@@ -991,14 +1013,16 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(scaledWidth, ret.getScaledWidth(dummyDensity));
     }
 
+    @Test
     public void testGetScaledWidth2() {
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
-        DisplayMetrics metrics = new DisplayMetrics();
-        metrics = getContext().getResources().getDisplayMetrics();
+        DisplayMetrics metrics =
+                InstrumentationRegistry.getTargetContext().getResources().getDisplayMetrics();
         int scaledWidth = scaleFromDensity(ret.getWidth(), ret.getDensity(), metrics.densityDpi);
         assertEquals(scaledWidth, ret.getScaledWidth(metrics));
     }
 
+    @Test
     public void testGetScaledWidth3() {
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
         Bitmap mMutableBitmap = Bitmap.createBitmap(100, 200, Config.ARGB_8888);
@@ -1009,7 +1033,7 @@ public class BitmapTest extends AndroidTestCase {
         assertEquals(scaledWidth, ret.getScaledWidth(mCanvas));
     }
 
-    private int scaleFromDensity(int size, int sdensity, int tdensity) {
+    private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;
         }
@@ -1018,7 +1042,7 @@ public class BitmapTest extends AndroidTestCase {
         return ((size * tdensity) + (sdensity >> 1)) / sdensity;
     }
 
-    private int[] createColors(int size){
+    private static int[] createColors(int size) {
         int[] colors = new int[size];
 
         for (int i = 0; i < size; i++) {
