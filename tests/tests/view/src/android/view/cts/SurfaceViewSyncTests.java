@@ -19,10 +19,12 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
+import android.os.Environment;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -32,6 +34,7 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -44,10 +47,18 @@ import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.ViewFactory;
 import android.widget.FrameLayout;
 
+import libcore.io.IoUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -56,15 +67,21 @@ import static org.junit.Assert.*;
 @SuppressLint("RtlHardcoded")
 public class SurfaceViewSyncTests {
     private static final String TAG = "SurfaceViewSyncTests";
-    private static final int PERMISSION_DIALOG_WAIT_MS = 500;
+    private static final int PERMISSION_DIALOG_WAIT_MS = 1000;
 
+    /**
+     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss both
+     * before and after test.
+     */
     @Before
+    @After
     public void setUp() throws UiObjectNotFoundException {
         // The permission dialog will be auto-opened by the activity - find it and accept
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         UiSelector acceptButtonSelector = new UiSelector().resourceId("android:id/button1");
         UiObject acceptButton = uiDevice.findObject(acceptButtonSelector);
         if (acceptButton.waitForExists(PERMISSION_DIALOG_WAIT_MS)) {
+            Log.d(TAG, "found permission dialog, dismissing...");
             assertTrue(acceptButton.click());
         }
     }
@@ -79,6 +96,9 @@ public class SurfaceViewSyncTests {
 
     @Rule
     public ActivityTestRule mActivityRule = new ActivityTestRule<>(CapturedActivity.class);
+
+    @Rule
+    public TestName mName = new TestName();
 
     static ValueAnimator makeInfinite(ValueAnimator a) {
         a.setRepeatMode(ObjectAnimator.REVERSE);
@@ -165,13 +185,76 @@ public class SurfaceViewSyncTests {
     };
 
     ///////////////////////////////////////////////////////////////////////////
+    // Bad frame capture
+    ///////////////////////////////////////////////////////////////////////////
+
+    private void saveFailureCaptures(SparseArray<Bitmap> failFrames) {
+        if (failFrames.size() == 0) return;
+
+        String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + getClass().getSimpleName()
+                + "/" + mName.getMethodName();
+        File testDirectory = new File(directoryName);
+        if (testDirectory.exists()) {
+            String[] children = testDirectory.list();
+            if (children == null) {
+                return;
+            }
+            for (String file : children) {
+                new File(testDirectory, file).delete();
+            }
+        } else {
+            testDirectory.mkdirs();
+        }
+
+        for (int i = 0; i < failFrames.size(); i++) {
+            int frameNr = failFrames.keyAt(i);
+            Bitmap bitmap = failFrames.valueAt(i);
+
+            String bitmapName =  "frame_" + frameNr + ".png";
+            Log.d(TAG, "Saving file : " + bitmapName + " in directory : " + directoryName);
+
+            File file = new File(directoryName, bitmapName);
+            FileOutputStream fileStream = null;
+            try {
+                fileStream = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
+                fileStream.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                IoUtils.closeQuietly(fileStream);
+            }
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////
     // Tests
     ///////////////////////////////////////////////////////////////////////////
+
+    public void verifyTest(AnimationTestCase testCase) {
+        CapturedActivity.TestResult result = getActivity().runTest(testCase);
+        saveFailureCaptures(result.failures);
+
+        float failRatio = 1.0f * result.failFrames / (result.failFrames + result.passFrames);
+        assertTrue("Error: " + failRatio + " fail ratio - extremely high, is activity obstructed?",
+                failRatio < 0.95f);
+        assertTrue("Error: " + result.failFrames
+                + " incorrect frames observed - incorrect positioning",
+                result.failFrames == 0);
+        float framesPerSecond = 1.0f * result.passFrames
+                / TimeUnit.MILLISECONDS.toSeconds(CapturedActivity.CAPTURE_DURATION_MS);
+        assertTrue("Error, only " + result.passFrames
+                + " frames observed, virtual display only capturing at "
+                + framesPerSecond + " frames per second",
+                result.passFrames > 100);
+    }
 
     /** Draws a moving 10x10 black rectangle, validates 100 pixels of black are seen each frame */
     @Test
     public void testSmallRect() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 context -> new View(context) {
                     // draw a single pixel
                     final Paint sBlackPaint = new Paint();
@@ -191,8 +274,6 @@ public class SurfaceViewSyncTests {
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 view -> makeInfinite(ObjectAnimator.ofInt(view, "offset", 10, 30)),
                 (blackishPixelCount, width, height) -> blackishPixelCount == 100));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     /**
@@ -201,52 +282,44 @@ public class SurfaceViewSyncTests {
      */
     @Test
     public void testEmptySurfaceView() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sEmptySurfaceViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 sTranslateAnimationFactory,
                 (blackishPixelCount, width, height) ->
                         blackishPixelCount > 9000 && blackishPixelCount < 11000));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     @Test
     public void testSurfaceViewSmallScale() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
                 sSmallScaleAnimationFactory,
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     @Test
     public void testSurfaceViewBigScale() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
                 sBigScaleAnimationFactory,
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     @Test
     public void testVideoSurfaceViewTranslate() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
                 sTranslateAnimationFactory,
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     @Test
     public void testVideoSurfaceViewRotated() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 view -> makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view,
@@ -254,13 +327,11 @@ public class SurfaceViewSyncTests {
                         PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 10f, 30f),
                         PropertyValuesHolder.ofFloat(View.ROTATION, 45f, 45f))),
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     @Test
     public void testVideoSurfaceViewEdgeCoverage() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
                 view -> {
@@ -274,13 +345,11 @@ public class SurfaceViewSyncTests {
                             PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 0, -y, 0, y, 0)));
                 },
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 
     @Test
     public void testVideoSurfaceViewCornerCoverage() {
-        CapturedActivity.TestResult result = getActivity().runTest(new AnimationTestCase(
+        verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
                 view -> {
@@ -294,7 +363,5 @@ public class SurfaceViewSyncTests {
                             PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, -y, -y, y, y, -y)));
                 },
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
-        assertTrue(result.passFrames > 100);
-        assertTrue(result.failFrames == 0);
     }
 }
