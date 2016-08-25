@@ -15,11 +15,11 @@
  */
 package android.graphics.cts;
 
-import android.graphics.Color;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
+import static org.junit.Assert.assertEquals;
 
-import static org.junit.Assert.*;
+import android.graphics.Color;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,82 +28,61 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class ColorTest {
     @Test
-    public void testAlpha(){
+    public void testAlpha() {
         assertEquals(0xff, Color.alpha(Color.RED));
         assertEquals(0xff, Color.alpha(Color.YELLOW));
         new Color();
     }
 
     @Test
-    public void testArgb(){
+    public void testArgb() {
         assertEquals(Color.RED, Color.argb(0xff, 0xff, 0x00, 0x00));
         assertEquals(Color.YELLOW, Color.argb(0xff, 0xff, 0xff, 0x00));
     }
 
     @Test
-    public void testBlue(){
+    public void testBlue() {
         assertEquals(0x00, Color.blue(Color.RED));
         assertEquals(0x00, Color.blue(Color.YELLOW));
     }
 
     @Test
-    public void testGreen(){
+    public void testGreen() {
         assertEquals(0x00, Color.green(Color.RED));
         assertEquals(0xff, Color.green(Color.GREEN));
     }
 
-    @Test
-    public void testHSVToColor1(){
-        //abnormal case: hsv length less than 3
-        try{
-            float[] hsv = new float[2];
-            Color.HSVToColor(hsv);
-            fail("shouldn't come to here");
-        }catch(RuntimeException e){
-            //expected
-        }
+    @Test(expected=RuntimeException.class)
+    public void testHSVToColorArrayTooShort() {
+        // abnormal case: hsv length less than 3
+        float[] hsv = new float[2];
+        Color.HSVToColor(hsv);
+    }
 
+    @Test
+    public void testHSVToColor() {
         float[] hsv = new float[3];
         Color.colorToHSV(Color.RED, hsv);
         assertEquals(Color.RED, Color.HSVToColor(hsv));
     }
 
     @Test
-    public void testHSVToColor2(){
-        //abnormal case: hsv length less than 3
-        try{
-            float[] hsv = new float[2];
-            Color.HSVToColor(hsv);
-            fail("shouldn't come to here");
-        }catch(RuntimeException e){
-            //expected
-        }
-
+    public void testHSVToColorWithAlpha() {
         float[] hsv = new float[3];
         Color.colorToHSV(Color.RED, hsv);
         assertEquals(Color.RED, Color.HSVToColor(0xff, hsv));
     }
 
-    @Test
-    public void testParseColor(){
-        //abnormal case: colorString starts with '#' but length is neither 7 nor 9
-        try{
-            Color.parseColor("#ff00ff0");
-            fail("should come to here");
-        }catch(IllegalArgumentException e){
-            //expected
-        }
+    @Test(expected=IllegalArgumentException.class)
+    public void testParseColorStringOfInvalidLength() {
+        // abnormal case: colorString starts with '#' but length is neither 7 nor 9
+        Color.parseColor("#ff00ff0");
+    }
 
+    @Test
+    public void testParseColor() {
         assertEquals(Color.RED, Color.parseColor("#ff0000"));
         assertEquals(Color.RED, Color.parseColor("#ffff0000"));
-
-        //abnormal case: colorString doesn't start with '#' and is unknown color
-        try{
-            Color.parseColor("hello");
-            fail("should come to here");
-        }catch(IllegalArgumentException e){
-            //expected
-        }
 
         assertEquals(Color.BLACK, Color.parseColor("black"));
         assertEquals(Color.DKGRAY, Color.parseColor("darkgray"));
@@ -118,29 +97,33 @@ public class ColorTest {
         assertEquals(Color.MAGENTA, Color.parseColor("magenta"));
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testParseColorUnsupportedFormat() {
+        // abnormal case: colorString doesn't start with '#' and is unknown color
+        Color.parseColor("hello");
+    }
+
     @Test
-    public void testRed(){
+    public void testRed() {
         assertEquals(0xff, Color.red(Color.RED));
         assertEquals(0xff, Color.red(Color.YELLOW));
     }
 
     @Test
-    public void testRgb(){
+    public void testRgb() {
         assertEquals(Color.RED, Color.rgb(0xff, 0x00, 0x00));
         assertEquals(Color.YELLOW, Color.rgb(0xff, 0xff, 0x00));
     }
 
-    @Test
-    public void testRGBToHSV(){
-        //abnormal case: hsv length less than 3
-        try{
-            float[] hsv = new float[2];
-            Color.RGBToHSV(0xff, 0x00, 0x00, hsv);
-            fail("shouldn't come to here");
-        }catch(RuntimeException e){
-            //expected
-        }
+    @Test(expected=RuntimeException.class)
+    public void testRGBToHSVArrayTooShort() {
+        // abnormal case: hsv length less than 3
+        float[] hsv = new float[2];
+        Color.RGBToHSV(0xff, 0x00, 0x00, hsv);
+    }
 
+    @Test
+    public void testRGBToHSV() {
         float[] hsv = new float[3];
         Color.RGBToHSV(0xff, 0x00, 0x00, hsv);
         assertEquals(Color.RED, Color.HSVToColor(hsv));

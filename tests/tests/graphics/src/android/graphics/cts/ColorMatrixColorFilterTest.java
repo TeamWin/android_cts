@@ -15,21 +15,27 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertEquals;
 
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
-import android.graphics.Bitmap.Config;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ColorMatrixColorFilterTest extends TestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ColorMatrixColorFilterTest {
     private static final int TOLERANCE = 1;
 
+    @Test
     public void testColorMatrixColorFilter() {
         ColorMatrixColorFilter filter;
 
@@ -47,17 +53,17 @@ public class ColorMatrixColorFilterTest extends TestCase {
         paint.setColor(Color.BLUE);
         paint.setColorFilter(filter);
         canvas.drawPoint(0, 0, paint);
-        assertColor(Color.CYAN, bitmap.getPixel(0, 0));
+        verifyColor(Color.CYAN, bitmap.getPixel(0, 0));
         paint.setColor(Color.GREEN);
         canvas.drawPoint(0, 0, paint);
-        assertColor(Color.GREEN, bitmap.getPixel(0, 0));
+        verifyColor(Color.GREEN, bitmap.getPixel(0, 0));
         paint.setColor(Color.RED);
         canvas.drawPoint(0, 0, paint);
-        assertColor(Color.RED, bitmap.getPixel(0, 0));
+        verifyColor(Color.RED, bitmap.getPixel(0, 0));
         // color components are clipped, not scaled
         paint.setColor(Color.MAGENTA);
         canvas.drawPoint(0, 0, paint);
-        assertColor(Color.WHITE, bitmap.getPixel(0, 0));
+        verifyColor(Color.WHITE, bitmap.getPixel(0, 0));
 
         float[] transparentRedAddBlue = new float[] {
                 1f, 0f, 0f, 0f, 0f,
@@ -73,29 +79,29 @@ public class ColorMatrixColorFilterTest extends TestCase {
         // the bitmap stores the result in premul colors and we read out an
         // unpremultiplied result, which causes us to need a bigger tolerance in
         // this case (due to the fact that scaling by 1/255 is not exact).
-        assertColor(Color.argb(128, 255, 0, 64), bitmap.getPixel(0, 0), 2);
+        verifyColor(Color.argb(128, 255, 0, 64), bitmap.getPixel(0, 0), 2);
         paint.setColor(Color.CYAN);
         canvas.drawPoint(0, 0, paint);
         // blue gets clipped
-        assertColor(Color.CYAN, bitmap.getPixel(0, 0));
+        verifyColor(Color.CYAN, bitmap.getPixel(0, 0));
 
         // change array to filter out green
-        assertEquals(1f, transparentRedAddBlue[6]);
+        assertEquals(1f, transparentRedAddBlue[6], 0.0f);
         transparentRedAddBlue[6] = 0f;
         // changing the array has no effect
         canvas.drawPoint(0, 0, paint);
-        assertColor(Color.CYAN, bitmap.getPixel(0, 0));
+        verifyColor(Color.CYAN, bitmap.getPixel(0, 0));
         // create a new filter with the changed matrix
         paint.setColorFilter(new ColorMatrixColorFilter(transparentRedAddBlue));
         canvas.drawPoint(0, 0, paint);
-        assertColor(Color.BLUE, bitmap.getPixel(0, 0));
+        verifyColor(Color.BLUE, bitmap.getPixel(0, 0));
     }
 
-    private void assertColor(int expected, int actual) {
-        assertColor(expected, actual, TOLERANCE);
+    private void verifyColor(int expected, int actual) {
+        verifyColor(expected, actual, TOLERANCE);
     }
-    
-    private void assertColor(int expected, int actual, int tolerance) {
+
+    private void verifyColor(int expected, int actual, int tolerance) {
         assertEquals(Color.red(expected), Color.red(actual), tolerance);
         assertEquals(Color.green(expected), Color.green(actual), tolerance);
         assertEquals(Color.blue(expected), Color.blue(actual), tolerance);
