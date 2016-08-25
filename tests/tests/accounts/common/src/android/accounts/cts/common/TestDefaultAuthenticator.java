@@ -21,6 +21,8 @@ import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.accounts.NetworkErrorException;
+import android.accounts.cts.common.tx.AddAccountTx;
+import android.accounts.cts.common.tx.UpdateCredentialsTx;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -67,6 +69,8 @@ public class TestDefaultAuthenticator extends AbstractAccountAuthenticator {
         Bundle result = new Bundle();
         result.putString(AccountManager.KEY_ACCOUNT_NAME, accountName);
         result.putString(AccountManager.KEY_ACCOUNT_TYPE, mAccountType);
+        AuthenticatorContentProvider.setTx(
+                new AddAccountTx(accountType, authTokenType, requiredFeatures, options, result));
         return result;
     }
 
@@ -107,6 +111,8 @@ public class TestDefaultAuthenticator extends AbstractAccountAuthenticator {
         Bundle result = new Bundle();
         result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
         result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
+        AuthenticatorContentProvider.setTx(
+                new UpdateCredentialsTx(account, authTokenType, options, result));
         return result;
     }
 

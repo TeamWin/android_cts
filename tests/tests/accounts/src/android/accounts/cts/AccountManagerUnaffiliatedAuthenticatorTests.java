@@ -30,7 +30,6 @@ import android.content.ContentResolver;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import java.io.IOException;
 
@@ -294,6 +293,106 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
 
         // Validate returned data
         validateSessionBundleAndPasswordAndStatusTokenResult(result);
+    }
+
+    /**
+     * Tests finishSession default implementation with overridden startAddAccountSession
+     * implementation. AuthenticatorException is expected because default AbstractAuthenticator
+     * implementation cannot understand customized session bundle.
+     */
+    public void testDefaultFinishSessiontWithStartAddAccountSessionImpl()
+            throws OperationCanceledException, AuthenticatorException, IOException {
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        // Creates session bundle to be returned by custom implementation of
+        // startAddAccountSession of authenticator.
+        Bundle sessionBundle = new Bundle();
+        sessionBundle.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        sessionBundle.putString(AccountManager.KEY_ACCOUNT_TYPE,
+                Fixtures.TYPE_STANDARD_UNAFFILIATED);
+        Bundle options = new Bundle();
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        options.putBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE, sessionBundle);
+
+        // First get an encrypted session bundle from custom startAddAccountSession implementation.
+        AccountManagerFuture<Bundle> future = mAccountManager.startAddAccountSession(
+                Fixtures.TYPE_STANDARD_UNAFFILIATED,
+                null /* authTokenType */,
+                null /* requiredFeatures */,
+                options,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        Bundle result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        Bundle decryptedBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        assertNotNull(decryptedBundle);
+
+        try {
+            // Call default implementation of finishSession of authenticator
+            // with encrypted session bundle.
+            future = mAccountManager.finishSession(
+                    decryptedBundle,
+                    null /* activity */,
+                    null /* callback */,
+                    null /* handler */);
+            future.getResult();
+
+            fail("Should have thrown AuthenticatorException if finishSession is not overridden.");
+        } catch (AuthenticatorException e) {
+        }
+    }
+
+    /**
+     * Tests finishSession default implementation with overridden startUpdateCredentialsSession
+     * implementation. AuthenticatorException is expected because default implementation cannot
+     * understand custom session bundle.
+     */
+    public void testDefaultFinishSessionWithCustomStartUpdateCredentialsSessionImpl()
+            throws OperationCanceledException, AuthenticatorException, IOException {
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        // Creates session bundle to be returned by custom implementation of
+        // startUpdateCredentialsSession of authenticator.
+        Bundle sessionBundle = new Bundle();
+        sessionBundle.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        sessionBundle.putString(AccountManager.KEY_ACCOUNT_TYPE,
+                Fixtures.TYPE_STANDARD_UNAFFILIATED);
+        Bundle options = new Bundle();
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+        options.putBundle(Fixtures.KEY_ACCOUNT_SESSION_BUNDLE, sessionBundle);
+
+        // First get an encrypted session bundle from custom
+        // startUpdateCredentialsSession implementation.
+        AccountManagerFuture<Bundle> future = mAccountManager.startUpdateCredentialsSession(
+                Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
+                null /* authTokenType */,
+                options,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        Bundle result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        Bundle decryptedBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        assertNotNull(decryptedBundle);
+
+        try {
+            // Call default implementation of finishSession of authenticator
+            // with encrypted session bundle.
+            future = mAccountManager.finishSession(
+                    decryptedBundle,
+                    null /* activity */,
+                    null /* callback */,
+                    null /* handler */);
+            future.getResult();
+
+            fail("Should have thrown AuthenticatorException if finishSession is not overridden.");
+        } catch (AuthenticatorException e) {
+        }
     }
 
     private void validateStartAddAccountSessionParameters(Bundle inOpt)

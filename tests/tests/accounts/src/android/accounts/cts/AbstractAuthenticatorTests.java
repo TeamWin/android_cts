@@ -20,8 +20,14 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.accounts.cts.common.AuthenticatorContentProvider;
 import android.accounts.cts.common.Fixtures;
+import android.accounts.cts.common.tx.AddAccountTx;
+import android.accounts.cts.common.tx.UpdateCredentialsTx;
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.test.AndroidTestCase;
 
 import java.io.IOException;
@@ -41,11 +47,19 @@ import java.io.IOException;
 public class AbstractAuthenticatorTests extends AndroidTestCase {
 
     private AccountManager mAccountManager;
+    private ContentProviderClient mProviderClient;
 
     @Override
     public void setUp() throws Exception {
         // bind to the diagnostic service and set it up.
         mAccountManager = AccountManager.get(getContext());
+        ContentResolver resolver = getContext().getContentResolver();
+        mProviderClient = resolver.acquireContentProviderClient(
+                AuthenticatorContentProvider.AUTHORITY);
+    }
+
+    public void tearDown() throws RemoteException {
+        mProviderClient.release();
     }
 
     /**
@@ -118,6 +132,147 @@ public class AbstractAuthenticatorTests extends AndroidTestCase {
         // encrypted and hence not visible.
         assertNotNull(sessionBundle);
         assertNull(sessionBundle.getString(Fixtures.KEY_ACCOUNT_NAME));
+    }
+
+    /**
+     * Tests finishSession default implementation with default startAddAccountSession.
+     * Only account name and account type should be returned as a bundle.
+     */
+    public void testFinishSessionAndStartAddAccountSessionDefaultImpl()
+            throws OperationCanceledException, AuthenticatorException, IOException,
+            RemoteException {
+        Bundle options = new Bundle();
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+
+        // First obtain an encrypted session bundle from startAddAccountSession(...) default
+        // implementation.
+        AccountManagerFuture<Bundle> future = mAccountManager.startAddAccountSession(
+                Fixtures.TYPE_DEFAULT,
+                null /* authTokenType */,
+                null /* requiredFeatures */,
+                options,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        Bundle result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        // Assert that result contains a non-null session bundle.
+        Bundle escrowBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        assertNotNull(escrowBundle);
+
+        // Now call finishSession(...) with the session bundle we just obtained.
+        future = mAccountManager.finishSession(
+                escrowBundle,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        // Validate that parameters are passed to addAccount(...) correctly in default finishSession
+        // implementation.
+        Bundle providerBundle = mProviderClient.call(
+                AuthenticatorContentProvider.METHOD_GET,
+                null /* arg */,
+                null /* extras */);
+        providerBundle.setClassLoader(AddAccountTx.class.getClassLoader());
+        AddAccountTx addAccountTx = providerBundle
+                .getParcelable(AuthenticatorContentProvider.KEY_TX);
+        assertNotNull(addAccountTx);
+
+        // Assert parameters has been passed to addAccount(...) correctly
+        assertEquals(Fixtures.TYPE_DEFAULT, addAccountTx.accountType);
+        assertNull(addAccountTx.authTokenType);
+
+        validateSystemOptions(addAccountTx.options);
+        // Validate options
+        assertNotNull(addAccountTx.options);
+        assertEquals(accountName, addAccountTx.options.getString(Fixtures.KEY_ACCOUNT_NAME));
+        // Validate features.
+        assertEquals(0, addAccountTx.requiredFeatures.size());
+
+        // Assert returned result contains correct account name, account type and null auth token.
+        assertEquals(accountName, result.get(AccountManager.KEY_ACCOUNT_NAME));
+        assertEquals(Fixtures.TYPE_DEFAULT, result.get(AccountManager.KEY_ACCOUNT_TYPE));
+        assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
+    }
+
+    /**
+     * Tests finishSession default implementation with default startUpdateCredentialsSession.
+     * Only account name and account type should be returned as a bundle.
+     */
+    public void testFinishSessionAndStartUpdateCredentialsSessionDefaultImpl()
+            throws OperationCanceledException, AuthenticatorException, IOException,
+            RemoteException {
+        Bundle options = new Bundle();
+        String accountName = Fixtures.PREFIX_NAME_SUCCESS + "@" + Fixtures.SUFFIX_NAME_FIXTURE;
+        options.putString(Fixtures.KEY_ACCOUNT_NAME, accountName);
+
+        // First obtain an encrypted session bundle from startUpdateCredentialsSession(...) default
+        // implementation.
+        AccountManagerFuture<Bundle> future = mAccountManager.startUpdateCredentialsSession(
+                Fixtures.ACCOUNT_DEFAULT,
+                null /* authTokenTYpe */,
+                options,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        Bundle result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        // Assert that result contains a non-null session bundle.
+        Bundle escrowBundle = result.getBundle(AccountManager.KEY_ACCOUNT_SESSION_BUNDLE);
+        assertNotNull(escrowBundle);
+
+        // Now call finishSession(...) with the session bundle we just obtained.
+        future = mAccountManager.finishSession(
+                escrowBundle,
+                null /* activity */,
+                null /* callback */,
+                null /* handler */);
+
+        result = future.getResult();
+        assertTrue(future.isDone());
+        assertNotNull(result);
+
+        // Validate that parameters are passed to updateCredentials(...) correctly in default
+        // finishSession implementation.
+        Bundle providerBundle = mProviderClient.call(
+                AuthenticatorContentProvider.METHOD_GET,
+                null /* arg */,
+                null /* extras */);
+        providerBundle.setClassLoader(UpdateCredentialsTx.class.getClassLoader());
+        UpdateCredentialsTx updateCredentialsTx = providerBundle
+                .getParcelable(AuthenticatorContentProvider.KEY_TX);
+        assertNotNull(updateCredentialsTx);
+
+        // Assert parameters has been passed to updateCredentials(...) correctly
+        assertEquals(Fixtures.ACCOUNT_DEFAULT, updateCredentialsTx.account);
+        assertNull(updateCredentialsTx.authTokenType);
+
+        validateSystemOptions(updateCredentialsTx.options);
+        // Validate options
+        assertNotNull(updateCredentialsTx.options);
+        assertEquals(accountName, updateCredentialsTx.options.getString(Fixtures.KEY_ACCOUNT_NAME));
+
+        // Assert returned result contains correct account name, account type and null auth token.
+        assertEquals(accountName, result.get(AccountManager.KEY_ACCOUNT_NAME));
+        assertEquals(Fixtures.TYPE_DEFAULT, result.get(AccountManager.KEY_ACCOUNT_TYPE));
+        assertNull(result.get(AccountManager.KEY_AUTHTOKEN));
+    }
+
+    private void validateSystemOptions(Bundle options) {
+        assertNotNull(options.getString(AccountManager.KEY_ANDROID_PACKAGE_NAME));
+        assertTrue(options.containsKey(AccountManager.KEY_CALLER_UID));
+        assertTrue(options.containsKey(AccountManager.KEY_CALLER_PID));
     }
 
     private void validateNullPasswordAndStatusToken(Bundle result) {
