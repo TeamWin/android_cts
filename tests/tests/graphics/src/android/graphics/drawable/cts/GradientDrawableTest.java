@@ -16,13 +16,13 @@
 
 package android.graphics.drawable.cts;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
@@ -32,35 +32,34 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.cts.MockActivity;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
-import android.support.test.rule.ActivityTestRule;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-
-import android.test.suitebuilder.annotation.MediumTest;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
 import android.util.Xml;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 @RunWith(AndroidJUnit4.class)
 public class GradientDrawableTest {
+    private Resources mResources;
 
-    @Rule
-    public ActivityTestRule<MockActivity> mActivityRule
-            = new ActivityTestRule<>(MockActivity.class);
+    @Before
+    public void setup() {
+        mResources = InstrumentationRegistry.getTargetContext().getResources();
+    }
 
     @SmallTest
     @Test
@@ -178,12 +177,12 @@ public class GradientDrawableTest {
     @SmallTest
     @Test
     public void testSetStroke_WidthGap() {
-        helpTestSetStroke_WidthGap(2, Color.RED, 3.4f, 5.5f);
-        helpTestSetStroke_WidthGap(-2, Color.TRANSPARENT, -3.4f, -5.5f);
-        helpTestSetStroke_WidthGap(0, 0, 0, (float) 0.0f);
+        verifySetStroke_WidthGap(2, Color.RED, 3.4f, 5.5f);
+        verifySetStroke_WidthGap(-2, Color.TRANSPARENT, -3.4f, -5.5f);
+        verifySetStroke_WidthGap(0, 0, 0, (float) 0.0f);
     }
 
-    private void helpTestSetStroke_WidthGap(int width, int color,
+    private void verifySetStroke_WidthGap(int width, int color,
             float dashWidth, float dashGap) {
         GradientDrawable gradientDrawable = new GradientDrawable();
         gradientDrawable.setStroke(width, color, dashWidth, dashGap);
@@ -193,12 +192,12 @@ public class GradientDrawableTest {
     @SmallTest
     @Test
     public void testSetStrokeList() {
-        helpTestSetStrokeList(2, ColorStateList.valueOf(Color.RED));
-        helpTestSetStrokeList(-2, ColorStateList.valueOf(Color.TRANSPARENT));
-        helpTestSetStrokeList(0, null);
+        verifySetStrokeList(2, ColorStateList.valueOf(Color.RED));
+        verifySetStrokeList(-2, ColorStateList.valueOf(Color.TRANSPARENT));
+        verifySetStrokeList(0, null);
     }
 
-    private void helpTestSetStrokeList(int width,
+    private void verifySetStrokeList(int width,
             ColorStateList colorList) {
         GradientDrawable gradientDrawable = new GradientDrawable();
         gradientDrawable.setStroke(width, colorList);
@@ -208,12 +207,12 @@ public class GradientDrawableTest {
     @SmallTest
     @Test
     public void testSetStrokeList_WidthGap() {
-        helpTestSetStrokeList_WidthGap(2, ColorStateList.valueOf(Color.RED), 3.4f, 5.5f);
-        helpTestSetStrokeList_WidthGap(-2, ColorStateList.valueOf(Color.TRANSPARENT), -3.4f, -5.5f);
-        helpTestSetStrokeList_WidthGap(0, null, 0.0f, 0.0f);
+        verifySetStrokeList_WidthGap(2, ColorStateList.valueOf(Color.RED), 3.4f, 5.5f);
+        verifySetStrokeList_WidthGap(-2, ColorStateList.valueOf(Color.TRANSPARENT), -3.4f, -5.5f);
+        verifySetStrokeList_WidthGap(0, null, 0.0f, 0.0f);
     }
 
-    private void helpTestSetStrokeList_WidthGap(int width, ColorStateList colorList,
+    private void verifySetStrokeList_WidthGap(int width, ColorStateList colorList,
             float dashWidth, float dashGap) {
         GradientDrawable gradientDrawable = new GradientDrawable();
         gradientDrawable.setStroke(width, colorList, dashWidth, dashGap);
@@ -223,13 +222,13 @@ public class GradientDrawableTest {
     @SmallTest
     @Test
     public void testSetSize() {
-        helpTestSetSize(6, 4);
-        helpTestSetSize(-30, -40);
-        helpTestSetSize(0, 0);
-        helpTestSetSize(Integer.MAX_VALUE, Integer.MIN_VALUE);
+        verifySetSize(6, 4);
+        verifySetSize(-30, -40);
+        verifySetSize(0, 0);
+        verifySetSize(Integer.MAX_VALUE, Integer.MIN_VALUE);
     }
 
-    private void helpTestSetSize(int width, int height) {
+    private void verifySetSize(int width, int height) {
         GradientDrawable gradientDrawable = new GradientDrawable();
         gradientDrawable.setSize(width, height);
         assertEquals(width, gradientDrawable.getIntrinsicWidth());
@@ -436,8 +435,7 @@ public class GradientDrawableTest {
         assertEquals(0, rect.right);
         assertEquals(0, rect.bottom);
 
-        Resources resources = mActivityRule.getActivity().getResources();
-        XmlPullParser parser = resources.getXml(R.drawable.gradientdrawable);
+        XmlPullParser parser = mResources.getXml(R.drawable.gradientdrawable);
         AttributeSet attrs = Xml.asAttributeSet(parser);
 
         // find the START_TAG
@@ -449,7 +447,7 @@ public class GradientDrawableTest {
         assertEquals(XmlPullParser.START_TAG, type);
 
         // padding is set in gradientdrawable.xml
-        gradientDrawable.inflate(resources, parser, attrs);
+        gradientDrawable.inflate(mResources, parser, attrs);
         assertTrue(gradientDrawable.getPadding(rect));
         assertEquals(4, rect.left);
         assertEquals(2, rect.top);
@@ -475,18 +473,17 @@ public class GradientDrawableTest {
     @Test
     public void testInflateGradientRadius() throws XmlPullParserException, IOException {
         Rect parentBounds = new Rect(0, 0, 100, 100);
-        Resources resources = mActivityRule.getActivity().getResources();
 
         GradientDrawable gradientDrawable;
         float radius;
 
-        gradientDrawable = (GradientDrawable) resources.getDrawable(
+        gradientDrawable = (GradientDrawable) mResources.getDrawable(
                 R.drawable.gradientdrawable_radius_base);
         gradientDrawable.setBounds(parentBounds);
         radius = gradientDrawable.getGradientRadius();
         assertEquals(25.0f, radius, 0.0f);
 
-        gradientDrawable = (GradientDrawable) resources.getDrawable(
+        gradientDrawable = (GradientDrawable) mResources.getDrawable(
                 R.drawable.gradientdrawable_radius_parent);
         gradientDrawable.setBounds(parentBounds);
         radius = gradientDrawable.getGradientRadius();
@@ -525,10 +522,12 @@ public class GradientDrawableTest {
     @SmallTest
     @Test
     public void testMutate() {
-        Resources resources = mActivityRule.getActivity().getResources();
-        GradientDrawable d1 = (GradientDrawable) resources.getDrawable(R.drawable.gradientdrawable);
-        GradientDrawable d2 = (GradientDrawable) resources.getDrawable(R.drawable.gradientdrawable);
-        GradientDrawable d3 = (GradientDrawable) resources.getDrawable(R.drawable.gradientdrawable);
+        GradientDrawable d1 =
+                (GradientDrawable) mResources.getDrawable(R.drawable.gradientdrawable);
+        GradientDrawable d2 =
+                (GradientDrawable) mResources.getDrawable(R.drawable.gradientdrawable);
+        GradientDrawable d3 =
+                (GradientDrawable) mResources.getDrawable(R.drawable.gradientdrawable);
 
         d1.setSize(10, 10);
         assertEquals(10, d1.getIntrinsicHeight());
@@ -559,16 +558,15 @@ public class GradientDrawableTest {
     @MediumTest
     @Test
     public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final Resources res = mActivityRule.getActivity().getResources();
-        final int densityDpi = res.getConfiguration().densityDpi;
+        final int densityDpi = mResources.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res, densityDpi);
+            verifyPreloadDensityInner(mResources, densityDpi);
         } finally {
-            DrawableTestUtils.setResourcesDensity(res, densityDpi);
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res, int densityDpi)
+    private void verifyPreloadDensityInner(Resources res, int densityDpi)
             throws XmlPullParserException, IOException {
         final Rect tempPadding = new Rect();
 
