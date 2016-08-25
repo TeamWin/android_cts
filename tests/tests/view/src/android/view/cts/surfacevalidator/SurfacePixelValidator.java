@@ -16,6 +16,7 @@
 package android.view.cts.surfacevalidator;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -25,11 +26,13 @@ import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.Type;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Surface;
 import android.view.cts.surfacevalidator.PixelChecker;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 public class SurfacePixelValidator {
     private static final String TAG = "SurfacePixelValidator";
@@ -42,6 +45,8 @@ public class SurfacePixelValidator {
 
     // If no channel is greater than this value, pixel will be considered 'blackish'.
     private static final short PIXEL_CHANNEL_THRESHOLD = 4;
+
+    private static final int MAX_CAPTURED_FAILURES = 5;
 
     private final int mWidth;
     private final int mHeight;
@@ -62,6 +67,7 @@ public class SurfacePixelValidator {
     private final Object mResultLock = new Object();
     private int mResultSuccessFrames;
     private int mResultFailureFrames;
+    private SparseArray<Bitmap> mFirstFailures = new SparseArray<>(MAX_CAPTURED_FAILURES);
 
     private Runnable mConsumeRunnable = new Runnable() {
         int numSkipped = 0;
@@ -85,7 +91,6 @@ public class SurfacePixelValidator {
                 if (numSkipped < NUM_FIRST_FRAMES_SKIPPED) {
                     numSkipped++;
                 } else {
-
                     if (success) {
                         mResultSuccessFrames++;
                     } else {
@@ -93,6 +98,15 @@ public class SurfacePixelValidator {
                         int totalFramesSeen = mResultSuccessFrames + mResultFailureFrames;
                         Log.d(TAG, "Failure (pixel count = " + blackishPixelCount
                                 + ") occurred on frame " + totalFramesSeen);
+
+                        if (mFirstFailures.size() < MAX_CAPTURED_FAILURES) {
+                            Log.d(TAG, "Capturing bitmap #" + mFirstFailures.size());
+                            // error, worth looking at...
+                            Bitmap capture = Bitmap.createBitmap(mWidth, mHeight,
+                                    Bitmap.Config.ARGB_8888);
+                            mInPixelsAllocation.copyTo(capture);
+                            mFirstFailures.put(totalFramesSeen, capture);
+                        }
                     }
                 }
             }
@@ -160,7 +174,8 @@ public class SurfacePixelValidator {
 
     private Allocation createBufferQueueAllocation() {
         return Allocation.createAllocations(mRS, Type.createXY(mRS,
-                Element.U8_4(mRS), mWidth, mHeight),
+                Element.RGBA_8888(mRS)
+                /*Element.U32(mRS)*/, mWidth, mHeight),
                 Allocation.USAGE_SCRIPT | Allocation.USAGE_IO_INPUT,
                 1)[0];
     }
@@ -177,6 +192,10 @@ public class SurfacePixelValidator {
             // Caller should only call this
             testResult.failFrames = mResultFailureFrames;
             testResult.passFrames = mResultSuccessFrames;
+
+            for (int i = 0; i < mFirstFailures.size(); i++) {
+                testResult.failures.put(mFirstFailures.keyAt(i), mFirstFailures.valueAt(i));
+            }
         }
         mWorkerThread.quitSafely();
     }
