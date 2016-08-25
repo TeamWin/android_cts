@@ -20,6 +20,7 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -160,6 +161,28 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.removeAction(customFocus);
         assertSame(info.getActions(), 0);
         assertTrue(info.getActionList().isEmpty());
+    }
+
+    /**
+     * While CharSequence is immutable, some classes implementing it are mutable. Make sure they
+     * can't change the object by changing the objects backing CharSequence
+     */
+    @SmallTest
+    public void testChangeTextAfterSetting_shouldNotAffectInfo() {
+        final String originalText = "Cassowaries";
+        final String newText = "Hornbill";
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        StringBuffer updatingString = new StringBuffer(originalText);
+        info.setText(updatingString);
+        info.setError(updatingString);
+        info.setContentDescription(updatingString);
+
+        updatingString.delete(0, updatingString.length());
+        updatingString.append(newText);
+
+        assertTrue(TextUtils.equals(originalText, info.getText()));
+        assertTrue(TextUtils.equals(originalText, info.getError()));
+        assertTrue(TextUtils.equals(originalText, info.getContentDescription()));
     }
 
     /**
