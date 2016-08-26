@@ -59,8 +59,6 @@ public class SurfacePixelValidator {
     private final RenderScript mRS;
 
     private final Allocation mInPixelsAllocation;
-    private final Allocation mInRowsAllocation;
-    private final Allocation mOutRowsAllocation;
     private final ScriptC_PixelCounter mScript;
 
 
@@ -75,15 +73,10 @@ public class SurfacePixelValidator {
         public void run() {
             Trace.beginSection("consume buffer");
             mInPixelsAllocation.ioReceive();
-            mScript.set_image(mInPixelsAllocation);
             Trace.endSection();
 
-            Trace.beginSection("compare");
-            mScript.forEach_countBlackishPixels(mInRowsAllocation, mOutRowsAllocation);
-            Trace.endSection();
-
-            Trace.beginSection("sum");
-            int blackishPixelCount = sum1DIntAllocation(mOutRowsAllocation, mHeight);
+            Trace.beginSection("compare and sum");
+            int blackishPixelCount = mScript.reduce_countBlackishPixels(mInPixelsAllocation).get();
             Trace.endSection();
 
             boolean success = mPixelChecker.checkPixels(blackishPixelCount, mWidth, mHeight);
@@ -127,9 +120,6 @@ public class SurfacePixelValidator {
         mScript = new ScriptC_PixelCounter(mRS);
 
         mInPixelsAllocation = createBufferQueueAllocation();
-        mInRowsAllocation = createInputRowIndexAllocation();
-        mOutRowsAllocation = createOutputRowAllocation();
-        mScript.set_WIDTH(mWidth);
         mScript.set_THRESHOLD(PIXEL_CHANNEL_THRESHOLD);
 
         mInPixelsAllocation.setOnBufferAvailableListener(
@@ -138,38 +128,6 @@ public class SurfacePixelValidator {
 
     public Surface getSurface() {
         return mInPixelsAllocation.getSurface();
-    }
-
-    static private int sum1DIntAllocation(Allocation array, int length) {
-        //Get the values returned from the function
-        int[] returnValue = new int[length];
-        array.copyTo(returnValue);
-        int sum = 0;
-        //If any row had any different pixels, then it fails
-        for (int i = 0; i < length; i++) {
-            sum += returnValue[i];
-        }
-        return sum;
-    }
-
-    /**
-     * Creates an allocation where the values in it are the indices of each row
-     */
-    private Allocation createInputRowIndexAllocation() {
-        //Create an array with the index of each row
-        int[] inputIndices = new int[mHeight];
-        for (int i = 0; i < mHeight; i++) {
-            inputIndices[i] = i;
-        }
-        //Create the allocation from that given array
-        Allocation inputAllocation = Allocation.createSized(mRS, Element.I32(mRS),
-                inputIndices.length, Allocation.USAGE_SCRIPT);
-        inputAllocation.copyFrom(inputIndices);
-        return inputAllocation;
-    }
-
-    private Allocation createOutputRowAllocation() {
-        return Allocation.createSized(mRS, Element.I32(mRS), mHeight, Allocation.USAGE_SCRIPT);
     }
 
     private Allocation createBufferQueueAllocation() {
