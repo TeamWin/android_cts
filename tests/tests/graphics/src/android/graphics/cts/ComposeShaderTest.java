@@ -15,8 +15,10 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertEquals;
 
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -26,18 +28,21 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Shader;
-import android.graphics.Xfermode;
-import android.graphics.Bitmap.Config;
 import android.graphics.Shader.TileMode;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class ComposeShaderTest extends TestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ComposeShaderTest {
     private static final int SIZE = 255;
     private static final int TOLERANCE = 5;
 
+    @Test
     public void testPorterDuff() {
         LinearGradient blueGradient = new LinearGradient(0, 0, SIZE, 0,
                 Color.GREEN, Color.BLUE, Shader.TileMode.CLAMP);
@@ -70,6 +75,7 @@ public class ComposeShaderTest extends TestCase {
         }
     }
 
+    @Test
     public void testXfermode() {
         Bitmap redBitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
         redBitmap.eraseColor(Color.RED);

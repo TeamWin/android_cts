@@ -15,17 +15,23 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.cts.util.CtsArrayUtils;
 import android.graphics.Camera;
 import android.graphics.Matrix;
-import android.graphics.RectF;
 import android.graphics.Matrix.ScaleToFit;
+import android.graphics.RectF;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.*;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -34,7 +40,7 @@ public class MatrixTest {
     private float[] mValues;
 
     @Before
-    public void setUp() {
+    public void setup() {
         mMatrix = new Matrix();
         mValues = new float[9];
     }
@@ -101,74 +107,65 @@ public class MatrixTest {
     @Test
     public void testReset() {
         mMatrix.setScale(1f, 2f, 3f, 4f);
-        String expect = "[1.0, 0.0, 0.0][0.0, 2.0, -4.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, -4.0f, 0.0f, 0.0f, 1.0f });
         mMatrix.reset();
-        expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testSetScale() {
-        String expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         mMatrix.setScale(1f, 2f);
-        expect = "[1.0, 0.0, 0.0][0.0, 2.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testSetScale2() {
-        String expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
 
         mMatrix.setScale(1f, 2f, 3f, 4f);
-        expect = "[1.0, 0.0, 0.0][0.0, 2.0, -4.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, -4.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testSetRotate() {
         mMatrix.setRotate(1f);
-        String expect = "[0.9998477, -0.017452406, 0.0]"
-                + "[0.017452406, 0.9998477, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] {
+            0.9998477f, -0.017452406f, 0.0f, 0.017452406f, 0.9998477f, 0.0f, 0.0f, 0.0f, 1.0f
+        });
     }
 
     @Test
     public void testSetRotate2() {
         mMatrix.setRotate(1f, 2f, 3f);
-        String expect = "[0.9998477, -0.017452406, 0.0526618]"
-                + "[0.017452406, 0.9998477, -0.034447942][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] {
+            0.9998477f, -0.017452406f, 0.0526618f, 0.017452406f, 0.9998477f, -0.034447942f, 0.0f,
+                0.0f, 1.0f
+        });
     }
 
     @Test
     public void testSetSinCos() {
         mMatrix.setSinCos(1f, 2f);
-        String expect = "[2.0, -1.0, 0.0][1.0, 2.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 2.0f, -1.0f, 0.0f, 1.0f, 2.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testSetSinCos2() {
         mMatrix.setSinCos(1f, 2f, 3f, 4f);
-        String expect = "[2.0, -1.0, 1.0][1.0, 2.0, -7.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 2.0f, -1.0f, 1.0f, 1.0f, 2.0f, -7.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testSetSkew() {
         mMatrix.setSkew(1f, 2f);
-        String expect = "[1.0, 1.0, 0.0][2.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 1.0f, 0.0f, 2.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testSetSkew2() {
         mMatrix.setSkew(1f, 2f, 3f, 4f);
-        String expect = "[1.0, 1.0, -4.0][2.0, 1.0, -6.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 1.0f, -4.0f, 2.0f, 1.0f, -6.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
@@ -176,48 +173,42 @@ public class MatrixTest {
         Matrix a = new Matrix();
         Matrix b = new Matrix();
         mMatrix.setConcat(a, b);
-        String expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         mMatrix = new Matrix();
         mMatrix.setConcat(mMatrix, b);
         mMatrix.setConcat(a, b);
-        expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         mMatrix = new Matrix();
         mValues = new float[9];
         mMatrix.setConcat(a, mMatrix);
         mMatrix.getValues(mValues);
-        expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPreTranslate() {
         assertTrue(mMatrix.preTranslate(1f, 2f));
-        String expect = "[1.0, 0.0, 1.0][0.0, 1.0, 2.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPreScale() {
         assertTrue(mMatrix.preScale(1f, 2f));
-        String expect = "[1.0, 0.0, 0.0][0.0, 2.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPreScale2() {
         assertTrue(mMatrix.preScale(1f, 2f, 3f, 4f));
-        String expect = "[1.0, 0.0, 0.0][0.0, 2.0, -4.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, -4.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPreRotate() {
         assertTrue(mMatrix.preRotate(1f));
-        String expect = "[0.9998477, -0.017452406, 0.0][0.017452406, 0.9998477, "
-                + "0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] {
+            0.9998477f, -0.017452406f, 0.0f, 0.017452406f, 0.9998477f, 0.0f, 0.0f, 0.0f, 1.0f
+        });
     }
 
     @Test
@@ -225,23 +216,22 @@ public class MatrixTest {
         assertTrue(mMatrix.preRotate(1f, 2f, 3f));
         float[] values = new float[9];
         mMatrix.getValues(values);
-        String expect = "[0.9998477, -0.017452406, 0.0526618][0.017452406, 0.9998477,"
-                + " -0.034447942][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] {
+            0.9998477f, -0.017452406f, 0.0526618f, 0.017452406f, 0.9998477f, -0.034447942f, 0.0f,
+                0.0f, 1.0f
+        });
     }
 
     @Test
     public void testPreSkew() {
         assertTrue(mMatrix.preSkew(1f, 2f));
-        String expect = "[1.0, 1.0, 0.0][2.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 1.0f, 0.0f, 2.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPreSkew2() {
         assertTrue(mMatrix.preSkew(1f, 2f, 3f, 4f));
-        String expect = "[1.0, 1.0, -4.0][2.0, 1.0, -6.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 1.0f, -4.0f, 2.0f, 1.0f, -6.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
@@ -251,59 +241,54 @@ public class MatrixTest {
         Matrix matrix = new Matrix();
         matrix.setValues(values);
         assertTrue(mMatrix.preConcat(matrix));
-        String expect = "[1000.0, 0.0, 0.0][0.0, 0.0, 0.0][0.0, 0.0, 0.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
     }
 
     @Test
     public void testPostTranslate() {
         assertTrue(mMatrix.postTranslate(1f, 2f));
-        String expect = "[1.0, 0.0, 1.0][0.0, 1.0, 2.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 2.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPostScale() {
         assertTrue(mMatrix.postScale(1f, 2f));
-        String expect = "[1.0, 0.0, 0.0][0.0, 2.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPostScale2() {
         assertTrue(mMatrix.postScale(1f, 2f, 3f, 4f));
-        String expect = "[1.0, 0.0, 0.0][0.0, 2.0, -4.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 2.0f, -4.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPostRotate() {
         assertTrue(mMatrix.postRotate(1f));
-        String expect = "[0.9998477, -0.017452406, 0.0]" +
-         "[0.017452406, 0.9998477, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] {
+            0.9998477f, -0.017452406f, 0.0f, 0.017452406f, 0.9998477f, 0.0f, 0.0f, 0.0f, 1.0f
+        });
     }
 
     @Test
     public void testPostRotate2() {
         assertTrue(mMatrix.postRotate(1f, 2f, 3f));
-        String expect = "[0.9998477, -0.017452406, 0.0526618]" +
-        "[0.017452406, 0.9998477, -0.034447942][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] {
+            0.9998477f, -0.017452406f, 0.0526618f, 0.017452406f, 0.9998477f, -0.034447942f, 0.0f,
+                0.0f, 1.0f
+        });
     }
 
     @Test
     public void testPostSkew() {
         assertTrue(mMatrix.postSkew(1f, 2f));
-        String expect = "[1.0, 1.0, 0.0][2.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 1.0f, 0.0f, 2.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
     public void testPostSkew2() {
         assertTrue(mMatrix.postSkew(1f, 2f, 3f, 4f));
-        String expect = "[1.0, 1.0, -4.0][2.0, 1.0, -6.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 1.0f, -4.0f, 2.0f, 1.0f, -6.0f, 0.0f, 0.0f, 1.0f });
     }
 
     @Test
@@ -314,8 +299,7 @@ public class MatrixTest {
         matrix.setValues(values);
         assertTrue(mMatrix.postConcat(matrix));
 
-        String expect = "[1000.0, 0.0, 0.0][0.0, 0.0, 0.0][0.0, 0.0, 0.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
     }
 
     @Test
@@ -325,32 +309,29 @@ public class MatrixTest {
         RectF r2 = new RectF();
         r1.set(10f, 20f, 30f, 30f);
         assertTrue(mMatrix.setRectToRect(r1, r2, ScaleToFit.CENTER));
-        String expect = "[0.0, 0.0, 0.0][0.0, 0.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         mMatrix.setRectToRect(r1, r2, ScaleToFit.END);
 
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         mMatrix.setRectToRect(r1, r2, ScaleToFit.FILL);
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         mMatrix.setRectToRect(r1, r2, ScaleToFit.START);
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f });
 
         assertFalse(mMatrix.setRectToRect(r2, r1, ScaleToFit.CENTER));
 
-        expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         assertFalse(mMatrix.setRectToRect(r2, r1, ScaleToFit.FILL));
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         assertFalse(mMatrix.setRectToRect(r2, r1, ScaleToFit.START));
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
         assertFalse(mMatrix.setRectToRect(r2, r1, ScaleToFit.END));
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
+    }
 
-        try {
-            mMatrix.setRectToRect(null, null, ScaleToFit.CENTER);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    @Test(expected=Exception.class)
+    public void testSetRectToRectNull() {
+        mMatrix.setRectToRect(null, null, ScaleToFit.CENTER);
     }
 
     @Test
@@ -360,17 +341,12 @@ public class MatrixTest {
         values[0] = 1000f;
         matrix.setValues(values);
         assertTrue(mMatrix.invert(matrix));
-        String expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, matrix.toShortString());
-        expect = "[1.0, 0.0, 0.0][0.0, 1.0, 0.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
-        boolean result = false;
-        try {
-            result = mMatrix.invert(null);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
-        assertFalse(result);
+        verifyMatrix(new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f });
+    }
+
+    @Test(expected=Exception.class)
+    public void testInvertNull() {
+        mMatrix.invert(null);
     }
 
     @Test
@@ -381,8 +357,7 @@ public class MatrixTest {
         dst[0] = 200f;
         dst[1] = 300f;
         assertTrue(mMatrix.setPolyToPoly(src, 0, dst, 0, 1));
-        String expect = "[1.0, 0.0, 100.0][0.0, 1.0, 300.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 100.0f, 0.0f, 1.0f, 300.0f, 0.0f, 0.0f, 1.0f });
         try {
             mMatrix.setPolyToPoly(src, 0, dst, 0, 5);
             fail("should throw exception");
@@ -396,11 +371,11 @@ public class MatrixTest {
         value[0] = 100f;
         mMatrix.mapPoints(value);
         assertEquals(value[0], 100f, 0f);
-        try {
-            mMatrix.mapPoints(null);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    }
+
+    @Test(expected=Exception.class)
+    public void testMapPointsNull() {
+        mMatrix.mapPoints(null);
     }
 
     @Test
@@ -411,26 +386,26 @@ public class MatrixTest {
         src[0] = 200f;
         mMatrix.mapPoints(dst, src);
         assertEquals(dst[0], 200f, 0f);
-        try {
-            mMatrix.mapPoints(new float[8], new float[9]);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    }
+
+    @Test(expected=Exception.class)
+    public void testMapPointsArraysMismatch() {
+        mMatrix.mapPoints(new float[8], new float[9]);
     }
 
     @Test
-    public void testMapPoints3() {
+    public void testMapPointsWithIndices() {
         float[] dst = new float[9];
         dst[0] = 100f;
         float[] src = new float[9];
         src[0] = 200f;
         mMatrix.mapPoints(dst, 0, src, 0, 9 >> 1);
         assertEquals(dst[0], 200f, 0f);
-        try {
-            mMatrix.mapPoints(null, 0, new float[9], 0, 1);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    }
+
+    @Test(expected=Exception.class)
+    public void testMapPointsWithIndicesNull() {
+        mMatrix.mapPoints(null, 0, new float[9], 0, 1);
     }
 
     @Test
@@ -439,31 +414,30 @@ public class MatrixTest {
         values[0] = 100f;
         mMatrix.mapVectors(values);
         assertEquals(values[0], 100f, 0f);
-        try {
-            mMatrix.mapVectors(null);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    }
+
+    @Test(expected=Exception.class)
+    public void testMapVectorsNull() {
+        mMatrix.mapVectors(null);
     }
 
     @Test
-    public void testMapVectors2() {
+    public void testMapVectorsDstSrc() {
         float[] src = new float[9];
         src[0] = 100f;
         float[] dst = new float[9];
         dst[0] = 200f;
         mMatrix.mapVectors(dst, src);
         assertEquals(dst[0], 100f, 0f);
+    }
 
-        try {
-            mMatrix.mapVectors(new float[9], new float[8]);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    @Test(expected=Exception.class)
+    public void testMapVectorsDstSrcMismatch() {
+        mMatrix.mapVectors(new float[9], new float[8]);
     }
 
     @Test
-    public void testMapVectors3() {
+    public void testMapVectorsDstSrcWithIndices() {
         float[] src = new float[9];
         src[0] = 100f;
         float[] dst = new float[9];
@@ -494,16 +468,15 @@ public class MatrixTest {
         assertEquals(2f, r.top, 0f);
         assertEquals(3f, r.right, 0f);
         assertEquals(4f, r.bottom, 0f);
+    }
 
-        try {
-            mMatrix.mapRect(null);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    @Test(expected=Exception.class)
+    public void testMapRectNull() {
+        mMatrix.mapRect(null);
     }
 
     @Test
-    public void testMapRect2() {
+    public void testMapRectDstSrc() {
         RectF dst = new RectF();
         dst.set(100f, 100f, 200f, 200f);
         RectF src = new RectF();
@@ -518,12 +491,11 @@ public class MatrixTest {
         assertEquals(0f, src.top, 0f);
         assertEquals(0f, src.right, 0f);
         assertEquals(0f, src.bottom, 0f);
+    }
 
-        try {
-            mMatrix.mapRect(null, null);
-            fail("should throw exception");
-        } catch (Exception ignored) {
-        }
+    @Test(expected=Exception.class)
+    public void testMapRectDstSrcNull() {
+        mMatrix.mapRect(null, null);
     }
 
     @Test
@@ -536,14 +508,9 @@ public class MatrixTest {
         mMatrix.setValues(values);
         values = new float[9];
         mMatrix.getValues(values);
-        String expect = "[9.0, 100.0, 0.0][0.0, 0.0, 0.0][0.0, 0.0, 0.0]";
-        assertEquals(expect, toShortString(values));
-    }
-
-    private String toShortString(float[] values) {
-        return "[" + values[0] + ", " + values[1] + ", " + values[2] + "]["
-                + values[3] + ", " + values[4] + ", " + values[5] + "]["
-                + values[6] + ", " + values[7] + ", " + values[8] + "]";
+        CtsArrayUtils.verifyArrayEquals(new float[] {
+                9.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
+        }, values, 0.0f);
     }
 
     @Test
@@ -560,8 +527,15 @@ public class MatrixTest {
     @Test
     public void testSetTranslate() {
         mMatrix.setTranslate(2f, 3f);
-        String expect = "[1.0, 0.0, 2.0][0.0, 1.0, 3.0][0.0, 0.0, 1.0]";
-        assertEquals(expect, mMatrix.toShortString());
+        verifyMatrix(new float[] { 1.0f, 0.0f, 2.0f, 0.0f, 1.0f, 3.0f, 0.0f, 0.0f, 1.0f });
     }
 
+    private void verifyMatrix(float[] expected) {
+        if ((expected == null) || (expected.length != 9)) {
+            fail("Expected does not have 9 elements");
+        }
+        final float[] actualValues = new float[9];
+        mMatrix.getValues(actualValues);
+        CtsArrayUtils.verifyArrayEquals(expected, actualValues, 0.0f);
+    }
 }
