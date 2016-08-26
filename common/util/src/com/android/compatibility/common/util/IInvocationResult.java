@@ -41,11 +41,6 @@ public interface IInvocationResult {
     int countResults(TestStatus result);
 
     /**
-     * @param the number of additional tests not executed tests for the invocation.
-     */
-    void notExecuted(int count);
-
-    /**
      * @return the number of tests that have not been executed in this moduleResult.
      */
     int getNotExecuted();
