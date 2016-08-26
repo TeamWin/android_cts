@@ -31,8 +31,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.graphics.cts.MockActivity" android:label="MockActivity" />
-
         <activity android:name="android.opengl.cts.CompressedTextureCtsActivity"
             android:label="CompressedTextureCtsActivity"
             android:screenOrientation="nosensor">
