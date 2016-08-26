@@ -85,8 +85,14 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         // Verify shell command return value
         verifyShellOutput(result, actualActivity, shouldStart);
 
+        // TODO: Disable logcat check for now.
+        // Logcat of WM or AM tag could be lost (eg. chatty if earlier events generated
+        // too many lines), and make the test look flaky. We need to either use event
+        // log or swith to other mechanisms. Only verify shell output for now, it should
+        // still catch most failures.
+
         // Verify adb logcat log
-        verifyLogcat(actualActivity, shouldStart);
+        //verifyLogcat(actualActivity, shouldStart);
     }
 
     private static final Pattern sNotStartedWarningPattern = Pattern.compile(
