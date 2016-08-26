@@ -18,6 +18,7 @@ package android.filesystem.cts;
 
 import android.cts.util.CtsAndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 
 public class RandomRWTest extends CtsAndroidTestCase {
@@ -32,6 +33,7 @@ public class RandomRWTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
+    @CddTest(requirement="8.2")
     public void testRandomRead() throws Exception {
         final int READ_BUFFER_SIZE = 4 * 1024;
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), READ_BUFFER_SIZE);
@@ -46,6 +48,7 @@ public class RandomRWTest extends CtsAndroidTestCase {
     }
 
     // It is taking too long in some device, and thus cannot run multiple times
+    @CddTest(requirement="8.2")
     public void testRandomUpdate() throws Exception {
         final int WRITE_BUFFER_SIZE = 4 * 1024;
         final long fileSize = 256 * 1024 * 1024;
