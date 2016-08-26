@@ -20,7 +20,7 @@ LOCAL_STATIC_LIBRARIES += \
   libbacktrace_offline \
   libbacktrace \
   libunwind \
-  libziparchive-host \
+  libziparchive \
   libz \
   liblzma \
   libbase \
