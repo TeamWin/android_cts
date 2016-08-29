@@ -16,19 +16,33 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class TypefaceTest extends AndroidTestCase {
-
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class TypefaceTest {
     // generic family name for monospaced fonts
     private static final String MONO = "monospace";
     private static final String DEFAULT = (String)null;
@@ -38,12 +52,14 @@ public class TypefaceTest extends AndroidTestCase {
     private static final String[] FAMILIES =
             { (String) null, "monospace", "serif", "sans-serif", "cursive", "arial", "times" };
 
+    private Context mContext;
+
     /**
      * Create a typeface of the given style. If the default font does not support the style,
      * a number of generic families are tried.
      * @return The typeface or null, if no typeface with the given style can be found.
      */
-    private Typeface createTypeface(int style) {
+    private static Typeface createTypeface(int style) {
         for (String family : FAMILIES) {
             Typeface tf = Typeface.create(family, style);
             if (tf.getStyle() == style) {
@@ -53,7 +69,12 @@ public class TypefaceTest extends AndroidTestCase {
         return null;
     }
 
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getTargetContext();
+    }
 
+    @Test
     public void testIsBold() {
         Typeface typeface = createTypeface(Typeface.BOLD);
         if (typeface != null) {
@@ -84,6 +105,7 @@ public class TypefaceTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCreate() {
         Typeface typeface = Typeface.create(DEFAULT, Typeface.NORMAL);
         assertNotNull(typeface);
@@ -98,6 +120,7 @@ public class TypefaceTest extends AndroidTestCase {
         assertNotNull(typeface);
     }
 
+    @Test
     public void testDefaultFromStyle() {
         Typeface typeface = Typeface.defaultFromStyle(Typeface.NORMAL);
         assertNotNull(typeface);
@@ -109,6 +132,7 @@ public class TypefaceTest extends AndroidTestCase {
         assertNotNull(typeface);
     }
 
+    @Test
     public void testConstants() {
         assertNotNull(Typeface.DEFAULT);
         assertNotNull(Typeface.DEFAULT_BOLD);
@@ -117,47 +141,45 @@ public class TypefaceTest extends AndroidTestCase {
         assertNotNull(Typeface.SERIF);
     }
 
-    public void testCreateFromAsset() {
+    @Test(expected=NullPointerException.class)
+    public void testCreateFromAssetNull() {
         // input abnormal params.
-        try {
-            Typeface.createFromAsset(null, null);
-            fail("Should throw a NullPointerException.");
-        } catch (NullPointerException e) {
-            // except here
-        }
+        Typeface.createFromAsset(null, null);
+    }
 
-        Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), "samplefont.ttf");
+    @Test
+    public void testCreateFromAsset() {
+        Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "samplefont.ttf");
         assertNotNull(typeface);
     }
 
-    public void testCreateFromFile1() throws IOException {
+    @Test(expected=NullPointerException.class)
+    public void testCreateFromFileByFileReferenceNull() {
         // input abnormal params.
-        try {
-            Typeface.createFromFile((File)null);
-            fail("Should throw a NullPointerException.");
-        } catch (NullPointerException e) {
-            // except here
-        }
+        Typeface.createFromFile((File) null);
+    }
+
+    @Test
+    public void testCreateFromFileByFileReference() throws IOException {
         File file = new File(obtainPath());
         Typeface typeface = Typeface.createFromFile(file);
         assertNotNull(typeface);
     }
 
-    public void testCreateFromFile2() throws IOException {
+    @Test(expected=NullPointerException.class)
+    public void testCreateFromFileByFileNameNull() throws IOException {
         // input abnormal params.
-        try {
-            Typeface.createFromFile((String)null);
-            fail("Should throw a NullPointerException.");
-        } catch (NullPointerException e) {
-            // except here
-        }
+        Typeface.createFromFile((String) null);
+    }
 
+    @Test
+    public void testCreateFromFileByFileName() throws IOException {
         Typeface typeface = Typeface.createFromFile(obtainPath());
         assertNotNull(typeface);
     }
 
     private String obtainPath() throws IOException {
-        File dir = getContext().getFilesDir();
+        File dir = mContext.getFilesDir();
         dir.mkdirs();
         File file = new File(dir, "test.jpg");
         if (!file.createNewFile()) {
@@ -165,7 +187,7 @@ public class TypefaceTest extends AndroidTestCase {
                 fail("Failed to create new File!");
             }
         }
-        InputStream is = getContext().getAssets().open("samplefont.ttf");
+        InputStream is = mContext.getAssets().open("samplefont.ttf");
         FileOutputStream fOutput = new FileOutputStream(file);
         byte[] dataBuffer = new byte[1024];
         int readLength = 0;
@@ -177,8 +199,9 @@ public class TypefaceTest extends AndroidTestCase {
         return (file.getPath());
     }
 
+    @Test
     public void testInvalidCmapFont() {
-        Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), "bombfont.ttf");
+        Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "bombfont.ttf");
         assertNotNull(typeface);
         Paint p = new Paint();
         final String testString = "abcde";
@@ -188,8 +211,9 @@ public class TypefaceTest extends AndroidTestCase {
         assertEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
     }
 
+    @Test
     public void testInvalidCmapFont2() {
-        Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), "bombfont2.ttf");
+        Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "bombfont2.ttf");
         assertNotNull(typeface);
         Paint p = new Paint();
         final String testString = "abcde";
@@ -199,26 +223,25 @@ public class TypefaceTest extends AndroidTestCase {
         assertEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
     }
 
-    @SmallTest
+    @Test
     public void testCreateFromAsset_cachesTypeface() {
-        Typeface typeface1 = Typeface.createFromAsset(getContext().getAssets(), "bombfont2.ttf");
+        Typeface typeface1 = Typeface.createFromAsset(mContext.getAssets(), "bombfont2.ttf");
         assertNotNull(typeface1);
 
-        Typeface typeface2 = Typeface.createFromAsset(getContext().getAssets(), "bombfont2.ttf");
+        Typeface typeface2 = Typeface.createFromAsset(mContext.getAssets(), "bombfont2.ttf");
         assertNotNull(typeface2);
         assertSame("Same font asset should return same Typeface object", typeface1, typeface2);
 
-        Typeface typeface3 = Typeface.createFromAsset(getContext().getAssets(), "bombfont.ttf");
+        Typeface typeface3 = Typeface.createFromAsset(mContext.getAssets(), "bombfont.ttf");
         assertNotNull(typeface3);
         assertNotSame("Different font asset should return different Typeface object",
                 typeface2, typeface3);
 
-        Typeface typeface4 = Typeface.createFromAsset(getContext().getAssets(), "samplefont.ttf");
+        Typeface typeface4 = Typeface.createFromAsset(mContext.getAssets(), "samplefont.ttf");
         assertNotNull(typeface4);
         assertNotSame("Different font asset should return different Typeface object",
                 typeface2, typeface4);
         assertNotSame("Different font asset should return different Typeface object",
                 typeface3, typeface4);
     }
-
 }
