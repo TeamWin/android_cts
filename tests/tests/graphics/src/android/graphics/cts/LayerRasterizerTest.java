@@ -16,14 +16,20 @@
 
 package android.graphics.cts;
 
-import junit.framework.TestCase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.LayerRasterizer;
 import android.graphics.Paint;
 import android.graphics.Rasterizer;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-public class LayerRasterizerTest extends TestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class LayerRasterizerTest {
     private final static int BITMAP_WIDTH = 16;
     private final static int BITMAP_HEIGHT = 16;
 
@@ -37,10 +43,12 @@ public class LayerRasterizerTest extends TestCase {
         canvas.drawCircle(BITMAP_WIDTH/2, BITMAP_WIDTH/2, BITMAP_WIDTH/2, paint);
     }
 
+    @Test
     public void testConstructor() {
         exerciseRasterizer(new LayerRasterizer());
     }
 
+    @Test
     public void testAddLayer1() {
         LayerRasterizer layerRasterizer = new LayerRasterizer();
         Paint p = new Paint();
@@ -48,6 +56,7 @@ public class LayerRasterizerTest extends TestCase {
         exerciseRasterizer(layerRasterizer);
     }
 
+    @Test
     public void testAddLayer2() {
         LayerRasterizer layerRasterizer = new LayerRasterizer();
         layerRasterizer.addLayer(new Paint(), 1.0f, 1.0f);
@@ -56,5 +65,4 @@ public class LayerRasterizerTest extends TestCase {
         layerRasterizer.addLayer(new Paint(), 2.0f, 2.0f);
         exerciseRasterizer(layerRasterizer);
     }
-
 }
