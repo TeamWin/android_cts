@@ -50,7 +50,7 @@ import static org.junit.matchers.JUnitMatchers.either;
 import static org.junit.matchers.JUnitMatchers.hasItems;
 
 import com.google.common.collect.ImmutableSet;
-
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.security.KeyStoreException;
@@ -457,8 +457,26 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    private void checkAttestationApplicationId(Attestation attestation)
+            throws NoSuchAlgorithmException, NameNotFoundException {
+        AttestationApplicationId aaid = null;
+        switch (attestation.getAttestationSecurityLevel()) {
+        case Attestation.KM_SECURITY_LEVEL_SOFTWARE:
+            assertNull(attestation.getTeeEnforced().getAttestationApplicationId());
+            aaid = attestation.getSoftwareEnforced().getAttestationApplicationId();
+            break;
+        case Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT:
+            assertNull(attestation.getSoftwareEnforced().getAttestationApplicationId());
+            aaid = attestation.getTeeEnforced().getAttestationApplicationId();
+            break;
+        }
+        assertNotNull(aaid);
+        assertEquals(new AttestationApplicationId(getContext()), aaid);
+    }
+
     private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes, Date startTime,
-            boolean includesValidityDates, Attestation attestation) {
+            boolean includesValidityDates, Attestation attestation)
+            throws CertificateParsingException, NoSuchAlgorithmException, NameNotFoundException {
         checkAttestationSecurityLevelDependentParams(attestation);
         assertNotNull(attestation.getAttestationChallenge());
         assertTrue(Arrays.equals(challenge, attestation.getAttestationChallenge()));
@@ -470,6 +488,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         checkValidityPeriod(attestation, startTime, includesValidityDates);
         checkFlags(attestation);
         checkOrigin(attestation);
+        checkAttestationApplicationId(attestation);
     }
 
     private int getSystemPatchLevel() {
