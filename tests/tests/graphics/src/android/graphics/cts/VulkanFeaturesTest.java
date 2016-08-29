@@ -16,21 +16,34 @@
 
 package android.graphics.cts;
 
-import android.content.Context;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-import java.io.UnsupportedEncodingException;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  * Test that the Vulkan loader is present, supports the required extensions, and that system
  * features accurately indicate the capabilities of the Vulkan driver if one exists.
  */
-public class VulkanFeaturesTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class VulkanFeaturesTest {
 
     static {
         System.loadLibrary("ctsgraphics_jni");
@@ -43,20 +56,14 @@ public class VulkanFeaturesTest extends AndroidTestCase {
     // and there was an important bugfix relative to 1.0.2.
     private static final int VULKAN_1_0 = 0x00400003; // 1.0.3
 
-    PackageManager mPm;
-    FeatureInfo mVulkanHardwareLevel = null;
-    FeatureInfo mVulkanHardwareVersion = null;
-    JSONObject mVulkanDevices[];
+    private PackageManager mPm;
+    private FeatureInfo mVulkanHardwareLevel = null;
+    private FeatureInfo mVulkanHardwareVersion = null;
+    private JSONObject mVulkanDevices[];
 
-    public VulkanFeaturesTest() {
-        super();
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mPm = getContext().getPackageManager();
+    @Before
+    public void setup() throws Throwable {
+        mPm = InstrumentationRegistry.getTargetContext().getPackageManager();
         FeatureInfo features[] = mPm.getSystemAvailableFeatures();
         if (features != null) {
             for (FeatureInfo feature : features) {
@@ -77,6 +84,7 @@ public class VulkanFeaturesTest extends AndroidTestCase {
         mVulkanDevices = getVulkanDevices();
     }
 
+    @Test
     public void testVulkanHardwareFeatures() throws JSONException {
         if (DEBUG) {
             Log.d(TAG, "Inspecting " + mVulkanDevices.length + " devices");
@@ -138,6 +146,7 @@ public class VulkanFeaturesTest extends AndroidTestCase {
             isVersionCompatible(bestDeviceVersion, mVulkanHardwareVersion.version));
     }
 
+    @Test
     public void testVulkanVersionForVrHighPerformance() {
         if (!mPm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE))
             return;

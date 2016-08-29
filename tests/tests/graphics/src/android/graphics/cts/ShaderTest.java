@@ -16,17 +16,27 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertFalse;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Matrix;
 import android.graphics.Shader;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-public class ShaderTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ShaderTest {
+    @Test
     public void testConstructor() {
         new Shader();
     }
 
+    @Test
     public void testAccessLocalMatrix() {
         int width = 80;
         int height = 120;
