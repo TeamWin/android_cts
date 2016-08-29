@@ -16,16 +16,25 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.Point;
 import android.os.Parcel;
 import android.support.test.filters.SmallTest;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
-public class PointTest extends AndroidTestCase {
-
+@RunWith(AndroidJUnit4.class)
+public class PointTest {
     private Point mPoint;
 
+    @Test
     public void testConstructor() {
         mPoint = new Point();
         mPoint = new Point(10, 10);
@@ -34,6 +43,7 @@ public class PointTest extends AndroidTestCase {
         mPoint = new Point(point);
     }
 
+    @Test
     public void testSet() {
         mPoint = new Point();
         mPoint.set(3, 4);
@@ -41,12 +51,14 @@ public class PointTest extends AndroidTestCase {
         assertEquals(4, mPoint.y);
     }
 
+    @Test
     public void testEquals1() {
         mPoint = new Point(3, 4);
         assertTrue(mPoint.equals(3, 4));
         assertFalse(mPoint.equals(4, 3));
     }
 
+    @Test
     public void testEquals2() {
         mPoint = new Point(3, 4);
         Point point = new Point(3, 4);
@@ -55,17 +67,20 @@ public class PointTest extends AndroidTestCase {
         assertFalse(mPoint.equals(point));
     }
 
+    @Test
     public void testHashCode() {
         mPoint = new Point(10, 10);
         Point p = new Point(100, 10);
         assertTrue(p.hashCode() != mPoint.hashCode());
     }
 
+    @Test
     public void testToString() {
         mPoint = new Point();
         assertNotNull(mPoint.toString());
     }
 
+    @Test
     public void testOffset() {
         mPoint = new Point(10, 10);
         mPoint.offset(1, 1);
@@ -73,6 +88,7 @@ public class PointTest extends AndroidTestCase {
         assertEquals(11, mPoint.y);
     }
 
+    @Test
     public void testNegate() {
         mPoint = new Point(10, 10);
         mPoint.negate();
@@ -80,11 +96,13 @@ public class PointTest extends AndroidTestCase {
         assertEquals(-10, mPoint.y);
     }
 
+    @Test
     public void testDescribeContents() {
         mPoint = new Point(10, 20);
         assertEquals(0, mPoint.describeContents());
     }
 
+    @Test
     public void testParceling() {
         mPoint = new Point(10, 20);
         Parcel p = Parcel.obtain();

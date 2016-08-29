@@ -23,8 +23,8 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -81,7 +81,7 @@ public class PathTest {
         Path path1 = new Path();
         addRectToPath(path1);
         path.set(path1);
-        assertPathsAreEquivalent(path, path1);
+        verifyPathsAreEquivalent(path, path1);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class PathTest {
         Path path1 = new Path();
         path1.addRect(new RectF(10, 10, 20, 20), Path.Direction.CW);
         path.set(path1);
-        assertPathsAreEquivalent(path, path1);
+        verifyPathsAreEquivalent(path, path1);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class PathTest {
         addRectToPath(path);
         Path path1 = new Path();
         path.set(path1);
-        assertPathsAreEquivalent(path, path1);
+        verifyPathsAreEquivalent(path, path1);
     }
 
     @Test
@@ -221,10 +221,6 @@ public class PathTest {
         path.computeBounds(bounds, false);
         assertEquals(expected.width(), bounds.width(), 0.0f);
         assertEquals(expected.height(), bounds.height(), 0.0f);
-    }
-
-    @Test
-    public void testRMoveTo() {
     }
 
     @Test
@@ -444,7 +440,7 @@ public class PathTest {
         assertEquals(expectedRect, offsettedRect);
     }
 
-    private static void assertPathsAreEquivalent(Path actual, Path expected) {
+    private static void verifyPathsAreEquivalent(Path actual, Path expected) {
         Bitmap actualBitmap = drawAndGetBitmap(actual);
         Bitmap expectedBitmap = drawAndGetBitmap(expected);
         assertTrue(actualBitmap.sameAs(expectedBitmap));

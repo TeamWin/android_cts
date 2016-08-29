@@ -17,17 +17,19 @@
 package android.graphics.cts;
 
 import android.graphics.Rasterizer;
-import android.test.AndroidTestCase;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 
-public class RasterizerTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-    public void testFinalize() {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class RasterizerTest {
+    @Test
+    public void testFinalize() throws Throwable {
         MockRasterizer mr = new MockRasterizer();
-        try {
-            mr.finalize();
-        } catch (Throwable e) {
-            fail(e.getMessage());
-        }
+        mr.finalize();
     }
 
     class MockRasterizer extends Rasterizer {
