@@ -36,7 +36,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
             enableManifestActivity("Launcher_manifest_1", true);
             enableManifestActivity("Launcher_manifest_2", true);
 
-            retryUntil(() -> getManager().getManifestShortcuts().size() > 0,
+            retryUntil(() -> getManager().getManifestShortcuts().size() == 3,
                     "Manifest shortcuts didn't show up");
 
             assertTrue(getManager().setDynamicShortcuts(list(
@@ -55,7 +55,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
             enableManifestActivity("Launcher_manifest_1", true);
             enableManifestActivity("Launcher_manifest_3", true);
 
-            retryUntil(() -> getManager().getManifestShortcuts().size() > 0,
+            retryUntil(() -> getManager().getManifestShortcuts().size() == 3,
                     "Manifest shortcuts didn't show up");
 
             assertTrue(getManager().setDynamicShortcuts(list(
@@ -306,7 +306,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         runWithCaller(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_2", true);
 
-            retryUntil(() -> getManager().getManifestShortcuts().size() > 0,
+            retryUntil(() -> getManager().getManifestShortcuts().size() == 2,
                     "Manifest shortcuts didn't show up");
 
             assertTrue(getManager().setDynamicShortcuts(list(
@@ -342,8 +342,4 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         assertIconDimensions(icon5, getIconAsLauncher(
                 mLauncherContext1, mPackageContext1.getPackageName(), "ms21", false));
     }
-
-    // TODO Callback test
-
-    // TODO Launch test
 }
