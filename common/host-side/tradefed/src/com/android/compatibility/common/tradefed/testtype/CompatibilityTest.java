@@ -83,6 +83,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
+    public static final String RETRY_TYPE_OPTION = "retry-type";
     private static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shards";
     public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
@@ -135,11 +136,21 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             importance = Importance.ALWAYS)
     private List<String> mTestArgs = new ArrayList<>();
 
+    public enum RetryType {
+        FAILED, NOT_EXECUTED;
+    }
+
     @Option(name = RETRY_OPTION,
             shortName = 'r',
-            description = "retry a previous session.",
+            description = "retry a previous session's failed and not executed tests.",
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
+
+    @Option(name = RETRY_TYPE_OPTION,
+            description = "used with " + RETRY_OPTION + ", retry tests of a certain status. "
+            + "Possible values include \"failed\" and \"not_executed\".",
+            importance = Importance.IF_UNSET)
+    private RetryType mRetryType = null;
 
     @Option(name = ABI_OPTION,
             shortName = 'a',
@@ -589,26 +600,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     throw new RuntimeException(e);
                 }
             }
-            // Append each test that failed or was not executed to the filters
-            for (IModuleResult module : result.getModules()) {
-                if (module.isPassed()) {
-                    // Whole module passed, exclude entire module
-                    TestFilter filter = new TestFilter(module.getAbi(), module.getName(), null);
-                    mExcludeFilters.add(filter.toString());
-                } else {
-                    for (ICaseResult testResultList : module.getResults()) {
-                        for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
-                            // Test passed, exclude it for retry
-                            TestFilter filter = new TestFilter(
-                                    module.getAbi(), module.getName(), testResult.getFullName());
-                            mExcludeFilters.add(filter.toString());
-                        }
-                    }
-                }
+
+            ITestPlan retryPlan = new TestPlan();
+            retryPlan.excludePassed(result); // always exclude passed tests on retry
+            if (RetryType.FAILED.equals(mRetryType)) {
+                    retryPlan.includeFailed(result); // retry only failed tests
+            } else if (RetryType.NOT_EXECUTED.equals(mRetryType)){
+                    retryPlan.excludeFailed(result); // retry only not executed tests
             }
+            mIncludeFilters.addAll(retryPlan.getIncludeFilters());
+            mExcludeFilters.addAll(retryPlan.getExcludeFilters());
         }
         if (mModuleName != null) {
-            mIncludeFilters.clear();
             try {
                 List<String> modules = ModuleRepo.getModuleNamesMatching(
                         mBuildHelper.getTestsDir(), mModuleName);
@@ -621,19 +624,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             mModuleName, ArrayUtil.join("\n", modules)));
                 } else {
                     String module = modules.get(0);
+                    cleanFilters(mIncludeFilters, module);
+                    cleanFilters(mExcludeFilters, module);
                     mIncludeFilters.add(new TestFilter(mAbiName, module, mTestName).toString());
-                    // We will run this module with previous exclusions,
-                    // unless they exclude the whole module.
-                    List<String> excludeFilters = new ArrayList<>();
-                    for (String excludeFilter : mExcludeFilters) {
-                        TestFilter filter = TestFilter.createFrom(excludeFilter);
-                        String name = filter.getName();
-                        // Add the filter if it applies to this module
-                        if (module.equals(name)) {
-                            excludeFilters.add(excludeFilter);
-                        }
-                    }
-                    mExcludeFilters = excludeFilters;
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -647,6 +640,17 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 mIncludeFilters.add(arg.split(":")[0]);
             }
         }
+    }
+
+    /* Helper method designed to remove filters in a list not applicable to the given module */
+    private static void cleanFilters(List<String> filters, String module) {
+        List<String> cleanedFilters = new ArrayList<String>();
+        for (String filter : filters) {
+            if (module.equals(TestFilter.createFrom(filter).getName())) {
+                cleanedFilters.add(filter); // Module name matches, filter passes
+            }
+        }
+        filters = cleanedFilters;
     }
 
     /**

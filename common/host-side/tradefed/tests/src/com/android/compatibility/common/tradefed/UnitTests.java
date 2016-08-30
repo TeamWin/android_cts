@@ -24,6 +24,7 @@ import com.android.compatibility.common.tradefed.targetprep.SettingsPreparerTest
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
+import com.android.compatibility.common.tradefed.testtype.TestPlanTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 
@@ -51,6 +52,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(ModuleRepoTest.class);
         addTestSuite(PropertyCheckTest.class);
         addTestSuite(SettingsPreparerTest.class);
+        addTestSuite(TestPlanTest.class);
     }
 
     public static Test suite() {
