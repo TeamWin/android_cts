@@ -19,6 +19,8 @@
     package="android.view.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application android:label="Android TestCase"
                 android:icon="@drawable/size_48x48"
                 android:maxRecents="1"
