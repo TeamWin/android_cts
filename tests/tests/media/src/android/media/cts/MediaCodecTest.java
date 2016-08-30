@@ -144,6 +144,8 @@ public class MediaCodecTest extends AndroidTestCase {
             return false;
         }
 
+        final boolean isVideoEncoder = isEncoder && mimeType.startsWith("video/");
+
         // create codec (enter Initialized State)
         MediaCodec codec;
 
@@ -238,13 +240,33 @@ public class MediaCodecTest extends AndroidTestCase {
                 fail("createInputSurface should not work on a decoder");
             }
         } catch (IllegalStateException e) { // expected for decoder and audio encoder
-            if (isEncoder && format.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+            if (isVideoEncoder) {
                 throw e;
             }
         }
 
+        // test getInputBuffers before start()
+        try {
+            ByteBuffer[] buffers = codec.getInputBuffers();
+            fail("getInputBuffers called before start() should throw exception");
+        } catch (IllegalStateException e) { // expected
+        }
+
         // start codec (enter Executing state)
         codec.start();
+
+        // test getInputBuffers after start()
+        try {
+            ByteBuffer[] buffers = codec.getInputBuffers();
+            if (buffers == null) {
+                fail("getInputBuffers called after start() should not return null");
+            }
+            if (isVideoEncoder && buffers.length > 0) {
+                fail("getInputBuffers returned non-zero length array with input surface");
+            }
+        } catch (IllegalStateException e) {
+            fail("getInputBuffers called after start() shouldn't throw exception");
+        }
 
         // test a few commands
         try {
@@ -1520,7 +1542,7 @@ public class MediaCodecTest extends AndroidTestCase {
             if (!encoder && info.isEncoder()) {
                 continue;
             }
-            
+
             for (String type : info.getSupportedTypes()) {
                 if (type.equalsIgnoreCase(mimeType)) {
                     return true;
