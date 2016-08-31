@@ -18,6 +18,7 @@ package android.graphics.drawable.cts;
 
 import android.app.Activity;
 import android.content.res.Resources;
+import android.cts.util.SystemUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -27,10 +28,13 @@ import android.graphics.drawable.AnimatedVectorDrawable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,6 +59,8 @@ public class AnimatedVectorDrawableParameterizedTest {
     private static final int IMAGE_HEIGHT = 64;
     private static final long MAX_TIMEOUT_MS = 1000;
 
+    private static float sTransitionScaleBefore = Float.NaN;
+
     private Activity mActivity = null;
     private Resources mResources = null;
     private final int mLayerType;
@@ -66,6 +72,30 @@ public class AnimatedVectorDrawableParameterizedTest {
                 View.LAYER_TYPE_NONE,
                 View.LAYER_TYPE_SOFTWARE
         };
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        try {
+            sTransitionScaleBefore = Float.parseFloat(SystemUtil.runShellCommand(
+                    InstrumentationRegistry.getInstrumentation(),
+                    "settings get global transition_animation_scale"));
+
+            SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                    "settings put global transition_animation_scale 0");
+        } catch (NumberFormatException e) {
+            Log.e("AnimatedVectorDrawableTest", "Could not read transition_animation_scale", e);
+            sTransitionScaleBefore = Float.NaN;
+        }
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (sTransitionScaleBefore != Float.NaN) {
+            SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                    "settings put global transition_animation_scale " +
+                            sTransitionScaleBefore);
+        }
     }
 
     public AnimatedVectorDrawableParameterizedTest(final int layerType) throws Throwable {
@@ -116,10 +146,8 @@ public class AnimatedVectorDrawableParameterizedTest {
             counter++;
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
             if (isIdentical) {
-                saveVectorDrawableIntoPNG(screenShot,
-                        mResources.getString(R.string.current_screenshot));
-                saveVectorDrawableIntoPNG(lastScreenShot,
-                        mResources.getString(R.string.last_screenshot));
+                saveVectorDrawableIntoPNG(screenShot, "screenshot_" + counter);
+                saveVectorDrawableIntoPNG(lastScreenShot, "screenshot_" + (counter - 1));
                 fail("Two consecutive screenshots of AVD are identical, AVD is " +
                         "likely not animating");
             }

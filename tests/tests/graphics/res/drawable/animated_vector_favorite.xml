@@ -66,11 +66,11 @@
                         android:duration="3000"
                         android:propertyName="strokeColor"
                         android:valueFrom="#FF0000FF"
-                        android:valueTo="#FF00FF00" />
+                        android:valueTo="#FFFFFF00" />
                 <objectAnimator
                         android:duration="3000"
                         android:propertyName="fillColor"
-                        android:valueFrom="#FFFF0000"
+                        android:valueFrom="#FFFF00FF"
                         android:valueTo="#FF00FF00" />
             </set>
         </aapt:attr>

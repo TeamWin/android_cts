@@ -84,10 +84,14 @@ public class AnimatedVectorDrawableTest {
     // This is only for debugging or golden image (re)generation purpose.
     private void saveVectorDrawableIntoPNG(Bitmap bitmap, int resId) throws IOException {
         String originalFilePath = mResources.getString(resId);
-        saveVectorDrawableIntoPNG(bitmap, originalFilePath);
+        File originalFile = new File(originalFilePath);
+        String fileFullName = originalFile.getName();
+        String fileTitle = fileFullName.substring(0, fileFullName.lastIndexOf("."));
+        saveVectorDrawableIntoPNG(bitmap, fileTitle);
     }
 
-    static void saveVectorDrawableIntoPNG(Bitmap bitmap, String filePath)
+    // Save a bitmap to the given name under /sdcard/temp/
+    static void saveVectorDrawableIntoPNG(Bitmap bitmap, String fileFullName)
             throws IOException {
         // Save the image to the disk.
         FileOutputStream out = null;
@@ -97,10 +101,7 @@ public class AnimatedVectorDrawableTest {
             if (!folder.exists()) {
                 folder.mkdir();
             }
-            File originalFile = new File(filePath);
-            String fileFullName = originalFile.getName();
-            String fileTitle = fileFullName.substring(0, fileFullName.lastIndexOf("."));
-            String outputFilename = outputFolder + fileTitle + "_golden.png";
+            String outputFilename = outputFolder + fileFullName + "_golden.png";
             File outputFile = new File(outputFilename);
             if (!outputFile.exists()) {
                 outputFile.createNewFile();
