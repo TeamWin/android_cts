@@ -28,8 +28,11 @@ import android.util.Log;
 
 import junit.framework.Assert;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 /**
  * Helper class for GnssMeasurement Tests.
@@ -51,6 +54,21 @@ public final class TestMeasurementUtil {
     public static final String REGISTRATION_ERROR_MESSAGE = "Registration of GnssMeasurements" +
             " listener has failed, this indicates a platform bug. Please report the issue with" +
             " a full bugreport.";
+
+    // The valid Gnss navigation message type as listed in
+    // android/hardware/libhardware/include/hardware/gps.h
+    public static final Set<Integer> GNSS_NAVIGATION_MESSAGE_TYPE =
+        new HashSet<Integer>(Arrays.asList(
+            0x0101,
+            0x0102,
+            0x0103,
+            0x0104,
+            0x0301,
+            0x0501,
+            0x0502,
+            0x0601,
+            0x0602
+        ));
 
     /**
      * Check if test can be run on the current device.
@@ -667,9 +685,9 @@ public final class TestMeasurementUtil {
         SoftAssert softAssert = new SoftAssert(TAG);
         for (GnssNavigationMessage message : events) {
             int type = message.getType();
-            softAssert.assertTrue("Gnss Navigation Message Type:expected [0x0101 - 0x0104]," +
-                            " actual = " + type,
-                    type >= 0x0101 && type <= 0x0104);
+            softAssert.assertTrue("Gnss Navigation Message Type:expected [" +
+                getGnssNavMessageTypes() + "] actual = " + type,
+                    GNSS_NAVIGATION_MESSAGE_TYPE.contains(type));
 
             // if message type == TYPE_L1CA, verify PRN & Data Size.
             int messageType = message.getType();
@@ -687,5 +705,15 @@ public final class TestMeasurementUtil {
             }
         }
         softAssert.assertAll();
+    }
+
+    private static String getGnssNavMessageTypes() {
+        StringBuilder typesStr = new StringBuilder();
+        for (int type : GNSS_NAVIGATION_MESSAGE_TYPE) {
+            typesStr.append(String.format("0x%04X", type));
+            typesStr.append(", ");
+        }
+
+        return typesStr.length() > 2 ? typesStr.substring(0, typesStr.length() - 2) : "";
     }
 }
