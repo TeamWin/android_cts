@@ -33,7 +33,7 @@ class GenericFactory;
 class ModelBuilder {
 public:
     ModelBuilder();
-    ModelBuilder(GenericFactory* factory);
+    explicit ModelBuilder(GenericFactory* factory);
     virtual ~ModelBuilder();
 
     /**
