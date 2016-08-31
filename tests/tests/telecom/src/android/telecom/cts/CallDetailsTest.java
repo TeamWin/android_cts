@@ -445,6 +445,10 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
      * {@link android.telecom.Call.Callback#onDetailsChanged(Call, Call.Details)}.
      */
     public void testConnectionRemoveExtras() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         testConnectionPutExtras();
 
         mConnection.removeExtras(Arrays.asList(TEST_EXTRA_KEY));
@@ -458,6 +462,10 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
      * {@link android.telecom.Call.Callback#onDetailsChanged(Call, Call.Details)}.
      */
     public void testConnectionRemoveExtras2() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
         testConnectionPutExtras();
 
         mConnection.removeExtras(TEST_EXTRA_KEY);
