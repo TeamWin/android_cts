@@ -74,6 +74,8 @@ public class EglConfigTest {
                     contextClientVersion);
             EglConfigCtsActivity activity = mActivityRule.launchActivity(intent);
             activity.waitToFinishDrawing();
+            // TODO(b/30948621): Remove the sleep below once b/30948621 is fixed.
+            Thread.sleep(500);
             activity.finish();
             mInstrumentation.waitForIdleSync();
         }
