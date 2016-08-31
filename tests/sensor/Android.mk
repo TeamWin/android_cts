@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,26 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-# CtsHardwareTestCases package
+# Reusable Sensor test classes and helpers
+include $(CLEAR_VARS)
 
+LOCAL_MODULE := cts-sensors-tests
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil
+
+LOCAL_JAVA_LIBRARIES := platform-test-annotations
+
+LOCAL_SDK_VERSION := current
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
+
+# CtsSensorTestCases package
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
@@ -26,18 +44,12 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil \
-    compatibility-device-util \
     ctstestrunner \
-    mockito-target-minus-junit4 \
-    android-ex-camera2
+    cts-sensors-tests \
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
-
-LOCAL_PACKAGE_NAME := CtsHardwareTestCases
+LOCAL_PACKAGE_NAME := CtsSensorTestCases
 
 LOCAL_SDK_VERSION := current
-
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
 include $(BUILD_CTS_PACKAGE)
