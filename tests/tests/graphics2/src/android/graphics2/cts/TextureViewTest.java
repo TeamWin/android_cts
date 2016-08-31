@@ -16,33 +16,42 @@
 
 package android.graphics2.cts;
 
-import android.graphics2.cts.TextureViewCameraActivity;
+import static org.junit.Assert.assertTrue;
+
 import android.hardware.Camera;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.filters.LargeTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class TextureViewTest extends ActivityInstrumentationTestCase2<TextureViewCameraActivity> {
+@LargeTest
+@RunWith(AndroidJUnit4.class)
+public class TextureViewTest {
     private static final long WAIT_TIMEOUT_IN_SECS = 10;
+
     private TextureViewCameraActivity mActivity;
-    public TextureViewTest() {
-        super(TextureViewCameraActivity.class);
+    private int mNumberOfCameras;
+
+    @Rule
+    public ActivityTestRule<TextureViewCameraActivity> mActivityRule =
+            new ActivityTestRule<>(TextureViewCameraActivity.class);
+
+    @Before
+    public void setup() {
+        mActivity = mActivityRule.getActivity();
+        mNumberOfCameras = Camera.getNumberOfCameras();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (Camera.getNumberOfCameras() < 1) {
-            return;
-        }
-        mActivity = getActivity();
-    }
-
+    @Test
     public void testTextureViewActivity() throws InterruptedException {
-        if (Camera.getNumberOfCameras() < 1) {
+        if (mNumberOfCameras < 1) {
             return;
         }
         assertTrue(mActivity.waitForCompletion(WAIT_TIMEOUT_IN_SECS));
     }
-
 }
 

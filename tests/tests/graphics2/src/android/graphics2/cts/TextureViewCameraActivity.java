@@ -19,7 +19,6 @@ package android.graphics2.cts;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -27,11 +26,11 @@ import android.os.Bundle;
 import android.view.TextureView;
 import android.view.View;
 
+import junit.framework.Assert;
+
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import junit.framework.Assert;
 
 
 public class TextureViewCameraActivity extends Activity implements
@@ -39,6 +38,7 @@ public class TextureViewCameraActivity extends Activity implements
     private static final int CAPTURE_SCREEN_INTERVAL = 10;
     private static final float SCREEN_ROTATION_RATE = 1.0f;
     private static final int MAX_FRAME_UPDATE = 40;
+
     private Camera mCamera;
     private TextureView mTextureView;
     private int mUpdateCounter = 0;
