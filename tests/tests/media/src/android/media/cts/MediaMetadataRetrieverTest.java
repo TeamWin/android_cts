@@ -23,11 +23,21 @@ import android.content.res.Resources;
 import android.cts.util.MediaUtils;
 import android.media.MediaDataSource;
 import android.media.MediaMetadataRetriever;
+import android.graphics.Bitmap;
 import android.test.AndroidTestCase;
+import android.util.Log;
+
+import static android.media.MediaMetadataRetriever.OPTION_CLOSEST;
+import static android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC;
+import static android.media.MediaMetadataRetriever.OPTION_NEXT_SYNC;
+import static android.media.MediaMetadataRetriever.OPTION_PREVIOUS_SYNC;
 
 import java.io.IOException;
 
 public class MediaMetadataRetrieverTest extends AndroidTestCase {
+    private static final String TAG = "MediaMetadataRetrieverTest";
+    private static final boolean SAVE_BITMAP_OUTPUT = false;
+
     protected Resources mResources;
     protected MediaMetadataRetriever mRetriever;
 
@@ -210,5 +220,81 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     public void testThumbnailHEVC() {
         testThumbnail(R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz);
+    }
+
+
+    /**
+     * The following tests verifies MediaMetadataRetriever.getFrameAtTime behavior.
+     *
+     * We use a simple stream with binary counter at the top to check which frame
+     * is actually captured. The stream is 30fps with 600 frames in total. It has
+     * I/P/B frames, with I interval of 30. Due to the encoding structure, pts starts
+     * at 66666 (instead of 0), so we have I frames at 66666, 1066666, ..., etc..
+     *
+     * For each seek option, we check the following five cases:
+     *     1) frame time falls right on a sync frame
+     *     2) frame time is near the middle of two sync frames but closer to the previous one
+     *     3) frame time is near the middle of two sync frames but closer to the next one
+     *     4) frame time is shortly before a sync frame
+     *     5) frame time is shortly after a sync frame
+     */
+    public void testGetFrameAtTimePreviousSync() {
+        int[][] testCases = {
+                { 2066666, 60 }, { 2500000, 60 }, { 2600000, 60 }, { 3000000, 60 }, { 3200000, 90}};
+        testGetFrameAtTime(OPTION_PREVIOUS_SYNC, testCases);
+    }
+
+    public void testGetFrameAtTimeNextSync() {
+        int[][] testCases = {
+                { 2066666, 60 }, { 2500000, 90 }, { 2600000, 90 }, { 3000000, 90 }, { 3200000, 120}};
+        testGetFrameAtTime(OPTION_NEXT_SYNC, testCases);
+    }
+
+    public void testGetFrameAtTimeClosestSync() {
+        int[][] testCases = {
+                { 2066666, 60 }, { 2500000, 60 }, { 2600000, 90 }, { 3000000, 90 }, { 3200000, 90}};
+        testGetFrameAtTime(OPTION_CLOSEST_SYNC, testCases);
+    }
+
+    public void testGetFrameAtTimeClosest() {
+        int[][] testCases = {
+                { 2066666, 60 }, { 2500001, 73 }, { 2599999, 76 }, { 3016000, 88 }, { 3184000, 94}};
+        testGetFrameAtTime(OPTION_CLOSEST, testCases);
+    }
+
+    private void testGetFrameAtTime(int option, int[][] testCases) {
+        int resId = R.raw.binary_counter_320x240_30fps_600frames;
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        Resources resources = getContext().getResources();
+        AssetFileDescriptor afd = resources.openRawResourceFd(resId);
+
+        retriever.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        try {
+            afd.close();
+        } catch (IOException e) {
+            fail("Unable to close file");
+        }
+        for (int[] testCase : testCases) {
+            getVideoFrameAndVerify(retriever, testCase[0], testCase[1], option);
+        }
+        retriever.release();
+    }
+
+    private void getVideoFrameAndVerify(
+            MediaMetadataRetriever retriever, long timeUs, long expectedCounter, int option) {
+        try {
+            Bitmap bitmap = retriever.getFrameAtTime(timeUs, option);
+            if (bitmap == null) {
+                fail("Failed to get bitmap at time " + timeUs + " with option " + option);
+            }
+            assertEquals("Counter value incorrect at time " + timeUs + " with option " + option,
+                    expectedCounter, CodecUtils.readBinaryCounterFromBitmap(bitmap));
+
+            if (SAVE_BITMAP_OUTPUT) {
+                CodecUtils.saveBitmapToFile(bitmap, "test" + timeUs + ".jpg");
+            }
+        } catch (Exception e) {
+            fail("Exception getting bitmap: " + e);
+        }
     }
 }
