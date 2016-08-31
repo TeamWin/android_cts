@@ -1,10 +1,13 @@
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assert.assertFalse;
+
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Path;
 import android.graphics.Rect;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.support.test.filters.MediumTest;
+import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testclasses.view.UnclippedBlueView;
@@ -13,10 +16,8 @@ import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
-import android.uirendering.cts.R;
-import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
+import org.junit.Test;
 
 /**
  * This tests view clipping by modifying properties of blue_padded_layout, and validating

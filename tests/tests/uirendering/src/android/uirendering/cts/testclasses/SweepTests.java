@@ -22,17 +22,15 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.support.test.filters.MediumTest;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.DisplayModifier;
 import android.uirendering.cts.testinfrastructure.ResourceModifier;
-import org.junit.Test;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.junit.Test;
 
 /**
  * Test cases of all combination of resource modifications.
