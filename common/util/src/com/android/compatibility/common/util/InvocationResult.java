@@ -64,16 +64,12 @@ public class InvocationResult implements IInvocationResult {
      * {@inheritDoc}
      */
     @Override
-    public void notExecuted(int count) {
-        mNotExecuted += count;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public int getNotExecuted() {
-        return mNotExecuted;
+        int numTests = 0;
+        for (IModuleResult module : mModuleResults.values()) {
+            numTests += module.getNotExecuted();
+        }
+        return numTests;
     }
 
     /**

@@ -38,6 +38,10 @@ public interface IModuleResult extends Comparable<IModuleResult> {
 
     boolean isPassed();
 
+    int getNotExecuted();
+
+    void setNotExecuted(int numTests);
+
     /**
      * Gets a {@link ICaseResult} for the given testcase, creating it if it doesn't exist.
      *
