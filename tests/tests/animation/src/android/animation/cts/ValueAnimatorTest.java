@@ -185,6 +185,28 @@ public class ValueAnimatorTest {
     }
 
     @Test
+    public void testPauseListener() throws Throwable {
+        // Adds two pause listeners to the animator, and remove one after the animator is paused.
+        Animator.AnimatorPauseListener l1 = mock(Animator.AnimatorPauseListener.class);
+        Animator.AnimatorPauseListener l2 = mock(Animator.AnimatorPauseListener.class);
+        ValueAnimator a1 = ValueAnimator.ofFloat(0, 1f);
+        a1.addPauseListener(l1);
+        a1.addPauseListener(l2);
+        mActivityRule.runOnUiThread(() -> {
+            a1.start();
+            a1.pause();
+            verify(l1, times(1)).onAnimationPause(a1);
+            verify(l2, times(1)).onAnimationPause(a1);
+            a1.removePauseListener(l2);
+            a1.resume();
+        });
+
+        // Check that the pause listener that is removed doesn't have resume called.
+        verify(l1, times(1)).onAnimationResume(a1);
+        verify(l2, times(0)).onAnimationResume(a1);
+    }
+
+    @Test
     public void testSetCurrentPlayTimeAfterStart() throws Throwable {
         // This test sets current play time right after start() is called on a non-delayed animation
         final long duration = 100;
