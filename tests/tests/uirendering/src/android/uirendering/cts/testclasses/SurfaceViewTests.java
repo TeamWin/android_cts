@@ -18,23 +18,20 @@ package android.uirendering.cts.testclasses;
 import android.animation.ObjectAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Rect;
-import android.test.suitebuilder.annotation.MediumTest;
-import android.uirendering.cts.bitmapverifiers.*;
+import android.support.test.filters.MediumTest;
+import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
-import android.uirendering.cts.testinfrastructure.DrawActivity;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.uirendering.cts.R;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
-import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
+import org.junit.Test;
 
 @MediumTest
 public class SurfaceViewTests extends ActivityTestBase {

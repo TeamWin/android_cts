@@ -17,13 +17,12 @@ package android.uirendering.cts.testclasses;
 
 import android.graphics.Color;
 import android.graphics.Point;
-import android.test.suitebuilder.annotation.MediumTest;
-import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
-
+import android.support.test.filters.MediumTest;
 import android.uirendering.cts.R;
-
+import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.util.CompareUtils;
+
 import org.junit.Test;
 
 @MediumTest

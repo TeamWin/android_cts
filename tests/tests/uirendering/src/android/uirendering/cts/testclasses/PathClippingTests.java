@@ -16,13 +16,16 @@
 
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Typeface;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.support.test.filters.MediumTest;
+import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -32,10 +35,8 @@ import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.uirendering.cts.R;
-import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
+import org.junit.Test;
 
 @MediumTest
 public class PathClippingTests extends ActivityTestBase {
