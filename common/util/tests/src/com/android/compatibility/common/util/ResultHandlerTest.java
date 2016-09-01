@@ -45,6 +45,10 @@ public class ResultHandlerTest extends TestCase {
     private static final String JAVA_VERSION = System.getProperty("java.version");
     private static final String NAME_A = "ModuleA";
     private static final String NAME_B = "ModuleB";
+    private static final String DONE_A = "false";
+    private static final String DONE_B = "true";
+    private static final String NOT_EXECUTED_A = "1";
+    private static final String NOT_EXECUTED_B = "0";
     private static final String ABI = "mips64";
     private static final String ID_A = AbiUtils.createId(ABI, NAME_A);
     private static final String ID_B = AbiUtils.createId(ABI, NAME_B);
@@ -105,7 +109,7 @@ public class ResultHandlerTest extends TestCase {
             "  <Summary pass=\"%d\" failed=\"%d\" not_executed=\"%d\" " +
             "modules_done=\"1\" modules_total=\"1\" />\n";
     private static final String XML_MODULE =
-            "  <Module name=\"%s\" abi=\"%s\" device=\"%s\">\n" +
+            "  <Module name=\"%s\" abi=\"%s\" device=\"%s\" done=\"%s\" not_executed=\"%s\">\n" +
             "%s" +
             "  </Module>\n";
     private static final String XML_CASE =
@@ -158,14 +162,16 @@ public class ResultHandlerTest extends TestCase {
         result.addInvocationInfo(BUILD_ID, EXAMPLE_BUILD_ID);
         result.addInvocationInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
         IModuleResult moduleA = result.getOrCreateModule(ID_A);
+        moduleA.setDone(false);
         ICaseResult moduleACase = moduleA.getOrCreateResult(CLASS_A);
         ITestResult moduleATest1 = moduleACase.getOrCreateResult(METHOD_1);
         moduleATest1.setResultStatus(TestStatus.PASS);
         ITestResult moduleATest2 = moduleACase.getOrCreateResult(METHOD_2);
         moduleATest2.setResultStatus(null); // not executed test
-        result.notExecuted(1);
+        moduleA.setNotExecuted(1);
 
         IModuleResult moduleB = result.getOrCreateModule(ID_B);
+        moduleB.setDone(true);
         ICaseResult moduleBCase = moduleB.getOrCreateResult(CLASS_B);
         ITestResult moduleBTest3 = moduleBCase.getOrCreateResult(METHOD_3);
         moduleBTest3.setResultStatus(TestStatus.FAIL);
@@ -205,7 +211,8 @@ public class ResultHandlerTest extends TestCase {
             String summary = String.format(XML_SUMMARY, 2, 1, 1);
             String moduleATest = String.format(XML_TEST_PASS, METHOD_1);
             String moduleACases = String.format(XML_CASE, CLASS_A, moduleATest);
-            String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, moduleACases);
+            String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, DONE_A,
+                    NOT_EXECUTED_A, moduleACases);
             String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, MESSAGE, STACK_TRACE,
                     BUG_REPORT, LOGCAT, SCREENSHOT);
             String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4,
@@ -216,7 +223,8 @@ public class ResultHandlerTest extends TestCase {
                     Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
             String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
             String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
-            String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, moduleBCases);
+            String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, DONE_B,
+                    NOT_EXECUTED_B, moduleBCases);
             String modules = String.format(JOIN, moduleA, moduleB);
             String hostName = "";
             try {

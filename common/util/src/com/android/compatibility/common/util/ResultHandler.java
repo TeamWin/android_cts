@@ -142,8 +142,6 @@ public class ResultHandler {
                 parser.require(XmlPullParser.END_TAG, NS, BUILD_TAG);
                 parser.nextTag();
                 parser.require(XmlPullParser.START_TAG, NS, SUMMARY_TAG);
-                invocation.notExecuted(
-                        Integer.parseInt(parser.getAttributeValue(NS, NOT_EXECUTED_ATTR)));
                 parser.nextTag();
                 parser.require(XmlPullParser.END_TAG, NS, SUMMARY_TAG);
                 while (parser.nextTag() == XmlPullParser.START_TAG) {
@@ -154,6 +152,9 @@ public class ResultHandler {
                     boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
                     IModuleResult module = invocation.getOrCreateModule(moduleId);
                     module.setDone(done);
+                    int notExecuted =
+                            Integer.parseInt(parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
+                    module.setNotExecuted(notExecuted);
                     while (parser.nextTag() == XmlPullParser.START_TAG) {
                         parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
                         String caseName = parser.getAttributeValue(NS, NAME_ATTR);
@@ -312,6 +313,7 @@ public class ResultHandler {
             serializer.attribute(NS, ABI_ATTR, module.getAbi());
             serializer.attribute(NS, RUNTIME_ATTR, String.valueOf(module.getRuntime()));
             serializer.attribute(NS, DONE_ATTR, Boolean.toString(module.isDone()));
+            serializer.attribute(NS, NOT_EXECUTED_ATTR, Integer.toString(module.getNotExecuted()));
             for (ICaseResult cr : module.getResults()) {
                 serializer.startTag(NS, CASE_TAG);
                 serializer.attribute(NS, NAME_ATTR, cr.getName());
