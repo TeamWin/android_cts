@@ -468,7 +468,7 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes, Date startTime,
             boolean includesValidityDates, Attestation attestation)
-            throws CertificateParsingException, NoSuchAlgorithmException, NameNotFoundException {
+            throws NoSuchAlgorithmException, NameNotFoundException {
         checkAttestationSecurityLevelDependentParams(attestation);
         assertNotNull(attestation.getAttestationChallenge());
         assertTrue(Arrays.equals(challenge, attestation.getAttestationChallenge()));
