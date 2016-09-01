@@ -460,16 +460,8 @@ public class KeyAttestationTest extends AndroidTestCase {
     private void checkAttestationApplicationId(Attestation attestation)
             throws NoSuchAlgorithmException, NameNotFoundException {
         AttestationApplicationId aaid = null;
-        switch (attestation.getAttestationSecurityLevel()) {
-        case Attestation.KM_SECURITY_LEVEL_SOFTWARE:
-            assertNull(attestation.getTeeEnforced().getAttestationApplicationId());
-            aaid = attestation.getSoftwareEnforced().getAttestationApplicationId();
-            break;
-        case Attestation.KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT:
-            assertNull(attestation.getSoftwareEnforced().getAttestationApplicationId());
-            aaid = attestation.getTeeEnforced().getAttestationApplicationId();
-            break;
-        }
+        assertNull(attestation.getTeeEnforced().getAttestationApplicationId());
+        aaid = attestation.getSoftwareEnforced().getAttestationApplicationId();
         assertNotNull(aaid);
         assertEquals(new AttestationApplicationId(getContext()), aaid);
     }
