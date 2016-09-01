@@ -16,18 +16,22 @@
 
 package android.media.cts;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.media.cts.CodecImage;
 import android.media.Image;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecList;
+import android.os.Environment;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 
 public class CodecUtils  {
     private static final String TAG = "CodecUtils";
@@ -225,6 +229,36 @@ public class CodecUtils  {
             result.append(Integer.toString((ba[i] & 0xff) + 0x100, 16).substring(1));
         }
         return result.toString();
+    }
+
+    /**
+     * This method reads the binarybar code on the top row of a bitmap. Each 16x16
+     * block is one digit, with black=0 and white=1. LSB is on the left.
+     */
+    public static int readBinaryCounterFromBitmap(Bitmap bitmap) {
+        int numDigits = bitmap.getWidth() / 16;
+        int counter = 0;
+        for (int i = 0; i < numDigits; i++) {
+            int rgb = bitmap.getPixel(i * 16 + 8, 8);
+            if (Color.red(rgb) > 128) {
+                counter |= (1 << i);
+            }
+        }
+        return counter;
+    }
+
+    public static void saveBitmapToFile(Bitmap bitmap, String filename) {
+        try {
+            File outputFile = new File(Environment.getExternalStorageDirectory(), filename);
+
+            Log.d(TAG, "Saving bitmap to: " + outputFile);
+            FileOutputStream outputStream = new FileOutputStream(outputFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch(Exception e) {
+            Log.e(TAG, "Failed to save to file: " + e);
+        }
     }
 }
 
