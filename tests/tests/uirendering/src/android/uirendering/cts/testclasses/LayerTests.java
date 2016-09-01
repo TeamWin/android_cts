@@ -37,6 +37,8 @@ import android.widget.FrameLayout;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CountDownLatch;
+
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class LayerTests extends ActivityTestBase {
@@ -151,6 +153,7 @@ public class LayerTests extends ActivityTestBase {
 
     @Test
     public void testLayerResizeZero() {
+        final CountDownLatch fence = new CountDownLatch(1);
         createTest()
                 .addLayout(R.layout.frame_layout, view -> {
                     FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
@@ -177,11 +180,15 @@ public class LayerTests extends ActivityTestBase {
                                 root.getChildAt(0).requestLayout();
                                 root.getChildAt(1).getLayoutParams().height = 0;
                                 root.getChildAt(1).requestLayout();
+                                root.getViewTreeObserver().removeOnPreDrawListener(this);
+                                root.post(fence::countDown);
+                            } else {
+                                root.postInvalidate();
                             }
                             return true;
                         }
                     });
-                }, true)
+                }, true, fence)
                 .runWithVerifier(new ColorVerifier(Color.WHITE, 0 /* zero tolerance */));
     }
 }

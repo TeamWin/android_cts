@@ -32,11 +32,14 @@ import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.CanvasClientDrawable;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
+import android.uirendering.cts.util.WebViewReadyHelper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
 
 @MediumTest
 public class PathClippingTests extends ActivityTestBase {
@@ -161,11 +164,22 @@ public class PathClippingTests extends ActivityTestBase {
                 .runWithComparer(new MSSIMComparer(0.90));
     }
 
+    private ViewInitializer initBlueWebView(final CountDownLatch fence) {
+        return view -> {
+            WebView webview = (WebView)view.findViewById(R.id.webview);
+            assertNotNull(webview);
+            WebViewReadyHelper helper = new WebViewReadyHelper(webview, fence);
+            helper.loadData("<body style=\"background-color:blue\">");
+        };
+    }
+
     @Test
     public void testWebViewClipWithCircle() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return; // no WebView to run test on
         }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        CountDownLatch swFence = new CountDownLatch(1);
         createTest()
                 // golden client - draw a simple non-AA circle
                 .addCanvasClient((canvas, width, height) -> {
@@ -175,11 +189,10 @@ public class PathClippingTests extends ActivityTestBase {
                     canvas.drawOval(0, 0, width, height, paint);
                 }, false)
                 // verify against solid color webview, clipped to its parent oval
-                .addLayout(R.layout.circle_clipped_webview, (ViewInitializer) view -> {
-                    WebView webview = (WebView)view.findViewById(R.id.webview);
-                    assertNotNull(webview);
-                    webview.loadData("<body style=\"background-color:blue\">", null, null);
-                })
+                .addLayout(R.layout.circle_clipped_webview,
+                        initBlueWebView(hwFence), true, hwFence)
+                .addLayout(R.layout.circle_clipped_webview,
+                        initBlueWebView(swFence), false, swFence)
                 .runWithComparer(new MSSIMComparer(0.95));
     }
 }

@@ -15,18 +15,29 @@
  */
 package android.uirendering.cts.testinfrastructure;
 
+import static org.junit.Assert.fail;
+
 import android.annotation.Nullable;
 import android.app.Instrumentation;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Point;
-import android.support.test.rule.ActivityTestRule;
+import android.graphics.Rect;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.support.test.InstrumentationRegistry;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.util.Log;
+import android.view.PixelCopy;
+import android.view.PixelCopy.OnPixelCopyFinishedListener;
+import android.view.Window;
 
-import android.support.test.InstrumentationRegistry;
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -51,9 +62,7 @@ public abstract class ActivityTestBase {
 
     private TestCaseBuilder mTestCaseBuilder;
 
-    @Rule
-    public ActivityTestRule<DrawActivity> mActivityRule = new ActivityTestRule<>(
-            DrawActivity.class);
+    private static DrawActivity sActivity;
 
     @Rule
     public TestName name = new TestName();
@@ -61,16 +70,33 @@ public abstract class ActivityTestBase {
     private BitmapAsserter mBitmapAsserter = new BitmapAsserter(this.getClass().getSimpleName(),
             name.getMethodName());
 
-    protected DrawActivity getActivity() {
-        return mActivityRule.getActivity();
-    }
-
     protected String getName() {
         return name.getMethodName();
     }
 
     protected Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
+    }
+
+    protected DrawActivity getActivity() {
+        if (sActivity == null) {
+            Instrumentation instrumentation = getInstrumentation();
+            instrumentation.setInTouchMode(true);
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setClass(instrumentation.getTargetContext(), DrawActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            sActivity = (DrawActivity) instrumentation.startActivitySync(intent);
+        }
+        return sActivity;
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        if (sActivity != null) {
+            // All tests are finished, tear down the activity
+            sActivity.allTestsFinished();
+            sActivity = null;
+        }
     }
 
     @Before
@@ -98,15 +124,20 @@ public abstract class ActivityTestBase {
     }
 
     public Bitmap takeScreenshot(Point testOffset) {
-        getInstrumentation().waitForIdleSync();
-        Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
-        return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
+        SynchronousPixelCopy copy = new SynchronousPixelCopy();
+        Bitmap dest = Bitmap.createBitmap(
+                TEST_WIDTH, TEST_HEIGHT, Config.ARGB_8888);
+        Rect srcRect = new Rect(testOffset.x, testOffset.y,
+                testOffset.x + TEST_WIDTH, testOffset.y + TEST_HEIGHT);
+        int copyResult = copy.request(getActivity().getWindow(), srcRect, dest);
+        Assert.assertEquals(PixelCopy.SUCCESS, copyResult);
+        return dest;
     }
 
     protected Point runRenderSpec(TestCase testCase) {
         Point testOffset = getActivity().enqueueRenderSpecAndWait(
                 testCase.layoutID, testCase.canvasClient,
-                null, testCase.viewInitializer, testCase.useHardware);
+                testCase.viewInitializer, testCase.useHardware);
         testCase.wasTestRan = true;
         if (testCase.readyFence != null) {
             try {
@@ -129,6 +160,10 @@ public abstract class ActivityTestBase {
     protected TestCaseBuilder createTest() {
         mTestCaseBuilder = new TestCaseBuilder();
         return mTestCaseBuilder;
+    }
+
+    public interface Screenshotter {
+        Bitmap takeScreenshot(Point point);
     }
 
     /**
@@ -185,7 +220,8 @@ public abstract class ActivityTestBase {
          * A screenshot is captured several times in a loop, to ensure that valid output is produced
          * at many different times during the animation.
          */
-        public void runWithAnimationVerifier(BitmapVerifier bitmapVerifier) {
+        public void runWithAnimationVerifier(BitmapVerifier bitmapVerifier,
+                @Nullable Screenshotter screenshotter) {
             if (mTestCases.size() == 0) {
                 throw new IllegalStateException("Need at least one test to run");
             }
@@ -199,7 +235,12 @@ public abstract class ActivityTestBase {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    Bitmap testCaseBitmap = takeScreenshot(testOffset);
+                    Bitmap testCaseBitmap;
+                    if (screenshotter == null) {
+                        testCaseBitmap = takeScreenshot(testOffset);
+                    } else {
+                        testCaseBitmap = screenshotter.takeScreenshot(testOffset);
+                    }
                     mBitmapAsserter.assertBitmapIsVerified(testCaseBitmap, bitmapVerifier,
                             getName(), testCase.getDebugString());
                 }
@@ -305,6 +346,41 @@ public abstract class ActivityTestBase {
             }
             debug += "\nTest ran in " + (useHardware ? "hardware" : "software") + "\n";
             return debug;
+        }
+    }
+
+    private static class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
+        private static Handler sHandler;
+        static {
+            HandlerThread thread = new HandlerThread("PixelCopyHelper");
+            thread.start();
+            sHandler = new Handler(thread.getLooper());
+        }
+
+        private int mStatus = -1;
+
+        public int request(Window source, Rect srcRect, Bitmap dest) {
+            synchronized (this) {
+                PixelCopy.request(source, srcRect, dest, this, sHandler);
+                return getResultLocked();
+            }
+        }
+
+        private int getResultLocked() {
+            try {
+                this.wait(250);
+            } catch (InterruptedException e) {
+                fail("PixelCopy request didn't complete within 250ms");
+            }
+            return mStatus;
+        }
+
+        @Override
+        public void onPixelCopyFinished(int copyResult) {
+            synchronized (this) {
+                mStatus = copyResult;
+                this.notify();
+            }
         }
     }
 }

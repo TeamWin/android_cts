@@ -16,6 +16,7 @@
 package android.uirendering.cts.testclasses;
 
 import android.animation.ObjectAnimator;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.support.test.filters.MediumTest;
@@ -97,8 +98,14 @@ public class SurfaceViewTests extends ActivityTestBase {
                 mAnimator.cancel();
             }
         };
+        Screenshotter screenshotter = testOffset -> {
+            getInstrumentation().waitForIdleSync();
+            Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
+            return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
+        };
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
-                .runWithAnimationVerifier(new ColorVerifier(Color.WHITE, 0 /* zero tolerance */));
+                .runWithAnimationVerifier(new ColorVerifier(Color.WHITE, 0 /* zero tolerance */),
+                        screenshotter);
     }
 }
