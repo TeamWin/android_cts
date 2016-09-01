@@ -26,9 +26,12 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
+import android.os.Debug;
+import android.os.Debug.MemoryInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -147,6 +150,57 @@ public class PixelCopyTest {
             assertEquals(Config.ARGB_8888, bitmap.getConfig());
             assertBitmapQuadColor(bitmap,
                     Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+
+        } catch (InterruptedException e) {
+            fail("Interrupted, error=" + e.getMessage());
+        }
+    }
+
+    @Test
+    @LargeTest
+    public void testNotLeaking() {
+        try {
+            CountDownLatch swapFence = new CountDownLatch(2);
+
+            PixelCopyGLProducerCtsActivity activity =
+                    mGLSurfaceViewActivityRule.launchActivity(null);
+            activity.setSwapFence(swapFence);
+
+            while (!swapFence.await(5, TimeUnit.MILLISECONDS)) {
+                activity.getView().requestRender();
+            }
+
+            // Test a fullsize copy
+            Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+
+            MemoryInfo meminfoStart = new MemoryInfo();
+            MemoryInfo meminfoEnd = new MemoryInfo();
+
+            for (int i = 0; i < 1000; i++) {
+                if (i == 2) {
+                    // Not really the "start" but by having done a couple
+                    // we've fully initialized any state that may be required,
+                    // so memory usage should be stable now
+                    Debug.getMemoryInfo(meminfoStart);
+                }
+                if (i % 10 == 5) {
+                    Debug.getMemoryInfo(meminfoEnd);
+                    if (meminfoEnd.getTotalPss() - meminfoStart.getTotalPss() > 1000 /* kb */) {
+                        assertEquals("Memory leaked, iteration=" + i,
+                                meminfoStart.getTotalPss(), meminfoEnd.getTotalPss(),
+                                1000 /* kb */);
+                    }
+                }
+                SynchronousPixelCopy copyHelper = new SynchronousPixelCopy();
+                int result = copyHelper.request(activity.getView(), bitmap);
+                assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
+                // Make sure nothing messed with the bitmap
+                assertEquals(100, bitmap.getWidth());
+                assertEquals(100, bitmap.getHeight());
+                assertEquals(Config.ARGB_8888, bitmap.getConfig());
+                assertBitmapQuadColor(bitmap,
+                        Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+            }
 
         } catch (InterruptedException e) {
             fail("Interrupted, error=" + e.getMessage());
