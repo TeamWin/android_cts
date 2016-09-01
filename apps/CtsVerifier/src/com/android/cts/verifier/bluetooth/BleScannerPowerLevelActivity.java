@@ -29,6 +29,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -72,7 +73,7 @@ public class BleScannerPowerLevelActivity extends PassFailButtons.Activity {
 
             @Override
             public void onFinish() {
-                mTimerText.setTextColor(getResources().getColor(R.color.red));
+                mTimerText.setTextColor(Color.RED);
                 mTimerText.setText("Time is up!");
             }
         };
@@ -188,7 +189,7 @@ public class BleScannerPowerLevelActivity extends PassFailButtons.Activity {
                 case BleScannerService.BLE_PRIVACY_NEW_MAC_RECEIVE:
                      Toast.makeText(context, "New MAC address detected", Toast.LENGTH_SHORT)
                             .show();
-                     mTimerText.setTextColor(getResources().getColor(R.color.green));
+                     mTimerText.setTextColor(Color.GREEN);
                      mTimerText.append("   Get new MAC address.");
                      mTimer.cancel();
                      getPassButton().setEnabled(true);
