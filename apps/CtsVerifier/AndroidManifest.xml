@@ -18,9 +18,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.android.cts.verifier"
       android:versionCode="5"
-      android:versionName="7.0_r0">
+      android:versionName="7.1_r1">
 
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="24"/>
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="25"/>
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"/>
