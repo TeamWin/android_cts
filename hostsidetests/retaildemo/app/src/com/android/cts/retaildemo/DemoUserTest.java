@@ -18,7 +18,6 @@ package com.android.cts.retaildemo;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
-import android.content.Context;
 import android.os.UserManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;

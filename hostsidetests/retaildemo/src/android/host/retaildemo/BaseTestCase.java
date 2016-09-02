@@ -34,13 +34,20 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class BaseTestCase extends DeviceTestCase implements IBuildReceiver {
+    protected static final String RETAIL_DEMO_TEST_APK = "CtsRetailDemoApp.apk";
+
     private static final String RETAIL_DEMO_TEST_PKG = "com.android.cts.retaildemo";
+
     private static final String RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+
+    protected static final int USER_SYSTEM = 0; // From the UserHandle class.
+
+    private static final int FLAG_DEMO = 0x00000200; // From the UserInfo class.
 
     private IBuildInfo mBuildInfo;
     private CompatibilityBuildHelper mBuildHelper;
-
-    private ArrayList<Integer> mTestUsers;
+    protected boolean mSupportsMultiUser;
+    private ArrayList<Integer> mFixedUsers;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -52,17 +59,33 @@ public class BaseTestCase extends DeviceTestCase implements IBuildReceiver {
     protected void setUp() throws Exception {
         super.setUp();
         assertNotNull(mBuildInfo); // ensure build has been set before test is run.
-        mTestUsers = new ArrayList<>();
+
+        mSupportsMultiUser = getDevice().isMultiUserSupported();
+        mFixedUsers = new ArrayList<>();
+        final int primaryUserId = getDevice().getPrimaryUserId();
+        mFixedUsers.add(primaryUserId);
+        if (primaryUserId != USER_SYSTEM) {
+            mFixedUsers.add(USER_SYSTEM);
+        }
+        getDevice().switchUser(primaryUserId);
+        removeTestUsers();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        for (int userId : mTestUsers) {
-            getDevice().removeUser(userId);
-        }
+        removeTestUsers();
         super.tearDown();
     }
 
+    private void removeTestUsers() throws DeviceNotAvailableException {
+        for (int userId : getDevice().listUsers()) {
+            if (!mFixedUsers.contains(userId)) {
+                getDevice().removeUser(userId);
+            }
+        }
+    }
+
+    // TODO: Update TestDevice class to include this functionality.
     protected int createDemoUser() throws DeviceNotAvailableException, IllegalStateException {
         final String command = "pm create-user --ephemeral --demo "
                 + "TestUser_" + System.currentTimeMillis();
@@ -73,7 +96,6 @@ public class BaseTestCase extends DeviceTestCase implements IBuildReceiver {
         if (output.startsWith("Success")) {
             try {
                 int userId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
-                mTestUsers.add(userId);
                 return userId;
             } catch (NumberFormatException e) {
                 CLog.e("Failed to parse result: %s", output);
@@ -84,12 +106,98 @@ public class BaseTestCase extends DeviceTestCase implements IBuildReceiver {
         throw new IllegalStateException();
     }
 
+    protected void enableDemoMode(boolean enabled) throws DeviceNotAvailableException {
+        getDevice().executeShellCommand("settings put global device_demo_mode "
+                + (enabled ? 1 : 0));
+    }
+
+    protected void setUserInactivityTimeoutMs(long timeoutMs) throws DeviceNotAvailableException {
+        updateTimeoutValue("user_inactivity_timeout_ms", timeoutMs);
+    }
+
+    protected void setWarningDialogTimeoutMs(long timeoutMs) throws DeviceNotAvailableException {
+        updateTimeoutValue("warning_dialog_timeout_ms", timeoutMs);
+    }
+
+    private void updateTimeoutValue(String constant, long timeoutMs)
+            throws DeviceNotAvailableException {
+        final String constantsValue = getRetailDemoModeConstants();
+        final String[] constants = constantsValue.split(",");
+        for (int i = 0; i < constants.length; ++i) {
+            if (constants[i].startsWith(constant)) {
+                constants[i] = constant + "=" + timeoutMs;
+                break;
+            }
+        }
+        setRetailDemoModeConstants(String.join(",", constants));
+    }
+
+    protected void setRetailDemoModeConstants(String constants)
+            throws DeviceNotAvailableException {
+        getDevice().executeShellCommand("settings put global retail_demo_mode_constants " +
+                constants);
+    }
+
+    protected String getRetailDemoModeConstants() throws DeviceNotAvailableException {
+        return getDevice().executeShellCommand("settings get global retail_demo_mode_constants");
+    }
+
+    protected Integer getDemoUserId(ArrayList<Integer> existingDemoUsers)
+            throws DeviceNotAvailableException {
+        ArrayList<String[]> users = tokenizeListUsers();
+        if (users == null) {
+            return null;
+        }
+        for (String[] user : users) {
+            final int flag = Integer.parseInt(user[3], 16);
+            final Integer userId = Integer.parseInt(user[1]);
+            if ((flag & FLAG_DEMO) != 0 && !existingDemoUsers.contains(userId)) {
+                return userId;
+            }
+        }
+        return null;
+    }
+
+    protected boolean isUserUnlocked(int userId) throws DeviceNotAvailableException {
+        final String state = getDevice().executeShellCommand(
+                "cmd activity get-started-user-state " + userId);
+        return state != null && state.startsWith("RUNNING_UNLOCKED");
+    }
+
+    // TODO: Add getDemoUserIds() to TestDevice class to avoid this code duplication.
+    private ArrayList<String[]> tokenizeListUsers() throws DeviceNotAvailableException {
+        String command = "pm list users";
+        String commandOutput = getDevice().executeShellCommand(command);
+        // Extract the id of all existing users.
+        String[] lines = commandOutput.split("\\r?\\n");
+        if (lines.length < 1) {
+            CLog.e("%s should contain at least one line", commandOutput);
+            return null;
+        }
+        if (!lines[0].equals("Users:")) {
+            CLog.e("%s in not a valid output for 'pm list users'", commandOutput);
+            return null;
+        }
+        ArrayList<String[]> users = new ArrayList<>(lines.length - 1);
+        for (int i = 1; i < lines.length; i++) {
+            // Individual user is printed out like this:
+            // \tUserInfo{$id$:$name$:$Integer.toHexString(flags)$} [running]
+            String[] tokens = lines[i].split("\\{|\\}|:");
+            if (tokens.length != 4 && tokens.length != 5) {
+                CLog.e("%s doesn't contain 4 or 5 tokens", lines[i]);
+                return null;
+            }
+            users.add(tokens);
+        }
+        return users;
+    }
+
     protected void installAppAsUser(String appFileName, int userId)
             throws FileNotFoundException, DeviceNotAvailableException {
         CLog.d("Installing app " + appFileName + " for user " + userId);
         File apkFile = new File(mBuildHelper.getTestsDir(), appFileName);
         final String result = getDevice().installPackageForUser(
-                apkFile, true, true, userId, "-t");
+                apkFile, true, true, userId, "-t -r");
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
     }

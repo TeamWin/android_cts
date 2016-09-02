@@ -22,7 +22,10 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := tools-common-prebuilt cts-tradefed tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := \
+    tools-common-prebuilt \
+    cts-tradefed \
+    tradefed-prebuilt
 
 LOCAL_CTS_TEST_PACKAGE := android.host.retaildemo
 
