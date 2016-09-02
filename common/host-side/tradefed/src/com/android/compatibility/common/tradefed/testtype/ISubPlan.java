@@ -26,13 +26,13 @@ import java.util.Set;
 
 
 /**
- * Interface for generating, parsing, and retrieving test plan data.
+ * Interface for generating, parsing, and retrieving subplan data.
  */
-public interface ITestPlan extends ITestFilterReceiver {
+public interface ISubPlan extends ITestFilterReceiver {
 
     /**
-     * Parse the test plan data from a stream of XML, populate collections of filters internally.
-     * @param xmlInputStream the {@link InputStream} containing test plan XML
+     * Parse the subplan data from a stream of XML, populate collections of filters internally.
+     * @param xmlInputStream the {@link InputStream} containing subplan XML
      */
     public void parse(InputStream xmlInputStream) throws ParseException;
 
@@ -74,7 +74,7 @@ public interface ITestPlan extends ITestFilterReceiver {
 
     /**
      * Serialize the existing filters into a stream of XML, and write to an output stream.
-     * @param xmlOutputStream the {@link OutputStream} to receive test plan XML
+     * @param xmlOutputStream the {@link OutputStream} to receive subplan XML
      */
     public void serialize(OutputStream xmlOutputStream) throws IOException;
 }
