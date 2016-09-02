@@ -15,10 +15,11 @@
  */
 package android.media.cts;
 
+import android.media.cts.R;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -39,32 +40,35 @@ import java.util.ArrayList;
  */
 public class MediaRouterTest extends InstrumentationTestCase {
 
-    private MediaRouter mMediaRouter;
-    private RouteCategory mTestCategory;
-    private RouteCategory mTestGroupableCategory;
-    private Drawable mTestIconDrawable;
-    private static final String TEST_ROUTE_CATEGORY_NAME = "test_route_category_name";
-    private static final String TEST_GROUPABLE_ROUTE_CATEGORY_NAME = "test_groupable_category_name";
-    private static final String TEST_ROUTE_NAME = "test_user_route_name";
-    private static final String TEST_ROUTE_DESCRIPTION = "test_user_route_description";
-    private static final String TEST_STATUS = "test_user_route_status";
+    private static final int TEST_ROUTE_NAME_RESOURCE_ID = R.string.test_user_route_name;
+    private static final int TEST_CATEGORY_NAME_RESOURCE_ID = R.string.test_route_category_name;
+    private static final int TEST_ICON_RESOURCE_ID = R.drawable.single_face;
     private static final int TEST_MAX_VOLUME = 100;
     private static final int TEST_VOLUME = 17;
     private static final int TEST_VOLUME_DIRECTION = -2;
     private static final int TEST_PLAYBACK_STREAM = AudioManager.STREAM_ALARM;
     private static final int TEST_VOLUME_HANDLING = RouteInfo.PLAYBACK_VOLUME_VARIABLE;
     private static final int TEST_PLAYBACK_TYPE = RouteInfo.PLAYBACK_TYPE_LOCAL;
-    private static final int TEST_ICON_RESOURCE_ID = android.R.drawable.ic_media_next;
+    private static final CharSequence TEST_ROUTE_DESCRIPTION = "test_user_route_description";
+    private static final CharSequence TEST_STATUS = "test_user_route_status";
+    private static final CharSequence TEST_GROUPABLE_CATEGORY_NAME = "test_groupable_category_name";
+
+    private MediaRouter mMediaRouter;
+    private RouteCategory mTestCategory;
+    private RouteCategory mTestGroupableCategory;
+    private CharSequence mTestRouteName;
+    private Drawable mTestIconDrawable;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         final Context context = getInstrumentation().getContext();
         mMediaRouter = (MediaRouter) context.getSystemService(Context.MEDIA_ROUTER_SERVICE);
-        mTestCategory = mMediaRouter.createRouteCategory(TEST_ROUTE_CATEGORY_NAME, false);
-        mTestGroupableCategory = mMediaRouter.createRouteCategory(
-                TEST_GROUPABLE_ROUTE_CATEGORY_NAME, true);
-        mTestIconDrawable = Resources.getSystem().getDrawable(TEST_ICON_RESOURCE_ID, null);
+        mTestCategory = mMediaRouter.createRouteCategory(TEST_CATEGORY_NAME_RESOURCE_ID, false);
+        mTestGroupableCategory = mMediaRouter.createRouteCategory(TEST_GROUPABLE_CATEGORY_NAME,
+                true);
+        mTestRouteName = getInstrumentation().getContext().getText(TEST_ROUTE_NAME_RESOURCE_ID);
+        mTestIconDrawable = getInstrumentation().getContext().getDrawable(TEST_ICON_RESOURCE_ID);
     }
 
     protected void tearDown() throws Exception {
@@ -140,14 +144,33 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertEquals(RouteInfo.DEVICE_TYPE_UNKNOWN, userRoute.getDeviceType());
         assertEquals(RouteInfo.PLAYBACK_TYPE_REMOTE, userRoute.getPlaybackType());
 
-        userRoute.setName(TEST_ROUTE_NAME);
-        userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
-        userRoute.setStatus(TEST_STATUS);
-        userRoute.setPlaybackStream(TEST_PLAYBACK_STREAM);
+        // Test setName by CharSequence object.
+        userRoute.setName(mTestRouteName);
+        assertEquals(mTestRouteName, userRoute.getName());
 
-        assertEquals(TEST_ROUTE_NAME, userRoute.getName());
+        userRoute.setName(null);
+        assertNull(userRoute.getName());
+
+        // Test setName by resource ID.
+        // The getName() method tries to find the resource in application resources which was stored
+        // when the media router is first initialized. In contrast, getName(Context) method tries to
+        // find the resource in a given context's resources. So if we call getName(Context) with a
+        // context which has the same resources, two methods will return the same value.
+        userRoute.setName(TEST_ROUTE_NAME_RESOURCE_ID);
+        assertEquals(mTestRouteName, userRoute.getName());
+        assertEquals(mTestRouteName, userRoute.getName(getInstrumentation().getContext()));
+
+        userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
         assertEquals(TEST_ROUTE_DESCRIPTION, userRoute.getDescription());
+
+        userRoute.setStatus(TEST_STATUS);
         assertEquals(TEST_STATUS, userRoute.getStatus());
+
+        Object tag = new Object();
+        userRoute.setTag(tag);
+        assertEquals(tag, userRoute.getTag());
+
+        userRoute.setPlaybackStream(TEST_PLAYBACK_STREAM);
         assertEquals(TEST_PLAYBACK_STREAM, userRoute.getPlaybackStream());
 
         userRoute.setIconDrawable(mTestIconDrawable);
@@ -159,13 +182,10 @@ public class MediaRouterTest extends InstrumentationTestCase {
         userRoute.setIconResource(TEST_ICON_RESOURCE_ID);
         assertTrue(getBitmap(mTestIconDrawable).sameAs(getBitmap(userRoute.getIconDrawable())));
 
-        Object tag = new Object();
-        userRoute.setTag(tag);
-        assertEquals(tag, userRoute.getTag());
-
         userRoute.setVolumeMax(TEST_MAX_VOLUME);
-        userRoute.setVolume(TEST_VOLUME);
         assertEquals(TEST_MAX_VOLUME, userRoute.getVolumeMax());
+
+        userRoute.setVolume(TEST_VOLUME);
         assertEquals(TEST_VOLUME, userRoute.getVolume());
 
         Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
@@ -258,24 +278,187 @@ public class MediaRouterTest extends InstrumentationTestCase {
      * Test {@link MediaRouter.RouteCategory}.
      */
     public void testRouteCategory() {
-        assertEquals(TEST_ROUTE_CATEGORY_NAME, mTestCategory.getName());
-        assertFalse(mTestCategory.isGroupable());
-        assertEquals(MediaRouter.ROUTE_TYPE_USER, mTestCategory.getSupportedTypes());
+        // Test getName() for category whose name is set with resource ID.
+        RouteCategory routeCategory = mMediaRouter.createRouteCategory(
+                TEST_CATEGORY_NAME_RESOURCE_ID, false);
+
+        // The getName() method tries to find the resource in application resources which was stored
+        // when the media router is first initialized. In contrast, getName(Context) method tries to
+        // find the resource in a given context's resources. So if we call getName(Context) with a
+        // context which has the same resources, two methods will return the same value.
+        CharSequence categoryName = getInstrumentation().getContext().getText(
+                TEST_CATEGORY_NAME_RESOURCE_ID);
+        assertEquals(categoryName, routeCategory.getName());
+        assertEquals(categoryName, routeCategory.getName(getInstrumentation().getContext()));
+
+        assertFalse(routeCategory.isGroupable());
+        assertEquals(MediaRouter.ROUTE_TYPE_USER, routeCategory.getSupportedTypes());
 
         final int count = mMediaRouter.getCategoryCount();
         assertTrue("By default, a media router has at least one route category.", count > 0);
 
-        UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
+        UserRouteInfo userRoute = mMediaRouter.createUserRoute(routeCategory);
         mMediaRouter.addUserRoute(userRoute);
         assertEquals(count + 1, mMediaRouter.getCategoryCount());
-        assertEquals(mTestCategory, mMediaRouter.getCategoryAt(count));
+        assertEquals(routeCategory, mMediaRouter.getCategoryAt(count));
 
         List<RouteInfo> routesInCategory = new ArrayList<RouteInfo>();
-        mTestCategory.getRoutes(routesInCategory);
+        routeCategory.getRoutes(routesInCategory);
         assertEquals(1, routesInCategory.size());
 
         RouteInfo route = routesInCategory.get(0);
         assertEquals(userRoute, route);
+
+        // Test getName() for category whose name is set with CharSequence object.
+        RouteCategory newRouteCategory = mMediaRouter.createRouteCategory(categoryName, false);
+        assertEquals(categoryName, newRouteCategory.getName());
+    }
+
+    public void testCallback() {
+        MediaRouterCallback callback = new MediaRouterCallback();
+        final int allRouteTypes = MediaRouter.ROUTE_TYPE_LIVE_AUDIO
+                | MediaRouter.ROUTE_TYPE_LIVE_VIDEO | MediaRouter.ROUTE_TYPE_REMOTE_DISPLAY
+                | MediaRouter.ROUTE_TYPE_USER;
+        mMediaRouter.addCallback(allRouteTypes, callback);
+
+        // Test onRouteAdded().
+        callback.reset();
+        UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
+        mMediaRouter.addUserRoute(userRoute);
+        assertTrue(callback.mOnRouteAddedCalled);
+        assertEquals(userRoute, callback.mAddedRoute);
+
+        RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute();
+
+        // Test onRouteSelected() and onRouteUnselected().
+        callback.reset();
+        mMediaRouter.selectRoute(MediaRouter.ROUTE_TYPE_USER, userRoute);
+        assertTrue(callback.mOnRouteUnselectedCalled);
+        assertEquals(prevSelectedRoute, callback.mUnselectedRoute);
+        assertTrue(callback.mOnRouteSelectedCalled);
+        assertEquals(userRoute, callback.mSelectedRoute);
+
+        // Test onRouteChanged().
+        // It is called when the route's name, description, status or tag is updated.
+        callback.reset();
+        userRoute.setName(mTestRouteName);
+        assertTrue(callback.mOnRouteChangedCalled);
+        assertEquals(userRoute, callback.mChangedRoute);
+
+        callback.reset();
+        userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
+        assertTrue(callback.mOnRouteChangedCalled);
+        assertEquals(userRoute, callback.mChangedRoute);
+
+        callback.reset();
+        userRoute.setStatus(TEST_STATUS);
+        assertTrue(callback.mOnRouteChangedCalled);
+        assertEquals(userRoute, callback.mChangedRoute);
+
+        callback.reset();
+        Object tag = new Object();
+        userRoute.setTag(tag);
+        assertTrue(callback.mOnRouteChangedCalled);
+        assertEquals(userRoute, callback.mChangedRoute);
+
+        // Test onRouteVolumeChanged().
+        userRoute.setVolumeMax(TEST_MAX_VOLUME);
+        callback.reset();
+        userRoute.setVolume(TEST_VOLUME);
+        assertTrue(callback.mOnRouteVolumeChangedCalled);
+        assertEquals(userRoute, callback.mVolumeChangedRoute);
+
+        // Test onRouteRemoved().
+        callback.reset();
+        mMediaRouter.removeUserRoute(userRoute);
+        assertTrue(callback.mOnRouteRemovedCalled);
+        assertEquals(userRoute, callback.mRemovedRoute);
+
+        // Test onRouteGrouped() and onRouteUngrouped().
+        mMediaRouter.clearUserRoutes();
+        UserRouteInfo groupableRoute0 = mMediaRouter.createUserRoute(mTestGroupableCategory);
+        UserRouteInfo groupableRoute1 = mMediaRouter.createUserRoute(mTestGroupableCategory);
+
+        // Adding a route of groupable category in the media router does not directly add the route.
+        // Instead, it creates a RouteGroup, adds the group as a route in the media router, and puts
+        // the route inside that group. Therefore onRouteAdded() is called for the group, and
+        // onRouteGrouped() is called for the route.
+        callback.reset();
+        mMediaRouter.addUserRoute(groupableRoute0);
+
+        RouteGroup group = groupableRoute0.getGroup();
+        assertTrue(callback.mOnRouteAddedCalled);
+        assertEquals(group, callback.mAddedRoute);
+
+        assertTrue(callback.mOnRouteGroupedCalled);
+        assertEquals(groupableRoute0, callback.mGroupedRoute);
+        assertEquals(group, callback.mGroup);
+        assertEquals(0, callback.mRouteIndexInGroup);
+
+        // Add another route to the group.
+        callback.reset();
+        group.addRoute(groupableRoute1);
+        assertTrue(callback.mOnRouteGroupedCalled);
+        assertEquals(groupableRoute1, callback.mGroupedRoute);
+        assertEquals(1, callback.mRouteIndexInGroup);
+
+        // Since removing a route from the group changes the group's name, onRouteChanged() is
+        // called.
+        callback.reset();
+        group.removeRoute(groupableRoute1);
+        assertTrue(callback.mOnRouteUngroupedCalled);
+        assertEquals(groupableRoute1, callback.mUngroupedRoute);
+        assertTrue(callback.mOnRouteChangedCalled);
+        assertEquals(group, callback.mChangedRoute);
+
+        // When a group has no routes, the group is removed from the media router.
+        callback.reset();
+        group.removeRoute(0);
+        assertTrue(callback.mOnRouteUngroupedCalled);
+        assertEquals(groupableRoute0, callback.mUngroupedRoute);
+        assertTrue(callback.mOnRouteRemovedCalled);
+        assertEquals(group, callback.mRemovedRoute);
+
+        // In this case, onRouteChanged() is not called.
+        assertFalse(callback.mOnRouteChangedCalled);
+
+        // Try removing the callback.
+        mMediaRouter.removeCallback(callback);
+        callback.reset();
+        mMediaRouter.addUserRoute(groupableRoute0);
+        assertFalse(callback.mOnRouteAddedCalled);
+
+        mMediaRouter.selectRoute(prevSelectedRoute.getSupportedTypes(), prevSelectedRoute);
+    }
+
+    /**
+     * Test {@link MediaRouter#addCallback(int, MediaRouter.Callback, int)}.
+     */
+    public void testAddCallbackWithFlags() {
+        MediaRouterCallback callback = new MediaRouterCallback();
+        mMediaRouter.addCallback(MediaRouter.ROUTE_TYPE_USER, callback);
+
+        RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute(
+                MediaRouter.ROUTE_TYPE_LIVE_AUDIO | MediaRouter.ROUTE_TYPE_LIVE_VIDEO
+                | MediaRouter.ROUTE_TYPE_REMOTE_DISPLAY);
+
+        // Currently mCallback is set for the type MediaRouter.ROUTE_TYPE_USER.
+        // Changes on prevSelectedRoute will not invoke mCallback since the types do not match.
+        callback.reset();
+        Object tag0 = new Object();
+        prevSelectedRoute.setTag(tag0);
+        assertFalse(callback.mOnRouteChangedCalled);
+
+        // Remove mCallback and add it again with flag MediaRouter.CALLBACK_FLAG_UNFILTERED_EVENTS.
+        // This flag will make the callback be invoked even when the types do not match.
+        mMediaRouter.removeCallback(callback);
+        mMediaRouter.addCallback(MediaRouter.ROUTE_TYPE_USER, callback,
+                MediaRouter.CALLBACK_FLAG_UNFILTERED_EVENTS);
+
+        callback.reset();
+        Object tag1 = new Object();
+        prevSelectedRoute.setTag(tag1);
+        assertTrue(callback.mOnRouteChangedCalled);
     }
 
     /**
@@ -339,6 +522,102 @@ public class MediaRouterTest extends InstrumentationTestCase {
             mOnVolumeSetRequestCalled = true;
             mRouteInfo = info;
             mVolume = volume;
+        }
+    }
+
+    private class MediaRouterCallback extends MediaRouter.Callback {
+        private boolean mOnRouteSelectedCalled;
+        private boolean mOnRouteUnselectedCalled;
+        private boolean mOnRouteAddedCalled;
+        private boolean mOnRouteRemovedCalled;
+        private boolean mOnRouteChangedCalled;
+        private boolean mOnRouteGroupedCalled;
+        private boolean mOnRouteUngroupedCalled;
+        private boolean mOnRouteVolumeChangedCalled;
+
+        private RouteInfo mSelectedRoute;
+        private RouteInfo mUnselectedRoute;
+        private RouteInfo mAddedRoute;
+        private RouteInfo mRemovedRoute;
+        private RouteInfo mChangedRoute;
+        private RouteInfo mGroupedRoute;
+        private RouteInfo mUngroupedRoute;
+        private RouteInfo mVolumeChangedRoute;
+        private RouteGroup mGroup;
+        private int mRouteIndexInGroup = -1;
+
+        public void reset() {
+            mOnRouteSelectedCalled = false;
+            mOnRouteUnselectedCalled = false;
+            mOnRouteAddedCalled = false;
+            mOnRouteRemovedCalled = false;
+            mOnRouteChangedCalled = false;
+            mOnRouteGroupedCalled = false;
+            mOnRouteUngroupedCalled = false;
+            mOnRouteVolumeChangedCalled = false;
+
+            mSelectedRoute = null;
+            mUnselectedRoute = null;
+            mAddedRoute = null;
+            mRemovedRoute = null;
+            mChangedRoute = null;
+            mGroupedRoute = null;
+            mUngroupedRoute = null;
+            mVolumeChangedRoute = null;
+            mGroup = null;
+            mRouteIndexInGroup = -1;
+        }
+
+        @Override
+        public void onRouteSelected(MediaRouter router, int type, RouteInfo info) {
+            mOnRouteSelectedCalled = true;
+            mSelectedRoute = info;
+        }
+
+        @Override
+        public void onRouteUnselected(MediaRouter router, int type, RouteInfo info) {
+            mOnRouteUnselectedCalled = true;
+            mUnselectedRoute = info;
+        }
+
+        @Override
+        public void onRouteAdded(MediaRouter router, RouteInfo info) {
+            mOnRouteAddedCalled = true;
+            mAddedRoute = info;
+        }
+
+        @Override
+        public void onRouteRemoved(MediaRouter router, RouteInfo info) {
+            mOnRouteRemovedCalled = true;
+            mRemovedRoute = info;
+        }
+
+        @Override
+        public void onRouteChanged(MediaRouter router, RouteInfo info) {
+            mOnRouteChangedCalled = true;
+            mChangedRoute = info;
+        }
+
+        @Override
+        public void onRouteGrouped(MediaRouter router, RouteInfo info, RouteGroup group,
+                int index) {
+            mOnRouteGroupedCalled = true;
+            mGroupedRoute = info;
+            mGroup = group;
+            mRouteIndexInGroup = index;
+        }
+
+        @Override
+        public void onRouteUngrouped(MediaRouter router, RouteInfo info, RouteGroup group) {
+            mOnRouteUngroupedCalled = true;
+            mUngroupedRoute = info;
+            mGroup = group;
+        }
+
+        @Override
+        public void onRouteVolumeChanged(MediaRouter router, RouteInfo info) {
+            mOnRouteVolumeChangedCalled = true;
+            mVolumeChangedRoute = info;
         }
     }
 }
