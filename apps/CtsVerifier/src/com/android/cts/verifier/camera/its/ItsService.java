@@ -404,6 +404,7 @@ public class ItsService extends Service implements SensorEventListener {
         // (called on different threads) will need to send data back to the host script.
 
         public Socket mOpenSocket = null;
+        private Thread mThread = null;
 
         public SocketWriteRunnable(Socket openSocket) {
             mOpenSocket = openSocket;
@@ -421,6 +422,7 @@ public class ItsService extends Service implements SensorEventListener {
                     ByteBuffer b = mSocketWriteQueue.take();
                     synchronized(mSocketWriteDrainLock) {
                         if (mOpenSocket == null) {
+                            Logt.e(TAG, "No open socket connection!");
                             continue;
                         }
                         if (b.hasArray()) {
@@ -442,14 +444,26 @@ public class ItsService extends Service implements SensorEventListener {
                     }
                 } catch (IOException e) {
                     Logt.e(TAG, "Error writing to socket", e);
+                    mOpenSocket = null;
                     break;
                 } catch (java.lang.InterruptedException e) {
                     Logt.e(TAG, "Error writing to socket (interrupted)", e);
+                    mOpenSocket = null;
                     break;
                 }
             }
             Logt.i(TAG, "Socket writer thread terminated");
         }
+
+        public synchronized void checkAndStartThread() {
+            if (mThread == null || mThread.getState() == Thread.State.TERMINATED) {
+                mThread = new Thread(this);
+            }
+            if (mThread.getState() == Thread.State.NEW) {
+                mThread.start();
+            }
+        }
+
     }
 
     class SocketRunnable implements Runnable {
@@ -475,7 +489,6 @@ public class ItsService extends Service implements SensorEventListener {
 
             // Create a new thread to handle writes to this socket.
             mSocketWriteRunnable = new SocketWriteRunnable(null);
-            (new Thread(mSocketWriteRunnable)).start();
 
             while (!mThreadExitFlag) {
                 // Receive the socket-open request from the host.
@@ -489,6 +502,7 @@ public class ItsService extends Service implements SensorEventListener {
                     mSocketWriteQueue.clear();
                     mInflightImageSizes.clear();
                     mSocketWriteRunnable.setOpenSocket(mOpenSocket);
+                    mSocketWriteRunnable.checkAndStartThread();
                     Logt.i(TAG, "Socket connected");
                 } catch (IOException e) {
                     Logt.e(TAG, "Socket open error: ", e);
