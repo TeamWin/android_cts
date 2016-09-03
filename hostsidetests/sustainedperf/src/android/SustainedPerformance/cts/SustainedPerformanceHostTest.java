@@ -248,7 +248,7 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
          * 5% error margin.
          */
         assertFalse("Results in the mode are not sustainable",
-                (dhrystoneResultsWithMode.get(2) > 5) ||
+                (dhrystoneResultsWithMode.get(2) > 10) ||
                 (appResultsWithMode.get(2)) > 5);
     }
 }
