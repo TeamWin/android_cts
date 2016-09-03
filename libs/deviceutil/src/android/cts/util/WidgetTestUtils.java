@@ -209,21 +209,25 @@ public class WidgetTestUtils {
      * @param runner the runnable to run on the main thread, or {@code null} to
      *               simply force invalidation and a draw pass
      */
-    public static void runOnMainAndDrawSync(@NonNull ActivityTestRule activityTestRule,
+    public static void runOnMainAndDrawSync(@NonNull final ActivityTestRule activityTestRule,
             @NonNull final View view, @Nullable final Runnable runner) throws Throwable {
         final CountDownLatch latch = new CountDownLatch(1);
 
         activityTestRule.runOnUiThread(() -> {
-            final ViewTreeObserver observer = view.getViewTreeObserver();
             final OnDrawListener listener = new OnDrawListener() {
                 @Override
                 public void onDraw() {
-                    observer.removeOnDrawListener(this);
-                    view.post(() -> latch.countDown());
+                    // posting so that the sync happens after the draw that's about to happen
+                    view.post(() -> {
+                        activityTestRule.getActivity().getWindow().getDecorView().
+                                getViewTreeObserver().removeOnDrawListener(this);
+                        latch.countDown();
+                    });
                 }
             };
 
-            observer.addOnDrawListener(listener);
+            activityTestRule.getActivity().getWindow().getDecorView().
+                    getViewTreeObserver().addOnDrawListener(listener);
 
             if (runner != null) {
                 runner.run();
@@ -234,6 +238,52 @@ public class WidgetTestUtils {
 
         try {
             Assert.assertTrue("Expected draw pass occurred within 5 seconds",
+                    latch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Runs the specified Runnable on the main thread and ensures that the activity's view tree is
+     * laid out before returning.
+     *
+     * @param activityTestRule the activity test rule used to run the test
+     * @param runner the runnable to run on the main thread. {@code null} is
+     * allowed, and simply means that there no runnable is required.
+     * @param forceLayout true if there should be an explicit call to requestLayout(),
+     * false otherwise
+     */
+    public static void runOnMainAndLayoutSync(@NonNull final ActivityTestRule activityTestRule,
+            @Nullable final Runnable runner, boolean forceLayout)
+            throws Throwable {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        activityTestRule.runOnUiThread(() -> {
+            final OnGlobalLayoutListener listener = new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    activityTestRule.getActivity().getWindow().getDecorView().
+                            getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    // countdown immediately since the layout we were waiting on has happened
+                    latch.countDown();
+                }
+            };
+
+            activityTestRule.getActivity().getWindow().getDecorView().
+                    getViewTreeObserver().addOnGlobalLayoutListener(listener);
+
+            if (runner != null) {
+                runner.run();
+            }
+
+            if (forceLayout) {
+                activityTestRule.getActivity().getWindow().getDecorView().requestLayout();
+            }
+        });
+
+        try {
+            Assert.assertTrue("Expected layout pass within 5 seconds",
                     latch.await(5, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
