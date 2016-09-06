@@ -141,12 +141,14 @@
         </activity>
 
         <activity android:name="android.view.cts.PixelCopyVideoSourceActivity"
-            android:label="PixelCopyVideoSourceActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
+                android:label="PixelCopyVideoSourceActivity" />
+
+        <activity android:name="android.view.cts.PixelCopyGLProducerCtsActivity"
+                android:label="PixelCopyGLProducerCtsActivity"/>
+
+        <activity android:name="android.view.cts.PixelCopyViewProducerActivity"
+                android:label="PixelCopyViewProducerActivity"
+                android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
             android:label="FocusFinderCtsActivity">
@@ -166,9 +168,6 @@
 
         <activity android:name="android.view.cts.DisplayRefreshRateCtsActivity"
                   android:label="DisplayRefreshRateCtsActivity"/>
-
-        <activity android:name="android.view.cts.PixelCopyGLProducerCtsActivity"
-                  android:label="PixelCopyGLProducerCtsActivity"/>
 
         <activity android:name="android.view.cts.MockActivity" android:label="MockActivity">
             <meta-data android:name="android.view.merge"
