@@ -37,14 +37,14 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         // Request all application focuses and abandon them to ensure no active context is present
         // when test starts.
         FocusOwnershipChangeListerner owner = new FocusOwnershipChangeListerner();
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND, owner);
         mManager.abandonAppFocus(owner);
     }
 
     public void testSetActiveNullListener() throws Exception {
         try {
-            mManager.requestAppFocus(null, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+            mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, null);
             fail();
         } catch (IllegalArgumentException e) {
             // expected
@@ -90,7 +90,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         manager2.registerFocusListener(change2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
         manager2.registerFocusListener(change2, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
 
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner);
         int[] expectedFocuses = new int[] {CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION};
         Assert.assertArrayEquals(expectedFocuses, mManager.getActiveAppTypes());
         Assert.assertArrayEquals(expectedFocuses, manager2.getActiveAppTypes());
@@ -104,7 +104,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         assertTrue(change.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true));
 
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND, owner);
         expectedFocuses = new int[] {
             CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION,
             CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND };
@@ -123,7 +123,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         // this should be no-op
         change.reset();
         change2.reset();
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner);
         Assert.assertArrayEquals(expectedFocuses, mManager.getActiveAppTypes());
         Assert.assertArrayEquals(expectedFocuses, manager2.getActiveAppTypes());
         assertFalse(change2.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
@@ -131,7 +131,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         assertFalse(change.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true));
 
-        manager2.requestAppFocus(owner2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+        manager2.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner2);
         assertFalse(mManager.isOwningFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION));
         assertTrue(mManager.isOwningFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND));
         assertTrue(manager2.isOwningFocus(owner2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION));
@@ -206,7 +206,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         mManager.registerFocusListener(listener, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
         manager2.registerFocusListener(listener2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
 
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner);
         assertTrue(listener.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                  CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true));
         assertTrue(listener2.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
@@ -214,7 +214,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
         listener.reset();
         listener2.reset();
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND, owner);
         assertTrue(listener.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND, true));
         assertFalse(listener2.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
@@ -245,7 +245,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         mManager.registerFocusListener(listener, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
         mManager.registerFocusListener(listener2, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
 
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner);
         assertTrue(listener.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                  CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true));
         assertTrue(listener2.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
@@ -253,7 +253,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
         listener.reset();
         listener2.reset();
-        mManager.requestAppFocus(owner, CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND);
+        mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND, owner);
         assertTrue(listener.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND, true));
         assertFalse(listener2.waitForFocusChangeAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
