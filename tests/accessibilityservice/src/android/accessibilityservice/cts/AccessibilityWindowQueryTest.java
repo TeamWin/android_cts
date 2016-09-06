@@ -84,6 +84,11 @@ public class AccessibilityWindowQueryTest
 
     @MediumTest
     public void testNoWindowsAccessIfFlagNotSet() throws Exception {
+        // Clear window access flag
+        AccessibilityServiceInfo info = getInstrumentation().getUiAutomation().getServiceInfo();
+        info.flags &= ~AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        getInstrumentation().getUiAutomation().setServiceInfo(info);
+
         // Make sure the windows cannot be accessed.
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         assertTrue(uiAutomation.getWindows().isEmpty());
