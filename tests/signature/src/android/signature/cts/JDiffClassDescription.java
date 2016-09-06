@@ -26,6 +26,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -243,11 +244,20 @@ public class JDiffClassDescription {
      */
     public static final class JDiffField extends JDiffElement {
         private String mFieldType;
+        private String mFieldValue;
 
-        public JDiffField(String name, String fieldType, int modifier) {
+        public JDiffField(String name, String fieldType, int modifier, String value) {
             super(name, modifier);
 
             mFieldType = fieldType;
+            mFieldValue = value;
+        }
+
+        /**
+         * A string representation of the value within the field.
+         */
+        public String getValueString() {
+            return mFieldValue;
         }
 
         /**
@@ -787,6 +797,15 @@ public class JDiffClassDescription {
     }
 
     /**
+     * Gets the list of fields found within this class.
+     *
+     * @return the list of fields.
+     */
+    public Collection<JDiffField> getFieldList() {
+        return jDiffFields;
+    }
+
+    /**
      * Checks if the class under test has compliant modifiers compared to the API.
      *
      * @return true if modifiers are compliant.
@@ -1087,6 +1106,15 @@ public class JDiffClassDescription {
      */
     public String getClassName() {
         return mShortClassName;
+    }
+
+    /**
+     * Gets the package name + short class name
+     *
+     * @return The package + short class name
+     */
+    public String getAbsoluteClassName() {
+        return mAbsoluteClassName;
     }
 
     /**

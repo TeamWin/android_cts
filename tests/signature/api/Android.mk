@@ -40,3 +40,29 @@ $(cts_api_xml_v1):  $(LOCAL_BUILT_MODULE) | $(ACP)
 	$(call copy-file-to-new-target)
 
 $(CTS_TESTCASES_OUT)/CtsSignatureTestCases.xml: $(cts_api_xml_v1)
+
+include $(CLEAR_VARS)
+
+# current api, in XML format.
+# ============================================================
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-system-current-api
+LOCAL_MODULE_STEM := system-current.api
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_ETC)
+
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+include $(BUILD_SYSTEM)/base_rules.mk
+$(LOCAL_BUILT_MODULE) : frameworks/base/api/system-current.txt | $(APICHECK)
+	@echo "Convert API file $@"
+	@mkdir -p $(dir $@)
+	$(hide) $(APICHECK_COMMAND) -convert2xml $< $@
+
+# For CTS v1
+cts_api_xml_v1 := $(CTS_TESTCASES_OUT)/system-current.api
+$(cts_api_xml_v1):  $(LOCAL_BUILT_MODULE) | $(ACP)
+	$(call copy-file-to-new-target)
+
+$(CTS_TESTCASES_OUT)/CtsSignatureTestCases.xml: $(cts_api_xml_v1)
