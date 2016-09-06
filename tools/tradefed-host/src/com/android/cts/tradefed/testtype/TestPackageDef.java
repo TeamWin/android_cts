@@ -16,13 +16,13 @@
 
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.InstrumentationTest;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.StreamUtil;
 
 import java.io.BufferedInputStream;

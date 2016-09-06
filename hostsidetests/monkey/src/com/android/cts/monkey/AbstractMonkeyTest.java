@@ -1,6 +1,5 @@
 package com.android.cts.monkey;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -9,6 +8,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.File;
 

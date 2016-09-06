@@ -75,6 +75,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	descGen \
 	jsr305lib
 
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt
+
 LOCAL_MODULE := cts-icu-tools
 
 include $(BUILD_HOST_JAVA_LIBRARY)

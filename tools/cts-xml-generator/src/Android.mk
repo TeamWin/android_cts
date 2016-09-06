@@ -25,6 +25,8 @@ LOCAL_JAR_MANIFEST := MANIFEST.mf
 LOCAL_MODULE := cts-xml-generator
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt
+
 LOCAL_STATIC_JAVA_LIBRARIES := vogarexpectlib compatibility-host-util
 
 include $(BUILD_HOST_JAVA_LIBRARY)

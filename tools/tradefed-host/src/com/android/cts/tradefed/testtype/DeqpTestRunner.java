@@ -1,6 +1,5 @@
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IShellOutputReceiver;
@@ -19,6 +18,7 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.IRunUtil;
 import com.android.tradefed.util.RunInterruptedException;
 import com.android.tradefed.util.RunUtil;

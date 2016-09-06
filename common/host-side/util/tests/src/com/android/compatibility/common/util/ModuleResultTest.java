@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.util.AbiUtils;
+
 import junit.framework.TestCase;
 
 /**

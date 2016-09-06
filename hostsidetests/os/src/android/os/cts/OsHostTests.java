@@ -16,7 +16,6 @@
 
 package android.os.cts;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.migration.MigrationHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -25,6 +24,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
@@ -30,6 +29,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.TimeUtil;
 

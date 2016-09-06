@@ -19,7 +19,6 @@ import com.android.compatibility.common.tradefed.result.IModuleListener;
 import com.android.compatibility.common.tradefed.result.ModuleListener;
 import com.android.compatibility.common.tradefed.targetprep.PreconditionPreparer;
 import com.android.compatibility.common.tradefed.targetprep.TokenRequirement;
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.OptionSetter;
@@ -39,6 +38,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
+import com.android.tradefed.util.AbiUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;

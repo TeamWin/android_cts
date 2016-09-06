@@ -16,7 +16,6 @@
 
 package android.theme.cts;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.migration.MigrationHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
@@ -28,6 +27,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.File;
 import java.io.FileInputStream;

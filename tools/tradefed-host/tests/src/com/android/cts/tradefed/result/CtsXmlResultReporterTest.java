@@ -17,7 +17,6 @@ package com.android.cts.tradefed.result;
 
 import static com.android.cts.tradefed.result.CtsXmlResultReporter.CTS_RESULT_FILE_VERSION;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.UnitTests;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IFolderBuildInfo;
@@ -25,6 +24,7 @@ import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFile;
 import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.result.XmlResultReporter;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;

@@ -15,7 +15,6 @@
  */
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
@@ -25,6 +24,7 @@ import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.InstrumentationTest;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
