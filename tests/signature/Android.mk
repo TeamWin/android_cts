@@ -40,7 +40,7 @@ include $(BUILD_CTS_PACKAGE)
 include $(CLEAR_VARS)
 
 # These files are for device-side only, so filter-out for host library
-LOCAL_DEVICE_ONLY_SOURCES := %/SignatureTest.java
+LOCAL_DEVICE_ONLY_SOURCES := %/SignatureTest.java %/IntentTest.java %/CurrentApi.java
 
 LOCAL_SRC_FILES := $(filter-out $(LOCAL_DEVICE_ONLY_SOURCES), $(call all-java-files-under, src))
 
