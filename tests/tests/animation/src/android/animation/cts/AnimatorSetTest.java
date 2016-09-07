@@ -42,6 +42,7 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -72,22 +73,24 @@ public class AnimatorSetTest {
 
     @Test
     public void testPlaySequentially() throws Throwable {
-         xAnimator.setRepeatCount(0);
-         yAnimator.setRepeatCount(0);
-         xAnimator.setDuration(50);
-         yAnimator.setDuration(50);
-         Animator[] animatorArray = {xAnimator, yAnimator};
-         mAnimatorSet = new AnimatorSet();
-         mAnimatorSet.playSequentially(animatorArray);
-         verifySequentialPlayOrder(mAnimatorSet, animatorArray);
+        xAnimator.setRepeatCount(0);
+        yAnimator.setRepeatCount(0);
+        xAnimator.setDuration(50);
+        yAnimator.setDuration(50);
+        List<Animator> animators = new ArrayList<Animator>();
+        animators.add(xAnimator);
+        animators.add(yAnimator);
+        mAnimatorSet = new AnimatorSet();
+        mAnimatorSet.playSequentially(animators);
+        verifySequentialPlayOrder(mAnimatorSet, new Animator[] {xAnimator, yAnimator});
 
-         ValueAnimator anim1 = ValueAnimator.ofFloat(0f, 1f);
-         ValueAnimator anim2 = ValueAnimator.ofInt(0, 100);
-         anim1.setDuration(50);
-         anim2.setDuration(50);
-         AnimatorSet set = new AnimatorSet();
-         set.playSequentially(anim1, anim2);
-         verifySequentialPlayOrder(set, new Animator[] {anim1, anim2});
+        ValueAnimator anim1 = ValueAnimator.ofFloat(0f, 1f);
+        ValueAnimator anim2 = ValueAnimator.ofInt(0, 100);
+        anim1.setDuration(50);
+        anim2.setDuration(50);
+        AnimatorSet set = new AnimatorSet();
+        set.playSequentially(anim1, anim2);
+        verifySequentialPlayOrder(set, new Animator[] {anim1, anim2});
     }
 
     /**
