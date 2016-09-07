@@ -115,6 +115,40 @@ public class LayerTests extends ActivityTestBase {
     }
 
     @Test
+    public void testLayerPaintAlphaChanged() {
+        final CountDownLatch fence = new CountDownLatch(1);
+        createTest()
+            .addLayout(R.layout.frame_layout, view -> {
+                FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
+                View child = new View(view.getContext());
+                child.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                child.setAlpha(0.0f);
+                // add rendering content
+                child.setBackgroundColor(Color.RED);
+                root.addView(child, new FrameLayout.LayoutParams(TEST_WIDTH, TEST_HEIGHT,
+                        Gravity.TOP | Gravity.LEFT));
+
+                // Post non-zero alpha a few frames in, so that the initial layer draw completes.
+                root.getViewTreeObserver().addOnPreDrawListener(
+                        new ViewTreeObserver.OnPreDrawListener() {
+                            int mDrawCount = 0;
+                            @Override
+                            public boolean onPreDraw() {
+                                if (mDrawCount++ == 5) {
+                                    root.getChildAt(0).setAlpha(1.00f);
+                                    root.getViewTreeObserver().removeOnPreDrawListener(this);
+                                    root.post(fence::countDown);
+                                } else {
+                                    root.postInvalidate();
+                                }
+                                return true;
+                            }
+                        });
+            }, true, fence)
+            .runWithVerifier(new ColorVerifier(Color.RED));
+    }
+
+    @Test
     public void testLayerPaintColorFilter() {
         // Red, fully desaturated. Note that it's not 255/3 in each channel.
         // See ColorMatrix#setSaturation()
