@@ -19,7 +19,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Picture;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -27,7 +26,6 @@ import android.view.View;
  * A simple View that uses a CanvasClient to draw its contents
  */
 public class CanvasClientView extends View {
-    private boolean mUsePicture = false;
     private CanvasClient mCanvasClient;
 
     public CanvasClientView(Context context) {
@@ -40,10 +38,6 @@ public class CanvasClientView extends View {
 
     public CanvasClientView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-    }
-
-    public void setUsePicture(boolean usePicture) {
-        mUsePicture = usePicture;
     }
 
     public void setCanvasClient(CanvasClient canvasClient) {
@@ -63,17 +57,7 @@ public class CanvasClientView extends View {
 
         int saveCount = canvas.save();
         canvas.clipRect(0, 0, ActivityTestBase.TEST_WIDTH, ActivityTestBase.TEST_HEIGHT);
-        if (mUsePicture) {
-            Picture picture = new Picture();
-            Canvas pictureCanvas = picture.beginRecording(ActivityTestBase.TEST_WIDTH,
-                    ActivityTestBase.TEST_HEIGHT);
-            mCanvasClient.draw(pictureCanvas, ActivityTestBase.TEST_WIDTH,
-                    ActivityTestBase.TEST_HEIGHT);
-            picture.endRecording();
-            picture.draw(canvas);
-        } else {
-            mCanvasClient.draw(canvas, ActivityTestBase.TEST_WIDTH, ActivityTestBase.TEST_HEIGHT);
-        }
+        mCanvasClient.draw(canvas, ActivityTestBase.TEST_WIDTH, ActivityTestBase.TEST_HEIGHT);
         canvas.restoreToCount(saveCount);
     }
 }
