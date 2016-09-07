@@ -42,9 +42,6 @@ LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
-LOCAL_C_INCLUDES := \
-    external/gtest/include
-
 LOCAL_SRC_FILES := \
     src/AslrMallocTest.cpp
 
