@@ -33,10 +33,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 import javax.annotation.Nullable;
 import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
@@ -82,10 +82,7 @@ public class CoreTestRunner extends Instrumentation {
     /** The args for the runner. */
     private Bundle args;
 
-    /** Only count the number of tests, and not run them. */
-    private boolean testCountOnly;
-
-    /** Only log the number of tests, and not run them. */
+    /** Only log the number and names of tests, and not run them. */
     private boolean logOnly;
 
     /** The amount of time in millis to wait for a single test to complete. */
@@ -123,8 +120,13 @@ public class CoreTestRunner extends Instrumentation {
         // unparceled.
         Log.d(TAG, "In OnCreate: " + args);
 
-        this.logOnly = "true".equalsIgnoreCase(args.getString(ARGUMENT_LOG_ONLY));
-        this.testCountOnly = args.getBoolean(ARGUMENT_COUNT);
+        // Treat logOnly and count as the same. This is not quite true as count should only send
+        // the host the number of tests but logOnly should send the name and number. However,
+        // this is how this has always behaved and it does not appear to have caused any problems.
+        // Changing it seems unnecessary given that count is CTSv1 only and CTSv1 will be removed
+        // soon now that CTSv2 is ready.
+        boolean testCountOnly = args.getBoolean(ARGUMENT_COUNT);
+        this.logOnly = "true".equalsIgnoreCase(args.getString(ARGUMENT_LOG_ONLY)) || testCountOnly;
         this.testTimeout = parseUnsignedLong(args.getString(ARGUMENT_TIMEOUT), ARGUMENT_TIMEOUT);
 
         try {
@@ -237,28 +239,27 @@ public class CoreTestRunner extends Instrumentation {
 
     @Override
     public void onStart() {
-        if (logOnly || testCountOnly) {
+        if (logOnly) {
             Log.d(TAG, "Counting/logging tests only");
         } else {
             Log.d(TAG, "Running tests");
         }
 
         AndroidRunnerParams runnerParams = new AndroidRunnerParams(this, args,
-                logOnly || testCountOnly, testTimeout, false /*ignoreSuiteMethods*/);
+                logOnly, testTimeout, false /*ignoreSuiteMethods*/);
 
-        JUnitCore core = new JUnitCore();
-
-        Request request;
+        Runner runner;
         try {
             RunnerBuilder runnerBuilder = new ExtendedAndroidRunnerBuilder(runnerParams);
             Class[] classes = testList.getClassesToRun();
             for (Class cls : classes) {
               Log.d(TAG, "Found class to run: " + cls.getName());
             }
-            Runner suite = new Computer().getSuite(runnerBuilder, classes);
+            runner = new Computer().getSuite(runnerBuilder, classes);
 
-            if (suite instanceof Filterable) {
-                Filterable filterable = (Filterable) suite;
+            if (runner instanceof Filterable) {
+                Log.d(TAG, "Applying filters");
+                Filterable filterable = (Filterable) runner;
 
                 // Filter out all the tests that are expected to fail.
                 Filter filter = new TestFilter(testList, expectationStore);
@@ -268,9 +269,18 @@ public class CoreTestRunner extends Instrumentation {
                 } catch (NoTestsRemainException e) {
                     // Sometimes filtering will remove all tests but we do not care about that.
                 }
+                Log.d(TAG, "Applied filters");
             }
 
-            request = Request.runner(suite);
+            // If the tests are only supposed to be logged and not actually run then replace the
+            // runner with a runner that will fire notifications for all the tests that would have
+            // been run. This is needed because CTSv2 does a log only run through a CTS module in
+            // order to generate a list of tests that will be run so that it can monitor them.
+            // Encapsulating that in a Runner implementation makes it easier to leverage the
+            // existing code for running tests.
+            if (logOnly) {
+                runner = new DescriptionHierarchyNotifier(runner.getDescription());
+            }
 
         } catch (InitializationError e) {
             throw new RuntimeException("Could not create a suite", e);
@@ -279,23 +289,33 @@ public class CoreTestRunner extends Instrumentation {
         InstrumentationResultPrinter instrumentationResultPrinter =
                 new InstrumentationResultPrinter();
         instrumentationResultPrinter.setInstrumentation(this);
+
+        JUnitCore core = new JUnitCore();
         core.addListener(instrumentationResultPrinter);
 
-        for (Class<? extends RunListener> listenerClass : listenerClasses) {
-            try {
-                RunListener runListener = listenerClass.newInstance();
-                if (runListener instanceof InstrumentationRunListener) {
-                    ((InstrumentationRunListener) runListener).setInstrumentation(this);
+        // If not logging the list of tests then add any additional configured listeners. These
+        // must be added before firing any events.
+        if (!logOnly) {
+            // Add additional configured listeners.
+            for (Class<? extends RunListener> listenerClass : listenerClasses) {
+                try {
+                    RunListener runListener = listenerClass.newInstance();
+                    if (runListener instanceof InstrumentationRunListener) {
+                        ((InstrumentationRunListener) runListener).setInstrumentation(this);
+                    }
+                    core.addListener(runListener);
+                } catch (InstantiationException | IllegalAccessException e) {
+                    Log.e(TAG,
+                            "Could not create instance of listener: " + listenerClass, e);
                 }
-                core.addListener(runListener);
-            } catch (InstantiationException | IllegalAccessException e) {
-                Log.e(TAG, "Could not create instance of listener: " + listenerClass, e);
             }
         }
 
+        Log.d(TAG, "Finished preparations, running/listing tests");
+
         Bundle results = new Bundle();
         try {
-            core.run(request);
+            core.run(Request.runner(runner));
         } catch (RuntimeException e) {
             final String msg = "Fatal exception when running tests";
             Log.e(TAG, msg, e);
@@ -343,5 +363,4 @@ public class CoreTestRunner extends Instrumentation {
         }
         return -1;
     }
-
 }
