@@ -15,6 +15,10 @@
  */
 package android.host.multiuser;
 
+import static com.android.tradefed.log.LogUtil.CLog;
+
+import com.android.ddmlib.Log;
+
 public class CreateUsersPermissionTest extends BaseMultiUserTest {
 
     public void testCanCreateGuestUser() throws Exception {
@@ -45,6 +49,11 @@ public class CreateUsersPermissionTest extends BaseMultiUserTest {
     }
 
     public void testCantSetUserRestriction() throws Exception {
+        if (getDevice().isAdbRoot()) {
+            CLog.logAndDisplay(Log.LogLevel.WARN,
+                    "Cannot test testCantSetUserRestriction on rooted devices");
+            return;
+        }
         final String setRestriction = "pm set-user-restriction no_fun ";
         final String output = getDevice().executeShellCommand(setRestriction + "1");
         assertTrue("Trying to set user restriction should fail with SecurityException",
