@@ -16,7 +16,6 @@
 
 package com.android.cts.core.runner.support;
 
-import android.support.test.internal.util.AndroidRunnerParams;
 import android.util.Log;
 
 import org.junit.runner.Description;
@@ -42,8 +41,6 @@ class TestNgRunner extends Runner implements Filterable {
 
   private static final boolean DEBUG = false;
 
-  private static final String TESTNG_TEST = "org.testng.annotations.Test";
-
   private Description mDescription;
   /** Class name for debugging. */
   private String mClassName;
@@ -53,7 +50,8 @@ class TestNgRunner extends Runner implements Filterable {
   private final boolean mSkipExecution;
 
   /**
-   * @param runnerParams {@link AndroidRunnerParams} that stores common runner parameters
+   * @param testClass the test class to run
+   * @param skipExecution true if the tests should not actually be run
    */
   TestNgRunner(Class<?> testClass, boolean skipExecution) {
     mDescription = generateTestNgDescription(testClass);
@@ -130,9 +128,8 @@ class TestNgRunner extends Runner implements Filterable {
         // TODO: get the error messages from testng somehow.
         notifier.fireTestFailure(new Failure(child, new AssertionError()));
       }
-      else {
-        notifier.fireTestFinished(child);
-      }
+
+      notifier.fireTestFinished(child);
       // TODO: Check @Test(enabled=false) and invoke #fireTestIgnored instead.
     }
   }
