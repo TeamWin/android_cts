@@ -29,8 +29,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.res.Configuration;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -68,7 +71,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class PopupWindowTest {
     private Instrumentation mInstrumentation;
-    private Activity mActivity;
+    private PopupWindowCtsActivity mActivity;
     private PopupWindow mPopupWindow;
     private TextView mTextView;
 
@@ -79,7 +82,7 @@ public class PopupWindowTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mActivity = mActivityRule.getActivity();
+        mActivity = (PopupWindowCtsActivity) mActivityRule.getActivity();
     }
 
     @Test
@@ -1223,6 +1226,72 @@ public class PopupWindowTest {
         assertTrue(mPopupWindow.isSplitTouchEnabled());
     }
 
+    @Test
+    public void testVerticallyClippedBeforeAdjusted() throws Throwable {
+        View parentWindowView = mActivity.getWindow().getDecorView();
+        int parentWidth = parentWindowView.getMeasuredWidth();
+        int parentHeight = parentWindowView.getMeasuredHeight();
+
+        // We make a popup which is too large to fit within the parent window.
+        // After showing it, we verify that it is shrunk to fit the window,
+        // rather than adjusted up.
+        mPopupWindow = createPopupWindow(createPopupContent(parentWidth*2, parentHeight*2));
+        mPopupWindow.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
+        mPopupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+
+        showPopup(R.id.anchor_middle);
+
+        View popupRoot = mPopupWindow.getContentView();
+        int measuredWidth = popupRoot.getMeasuredWidth();
+        int measuredHeight = popupRoot.getMeasuredHeight();
+        View anchor = mActivity.findViewById(R.id.anchor_middle);
+        int[] anchorLocationInWindowXY = new int[2];
+        anchor.getLocationInWindow(anchorLocationInWindowXY);
+
+        assertEquals(measuredHeight, parentHeight - anchorLocationInWindowXY[1]);
+    }
+
+    @Test
+    public void testClipToScreenClipsToInsets() throws Throwable {
+        int[] orientationValues = {ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT};
+        int currentOrientation = mActivity.getResources().getConfiguration().orientation;
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            orientationValues[0] = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            orientationValues[1] = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+        }
+
+        for (int i = 0; i < 2; i++) {
+            final int orientation = orientationValues[i];
+            mActivity.runOnUiThread(() ->
+                    mActivity.setRequestedOrientation(orientation));
+            mActivity.waitForConfigurationChanged();
+
+            View parentWindowView = mActivity.getWindow().getDecorView();
+            int parentWidth = parentWindowView.getMeasuredWidth();
+            int parentHeight = parentWindowView.getMeasuredHeight();
+
+            mPopupWindow = createPopupWindow(createPopupContent(parentWidth*2, parentHeight*2));
+            mPopupWindow.setWidth(WindowManager.LayoutParams.MATCH_PARENT);
+            mPopupWindow.setHeight(WindowManager.LayoutParams.MATCH_PARENT);
+            mPopupWindow.setClipToScreenEnabled(true);
+
+            showPopup(R.id.anchor_upper_left);
+
+            View popupRoot = mPopupWindow.getContentView().getRootView();
+            int measuredWidth  = popupRoot.getMeasuredWidth();
+            int measuredHeight = popupRoot.getMeasuredHeight();
+
+            // The visible frame will not include the insets.
+            Rect visibleFrame = new Rect();
+            parentWindowView.getWindowVisibleDisplayFrame(visibleFrame);
+
+            assertEquals(measuredWidth, visibleFrame.width());
+            assertEquals(measuredHeight, visibleFrame.height());
+        }
+    }
+
+
     private static class BaseTransition extends Transition {
         @Override
         public void captureStartValues(TransitionValues transitionValues) {}
@@ -1253,16 +1322,20 @@ public class PopupWindowTest {
         return window;
     }
 
-    private void showPopup() throws Throwable {
+    private void showPopup(int resourceId) throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             if (mPopupWindow == null || mPopupWindow.isShowing()) {
                 return;
             }
-            View anchor = mActivity.findViewById(R.id.anchor_upper);
+            View anchor = mActivity.findViewById(resourceId);
             mPopupWindow.showAsDropDown(anchor);
             assertTrue(mPopupWindow.isShowing());
         });
         mInstrumentation.waitForIdleSync();
+    }
+
+    private void showPopup() throws Throwable {
+        showPopup(R.id.anchor_upper_left);
     }
 
     private void dismissPopup() throws Throwable {

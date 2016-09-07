@@ -279,6 +279,7 @@
         </activity>
 
         <activity android:name="android.widget.cts.PopupWindowCtsActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="PopupWindowCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
