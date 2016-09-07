@@ -18,7 +18,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/text1"
     android:layout_width="match_parent"
-    android:layout_height="40px"
+    android:layout_height="@dimen/listrow_height"
     android:gravity="center_vertical"
-    android:textSize="36px"
+    android:textSize="24sp"
     android:textColor="#000" />

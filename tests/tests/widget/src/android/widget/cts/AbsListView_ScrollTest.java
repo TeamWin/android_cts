@@ -52,7 +52,6 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class AbsListView_ScrollTest {
-    private static final int ROW_HEIGHT_PX = 40;
     private static final String[] COUNTRY_LIST = new String[] {
             "Argentina", "Armenia", "Aruba", "Australia", "Belarus", "Belgium", "Belize", "Benin",
             "Botswana", "Brazil", "Cameroon", "China", "Colombia", "Costa Rica", "Cyprus",
@@ -72,6 +71,7 @@ public class AbsListView_ScrollTest {
     private AbsListView mListView;
     private Context mContext;
     private ArrayAdapter<String> mCountriesAdapter;
+    private int mRowHeightPx;
 
     @Before
     public void setup() throws Throwable {
@@ -88,6 +88,8 @@ public class AbsListView_ScrollTest {
         mListView = (ListView) activity.findViewById(R.id.listview_default);
         mActivityRule.runOnUiThread(() -> mListView.setAdapter(mCountriesAdapter));
         mInstrumentation.waitForIdleSync();
+
+        mRowHeightPx = mContext.getResources().getDimensionPixelSize(R.dimen.listrow_height);
     }
 
     /**
@@ -182,13 +184,8 @@ public class AbsListView_ScrollTest {
         mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(
                 positionToScrollTo));
 
-        boolean result = false;
-        try {
-            result = latch.await(2, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-        assertTrue("Timed out while waiting for the scroll to complete", result);
+        assertTrue("Timed out while waiting for the scroll to complete",
+                latch.await(2, TimeUnit.SECONDS));
 
         // Verify that the position we've been asked to scroll to is visible
         assertTrue("Asked to scroll to " + positionToScrollTo + ", first visible is "
@@ -246,13 +243,8 @@ public class AbsListView_ScrollTest {
         mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(
                 positionToScrollTo, boundPosition));
 
-        boolean result = false;
-        try {
-            result = latch.await(2, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-        assertTrue("Timed out while waiting for the scroll to complete", result);
+        assertTrue("Timed out while waiting for the scroll to complete",
+                latch.await(2, TimeUnit.SECONDS));
 
         // Verify that the bound position is visible
         assertTrue("Asked to scroll to " + positionToScrollTo + " with bound " + boundPosition
@@ -268,7 +260,7 @@ public class AbsListView_ScrollTest {
 
     @Test
     public void testSmoothScrollToPositionWithBound() throws Throwable {
-        // Our list is 300px high and each row is 40px high. Without being too precise,
+        // Our list is 300dp high and each row is 40dp high. Without being too precise,
         // the logic in this method relies on at least 8 and at most 10 items on the screen
         // at any time.
 
@@ -292,14 +284,14 @@ public class AbsListView_ScrollTest {
     private void verifyScrollToPositionFromTop(int positionToScrollTo, int offset,
             int durationMs) throws Throwable {
         final int startTopPositionInListCoordinates =
-                mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
+                mListView.getFirstVisiblePosition() * mRowHeightPx -
                         mListView.getChildAt(0).getTop();
-        int targetTopPositionInListCoordinates = positionToScrollTo * ROW_HEIGHT_PX - offset;
+        int targetTopPositionInListCoordinates = positionToScrollTo * mRowHeightPx - offset;
         // Need to clamp it to account for requests that would scroll the content outside
         // of the available bounds
         targetTopPositionInListCoordinates = Math.max(0, targetTopPositionInListCoordinates);
         targetTopPositionInListCoordinates = Math.min(
-                COUNTRY_LIST.length * ROW_HEIGHT_PX - mListView.getHeight(),
+                COUNTRY_LIST.length * mRowHeightPx - mListView.getHeight(),
                 targetTopPositionInListCoordinates);
 
         if (targetTopPositionInListCoordinates == startTopPositionInListCoordinates) {
@@ -322,19 +314,14 @@ public class AbsListView_ScrollTest {
                     positionToScrollTo, offset));
         }
 
-        boolean result = false;
-        try {
-            // Since position-based scroll is emulated as a series of mini-flings, scrolling
-            // might take considerable time.
-            int timeoutMs = durationMs > 0 ? 5000 + durationMs : 5000;
-            result = latch.await(timeoutMs, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-        assertTrue("Timed out while waiting for the scroll to complete", result);
+        // Since position-based scroll is emulated as a series of mini-flings, scrolling
+        // might take considerable time.
+        int timeoutMs = durationMs > 0 ? 5000 + durationMs : 5000;
+        assertTrue("Timed out while waiting for the scroll to complete",
+                latch.await(timeoutMs, TimeUnit.MILLISECONDS));
 
         final int endTopPositionInListCoordinates =
-                mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
+                mListView.getFirstVisiblePosition() * mRowHeightPx -
                         mListView.getChildAt(0).getTop();
 
         assertEquals(targetTopPositionInListCoordinates, endTopPositionInListCoordinates);
@@ -342,15 +329,15 @@ public class AbsListView_ScrollTest {
 
     @Test
     public void testSmoothScrollToPositionFromTop() throws Throwable {
-        // Ask to scroll so that the top of position 5 is 20 pixels below the top edge of the list
+        // Ask to scroll so that the top of position 5 is 10 pixels below the top edge of the list
         verifyScrollToPositionFromTop(5, 10, -1);
 
         // Ask to scroll so that the top of position 10 is right at the top edge of the list
         verifyScrollToPositionFromTop(10, 0, -1);
 
-        // Ask to scroll so that the top of position 5 is 80 pixels below the top edge of the list
-        // (which means that since row height is 40 pixels high, the top item should be 3
-        verifyScrollToPositionFromTop(5, 80, -1);
+        // Ask to scroll so that the top of position 5 is 80 dps below the top edge of the list
+        // (which means that since row height is 40 dps high, the top item should be 3
+        verifyScrollToPositionFromTop(5, 2 * mRowHeightPx, -1);
 
         // Ask to scroll so that the top of position 20 is 20 pixels above the top edge of the list
         verifyScrollToPositionFromTop(20, 20, -1);
@@ -379,9 +366,9 @@ public class AbsListView_ScrollTest {
         // Ask to scroll so that the top of position 10 is right at the top edge of the list
         verifyScrollToPositionFromTop(10, 0, 1000);
 
-        // Ask to scroll so that the top of position 5 is 80 pixels below the top edge of the list
-        // (which means that since row height is 40 pixels high, the top item should be 3
-        verifyScrollToPositionFromTop(5, 80, 500);
+        // Ask to scroll so that the top of position 5 is 80 dps below the top edge of the list
+        // (which means that since row height is 40 dps high, the top item should be 3
+        verifyScrollToPositionFromTop(5, 2 * mRowHeightPx, 500);
 
         // Ask to scroll so that the top of position 20 is 20 pixels above the top edge of the list
         verifyScrollToPositionFromTop(20, 20, 100);
@@ -434,7 +421,7 @@ public class AbsListView_ScrollTest {
     private void verifyScrollBy(int y) throws Throwable {
         // Here we rely on knowing the fixed pixel height of each row
         final int startTopPositionInListCoordinates =
-                mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
+                mListView.getFirstVisiblePosition() * mRowHeightPx -
                         mListView.getChildAt(0).getTop();
 
         // Since scrollListBy is a synchronous operation, we do not need to wait
@@ -442,7 +429,7 @@ public class AbsListView_ScrollTest {
         mActivityRule.runOnUiThread(() -> mListView.scrollListBy(y));
 
         final int endTopPositionInListCoordinates =
-                mListView.getFirstVisiblePosition() * ROW_HEIGHT_PX -
+                mListView.getFirstVisiblePosition() * mRowHeightPx -
                         mListView.getChildAt(0).getTop();
 
         // As specified in the Javadocs of AbsListView.scrollListBy, the actual scroll amount
@@ -456,7 +443,7 @@ public class AbsListView_ScrollTest {
         // of the available bounds
         expectedTopPositionInListCoordinates = Math.max(0, expectedTopPositionInListCoordinates);
         expectedTopPositionInListCoordinates = Math.min(
-                COUNTRY_LIST.length * ROW_HEIGHT_PX - mListView.getHeight(),
+                COUNTRY_LIST.length * mRowHeightPx - mListView.getHeight(),
                 expectedTopPositionInListCoordinates);
 
         assertEquals(expectedTopPositionInListCoordinates, endTopPositionInListCoordinates);
@@ -468,36 +455,36 @@ public class AbsListView_ScrollTest {
         final int itemCount = COUNTRY_LIST.length;
 
         // Scroll down by half row height
-        verifyScrollBy(ROW_HEIGHT_PX / 2);
+        verifyScrollBy(mRowHeightPx / 2);
 
         // Scroll up by full row height - verifying that we're going to stop at the top of the first
         // row
-        verifyScrollBy(-ROW_HEIGHT_PX);
+        verifyScrollBy(-mRowHeightPx);
 
         // Scroll down by slightly more than a screenful of rows - we expect it to be capped
         // by the list height minus one pixel.
-        verifyScrollBy(listHeight + ROW_HEIGHT_PX);
+        verifyScrollBy(listHeight + mRowHeightPx);
 
         // Scroll down by another half row
-        verifyScrollBy(ROW_HEIGHT_PX / 2);
+        verifyScrollBy(mRowHeightPx / 2);
 
         // Scroll up by full row height
-        verifyScrollBy(-ROW_HEIGHT_PX);
+        verifyScrollBy(-mRowHeightPx);
 
         // Now scroll all the way down (using position-based scrolling)
         verifyScrollToPosition(itemCount - 1);
         assertEquals(itemCount - 1, mListView.getLastVisiblePosition());
 
         // Scroll up by half row height
-        verifyScrollBy(-ROW_HEIGHT_PX / 2);
+        verifyScrollBy(-mRowHeightPx / 2);
 
         // Scroll down by full row height - verifying that we're going to stop at the bottom of the
         // last row
-        verifyScrollBy(ROW_HEIGHT_PX);
+        verifyScrollBy(mRowHeightPx);
 
         // Scroll up halfway into the list - we expect it to be capped by the list height minus
         // one pixel.
-        verifyScrollBy(-itemCount * ROW_HEIGHT_PX / 2);
+        verifyScrollBy(-itemCount * mRowHeightPx / 2);
     }
 
     @Test
@@ -508,15 +495,10 @@ public class AbsListView_ScrollTest {
         mListView.setOnScrollListener(new ScrollPositionListListener(scrollLatch, 15));
         mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(30));
 
-        boolean result = false;
-        try {
-            // Since position-based scroll is emulated as a series of mini-flings, scrolling
-            // might take considerable time.
-            result = scrollLatch.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-        assertTrue("Timed out while waiting for the scroll to complete", result);
+        // Since position-based scroll is emulated as a series of mini-flings, scrolling
+        // might take considerable time.
+        assertTrue("Timed out while waiting for the scroll to complete",
+                scrollLatch.await(5, TimeUnit.SECONDS));
 
         // Verify that we're here in the middle of the programmatic scroll
         assertTrue(mListView.getLastVisiblePosition() < 30);
@@ -542,15 +524,10 @@ public class AbsListView_ScrollTest {
         mListView.setOnScrollListener(new ScrollPositionListListener(scrollLatch, 15));
         mActivityRule.runOnUiThread(() -> mListView.smoothScrollToPosition(30));
 
-        boolean result = false;
-        try {
-            // Since position-based scroll is emulated as a series of mini-flings, scrolling
-            // might take considerable time.
-            result = scrollLatch.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-        assertTrue("Timed out while waiting for the scroll to complete", result);
+        // Since position-based scroll is emulated as a series of mini-flings, scrolling
+        // might take considerable time.
+        assertTrue("Timed out while waiting for the scroll to complete",
+                scrollLatch.await(5, TimeUnit.SECONDS));
 
         // Verify that we're here in the middle of the programmatic scroll
         assertTrue(mListView.getLastVisiblePosition() < 30);
@@ -563,12 +540,8 @@ public class AbsListView_ScrollTest {
         mListView.setOnScrollListener(new ScrollIdleListListener(flingLatch));
         CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, isDownwardsFlingGesture);
 
-        try {
-            result = flingLatch.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-        assertTrue("Timed out while waiting for the fling to complete", result);
+        assertTrue("Timed out while waiting for the fling to complete",
+                flingLatch.await(5, TimeUnit.SECONDS));
 
         // Note that the actual position in the list at the end of the fling depends on
         // the processing of the injected sequence of motion events that might differ at milli/micro
@@ -595,7 +568,7 @@ public class AbsListView_ScrollTest {
     }
 
     @Test
-    public void testListFlingWithZeroVelocity() {
+    public void testListFlingWithZeroVelocity() throws Throwable {
         mListView.setVelocityScale(0.0f);
 
         final CountDownLatch flingLatch = new CountDownLatch(1);
@@ -603,20 +576,16 @@ public class AbsListView_ScrollTest {
         final int flingAmount =
                 CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
 
-        try {
-            assertTrue("Timed out while waiting for the fling to complete",
-                    flingLatch.await(5, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        assertTrue("Timed out while waiting for the fling to complete",
+                flingLatch.await(5, TimeUnit.SECONDS));
 
         // Since our velocity scale is 0, we expect that the emulated fling gesture didn't
         // result in any fling, but just a simple scroll that stopped at the ACTION_UP
         // event.
         final int expectedTopOffsetAtFlingEnd = -flingAmount;
         final int expectedBottomOffsetAtFlingEnd = mListView.getHeight() - flingAmount;
-        final int expectedTopPositionAtFlingEnd = expectedTopOffsetAtFlingEnd / ROW_HEIGHT_PX;
-        final int expectedBottomPositionAtFlingEnd = expectedBottomOffsetAtFlingEnd / ROW_HEIGHT_PX;
+        final int expectedTopPositionAtFlingEnd = expectedTopOffsetAtFlingEnd / mRowHeightPx;
+        final int expectedBottomPositionAtFlingEnd = expectedBottomOffsetAtFlingEnd / mRowHeightPx;
 
         assertEquals(expectedTopPositionAtFlingEnd, mListView.getFirstVisiblePosition());
         assertEquals(expectedBottomPositionAtFlingEnd, mListView.getLastVisiblePosition());
@@ -674,29 +643,21 @@ public class AbsListView_ScrollTest {
         final CountDownLatch initialFlingLatch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(initialFlingLatch));
         CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
-        try {
-            assertTrue("Timed out while waiting for the fling to complete",
-                    initialFlingLatch.await(5, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        assertTrue("Timed out while waiting for the fling to complete",
+                initialFlingLatch.await(5, TimeUnit.SECONDS));
 
         final int lastVisiblePositionAfterDefaultFling = mListView.getLastVisiblePosition();
 
         // Scroll back to the top of the list
         verifyScrollToPosition(0);
         // configure the fling to have less friction
-        mListView.setFriction(ViewConfiguration.getScrollFriction() / 2.0f);
+        mListView.setFriction(ViewConfiguration.getScrollFriction() / 4.0f);
         // and do the fling again
         final CountDownLatch fastFlingLatch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(fastFlingLatch));
         CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
-        try {
-            assertTrue("Timed out while waiting for the fling to complete",
-                    fastFlingLatch.await(5, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        assertTrue("Timed out while waiting for the fling to complete",
+                fastFlingLatch.await(5, TimeUnit.SECONDS));
 
         final int lastVisiblePositionAfterFastFling = mListView.getLastVisiblePosition();
 
@@ -709,17 +670,13 @@ public class AbsListView_ScrollTest {
         // Scroll back to the top of the list
         verifyScrollToPosition(0);
         // configure the fling to have more friction
-        mListView.setFriction(ViewConfiguration.getScrollFriction() * 2.0f);
+        mListView.setFriction(ViewConfiguration.getScrollFriction() * 4.0f);
         // and do the fling again
         final CountDownLatch slowFlingLatch = new CountDownLatch(1);
         mListView.setOnScrollListener(new ScrollIdleListListener(slowFlingLatch));
         CtsTouchUtils.emulateFlingGesture(mInstrumentation, mListView, false);
-        try {
-            assertTrue("Timed out while waiting for the fling to complete",
-                    slowFlingLatch.await(5, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        assertTrue("Timed out while waiting for the fling to complete",
+                slowFlingLatch.await(5, TimeUnit.SECONDS));
 
         final int lastVisiblePositionAfterSlowFling = mListView.getLastVisiblePosition();
 
