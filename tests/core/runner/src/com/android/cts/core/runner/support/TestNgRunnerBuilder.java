@@ -18,7 +18,6 @@ package com.android.cts.core.runner.support;
 
 import android.support.test.internal.util.AndroidRunnerParams;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import org.junit.runner.Runner;
@@ -30,7 +29,6 @@ import org.testng.annotations.Test;
  * A {@link RunnerBuilder} that can TestNG tests.
  */
 class TestNgRunnerBuilder extends RunnerBuilder {
-  private static final String TESTNG_TEST = "org.testng.annotations.Test";
   private final AndroidRunnerParams mRunnerParams;
 
   /**
@@ -39,7 +37,6 @@ class TestNgRunnerBuilder extends RunnerBuilder {
   TestNgRunnerBuilder(AndroidRunnerParams runnerParams) {
     mRunnerParams = runnerParams;
   }
-
 
   // Returns a TestNG runner for this class, only if it is a class
   // annotated with testng's @Test or has any methods with @Test in it.
