@@ -16,6 +16,7 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.animation.ObjectAnimator;
 import android.annotation.ColorInt;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
@@ -23,10 +24,12 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
+import android.uirendering.cts.bitmapverifiers.ColorCountVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.Gravity;
@@ -96,6 +99,41 @@ public class LayerTests extends ActivityTestBase {
                     view.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
                 })
                 .runWithVerifier(new ColorVerifier(expectedColor));
+    }
+
+    @Test
+    public void testLayerClear() {
+        ViewInitializer initializer = new ViewInitializer() {
+            ObjectAnimator mAnimator;
+            @Override
+            public void initializeView(View view) {
+                FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
+                root.setAlpha(0.5f);
+
+                View child = new View(view.getContext());
+                child.setBackgroundColor(Color.BLACK);
+                child.setTranslationX(10);
+                child.setTranslationY(10);
+                child.setLayoutParams(
+                        new FrameLayout.LayoutParams(50, 50));
+                child.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                root.addView(child);
+
+                mAnimator = ObjectAnimator.ofFloat(child, "translationY", 0, 20);
+                mAnimator.setRepeatMode(mAnimator.REVERSE);
+                mAnimator.setRepeatCount(mAnimator.INFINITE);
+                mAnimator.setDuration(200);
+                mAnimator.start();
+            }
+            @Override
+            public void teardownView() {
+                mAnimator.cancel();
+            }
+        };
+
+        createTest()
+                .addLayout(R.layout.frame_layout, initializer, true)
+                .runWithAnimationVerifier(new ColorCountVerifier(0xff808080, 50 * 50));
     }
 
     @Test
