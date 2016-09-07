@@ -60,6 +60,34 @@ public class LayerTests extends ActivityTestBase {
     }
 
     @Test
+    public void testLayerPaintSimpleAlphaWithHardware() {
+        @ColorInt
+        final int expectedColor = Color.rgb(255, 128, 128);
+        createTest()
+                .addLayout(R.layout.simple_red_layout, (ViewInitializer) view -> {
+                    view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+                    // reduce alpha, so that overdraw will result in a different color
+                    view.setAlpha(0.5f);
+                })
+                .runWithVerifier(new ColorVerifier(expectedColor));
+    }
+
+    @Test
+    public void testLayerPaintSimpleAlphaWithSoftware() {
+        @ColorInt
+        final int expectedColor = Color.rgb(255, 128, 128);
+        createTest()
+                .addLayout(R.layout.simple_red_layout, (ViewInitializer) view -> {
+                    view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+                    // reduce alpha, so that overdraw will result in a different color
+                    view.setAlpha(0.5f);
+                })
+                .runWithVerifier(new ColorVerifier(expectedColor));
+    }
+
+    @Test
     public void testLayerPaintColorFilter() {
         // Red, fully desaturated. Note that it's not 255/3 in each channel.
         // See ColorMatrix#setSaturation()
