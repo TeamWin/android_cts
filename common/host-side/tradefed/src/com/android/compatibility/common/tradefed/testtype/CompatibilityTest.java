@@ -22,13 +22,9 @@ import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityC
 import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
 import com.android.compatibility.common.tradefed.util.OptionHelper;
 import com.android.compatibility.common.util.AbiUtils;
-import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
-import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
-import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ArgsOptionParser;
@@ -64,6 +60,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -453,23 +450,34 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                         PRIMARY_ABI_RUN, mAbiName);
             }
         }
-        for (String abi : AbiFormatter.getSupportedAbis(mDevice, "")) {
-            // Only test against ABIs supported by Compatibility, and if the
-            // --abi option was given, it must match.
-            if (AbiUtils.isAbiSupportedByCompatibility(abi) && archAbis.contains(abi)
-                    && (mAbiName == null || mAbiName.equals(abi))) {
-                abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
-            }
-        }
-        if (abis.isEmpty()) {
-            if (mAbiName == null) {
-                throw new IllegalArgumentException("Could not get device's ABIs");
+        if (mAbiName != null) {
+            // A particular abi was requested
+            if (!archAbis.contains(mAbiName)) {
+                throw new IllegalArgumentException(String.format("Your CTS hasn't been built with "
+                        + "abi '%s' support, this CTS currently supports '%s'.",
+                        mAbiName, archAbis));
             } else {
-                throw new IllegalArgumentException(String.format(
-                        "Device %s doesn't support %s", mDevice.getSerialNumber(), mAbiName));
+                abis.add(new Abi(mAbiName, AbiUtils.getBitness(mAbiName)));
+                return abis;
             }
+        } else {
+            // Run on all abi in common between the device and CTS.
+            List<String> deviceAbis = Arrays.asList(AbiFormatter.getSupportedAbis(mDevice, ""));
+            for (String abi : deviceAbis) {
+                if (AbiUtils.isAbiSupportedByCompatibility(abi) && archAbis.contains(abi)) {
+                    abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
+                } else {
+                    CLog.d("abi '%s' is supported by device but not by this CTS build (%s), tests "
+                            + "will not run against it.", abi, archAbis);
+                }
+            }
+            if (abis.isEmpty()) {
+                throw new IllegalArgumentException(String.format("None of the abi supported by this"
+                       + " CTS build ('%s') are supported by the device ('%s').",
+                       archAbis, deviceAbis));
+            }
+            return abis;
         }
-        return abis;
     }
 
     private List<SystemStatusChecker> initSystemStatusCheckers() throws ConfigurationException {
