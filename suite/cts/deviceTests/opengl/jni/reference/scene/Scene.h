@@ -19,7 +19,7 @@
 #include <graphics/Program.h>
 #include <graphics/ProgramNode.h>
 
-#include <utils/Vector.h>
+#include <vector>
 
 class Scene {
 public:
@@ -40,9 +40,9 @@ protected:
     virtual bool updateSceneGraphs(int frame) = 0;
     int mWidth;
     int mHeight;
-    android::Vector<Mesh*> mMeshes;
-    android::Vector<GLuint> mTextureIds;
-    android::Vector<ProgramNode*> mSceneGraphs;
+    std::vector<Mesh*> mMeshes;
+    std::vector<GLuint> mTextureIds;
+    std::vector<ProgramNode*> mSceneGraphs;
 private:
     Matrix* mModelMatrix;
     Matrix* mViewMatrix;
