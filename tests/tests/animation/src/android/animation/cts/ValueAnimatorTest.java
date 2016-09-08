@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,8 +29,11 @@ import static org.mockito.Mockito.verify;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
@@ -265,6 +269,106 @@ public class ValueAnimatorTest {
             long actualFrameDelay = mValueAnimator.getFrameDelay();
             assertEquals(frameDelay, actualFrameDelay);
         });
+    }
+
+    @Test
+    public void testUpdateListeners() throws Throwable {
+        ValueAnimator.AnimatorUpdateListener l1 = mock(ValueAnimator.AnimatorUpdateListener.class);
+        ValueAnimator.AnimatorUpdateListener l2 = mock(ValueAnimator.AnimatorUpdateListener.class);
+        ValueAnimator.AnimatorUpdateListener l3 = mock(ValueAnimator.AnimatorUpdateListener.class);
+        ValueAnimator.AnimatorUpdateListener l4 = mock(ValueAnimator.AnimatorUpdateListener.class);
+
+        AnimatorListenerAdapter listener = mock(AnimatorListenerAdapter.class);
+
+        ValueAnimator a1 = ValueAnimator.ofFloat(0, 1f);
+        a1.setDuration(50);
+        a1.addUpdateListener(l1);
+        a1.addUpdateListener(l2);
+        a1.removeAllUpdateListeners();
+
+        a1.addUpdateListener(l3);
+        a1.addUpdateListener(l4);
+        a1.removeUpdateListener(l3);
+
+        a1.addListener(listener);
+
+        mActivityRule.runOnUiThread(() -> {
+            a1.start();
+        });
+
+        // Wait for the anim to finish.
+        verify(listener, within(200)).onAnimationEnd(a1);
+
+        verify(l1, times(0)).onAnimationUpdate(a1);
+        verify(l2, times(0)).onAnimationUpdate(a1);
+        verify(l3, times(0)).onAnimationUpdate(a1);
+        verify(l4, atLeast(1)).onAnimationUpdate(a1);
+    }
+
+    @Test
+    public void testValuesSetterAndGetter() throws Throwable {
+
+        ValueAnimator a2 = ValueAnimator.ofPropertyValuesHolder();
+        PropertyValuesHolder p1 = PropertyValuesHolder.ofFloat("scaleX", 0f, 1f);
+        PropertyValuesHolder p2 = PropertyValuesHolder.ofFloat("scaleY", 1f, 2f);
+        a2.setValues(p1, p2);
+        PropertyValuesHolder[] holders = a2.getValues();
+        assertEquals(2, holders.length);
+
+        // Use the PropertyValueHolders returned from the getter to initialize the animator, in
+        // order to test the getter.
+        ValueAnimator a1 = ValueAnimator.ofPropertyValuesHolder(holders);
+        a1.setDuration(50);
+        a1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float scaleX = (Float) animation.getAnimatedValue("scaleX");
+                float scaleY = (Float) animation.getAnimatedValue("scaleY");
+                assertTrue(scaleX >= 0f && scaleX <= 1f);
+                assertTrue(scaleY >= 1f && scaleY <= 2f);
+            }
+        });
+        AnimatorListenerAdapter l1 = mock(AnimatorListenerAdapter.class);
+        a1.addListener(l1);
+
+        mActivityRule.runOnUiThread(() -> {
+            a1.start();
+        });
+
+        verify(l1, within(200)).onAnimationEnd(a1);
+    }
+
+    @Test
+    public void testSetObjectValues() throws Throwable {
+        TypeEvaluator<PointF> eval = new TypeEvaluator<PointF>() {
+            PointF tmpValue = new PointF();
+            @Override
+            public PointF evaluate(float fraction, PointF startValue, PointF endValue) {
+                tmpValue.x = fraction * startValue.x + (1f - fraction) * endValue.x;
+                tmpValue.y = fraction * startValue.y + (1f - fraction) * endValue.y;
+                return tmpValue;
+            }
+        };
+
+        ValueAnimator a1 = new ValueAnimator();
+        a1.setDuration(50);
+        a1.setObjectValues(new PointF(0, 0), new PointF(1, 1));
+        a1.setEvaluator(eval);
+        a1.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                PointF point = (PointF) animation.getAnimatedValue();
+                assertTrue(point.x >= 0f && point.x <= 1f);
+                assertTrue(point.y >= 0f && point.y <= 1f);
+            }
+        });
+        AnimatorListenerAdapter l1 = mock(AnimatorListenerAdapter.class);
+        a1.addListener(l1);
+        mActivityRule.runOnUiThread(() -> {
+            a1.start();
+        });
+
+        verify(l1, within(200)).onAnimationEnd(a1);
     }
 
     @Test
