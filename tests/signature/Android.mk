@@ -30,7 +30,7 @@ LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test
 
 include $(BUILD_CTS_PACKAGE)
 
