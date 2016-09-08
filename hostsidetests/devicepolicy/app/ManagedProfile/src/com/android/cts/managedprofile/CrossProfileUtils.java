@@ -49,6 +49,10 @@ public class CrossProfileUtils extends AndroidTestCase {
 
     private static String ACTION_COPY_TO_CLIPBOARD = "com.android.cts.action.COPY_TO_CLIPBOARD";
 
+    private static String ACTION_NOTIFY_URI_CHANGE = "com.android.cts.action.NOTIFY_URI_CHANGE";
+
+    private static String ACTION_OBSERVE_URI_CHANGE = "com.android.cts.action.OBSERVE_URI_CHANGE";
+
     public void testAddParentCanAccessManagedFilters() {
         testRemoveAllFilters();
 
@@ -73,6 +77,8 @@ public class CrossProfileUtils extends AndroidTestCase {
         intentFilter.addAction(ACTION_WRITE_TO_URI);
         intentFilter.addAction(ACTION_TAKE_PERSISTABLE_URI_PERMISSION);
         intentFilter.addAction(ACTION_COPY_TO_CLIPBOARD);
+        intentFilter.addAction(ACTION_NOTIFY_URI_CHANGE);
+        intentFilter.addAction(ACTION_OBSERVE_URI_CHANGE);
         return intentFilter;
     }
 
