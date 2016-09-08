@@ -14,6 +14,7 @@
 #include <jni.h>
 
 #include <stdlib.h>
+#include <android/log.h>
 
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
@@ -92,7 +93,8 @@ Java_com_android_cts_opengl_primitive_GLPrimitiveActivity_setupBenchmark(
             gRenderer = new ContextSwitchRenderer(gNativeWindow, offscreen);
             break;
         default:
-            ALOGE("Unknown benchmark '%d'", benchmark);
+            __android_log_print(ANDROID_LOG_ERROR, "GLPrimitive",
+                    "Unknown benchmark '%d'", benchmark);
             ANativeWindow_release(gNativeWindow);
             gNativeWindow = NULL;
             return;

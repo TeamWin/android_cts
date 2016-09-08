@@ -20,7 +20,7 @@ SceneGraphNode::~SceneGraphNode() {
 }
 
 void SceneGraphNode::addChild(SceneGraphNode* child) {
-    mChildren.add(child);
+    mChildren.push_back(child);
 }
 
 void SceneGraphNode::draw(Program& program, Matrix& model, Matrix& view, Matrix& projection) {
