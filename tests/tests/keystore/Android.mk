@@ -26,6 +26,7 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_JAVA_LIBRARIES := bouncycastle
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+        android-support-test \
         core-tests-support \
         ctsdeviceutil \
         ctstestrunner \
