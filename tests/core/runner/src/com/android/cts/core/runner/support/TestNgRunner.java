@@ -46,17 +46,13 @@ class TestNgRunner extends Runner implements Filterable {
   private String mClassName;
   /** Don't include the same method names twice. */
   private HashSet<String> mMethodSet = new HashSet<>();
-  /** Don't actually run the test if this is true, just report passing. */
-  private final boolean mSkipExecution;
 
   /**
    * @param testClass the test class to run
-   * @param skipExecution true if the tests should not actually be run
    */
-  TestNgRunner(Class<?> testClass, boolean skipExecution) {
+  TestNgRunner(Class<?> testClass) {
     mDescription = generateTestNgDescription(testClass);
     mClassName = testClass.getName();
-    mSkipExecution = skipExecution;
   }
 
   // Runner implementation
@@ -115,13 +111,6 @@ class TestNgRunner extends Runner implements Filterable {
       }
 
       notifier.fireTestStarted(child);
-
-      // CTS has a phase where it "collects" all the tests first.
-      // Just report that the test passes without actually running it here.
-      if (mSkipExecution) {
-        notifier.fireTestFinished(child);
-        continue;
-      }
 
       // Avoid looking at all the methods by just using the string method name.
       if (!SingleTestNgTestExecutor.execute(klass, methodName)) {
