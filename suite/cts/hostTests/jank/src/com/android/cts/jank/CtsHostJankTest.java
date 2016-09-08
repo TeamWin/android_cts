@@ -81,7 +81,7 @@ public class CtsHostJankTest extends DeviceTestCase implements IAbiReceiver, IBu
 
     public void runUiAutomatorTest(String testName) throws Exception {
         // Delete any existing result files
-        mDevice.executeShellCommand("rm -r " + DEVICE_LOCATION + "*.txt");
+        mDevice.executeShellCommand("rm -r " + DEVICE_LOCATION + "UiJankinessTestsOutput.txt");
 
         // Run ui automator test.
         mDevice.executeShellCommand(
