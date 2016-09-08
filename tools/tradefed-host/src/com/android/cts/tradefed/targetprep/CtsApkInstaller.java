@@ -18,7 +18,6 @@ package com.android.cts.tradefed.targetprep;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionClass;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.targetprep.TestAppInstallSetup;
 
@@ -44,13 +43,12 @@ public class CtsApkInstaller extends TestAppInstallSetup {
      * {@inheritDoc}
      */
     @Override
-    protected File getLocalPathForFilename(IBuildInfo buildInfo, String apkFileName,
-            ITestDevice device) throws TargetSetupError {
+    protected File getLocalPathForFilename(IBuildInfo buildInfo, String apkFileName)
+            throws TargetSetupError {
         try {
             return getCtsBuildHelper(buildInfo).getTestApp(apkFileName);
         } catch (FileNotFoundException e) {
-            throw new TargetSetupError(String.format("apk not found: %s", apkFileName), e,
-                device.getDeviceDescriptor());
+            throw new TargetSetupError(String.format("apk not found: %s", apkFileName), e);
         }
     }
 }
