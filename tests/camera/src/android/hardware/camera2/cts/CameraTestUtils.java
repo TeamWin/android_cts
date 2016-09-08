@@ -228,16 +228,27 @@ public class CameraTestUtils extends Assert {
      */
     public static class ImageDropperListener implements ImageReader.OnImageAvailableListener {
         @Override
-        public void onImageAvailable(ImageReader reader) {
+        public synchronized void onImageAvailable(ImageReader reader) {
             Image image = null;
             try {
                 image = reader.acquireNextImage();
             } finally {
                 if (image != null) {
                     image.close();
+                    mImagesDropped++;
                 }
             }
         }
+
+        public synchronized int getImageCount() {
+            return mImagesDropped;
+        }
+
+        public synchronized void resetImageCount() {
+            mImagesDropped = 0;
+        }
+
+        private int mImagesDropped = 0;
     }
 
     /**
