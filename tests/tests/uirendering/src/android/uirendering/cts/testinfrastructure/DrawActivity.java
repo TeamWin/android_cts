@@ -22,12 +22,10 @@ import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.uirendering.cts.R;
 import android.view.View;
 import android.view.ViewStub;
 import android.view.ViewTreeObserver;
-import android.webkit.WebView;
-
-import android.uirendering.cts.R;
 
 /**
  * A generic activity that uses a view specified by the user.
@@ -35,7 +33,6 @@ import android.uirendering.cts.R;
 public class DrawActivity extends Activity {
     private final static long TIME_OUT_MS = 10000;
     private final Point mLock = new Point();
-    public static final int MIN_NUMBER_OF_DRAWS = 20;
 
     private Handler mHandler;
     private View mView;
@@ -55,14 +52,12 @@ public class DrawActivity extends Activity {
         return mOnTv;
     }
 
-    public Point enqueueRenderSpecAndWait(int layoutId, CanvasClient canvasClient, String webViewUrl,
+    public Point enqueueRenderSpecAndWait(int layoutId, CanvasClient canvasClient,
             @Nullable ViewInitializer viewInitializer, boolean useHardware) {
         ((RenderSpecHandler) mHandler).setViewInitializer(viewInitializer);
         int arg2 = (useHardware ? View.LAYER_TYPE_NONE : View.LAYER_TYPE_SOFTWARE);
         if (canvasClient != null) {
             mHandler.obtainMessage(RenderSpecHandler.CANVAS_MSG, 0, arg2, canvasClient).sendToTarget();
-        } else if (webViewUrl != null) {
-            mHandler.obtainMessage(RenderSpecHandler.WEB_VIEW_MSG, 0, arg2, webViewUrl).sendToTarget();
         } else {
             mHandler.obtainMessage(RenderSpecHandler.LAYOUT_MSG, layoutId, arg2).sendToTarget();
         }
@@ -81,10 +76,15 @@ public class DrawActivity extends Activity {
 
     private ViewInitializer mViewInitializer;
 
+    private void notifyOnDrawCompleted() {
+        DrawCounterListener onDrawListener = new DrawCounterListener();
+        mView.getViewTreeObserver().addOnDrawListener(onDrawListener);
+        mView.invalidate();
+    }
+
     private class RenderSpecHandler extends Handler {
         public static final int LAYOUT_MSG = 1;
         public static final int CANVAS_MSG = 2;
-        public static final int WEB_VIEW_MSG = 3;
 
 
         public void setViewInitializer(ViewInitializer viewInitializer) {
@@ -92,7 +92,6 @@ public class DrawActivity extends Activity {
         }
 
         public void handleMessage(Message message) {
-            int drawCountDelay = 0;
             setContentView(R.layout.test_container);
             ViewStub stub = (ViewStub) findViewById(R.id.test_content_stub);
             mViewWrapper = findViewById(R.id.test_content_wrapper);
@@ -106,14 +105,6 @@ public class DrawActivity extends Activity {
                     stub.setLayoutResource(R.layout.test_content_canvasclientview);
                     mView = stub.inflate();
                     ((CanvasClientView) mView).setCanvasClient((CanvasClient) (message.obj));
-                } break;
-
-                case WEB_VIEW_MSG: {
-                    stub.setLayoutResource(R.layout.test_content_webview);
-                    mView = stub.inflate();
-                    ((WebView) mView).loadUrl((String) message.obj);
-                    ((WebView) mView).setInitialScale(100);
-                    drawCountDelay = 10;
                 } break;
             }
 
@@ -129,11 +120,7 @@ public class DrawActivity extends Activity {
             // can control layer type of View under test.
             mViewWrapper.setLayerType(message.arg2, null);
 
-            DrawCounterListener onDrawListener = new DrawCounterListener(drawCountDelay);
-
-            mView.getViewTreeObserver().addOnPreDrawListener(onDrawListener);
-
-            mView.postInvalidate();
+            notifyOnDrawCompleted();
         }
     }
 
@@ -145,27 +132,27 @@ public class DrawActivity extends Activity {
         }
     }
 
-    private class DrawCounterListener implements ViewTreeObserver.OnPreDrawListener {
-        private int mCurrentDraws = 0;
-        private int mExtraDraws;
+    @Override
+    public void finish() {
+        // Ignore
+    }
 
-        public DrawCounterListener(int extraDraws) {
-            mExtraDraws = extraDraws;
-        }
+    /** Call this when all the tests that use this activity have completed.
+     * This will then clean up any internal state and finish the activity. */
+    public void allTestsFinished() {
+        super.finish();
+    }
 
+    private class DrawCounterListener implements ViewTreeObserver.OnDrawListener {
         @Override
-        public boolean onPreDraw() {
-            mCurrentDraws++;
-            if (mCurrentDraws < MIN_NUMBER_OF_DRAWS + mExtraDraws) {
-                mView.postInvalidate();
-            } else {
+        public void onDraw() {
+            mView.post(() -> {
+                mView.getViewTreeObserver().removeOnDrawListener(this);
                 synchronized (mLock) {
                     mLock.set(mViewWrapper.getLeft(), mViewWrapper.getTop());
                     mLock.notify();
                 }
-                mView.getViewTreeObserver().removeOnPreDrawListener(this);
-            }
-            return true;
+            });
         }
     }
 }
