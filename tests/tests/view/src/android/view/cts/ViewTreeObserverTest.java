@@ -117,6 +117,34 @@ public class ViewTreeObserverTest {
     }
 
     @Test
+    public void testAddOnDrawListener() {
+        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
+        mViewTreeObserver = layout.getViewTreeObserver();
+
+        final ViewTreeObserver.OnDrawListener listener =
+                mock(ViewTreeObserver.OnDrawListener.class);
+        mViewTreeObserver.addOnDrawListener(listener);
+        mViewTreeObserver.dispatchOnDraw();
+        verify(listener, times(1)).onDraw();
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testRemoveOnDrawListenerInDispatch() {
+        final View view = new View(mActivity);
+        mViewTreeObserver = view.getViewTreeObserver();
+
+        final ViewTreeObserver.OnDrawListener listener =
+                new ViewTreeObserver.OnDrawListener() {
+                    @Override
+                    public void onDraw() {
+                        mViewTreeObserver.removeOnDrawListener(this);
+                    }
+                };
+        mViewTreeObserver.addOnDrawListener(listener);
+        mViewTreeObserver.dispatchOnDraw();
+    }
+
+    @Test
     public void testAddOnTouchModeChangeListener() throws Throwable {
         final Button b = (Button) mActivity.findViewById(R.id.button1);
 
