@@ -246,7 +246,7 @@ public class CoreTestRunner extends Instrumentation {
         }
 
         AndroidRunnerParams runnerParams = new AndroidRunnerParams(this, args,
-                logOnly, testTimeout, false /*ignoreSuiteMethods*/);
+                false, testTimeout, false /*ignoreSuiteMethods*/);
 
         Runner runner;
         try {
