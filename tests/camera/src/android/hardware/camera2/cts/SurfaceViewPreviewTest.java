@@ -38,6 +38,8 @@ import android.hardware.camera2.params.OutputConfiguration;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
+import android.view.SurfaceView;
+import android.view.SurfaceHolder;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
@@ -416,6 +418,213 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
 
         // Wait to get some frames out
         waitForNumResults(resultListener, SOME_FRAMES);
+    }
+
+    /*
+     * Verify creation of deferred surface capture sessions
+     */
+    public void testDeferredSurfaces() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i]);
+                if (mStaticInfo.isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] + " is legacy, skipping");
+                    continue;
+                }
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                testDeferredSurfacesByCamera(mCameraIds[i]);
+            }
+            finally {
+                closeDevice();
+            }
+        }
+    }
+
+    private void testDeferredSurfacesByCamera(String cameraId) throws Exception {
+        Size maxPreviewSize = m1080pBoundedOrderedPreviewSizes.get(0);
+
+        SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+
+        // Create a SurfaceTexture for a second output
+        SurfaceTexture sharedOutputTexture = new SurfaceTexture(/*random texture ID*/ 5);
+        sharedOutputTexture.setDefaultBufferSize(maxPreviewSize.getWidth(),
+                maxPreviewSize.getHeight());
+        Surface sharedOutputSurface1 = new Surface(sharedOutputTexture);
+
+        class TextureAvailableListener implements SurfaceTexture.OnFrameAvailableListener {
+            @Override
+            public void onFrameAvailable(SurfaceTexture t) {
+                mGotFrame = true;
+            }
+            public boolean gotFrame() { return mGotFrame; }
+
+            private volatile boolean mGotFrame = false;
+        }
+        TextureAvailableListener textureAvailableListener = new TextureAvailableListener();
+
+        sharedOutputTexture.setOnFrameAvailableListener(textureAvailableListener, mHandler);
+
+        updatePreviewSurface(maxPreviewSize);
+
+        // Create deferred outputs for surface view and surface texture
+        OutputConfiguration surfaceViewOutput = new OutputConfiguration(maxPreviewSize,
+                SurfaceHolder.class);
+        OutputConfiguration surfaceTextureOutput = new OutputConfiguration(maxPreviewSize,
+                SurfaceTexture.class);
+
+        List<OutputConfiguration> outputSurfaces = new ArrayList<>();
+        outputSurfaces.add(surfaceViewOutput);
+        outputSurfaces.add(surfaceTextureOutput);
+
+        // Create non-deferred ImageReader output (JPEG for LIMITED-level compatibility)
+        ImageDropperListener imageListener = new ImageDropperListener();
+        createImageReader(mOrderedStillSizes.get(0), ImageFormat.JPEG, /*maxImages*/ 3,
+                imageListener);
+        OutputConfiguration jpegOutput =
+                new OutputConfiguration(OutputConfiguration.SURFACE_GROUP_ID_NONE, mReaderSurface);
+        outputSurfaces.add(jpegOutput);
+
+        // Confirm that other surface types aren't supported for OutputConfiguration
+        Class[] unsupportedClasses =
+                {android.media.ImageReader.class, android.media.MediaCodec.class,
+                 android.renderscript.Allocation.class, android.media.MediaRecorder.class};
+
+        for (Class klass : unsupportedClasses) {
+            try {
+                OutputConfiguration bad = new OutputConfiguration(maxPreviewSize, klass);
+                fail("OutputConfiguration allowed use of unsupported class " + klass);
+            } catch (IllegalArgumentException e) {
+                // expected
+            }
+        }
+
+        // Create session
+
+        BlockingSessionCallback sessionListener =
+                new BlockingSessionCallback();
+
+        mSession = configureCameraSessionWithConfig(mCamera, outputSurfaces, sessionListener,
+                mHandler);
+        sessionListener.getStateWaiter().waitForState(BlockingSessionCallback.SESSION_READY,
+                SESSION_CONFIGURE_TIMEOUT_MS);
+
+        // Submit JPEG requests
+
+        CaptureRequest.Builder request = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        request.addTarget(mReaderSurface);
+
+        final int SOME_FRAMES = 10;
+        for (int i = 0; i < SOME_FRAMES; i++) {
+            mSession.capture(request.build(), resultListener, mHandler);
+        }
+
+        // Wait to get some frames out to ensure we can operate just the one expected surface
+        waitForNumResults(resultListener, SOME_FRAMES);
+        assertTrue("No images received", imageListener.getImageCount() > 0);
+
+        // Ensure we can't use the deferred surfaces yet
+        request.addTarget(sharedOutputSurface1);
+        try {
+            mSession.capture(request.build(), resultListener, mHandler);
+            fail("Should have received IAE for trying to use a deferred target " +
+                    "that's not yet configured");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // Add deferred surfaces to their configurations
+        surfaceViewOutput.setDeferredSurface(mPreviewSurface);
+        surfaceTextureOutput.setDeferredSurface(sharedOutputSurface1);
+
+        // Verify bad inputs to setDeferredSurface
+        try {
+            surfaceViewOutput.setDeferredSurface(null);
+            fail("No error from setting a null deferred surface");
+        } catch (NullPointerException e) {
+            // expected
+        }
+        try {
+            surfaceViewOutput.setDeferredSurface(mPreviewSurface);
+            fail("Shouldn't be able to set deferred surface twice");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+
+        // Add first deferred surface to session
+        List<OutputConfiguration> deferredSurfaces = new ArrayList<>();
+        deferredSurfaces.add(surfaceTextureOutput);
+
+        mSession.finishDeferredConfiguration(deferredSurfaces);
+
+        // Try a second time, this should error
+
+        try {
+            mSession.finishDeferredConfiguration(deferredSurfaces);
+            fail("Should have received ISE for trying to finish a deferred output twice");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // Use new deferred surface for a bit
+        imageListener.resetImageCount();
+        for (int i = 0; i < SOME_FRAMES; i++) {
+            mSession.capture(request.build(), resultListener, mHandler);
+        }
+        waitForNumResults(resultListener, SOME_FRAMES);
+        assertTrue("No images received", imageListener.getImageCount() > 0);
+        assertTrue("No texture update received", textureAvailableListener.gotFrame());
+
+        // Ensure we can't use the last deferred surface yet
+        request.addTarget(mPreviewSurface);
+        try {
+            mSession.capture(request.build(), resultListener, mHandler);
+            fail("Should have received IAE for trying to use a deferred target that's" +
+                    " not yet configured");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        // Add final deferred surface
+        deferredSurfaces.clear();
+        deferredSurfaces.add(surfaceViewOutput);
+
+        mSession.finishDeferredConfiguration(deferredSurfaces);
+
+        // Use final deferred surface for a bit
+        imageListener.resetImageCount();
+        for (int i = 0; i < SOME_FRAMES; i++) {
+            mSession.capture(request.build(), resultListener, mHandler);
+        }
+        waitForNumResults(resultListener, SOME_FRAMES);
+        assertTrue("No images received", imageListener.getImageCount() > 0);
+        // Can't check GL output since we don't have a context to call updateTexImage on, and
+        // the callback only fires once per updateTexImage call.
+        // And there's no way to verify data is going to a SurfaceView
+
+        // Check for invalid output configurations being handed to a session
+        OutputConfiguration badConfig =
+                new OutputConfiguration(maxPreviewSize, SurfaceTexture.class);
+        deferredSurfaces.clear();
+        try {
+            mSession.finishDeferredConfiguration(deferredSurfaces);
+            fail("No error for empty list passed to finishDeferredConfiguration");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        deferredSurfaces.add(badConfig);
+        try {
+            mSession.finishDeferredConfiguration(deferredSurfaces);
+            fail("No error for invalid output config being passed to finishDeferredConfiguration");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
     }
 
     /**
