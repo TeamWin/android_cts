@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.Instrumentation;
+import android.cts.util.WidgetTestUtils;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.transition.Scene;
@@ -128,8 +129,7 @@ public abstract class BaseTransitionTest {
     }
 
     protected void enterScene(final Scene scene) throws Throwable {
-        mActivityRule.runOnUiThread(scene::enter);
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, scene::enter, false);
     }
 
     protected void exitScene(final Scene scene) throws Throwable {
