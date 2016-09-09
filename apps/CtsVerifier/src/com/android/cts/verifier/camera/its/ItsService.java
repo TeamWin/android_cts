@@ -1161,12 +1161,13 @@ public class ItsService extends Service implements SensorEventListener {
         } else {
             // No surface(s) specified at all.
             // Default: a single output surface which is full-res YUV.
-            Size sizes[] = ItsUtils.getYuvOutputSizes(mCameraCharacteristics);
+            Size maxYuvSize = ItsUtils.getMaxOutputSize(
+                    mCameraCharacteristics, ImageFormat.YUV_420_888);
             numSurfaces = backgroundRequest ? 2 : 1;
 
             outputSizes = new Size[numSurfaces];
             outputFormats = new int[numSurfaces];
-            outputSizes[0] = sizes[0];
+            outputSizes[0] = maxYuvSize;
             outputFormats[0] = ImageFormat.YUV_420_888;
             if (backgroundRequest) {
                 outputSizes[1] = new Size(640, 480);
