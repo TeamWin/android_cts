@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.build;
 
-import com.android.compatibility.SuiteInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.build.IFolderBuildInfo;
 
@@ -40,67 +39,18 @@ public class CompatibilityBuildHelper {
     private static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
     private static final String SUITE_VERSION = "SUITE_VERSION";
     private static final String SUITE_PLAN = "SUITE_PLAN";
-    private static final String RESULT_DIR = "RESULT_DIR";
     private static final String START_TIME_MS = "START_TIME_MS";
     private static final String CONFIG_PATH_PREFIX = "DYNAMIC_CONFIG_FILE:";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
     private static final String COMMAND_LINE_ARGS = "command_line_args";
     private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
     private final IBuildInfo mBuildInfo;
-    private boolean mInitialized = false;
 
     /**
      * Creates a {@link CompatibilityBuildHelper} wrapping the given {@link IBuildInfo}.
      */
     public CompatibilityBuildHelper(IBuildInfo buildInfo) {
         mBuildInfo = buildInfo;
-    }
-
-    /**
-     * Initializes the {@link IBuildInfo} from the manifest with the current time
-     * as the start time.
-     */
-    public void init(String suitePlan, String dynamicConfigUrl) {
-        init(suitePlan, dynamicConfigUrl, System.currentTimeMillis());
-    }
-
-    /**
-     * Initializes the {@link IBuildInfo} from the manifest.
-     */
-    public void init(String suitePlan, String dynamicConfigUrl, long startTimeMs) {
-        if (mInitialized) {
-            return;
-        }
-        mInitialized = true;
-        mBuildInfo.addBuildAttribute(SUITE_BUILD, SuiteInfo.BUILD_NUMBER);
-        mBuildInfo.addBuildAttribute(SUITE_NAME, SuiteInfo.NAME);
-        mBuildInfo.addBuildAttribute(SUITE_FULL_NAME, SuiteInfo.FULLNAME);
-        mBuildInfo.addBuildAttribute(SUITE_VERSION, SuiteInfo.VERSION);
-        mBuildInfo.addBuildAttribute(SUITE_PLAN, suitePlan);
-        mBuildInfo.addBuildAttribute(START_TIME_MS, Long.toString(startTimeMs));
-        mBuildInfo.addBuildAttribute(RESULT_DIR, getDirSuffix(startTimeMs));
-        String rootDirPath = null;
-        if (mBuildInfo instanceof IFolderBuildInfo) {
-            File rootDir = ((IFolderBuildInfo) mBuildInfo).getRootDir();
-            if (rootDir != null) {
-                rootDirPath = rootDir.getAbsolutePath();
-            }
-        }
-        rootDirPath = System.getProperty(String.format("%s_ROOT", SuiteInfo.NAME), rootDirPath);
-        if (rootDirPath == null || rootDirPath.trim().equals("")) {
-            throw new IllegalArgumentException(
-                    String.format("Missing install path property %s_ROOT", SuiteInfo.NAME));
-        }
-        File rootDir = new File(rootDirPath);
-        if (!rootDir.exists()) {
-            throw new IllegalArgumentException(
-                    String.format("Root directory doesn't exist %s", rootDir.getAbsolutePath()));
-        }
-        mBuildInfo.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
-        if (dynamicConfigUrl != null && !dynamicConfigUrl.isEmpty()) {
-            mBuildInfo.addBuildAttribute(DYNAMIC_CONFIG_OVERRIDE_URL,
-                    dynamicConfigUrl.replace("{suite-name}", getSuiteName()));
-        }
     }
 
     public IBuildInfo getBuildInfo() {

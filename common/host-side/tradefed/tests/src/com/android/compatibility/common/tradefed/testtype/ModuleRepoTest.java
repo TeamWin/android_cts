@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
-import com.android.compatibility.common.tradefed.testtype.IModuleDef;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.Abi;
@@ -31,8 +30,8 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +86,11 @@ public class ModuleRepoTest extends TestCase {
         "armeabi-v7a FooModuleC",
         "armeabi-v7a FooModuleB"
     };
+    private static final String ROOT_DIR_NAME = "root";
+    private static final String BASE_DIR_NAME = "android-tests";
+    private static final String TESTCASES = "testcases";
+    private static final String ROOT_PROPERTY = "TESTS_ROOT";
+    private static final String SUITE_NAME = "TESTS";
 
     static {
         SERIALS.add(SERIAL1);
@@ -106,12 +110,25 @@ public class ModuleRepoTest extends TestCase {
     private IModuleRepo mRepo;
     private File mTestsDir;
     private IBuildInfo mBuild;
+    private File mRoot = null;
 
     @Override
     public void setUp() throws Exception {
         mTestsDir = setUpConfigs();
         mRepo = new ModuleRepo();
-        mBuild = new CompatibilityBuildProvider().getBuild();
+        mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
+        File base = new File(mRoot, BASE_DIR_NAME);
+        base.mkdirs();
+        File tests = new File(base, TESTCASES);
+        tests.mkdirs();
+        System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
+        CompatibilityBuildProvider provider = new CompatibilityBuildProvider() {
+            @Override
+            protected String getSuiteInfoName() {
+                return SUITE_NAME;
+            }
+        };
+        mBuild = provider.getBuild();
     }
 
     private File setUpConfigs() throws IOException {
@@ -138,6 +155,7 @@ public class ModuleRepoTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         tearDownConfigs(mTestsDir);
+        FileUtil.recursiveDelete(mRoot);
     }
 
     private void tearDownConfigs(File testsDir) {

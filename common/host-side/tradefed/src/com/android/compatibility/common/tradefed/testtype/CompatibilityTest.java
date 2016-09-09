@@ -75,7 +75,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
-    private static final String PLAN_OPTION = "plan";
     private static final String MODULE_OPTION = "module";
     private static final String TEST_OPTION = "test";
     private static final String MODULE_ARG_OPTION = "module-arg";
@@ -89,16 +88,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String PRIMARY_ABI_RUN = "primary-abi-only";
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
-    private static final String URL = "dynamic-config-url";
 
-    /* API Key for compatibility test project, used for dynamic configuration */
-    private static final String API_KEY = "AIzaSyAbwX5JRlmsLeygY2WWihpIJPXFLueOQ3U";
-
-
-    @Option(name = PLAN_OPTION,
-            description = "the test suite plan to run, such as \"everything\" or \"cts\"",
-            importance = Importance.ALWAYS)
-    private String mSuitePlan;
 
     @Option(name = INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
@@ -159,11 +149,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Option(name = SHARD_OPTION,
             description = "split the modules up to run on multiple devices concurrently.")
     private int mShards = 1;
-
-    @Option(name = URL,
-            description = "Specify the url for override config")
-    private String mURL = "https://androidpartner.googleapis.com/v1/dynamicconfig/"
-            + "suites/{suite-name}/modules/{module}/version/{version}?key=" + API_KEY;
 
     @Option(name = SKIP_DEVICE_INFO_OPTION,
             shortName = 'd',
@@ -297,11 +282,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         mBuildHelper = new CompatibilityBuildHelper(buildInfo);
-        // Initializing the mBuildHelper also updates properties in buildInfo.
-        // TODO(nicksauer): Keeping invocation properties around via buildInfo
-        // is confusing and would be better done in an "InvocationInfo".
-        // Note, the current time is used to generated the result directory.
-        mBuildHelper.init(mSuitePlan, mURL, System.currentTimeMillis());
     }
 
     /**

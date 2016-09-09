@@ -371,8 +371,6 @@ public class CompatibilityConsole extends Console {
         if (mBuildHelper == null) {
             CompatibilityBuildProvider buildProvider = new CompatibilityBuildProvider();
             mBuildHelper = new CompatibilityBuildHelper(buildProvider.getBuild());
-            mBuildHelper.init(
-                "" /* suite plan */, "" /* dynamic config url */, -1 /*startTimeMs*/);
         }
         return mBuildHelper;
     }

@@ -27,7 +27,6 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
@@ -58,13 +57,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -600,7 +596,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     /**
      * When enabled, upload the result to a server.
      */
-    private void uploadResult(File resultFile) throws IOException {
+    private void uploadResult(File resultFile) {
         if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
             try {
                 info("Result Server: %d", mUploader.uploadResult(resultFile, mReferenceUrl));
