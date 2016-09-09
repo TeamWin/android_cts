@@ -124,6 +124,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER));
     }
 
+    public void testLargeAlbumArt() {
+        setDataSourceFd(R.raw.largealbumart);
+
+        assertNotNull("couldn't retrieve album art", mRetriever.getEmbeddedPicture());
+    }
+
     public void testSetDataSourceNullPath() {
         try {
             mRetriever.setDataSource((String)null);
