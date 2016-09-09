@@ -21,7 +21,9 @@ import android.app.Activity;
 import android.app.UiAutomation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityWindowInfo;
 
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -53,6 +55,7 @@ public abstract class AccessibilityActivityTestCase<T extends Activity>
 
         AccessibilityServiceInfo info = getInstrumentation().getUiAutomation().getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         info.flags &= ~AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
         getInstrumentation().getUiAutomation().setServiceInfo(info);
 
@@ -96,13 +99,17 @@ public abstract class AccessibilityActivityTestCase<T extends Activity>
                 new UiAutomation.AccessibilityEventFilter() {
             @Override
             public boolean accept(AccessibilityEvent event) {
-                final int eventType = event.getEventType();
-                // Do not check the package name since an event of this type may
-                // come concurrently from the app and from the IME (since input
-                // focus goes to the first focusable) but we dispatch one event
-                // of each type within a timeout. Hence, sometimes the window
-                // change event from the IME may override the one from the app.
-                return (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
+                List<AccessibilityWindowInfo> windows = getInstrumentation().getUiAutomation()
+                        .getWindows();
+                // Wait for a window state changed event with our window showing
+                for (int i = 0; i < windows.size(); i++) {
+                    if (windows.get(i).getRoot().getPackageName()
+                            .equals(getActivity().getPackageName())) {
+                        return (event.getEventType()
+                                == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
+                    }
+                }
+                return false;
             }
         },
         TIMEOUT_ASYNC_PROCESSING);
