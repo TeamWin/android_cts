@@ -183,7 +183,8 @@ def get_available_output_sizes(fmt, props, max_size=None, match_ar_size=None):
         ar = match_ar_size[0] / float(match_ar_size[1])
         out_sizes = [s for s in out_sizes if
                 abs(ar - s[0] / float(s[1])) <= AR_TOLERANCE]
-    out_sizes.sort(reverse=True)
+    out_sizes.sort(reverse=True, key=lambda s: s[0]) # 1st pass, sort by width
+    out_sizes.sort(reverse=True, key=lambda s: s[0]*s[1]) # sort by area
     return out_sizes
 
 def set_filter_off_or_fast_if_possible(props, req, available_modes, filter):
