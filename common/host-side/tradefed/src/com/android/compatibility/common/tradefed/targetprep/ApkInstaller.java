@@ -18,7 +18,6 @@ package com.android.compatibility.common.tradefed.targetprep;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionClass;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.targetprep.TestAppInstallSetup;
 
@@ -44,8 +43,8 @@ public class ApkInstaller extends TestAppInstallSetup {
      * {@inheritDoc}
      */
     @Override
-    protected File getLocalPathForFilename(IBuildInfo buildInfo, String apkFileName,
-            ITestDevice device) throws TargetSetupError {
+    protected File getLocalPathForFilename(IBuildInfo buildInfo, String apkFileName)
+            throws TargetSetupError {
         File apkFile = null;
         try {
             apkFile = new File(getTestsDir(buildInfo), apkFileName);
@@ -53,8 +52,7 @@ public class ApkInstaller extends TestAppInstallSetup {
                 throw new FileNotFoundException();
             }
         } catch (FileNotFoundException e) {
-            throw new TargetSetupError(String.format("%s not found", apkFileName), e,
-                    device.getDeviceDescriptor());
+            throw new TargetSetupError(String.format("%s not found", apkFileName), e);
         }
         return apkFile;
     }
