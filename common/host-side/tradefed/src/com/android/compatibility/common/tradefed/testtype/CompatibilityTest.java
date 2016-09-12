@@ -659,7 +659,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 cleanedFilters.add(filter); // Module name matches, filter passes
             }
         }
-        filters = cleanedFilters;
+        filters.clear();
+        filters.addAll(cleanedFilters);
     }
 
     /**
