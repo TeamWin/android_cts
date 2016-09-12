@@ -16,7 +16,7 @@
 
 #include <tinyxml.h>
 
-#include <UniquePtr.h>
+#include <memory>
 
 #include "Log.h"
 #include "GenericFactory.h"
@@ -103,7 +103,7 @@ TaskGeneric* ModelBuilder::parseGeneric(const TiXmlElement& self, int tableIndex
 {
     TaskGeneric::TaskType typeSelf(mParsingTable[tableIndex].type);
     int Nchildren = mParsingTable[tableIndex].Nchildren;
-    UniquePtr<TaskGeneric> taskSelf(mFactory->createTask(typeSelf));
+    std::unique_ptr<TaskGeneric> taskSelf(mFactory->createTask(typeSelf));
     if (taskSelf.get() == NULL) {
         return NULL;
     }
@@ -148,7 +148,7 @@ TaskGeneric* ModelBuilder::parseGeneric(const TiXmlElement& self, int tableIndex
                     typeSelf);
             return NULL;
         }
-        UniquePtr<TaskGeneric> taskChild(parseGeneric(*child, i));
+        std::unique_ptr<TaskGeneric> taskChild(parseGeneric(*child, i));
         if (taskChild.get() == NULL) {
             LOGE("ModelBuilder::parseGeneric failed in parsing child type %d for type %d",
                     childType, typeSelf);
@@ -184,7 +184,7 @@ TaskCase* ModelBuilder::parseCase(const TiXmlElement& root)
 
 TaskBatch* ModelBuilder::parseBatch(const TiXmlElement& root, const android::String8& xmlFileName)
 {
-    UniquePtr<TaskBatch> batch(
+    std::unique_ptr<TaskBatch> batch(
             reinterpret_cast<TaskBatch*>(mFactory->createTask(TaskGeneric::ETaskBatch)));
     if (batch.get() == NULL) {
         LOGE("ModelBuilder::handleBatch cannot create TaskBatch");
@@ -201,7 +201,7 @@ TaskBatch* ModelBuilder::parseBatch(const TiXmlElement& root, const android::Str
     }
     android::String8 path = xmlFileName.getPathDir();
 
-    UniquePtr<TaskCase> testCase;
+    std::unique_ptr<TaskCase> testCase;
     int i = 0;
     while (1) {
         if (inc == NULL) {
