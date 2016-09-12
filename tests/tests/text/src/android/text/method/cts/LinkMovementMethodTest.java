@@ -21,7 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -155,7 +154,6 @@ public class LinkMovementMethodTest {
     @Test(expected=NullPointerException.class)
     public void testOnTakeFocusNullSpannable() {
         LinkMovementMethod method = new LinkMovementMethod();
-
         method.onTakeFocus(new TextViewNoIme(mActivity), null, View.FOCUS_RIGHT);
     }
 
@@ -222,30 +220,26 @@ public class LinkMovementMethodTest {
         assertFalse(mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER, event));
         verify(mClickable0, never()).onClick(any());
         verify(mClickable1, never()).onClick(any());
+    }
 
-        // null parameters
-        try {
-            mMethod.onKeyDown(null, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER,
-                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER));
-            fail("The method did not throw NullPointerException when param view is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnKeyDown_nullViewParam() {
+        mMethod.onKeyDown(null, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER,
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER));
+    }
 
-        try {
-            mMethod.onKeyDown(mView, null, KeyEvent.KEYCODE_DPAD_CENTER,
-                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER));
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnKeyDown_nullSpannableParam() {
+        mMethod.onKeyDown(mView, null, KeyEvent.KEYCODE_DPAD_CENTER,
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER));
+    }
 
-        try {
-            mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER, null);
-            fail("The method did not throw NullPointerException when param keyEvent is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnKeyDown_nullKeyEventParam() {
+        mMethod.onKeyDown(mView, mSpannable, KeyEvent.KEYCODE_DPAD_CENTER, null);
     }
 
     @UiThreadTest
@@ -271,8 +265,8 @@ public class LinkMovementMethodTest {
 
         // release on first line
         verify(mClickable0, never()).onClick(any());
-        assertTrue(releaseOnLine(0));
-        verify(mClickable0, times(1)).onClick(any());
+        assertFalse(releaseOnLine(0));
+        verify(mClickable0, never()).onClick(any());
 
         // press on second line (unclickable)
         assertSelectClickableLeftToRight(mSpannable, mClickable0);
@@ -286,40 +280,38 @@ public class LinkMovementMethodTest {
 
         // release on last line
         verify(mClickable1, never()).onClick(any());
-        assertTrue(releaseOnLine(2));
-        verify(mClickable1, times(1)).onClick(any());
+        assertFalse(releaseOnLine(2));
+        verify(mClickable1, never()).onClick(any());
 
         // release on second line (unclickable)
         assertSelectClickableLeftToRight(mSpannable, mClickable1);
         // just clear selection
-        releaseOnLine(1);
+        pressOnLine(1);
         assertSelection(mSpannable, -1);
+    }
 
-        // null parameters
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnTouchEvent_nullViewParam() {
         long now = SystemClock.uptimeMillis();
         int y = (mView.getLayout().getLineTop(1) + mView.getLayout().getLineBottom(1)) / 2;
-        try {
-            mMethod.onTouchEvent(null, mSpannable,
-                    MotionEvent.obtain(now, now, MotionEvent.ACTION_UP, 5, y, 0));
-            fail("The method did not throw NullPointerException when param view is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+        mMethod.onTouchEvent(null, mSpannable,
+                MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, 5, y, 0));
+    }
 
-        try {
-            mMethod.onTouchEvent(mView, null,
-                    MotionEvent.obtain(now, now, MotionEvent.ACTION_UP, 5, y, 0));
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnTouchEvent_nullSpannableParam() {
+        long now = SystemClock.uptimeMillis();
+        int y = (mView.getLayout().getLineTop(1) + mView.getLayout().getLineBottom(1)) / 2;
+        mMethod.onTouchEvent(mView, null,
+                MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, 5, y, 0));
+    }
 
-        try {
-            mMethod.onTouchEvent(mView, mSpannable, null);
-            fail("The method did not throw NullPointerException when param keyEvent is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testOnTouchEvent_nullKeyEventParam() {
+        mMethod.onTouchEvent(mView, mSpannable, null);
     }
 
     @UiThreadTest
@@ -336,21 +328,20 @@ public class LinkMovementMethodTest {
 
         assertFalse(method.up(mView, mSpannable));
         assertSelectClickableRightToLeft(mSpannable, mClickable0);
+    }
 
-        // null parameters
-        try {
-            method.up(null, mSpannable);
-            fail("The method did not throw NullPointerException when param view is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testUp_nullViewParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.up(null, mSpannable);
+    }
 
-        try {
-            method.up(mView, null);
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testUp_nullSpannableParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.up(mView, null);
     }
 
     @UiThreadTest
@@ -367,21 +358,20 @@ public class LinkMovementMethodTest {
 
         assertFalse(method.down(mView, mSpannable));
         assertSelectClickableLeftToRight(mSpannable, mClickable1);
+    }
 
-        // null parameters
-        try {
-            method.down(null, mSpannable);
-            fail("The method did not throw NullPointerException when param view is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testDown_nullViewParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.down(null, mSpannable);
+    }
 
-        try {
-            method.down(mView, null);
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testDown_nullSpannableParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.down(mView, null);
     }
 
     @UiThreadTest
@@ -398,21 +388,20 @@ public class LinkMovementMethodTest {
 
         assertFalse(method.left(mView, mSpannable));
         assertSelectClickableRightToLeft(mSpannable, mClickable0);
+    }
 
-        // null parameters
-        try {
-            method.left(null, mSpannable);
-            fail("The method did not throw NullPointerException when param view is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testLeft_nullViewParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.left(null, mSpannable);
+    }
 
-        try {
-            method.left(mView, null);
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testLeft_nullSpannableParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.left(mView, null);
     }
 
     @UiThreadTest
@@ -429,21 +418,20 @@ public class LinkMovementMethodTest {
 
         assertFalse(method.right(mView, mSpannable));
         assertSelectClickableLeftToRight(mSpannable, mClickable1);
+    }
 
-        // null parameters
-        try {
-            method.right(null, mSpannable);
-            fail("The method did not throw NullPointerException when param view is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testRight_nullViewParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.right(null, mSpannable);
+    }
 
-        try {
-            method.right(mView, null);
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    @UiThreadTest
+    @Test(expected=NullPointerException.class)
+    public void testRight_nullSpannableParam() {
+        final MyLinkMovementMethod method = new MyLinkMovementMethod();
+        method.right(mView, null);
     }
 
     @UiThreadTest
@@ -480,12 +468,12 @@ public class LinkMovementMethodTest {
         assertSelection(spannable, -1);
         assertEquals(0, spannable.getSpans(0, spannable.length(), Object.class).length);
 
-        try {
-            method.initialize(mView, null);
-            fail("The method did not throw NullPointerException when param spannable is null.");
-        } catch (NullPointerException e) {
-            // expected
-        }
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testInitialize_nullViewParam() {
+        final LinkMovementMethod method = new LinkMovementMethod();
+        method.initialize(mView, null);
     }
 
     private ClickableSpan markClickable(final int start, final int end) throws Throwable {
