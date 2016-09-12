@@ -218,14 +218,14 @@ public class MediaSessionTest extends AndroidTestCase {
             assertEquals(repeatMode, mCallback.mRepeatMode);
             assertEquals(repeatMode, controller.getRepeatMode());
 
-            // test setShuffleMode
+            // test setShuffleModeEnabled
             mCallback.resetLocked();
-            final boolean shuffleMode = true;
-            mSession.setShuffleMode(shuffleMode);
+            final boolean shuffleModeEnabled = true;
+            mSession.setShuffleModeEnabled(shuffleModeEnabled);
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnShuffleModeChangedCalled);
-            assertEquals(shuffleMode, mCallback.mShuffleMode);
-            assertEquals(shuffleMode, controller.getShuffleMode());
+            assertEquals(shuffleModeEnabled, mCallback.mShuffleModeEnabled);
+            assertEquals(shuffleModeEnabled, controller.isShuffleModeEnabled());
 
             // test setActivity
             mSession.setActive(true);
@@ -464,7 +464,7 @@ public class MediaSessionTest extends AndroidTestCase {
         private volatile Bundle mExtras;
         private volatile MediaController.PlaybackInfo mPlaybackInfo;
         private volatile int mRepeatMode;
-        private volatile boolean mShuffleMode;
+        private volatile boolean mShuffleModeEnabled;
 
         public void resetLocked() {
             mOnPlaybackStateChangedCalled = false;
@@ -485,7 +485,7 @@ public class MediaSessionTest extends AndroidTestCase {
             mExtras = null;
             mPlaybackInfo = null;
             mRepeatMode = PlaybackState.REPEAT_MODE_NONE;
-            mShuffleMode = false;
+            mShuffleModeEnabled = false;
         }
 
         @Override
@@ -570,10 +570,10 @@ public class MediaSessionTest extends AndroidTestCase {
         }
 
         @Override
-        public void onShuffleModeChanged(boolean shuffleMode) {
+        public void onShuffleModeChanged(boolean enabled) {
             synchronized (mWaitLock) {
                 mOnShuffleModeChangedCalled = true;
-                mShuffleMode = shuffleMode;
+                mShuffleModeEnabled = enabled;
                 mWaitLock.notify();
             }
         }
