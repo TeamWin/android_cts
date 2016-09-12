@@ -16,8 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
+
+import junit.framework.AssertionFailedError;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     private static final String APK_NON_TEST_ONLY = "CtsAccountCheckNonTestOnlyOwnerApp.apk";
     private static final String APK_TEST_ONLY = "CtsAccountCheckTestOnlyOwnerApp.apk";
+    private static final String APK_TEST_ONLY_UPDATE = "CtsAccountCheckTestOnlyOwnerUpdateApp.apk";
     private static final String APK_AUTH = "CtsAccountCheckAuthApp.apk";
 
     private static final String PACKAGE_NON_TEST_ONLY =
@@ -44,12 +46,14 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            runCleanupTestOnlyOwner();
-            runCleanupNonTestOnlyOwner();
+            if (getDevice().getInstalledPackageNames().contains(PACKAGE_AUTH)) {
+                runCleanupTestOnlyOwnerAllowingFailure();
+                runCleanupNonTestOnlyOwnerAllowingFailure();
 
-            // This shouldn't be needed since we're uninstalling the authenticator, but sometimes
-            // the account manager fails to clean up?
-            removeAllAccounts();
+                // This shouldn't be needed since we're uninstalling the authenticator,
+                // but sometimes the account manager fails to clean up?
+                removeAllAccountsAllowingFailure();
+            }
 
             getDevice().uninstallPackage(PACKAGE_AUTH);
             getDevice().uninstallPackage(PACKAGE_TEST_ONLY);
@@ -63,15 +67,36 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     }
 
     private void runCleanupTestOnlyOwner() throws Exception {
-        removeAdmin(OWNER_TEST_ONLY, mPrimaryUserId);
+        assertTrue(removeAdmin(OWNER_TEST_ONLY, mPrimaryUserId));
+    }
+
+    private void runCleanupTestOnlyOwnerAllowingFailure() throws Exception {
+        try {
+            runCleanupTestOnlyOwner();
+        } catch (AssertionFailedError ignore) {
+        }
     }
 
     private void runCleanupNonTestOnlyOwner() throws Exception {
         runTest("testCleanUpNonTestOwner");
     }
 
+    private void runCleanupNonTestOnlyOwnerAllowingFailure() throws Exception {
+        try {
+            runCleanupNonTestOnlyOwner();
+        } catch (AssertionFailedError ignore) {
+        }
+    }
+
     private void removeAllAccounts() throws Exception {
         runTest("testRemoveAllAccounts");
+    }
+
+    private void removeAllAccountsAllowingFailure() throws Exception {
+        try {
+            removeAllAccounts();
+        } catch (AssertionFailedError ignore) {
+        }
     }
 
     private void assertTestOnlyInstallable() throws Exception {
@@ -92,18 +117,18 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
 
     private void assertTestOnlyNotInstallable() throws Exception {
         setDeviceOwnerExpectingFailure(OWNER_TEST_ONLY, mPrimaryUserId);
-        runCleanupTestOnlyOwner();
+        runCleanupTestOnlyOwnerAllowingFailure();
 
         setProfileOwnerExpectingFailure(OWNER_TEST_ONLY, mPrimaryUserId);
-        runCleanupTestOnlyOwner();
+        runCleanupTestOnlyOwnerAllowingFailure();
     }
 
     private void assertNonTestOnlyNotInstallable() throws Exception {
         setDeviceOwnerExpectingFailure(OWNER_NON_TEST_ONLY, mPrimaryUserId);
-        runCleanupNonTestOnlyOwner();
+        runCleanupNonTestOnlyOwnerAllowingFailure();
 
         setProfileOwnerExpectingFailure(OWNER_NON_TEST_ONLY, mPrimaryUserId);
-        runCleanupNonTestOnlyOwner();
+        runCleanupNonTestOnlyOwnerAllowingFailure();
     }
 
     private boolean hasAccounts() throws Exception {
@@ -130,9 +155,9 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
         installAppAsUser(APK_NON_TEST_ONLY, mPrimaryUserId);
         installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
 
-        runCleanupTestOnlyOwner();
-        runCleanupNonTestOnlyOwner();
-        removeAllAccounts();
+        runCleanupTestOnlyOwnerAllowingFailure();
+        runCleanupNonTestOnlyOwnerAllowingFailure();
+        removeAllAccountsAllowingFailure();
         try {
             runTest("testCheckPreconfiguredAccountFeatures");
 
@@ -207,6 +232,40 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
 
             // Dump accounts
             throw th;
+        }
+    }
+
+    /**
+     * Make sure even if the "test-only" flag changes when an app is updated, we still respect
+     * the original value.
+     */
+    public void testInheritTestOnly() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        try {
+            installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
+
+            // Set as DO.
+            setDeviceOwnerOrFail(OWNER_TEST_ONLY, mPrimaryUserId);
+
+            // Override with a package that's not test-only.
+            installAppAsUser(APK_TEST_ONLY_UPDATE, mPrimaryUserId);
+
+            // But DPMS keeps the original test-only flag, so it's still removable.
+            runCleanupTestOnlyOwner();
+
+            return;
+        } catch (Throwable e) {
+            // If failed, re-install the APK with test-only=true.
+            try {
+                installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
+                runCleanupTestOnlyOwner();
+            } catch (Exception inner) {
+                CLog.e("Unable to clean up after a failure: " + e.getMessage());
+            }
+
+            throw e;
         }
     }
 }
