@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.cts.util.PollingCheck;
+import android.cts.util.WidgetTestUtils;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -78,26 +79,21 @@ public class FrameMetricsListenerTest {
         mActivityRule.runOnUiThread(() -> mActivity.getWindow().
                 addOnFrameMetricsAvailableListener(listener, handler));
 
-        mInstrumentation.waitForIdleSync();
+        scrollView.postInvalidate();
 
-        mActivityRule.runOnUiThread(() -> scrollView.fling(-100));
-
-        mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(() -> data.size() != 0);
 
         mActivityRule.runOnUiThread(() -> {
             mActivity.getWindow().removeOnFrameMetricsAvailableListener(listener);
         });
-        mInstrumentation.waitForIdleSync();
 
         data.clear();
 
-        mActivityRule.runOnUiThread(() -> {
-            scrollView.fling(100);
-            assertEquals(0, data.size());
-        });
-
-        mInstrumentation.waitForIdleSync();
+        // Produce 5 frames and assert no metric listeners were invoked
+        for (int i = 0; i < 5; i++) {
+            WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, scrollView, null);
+        }
+        assertEquals(0, data.size());
     }
 
     @Test
