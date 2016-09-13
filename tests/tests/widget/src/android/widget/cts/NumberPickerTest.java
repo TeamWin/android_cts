@@ -332,6 +332,8 @@ public class NumberPickerTest {
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                NumberPicker.OnScrollListener.SCROLL_STATE_FLING);
+        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_IDLE);
         verifyNoMoreInteractions(mockScrollListener);
     }
@@ -376,6 +378,8 @@ public class NumberPickerTest {
         InOrder inOrder = inOrder(mockScrollListener);
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+        inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
+                NumberPicker.OnScrollListener.SCROLL_STATE_FLING);
         inOrder.verify(mockScrollListener).onScrollStateChange(mNumberPicker,
                 NumberPicker.OnScrollListener.SCROLL_STATE_IDLE);
         verifyNoMoreInteractions(mockScrollListener);
