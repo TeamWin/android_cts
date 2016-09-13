@@ -38,9 +38,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Container, parser, and generator of TestPlan info.
+ * Container, parser, and generator of SubPlan info.
  */
-public class TestPlan extends AbstractXmlParser implements ITestPlan {
+public class SubPlan extends AbstractXmlParser implements ISubPlan {
 
     private final Set<String> mIncludes;
     private final Set<String> mExcludes;
@@ -48,17 +48,16 @@ public class TestPlan extends AbstractXmlParser implements ITestPlan {
     private static final String ENCODING = "UTF-8";
     private static final String NS = null; // namespace used for XML serializer
     private static final String VERSION_ATTR = "version";
-    private static final String PLAN_VERSION = "2.0";
+    private static final String SUBPLAN_VERSION = "2.0";
 
-
-    private static final String PLAN_TAG = "TestPlan";
+    private static final String SUBPLAN_TAG = "SubPlan";
     private static final String ENTRY_TAG = "Entry";
     private static final String EXCLUDE_ATTR = "exclude";
     private static final String INCLUDE_ATTR = "include";
     private static final String ABI_ATTR = "abi";
     private static final String NAME_ATTR = "name";
 
-    public TestPlan() {
+    public SubPlan() {
         mIncludes = new HashSet<String>();
         mExcludes = new HashSet<String>();
     }
@@ -202,8 +201,8 @@ public class TestPlan extends AbstractXmlParser implements ITestPlan {
         serializer.setOutput(stream, ENCODING);
         serializer.startDocument(ENCODING, false);
         serializer.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
-        serializer.startTag(NS, PLAN_TAG);
-        serializer.attribute(NS, VERSION_ATTR, PLAN_VERSION);
+        serializer.startTag(NS, SUBPLAN_TAG);
+        serializer.attribute(NS, VERSION_ATTR, SUBPLAN_VERSION);
 
         ArrayList<String> sortedIncludes = new ArrayList<String>(mIncludes);
         ArrayList<String> sortedExcludes = new ArrayList<String>(mExcludes);
@@ -220,7 +219,7 @@ public class TestPlan extends AbstractXmlParser implements ITestPlan {
             serializer.endTag(NS, ENTRY_TAG);
         }
 
-        serializer.endTag(NS, PLAN_TAG);
+        serializer.endTag(NS, SUBPLAN_TAG);
         serializer.endDocument();
     }
 
