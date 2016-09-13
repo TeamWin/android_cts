@@ -267,11 +267,11 @@ public class MediaControllerTest extends AndroidTestCase {
             assertEquals(repeatMode, mCallback.mRepeatMode);
 
             mCallback.reset();
-            final boolean shuffleMode = true;
-            controls.setShuffleMode(shuffleMode);
+            final boolean shuffleModeEnabled = true;
+            controls.setShuffleModeEnabled(shuffleModeEnabled);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSetShuffleModeCalled);
-            assertEquals(shuffleMode, mCallback.mShuffleMode);
+            assertTrue(mCallback.mOnSetShuffleModeEnabledCalled);
+            assertEquals(shuffleModeEnabled, mCallback.mShuffleModeEnabled);
         }
     }
 
@@ -304,7 +304,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private Bundle mExtras;
         private ResultReceiver mCommandCallback;
         private int mRepeatMode;
-        private boolean mShuffleMode;
+        private boolean mShuffleModeEnabled;
 
         private boolean mOnPlayCalled;
         private boolean mOnPauseCalled;
@@ -326,7 +326,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private boolean mOnPrepareFromSearchCalled;
         private boolean mOnPrepareFromUriCalled;
         private boolean mOnSetRepeatModeCalled;
-        private boolean mOnSetShuffleModeCalled;
+        private boolean mOnSetShuffleModeEnabledCalled;
 
         public void reset() {
             mSeekPosition = -1;
@@ -339,7 +339,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mExtras = null;
             mCommand = null;
             mCommandCallback = null;
-            mShuffleMode = false;
+            mShuffleModeEnabled = false;
             mRepeatMode = PlaybackState.REPEAT_MODE_NONE;
 
             mOnPlayCalled = false;
@@ -362,7 +362,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mOnPrepareFromSearchCalled = false;
             mOnPrepareFromUriCalled = false;
             mOnSetRepeatModeCalled = false;
-            mOnSetShuffleModeCalled = false;
+            mOnSetShuffleModeEnabledCalled = false;
         }
 
         @Override
@@ -547,10 +547,10 @@ public class MediaControllerTest extends AndroidTestCase {
         }
 
         @Override
-        public void onSetShuffleMode(boolean shuffleMode) {
+        public void onSetShuffleModeEnabled(boolean enabled) {
             synchronized (mWaitLock) {
-                mOnSetShuffleModeCalled = true;
-                mShuffleMode = shuffleMode;
+                mOnSetShuffleModeEnabledCalled = true;
+                mShuffleModeEnabled = enabled;
                 mWaitLock.notify();
             }
         }
