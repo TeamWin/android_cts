@@ -50,7 +50,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 
-include $(BUILD_JAVA_LIBRARY)
+include $(BUILD_STATIC_JAVA_LIBRARY)
 
 #==========================================================
 # Build the run listener
@@ -64,4 +64,4 @@ LOCAL_SRC_FILES := $(call all-java-files-under,src/com/android/cts/runner)
 LOCAL_MODULE := cts-test-runner
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
 
-include $(BUILD_JAVA_LIBRARY)
+include $(BUILD_STATIC_JAVA_LIBRARY)
