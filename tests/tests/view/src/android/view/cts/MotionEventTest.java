@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
@@ -26,6 +27,7 @@ import android.os.Parcelable;
 import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -84,7 +86,7 @@ public class MotionEventTest {
     }
 
     @Test
-    public void testObtain1() {
+    public void testObtainBasic() {
         mMotionEvent1 = MotionEvent.obtain(mDownTime, mEventTime,
                 MotionEvent.ACTION_DOWN, X_3F, Y_4F, META_STATE);
         assertNotNull(mMotionEvent1);
@@ -105,48 +107,106 @@ public class MotionEventTest {
     }
 
     @Test
-    public void testObtain2() {
-        MotionEvent motionEvent = MotionEvent.obtain(mDownTime, mEventTime,
-                MotionEvent.ACTION_DOWN, X_3F, Y_4F, META_STATE);
-        mMotionEvent1 = MotionEvent.obtain(motionEvent);
-        assertNotNull(mMotionEvent1);
-        assertEquals(motionEvent.getDownTime(), mMotionEvent1.getDownTime());
-        assertEquals(motionEvent.getEventTime(), mMotionEvent1.getEventTime());
-        assertEquals(motionEvent.getAction(), mMotionEvent1.getAction());
-        assertEquals(motionEvent.getX(), mMotionEvent1.getX(), DELTA);
-        assertEquals(motionEvent.getY(), mMotionEvent1.getY(), DELTA);
-        assertEquals(motionEvent.getX(), mMotionEvent1.getRawX(), DELTA);
-        assertEquals(motionEvent.getY(), mMotionEvent1.getRawY(), DELTA);
-        assertEquals(motionEvent.getMetaState(), mMotionEvent1.getMetaState());
-        assertEquals(motionEvent.getDeviceId(), mMotionEvent1.getDeviceId());
-        assertEquals(motionEvent.getEdgeFlags(), mMotionEvent1.getEdgeFlags());
-        assertEquals(motionEvent.getPressure(), mMotionEvent1.getPressure(), DELTA);
-        assertEquals(motionEvent.getSize(), mMotionEvent1.getSize(), DELTA);
-        assertEquals(motionEvent.getXPrecision(), mMotionEvent1.getXPrecision(), DELTA);
-        assertEquals(motionEvent.getYPrecision(), mMotionEvent1.getYPrecision(), DELTA);
+    public void testObtainFromMotionEvent() {
+        mMotionEventDynamic = MotionEvent.obtain(mMotionEvent2);
+        assertNotNull(mMotionEventDynamic);
+        assertEquals(mMotionEvent2.getDownTime(), mMotionEventDynamic.getDownTime());
+        assertEquals(mMotionEvent2.getEventTime(), mMotionEventDynamic.getEventTime());
+        assertEquals(mMotionEvent2.getAction(), mMotionEventDynamic.getAction());
+        assertEquals(mMotionEvent2.getX(), mMotionEventDynamic.getX(), DELTA);
+        assertEquals(mMotionEvent2.getY(), mMotionEventDynamic.getY(), DELTA);
+        assertEquals(mMotionEvent2.getX(), mMotionEventDynamic.getRawX(), DELTA);
+        assertEquals(mMotionEvent2.getY(), mMotionEventDynamic.getRawY(), DELTA);
+        assertEquals(mMotionEvent2.getMetaState(), mMotionEventDynamic.getMetaState());
+        assertEquals(mMotionEvent2.getDeviceId(), mMotionEventDynamic.getDeviceId());
+        assertEquals(mMotionEvent2.getEdgeFlags(), mMotionEventDynamic.getEdgeFlags());
+        assertEquals(mMotionEvent2.getPressure(), mMotionEventDynamic.getPressure(), DELTA);
+        assertEquals(mMotionEvent2.getSize(), mMotionEventDynamic.getSize(), DELTA);
+        assertEquals(mMotionEvent2.getXPrecision(), mMotionEventDynamic.getXPrecision(), DELTA);
+        assertEquals(mMotionEvent2.getYPrecision(), mMotionEventDynamic.getYPrecision(), DELTA);
     }
 
     @Test
-    public void testObtain3() {
-        mMotionEvent1 = null;
-        mMotionEvent1 = MotionEvent.obtain(mDownTime, mEventTime,
+    public void testObtainAllFields() {
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
                 MotionEvent.ACTION_DOWN, X_3F, Y_4F, PRESSURE_1F, SIZE_1F, META_STATE,
                 X_PRECISION_3F, Y_PRECISION_4F, DEVICE_ID_1, EDGE_FLAGS);
-        assertNotNull(mMotionEvent1);
-        assertEquals(mDownTime, mMotionEvent1.getDownTime());
-        assertEquals(mEventTime, mMotionEvent1.getEventTime());
-        assertEquals(MotionEvent.ACTION_DOWN, mMotionEvent1.getAction());
-        assertEquals(X_3F, mMotionEvent1.getX(), DELTA);
-        assertEquals(Y_4F, mMotionEvent1.getY(), DELTA);
-        assertEquals(X_3F, mMotionEvent1.getRawX(), DELTA);
-        assertEquals(Y_4F, mMotionEvent1.getRawY(), DELTA);
-        assertEquals(META_STATE, mMotionEvent1.getMetaState());
-        assertEquals(DEVICE_ID_1, mMotionEvent1.getDeviceId());
-        assertEquals(EDGE_FLAGS, mMotionEvent1.getEdgeFlags());
-        assertEquals(PRESSURE_1F, mMotionEvent1.getPressure(), DELTA);
-        assertEquals(SIZE_1F, mMotionEvent1.getSize(), DELTA);
-        assertEquals(X_PRECISION_3F, mMotionEvent1.getXPrecision(), DELTA);
-        assertEquals(Y_PRECISION_4F, mMotionEvent1.getYPrecision(), DELTA);
+        assertNotNull(mMotionEventDynamic);
+        assertEquals(mDownTime, mMotionEventDynamic.getDownTime());
+        assertEquals(mEventTime, mMotionEventDynamic.getEventTime());
+        assertEquals(MotionEvent.ACTION_DOWN, mMotionEventDynamic.getAction());
+        assertEquals(X_3F, mMotionEventDynamic.getX(), DELTA);
+        assertEquals(Y_4F, mMotionEventDynamic.getY(), DELTA);
+        assertEquals(X_3F, mMotionEventDynamic.getRawX(), DELTA);
+        assertEquals(Y_4F, mMotionEventDynamic.getRawY(), DELTA);
+        assertEquals(META_STATE, mMotionEventDynamic.getMetaState());
+        assertEquals(DEVICE_ID_1, mMotionEventDynamic.getDeviceId());
+        assertEquals(EDGE_FLAGS, mMotionEventDynamic.getEdgeFlags());
+        assertEquals(PRESSURE_1F, mMotionEventDynamic.getPressure(), DELTA);
+        assertEquals(SIZE_1F, mMotionEventDynamic.getSize(), DELTA);
+        assertEquals(X_PRECISION_3F, mMotionEventDynamic.getXPrecision(), DELTA);
+        assertEquals(Y_PRECISION_4F, mMotionEventDynamic.getYPrecision(), DELTA);
+    }
+
+    @Test
+    public void testObtainFromPropertyArrays() {
+        PointerCoordsBuilder coordsBuilder0 =
+                withCoords(X_3F, Y_4F).withPressure(PRESSURE_1F).withSize(SIZE_1F).
+                        withTool(1.2f, 1.4f);
+        PointerCoordsBuilder coordsBuilder1 =
+                withCoords(X_3F + 1.0f, Y_4F - 2.0f).withPressure(PRESSURE_1F + 0.2f).
+                        withSize(SIZE_1F + 0.5f).withTouch(2.2f, 0.6f);
+
+        PointerPropertiesBuilder propertiesBuilder0 =
+                withProperties(0, MotionEvent.TOOL_TYPE_FINGER);
+        PointerPropertiesBuilder propertiesBuilder1 =
+                withProperties(1, MotionEvent.TOOL_TYPE_FINGER);
+
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_MOVE, 2,
+                new PointerProperties[] { propertiesBuilder0.build(), propertiesBuilder1.build() },
+                new PointerCoords[] { coordsBuilder0.build(), coordsBuilder1.build() },
+                META_STATE, 0, X_PRECISION_3F, Y_PRECISION_4F, DEVICE_ID_1, EDGE_FLAGS,
+                InputDevice.SOURCE_TOUCHSCREEN, 0);
+
+        // We expect to have data for two pointers
+        assertEquals(2, mMotionEventDynamic.getPointerCount());
+        assertEquals(0, mMotionEventDynamic.getPointerId(0));
+        assertEquals(1, mMotionEventDynamic.getPointerId(1));
+        assertEquals(0, mMotionEventDynamic.getFlags());
+        verifyCurrentPointerData(mMotionEventDynamic,
+                new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
+                new PointerCoordsBuilder[] { coordsBuilder0, coordsBuilder1 });
+    }
+
+    @Test
+    public void testObtainNoHistory() {
+        // Add two batch to one of our events
+        mMotionEvent2.addBatch(mEventTime + 10, X_3F + 5.0f, Y_4F + 5.0f, 0.5f, 0.5f, 0);
+        mMotionEvent2.addBatch(mEventTime + 20, X_3F + 10.0f, Y_4F + 15.0f, 2.0f, 3.0f, 0);
+        // The newly added batch should be the "new" values of the event
+        withCoords(X_3F + 10.0f, Y_4F + 15.0f).withPressure(2.0f).withSize(3.0f).
+                verifyMatches(mMotionEvent2);
+        assertEquals(mEventTime + 20, mMotionEvent2.getEventTime());
+        // We should have history with 2 entries
+        assertEquals(2, mMotionEvent2.getHistorySize());
+        // The previous data should be history at index 1
+        withCoords(X_3F + 5.0f, Y_4F + 5.0f).withPressure(0.5f).withSize(0.5f).
+                verifyMatchesHistorical(mMotionEvent2, 1);
+        assertEquals(mEventTime + 10, mMotionEvent2.getHistoricalEventTime(1));
+        // And the original data should be history at index 0
+        withCoords(X_3F, Y_4F).withPressure(1.0f).withSize(1.0f).
+                verifyMatchesHistorical(mMotionEvent2, 0);
+        assertEquals(mEventTime, mMotionEvent2.getHistoricalEventTime(0));
+
+        assertEquals(2, mMotionEvent2.getHistorySize());
+
+        mMotionEventDynamic = MotionEvent.obtainNoHistory(mMotionEvent2);
+        // The newly obtained event should have the matching current content
+        withCoords(X_3F + 10.0f, Y_4F + 15.0f).withPressure(2.0f).withSize(3.0f).
+                verifyMatches(mMotionEvent2);
+        // And no history
+        assertEquals(0, mMotionEventDynamic.getHistorySize());
     }
 
     @Test
@@ -364,7 +424,7 @@ public class MotionEventTest {
         PointerPropertiesBuilder propertiesBuilder1 =
                 withProperties(1, MotionEvent.TOOL_TYPE_FINGER);
 
-        mMotionEventDynamic = MotionEvent.obtain(mEventTime, mEventTime,
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
                 MotionEvent.ACTION_MOVE, 2,
                 new PointerProperties[] { propertiesBuilder0.build(), propertiesBuilder1.build() },
                 new PointerCoords[] { coordsBuilder0.build(), coordsBuilder1.build() },
@@ -395,7 +455,7 @@ public class MotionEventTest {
         PointerPropertiesBuilder propertiesBuilder1 =
                 withProperties(1, MotionEvent.TOOL_TYPE_FINGER);
 
-        mMotionEventDynamic = MotionEvent.obtain(mEventTime, mEventTime,
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
                 MotionEvent.ACTION_MOVE, 2,
                 new PointerProperties[] { propertiesBuilder0.build(), propertiesBuilder1.build() },
                 new PointerCoords[] {
@@ -696,6 +756,118 @@ public class MotionEventTest {
         copy.copyFrom(properties);
         assertEquals(1, copy.id);
         assertEquals(MotionEvent.TOOL_TYPE_MOUSE, copy.toolType);
+    }
+
+    @Test
+    public void testActionToString() {
+        final int[] actions = {
+                MotionEvent.ACTION_DOWN,
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_MOVE,
+                MotionEvent.ACTION_CANCEL,
+                MotionEvent.ACTION_OUTSIDE,
+                MotionEvent.ACTION_HOVER_MOVE,
+                MotionEvent.ACTION_SCROLL,
+                MotionEvent.ACTION_HOVER_ENTER,
+                MotionEvent.ACTION_HOVER_EXIT,
+                MotionEvent.ACTION_BUTTON_PRESS,
+                MotionEvent.ACTION_BUTTON_RELEASE
+        };
+
+        // There is no hard guarantee on the actual return result on any specific action
+        // from MotionEvent.actionToString. Verify that we are not crashing on those calls
+        // and that the return result on each is not empty
+        for (int i = 0; i < actions.length; i++) {
+            assertFalse(TextUtils.isEmpty(MotionEvent.actionToString(actions[i])));
+        }
+
+        final int[] pointerActions = {
+                MotionEvent.ACTION_POINTER_UP,
+                MotionEvent.ACTION_POINTER_DOWN
+        };
+
+        for (int i = 0; i < pointerActions.length; i++) {
+            for (int pointer = 0; pointer < 5; pointer++) {
+                int pointerAction =
+                        pointerActions[i] | pointer << MotionEvent.ACTION_POINTER_INDEX_SHIFT;
+                assertFalse(TextUtils.isEmpty(MotionEvent.actionToString(pointerAction)));
+            }
+        }
+    }
+
+    @Test
+    public void testAxisFromToString() {
+        final int[] axes = {
+                MotionEvent.AXIS_X,
+                MotionEvent.AXIS_Y,
+                MotionEvent.AXIS_PRESSURE,
+                MotionEvent.AXIS_SIZE,
+                MotionEvent.AXIS_TOUCH_MAJOR,
+                MotionEvent.AXIS_TOUCH_MINOR,
+                MotionEvent.AXIS_TOOL_MAJOR,
+                MotionEvent.AXIS_TOOL_MINOR,
+                MotionEvent.AXIS_ORIENTATION,
+                MotionEvent.AXIS_VSCROLL,
+                MotionEvent.AXIS_HSCROLL,
+                MotionEvent.AXIS_Z,
+                MotionEvent.AXIS_RX,
+                MotionEvent.AXIS_RY,
+                MotionEvent.AXIS_RZ,
+                MotionEvent.AXIS_HAT_X,
+                MotionEvent.AXIS_HAT_Y,
+                MotionEvent.AXIS_LTRIGGER,
+                MotionEvent.AXIS_RTRIGGER,
+                MotionEvent.AXIS_THROTTLE,
+                MotionEvent.AXIS_RUDDER,
+                MotionEvent.AXIS_WHEEL,
+                MotionEvent.AXIS_GAS,
+                MotionEvent.AXIS_BRAKE,
+                MotionEvent.AXIS_DISTANCE,
+                MotionEvent.AXIS_TILT,
+                MotionEvent.AXIS_SCROLL,
+                MotionEvent.AXIS_RELATIVE_X,
+                MotionEvent.AXIS_RELATIVE_Y,
+                MotionEvent.AXIS_GENERIC_1,
+                MotionEvent.AXIS_GENERIC_2,
+                MotionEvent.AXIS_GENERIC_3,
+                MotionEvent.AXIS_GENERIC_4,
+                MotionEvent.AXIS_GENERIC_5,
+                MotionEvent.AXIS_GENERIC_6,
+                MotionEvent.AXIS_GENERIC_7,
+                MotionEvent.AXIS_GENERIC_8,
+                MotionEvent.AXIS_GENERIC_9,
+                MotionEvent.AXIS_GENERIC_10,
+                MotionEvent.AXIS_GENERIC_11,
+                MotionEvent.AXIS_GENERIC_12,
+                MotionEvent.AXIS_GENERIC_13,
+                MotionEvent.AXIS_GENERIC_14,
+                MotionEvent.AXIS_GENERIC_15,
+                MotionEvent.AXIS_GENERIC_16
+        };
+
+        // There is no hard guarantee on the actual return result on any specific axis
+        // from MotionEvent.axisToString. Verify that we are not crashing on those calls
+        // and that the return result on each is not empty. However, we do expect the two-way
+        // call chain of to/from to get us back to the original integer value.
+        for (int i = 0; i < axes.length; i++) {
+            String axisToString = MotionEvent.axisToString(axes[i]);
+            assertFalse(TextUtils.isEmpty(axisToString));
+            assertEquals(axes[i], MotionEvent.axisFromString(axisToString));
+        }
+    }
+
+    @Test
+    public void testGetActionButton() {
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_BUTTON_PRESS, X_3F, Y_4F, 0);
+        mMotionEventDynamic.setActionButton(MotionEvent.BUTTON_STYLUS_PRIMARY);
+        assertEquals(MotionEvent.BUTTON_STYLUS_PRIMARY, mMotionEventDynamic.getActionButton());
+        mMotionEventDynamic.recycle();
+
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_BUTTON_PRESS, X_3F, Y_4F, 0);
+        mMotionEventDynamic.setActionButton(MotionEvent.BUTTON_SECONDARY);
+        assertEquals(MotionEvent.BUTTON_SECONDARY, mMotionEventDynamic.getActionButton());
     }
 
     private static PointerCoordsBuilder withCoords(float x, float y) {
