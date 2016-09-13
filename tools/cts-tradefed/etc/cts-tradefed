@@ -83,7 +83,11 @@ JAR_DIR=${CTS_ROOT}/android-cts/tools
 JARS="tradefed-prebuilt
   hosttestlib
   compatibility-host-util
-  cts-tradefed"
+  compatibility-host-util-tests
+  cts-tradefed
+  cts-tradefed-tests
+  compatibility-common-util-tests
+  compatibility-tradefed-tests"
 
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}.jar
