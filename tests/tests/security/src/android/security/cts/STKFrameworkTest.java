@@ -17,12 +17,17 @@ package android.security.cts;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
 public class STKFrameworkTest extends AndroidTestCase {
+    private boolean mHasTelephony;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        mHasTelephony = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY);
     }
 
     @Override
@@ -35,6 +40,10 @@ public class STKFrameworkTest extends AndroidTestCase {
      * zero-permission malicious application
      */
     public void testInterceptedSIMCommandsToTelephony() {
+        if (!mHasTelephony) {
+            return;
+        }
+
         Intent intent = new Intent();
         intent.setAction("android.intent.action.stk.command");
         intent.putExtra("STK CMD", "test");
