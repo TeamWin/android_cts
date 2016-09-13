@@ -230,6 +230,51 @@ public class ExternalStorageHostTest extends DeviceTestCase
         }
     }
 
+    /**
+     * Test that apps with read permissions see the appropriate permissions
+     * when apps with r/w permission levels move around their files.
+     */
+    public void testMultiViewMoveConsistency() throws Exception {
+        final int[] users = createUsersForTest();
+        try {
+            wipePrimaryExternalStorage();
+
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(READ_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+            final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
+
+            for (int user : users) {
+                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testFolderSetup", user);
+            }
+            for (int user : users) {
+                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testRWAccess", user);
+            }
+
+            for (int user : users) {
+                runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveAway", user);
+            }
+            for (int user : users) {
+                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testROAccess", user);
+            }
+
+            for (int user : users) {
+                runDeviceTests(WRITE_PKG, ".WriteMultiViewTest", "testMoveBack", user);
+            }
+            for (int user : users) {
+                runDeviceTests(READ_PKG, ".ReadMultiViewTest", "testRWAccess", user);
+            }
+        } finally {
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(READ_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+            removeUsersForTest(users);
+        }
+    }
+
     private void wipePrimaryExternalStorage() throws DeviceNotAvailableException {
         getDevice().executeShellCommand("rm -rf /sdcard/Android");
         getDevice().executeShellCommand("rm -rf /sdcard/DCIM");
