@@ -29,7 +29,6 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
-import com.android.tradefed.util.TimeVal;
 
 import junit.framework.Test;
 

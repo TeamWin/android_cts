@@ -25,12 +25,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Tests for {@link SubPlan}
+ */
 public class SubPlanTest extends TestCase {
 
     private static final String ABI = "armeabi-v7a";
@@ -74,24 +76,28 @@ public class SubPlanTest extends TestCase {
     }
 
     public void testParsing() throws Exception {
-        File subPlanFile = FileUtil.createTempFile("test-subPlan-parsing", ".txt");
-        FileWriter writer = new FileWriter(subPlanFile);
-        Set<String> entries = new HashSet<String>();
-        entries.add(generateEntryXml(ABI, MODULE_A, TEST_1, true)); // include format 1
-        entries.add(generateEntryXml(ABI, MODULE_A, TEST_2, true));
-        entries.add(generateEntryXml(null, null,
-                new TestFilter(ABI, MODULE_A, TEST_3).toString(), true)); // include format 2
-        entries.add(generateEntryXml(null, MODULE_B, null, true));
-        entries.add(generateEntryXml(null, null,
-                new TestFilter(null, MODULE_B, TEST_1).toString(), false));
-        entries.add(generateEntryXml(null, null,
-                new TestFilter(null, MODULE_B, TEST_2).toString(), false));
-        entries.add(generateEntryXml(null, null,
-                new TestFilter(null, MODULE_B, TEST_3).toString(), false));
-        String xml = String.format(XML_BASE, String.join("\n", entries));
-        writer.write(xml);
-        writer.flush();
-        checkSubPlan(subPlanFile);
+        File planFile = FileUtil.createTempFile("test-plan-parsing", ".txt");
+        FileWriter writer = new FileWriter(planFile);
+        try {
+            Set<String> entries = new HashSet<String>();
+            entries.add(generateEntryXml(ABI, MODULE_A, TEST_1, true)); // include format 1
+            entries.add(generateEntryXml(ABI, MODULE_A, TEST_2, true));
+            entries.add(generateEntryXml(null, null,
+                    new TestFilter(ABI, MODULE_A, TEST_3).toString(), true)); // include format 2
+            entries.add(generateEntryXml(null, MODULE_B, null, true));
+            entries.add(generateEntryXml(null, null,
+                    new TestFilter(null, MODULE_B, TEST_1).toString(), false));
+            entries.add(generateEntryXml(null, null,
+                    new TestFilter(null, MODULE_B, TEST_2).toString(), false));
+            entries.add(generateEntryXml(null, null,
+                    new TestFilter(null, MODULE_B, TEST_3).toString(), false));
+            String xml = String.format(XML_BASE, String.join("\n", entries));
+            writer.write(xml);
+            writer.flush();
+            checkSubPlan(planFile);
+        } finally {
+            writer.close();
+        }
     }
 
     private void checkSubPlan(File subPlanFile) throws Exception {

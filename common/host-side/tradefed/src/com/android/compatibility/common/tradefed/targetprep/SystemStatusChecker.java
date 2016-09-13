@@ -100,8 +100,7 @@ public abstract class SystemStatusChecker implements ITargetCleaner {
     }
 
     /**
-     * Returns failure message set by the failed system status check
-     * @return
+     * Returns failure message set by the failed system status check.
      */
     public String getFailureMessage() {
         return mFailureMessage;

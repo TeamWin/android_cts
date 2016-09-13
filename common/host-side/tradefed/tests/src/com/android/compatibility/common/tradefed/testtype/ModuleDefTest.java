@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.tradefed.util.NoOpTestInvocationListener;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -40,9 +38,6 @@ public class ModuleDefTest extends TestCase {
     private static final String NAME = "ModuleName";
     private static final String ABI = "mips64";
     private static final String ID = AbiUtils.createId(ABI, NAME);
-    private static final String CLASS = "android.test.FoorBar";
-    private static final String METHOD_1 = "testBlah1";
-    private static final String TEST_1 = String.format("%s#%s", CLASS, METHOD_1);
 
     public void testAccessors() throws Exception {
         IAbi abi = new Abi(ABI, "");
@@ -99,6 +94,4 @@ public class ModuleDefTest extends TestCase {
             // Do nothing
         }
     }
-
-    private class MockListener extends NoOpTestInvocationListener {}
 }

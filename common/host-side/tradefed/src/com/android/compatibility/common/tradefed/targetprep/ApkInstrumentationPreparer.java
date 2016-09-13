@@ -21,7 +21,6 @@ import com.android.compatibility.common.tradefed.util.NoOpTestInvocationListener
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
-import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -33,8 +32,6 @@ import com.android.tradefed.testtype.AndroidJUnitTest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,10 +71,12 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
             if (instrument(device, buildInfo)) {
                 logInfo("Target preparation successful");
             } else {
-                throw new TargetSetupError("Not all target preparation steps completed");
+                throw new TargetSetupError("Not all target preparation steps completed",
+                        device.getDeviceDescriptor());
             }
         } catch (FileNotFoundException e) {
-            throw new TargetSetupError("Couldn't find apk to instrument", e);
+            throw new TargetSetupError("Couldn't find apk to instrument", e,
+                    device.getDeviceDescriptor());
         }
     }
 

@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.tradefed.util;
 
+import com.android.compatibility.common.tradefed.targetprep.DeviceInfoCollector;
+import com.android.compatibility.common.tradefed.targetprep.ReportLogCollector;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -34,7 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Util class for {@link ReportLogCollector} and {@link DeviceInfoCollector}.
+ * Utility class for {@link ReportLogCollector} and {@link DeviceInfoCollector}.
  */
 public class CollectorUtil {
 

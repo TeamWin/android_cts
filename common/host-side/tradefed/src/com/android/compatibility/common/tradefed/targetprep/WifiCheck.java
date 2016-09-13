@@ -23,9 +23,6 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This preparer ensures that the device is connected to a network.
  * The options "wifi-ssid" and "wifi-psk" allow users of the preparer to attempt connection

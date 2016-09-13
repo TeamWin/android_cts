@@ -22,7 +22,6 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 
-import java.io.File;
 import java.util.Set;
 
 /**
@@ -60,7 +59,7 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
      * Set a list of preparers to allow to run before or after a test.
      * If this list is empty, then all configured preparers will run.
      *
-     * @param a list containing the simple name of the preparer to run.
+     * @param preparerWhitelist list containing the simple name of the preparer to run.
      */
     void setPreparerWhitelist(Set<String> preparerWhitelist);
 

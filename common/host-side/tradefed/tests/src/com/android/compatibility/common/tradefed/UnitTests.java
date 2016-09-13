@@ -17,6 +17,7 @@ package com.android.compatibility.common.tradefed;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
+import com.android.compatibility.common.tradefed.config.ConfigurationFactoryTest;
 import com.android.compatibility.common.tradefed.result.ConsoleReporterTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
 import com.android.compatibility.common.tradefed.result.SubPlanCreatorTest;
@@ -44,9 +45,9 @@ public class UnitTests extends TestSuite {
         addTestSuite(CompatibilityBuildHelperTest.class);
         addTestSuite(CompatibilityConsoleTest.class);
         addTestSuite(CompatibilityTestTest.class);
+        addTestSuite(ConfigurationFactoryTest.class);
         addTestSuite(ConsoleReporterTest.class);
         addTestSuite(ResultReporterTest.class);
-        addTestSuite(CompatibilityTestTest.class);
         addTestSuite(OptionHelperTest.class);
         addTestSuite(CollectorUtilTest.class);
         addTestSuite(ModuleDefTest.class);

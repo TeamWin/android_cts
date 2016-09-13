@@ -16,11 +16,10 @@
 package com.android.compatibility.common.tradefed.util;
 
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.ddmlib.testrunner.ITestRunListener;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
-import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.TestSummary;
 
 import java.util.Map;

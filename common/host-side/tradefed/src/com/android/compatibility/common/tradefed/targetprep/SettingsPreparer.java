@@ -64,18 +64,18 @@ public class SettingsPreparer extends PreconditionPreparer {
 
         if (mSettingName == null) {
             throw new TargetSetupError("The \"device-setting\" option must be defined for the " +
-                    "SettingsPreparer class");
+                    "SettingsPreparer class", device.getDeviceDescriptor());
         }
 
         if (mSettingType == null) {
             throw new TargetSetupError("The \"setting-type\" option must be defined for the " +
-                    "SettingsPreparer class");
+                    "SettingsPreparer class", device.getDeviceDescriptor());
         }
 
         /* At least one of the options "set-value" and "expected-values" must be set */
         if (mSetValue == null && mExpectedSettingValues.isEmpty()) {
             throw new TargetSetupError("At least one of the options \"set-value\" and " +
-                    "\"expected-values\" must be set");
+                    "\"expected-values\" must be set", device.getDeviceDescriptor());
         }
 
         String shellCmdGet = (!mExpectedSettingValues.isEmpty()) ?
@@ -90,7 +90,8 @@ public class SettingsPreparer extends PreconditionPreparer {
             if (!mExpectedSettingValues.contains(mSetValue)) {
                 throw new TargetSetupError(String.format(
                         "set-value for %s is %s, but value not found in expected-values: %s",
-                        mSettingName, mSetValue, mExpectedSettingValues.toString()));
+                        mSettingName, mSetValue, mExpectedSettingValues.toString()),
+                        device.getDeviceDescriptor());
             }
             String currentSettingValue = device.executeShellCommand(shellCmdGet).trim();
             // only change unexpected setting value
@@ -117,7 +118,7 @@ public class SettingsPreparer extends PreconditionPreparer {
                         "Device setting \"%s\" returned \"%s\", not found in %s",
                         mSettingName, currentSettingValue, mExpectedSettingValues.toString());
             }
-            throw new TargetSetupError(mFailureMessage);
+            throw new TargetSetupError(mFailureMessage, device.getDeviceDescriptor());
         }
     }
 

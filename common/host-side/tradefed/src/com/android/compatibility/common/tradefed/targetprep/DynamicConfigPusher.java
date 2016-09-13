@@ -87,8 +87,8 @@ public class DynamicConfigPusher implements ITargetCleaner {
         try {
             localConfigFile = DynamicConfig.getConfigFile(buildHelper.getTestsDir(), mModuleName);
         } catch (FileNotFoundException e) {
-            throw new TargetSetupError(
-                    "Cannot get local dynamic config file from test directory", e);
+            throw new TargetSetupError("Cannot get local dynamic config file from test directory",
+                    e, device.getDeviceDescriptor());
         }
 
         if (mVersion == null) {
@@ -119,7 +119,8 @@ public class DynamicConfigPusher implements ITargetCleaner {
             src = DynamicConfigHandler.getMergedDynamicConfigFile(
                     localConfigFile, apfeConfigInJson, mModuleName);
         } catch (IOException | XmlPullParserException | JSONException e) {
-            throw new TargetSetupError("Cannot get merged dynamic config file", e);
+            throw new TargetSetupError("Cannot get merged dynamic config file", e,
+                    device.getDeviceDescriptor());
         }
 
         switch (mTarget) {
@@ -128,7 +129,7 @@ public class DynamicConfigPusher implements ITargetCleaner {
                 if (!device.pushFile(src, deviceDest)) {
                     throw new TargetSetupError(String.format(
                             "Failed to push local '%s' to remote '%s'",
-                            src.getAbsolutePath(), deviceDest));
+                            src.getAbsolutePath(), deviceDest), device.getDeviceDescriptor());
                 } else {
                     mFilePushed = deviceDest;
                     buildHelper.addDynamicConfigFile(mModuleName, src);
@@ -145,7 +146,8 @@ public class DynamicConfigPusher implements ITargetCleaner {
                     FileUtil.copyFile(src, hostDest);
                 } catch (IOException e) {
                     throw new TargetSetupError(String.format("Failed to copy file from %s to %s",
-                            src.getAbsolutePath(), hostDest.getAbsolutePath()), e);
+                            src.getAbsolutePath(), hostDest.getAbsolutePath()), e,
+                            device.getDeviceDescriptor());
                 }
                 mFilePushed = hostDest.getAbsolutePath();
                 buildHelper.addDynamicConfigFile(mModuleName, src);

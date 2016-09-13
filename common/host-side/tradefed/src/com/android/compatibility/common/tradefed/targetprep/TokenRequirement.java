@@ -45,7 +45,8 @@ public class TokenRequirement implements ITargetPreparer {
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        throw new TargetSetupError("TokenRequirement is not expected to run");
+        throw new TargetSetupError("TokenRequirement is not expected to run",
+                device.getDeviceDescriptor());
     }
 
     /**

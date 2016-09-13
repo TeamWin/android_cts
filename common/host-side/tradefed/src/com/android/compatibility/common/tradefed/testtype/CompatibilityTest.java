@@ -499,7 +499,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      * Resolve the inclusion and exclusion logic of system status checkers
      *
      * @param s the {@link SystemStatusChecker} to perform filtering logic on
-     * @return
+     * @return True if the {@link SystemStatusChecker} should be included, false otherwise.
      */
     private boolean shouldIncludeSystemStatusChecker(SystemStatusChecker s) {
         String clazz = s.getClass().getCanonicalName();

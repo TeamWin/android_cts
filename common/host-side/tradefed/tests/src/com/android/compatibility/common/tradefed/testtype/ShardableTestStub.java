@@ -32,7 +32,6 @@ import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildReceiver,
@@ -58,7 +57,7 @@ public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildRec
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {

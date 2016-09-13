@@ -16,6 +16,8 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.ITestResult;
+import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
