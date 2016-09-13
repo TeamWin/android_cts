@@ -132,8 +132,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
-            <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="test_required_features"
+                    android:value="android.software.device_admin" />
         </activity>
 
         <activity android:name=".backup.BackupTestActivity" android:label="@string/backup_test">
@@ -388,8 +388,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
-            <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="test_required_features"
+                    android:value="android.software.device_admin" />
         </activity>
         <activity android:name=".security.LockConfirmBypassTest"
                 android:label="@string/lock_confirm_test_title"
@@ -399,8 +399,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
-            <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="test_required_features"
+                    android:value="android.software.device_admin" />
         </activity>
 
         <activity android:name=".streamquality.StreamingVideoActivity"
