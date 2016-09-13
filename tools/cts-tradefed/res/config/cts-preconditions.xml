@@ -15,7 +15,7 @@
 -->
 <configuration description="CTS precondition configs">
 
-    <option name="compatibility:plan" value="cts-preconditions" />
+    <option name="plan" value="cts-preconditions" />
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />

@@ -17,6 +17,7 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -24,9 +25,9 @@ import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -39,6 +40,7 @@ import java.util.List;
 public class ResultReporterTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
+    private static final String SUITE_NAME = "TESTS";
     private static final String BUILD_NUMBER = "2";
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
@@ -63,7 +65,6 @@ public class ResultReporterTest extends TestCase {
         "compatibility_result.xsd",
         "compatibility_result.xsl",
         "logo.png"};
-    private static final long START_TIME = 123456L;
 
     private ResultReporter mReporter;
     private IBuildInfo mBuildInfo;
@@ -76,16 +77,31 @@ public class ResultReporterTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         mReporter = new ResultReporter();
-        OptionSetter setter = new OptionSetter(mReporter);
         mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
         mBase = new File(mRoot, BASE_DIR_NAME);
         mBase.mkdirs();
         mTests = new File(mBase, TESTCASES);
         mTests.mkdirs();
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
-        mBuildInfo = new BuildInfo(BUILD_NUMBER, "", "");
+        CompatibilityBuildProvider provider = new CompatibilityBuildProvider() {
+            @Override
+            protected String getSuiteInfoName() {
+                return SUITE_NAME;
+            }
+            @Override
+            protected String getSuiteInfoBuildNumber() {
+                return BUILD_NUMBER;
+            }
+            @Override
+            protected String getSuiteInfoVersion() {
+                return BUILD_NUMBER;
+            }
+        };
+        OptionSetter setter = new OptionSetter(provider);
+        setter.setOptionValue("plan", SUITE_PLAN);
+        setter.setOptionValue("dynamic-config-url", DYNAMIC_CONFIG_URL);
+        mBuildInfo = provider.getBuild();
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
     }
 
     @Override
@@ -305,6 +321,7 @@ public class ResultReporterTest extends TestCase {
 
     public void testCopyFormattingFiles() throws Exception {
         File resultDir = new File(mBuildHelper.getResultsDir(), RESULT_DIR);
+        CLog.e("%s", resultDir);
         resultDir.mkdirs();
         ResultReporter.copyFormattingFiles(resultDir);
         for (String filename : FORMATTING_FILES) {

@@ -17,7 +17,7 @@
 
     <include name="common-compatibility-config" />
 
-    <option name="compatibility:plan" value="cts-filtered-sample" />
+    <option name="plan" value="cts-filtered-sample" />
 
     <!-- Tell all AndroidJUnitTests to only run the medium sized tests -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:size:medium" />

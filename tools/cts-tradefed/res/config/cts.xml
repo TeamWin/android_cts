@@ -19,7 +19,7 @@
     <include name="cts-preconditions" />
     <include name="cts-known-failures" />
 
-    <option name="compatibility:plan" value="cts" />
+    <option name="plan" value="cts" />
 
     <option name="enable-root" value="false" />
 
