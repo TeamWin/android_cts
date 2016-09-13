@@ -54,9 +54,13 @@ import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.TimeUtil;
+import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -75,13 +79,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
-    private static final String MODULE_OPTION = "module";
-    private static final String TEST_OPTION = "test";
+    private static final String SUBPLAN_OPTION = "subplan";
+    public static final String MODULE_OPTION = "module";
+    public static final String TEST_OPTION = "test";
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
     public static final String RETRY_TYPE_OPTION = "retry-type";
-    private static final String ABI_OPTION = "abi";
+    public static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shards";
     public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
@@ -89,6 +94,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
 
+
+    @Option(name = SUBPLAN_OPTION,
+            description = "the subplan to run",
+            importance = Importance.IF_UNSET)
+    private String mSubPlan;
 
     @Option(name = INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
@@ -590,7 +600,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 }
             }
 
-            ITestPlan retryPlan = new TestPlan();
+            ISubPlan retryPlan = new SubPlan();
             retryPlan.excludePassed(result); // always exclude passed tests on retry
             if (RetryType.FAILED.equals(mRetryType)) {
                     retryPlan.includeFailed(result); // retry only failed tests
@@ -599,6 +609,23 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             mIncludeFilters.addAll(retryPlan.getIncludeFilters());
             mExcludeFilters.addAll(retryPlan.getExcludeFilters());
+        }
+        if (mSubPlan != null) {
+            try {
+                File subPlanFile = new File(mBuildHelper.getSubPlansDir(), mSubPlan + ".xml");
+                if (!subPlanFile.exists()) {
+                    throw new IllegalArgumentException(
+                            String.format("Could not retrieve subplan \"%s\"", mSubPlan));
+                }
+                InputStream subPlanInputStream = new FileInputStream(subPlanFile);
+                ISubPlan subPlan = new SubPlan();
+                subPlan.parse(subPlanInputStream);
+                mIncludeFilters.addAll(subPlan.getIncludeFilters());
+                mExcludeFilters.addAll(subPlan.getExcludeFilters());
+            } catch (FileNotFoundException | ParseException e) {
+                throw new RuntimeException(
+                        String.format("Unable to find or parse subplan %s", mSubPlan), e);
+            }
         }
         if (mModuleName != null) {
             try {

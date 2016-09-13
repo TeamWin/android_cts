@@ -31,7 +31,7 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TestPlanTest extends TestCase {
+public class SubPlanTest extends TestCase {
 
     private static final String ABI = "armeabi-v7a";
     private static final String MODULE_A = "ModuleA";
@@ -42,40 +42,40 @@ public class TestPlanTest extends TestCase {
 
     private static final String XML_BASE =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<TestPlan version=\"2.0\">\n" +
+            "<SubPlan version=\"2.0\">\n" +
             "%s\n" +
-            "</TestPlan>";
+            "</SubPlan>";
     private static final String XML_ENTRY = "  <Entry %s/>\n";
     private static final String XML_ATTR = "%s=\"%s\"";
 
     public void testSerialization() throws Exception {
-        ITestPlan plan = new TestPlan();
-        plan.addIncludeFilter(new TestFilter(ABI, MODULE_A, TEST_1).toString());
+        ISubPlan subPlan = new SubPlan();
+        subPlan.addIncludeFilter(new TestFilter(ABI, MODULE_A, TEST_1).toString());
         Set<String> includeFilterSet = new HashSet<String>();
         includeFilterSet.add(new TestFilter(ABI, MODULE_A, TEST_2).toString());
         includeFilterSet.add(new TestFilter(ABI, MODULE_A, TEST_3).toString());
-        plan.addAllIncludeFilters(includeFilterSet); // add multiple include filters simultaneously
-        plan.addIncludeFilter(new TestFilter(null, MODULE_B, null).toString());
-        plan.addExcludeFilter(new TestFilter(null, MODULE_B, TEST_1).toString());
+        subPlan.addAllIncludeFilters(includeFilterSet); // add multiple include filters simultaneously
+        subPlan.addIncludeFilter(new TestFilter(null, MODULE_B, null).toString());
+        subPlan.addExcludeFilter(new TestFilter(null, MODULE_B, TEST_1).toString());
         Set<String> excludeFilterSet = new HashSet<String>();
         excludeFilterSet.add(new TestFilter(null, MODULE_B, TEST_2).toString());
         excludeFilterSet.add(new TestFilter(null, MODULE_B, TEST_3).toString());
-        plan.addAllExcludeFilters(excludeFilterSet);
+        subPlan.addAllExcludeFilters(excludeFilterSet);
 
         // Serialize to file
-        File planFile = FileUtil.createTempFile("test-plan-serialization", ".txt");
-        OutputStream planOutputStream = new FileOutputStream(planFile);
-        plan.serialize(planOutputStream);
-        planOutputStream.close();
+        File subPlanFile = FileUtil.createTempFile("test-subPlan-serialization", ".txt");
+        OutputStream subPlanOutputStream = new FileOutputStream(subPlanFile);
+        subPlan.serialize(subPlanOutputStream);
+        subPlanOutputStream.close();
 
-        // Parse plan and assert correctness
-        checkPlan(planFile);
+        // Parse subPlan and assert correctness
+        checkSubPlan(subPlanFile);
 
     }
 
     public void testParsing() throws Exception {
-        File planFile = FileUtil.createTempFile("test-plan-parsing", ".txt");
-        FileWriter writer = new FileWriter(planFile);
+        File subPlanFile = FileUtil.createTempFile("test-subPlan-parsing", ".txt");
+        FileWriter writer = new FileWriter(subPlanFile);
         Set<String> entries = new HashSet<String>();
         entries.add(generateEntryXml(ABI, MODULE_A, TEST_1, true)); // include format 1
         entries.add(generateEntryXml(ABI, MODULE_A, TEST_2, true));
@@ -91,31 +91,31 @@ public class TestPlanTest extends TestCase {
         String xml = String.format(XML_BASE, String.join("\n", entries));
         writer.write(xml);
         writer.flush();
-        checkPlan(planFile);
+        checkSubPlan(subPlanFile);
     }
 
-    private void checkPlan(File planFile) throws Exception {
-        InputStream planInputStream = new FileInputStream(planFile);
-        ITestPlan plan = new TestPlan();
-        plan.parse(planInputStream);
-        Set<String> planIncludes = plan.getIncludeFilters();
-        Set<String> planExcludes = plan.getExcludeFilters();
-        assertEquals("Expected 4 includes", 4, planIncludes.size());
-        assertTrue("Missing expected test include", planIncludes.contains(
+    private void checkSubPlan(File subPlanFile) throws Exception {
+        InputStream subPlanInputStream = new FileInputStream(subPlanFile);
+        ISubPlan subPlan = new SubPlan();
+        subPlan.parse(subPlanInputStream);
+        Set<String> subPlanIncludes = subPlan.getIncludeFilters();
+        Set<String> subPlanExcludes = subPlan.getExcludeFilters();
+        assertEquals("Expected 4 includes", 4, subPlanIncludes.size());
+        assertTrue("Missing expected test include", subPlanIncludes.contains(
                 new TestFilter(ABI, MODULE_A, TEST_1).toString()));
-        assertTrue("Missing expected test include", planIncludes.contains(
+        assertTrue("Missing expected test include", subPlanIncludes.contains(
                 new TestFilter(ABI, MODULE_A, TEST_2).toString()));
-        assertTrue("Missing expected test include", planIncludes.contains(
+        assertTrue("Missing expected test include", subPlanIncludes.contains(
                 new TestFilter(ABI, MODULE_A, TEST_3).toString()));
-        assertTrue("Missing expected module include", planIncludes.contains(
+        assertTrue("Missing expected module include", subPlanIncludes.contains(
                 new TestFilter(null, MODULE_B, null).toString()));
 
-        assertEquals("Expected 3 excludes", 3, planExcludes.size());
-        assertTrue("Missing expected exclude", planExcludes.contains(
+        assertEquals("Expected 3 excludes", 3, subPlanExcludes.size());
+        assertTrue("Missing expected exclude", subPlanExcludes.contains(
                 new TestFilter(null, MODULE_B, TEST_1).toString()));
-        assertTrue("Missing expected exclude", planExcludes.contains(
+        assertTrue("Missing expected exclude", subPlanExcludes.contains(
                 new TestFilter(null, MODULE_B, TEST_2).toString()));
-        assertTrue("Missing expected exclude", planExcludes.contains(
+        assertTrue("Missing expected exclude", subPlanExcludes.contains(
                 new TestFilter(null, MODULE_B, TEST_3).toString()));
     }
 
