@@ -123,7 +123,8 @@ public class BitmapFilterTests extends ActivityTestBase {
             canvas.setDrawFilter(null);
         };
         createTest()
-                .addCanvasClient(canvasClient)
+                // Picture does not support PaintFlagsDrawFilter
+                .addCanvasClientWithoutUsingPicture(canvasClient)
                 .runWithVerifier(getVerifierForTest(filterEnum, scaleUp));
     }
 

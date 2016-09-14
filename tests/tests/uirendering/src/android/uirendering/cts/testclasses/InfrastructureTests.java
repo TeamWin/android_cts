@@ -63,7 +63,11 @@ public class InfrastructureTests extends ActivityTestBase {
             }
         };
         createTest()
-                .addCanvasClient(canvasClient)
+                // Because of the inverseComparer, we can't use Picture because
+                // software w/ picture = software w/o picture (same for hardware).
+                // (The inverseComparer assumes that there are only two render paths are they
+                // are different.)
+                .addCanvasClientWithoutUsingPicture(canvasClient)
                 .runWithComparer(inverseComparer);
     }
 

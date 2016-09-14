@@ -375,8 +375,8 @@ public class LayerTests extends ActivityTestBase {
     @Test
     public void testSaveLayerClippedWithAlpha() {
         // verify that renderer can draw nested clipped layers with different alpha
-        createTest()
-            .addCanvasClient((canvas, width, height) -> {
+        createTest() // picture mode is disable due to bug:34871089
+            .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                 Paint redPaint = new Paint();
                 redPaint.setColor(0xffff0000);
                 canvas.saveLayerAlpha(40, 5, 80, 70, 0x7f, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
@@ -391,8 +391,8 @@ public class LayerTests extends ActivityTestBase {
     @Test
     public void testSaveLayerUnclippedWithAlpha() {
         // verify that renderer can draw nested unclipped layers with different alpha
-        createTest()
-            .addCanvasClient((canvas, width, height) -> {
+        createTest() // picture mode is disable due to bug:34871089
+            .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                 Paint redPaint = new Paint();
                 redPaint.setColor(0xffff0000);
                 canvas.saveLayerAlpha(40, 5, 80, 70, 0x7f, 0);
