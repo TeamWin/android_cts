@@ -154,769 +154,209 @@
                     android:value="android.software.backup" />
         </activity>
 
-<!--            CTS Verifier Bluetooth Test Top Screen -->
-        <activity
-            android:name=".bluetooth.BluetoothTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bluetooth_test" >
+        <activity android:name=".bluetooth.BluetoothTestActivity"
+                android:label="@string/bluetooth_test"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/test_category_networking" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth" />
+            <meta-data android:name="test_category" android:value="@string/test_category_networking" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.bluetooth" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Toggle Test Screen
-                 test category : bt_control
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BluetoothToggleActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_toggle_bluetooth" >
+        <activity android:name=".bluetooth.BluetoothToggleActivity"
+                android:label="@string/bt_toggle_bluetooth"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_control" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_excluded_features"
-                android:value="android.software.leanback" />
+            <meta-data android:name="test_category" android:value="@string/bt_control" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Secure Server Test Screen
-                 test category : bt_device_communication
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.SecureServerActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_secure_server" >
+        <activity android:name=".bluetooth.SecureServerActivity"
+                android:label="@string/bt_secure_server"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_device_communication" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_category" android:value="@string/bt_device_communication" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Insecure Server Test Screen
-                 test category : bt_device_communication
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.InsecureServerActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_insecure_server" >
+        <activity android:name=".bluetooth.InsecureServerActivity"
+                android:label="@string/bt_insecure_server"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_device_communication" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_category" android:value="@string/bt_device_communication" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Secure Client Test Screen
-                 test category : bt_device_communication
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.SecureClientActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_secure_client" >
+        <activity android:name=".bluetooth.SecureClientActivity"
+                android:label="@string/bt_secure_client"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_device_communication" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_category" android:value="@string/bt_device_communication" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Insecure Client Test Screen
-                 test category : bt_device_communication
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.InsecureClientActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_insecure_client" >
+        <activity android:name=".bluetooth.InsecureClientActivity"
+                android:label="@string/bt_insecure_client"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_device_communication" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_category" android:value="@string/bt_device_communication" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Connection Access Server Test Screen
-                 test category : bt_device_communication
-                 test parent : BluetoothTestActivity
-        -->
-        <!-- ********************* NOT MANUAL TEST! ******************** -->
-        <activity
-            android:name=".bluetooth.ConnectionAccessServerActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_connection_access_server" >
+        <activity android:name=".bluetooth.ConnectionAccessServerActivity"
+                android:label="@string/bt_connection_access_server"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_device_communication" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_category" android:value="@string/bt_device_communication" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
 
-        <!--
-             CTS Verifier Bluetooth Connection Access Client Test Screen
-                 test category : bt_device_communication
-                 test parent : BluetoothTestActivity
-        -->
-        <!-- ********************* NOT MANUAL TEST! ******************** -->
-        <activity
-            android:name=".bluetooth.ConnectionAccessClientActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_connection_access_client" >
+        <activity android:name=".bluetooth.ConnectionAccessClientActivity"
+                android:label="@string/bt_connection_access_client"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_device_communication" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_category" android:value="@string/bt_device_communication" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
-        <activity
-            android:name=".bluetooth.DevicePickerActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_device_picker" />
 
-<!--
-     *****************************************************************************************
-     **                          Begin BLE Test Sub Layer Info                            ****
-     *****************************************************************************************
-        -->
-        <!-- CTS Verifier BLE Client Test Service -->
-        <service android:name=".bluetooth.BleClientService" />
-        <!-- CTS Verifier BLE Server Test Service -->
-        <service android:name=".bluetooth.BleServerService" />
+        <activity android:name=".bluetooth.DevicePickerActivity"
+                android:label="@string/bt_device_picker"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
 
-        <!-- CTS Verifier BLE Advertiser Test Service -->
-        <service android:name=".bluetooth.BleAdvertiserService" />
-        <!-- CTS Verifier BLE Scanner Test Service -->
-        <service android:name=".bluetooth.BleScannerService" />
+        <service android:name=".bluetooth.BleClientService"
+                android:label="@string/ble_client_service_name" />
 
-        <!-- CTS Verifier BLE Server Connection Priority Test Service -->
-        <service android:name=".bluetooth.BleConnectionPriorityServerService" />
-        <!-- CTS Verifier BLE Client Connection Priority Test Service -->
-        <service android:name=".bluetooth.BleConnectionPriorityClientService" />
+        <service android:name=".bluetooth.BleServerService"
+                android:label="ble_server_service_name" />
 
-        <!-- CTS Verifier BLE Client Encrypted Test Service -->
-        <service android:name=".bluetooth.BleEncryptedClientService" />
+        <service android:name=".bluetooth.BleAdvertiserService"
+                android:label="@string/ble_advertiser_service_name" />
 
-        <!-- CTS Verifier BLE Server Encrypted Test Service -->
-        <service android:name=".bluetooth.BleEncryptedServerService" />
+        <service android:name=".bluetooth.BleScannerService"
+                android:label="@string/ble_scanner_service_name" />
 
-        <!--
-             =================================================================================
-             ==                     BLE Insecure Client Test Info                           ==
-             =================================================================================
-        -->
-        <!--
-            CTS Verifier BLE Insecure Client Test Top Screen
-                test category : bt_le
-                test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureClientTestListActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_insecure_client_test_name" >
+        <!-- Uncomment until b/15657182, b/18283088 fixed
+        <activity android:name=".bluetooth.BleClientStartActivity"
+                android:label="@string/ble_client_test_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.bluetooth_le"/>
         </activity>
 
-
-        <!--
-             CTS Verifier BLE Insecure Client Test List Screen
-                 test category : bt_le
-                 test parent : BleInsecureClientTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureClientStartActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_client_test_name" >
+        <activity android:name=".bluetooth.BleServerStartActivity"
+                android:label="@string/ble_server_start_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.bluetooth_le"/>
+        </activity> -->
 
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleInsecureClientTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Insecure Client Connection Priority Test Screen
-                test category : bt_le
-                test parent : BleInsecureClientTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureConnectionPriorityClientTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_connection_priority_client_name"
-            android:windowSoftInputMode="stateAlwaysHidden" >
+        <activity android:name=".bluetooth.BleScannerTestActivity"
+                android:label="@string/ble_scanner_test_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleInsecureClientTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.bluetooth_le"/>
         </activity>
 
-        <!--
-           CTS Verifier BLE Insecure Client Encrypted Test Screen
-               test category : bt_le
-               test parent : BleInsecureClientTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureEncryptedClientTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_encrypted_client_name"
-            android:windowSoftInputMode="stateAlwaysHidden" >
+        <activity android:name=".bluetooth.BleScannerPowerLevelActivity"
+                android:label="@string/ble_power_level_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleInsecureClientTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BleScannerTestActivity" />
         </activity>
 
-        <!--
-              =================================================================================
-              ==                     BLE Insecure Server Test Info                           ==
-              =================================================================================
-        -->
-        <!--
-             CTS Verifier BLE Insecure Server Test Top Screen
-                 test category : bt_le
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureServerTestListActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_insecure_server_test_name" >
+        <!-- Comment out until we have a better way to validate the hardware scan filter
+        <activity android:name=".bluetooth.BleScannerHardwareScanFilterActivity"
+                android:label="@string/ble_scanner_scan_filter_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BleScannerTestActivity" />
         </activity>
-
-        <!--
-              CTS Verifier BLE Insecure Server Test List Screen
-                  test category : bt_le
-                  test parent : BleInsecureServerTestListActivity
         -->
-        <activity
-            android:name=".bluetooth.BleInsecureServerStartActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_server_start_name" >
+
+        <activity android:name=".bluetooth.BleAdvertiserTestActivity"
+                android:label="@string/ble_advertiser_test_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.bluetooth_le"/>
+         </activity>
 
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleInsecureServerTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Insecure Server Connection Priority Test Screen
-                test category : bt_le
-                test parent : BleInsecureServerTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureConnectionPriorityServerTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_connection_priority_server_name" >
+        <activity android:name=".bluetooth.BleAdvertiserPowerLevelActivity"
+                android:label="@string/ble_power_level_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleInsecureServerTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BleAdvertiserTestActivity" />
         </activity>
 
-        <!--
-           CTS Verifier BLE Insecure Server Encrypted Test Screen
-               test category : bt_le
-               test parent : BleInsecureServerTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleInsecureEncryptedServerTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_encrypted_server_name"
-            android:windowSoftInputMode="stateAlwaysHidden" >
+        <!-- Comment out until we have a better way to validate the hardware scan filter
+        <activity android:name=".bluetooth.BleAdvertiserHardwareScanFilterActivity"
+                android:label="@string/ble_advertiser_scan_filter_name"
+                android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleInsecureServerTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="test_category" android:value="@string/bt_le" />
+            <meta-data android:name="test_parent" android:value="com.android.cts.verifier.bluetooth.BleAdvertiserTestActivity" />
         </activity>
-
-        <!--
-             =================================================================================
-             ==                      BLE Secure Client Test Info                            ==
-             =================================================================================
         -->
-        <!--
-             CTS Verifier BLE Secure Client Test Top Screen
-                 test category : bt_le
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureClientTestListActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_secure_client_test_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-             CTS Verifier BLE Secure Client Test List Screen
-                 test category : bt_le
-                 test parent : BleSecureClientTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureClientStartActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_client_test_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleSecureClientTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Secure Client Connection Priority Test Screen
-                test category : bt_le
-                test parent : BleSecureClientTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureConnectionPriorityClientTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_connection_priority_client_name"
-            android:windowSoftInputMode="stateAlwaysHidden" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleSecureClientTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-           CTS Verifier BLE Secure Client Encrypted Test Screen
-               test category : bt_le
-               test parent : BleSecureClientTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureEncryptedClientTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_encrypted_client_name"
-            android:windowSoftInputMode="stateAlwaysHidden" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleSecureClientTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-             =================================================================================
-             ==                      BLE Secure Server Test Info                            ==
-             =================================================================================
-        -->
-        <!--
-             CTS Verifier BLE Secure Server Test Top Screen
-                 test category : bt_le
-                 test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureServerTestListActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_secure_server_test_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Secure Server Test List Screen
-                test category : bt_le
-                test parent : BleSecureServerTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureServerStartActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_server_start_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleSecureServerTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Secure Server Connection Priority Test Screen
-                test category : bt_le
-                test parent : BleSecureServerTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureConnectionPriorityServerTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_connection_priority_server_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleSecureServerTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-           CTS Verifier BLE Secure Server Encrypted Test Screen
-               test category : bt_le
-               test parent : BleSecureServerTestListActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleSecureEncryptedServerTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_encrypted_server_name"
-            android:windowSoftInputMode="stateAlwaysHidden" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleSecureServerTestListActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-             =================================================================================
-             ==                      BLE Scanner Test Info                            ==
-             =================================================================================
-        -->
-        <!--
-            CTS Verifier BLE Client Scanner Screen
-                test category : bt_le
-                test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleScannerTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_scanner_test_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Scanner PowerLevel Test Screen
-                test category : bt_le
-                test parent : BleScannerTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleScannerPowerLevelActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_power_level_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleScannerTestActivity" />
-        </activity>
-
-
-        <!--
-             =================================================================================
-             ==                      BLE Advertiser Test Info                            ==
-             =================================================================================
-        -->
-        <!--
-            CTS Verifier BLE Advertiser Screen
-                test category : bt_le
-                test parent : BluetoothTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleAdvertiserTestActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_advertiser_test_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
-            <meta-data
-                android:name="test_required_features"
-                android:value="android.hardware.bluetooth_le" />
-        </activity>
-
-        <!--
-            CTS Verifier BLE Advertiser PowerLevel Test Screen
-                test category : bt_le
-                test parent : BleAdvertiserTestActivity
-        -->
-        <activity
-            android:name=".bluetooth.BleAdvertiserPowerLevelActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/ble_power_level_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-
-            <meta-data
-                android:name="test_category"
-                android:value="@string/bt_le" />
-            <meta-data
-                android:name="test_parent"
-                android:value="com.android.cts.verifier.bluetooth.BleAdvertiserTestActivity" />
-        </activity>
-
 
         <activity android:name=".suid.SuidFilesActivity"
                 android:label="@string/suid_files"

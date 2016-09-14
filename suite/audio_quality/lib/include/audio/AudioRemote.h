@@ -30,7 +30,7 @@ public:
             int mode = AudioHardware::EModeVoice);
 
 protected:
-    explicit AudioRemote(android::sp<RemoteAudio>& remote);
+    AudioRemote(android::sp<RemoteAudio>& remote);
     virtual ~AudioRemote() {};
 
 protected:
@@ -42,7 +42,7 @@ protected:
 
 class AudioRemotePlayback: public AudioRemote {
 public:
-    explicit AudioRemotePlayback(android::sp<RemoteAudio>& remote);
+    AudioRemotePlayback(android::sp<RemoteAudio>& remote);
     virtual ~AudioRemotePlayback() {};
     virtual bool startPlaybackOrRecord(android::sp<Buffer>& buffer, int numberRepetition = 1);
     virtual bool waitForCompletion();
@@ -52,7 +52,7 @@ public:
 
 class AudioRemoteRecording: public AudioRemote {
 public:
-    explicit AudioRemoteRecording(android::sp<RemoteAudio>& remote);
+    AudioRemoteRecording(android::sp<RemoteAudio>& remote);
     virtual ~AudioRemoteRecording() {};
     virtual bool startPlaybackOrRecord(android::sp<Buffer>& buffer, int numberRepetition = 1);
     virtual bool waitForCompletion();
