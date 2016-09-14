@@ -25,6 +25,9 @@
         <activity android:name=".SurfaceViewTestActivity"
                   android:exported="true"
         />
+        <activity android:name=".MovingSurfaceViewTestActivity"
+                  android:exported="true"
+        />
     </application>
 </manifest>
 

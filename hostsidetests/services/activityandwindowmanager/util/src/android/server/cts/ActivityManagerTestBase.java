@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
 
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -123,6 +124,29 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private int mInitialAccelerometerRotation;
     private int mUserRotation;
     private float mFontScale;
+
+    private SurfaceTraceReceiver mSurfaceTraceReceiver;
+    private Thread mSurfaceTraceThread;
+
+    void installSurfaceObserver(SurfaceTraceReceiver.SurfaceObserver observer) {
+        mSurfaceTraceReceiver = new SurfaceTraceReceiver(observer);
+        mSurfaceTraceThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    mDevice.executeShellCommand("wm surface-trace", mSurfaceTraceReceiver);
+                } catch (DeviceNotAvailableException e) {
+                    logE("Device not available: " + e.toString());
+                }
+            }
+        };
+        mSurfaceTraceThread.start();
+    }
+
+    void removeSurfaceObserver() {
+        mSurfaceTraceReceiver.cancel();
+        mSurfaceTraceThread.interrupt();
+    }
 
     @Override
     protected void setUp() throws Exception {
