@@ -42,7 +42,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_comp
 		libgui \
 		libaudioutils \
 		libnbaio \
-		libpcre2 \
+		libpcre \
 		libpackagelistparser \
 		libpowermanager \
 		libbase \

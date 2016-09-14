@@ -27,7 +27,7 @@
  */
 class Semaphore {
 public:
-    explicit Semaphore(int count = 0);
+    Semaphore(int count = 0);
 
     ~Semaphore();
 

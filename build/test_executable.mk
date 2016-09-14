@@ -33,15 +33,11 @@ $(foreach fp, $(ALL_MODULES.$(LOCAL_MODULE).BUILT) $(ALL_MODULES.$(LOCAL_MODULE)
   $(eval $(call copy-one-file, $(fp), $(installed)))\
   $(eval cts_executable_bin += $(installed)))
 
-ifndef LOCAL_CTS_GTEST_LIST_EXECUTABLE
-LOCAL_CTS_GTEST_LIST_EXECUTABLE := $(HOST_OUT_EXECUTABLES)/$(LOCAL_MODULE)_list
-endif
-
 cts_executable_xml := $(CTS_TESTCASES_OUT)/$(LOCAL_MODULE).xml
 $(cts_executable_xml): PRIVATE_TEST_PACKAGE := $(LOCAL_CTS_TEST_PACKAGE)
 $(cts_executable_xml): PRIVATE_EXECUTABLE := $(LOCAL_MODULE)
-$(cts_executable_xml): PRIVATE_LIST_EXECUTABLE := $(LOCAL_CTS_GTEST_LIST_EXECUTABLE)
-$(cts_executable_xml): $(LOCAL_CTS_GTEST_LIST_EXECUTABLE)
+$(cts_executable_xml): PRIVATE_LIST_EXECUTABLE := $(HOST_OUT_EXECUTABLES)/$(LOCAL_MODULE)_list
+$(cts_executable_xml): $(HOST_OUT_EXECUTABLES)/$(LOCAL_MODULE)_list
 $(cts_executable_xml): $(cts_executable_bin)
 $(cts_executable_xml): $(cts_module_test_config)
 $(cts_executable_xml): $(addprefix $(LOCAL_PATH)/,$(LOCAL_SRC_FILES)) $(CTS_EXPECTATIONS) $(CTS_UNSUPPORTED_ABIS) $(CTS_NATIVE_TEST_SCANNER) $(CTS_XML_GENERATOR)
