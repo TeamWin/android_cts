@@ -581,6 +581,28 @@ public class StaticLayoutTest {
                 assertTrue(layout.getEllipsisStart(0) > 0);
             }
         }
+
+        {
+            // 2 family emojis (11 code units + 11 code units).
+            final String text = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66"
+                    + "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66";
+            final float textWidth = mDefaultPaint.measureText(text);
+
+            final TextUtils.TruncateAt[] kinds = {TextUtils.TruncateAt.START,
+                    TextUtils.TruncateAt.MIDDLE, TextUtils.TruncateAt.END};
+            for (final TextUtils.TruncateAt kind : kinds) {
+                for (int i = 0; i <= 8; i++) {
+                    int avail = (int)(textWidth * i / 7.0f);
+                    StaticLayout layout = new StaticLayout(text, 0, text.length(), mDefaultPaint,
+                            avail, DEFAULT_ALIGN, TextDirectionHeuristics.FIRSTSTRONG_LTR,
+                            SPACE_MULTI, SPACE_ADD, false, kind, avail, 1);
+
+                    assertTrue(layout.getEllipsisCount(0) == text.length()
+                                    || layout.getEllipsisCount(0) == text.length() / 2
+                                    || layout.getEllipsisCount(0) == 0);
+                }
+            }
+        }
     }
 
     /**
