@@ -23,14 +23,17 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsLibcoreTestCases.apk" />
     </target_preparer>
-    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+    <test class="com.android.compatibility.testtype.LibcoreTest" >
         <!-- override AJUR -->
         <option name="runner" value="com.android.cts.core.runner.CoreTestRunner" />
         <option name="package" value="android.libcore.cts" />
         <option name="instrumentation-arg" key="core-listener"
                 value="com.android.cts.runner.CtsTestRunListener"/>
-        <option name="instrumentation-arg" key="core-expectations"
-                value="/knownfailures.txt,/brokentests.txt,/icebox.txt,/taggedtests.txt,/expectations/cts-runner-specific-failures.txt" />
+        <option name="core-expectation" value="/knownfailures.txt" />
+        <option name="core-expectation" value="/brokentests.txt" />
+        <option name="core-expectation" value="/icebox.txt" />
+        <option name="core-expectation" value="/taggedtests.txt" />
+        <option name="core-expectation" value="/expectations/cts-runner-specific-failures.txt" />
         <option name="runtime-hint" value="45m"/>
         <!-- 20x default timeout of 600sec -->
         <option name="shell-timeout" value="12000000"/>
