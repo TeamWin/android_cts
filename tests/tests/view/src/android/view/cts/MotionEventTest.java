@@ -26,6 +26,7 @@ import android.os.Parcelable;
 import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.MotionEvent.PointerCoords;
@@ -44,6 +45,7 @@ import org.junit.runner.RunWith;
 public class MotionEventTest {
     private MotionEvent mMotionEvent1;
     private MotionEvent mMotionEvent2;
+    private MotionEvent mMotionEventDynamic;
     private long mDownTime;
     private long mEventTime;
     private static final float X_3F           = 3.0f;
@@ -75,6 +77,9 @@ public class MotionEventTest {
         }
         if (null != mMotionEvent2) {
             mMotionEvent2.recycle();
+        }
+        if (null != mMotionEventDynamic) {
+            mMotionEventDynamic.recycle();
         }
     }
 
@@ -244,8 +249,8 @@ public class MotionEventTest {
         float offsetX = 1.0f;
         float offsetY = 1.0f;
         mMotionEvent2.offsetLocation(offsetX, offsetY);
-        assertEquals(X_3F + offsetX, mMotionEvent2.getX(), DELTA);
-        assertEquals(Y_4F + offsetY, mMotionEvent2.getY(), DELTA);
+        withCoords(X_3F + offsetX, Y_4F + offsetY).withPressure(PRESSURE_1F).withSize(SIZE_1F).
+                verifyMatches(mMotionEvent2);
     }
 
     @Test
@@ -253,100 +258,221 @@ public class MotionEventTest {
         assertEquals(X_3F, mMotionEvent2.getX(), DELTA);
         assertEquals(Y_4F, mMotionEvent2.getY(), DELTA);
 
-        float newLocationX = 0.0f;
-        float newLocationY = 0.0f;
-        mMotionEvent2.setLocation(newLocationX, newLocationY);
-        assertEquals(newLocationX, mMotionEvent2.getX(), DELTA);
-        assertEquals(newLocationY, mMotionEvent2.getY(), DELTA);
+        mMotionEvent2.setLocation(0.0f, 0.0f);
+        withCoords(0.0f, 0.0f).withPressure(PRESSURE_1F).withSize(SIZE_1F).
+                verifyMatches(mMotionEvent2);
 
-        newLocationX = 2.0f;
-        newLocationY = 2.0f;
-        mMotionEvent2.setLocation(newLocationX, newLocationY);
-        assertEquals(newLocationX, mMotionEvent2.getX(), DELTA);
-        assertEquals(newLocationY, mMotionEvent2.getY(), DELTA);
+        mMotionEvent2.setLocation(2.0f, 2.0f);
+        withCoords(2.0f, 2.0f).withPressure(PRESSURE_1F).withSize(SIZE_1F).
+                verifyMatches(mMotionEvent2);
     }
 
     @Test
-    public void testGetHistoricalX() {
-        float x = X_3F + 5.0f;
-        mMotionEvent2.addBatch(mEventTime, x, 5.0f, 1.0f, 0.0f, 0);
-        assertEquals(X_3F, mMotionEvent2.getHistoricalX(0), DELTA);
+    public void testGetHistoricalData() {
+        assertEquals(0, mMotionEvent2.getHistorySize());
 
-        mMotionEvent2.addBatch(mEventTime, X_3F + 10.0f, 10.0f, 0.0f, 1.0f, 0);
-        assertEquals(x, mMotionEvent2.getHistoricalX(1), DELTA);
-    }
-
-    @Test
-    public void testGetHistoricalY() {
-        float y = Y_4F + 5.0f;
-        mMotionEvent2.addBatch(mEventTime, 5.0f, y, 1.0f, 0.0f, 0);
-        assertEquals(Y_4F, mMotionEvent2.getHistoricalY(0), DELTA);
-
-        mMotionEvent2.addBatch(mEventTime, 15.0f, Y_4F + 15.0f, 0.0f, 1.0f, 0);
-        assertEquals(y, mMotionEvent2.getHistoricalY(1), DELTA);
-    }
-
-    @Test
-    public void testGetHistoricalSize() {
-        float size = 0.5f;
-        mMotionEvent2.addBatch(mEventTime, 5.0f, 5.0f, 1.0f, size, 0);
-        assertEquals(SIZE_1F, mMotionEvent2.getHistoricalSize(0), DELTA);
-
-        mMotionEvent2.addBatch(mEventTime, 15.0f, 15.0f, 1.0f, 0.0f, 0);
-        assertEquals(size, mMotionEvent2.getHistoricalSize(1), DELTA);
-    }
-
-    @Test
-    public void testGetHistoricalPressure() {
-        float pressure = 0.5f;
-        mMotionEvent2.addBatch(mEventTime, 5.0f, 5.0f, pressure, 0.0f, 0);
-        assertEquals(PRESSURE_1F, mMotionEvent2.getHistoricalPressure(0), DELTA);
-
-        mMotionEvent2.addBatch(mEventTime, 15.0f, 15.0f, 0.0f, 0.0f, 0);
-        assertEquals(pressure, mMotionEvent2.getHistoricalPressure(1), DELTA);
-    }
-
-    @Test
-    public void testGetHistoricalEventTime() {
-        long eventTime = mEventTime + 5l;
-        mMotionEvent2.addBatch(eventTime, 5.0f, 5.0f, 0.0f, 1.0f, 0);
+        mMotionEvent2.addBatch(mEventTime + 10, X_3F + 5.0f, Y_4F + 5.0f, 0.5f, 0.5f, 0);
+        // The newly added batch should be the "new" values of the event
+        withCoords(X_3F + 5.0f, Y_4F + 5.0f).withPressure(0.5f).withSize(0.5f).
+                verifyMatches(mMotionEvent2);
+        assertEquals(mEventTime + 10, mMotionEvent2.getEventTime());
+        // We should have history with 1 entry
+        assertEquals(1, mMotionEvent2.getHistorySize());
+        // And the previous / original data should be history at index 0
+        assertEquals(1, mMotionEvent2.getHistorySize());
+        withCoords(X_3F, Y_4F).withPressure(1.0f).withSize(1.0f).
+                verifyMatchesHistorical(mMotionEvent2, 0);
         assertEquals(mEventTime, mMotionEvent2.getHistoricalEventTime(0));
 
-        mMotionEvent2.addBatch(mEventTime + 10l, 15.0f, 15.0f, 1.0f, 0.0f, 0);
-        assertEquals(eventTime, mMotionEvent2.getHistoricalEventTime(1));
+        // Add another update batch to our event
+        mMotionEvent2.addBatch(mEventTime + 20, X_3F + 10.0f, Y_4F + 15.0f, 2.0f, 3.0f, 0);
+        // The newly added batch should be the "new" values of the event
+        withCoords(X_3F + 10.0f, Y_4F + 15.0f).withPressure(2.0f).withSize(3.0f).
+                verifyMatches(mMotionEvent2);
+        assertEquals(mEventTime + 20, mMotionEvent2.getEventTime());
+        // We should have history with 2 entries
+        assertEquals(2, mMotionEvent2.getHistorySize());
+        // The previous data should be history at index 1
+        withCoords(X_3F + 5.0f, Y_4F + 5.0f).withPressure(0.5f).withSize(0.5f).
+                verifyMatchesHistorical(mMotionEvent2, 1);
+        assertEquals(mEventTime + 10, mMotionEvent2.getHistoricalEventTime(1));
+        // And the original data should be history at index 0
+        withCoords(X_3F, Y_4F).withPressure(1.0f).withSize(1.0f).
+                verifyMatchesHistorical(mMotionEvent2, 0);
+        assertEquals(mEventTime, mMotionEvent2.getHistoricalEventTime(0));
+    }
+
+    private static void verifyCurrentPointerData(MotionEvent motionEvent,
+            PointerPropertiesBuilder[] pointerPropertiesBuilders,
+            PointerCoordsBuilder[] pointerCoordsBuilders) {
+        assertNotNull(motionEvent);
+        assertNotNull(pointerPropertiesBuilders);
+        assertNotNull(pointerCoordsBuilders);
+        final int pointerCount = motionEvent.getPointerCount();
+        assertEquals(pointerCount, pointerPropertiesBuilders.length);
+        assertEquals(pointerCount, pointerCoordsBuilders.length);
+
+        // Test that we have the expected data fetched via MotionEvent.getPointerCoords API
+        for (int i = 0; i < pointerCount; i++) {
+            pointerCoordsBuilders[i].verifyMatchesPointerCoords(motionEvent, i);
+        }
+
+        // Test that we have the expected data fetched via per-field MotionEvent getter APIs
+        for (int i = 0; i < pointerCount; i++) {
+            pointerCoordsBuilders[i].verifyMatches(motionEvent, i);
+        }
+
+        // Test that we have the expected data fetched via MotionEvent.getPointerProperties API
+        for (int i = 0; i < pointerCount; i++) {
+            pointerPropertiesBuilders[i].verifyMatchesPointerProperties(motionEvent, i);
+        }
+
+        // Test that we have the expected data fetched via per-field MotionEvent getter APIs
+        for (int i = 0; i < pointerCount; i++) {
+            pointerPropertiesBuilders[i].verifyMatches(motionEvent, i);
+        }
+    }
+
+    private static void verifyHistoricalPointerData(MotionEvent motionEvent,
+            PointerCoordsBuilder[] pointerCoordsBuilders, int pos) {
+        assertNotNull(motionEvent);
+        assertNotNull(pointerCoordsBuilders);
+        final int pointerCount = motionEvent.getPointerCount();
+        assertEquals(pointerCount, pointerCoordsBuilders.length);
+
+        // Test that we have the expected data fetched via MotionEvent.getHistoricalPointerCoords
+        // API
+        for (int i = 0; i < pointerCount; i++) {
+            pointerCoordsBuilders[i].verifyMatchesHistoricalPointerCoords(motionEvent, i, pos);
+        }
+
+        // Test that we have the expected data fetched via per-field MotionEvent getter APIs
+        for (int i = 0; i < pointerCount; i++) {
+            pointerCoordsBuilders[i].verifyMatchesHistorical(motionEvent, i, pos);
+        }
     }
 
     @Test
-    public void testAddBatch() {
-        long eventTime = SystemClock.uptimeMillis();
-        float x = 10.0f;
-        float y = 20.0f;
-        float pressure = 1.0f;
-        float size = 1.0f;
+    public void testGetCurrentDataWithTwoPointers() {
+        PointerCoordsBuilder coordsBuilder0 =
+                withCoords(10.0f, 20.0f).withPressure(1.2f).withSize(2.0f).withTool(1.2f, 1.4f);
+        PointerCoordsBuilder coordsBuilder1 =
+                withCoords(30.0f, 40.0f).withPressure(1.4f).withSize(3.0f).withTouch(2.2f, 0.6f);
 
-        // get original attribute values.
-        long origEventTime = mMotionEvent2.getEventTime();
-        float origX = mMotionEvent2.getX();
-        float origY = mMotionEvent2.getY();
-        float origPressure = mMotionEvent2.getPressure();
-        float origSize = mMotionEvent2.getSize();
+        PointerPropertiesBuilder propertiesBuilder0 =
+                withProperties(0, MotionEvent.TOOL_TYPE_FINGER);
+        PointerPropertiesBuilder propertiesBuilder1 =
+                withProperties(1, MotionEvent.TOOL_TYPE_FINGER);
 
-        assertEquals(0, mMotionEvent2.getHistorySize());
-        mMotionEvent2.addBatch(eventTime, x, y, pressure, size, 0);
-        assertEquals(1, mMotionEvent2.getHistorySize());
-        assertEquals(origEventTime, mMotionEvent2.getHistoricalEventTime(0));
-        assertEquals(origX, mMotionEvent2.getHistoricalX(0), DELTA);
-        assertEquals(origY, mMotionEvent2.getHistoricalY(0), DELTA);
-        assertEquals(origPressure, mMotionEvent2.getHistoricalPressure(0), DELTA);
-        assertEquals(origSize, mMotionEvent2.getHistoricalSize(0), DELTA);
+        mMotionEventDynamic = MotionEvent.obtain(mEventTime, mEventTime,
+                MotionEvent.ACTION_MOVE, 2,
+                new PointerProperties[] { propertiesBuilder0.build(), propertiesBuilder1.build() },
+                new PointerCoords[] { coordsBuilder0.build(), coordsBuilder1.build() },
+                0, 0, 1.0f, 1.0f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
 
-        mMotionEvent2.addBatch(mEventTime, 6, 6, 0.1f, 0, 0);
-        assertEquals(2, mMotionEvent2.getHistorySize());
-        assertEquals(eventTime, mMotionEvent2.getHistoricalEventTime(1));
-        assertEquals(x, mMotionEvent2.getHistoricalX(1), DELTA);
-        assertEquals(y, mMotionEvent2.getHistoricalY(1), DELTA);
-        assertEquals(pressure, mMotionEvent2.getHistoricalPressure(1), DELTA);
-        assertEquals(size, mMotionEvent2.getHistoricalSize(1), DELTA);
+        // We expect to have data for two pointers
+        assertEquals(2, mMotionEventDynamic.getPointerCount());
+        assertEquals(0, mMotionEventDynamic.getPointerId(0));
+        assertEquals(1, mMotionEventDynamic.getPointerId(1));
+        assertEquals(0, mMotionEventDynamic.getFlags());
+        verifyCurrentPointerData(mMotionEventDynamic,
+                new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
+                new PointerCoordsBuilder[] { coordsBuilder0, coordsBuilder1 });
+    }
+
+    @Test
+    public void testGetHistoricalDataWithTwoPointers() {
+        // PHASE 1 - construct the initial data for the event
+        PointerCoordsBuilder coordsBuilderInitial0 =
+                withCoords(10.0f, 20.0f).withPressure(1.2f).withSize(2.0f).withTool(1.2f, 1.4f).
+                        withTouch(0.7f, 0.6f).withOrientation(2.0f);
+        PointerCoordsBuilder coordsBuilderInitial1 =
+                withCoords(30.0f, 40.0f).withPressure(1.4f).withSize(3.0f).withTool(1.3f, 1.7f).
+                        withTouch(2.7f, 3.6f).withOrientation(1.0f);
+
+        PointerPropertiesBuilder propertiesBuilder0 =
+                withProperties(0, MotionEvent.TOOL_TYPE_FINGER);
+        PointerPropertiesBuilder propertiesBuilder1 =
+                withProperties(1, MotionEvent.TOOL_TYPE_FINGER);
+
+        mMotionEventDynamic = MotionEvent.obtain(mEventTime, mEventTime,
+                MotionEvent.ACTION_MOVE, 2,
+                new PointerProperties[] { propertiesBuilder0.build(), propertiesBuilder1.build() },
+                new PointerCoords[] {
+                        coordsBuilderInitial0.build(), coordsBuilderInitial1.build() },
+                0, 0, 1.0f, 1.0f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
+
+        // We expect to have data for two pointers
+        assertEquals(2, mMotionEventDynamic.getPointerCount());
+        assertEquals(0, mMotionEventDynamic.getPointerId(0));
+        assertEquals(1, mMotionEventDynamic.getPointerId(1));
+        assertEquals(0, mMotionEventDynamic.getFlags());
+        verifyCurrentPointerData(mMotionEventDynamic,
+                new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
+                new PointerCoordsBuilder[] { coordsBuilderInitial0, coordsBuilderInitial1 });
+
+        // PHASE 2 - add a new batch of data to our event
+        PointerCoordsBuilder coordsBuilderNext0 =
+                withCoords(15.0f, 25.0f).withPressure(1.6f).withSize(2.2f).withTool(1.2f, 1.4f).
+                        withTouch(1.0f, 0.9f).withOrientation(2.2f);
+        PointerCoordsBuilder coordsBuilderNext1 =
+                withCoords(35.0f, 45.0f).withPressure(1.8f).withSize(3.2f).withTool(1.2f, 1.4f).
+                        withTouch(0.7f, 0.6f).withOrientation(2.9f);
+
+        mMotionEventDynamic.addBatch(mEventTime + 10,
+                new PointerCoords[] { coordsBuilderNext0.build(), coordsBuilderNext1.build() }, 0);
+        // We still expect to have data for two pointers
+        assertEquals(2, mMotionEventDynamic.getPointerCount());
+        assertEquals(0, mMotionEventDynamic.getPointerId(0));
+        assertEquals(1, mMotionEventDynamic.getPointerId(1));
+        assertEquals(0, mMotionEventDynamic.getFlags());
+
+        // The newly added batch should be the "new" values of the event
+        verifyCurrentPointerData(mMotionEventDynamic,
+                new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
+                new PointerCoordsBuilder[] { coordsBuilderNext0, coordsBuilderNext1 });
+        assertEquals(mEventTime + 10, mMotionEventDynamic.getEventTime());
+        // We should have history with 1 entry
+        assertEquals(1, mMotionEventDynamic.getHistorySize());
+        // And the previous / original data should be history at index 0
+        assertEquals(1, mMotionEventDynamic.getHistorySize());
+        verifyHistoricalPointerData(mMotionEventDynamic,
+                new PointerCoordsBuilder[] { coordsBuilderInitial0, coordsBuilderInitial1 },
+                0);
+
+        // PHASE 3 - add one more new batch of data to our event
+        PointerCoordsBuilder coordsBuilderLast0 =
+                withCoords(18.0f, 28.0f).withPressure(1.1f).withSize(2.9f).withTool(1.5f, 1.9f).
+                        withTouch(1.2f, 5.0f).withOrientation(3.2f);
+        PointerCoordsBuilder coordsBuilderLast1 =
+                withCoords(38.0f, 48.0f).withPressure(1.2f).withSize(2.5f).withTool(0.2f, 0.4f).
+                        withTouch(2.7f, 4.6f).withOrientation(0.2f);
+
+        mMotionEventDynamic.addBatch(mEventTime + 20,
+                new PointerCoords[] { coordsBuilderLast0.build(), coordsBuilderLast1.build() }, 0);
+        // We still expect to have data for two pointers
+        assertEquals(2, mMotionEventDynamic.getPointerCount());
+        assertEquals(0, mMotionEventDynamic.getPointerId(0));
+        assertEquals(1, mMotionEventDynamic.getPointerId(1));
+        assertEquals(0, mMotionEventDynamic.getFlags());
+
+        // The newly added batch should be the "new" values of the event
+        verifyCurrentPointerData(mMotionEventDynamic,
+                new PointerPropertiesBuilder[] { propertiesBuilder0, propertiesBuilder1 },
+                new PointerCoordsBuilder[] { coordsBuilderLast0, coordsBuilderLast1 });
+        assertEquals(mEventTime + 20, mMotionEventDynamic.getEventTime());
+        // We should have history with 2 entries
+        assertEquals(2, mMotionEventDynamic.getHistorySize());
+        // The previous data should be history at index 1
+        verifyHistoricalPointerData(mMotionEventDynamic,
+                new PointerCoordsBuilder[] { coordsBuilderNext0, coordsBuilderNext1 },
+                1);
+        assertEquals(mEventTime + 10, mMotionEventDynamic.getHistoricalEventTime(1));
+        // And the original data should be history at index 0
+        verifyHistoricalPointerData(mMotionEventDynamic,
+                new PointerCoordsBuilder[] { coordsBuilderInitial0, coordsBuilderInitial1 },
+                0);
+        assertEquals(mEventTime, mMotionEventDynamic.getHistoricalEventTime(0));
     }
 
     @Test
@@ -570,5 +696,364 @@ public class MotionEventTest {
         copy.copyFrom(properties);
         assertEquals(1, copy.id);
         assertEquals(MotionEvent.TOOL_TYPE_MOUSE, copy.toolType);
+    }
+
+    private static PointerCoordsBuilder withCoords(float x, float y) {
+        final PointerCoordsBuilder builder = new PointerCoordsBuilder();
+        builder.x = x;
+        builder.y = y;
+        return builder;
+    }
+
+    private static PointerPropertiesBuilder withProperties(int id, int toolType) {
+        final PointerPropertiesBuilder builder = new PointerPropertiesBuilder();
+        builder.id = id;
+        builder.toolType = toolType;
+        return builder;
+    }
+
+    private static class PointerPropertiesBuilder {
+        private int id;
+        private int toolType;
+
+        public MotionEvent.PointerProperties build() {
+            final MotionEvent.PointerProperties pointerProperties =
+                    new MotionEvent.PointerProperties();
+            pointerProperties.id = id;
+            pointerProperties.toolType = toolType;
+            return pointerProperties;
+        }
+
+        public void verifyMatches(MotionEvent that, int pointerIndex) {
+            assertEquals("Pointer ID should be the same",
+                    that.getPointerId(pointerIndex), this.id);
+            assertEquals("Tool type should be the same",
+                    that.getToolType(pointerIndex), this.toolType);
+        }
+
+        public void verifyMatchesPointerProperties(MotionEvent motionEvent, int pointerIndex) {
+            final MotionEvent.PointerProperties that = new MotionEvent.PointerProperties();
+            motionEvent.getPointerProperties(pointerIndex, that);
+
+            assertEquals("Pointer ID should be the same", that.id, this.id);
+            assertEquals("Tool type should be the same", that.toolType, this.toolType);
+        }
+    }
+
+    private static class PointerCoordsBuilder {
+        private float x;
+        private float y;
+        private float pressure = 1.0f;
+        private float size = 1.0f;
+        private float touchMajor;
+        private float touchMinor;
+        private float toolMajor;
+        private float toolMinor;
+        private float orientation;
+
+        public PointerCoordsBuilder withPressure(float pressure) {
+            this.pressure = pressure;
+            return this;
+        }
+
+        public PointerCoordsBuilder withSize(float size) {
+            this.size = size;
+            return this;
+        }
+
+        public PointerCoordsBuilder withTouch(float touchMajor, float touchMinor) {
+            this.touchMajor = touchMajor;
+            this.touchMinor = touchMinor;
+            return this;
+        }
+
+        public PointerCoordsBuilder withTool(float toolMajor, float toolMinor) {
+            this.toolMajor = toolMajor;
+            this.toolMinor = toolMinor;
+            return this;
+        }
+
+        public PointerCoordsBuilder withOrientation(float orientation) {
+            this.orientation = orientation;
+            return this;
+        }
+
+        public MotionEvent.PointerCoords build() {
+            final MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+            pointerCoords.x = x;
+            pointerCoords.y = y;
+            pointerCoords.pressure = pressure;
+            pointerCoords.size = size;
+            pointerCoords.touchMajor = touchMajor;
+            pointerCoords.touchMinor = touchMinor;
+            pointerCoords.toolMajor = toolMajor;
+            pointerCoords.toolMinor = toolMinor;
+            pointerCoords.orientation = orientation;
+            return pointerCoords;
+        }
+
+        public void verifyMatches(MotionEvent that) {
+            assertEquals("X coordinates should be the same", that.getX(), this.x, DELTA);
+            assertEquals("X coordinates should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_X), this.x, DELTA);
+
+            assertEquals("Y coordinates should be the same", that.getY(), this.y, DELTA);
+            assertEquals("Y coordinates should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_Y), this.y, DELTA);
+
+            assertEquals("Pressure should be the same", that.getPressure(), this.pressure, DELTA);
+            assertEquals("Pressure should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_PRESSURE), this.pressure, DELTA);
+
+            assertEquals("Size should be the same", that.getSize(), this.size, DELTA);
+            assertEquals("Size should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_SIZE), this.size, DELTA);
+
+            assertEquals("Touch major should be the same",
+                    that.getTouchMajor(), this.touchMajor,DELTA);
+            assertEquals("Touch major should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOUCH_MAJOR), this.touchMajor, DELTA);
+
+            assertEquals("Touch minor should be the same",
+                    that.getTouchMinor(), this.touchMinor, DELTA);
+            assertEquals("Touch minor should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOUCH_MINOR), this.touchMinor, DELTA);
+
+            assertEquals("Tool major should be the same",
+                    that.getToolMajor(), this.toolMajor, DELTA);
+            assertEquals("Tool major should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOOL_MAJOR), this.toolMajor, DELTA);
+
+            assertEquals("Tool minor should be the same",
+                    that.getToolMinor(), this.toolMinor, DELTA);
+            assertEquals("Tool minor should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOOL_MINOR), this.toolMinor, DELTA);
+
+            assertEquals("Orientation should be the same",
+                    that.getOrientation(), this.orientation, DELTA);
+            assertEquals("Orientation should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_ORIENTATION), this.orientation, DELTA);
+        }
+
+        public void verifyMatches(MotionEvent that, int pointerIndex) {
+            assertEquals("X coordinates should be the same",
+                    that.getX(pointerIndex), this.x, DELTA);
+            assertEquals("X coordinates should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_X, pointerIndex), this.x, DELTA);
+
+            assertEquals("Y coordinates should be the same",
+                    that.getY(pointerIndex), this.y, DELTA);
+            assertEquals("Y coordinates should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_Y, pointerIndex), this.y, DELTA);
+
+            assertEquals("Pressure should be the same",
+                    that.getPressure(pointerIndex), this.pressure, DELTA);
+            assertEquals("Pressure should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_PRESSURE, pointerIndex), this.pressure,
+                        DELTA);
+
+            assertEquals("Size should be the same",
+                    that.getSize(pointerIndex), this.size, DELTA);
+            assertEquals("Size should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_SIZE, pointerIndex), this.size, DELTA);
+
+            assertEquals("Touch major should be the same",
+                    that.getTouchMajor(pointerIndex), this.touchMajor,DELTA);
+            assertEquals("Touch major should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOUCH_MAJOR, pointerIndex), this.touchMajor,
+                        DELTA);
+
+            assertEquals("Touch minor should be the same",
+                    that.getTouchMinor(pointerIndex), this.touchMinor, DELTA);
+            assertEquals("Touch minor should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOUCH_MINOR, pointerIndex), this.touchMinor,
+                        DELTA);
+
+            assertEquals("Tool major should be the same",
+                    that.getToolMajor(pointerIndex), this.toolMajor, DELTA);
+            assertEquals("Tool major should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOOL_MAJOR, pointerIndex), this.toolMajor,
+                        DELTA);
+
+            assertEquals("Tool minor should be the same",
+                    that.getToolMinor(pointerIndex), this.toolMinor, DELTA);
+            assertEquals("Tool minor should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOOL_MINOR, pointerIndex), this.toolMinor,
+                        DELTA);
+
+            assertEquals("Orientation should be the same",
+                    that.getOrientation(pointerIndex), this.orientation, DELTA);
+            assertEquals("Orientation should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_ORIENTATION, pointerIndex), this.orientation,
+                        DELTA);
+        }
+
+        public void verifyMatchesHistorical(MotionEvent that, int position) {
+            assertEquals("X coordinates should be the same",
+                    that.getHistoricalX(position), this.x, DELTA);
+            assertEquals("X coordinates should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_X, position), this.x, DELTA);
+
+            assertEquals("Y coordinates should be the same",
+                    that.getHistoricalY(position), this.y, DELTA);
+            assertEquals("Y coordinates should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_Y, position), this.y, DELTA);
+
+            assertEquals("Pressure should be the same",
+                    that.getHistoricalPressure(position), this.pressure, DELTA);
+            assertEquals("Pressure should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_PRESSURE, position), this.pressure,
+                    DELTA);
+
+            assertEquals("Size should be the same",
+                    that.getHistoricalSize(position), this.size, DELTA);
+            assertEquals("Size should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_SIZE, position), this.size, DELTA);
+
+            assertEquals("Touch major should be the same",
+                    that.getHistoricalTouchMajor(position), this.touchMajor,DELTA);
+            assertEquals("Touch major should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOUCH_MAJOR, position),
+                    this.touchMajor, DELTA);
+
+            assertEquals("Touch minor should be the same",
+                    that.getHistoricalTouchMinor(position), this.touchMinor, DELTA);
+            assertEquals("Touch minor should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOUCH_MINOR, position),
+                    this.touchMinor, DELTA);
+
+            assertEquals("Tool major should be the same",
+                    that.getHistoricalToolMajor(position), this.toolMajor, DELTA);
+            assertEquals("Tool major should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOOL_MAJOR, position),
+                    this.toolMajor, DELTA);
+
+            assertEquals("Tool minor should be the same",
+                    that.getHistoricalToolMinor(position), this.toolMinor, DELTA);
+            assertEquals("Tool minor should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOOL_MINOR, position),
+                    this.toolMinor, DELTA);
+
+            assertEquals("Orientation should be the same",
+                    that.getHistoricalOrientation(position), this.orientation, DELTA);
+            assertEquals("Orientation should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, position),
+                    this.orientation, DELTA);
+        }
+
+        public void verifyMatchesHistorical(MotionEvent that, int pointerIndex, int position) {
+            assertEquals("X coordinates should be the same",
+                    that.getHistoricalX(pointerIndex, position), this.x, DELTA);
+            assertEquals("X coordinates should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_X, pointerIndex, position),
+                    this.x, DELTA);
+
+            assertEquals("Y coordinates should be the same",
+                    that.getHistoricalY(pointerIndex, position), this.y, DELTA);
+            assertEquals("Y coordinates should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_Y, pointerIndex, position),
+                    this.y, DELTA);
+
+            assertEquals("Pressure should be the same",
+                    that.getHistoricalPressure(pointerIndex, position), this.pressure, DELTA);
+            assertEquals("Pressure should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_PRESSURE, pointerIndex, position),
+                    this.pressure, DELTA);
+
+            assertEquals("Size should be the same",
+                    that.getHistoricalSize(pointerIndex, position), this.size, DELTA);
+            assertEquals("Size should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_SIZE, pointerIndex, position),
+                    this.size, DELTA);
+
+            assertEquals("Touch major should be the same",
+                    that.getHistoricalTouchMajor(pointerIndex, position), this.touchMajor, DELTA);
+            assertEquals("Touch major should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOUCH_MAJOR,
+                            pointerIndex, position),
+                    this.touchMajor, DELTA);
+
+            assertEquals("Touch minor should be the same",
+                    that.getHistoricalTouchMinor(pointerIndex, position), this.touchMinor, DELTA);
+            assertEquals("Touch minor should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOUCH_MINOR,
+                            pointerIndex, position),
+                    this.touchMinor, DELTA);
+
+            assertEquals("Tool major should be the same",
+                    that.getHistoricalToolMajor(pointerIndex, position), this.toolMajor, DELTA);
+            assertEquals("Tool major should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOOL_MAJOR,
+                            pointerIndex, position),
+                    this.toolMajor, DELTA);
+
+            assertEquals("Tool minor should be the same",
+                    that.getHistoricalToolMinor(pointerIndex, position), this.toolMinor, DELTA);
+            assertEquals("Tool minor should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_TOOL_MINOR,
+                            pointerIndex, position),
+                    this.toolMinor, DELTA);
+
+            assertEquals("Orientation should be the same",
+                    that.getHistoricalOrientation(pointerIndex, position), this.orientation, DELTA);
+            assertEquals("Orientation should be the same",
+                    that.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION,
+                            pointerIndex, position),
+                    this.orientation, DELTA);
+        }
+
+        private void verifyMatchesPointerCoords(PointerCoords that) {
+            assertEquals("X coordinates should be the same", that.x, this.x, DELTA);
+            assertEquals("X coordinates should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_X), this.x, DELTA);
+
+            assertEquals("Y coordinates should be the same", that.y, this.y, DELTA);
+            assertEquals("Y coordinates should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_Y), this.y, DELTA);
+
+            assertEquals("Pressure should be the same", that.pressure, this.pressure, DELTA);
+            assertEquals("Pressure should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_PRESSURE), this.pressure, DELTA);
+
+            assertEquals("Size should be the same", that.size, this.size, DELTA);
+            assertEquals("Size should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_SIZE), this.size, DELTA);
+
+            assertEquals("Touch major should be the same", that.touchMajor, this.touchMajor, DELTA);
+            assertEquals("Touch major should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOUCH_MAJOR), this.touchMajor, DELTA);
+
+            assertEquals("Touch minor should be the same", that.touchMinor, this.touchMinor, DELTA);
+            assertEquals("Touch minor should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOUCH_MINOR), this.touchMinor, DELTA);
+
+            assertEquals("Tool major should be the same", that.toolMajor, this.toolMajor, DELTA);
+            assertEquals("Tool major should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOOL_MAJOR), this.toolMajor, DELTA);
+
+            assertEquals("Tool minor should be the same", that.toolMinor, this.toolMinor, DELTA);
+            assertEquals("Tool minor should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_TOOL_MINOR), this.toolMinor, DELTA);
+
+            assertEquals("Orientation should be the same",
+                    that.orientation, this.orientation, DELTA);
+            assertEquals("Orientation should be the same",
+                    that.getAxisValue(MotionEvent.AXIS_ORIENTATION), this.orientation, DELTA);
+        }
+
+        public void verifyMatchesPointerCoords(MotionEvent motionEvent, int pointerIndex) {
+            final PointerCoords that = new PointerCoords();
+            motionEvent.getPointerCoords(pointerIndex, that);
+
+            verifyMatchesPointerCoords(that);
+        }
+
+        public void verifyMatchesHistoricalPointerCoords(MotionEvent motionEvent, int pointerIndex,
+                int pos) {
+            final PointerCoords that = new PointerCoords();
+            motionEvent.getHistoricalPointerCoords(pointerIndex, pos, that);
+
+            verifyMatchesPointerCoords(that);
+        }
     }
 }
