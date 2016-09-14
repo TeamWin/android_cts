@@ -70,6 +70,7 @@ def main():
         # Todo: test for radial distortion enabled devices has not yet been
         # implemented
         its.caps.skip_unless(not its.caps.radial_distortion_correction(props))
+        its.caps.skip_unless(its.caps.read_3a(props))
         full_device = its.caps.full_or_better(props)
         limited_device = its.caps.limited(props)
         its.caps.skip_unless(full_device or limited_device)
