@@ -508,7 +508,10 @@ public class ListPopupWindowTest extends
         final int[] lastChildOnScreenXY = new int[2];
         lastListChild.getLocationOnScreen(lastChildOnScreenXY);
 
-        assertTrue(lastChildOnScreenXY[1] + lastListChild.getHeight() <= promptViewOnScreenXY[1]);
+        // The child is above the prompt. They may overlap, as in the case
+        // when the list items do not all fit on screen, but this is still
+        // correct.
+        assertTrue(lastChildOnScreenXY[1] <= promptViewOnScreenXY[1]);
     }
 
     @Presubmit
