@@ -168,14 +168,32 @@ public class DateUtilsTest extends AndroidTestCase {
         final long HOUR_DURATION = 2 * 60 * 60 * 1000;
         assertEquals("5:30:15 AM GMT+00:00", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
                 fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.FULL));
-        assertEquals("5:30:15 AM", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
-                fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.DEFAULT));
         assertEquals("5:30:15 AM GMT+00:00", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
                 fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.LONG));
-        assertEquals("5:30:15 AM", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
-                fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.MEDIUM));
-        assertEquals("5:30 AM", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
-                fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.SHORT));
+
+        // The following depend on the user setting of "Use 24-Hour Format". As there is no nice
+        // way of checking that setting in order to determine what the expected result should be
+        // this simply checks the result against both the expected 12 and 24 hour results. That
+        // does mean it will not detect if the 12 hour format accidentally uses the 24 hour format
+        // or vice versa but that is checked in libcore tests.
+        check12And24HourFormat("5:30:15 AM", "05:30:15",
+                DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
+                    fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.DEFAULT));
+        check12And24HourFormat("5:30:15 AM", "05:30:15",
+                DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
+                    fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.MEDIUM));
+        check12And24HourFormat("5:30 AM", "05:30",
+                DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
+                    fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.SHORT));
+    }
+
+    private static void check12And24HourFormat(String expected12HourFormat,
+            String expected24HourFormat, CharSequence actualFormat) {
+        if (!actualFormat.equals(expected24HourFormat)
+                && !actualFormat.equals(expected12HourFormat)) {
+            fail("Expected '" + expected12HourFormat +"' or '" + expected24HourFormat
+                    + "' but was '" + actualFormat + "'");
+        }
     }
 
     // This is just to exercise the wrapper that calls the libcore/icu4c implementation.
