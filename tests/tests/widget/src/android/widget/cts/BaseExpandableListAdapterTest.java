@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -41,14 +42,25 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class BaseExpandableListAdapterTest {
     @Test
+    public void testDefaults() {
+        // Test child type / group type APIs for the default values documented in the method
+        // Javadocs
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        assertEquals(1, adapter.getGroupTypeCount());
+        assertEquals(0, adapter.getGroupType(0));
+        assertEquals(1, adapter.getChildTypeCount());
+        assertEquals(0, adapter.getChildType(0, 0));
+    }
+
+    @Test
     public void testAreAllItemsEnabled() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         assertTrue(adapter.areAllItemsEnabled());
     }
 
     @Test
     public void testGetCombinedId() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
 
         long childID = adapter.getCombinedChildId(10, 100);
         long groupID = adapter.getCombinedGroupId(10);
@@ -71,7 +83,7 @@ public class BaseExpandableListAdapterTest {
 
     @Test
     public void testNotifyDataSetChanged() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
         adapter.registerDataSetObserver(mockDataSetObserver);
 
@@ -82,7 +94,7 @@ public class BaseExpandableListAdapterTest {
 
     @Test
     public void testNotifyDataSetInvalidated() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
         adapter.registerDataSetObserver(mockDataSetObserver);
 
@@ -93,21 +105,21 @@ public class BaseExpandableListAdapterTest {
 
     @Test
     public void testOnGroupCollapsed() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         // this function is non-operation.
         adapter.onGroupCollapsed(0);
     }
 
     @Test
     public void testOnGroupExpanded() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         // this function is non-operation.
         adapter.onGroupExpanded(0);
     }
 
     @Test
     public void testDataSetObserver() {
-        MockBaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
+        BaseExpandableListAdapter adapter = new MockBaseExpandableListAdapter();
         DataSetObserver mockDataSetObserver = mock(DataSetObserver.class);
         adapter.registerDataSetObserver(mockDataSetObserver);
 
