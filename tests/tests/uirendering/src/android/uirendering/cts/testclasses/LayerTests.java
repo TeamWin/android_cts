@@ -25,11 +25,13 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorCountVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
+import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.Gravity;
@@ -165,6 +167,31 @@ public class LayerTests extends ActivityTestBase {
                 .addLayout(R.layout.frame_layout, initializer, true)
                 .runWithAnimationVerifier(new ColorCountVerifier(Color.WHITE, 90 * 90 - 50 * 50),
                         null);
+    }
+
+    @Test
+    public void testAlphaLayerChild() {
+        ViewInitializer initializer = new ViewInitializer() {
+            @Override
+            public void initializeView(View view) {
+                FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
+                root.setAlpha(0.5f);
+
+                View child = new View(view.getContext());
+                child.setBackgroundColor(Color.BLUE);
+                child.setTranslationX(10);
+                child.setTranslationY(10);
+                child.setLayoutParams(
+                        new FrameLayout.LayoutParams(50, 50));
+                child.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                root.addView(child);
+            }
+        };
+
+        createTest()
+                .addLayout(R.layout.frame_layout, initializer)
+                .runWithVerifier(new RectVerifier(Color.WHITE, 0xff8080ff,
+                        new Rect(10, 10, 60, 60)));
     }
 
     @Test
