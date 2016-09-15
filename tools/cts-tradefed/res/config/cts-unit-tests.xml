@@ -23,7 +23,6 @@
         <option name="class" value="com.android.compatibility.tradefed.CtsTradefedTest" />
     </test>
     <logger class="com.android.tradefed.log.FileLogger" />
-    <log_saver class="com.android.tradefed.result.FileSystemLogSaver" />
 
     <result_reporter class="com.android.tradefed.result.ConsoleResultReporter" />
     <template-include name="reporters" default="empty" />
