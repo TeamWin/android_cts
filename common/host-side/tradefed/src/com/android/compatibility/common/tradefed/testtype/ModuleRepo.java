@@ -17,14 +17,12 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.util.TestFilter;
 import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.ITestFileFilterReceiver;
@@ -234,7 +232,7 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
             List<String> testArgs, List<String> moduleArgs, Set<String> includeFilters,
-            Set<String> excludeFilters, IBuildInfo buildInfo) {
+            Set<String> excludeFilters) {
         CLog.d("Initializing ModuleRepo\nShards:%d\nTests Dir:%s\nABIs:%s\nDevice Tokens:%s\n" +
                 "Test Args:%s\nModule Args:%s\nIncludes:%s\nExcludes:%s",
                 shards, testsDir.getAbsolutePath(), abis, deviceTokens, testArgs, moduleArgs,
@@ -316,12 +314,9 @@ public class ModuleRepo implements IModuleRepo {
                     }
                     List<IRemoteTest> shardedTests = tests;
                     if (mShards > 1) {
-                         shardedTests = splitShardableTests(tests, buildInfo);
+                         shardedTests = splitShardableTests(tests);
                     }
                     for (IRemoteTest test : shardedTests) {
-                        if (test instanceof IBuildReceiver) {
-                            ((IBuildReceiver)test).setBuild(buildInfo);
-                        }
                         addModuleDef(name, abi, test, pathArg);
                     }
                 }
@@ -339,14 +334,10 @@ public class ModuleRepo implements IModuleRepo {
         mLargeModulesPerShard = mLargeModules.size() / shards;
     }
 
-    private static List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests,
-            IBuildInfo buildInfo) {
+    private static List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests) {
         ArrayList<IRemoteTest> shardedList = new ArrayList<>(tests.size());
         for (IRemoteTest test : tests) {
             if (test instanceof IShardableTest) {
-                if (test instanceof IBuildReceiver) {
-                    ((IBuildReceiver)test).setBuild(buildInfo);
-                }
                 shardedList.addAll(((IShardableTest)test).split());
             } else {
                 shardedList.add(test);

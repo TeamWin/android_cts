@@ -310,7 +310,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // throw a {@link FileNotFoundException}
                     mModuleRepo.initialize(mTotalShards, mBuildHelper.getTestsDir(), getAbis(),
                             mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
-                            mExcludeFilters, mBuildHelper.getBuildInfo());
+                            mExcludeFilters);
 
                     // Add the entire list of modules to the CompatibilityBuildHelper for reporting
                     mBuildHelper.setModuleIds(mModuleRepo.getModuleIds());
@@ -386,6 +386,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     runPreModuleCheck(module.getName(), checkers, mDevice, listener);
                 }
                 try {
+                    if (module.getTest() instanceof IBuildReceiver) {
+                        ((IBuildReceiver)module.getTest()).setBuild(mBuildHelper.getBuildInfo());
+                    }
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
                     // being able to catch a DeviceUnresponsiveException here implies that recovery

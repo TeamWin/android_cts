@@ -21,12 +21,11 @@ import com.android.compatibility.common.tradefed.testtype.ISubPlan;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.ITestResult;
+import com.android.compatibility.common.util.InvocationResult;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ArgsOptionParser;
@@ -47,7 +46,6 @@ public class SubPlanCreatorTest extends TestCase {
     private static final String SUITE_VERSION = "5.0";
     private static final String SUITE_PLAN = "cts";
     private static final String SUITE_BUILD = "12345";
-    private static final String REPORT_VERSION = "5.0";
     private static final String NAME_A = "ModuleA";
     private static final String NAME_B = "ModuleB";
     private static final String ABI = "mips64";
@@ -59,7 +57,6 @@ public class SubPlanCreatorTest extends TestCase {
     private static final String EXAMPLE_BUILD_PRODUCT = "wolverine";
     private static final String DEVICE_A = "device123";
     private static final String DEVICE_B = "device456";
-    private static final String DEVICES = "device456,device123";
     private static final String CLASS_A = "android.test.Foor";
     private static final String CLASS_B = "android.test.Bar";
     private static final String METHOD_1 = "testBlah1";
@@ -68,8 +65,6 @@ public class SubPlanCreatorTest extends TestCase {
     private static final String METHOD_4 = "testBlah4";
     private static final long START_MS = 1431586801000L;
     private static final long END_MS = 1431673199000L;
-    private static final String START_DISPLAY = "Fri Aug 20 15:13:03 PDT 2010";
-    private static final String END_DISPLAY = "Fri Aug 20 15:13:04 PDT 2010";
     private static final String REFERENCE_URL="http://android.com";
     private static final String LOG_URL ="file:///path/to/logs";
     private static final String COMMAND_LINE_ARGS = "cts -m CtsMyModuleTestCases";
@@ -169,6 +164,7 @@ public class SubPlanCreatorTest extends TestCase {
             return mResultsDir;
         }
 
+        @Override
         public File getSubPlansDir() throws FileNotFoundException {
             return mSubPlansDir;
         }

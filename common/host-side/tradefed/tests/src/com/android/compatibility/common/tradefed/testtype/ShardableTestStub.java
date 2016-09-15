@@ -28,8 +28,6 @@ import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
-import junit.framework.Assert;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -69,8 +67,6 @@ public class ShardableTestStub implements IRemoteTest, IShardableTest, IBuildRec
      */
     @Override
     public Collection<IRemoteTest> split() {
-        Assert.assertNotNull(mBuildInfo);
-
         mShards = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             mShards.add(new ShardableTestStub());
