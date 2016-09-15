@@ -17,14 +17,13 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsIcuTestCases.apk" />
     </target_preparer>
-    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+    <test class="com.android.compatibility.testtype.LibcoreTest" >
         <!-- override AJUR -->
         <option name="runner" value="com.android.cts.core.runner.CoreTestRunner" />
         <option name="package" value="android.icu.cts" />
         <option name="instrumentation-arg" key="core-root-classes"
                 value="android.icu.cts.coverage.TestAll,android.icu.dev.test.TestAll" />
-        <option name="instrumentation-arg" key="core-expectations"
-                value="/android/icu/cts/expectations/icu-known-failures.txt" />
+        <option name="core-expectation" value="/android/icu/cts/expectations/icu-known-failures.txt" />
         <option name="runtime-hint" value="30m19s" />
     </test>
 </configuration>
