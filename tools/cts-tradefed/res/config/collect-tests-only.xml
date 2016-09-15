@@ -47,4 +47,7 @@
     <!-- Tell all DalvikTests to only list the tests -->
     <option name="compatibility:test-arg" value="com.android.compatibility.testtype.DalvikTest:collect-tests-only:true" />
 
+    <!-- Tell all LibcoreTests to only list the tests -->
+    <option name="compatibility:test-arg" value="com.android.compatibility.testtype.LibcoreTest:collect-tests-only:true" />
+
 </configuration>
