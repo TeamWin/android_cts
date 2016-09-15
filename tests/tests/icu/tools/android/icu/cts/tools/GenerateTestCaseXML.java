@@ -1,7 +1,7 @@
 package android.icu.cts.tools;
 
 import com.google.common.base.Joiner;
-import com.android.compatibility.common.util.AbiUtils;
+import com.android.tradefed.util.AbiUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

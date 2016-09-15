@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.util.AbiUtils;
+
 /**
  * Represents a filter for including and excluding tests.
  */

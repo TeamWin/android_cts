@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.util.AbiUtils;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;

@@ -16,7 +16,6 @@
 
 package com.android.cts.tradefed.result;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.device.DeviceInfoCollector;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
@@ -27,6 +26,7 @@ import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.result.StubTestInvocationListener;
+import com.android.tradefed.util.AbiUtils;
 
 import java.util.Map;
 

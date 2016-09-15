@@ -16,7 +16,6 @@
 
 package android.ui.cts;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.cts.migration.MigrationHelper;
@@ -30,6 +29,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.AbiUtils;
 
 import org.xmlpull.v1.XmlPullParserException;
 

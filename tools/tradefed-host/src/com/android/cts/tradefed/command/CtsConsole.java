@@ -15,7 +15,6 @@
  */
 package com.android.cts.tradefed.command;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.cts.tradefed.build.CtsBuildProvider;
 import com.android.cts.tradefed.result.ITestResultRepo;
@@ -28,6 +27,7 @@ import com.android.tradefed.build.IFolderBuildInfo;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.config.ArgsOptionParser;
 import com.android.tradefed.config.ConfigurationException;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.RegexTrie;
 import com.android.tradefed.util.TableFormatter;

@@ -15,7 +15,6 @@
  */
 package com.android.cts.tradefed.device;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.result.CtsXmlResultReporter;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.Log;
@@ -25,6 +24,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.testtype.InstrumentationTest;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.File;
 import java.util.HashSet;

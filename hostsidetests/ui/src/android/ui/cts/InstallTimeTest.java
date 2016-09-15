@@ -16,7 +16,6 @@
 
 package android.ui.cts;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
 import com.android.compatibility.common.util.MetricsReportLog;
@@ -32,6 +31,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.File;
 

@@ -20,7 +20,7 @@ import vogar.Expectation;
 import vogar.ExpectationStore;
 import vogar.Result;
 
-import com.android.compatibility.common.util.AbiUtils;
+import com.android.tradefed.util.AbiUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

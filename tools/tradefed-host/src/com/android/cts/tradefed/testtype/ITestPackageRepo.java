@@ -16,7 +16,7 @@
 
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
+import com.android.tradefed.util.AbiUtils;
 
 import java.util.List;
 import java.util.Map;

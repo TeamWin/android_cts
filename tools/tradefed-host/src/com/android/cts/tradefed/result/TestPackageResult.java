@@ -15,12 +15,12 @@
  */
 package com.android.cts.tradefed.result;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.MetricsStore;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.cts.tradefed.testtype.CtsTest;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.AbiUtils;
 
 import org.kxml2.io.KXmlSerializer;
 import org.xmlpull.v1.XmlPullParser;

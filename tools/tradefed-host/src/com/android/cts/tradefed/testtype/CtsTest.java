@@ -16,7 +16,6 @@
 
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.MonitoringUtils;
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.cts.tradefed.device.DeviceInfoCollector;
@@ -53,6 +52,7 @@ import com.android.tradefed.testtype.IResumableTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.InstrumentationTest;
 import com.android.tradefed.util.AbiFormatter;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.RunUtil;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 

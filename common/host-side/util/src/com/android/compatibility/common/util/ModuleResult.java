@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.util.AbiUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

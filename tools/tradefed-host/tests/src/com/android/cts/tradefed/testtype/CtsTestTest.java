@@ -15,7 +15,6 @@
  */
 package com.android.cts.tradefed.testtype;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.cts.tradefed.UnitTests;
 import com.android.cts.tradefed.build.StubCtsBuildHelper;
 import com.android.cts.tradefed.result.PlanCreator;
@@ -25,6 +24,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IRemoteTest;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import junit.framework.TestCase;

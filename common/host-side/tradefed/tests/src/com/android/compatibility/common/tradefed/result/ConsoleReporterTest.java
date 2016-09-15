@@ -16,10 +16,10 @@
 
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.compatibility.common.util.AbiUtils;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.util.AbiUtils;
 
 import junit.framework.TestCase;
 

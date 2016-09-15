@@ -27,17 +27,13 @@ public class UnitTests extends TestSuite {
 
     public UnitTests() {
         super();
-        addTestSuite(AbiUtilsTest.class);
         addTestSuite(CaseResultTest.class);
         addTestSuite(DynamicConfigTest.class);
         addTestSuite(MetricsXmlSerializerTest.class);
-        addTestSuite(ModuleResultTest.class);
         addTestSuite(MultipartFormTest.class);
         addTestSuite(ReportLogTest.class);
         addTestSuite(StatTest.class);
-        addTestSuite(TestFilterTest.class);
         addTestSuite(TestResultTest.class);
-        addTestSuite(ResultHandlerTest.class);
     }
 
     public static Test suite() {
