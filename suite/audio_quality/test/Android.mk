@@ -19,10 +19,9 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-subdir-cpp-files)
 
 #$(info $(LOCAL_SRC_FILES))
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lib/include $(LOCAL_PATH)/../lib/src external/gtest/include \
-    external/tinyalsa/include/  libcore/include
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../lib/include $(LOCAL_PATH)/../lib/src external/gtest/include
 LOCAL_STATIC_LIBRARIES := libutils libgtest_host libgtest_main_host  liblog libcutils libtinyalsa \
-    libtinyxml
+    libtinyxml2
 # need to keep everything in libcts_.. Otherwise, linker will drop some
 # functions and linker error happens
 LOCAL_WHOLE_STATIC_LIBRARIES := libcts_audio_quality
