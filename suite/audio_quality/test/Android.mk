@@ -22,15 +22,13 @@ LOCAL_SRC_FILES := $(call all-subdir-cpp-files)
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../lib/include \
     $(LOCAL_PATH)/../lib/src \
-    external/tinyalsa/include/ \
-    libcore/include \
 
 LOCAL_STATIC_LIBRARIES := \
     libutils \
     liblog \
     libcutils \
     libtinyalsa \
-    libtinyxml \
+    libtinyxml2 \
 
 # need to keep everything in libcts_.. Otherwise, linker will drop some
 # functions and linker error happens
