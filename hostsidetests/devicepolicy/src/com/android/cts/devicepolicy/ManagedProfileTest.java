@@ -20,6 +20,7 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.lang.System;
 import junit.framework.AssertionFailedError;
 
 import java.util.concurrent.Callable;
@@ -68,6 +69,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
     private static final String ADD_RESTRICTION_COMMAND = "add-restriction";
+
+    private static final int MANAGED_PROFILE_REMOVED_TIMEOUT_SECONDS = 15;
 
     private int mParentUserId;
 
@@ -131,7 +134,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".WipeDataTest", mProfileUserId));
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
-        assertFalse(listUsers().contains(mProfileUserId));
+        long epoch = System.currentTimeMillis();
+        while (System.currentTimeMillis() - epoch <=
+                MANAGED_PROFILE_REMOVED_TIMEOUT_SECONDS * 1000) {
+            Thread.sleep(1000);
+            if (!listUsers().contains(mProfileUserId)) {
+                // The managed profile has been removed: success
+                return;
+            }
+        }
+        fail("The managed profile has not been removed after calling wipeData");
     }
 
     public void testMaxOneManagedProfile() throws Exception {
