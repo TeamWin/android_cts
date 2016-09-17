@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.verifier.usb;
+package com.android.cts.verifier.usb.accessory;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
