@@ -18,6 +18,10 @@ package android.server.cts;
 
 import java.awt.Rectangle;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerDockedStackTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";

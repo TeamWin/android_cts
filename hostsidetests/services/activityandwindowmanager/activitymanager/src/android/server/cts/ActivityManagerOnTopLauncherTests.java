@@ -19,6 +19,10 @@ package android.server.cts;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerOnTopLauncherTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityManagerOnTopLauncherTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";

@@ -21,6 +21,10 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import java.lang.Exception;
 import java.lang.String;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerActivityVisiblityTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String VISIBLE_BEHIND_ACTIVITY = "VisibleBehindActivity";

@@ -464,7 +464,7 @@ public class WindowManagerState {
     }
 
     static abstract class WindowContainer {
-        protected static final Pattern sFullscreenPattern = Pattern.compile("mFullscreen=(\\S+)");
+        protected static final Pattern sFullscreenPattern = Pattern.compile("mFillsParent=(\\S+)");
         protected static final Pattern sBoundsPattern =
                 Pattern.compile("mBounds=\\[(-?\\d+),(-?\\d+)\\]\\[(-?\\d+),(-?\\d+)\\]");
 

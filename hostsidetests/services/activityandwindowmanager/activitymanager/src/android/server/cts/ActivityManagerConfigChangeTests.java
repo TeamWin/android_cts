@@ -16,6 +16,10 @@
 
 package android.server.cts;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerConfigChangeTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
