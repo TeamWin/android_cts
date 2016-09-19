@@ -1204,6 +1204,16 @@
     <string name="package_priority_default">Find \"%s\" in the \"Notifications\" settings panel, and disallow it to Override Do Not Disturb.</string>
     <string name="package_priority_user_order">Check that ranker respects user priorities.</string>
 
+    <string name="shortcut_reset_test">Shortcut Reset Rate-limiting Test</string>
+    <string name="shortcut_reset_info">This test checks that when an inline-reply happens, ShortcutManager\'s rate-limiting
+        is reset.</string>
+    <string name="shortcut_reset_bot">Verifying that the CTS Robot helper package is installed.</string>
+    <string name="shortcut_reset_start">Showing the notification.</string>
+    <string name="shortcut_reset_prompt_inline_reply">Open the notification shade,
+        find the \"Shortcut Reset Rate-limiting Test\" notification, type something in the inline-reply field and
+        press the send button.</string>
+    <string name="shortcut_reset_check_result">Check ShortcutManager rate-limit has been reset.</string>
+
     <string name="attention_test">Notification Attention Management Test</string>
     <string name="attention_info">This test checks that the NotificationManagerService is
         respecting user preferences about notification ranking and filtering.
