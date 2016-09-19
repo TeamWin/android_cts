@@ -189,9 +189,6 @@
     <!-- b/26150806 -->
     <option name="compatibility:exclude-filter" value="CtsSignatureTestCases android.signature.cts.tests" />
 
-    <!-- b/23427621 -->
-    <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases" />
-
     <!-- b/27873815 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsRenderscriptLegacyTestCases" />
     <option name="compatibility:exclude-filter" value="x86_64 CtsRenderscriptLegacyTestCases" />
