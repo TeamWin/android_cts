@@ -68,6 +68,7 @@ public class ResultHandlerTest extends TestCase {
     private static final String METHOD_2 = "testBlah2";
     private static final String METHOD_3 = "testBlah3";
     private static final String METHOD_4 = "testBlah4";
+    private static final String METHOD_5 = "testBlah5";
     private static final String SUMMARY_SOURCE = String.format("%s#%s:20", CLASS_B, METHOD_4);
     private static final String DETAILS_SOURCE = String.format("%s#%s:18", CLASS_B, METHOD_4);
     private static final String SUMMARY_MESSAGE = "Headline";
@@ -90,7 +91,6 @@ public class ResultHandlerTest extends TestCase {
     private static final String REFERENCE_URL="http://android.com";
     private static final String LOG_URL ="file:///path/to/logs";
     private static final String COMMAND_LINE_ARGS = "cts -m CtsMyModuleTestCases";
-    private static final String JOIN = "%s%s";
     private static final String XML_BASE =
             "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>" +
             "<?xml-stylesheet type=\"text/xsl\" href=\"compatibility_result.xsl\"?>\n" +
@@ -119,8 +119,8 @@ public class ResultHandlerTest extends TestCase {
             "    </TestCase>\n";
     private static final String XML_TEST_PASS =
             "      <Test result=\"pass\" name=\"%s\"/>\n";
-    private static final String XML_TEST_NOT_EXECUTED =
-            "      <Test result=\"not_executed\" name=\"%s\"/>\n";
+    private static final String XML_TEST_SKIP =
+            "      <Test result=\"pass\" name=\"%s\" skipped=\"true\"/>\n";
     private static final String XML_TEST_FAIL =
             "      <Test result=\"fail\" name=\"%s\">\n" +
             "        <Failure message=\"%s\">\n" +
@@ -162,6 +162,7 @@ public class ResultHandlerTest extends TestCase {
         result.addDeviceSerial(DEVICE_B);
         result.addInvocationInfo(BUILD_ID, EXAMPLE_BUILD_ID);
         result.addInvocationInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
+        // Module A: test1 passes, test2 not executed
         IModuleResult moduleA = result.getOrCreateModule(ID_A);
         moduleA.setDone(false);
         ICaseResult moduleACase = moduleA.getOrCreateResult(CLASS_A);
@@ -170,7 +171,7 @@ public class ResultHandlerTest extends TestCase {
         ITestResult moduleATest2 = moduleACase.getOrCreateResult(METHOD_2);
         moduleATest2.setResultStatus(null); // not executed test
         moduleA.setNotExecuted(1);
-
+        // Module B: test3 fails, test4 passes with report log, test5 passes with skip
         IModuleResult moduleB = result.getOrCreateModule(ID_B);
         moduleB.setDone(true);
         ICaseResult moduleBCase = moduleB.getOrCreateResult(CLASS_B);
@@ -188,6 +189,8 @@ public class ResultHandlerTest extends TestCase {
                 SUMMARY_VALUE, ResultType.HIGHER_BETTER, ResultUnit.SCORE);
         report.setSummary(summary);
         moduleBTest4.setReportLog(report);
+        ITestResult moduleBTest5 = moduleBCase.getOrCreateResult(METHOD_5);
+        moduleBTest5.skipped();
 
         // Serialize to file
         ResultHandler.writeResults(SUITE_NAME, SUITE_VERSION, SUITE_PLAN, SUITE_BUILD,
@@ -222,11 +225,12 @@ public class ResultHandlerTest extends TestCase {
                     DETAILS_SOURCE, DETAILS_MESSAGE, ResultType.LOWER_BETTER.toReportString(),
                     ResultUnit.MS.toReportString(), Double.toString(DETAILS_VALUE_1),
                     Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
-            String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
+            String moduleBTest5 = String.format(XML_TEST_SKIP, METHOD_5);
+            String moduleBTests = String.join("", moduleBTest3, moduleBTest4, moduleBTest5);
             String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
             String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, DONE_B,
                     NOT_EXECUTED_B, moduleBCases);
-            String modules = String.format(JOIN, moduleA, moduleB);
+            String modules = String.join("", moduleA, moduleB);
             String hostName = "";
             try {
                 hostName = InetAddress.getLocalHost().getHostName();
@@ -251,7 +255,7 @@ public class ResultHandlerTest extends TestCase {
     private void checkResult(List<IInvocationResult> results, File resultDir) throws Exception {
         assertEquals("Expected 1 result", 1, results.size());
         IInvocationResult result = results.get(0);
-        assertEquals("Expected 2 passes", 2, result.countResults(TestStatus.PASS));
+        assertEquals("Expected 3 passes", 3, result.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
         assertEquals("Expected 1 not executed", 1, result.getNotExecuted());
 
@@ -294,7 +298,7 @@ public class ResultHandlerTest extends TestCase {
         assertNull("Unexpected report", moduleATest1.getReportLog());
 
         IModuleResult moduleB = modules.get(1);
-        assertEquals("Expected 1 pass", 1, moduleB.countResults(TestStatus.PASS));
+        assertEquals("Expected 2 passes", 2, moduleB.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, moduleB.countResults(TestStatus.FAIL));
         assertEquals("Incorrect ABI", ABI, moduleB.getAbi());
         assertEquals("Incorrect name", NAME_B, moduleB.getName());
@@ -304,7 +308,7 @@ public class ResultHandlerTest extends TestCase {
         ICaseResult moduleBCase = moduleBCases.get(0);
         assertEquals("Incorrect name", CLASS_B, moduleBCase.getName());
         List<ITestResult> moduleBResults = moduleBCase.getResults();
-        assertEquals("Expected 2 results", 2, moduleBResults.size());
+        assertEquals("Expected 3 results", 3, moduleBResults.size());
         ITestResult moduleBTest3 = moduleBResults.get(0);
         assertEquals("Incorrect name", METHOD_3, moduleBTest3.getName());
         assertEquals("Incorrect result", TestStatus.FAIL, moduleBTest3.getResultStatus());
@@ -332,5 +336,15 @@ public class ResultHandlerTest extends TestCase {
         assertEquals("Incorrect unit", ResultUnit.SCORE, summary.getUnit());
         assertTrue("Incorrect values", Arrays.equals(new double[] { SUMMARY_VALUE },
                 summary.getValues()));
+        ITestResult moduleBTest5 = moduleBResults.get(2);
+        assertEquals("Incorrect name", METHOD_5, moduleBTest5.getName());
+        assertEquals("Incorrect result", TestStatus.PASS, moduleBTest5.getResultStatus());
+        assertTrue("Expected skipped", moduleBTest5.isSkipped());
+        assertNull("Unexpected bugreport", moduleBTest5.getBugReport());
+        assertNull("Unexpected log", moduleBTest5.getLog());
+        assertNull("Unexpected screenshot", moduleBTest5.getScreenshot());
+        assertNull("Unexpected message", moduleBTest5.getMessage());
+        assertNull("Unexpected stack trace", moduleBTest5.getStackTrace());
+        assertNull("Unexpected report", moduleBTest5.getReportLog());
     }
 }

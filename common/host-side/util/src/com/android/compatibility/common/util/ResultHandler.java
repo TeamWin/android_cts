@@ -86,6 +86,7 @@ public class ResultHandler {
     private static final String RESULT_TAG = "Result";
     private static final String RUNTIME_ATTR = "runtime";
     private static final String SCREENSHOT_TAG = "Screenshot";
+    private static final String SKIPPED_ATTR = "skipped";
     private static final String STACK_TAG = "StackTrace";
     private static final String START_DISPLAY_TIME_ATTR = "start_display";
     private static final String START_TIME_ATTR = "start";
@@ -166,7 +167,14 @@ public class ResultHandler {
                             String testName = parser.getAttributeValue(NS, NAME_ATTR);
                             ITestResult test = testCase.getOrCreateResult(testName);
                             String result = parser.getAttributeValue(NS, RESULT_ATTR);
-                            test.setResultStatus(TestStatus.getStatus(result));
+                            String skipped = parser.getAttributeValue(NS, SKIPPED_ATTR);
+                            if (skipped != null && Boolean.parseBoolean(skipped)) {
+                                // mark test passed and skipped
+                                test.skipped();
+                            } else {
+                                // only apply result status directly if test was not skipped
+                                test.setResultStatus(TestStatus.getStatus(result));
+                            }
                             test.setRetry(true);
                             while (parser.nextTag() == XmlPullParser.START_TAG) {
                                 if (parser.getName().equals(FAILURE_TAG)) {
@@ -327,6 +335,9 @@ public class ResultHandler {
                     serializer.startTag(NS, TEST_TAG);
                     serializer.attribute(NS, RESULT_ATTR, status.getValue());
                     serializer.attribute(NS, NAME_ATTR, r.getName());
+                    if (r.isSkipped()) {
+                        serializer.attribute(NS, SKIPPED_ATTR, Boolean.toString(true));
+                    }
                     String message = r.getMessage();
                     if (message != null) {
                         serializer.startTag(NS, FAILURE_TAG);

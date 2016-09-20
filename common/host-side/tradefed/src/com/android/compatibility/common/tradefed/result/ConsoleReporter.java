@@ -120,7 +120,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testAssumptionFailure(TestIdentifier test, String trace) {
-        logProgress("%s failed assumption: %s", test, trace);
+        logProgress("%s skip", test);
     }
 
     /**
