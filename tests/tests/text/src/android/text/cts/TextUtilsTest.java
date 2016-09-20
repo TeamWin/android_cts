@@ -497,6 +497,29 @@ public class TextUtilsTest  {
         }
     }
 
+    @SmallTest
+    public void testEllipsize_emoji() {
+        // 2 family emojis (11 code units + 11 code units).
+        final String text = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66"
+                + "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66";
+
+        final TextPaint p = new TextPaint();
+        final float width = p.measureText(text);
+
+        final TextUtils.TruncateAt[] kinds = {TextUtils.TruncateAt.START,
+                TextUtils.TruncateAt.MIDDLE, TextUtils.TruncateAt.END};
+        for (final TextUtils.TruncateAt kind : kinds) {
+            for (int i = 0; i <= 8; i++) {
+                float avail = width * i / 7.0f;
+                final String out = TextUtils.ellipsize(text, p, avail, kind).toString();
+                assertTrue("kind: " + kind + ", avail: " + avail + ", out length: " + out.length(),
+                        out.length() == text.length()
+                                || out.length() == text.length() / 2 + 1
+                                || out.length() == 0);
+            }
+        }
+    }
+
     @Test
     public void testEllipsizeCallback() {
         TextPaint p = new TextPaint();
