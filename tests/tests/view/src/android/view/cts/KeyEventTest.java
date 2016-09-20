@@ -36,6 +36,8 @@ import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.method.MetaKeyKeyListener;
+import android.view.InputDevice;
+import android.view.KeyCharacterMap;
 import android.view.KeyCharacterMap.KeyData;
 import android.view.KeyEvent;
 
@@ -104,14 +106,60 @@ public class KeyEventTest {
     }
 
     @Test
-    public void testIsShiftPressed() {
-        assertFalse(mKeyEvent.isShiftPressed());
-        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
-                KeyEvent.META_SHIFT_ON);
-        assertTrue(mKeyEvent.isShiftPressed());
+    public void testMetaKeyStates() {
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
                 KeyEvent.META_ALT_ON);
+        assertTrue(mKeyEvent.isAltPressed());
+        assertFalse(mKeyEvent.isCtrlPressed());
+        assertFalse(mKeyEvent.isFunctionPressed());
+        assertFalse(mKeyEvent.isMetaPressed());
         assertFalse(mKeyEvent.isShiftPressed());
+        assertFalse(mKeyEvent.isSymPressed());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_1, 4,
+                KeyEvent.META_CTRL_ON);
+        assertFalse(mKeyEvent.isAltPressed());
+        assertTrue(mKeyEvent.isCtrlPressed());
+        assertFalse(mKeyEvent.isFunctionPressed());
+        assertFalse(mKeyEvent.isMetaPressed());
+        assertFalse(mKeyEvent.isShiftPressed());
+        assertFalse(mKeyEvent.isSymPressed());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_2, 3,
+                KeyEvent.META_FUNCTION_ON);
+        assertFalse(mKeyEvent.isAltPressed());
+        assertFalse(mKeyEvent.isCtrlPressed());
+        assertTrue(mKeyEvent.isFunctionPressed());
+        assertFalse(mKeyEvent.isMetaPressed());
+        assertFalse(mKeyEvent.isShiftPressed());
+        assertFalse(mKeyEvent.isSymPressed());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_3, 2,
+                KeyEvent.META_META_ON);
+        assertFalse(mKeyEvent.isAltPressed());
+        assertFalse(mKeyEvent.isCtrlPressed());
+        assertFalse(mKeyEvent.isFunctionPressed());
+        assertTrue(mKeyEvent.isMetaPressed());
+        assertFalse(mKeyEvent.isShiftPressed());
+        assertFalse(mKeyEvent.isSymPressed());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_4, 1,
+                KeyEvent.META_SHIFT_ON);
+        assertFalse(mKeyEvent.isAltPressed());
+        assertFalse(mKeyEvent.isCtrlPressed());
+        assertFalse(mKeyEvent.isFunctionPressed());
+        assertFalse(mKeyEvent.isMetaPressed());
+        assertTrue(mKeyEvent.isShiftPressed());
+        assertFalse(mKeyEvent.isSymPressed());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_5, 0,
+                KeyEvent.META_SYM_ON);
+        assertFalse(mKeyEvent.isAltPressed());
+        assertFalse(mKeyEvent.isCtrlPressed());
+        assertFalse(mKeyEvent.isFunctionPressed());
+        assertFalse(mKeyEvent.isMetaPressed());
+        assertFalse(mKeyEvent.isShiftPressed());
+        assertTrue(mKeyEvent.isSymPressed());
     }
 
     @Test
@@ -122,9 +170,9 @@ public class KeyEventTest {
 
     @Test
     public void testGetKeyData() {
-        KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_Z);
+        mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_Z);
         KeyData keyData = new KeyData();
-        assertTrue(keyEvent.getKeyData(keyData));
+        assertTrue(mKeyEvent.getKeyData(keyData));
 
         assertEquals('Z', keyData.displayLabel);
         assertEquals(0, keyData.number);
@@ -242,17 +290,6 @@ public class KeyEventTest {
     }
 
     @Test
-    public void testIsSymPressed() {
-        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
-                KeyEvent.META_SYM_ON);
-        assertTrue(mKeyEvent.isSymPressed());
-
-        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
-                KeyEvent.META_SHIFT_ON);
-        assertFalse(mKeyEvent.isSymPressed());
-    }
-
-    @Test
     public void testGetDeviceId() {
         int deviceId = 1;
         mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
@@ -264,17 +301,6 @@ public class KeyEventTest {
     public void testToString() {
         // make sure it does not throw any exception.
         mKeyEvent.toString();
-    }
-
-    @Test
-    public void testIsAltPressed() {
-        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
-                KeyEvent.META_ALT_ON);
-        assertTrue(mKeyEvent.isAltPressed());
-
-        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0, 5,
-                KeyEvent.META_SHIFT_ON);
-        assertFalse(mKeyEvent.isAltPressed());
     }
 
     @Test
@@ -458,29 +484,29 @@ public class KeyEventTest {
 
     @Test
     public void testHasNoModifiers() {
-        KeyEvent ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON);
-        assertTrue(ev.hasNoModifiers());
+        assertTrue(mKeyEvent.hasNoModifiers());
 
-        ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON | KeyEvent.META_SHIFT_ON);
-        assertFalse(ev.hasNoModifiers());
+        assertFalse(mKeyEvent.hasNoModifiers());
     }
 
     @Test
     public void testHasModifiers() {
-        KeyEvent ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON);
-        assertTrue(ev.hasModifiers(0));
+        assertTrue(mKeyEvent.hasModifiers(0));
 
-        ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON | KeyEvent.META_SHIFT_ON);
-        assertTrue(ev.hasModifiers(KeyEvent.META_SHIFT_ON));
+        assertTrue(mKeyEvent.hasModifiers(KeyEvent.META_SHIFT_ON));
 
-        ev = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN,
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
                 KeyEvent.KEYCODE_A, 0,
                 KeyEvent.META_CAPS_LOCK_ON | KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_RIGHT_ON);
-        assertFalse(ev.hasModifiers(KeyEvent.META_SHIFT_LEFT_ON));
+        assertFalse(mKeyEvent.hasModifiers(KeyEvent.META_SHIFT_LEFT_ON));
     }
 
     @Test
@@ -555,16 +581,26 @@ public class KeyEventTest {
     }
 
     @Test
-    public void testGetMatch1() {
-        char[] codes1 = new char[] { '0', '1', '2' };
-        assertEquals('0', mKeyEvent.getMatch(codes1));
+    public void testGetMatch() {
+        // Our default key event is down + 0, so we expect getMatch to return our '0' character
+        assertEquals('0', mKeyEvent.getMatch(new char[] { '0', '1', '2' }));
 
-        char[] codes2 = new char[] { 'A', 'B', 'C' };
-        assertEquals('\0', mKeyEvent.getMatch(codes2));
+        // Our default key event is down + 0, so we expect getMatch to return the default 0
+        assertEquals('\0', mKeyEvent.getMatch(new char[] { 'A', 'B', 'C' }));
 
-        char[] codes3 = { '2', 'S' };
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_S);
-        assertEquals('S', mKeyEvent.getMatch(codes3));
+        assertEquals('S', mKeyEvent.getMatch(new char[] { '2', 'S' }));
+    }
+
+    @Test
+    public void testGetMatchWithMeta() {
+        mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A);
+        // With no meta state, we're expecting our key event to match the lowercase 'a' since
+        // it's the first good match in the passed array
+        assertEquals('a', mKeyEvent.getMatch(new char[] { 'a', 'A' }, 0));
+        // With SHIFT_ON meta state, we're expecting the same key event to match the uppercase
+        // 'a' since it's a better match now
+        assertEquals('A', mKeyEvent.getMatch(new char[] { 'a', 'A' }, KeyEvent.META_SHIFT_ON));
     }
 
     @Test
@@ -681,5 +717,47 @@ public class KeyEventTest {
         assertEquals(mKeyEvent.getDeviceId(), newEvent.getDeviceId());
         assertEquals(mKeyEvent.getDownTime(), newEvent.getDownTime());
         assertEquals(mKeyEvent.getKeyCode(), newEvent.getKeyCode());
+    }
+
+    @Test
+    public void testAccessSource() {
+        mKeyEvent.setSource(InputDevice.SOURCE_KEYBOARD);
+        assertEquals(InputDevice.SOURCE_KEYBOARD, mKeyEvent.getSource());
+
+        mKeyEvent.setSource(InputDevice.SOURCE_HDMI);
+        assertEquals(InputDevice.SOURCE_HDMI, mKeyEvent.getSource());
+    }
+
+    @Test
+    public void testMetaOn() {
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_A, 0, KeyEvent.META_CAPS_LOCK_ON | KeyEvent.META_SHIFT_ON);
+        assertTrue(mKeyEvent.isCapsLockOn());
+        assertFalse(mKeyEvent.isNumLockOn());
+        assertFalse(mKeyEvent.isScrollLockOn());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_B, 1, KeyEvent.META_NUM_LOCK_ON | KeyEvent.META_SHIFT_ON);
+        assertFalse(mKeyEvent.isCapsLockOn());
+        assertTrue(mKeyEvent.isNumLockOn());
+        assertFalse(mKeyEvent.isScrollLockOn());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_C, 2, KeyEvent.META_SCROLL_LOCK_ON | KeyEvent.META_SHIFT_ON);
+        assertFalse(mKeyEvent.isCapsLockOn());
+        assertFalse(mKeyEvent.isNumLockOn());
+        assertTrue(mKeyEvent.isScrollLockOn());
+    }
+
+    @Test
+    public void testIsLongPress() {
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
+                1, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_LONG_PRESS,
+                InputDevice.SOURCE_TOUCHSCREEN);
+        assertTrue(mKeyEvent.isLongPress());
+
+        mKeyEvent = new KeyEvent(mDownTime, mEventTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A,
+                1, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_TOUCHSCREEN);
+        assertFalse(mKeyEvent.isLongPress());
     }
 }
