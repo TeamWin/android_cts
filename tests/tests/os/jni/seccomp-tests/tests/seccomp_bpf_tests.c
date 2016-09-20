@@ -878,7 +878,7 @@ TEST_F(precedence, trace_is_fourth_in_any_order) {
 #define PTRACE_EVENT_SECCOMP 7
 #endif
 
-#define IS_SECCOMP_EVENT(status) ((status >> 16) == PTRACE_EVENT_SECCOMP)
+#define IS_SECCOMP_EVENT(status) (((status) >> 16) == PTRACE_EVENT_SECCOMP)
 bool tracer_running;
 void tracer_stop(int sig)
 {
