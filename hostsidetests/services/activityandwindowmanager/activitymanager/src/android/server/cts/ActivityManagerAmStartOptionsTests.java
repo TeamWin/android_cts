@@ -21,6 +21,10 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerAmStartOptionsTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";

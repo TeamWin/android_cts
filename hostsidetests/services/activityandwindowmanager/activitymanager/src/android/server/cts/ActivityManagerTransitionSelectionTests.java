@@ -26,6 +26,8 @@ package android.server.cts;
  * TRANSIT_ACTIVITY_OPEN, TRANSIT_TASK_CLOSE, TRANSIT_WALLPAPER_OPEN, etc.).
  * The exact animation is unspecified and can be overridden.
  *
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerTransitionSelectionTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
  */
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
 

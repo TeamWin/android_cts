@@ -26,6 +26,10 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityAndWindowManagerOverrideConfigTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";
 
@@ -76,14 +80,14 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
         mDevice.executeShellCommand(AM_MOVE_TASK + taskId + " " + FREEFORM_WORKSPACE_STACK_ID + " true");
     }
 
-private void resizeTask(final String activityName, int width, int height) throws Exception {
+    private void resizeTask(final String activityName, int width, int height) throws Exception {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_RESIZE_TASK + taskId + " " + 0 + "," + 0 +
             "," + width + "," + height;
         mDevice.executeShellCommand(cmd);
     }
 
-public void testReceiveOverrideConfigFromRelayout() throws Exception {
+    public void testReceiveOverrideConfigFromRelayout() throws Exception {
         launchTestActivityInFreeform(TEST_ACTIVITY_NAME);
 
         clearLogcat();

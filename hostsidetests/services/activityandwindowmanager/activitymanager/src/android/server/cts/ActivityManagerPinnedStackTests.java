@@ -19,6 +19,10 @@ package android.server.cts;
 import java.lang.Exception;
 import java.lang.String;
 
+/**
+ * Build: mmma -j32 cts/hostsidetests/services
+ * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerPinnedStackTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String PIP_ACTIVITY = "PipActivity";
     private static final String AUTO_ENTER_PIP_ACTIVITY = "AutoEnterPipActivity";
