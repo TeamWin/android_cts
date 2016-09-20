@@ -290,7 +290,7 @@ public class TransitionTest extends BaseTransitionTest {
     public void testExcludeChildrenView() throws Throwable {
         View layout1 = loadLayout(R.layout.scene1);
         Scene scene1 = loadScene(layout1);
-        enterScene(R.layout.scene1);
+        enterScene(scene1);
         View holder1 = layout1.findViewById(R.id.holder);
         mTransition.excludeChildren(holder1, true);
         View layout2 = loadLayout(R.layout.scene2);
@@ -347,8 +347,7 @@ public class TransitionTest extends BaseTransitionTest {
         View redSquare1 = layout1.findViewById(R.id.redSquare);
         mTransition.excludeTarget(redSquare1, true);
         startTransition(R.layout.scene7);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        waitForEnd(600);
 
         mTransition.excludeTarget(redSquare1, false); // remove it
         resetListener();
