@@ -78,7 +78,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        String version = getSuiteInfoVersion();
+        String version = getSuiteInfoBuildNumber();
         if (version == null) {
             version = IBuildInfo.UNKNOWN_BUILD_ID;
         }
