@@ -246,10 +246,14 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
     }
 
     public void testRemovePackageStep1UserDenies() throws Exception {
+        if (!supportedHardware()) return;
+
         deniesOnceForAllTest(getPrimaryVolume(), DIRECTORY_NOTIFICATIONS);
     }
 
     public void testRemovePackageStep2UserAcceptsDoNotClear() throws Exception {
+        if (!supportedHardware()) return;
+
         userAcceptsTest(getPrimaryVolume(), DIRECTORY_NOTIFICATIONS);
     }
 
