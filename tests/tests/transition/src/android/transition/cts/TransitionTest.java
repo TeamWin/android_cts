@@ -20,6 +20,7 @@ import static android.cts.util.CtsMockitoUtils.within;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -591,6 +592,34 @@ public class TransitionTest extends BaseTransitionTest {
 
         assertNotNull(transition.getTransitionProperties());
         assertEquals(1, transition.getTransitionProperties().length);
+    }
+
+    @Test
+    public void testGoWithNullParameter() throws Throwable {
+        final View layout1 = loadLayout(R.layout.scene1);
+        final Scene scene1 = loadScene(layout1);
+
+        final View layout3 = loadLayout(R.layout.scene3);
+        final Scene scene3 = loadScene(layout3);
+
+        enterScene(scene1);
+
+        mInstrumentation.runOnMainSync(() -> {
+            // scene1
+            assertSame(layout1, mActivity.findViewById(R.id.holder));
+            assertNotNull(mActivity.findViewById(R.id.hello));
+
+            TransitionManager.go(scene3, null);
+            // now at scene3
+            assertSame(layout3, mActivity.findViewById(R.id.holder));
+            assertNull(mActivity.findViewById(R.id.hello));
+
+            TransitionManager.go(scene1, null);
+
+            // now at scene1
+            assertSame(layout1, mActivity.findViewById(R.id.holder));
+            assertNotNull(mActivity.findViewById(R.id.hello));
+        });
     }
 
     private class NotRequiredTransition extends TestTransition {
