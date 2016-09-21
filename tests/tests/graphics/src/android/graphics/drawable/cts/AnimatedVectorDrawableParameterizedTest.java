@@ -224,4 +224,61 @@ public class AnimatedVectorDrawableParameterizedTest {
         return true;
     }
 
+    @Test
+    public void testInfiniteAVD() throws Throwable {
+        final AnimatedVectorDrawableTest.MyCallback callback
+                = new AnimatedVectorDrawableTest.MyCallback();
+        final Rect imageViewRect = new Rect();
+        final int size = mResources.getDimensionPixelSize(R.dimen.imageview_fixed_size);
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.setContentView(R.layout.fixed_sized_imageview);
+            final ImageView imageView = (ImageView) mActivity.findViewById(R.id.imageview);
+            imageView.setImageDrawable(mResources.getDrawable(R.drawable.infinite_avd));
+            imageView.setLayerType(mLayerType, null);
+            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView.getDrawable();
+            avd.registerAnimationCallback(callback);
+            int[] locationOnScreen = new int[2];
+            imageView.getLocationOnScreen(locationOnScreen);
+            imageViewRect.set(locationOnScreen[0], locationOnScreen[1],
+                    locationOnScreen[0] + size, locationOnScreen[1] + size);
+            avd.start();
+        });
+        callback.waitForStart();
+
+        // Wait another few frames to make sure that RT has started and rendered the animation, and
+        // the frame buffer with the started animation is being rendered on screen.
+        waitWhilePumpingFrames(5, mActivity.findViewById(R.id.imageview), 200);
+        Bitmap lastScreenShot = null;
+
+        for (int counter = 0; counter < 10; counter++) {
+            // Take a screen shot every 100ms, and compare with previous screenshot for the ImageView
+            // content, to make sure the AVD is animating when set on HW layer.
+            Bitmap screenShot = InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .takeScreenshot();
+            boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
+            if (isIdentical) {
+                saveVectorDrawableIntoPNG(screenShot, "inf_avd_screenshot_" + mLayerType + "_" +
+                        counter);
+                saveVectorDrawableIntoPNG(lastScreenShot, "inf_avd_screenshot_" + mLayerType + "_" +
+                        (counter - 1));
+                fail("Two consecutive screenshots of AVD are identical, AVD is " +
+                        "likely not animating");
+            }
+            lastScreenShot = screenShot;
+            counter++;
+
+            // Wait 100ms before the next screen shot. If animation ended during the wait, fail the
+            // test, as the infinite avd should not end until we call stop().
+            if (callback.waitForEnd(100)) {
+                fail("Infinite AnimatedVectorDrawable should not end on its own.");
+            }
+        }
+        Assert.assertFalse(callback.endIsCalled());
+        mActivityRule.runOnUiThread(() -> {
+            ImageView imageView = (ImageView) mActivity.findViewById(R.id.imageview);
+            AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView.getDrawable();
+            avd.stop();
+        });
+    }
+
 }
