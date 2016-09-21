@@ -16,14 +16,21 @@
 
 package android.media.cts;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+
+import android.util.Log;
 
 /* package */ class DeviceUtils {
     private static final String TAG = "DeviceUtils";
 
     /* package */ static boolean hasOutputDevice(AudioManager audioMgr) {
-
         AudioDeviceInfo[] devices = audioMgr.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
         return devices.length != 0;
     }
@@ -31,5 +38,28 @@ import android.media.AudioManager;
     /* package */ static boolean hasInputDevice(AudioManager audioMgr) {
         AudioDeviceInfo[] devices = audioMgr.getDevices(AudioManager.GET_DEVICES_INPUTS);
         return devices.length != 0;
+    }
+
+    /* package */ static boolean isTVDevice(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    /*
+     * HDMI
+     */
+    /* package */ static boolean isHDMIConnected(Context context) {
+        // configure the IntentFilter
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(AudioManager.ACTION_HDMI_AUDIO_PLUG);
+        Intent intent = context.registerReceiver(null, intentFilter);
+
+        String action = intent.getAction();
+        boolean isHDMIConnected = false;
+        if (action.equals(AudioManager.ACTION_HDMI_AUDIO_PLUG)) {
+            isHDMIConnected =
+                    intent.getIntExtra(AudioManager.EXTRA_AUDIO_PLUG_STATE, 0) != 0;
+        }
+
+        return isHDMIConnected;
     }
 }
