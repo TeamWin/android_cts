@@ -37,6 +37,10 @@ def main():
         print 'Error: need to specify which scene to load'
         assert False
 
+    if not screen_id:
+        print 'Error: need to specify screen serial'
+        assert False
+
     remote_scene_file = '/sdcard/Download/%s.pdf' % scene
     local_scene_file = os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests',
                                     scene, scene+'.pdf')
