@@ -197,6 +197,8 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile LinkedList<MySensorEvent> mEvents = null;
     private volatile Object mEventLock = new Object();
     private volatile boolean mEventsEnabled = false;
+    private HandlerThread mSensorThread = null;
+    private Handler mSensorHandler = null;
 
     public interface CaptureCallback {
         void onCaptureAvailable(Image capture);
@@ -228,9 +230,15 @@ public class ItsService extends Service implements SensorEventListener {
             mAccelSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             mMagSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
             mGyroSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-            mSensorManager.registerListener(this, mAccelSensor, SensorManager.SENSOR_DELAY_FASTEST);
-            mSensorManager.registerListener(this, mMagSensor, SensorManager.SENSOR_DELAY_FASTEST);
-            mSensorManager.registerListener(this, mGyroSensor, SensorManager.SENSOR_DELAY_FASTEST);
+            mSensorThread = new HandlerThread("SensorThread");
+            mSensorThread.start();
+            mSensorHandler = new Handler(mSensorThread.getLooper());
+            mSensorManager.registerListener(this, mAccelSensor,
+                    SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
+            mSensorManager.registerListener(this, mMagSensor,
+                    SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
+            mSensorManager.registerListener(this, mGyroSensor,
+                    /*200hz*/5000, mSensorHandler);
 
             // Get a handle to the system vibrator.
             mVibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
@@ -290,6 +298,10 @@ public class ItsService extends Service implements SensorEventListener {
                 mSaveThreads[i].quit();
                 mSaveThreads[i] = null;
             }
+        }
+        if (mSensorThread != null) {
+            mSensorThread.quitSafely();
+            mSensorThread = null;
         }
         if (mResultThread != null) {
             mResultThread.quitSafely();
@@ -1277,6 +1289,8 @@ public class ItsService extends Service implements SensorEventListener {
 
             // Initiate the captures.
             long maxExpTimeNs = -1;
+            List<CaptureRequest> requestList =
+                    new ArrayList<>(requests.size());
             for (int i = 0; i < requests.size(); i++) {
                 CaptureRequest.Builder req = requests.get(i);
                 // For DNG captures, need the LSC map to be available.
@@ -1291,8 +1305,9 @@ public class ItsService extends Service implements SensorEventListener {
                 for (int j = 0; j < numCaptureSurfaces; j++) {
                     req.addTarget(mOutputImageReaders[j].getSurface());
                 }
-                mSession.capture(req.build(), mCaptureResultListener, mResultHandler);
+                requestList.add(req.build());
             }
+            mSession.captureBurst(requestList, mCaptureResultListener, mResultHandler);
 
             long timeout = TIMEOUT_CALLBACK * 1000;
             if (maxExpTimeNs > 0) {
@@ -1478,6 +1493,11 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     @Override
+    public final void onAccuracyChanged(Sensor sensor, int accuracy) {
+        Logt.i(TAG, "Sensor " + sensor.getName() + " accuracy changed to " + accuracy);
+    }
+
+    @Override
     public final void onSensorChanged(SensorEvent event) {
         synchronized(mEventLock) {
             if (mEventsEnabled) {
@@ -1490,10 +1510,6 @@ public class ItsService extends Service implements SensorEventListener {
                 mEvents.add(ev2);
             }
         }
-    }
-
-    @Override
-    public final void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
     private final CaptureCallback mCaptureCallback = new CaptureCallback() {
