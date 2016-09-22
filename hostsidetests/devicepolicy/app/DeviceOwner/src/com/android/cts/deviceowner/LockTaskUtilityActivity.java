@@ -41,25 +41,25 @@ public class LockTaskUtilityActivity extends Activity {
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sendBroadcast(new Intent(CREATE_ACTION));
+        sendLocalBroadcast(new Intent(CREATE_ACTION));
         handleIntent(getIntent());
     }
 
     @Override
     protected void onDestroy() {
-        sendBroadcast(new Intent(DESTROY_ACTION));
+        sendLocalBroadcast(new Intent(DESTROY_ACTION));
         super.onDestroy();
     }
 
     @Override
     protected void onResume() {
-        sendBroadcast(new Intent(RESUME_ACTION));
+        sendLocalBroadcast(new Intent(RESUME_ACTION));
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        sendBroadcast(new Intent(PAUSE_ACTION));
+        sendLocalBroadcast(new Intent(PAUSE_ACTION));
         super.onPause();
     }
 
@@ -77,7 +77,12 @@ public class LockTaskUtilityActivity extends Activity {
         if (intent.getBooleanExtra(FINISH, false)) {
             finish();
         }
-        sendBroadcast(new Intent(INTENT_ACTION));
+        sendLocalBroadcast(new Intent(INTENT_ACTION));
     }
 
+    private void sendLocalBroadcast(Intent intent) {
+        intent.setPackage(this.getPackageName());
+        intent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        sendBroadcast(intent);
+    }
 }
