@@ -497,7 +497,7 @@ public class TextUtilsTest  {
         }
     }
 
-    @SmallTest
+    @Test
     public void testEllipsize_emoji() {
         // 2 family emojis (11 code units + 11 code units).
         final String text = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66"
