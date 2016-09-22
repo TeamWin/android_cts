@@ -20,7 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
+import android.content.Context;
 import android.cts.util.PollingCheck;
+import android.hardware.input.InputManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -50,6 +52,22 @@ public class SearchEventTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(5000, mActivity::hasWindowFocus);
+    }
+
+    @Test
+    public void testConstructor() {
+        final InputManager inputManager = (InputManager) mInstrumentation.getTargetContext().
+                getSystemService(Context.INPUT_SERVICE);
+        if (inputManager == null) {
+            return;
+        }
+        final int[] inputDeviceIds = inputManager.getInputDeviceIds();
+        if (inputDeviceIds != null) {
+            for (int inputDeviceId : inputDeviceIds) {
+                final InputDevice inputDevice = inputManager.getInputDevice(inputDeviceId);
+                new SearchEvent(inputDevice);
+            }
+        }
     }
 
     @Test

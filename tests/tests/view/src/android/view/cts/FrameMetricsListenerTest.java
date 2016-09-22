@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -74,6 +75,7 @@ public class FrameMetricsListenerTest {
             (Window window, FrameMetrics frameMetrics, int dropCount) -> {
                 assertEquals(myWindow, window);
                 assertEquals(0, dropCount);
+                callGetMetric(frameMetrics);
                 data.add(new FrameMetrics(frameMetrics));
             };
         mActivityRule.runOnUiThread(() -> mActivity.getWindow().
@@ -108,6 +110,7 @@ public class FrameMetricsListenerTest {
                 (Window window, FrameMetrics frameMetrics, int dropCount) -> {
                     assertEquals(myWindow, window);
                     assertEquals(0, dropCount);
+                    callGetMetric(frameMetrics);
                     data1.add(new FrameMetrics(frameMetrics));
                 };
         final ArrayList<FrameMetrics> data2 = new ArrayList<>();
@@ -115,6 +118,7 @@ public class FrameMetricsListenerTest {
                 (Window window, FrameMetrics frameMetrics, int dropCount) -> {
                     assertEquals(myWindow, window);
                     assertEquals(0, dropCount);
+                    callGetMetric(frameMetrics);
                     data2.add(new FrameMetrics(frameMetrics));
                 };
         mActivityRule.runOnUiThread(() -> {
@@ -149,6 +153,7 @@ public class FrameMetricsListenerTest {
         final Window.OnFrameMetricsAvailableListener frameMetricsListener =
                 (Window window, FrameMetrics frameMetrics, int dropCount) -> {
                     SystemClock.sleep(100);
+                    callGetMetric(frameMetrics);
                     framesDropped.addAndGet(dropCount);
                 };
 
@@ -165,6 +170,25 @@ public class FrameMetricsListenerTest {
 
         mActivityRule.runOnUiThread(() -> mActivity.getWindow().
                 removeOnFrameMetricsAvailableListener(frameMetricsListener));
+    }
+
+    private void callGetMetric(FrameMetrics frameMetrics) {
+        // The return values for non-boolean metrics do not have expected values. Here we
+        // are verifying that calling getMetrics does not crash
+        frameMetrics.getMetric(FrameMetrics.UNKNOWN_DELAY_DURATION);
+        frameMetrics.getMetric(FrameMetrics.INPUT_HANDLING_DURATION);
+        frameMetrics.getMetric(FrameMetrics.ANIMATION_DURATION);
+        frameMetrics.getMetric(FrameMetrics.LAYOUT_MEASURE_DURATION);
+        frameMetrics.getMetric(FrameMetrics.DRAW_DURATION);
+        frameMetrics.getMetric(FrameMetrics.SYNC_DURATION);
+        frameMetrics.getMetric(FrameMetrics.COMMAND_ISSUE_DURATION);
+        frameMetrics.getMetric(FrameMetrics.SWAP_BUFFERS_DURATION);
+        frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION);
+
+        // This is the only boolean metric so far
+        final long firstDrawFrameMetric = frameMetrics.getMetric(FrameMetrics.FIRST_DRAW_FRAME);
+        assertTrue("First draw frame metric should be boolean but is " + firstDrawFrameMetric,
+                (firstDrawFrameMetric == 0) || (firstDrawFrameMetric == 1));
     }
 }
 
