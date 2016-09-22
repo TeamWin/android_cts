@@ -1109,12 +1109,14 @@
     <string name="usb_device_test_info">
         1. Install the Cts Verifier USB Companion app on a separate helper device.
         \n\n2. Start the device test companion in the Cts Verifier USB Companion.
-        \n\n3. Connect the two devices. If using a OTG adapter make sure the adapter is directly connected to this device. If not make sure that this device is set as "supply power to the attached device".
+        \n\n3. Connect the two devices. If using a OTG adapter make sure the adapter is directly connected to this device. If using an Type-C cable make sure that this device is set as "supply power to the attached device".
         \n\n4. Confirm access to the USB device on this device.
         \n\n5. Confirm access to the USB accessory on the helper device
         \n\n6. Confirm access to the USB device on this device again.
-        \n\n7. Test will run and complete automatically
+        \n\n7. Test will run and complete automatically in a few seconds
+        \n\n8. Cancel all further dialogs on the helper device
     </string>
+    <string name="usb_device_unexpected">Usb companion device is not as expected %1$s. Please retry test.</string>
 
     <!-- Strings for MTP host test activity -->
     <string name="mtp_host_test">MTP Host Test</string>
