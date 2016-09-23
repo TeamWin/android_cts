@@ -56,6 +56,9 @@ public class ViewTreeObserverTest {
     private Activity mActivity;
     private ViewTreeObserver mViewTreeObserver;
 
+    private LinearLayout mLinearLayout;
+    private Button mButton;
+
     @Rule
     public ActivityTestRule<MockActivity> mActivityRule =
             new ActivityTestRule<>(MockActivity.class);
@@ -66,6 +69,9 @@ public class ViewTreeObserverTest {
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         layout(R.layout.viewtreeobserver_layout);
+
+        mLinearLayout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
+        mButton = (Button) mActivity.findViewById(R.id.button1);
     }
 
     private void layout(final int layoutId) throws Throwable {
@@ -75,13 +81,12 @@ public class ViewTreeObserverTest {
 
     @Test
     public void testAddOnGlobalFocusChangeListener() throws Throwable {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
         final View view1 = mActivity.findViewById(R.id.view1);
         final View view2 = mActivity.findViewById(R.id.view2);
 
         mActivityRule.runOnUiThread(view1::requestFocus);
 
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
         final ViewTreeObserver.OnGlobalFocusChangeListener listener =
                 mock(ViewTreeObserver.OnGlobalFocusChangeListener.class);
         mViewTreeObserver.addOnGlobalFocusChangeListener(listener);
@@ -93,9 +98,7 @@ public class ViewTreeObserverTest {
 
     @Test
     public void testAddOnGlobalLayoutListener() {
-        final LinearLayout layout =
-            (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnGlobalLayoutListener listener =
                 mock(ViewTreeObserver.OnGlobalLayoutListener.class);
@@ -106,8 +109,7 @@ public class ViewTreeObserverTest {
 
     @Test
     public void testAddOnPreDrawListener() {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnPreDrawListener listener =
                 mock(ViewTreeObserver.OnPreDrawListener.class);
@@ -118,8 +120,7 @@ public class ViewTreeObserverTest {
 
     @Test
     public void testAddOnDrawListener() {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnDrawListener listener =
                 mock(ViewTreeObserver.OnDrawListener.class);
@@ -146,18 +147,16 @@ public class ViewTreeObserverTest {
 
     @Test
     public void testAddOnTouchModeChangeListener() throws Throwable {
-        final Button b = (Button) mActivity.findViewById(R.id.button1);
-
         // let the button be touch mode.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, b);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButton);
 
-        mViewTreeObserver = b.getViewTreeObserver();
+        mViewTreeObserver = mButton.getViewTreeObserver();
 
         final ViewTreeObserver.OnTouchModeChangeListener listener =
                 mock(ViewTreeObserver.OnTouchModeChangeListener.class);
         mViewTreeObserver.addOnTouchModeChangeListener(listener);
 
-        mActivityRule.runOnUiThread(b::requestFocusFromTouch);
+        mActivityRule.runOnUiThread(mButton::requestFocusFromTouch);
         mInstrumentation.waitForIdleSync();
 
         verify(listener, within(TIMEOUT_MS)).onTouchModeChanged(anyBoolean());
@@ -165,17 +164,14 @@ public class ViewTreeObserverTest {
 
     @Test
     public void testIsAlive() {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
         assertTrue(mViewTreeObserver.isAlive());
     }
 
     @LargeTest
     @Test
     public void testRemoveGlobalOnLayoutListener() {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnGlobalLayoutListener listener =
                 mock(ViewTreeObserver.OnGlobalLayoutListener.class);
@@ -195,8 +191,7 @@ public class ViewTreeObserverTest {
     @LargeTest
     @Test
     public void testRemoveOnGlobalLayoutListener() {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnGlobalLayoutListener listener =
                 mock(ViewTreeObserver.OnGlobalLayoutListener.class);
@@ -216,13 +211,12 @@ public class ViewTreeObserverTest {
     @LargeTest
     @Test
     public void testRemoveOnGlobalFocusChangeListener() throws Throwable {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
         final View view1 = mActivity.findViewById(R.id.view1);
         final View view2 = mActivity.findViewById(R.id.view2);
 
         mActivityRule.runOnUiThread(view1::requestFocus);
 
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
         final ViewTreeObserver.OnGlobalFocusChangeListener listener =
                 mock(ViewTreeObserver.OnGlobalFocusChangeListener.class);
         mViewTreeObserver.addOnGlobalFocusChangeListener(listener);
@@ -243,8 +237,7 @@ public class ViewTreeObserverTest {
     @LargeTest
     @Test
     public void testRemoveOnPreDrawListener() {
-        final LinearLayout layout = (LinearLayout) mActivity.findViewById(R.id.linearlayout);
-        mViewTreeObserver = layout.getViewTreeObserver();
+        mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnPreDrawListener listener =
                 mock(ViewTreeObserver.OnPreDrawListener.class);
@@ -264,29 +257,28 @@ public class ViewTreeObserverTest {
     @LargeTest
     @Test
     public void testRemoveOnTouchModeChangeListener() throws Throwable {
-        final Button b = (Button) mActivity.findViewById(R.id.button1);
         // let the button be touch mode.
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, b);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mButton);
 
-        mViewTreeObserver = b.getViewTreeObserver();
+        mViewTreeObserver = mButton.getViewTreeObserver();
 
-        final ViewTreeObserver.OnTouchModeChangeListener listener1 =
+        final ViewTreeObserver.OnTouchModeChangeListener listener =
                 mock(ViewTreeObserver.OnTouchModeChangeListener.class);
-        mViewTreeObserver.addOnTouchModeChangeListener(listener1);
-        mActivityRule.runOnUiThread(b::requestFocusFromTouch);
+        mViewTreeObserver.addOnTouchModeChangeListener(listener);
+        mActivityRule.runOnUiThread(mButton::requestFocusFromTouch);
         mInstrumentation.waitForIdleSync();
 
-        verify(listener1, within(TIMEOUT_MS)).onTouchModeChanged(anyBoolean());
+        verify(listener, within(TIMEOUT_MS)).onTouchModeChanged(anyBoolean());
 
-        final ViewTreeObserver.OnTouchModeChangeListener listener2 =
-                mock(ViewTreeObserver.OnTouchModeChangeListener.class);
-        mActivityRule.runOnUiThread(b::requestFocusFromTouch);
+        reset(listener);
+        mViewTreeObserver.removeOnTouchModeChangeListener(listener);
+        mActivityRule.runOnUiThread(mButton::requestFocusFromTouch);
         mInstrumentation.waitForIdleSync();
 
-        // Since we didn't register the new mocked listener on the view tree observer,
-        // we expect it to not be called even after we've waited for a couple of seconds
+        // Since we've unregistered our listener we expect it to not be called even after
+        // we've waited for a couple of seconds
         SystemClock.sleep(TIMEOUT_MS);
-        verifyZeroInteractions(listener2);
+        verifyZeroInteractions(listener);
     }
 
     @LargeTest
