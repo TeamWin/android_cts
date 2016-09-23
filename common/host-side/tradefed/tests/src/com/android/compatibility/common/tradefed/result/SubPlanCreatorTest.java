@@ -117,13 +117,13 @@ public class SubPlanCreatorTest extends TestCase {
         ISubPlan plan = mSubPlanCreator.createSubPlan(mBuildHelper);
         Set<String> planIncludes = plan.getIncludeFilters();
         Set<String> planExcludes = plan.getExcludeFilters();
-        TestFilter passingTest1 =
-                new TestFilter(ABI, NAME_A, String.format("%s#%s", CLASS_A, METHOD_1));
-        TestFilter passingTest2 =
-                new TestFilter(ABI, NAME_B, String.format("%s#%s", CLASS_B, METHOD_4));
+        TestFilter mf1 = new TestFilter(ABI, NAME_A, null);
+        TestFilter tf1 = new TestFilter(ABI, NAME_A, String.format("%s#%s", CLASS_A, METHOD_1));
+        TestFilter tf3 = new TestFilter(ABI, NAME_B, String.format("%s#%s", CLASS_B, METHOD_3));
         assertTrue(planIncludes.contains("CtsMyModuleTestCases")); // command-line '-m' arg
-        assertTrue(planExcludes.contains(passingTest1.toString()));
-        assertTrue(planExcludes.contains(passingTest2.toString()));
+        assertTrue(planIncludes.contains(mf1.toString())); // include module with not-executed test
+        assertTrue(planExcludes.contains(tf1.toString())); // exclude passing test in that module
+        assertTrue(planIncludes.contains(tf3.toString())); // include failure in executed module
     }
 
     private void populateResults() throws Exception {
