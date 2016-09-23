@@ -144,7 +144,7 @@ class DeviceTestCompanion extends TestCompanion {
                         case "Echo 1 byte":
                             isSuccess = echoBytes(is, os, 1);
                             break;
-                        case "Echo 42 bytes (with offset 23)":
+                        case "Echo 42 bytes":
                             isSuccess = echoBytes(is, os, 42);
                             break;
                         case "Echo max bytes":
@@ -166,14 +166,7 @@ class DeviceTestCompanion extends TestCompanion {
                             isSuccess = true;
                         }
                         break;
-                        case "Receive timeout (large positive timeout)":
-                        case "Receive timeout (0 timeout)":
-                        case "Receive timeout (negative == very long timeout)":
-                        case "Receive timeout (0 timeout, offset)":
-                        case "Receive timeout (negative == very long timeout, offset)":
-                        case "Null buffer (in)":
-                        case "Empty buffer (in)":
-                        case "Offset == buffer.size (in)": {
+                        case "Receive byte after some time": {
                             Thread.sleep(200);
                             os.write(new byte[1]);
                             isSuccess = true;
