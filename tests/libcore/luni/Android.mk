@@ -52,7 +52,8 @@ LOCAL_JAVA_RESOURCE_FILES := \
     libcore/expectations/brokentests.txt \
     libcore/expectations/icebox.txt \
     libcore/expectations/knownfailures.txt \
-    libcore/expectations/taggedtests.txt
+    libcore/expectations/taggedtests.txt \
+    libcore/expectations/virtualdeviceknownfailures.txt
 
 LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 
