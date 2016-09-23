@@ -16,11 +16,14 @@
 
 package com.android.cts.verifier.usb.device;
 
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -31,8 +34,10 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+import org.junit.AssumptionViolatedException;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -41,8 +46,12 @@ import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private static final String ACTION_USB_PERMISSION =
@@ -347,6 +356,327 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
+     * Tests {@link UsbDeviceConnection#controlTransfer}.
+     *
+     * <p>Note: We cannot send ctrl data to the device as it thinks it talks to an accessory, hence
+     * the testing is currently limited.</p>
+     *
+     * @param connection The connection to use for testing
+     *
+     * @throws Throwable
+     */
+    private void ctrlTransferTests(@NonNull UsbDeviceConnection connection) throws Throwable {
+        assertException(() -> connection.controlTransfer(0, 0, 0, 0, null, 1, 0),
+                IllegalArgumentException.class);
+
+        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], -1, 0),
+                IllegalArgumentException.class);
+
+        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 2, 0),
+                IllegalArgumentException.class);
+
+        assertException(() -> connection.controlTransfer(0, 0, 0, 0, null, 0, 1, 0),
+                IllegalArgumentException.class);
+
+        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 0, -1, 0),
+                IllegalArgumentException.class);
+
+        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 1, 1, 0),
+                IllegalArgumentException.class);
+    }
+
+    /**
+     * Search an {@link UsbInterface} for an {@link UsbEndpoint endpoint} of a certain direction.
+     *
+     * @param iface     The interface to search
+     * @param direction The direction the endpoint is for.
+     *
+     * @return The first endpoint found or {@link null}.
+     */
+    private @NonNull UsbEndpoint getEndpoint(@NonNull UsbInterface iface, int direction) {
+        for (int i = 0; i < iface.getEndpointCount(); i++) {
+            UsbEndpoint ep = iface.getEndpoint(i);
+            if (ep.getDirection() == direction) {
+                return ep;
+            }
+        }
+
+        throw new IllegalStateException("Could not find " + direction + " endpoint in "
+                + iface.getName());
+    }
+
+    /**
+     * Tests {@link UsbDeviceConnection#bulkTransfer}.
+     *
+     * @param connection The connection to use for testing
+     * @param iface      The interface of the android accessory interface of the device
+     * @throws Throwable
+     */
+    private void bulkTransferTests(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbInterface iface) throws Throwable {
+        // Find bulk in and out endpoints
+        assertEquals(2, iface.getEndpointCount());
+        final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
+        final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
+        assertNotNull(in);
+        assertNotNull(out);
+
+        boolean claimed = connection.claimInterface(iface, false);
+        assertTrue(claimed);
+
+        // Transmission tests
+        nextTest(connection, in, out, "Echo 1 byte");
+        echoBulkTransfer(connection, in, out, 1);
+
+        nextTest(connection, in, out, "Echo 42 bytes (with offset 23)");
+        echoBulkTransferOffset(connection, in, out, 23, 42);
+
+        nextTest(connection, in, out, "Echo max bytes");
+        echoBulkTransfer(connection, in, out, MAX_BUFFER_SIZE);
+
+        nextTest(connection, in, out, "Echo oversized buffer");
+        echoOversizedBulkTransfer(connection, in, out);
+
+        nextTest(connection, in, out, "Receive oversized buffer");
+        receiveOversizedBulkTransfer(connection, in);
+
+        // Illegal arguments
+        nextTest(connection, in, out, "Length more than buffer size (out)");
+        assertException(() -> connection.bulkTransfer(out, new byte[1], 2, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Length more than buffer size (in)");
+        assertException(() -> connection.bulkTransfer(in, new byte[1], 2, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Offset + length more than buffer size (out)");
+        assertException(() -> connection.bulkTransfer(out, new byte[2], 1, 2, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Offset + length more than buffer size (in)");
+        assertException(() -> connection.bulkTransfer(in, new byte[2], 1, 2, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Negative length (out)");
+        assertException(() -> connection.bulkTransfer(out, new byte[1], -1, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Negative length (in)");
+        assertException(() -> connection.bulkTransfer(in, new byte[1], -1, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Negative offset (out)");
+        assertException(() -> connection.bulkTransfer(out, new byte[1], 1, -1, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Negative offset (in)");
+        assertException(() -> connection.bulkTransfer(in, new byte[1], 1, -1, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Negative length and offset (out)");
+        assertException(() -> connection.bulkTransfer(out, new byte[1], -1, -1, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Negative length and offset (in)");
+        assertException(() -> connection.bulkTransfer(in, new byte[1], -1, -1, 0),
+                IllegalArgumentException.class);
+
+        nextTest(connection, in, out, "Null endpoint");
+        assertException(() -> connection.bulkTransfer(null, new byte[1], 1, 0),
+                NullPointerException.class);
+
+        // Transmissions that do nothing
+        nextTest(connection, in, out, "Null buffer (out)");
+        int numSent = connection.bulkTransfer(out, null, 0, 0);
+        assertEquals(0, numSent);
+
+        nextTest(connection, in, out, "Null buffer (with offset, out)");
+        numSent = connection.bulkTransfer(out, null, 0, 0, 0);
+        assertEquals(0, numSent);
+
+        nextTest(connection, in, out, "Empty buffer (out)");
+        numSent = connection.bulkTransfer(out, new byte[0], 0, 0);
+        assertEquals(0, numSent);
+
+        nextTest(connection, in, out, "Empty buffer (with offset, out)");
+        numSent = connection.bulkTransfer(out, new byte[0], 0, 0, 0);
+        assertEquals(0, numSent);
+
+        nextTest(connection, in, out, "Offset == buffer.size (out)");
+        numSent = connection.bulkTransfer(out, new byte[2], 2, 0, 0);
+        assertEquals(0, numSent);
+
+        // Transmissions that do not transfer data:
+        // - first transfer blocks until data is received, but does not return the data.
+        // - The data is read in the second transfer
+        nextTest(connection, in, out, "Null buffer (in)");
+        receiveWithEmptyBuffer(connection, in, null, 0, 0);
+
+        nextTest(connection, in, out, "Empty buffer (in)");
+        receiveWithEmptyBuffer(connection, in, new byte[0], 0, 0);
+
+        nextTest(connection, in, out, "Offset == buffer.size (in)");
+        receiveWithEmptyBuffer(connection, in, new byte[2], 2, 0);
+
+        // Timeouts
+        nextTest(connection, in, out, "Receive timeout (small positive timeout)");
+        int numReceived = connection.bulkTransfer(in, new byte[1], 1, 100);
+        assertEquals(-1, numReceived);
+
+        nextTest(connection, in, out, "Receive timeout (large positive timeout)");
+        numReceived = connection.bulkTransfer(in, new byte[1], 1, 10000);
+        assertEquals(1, numReceived);
+
+        nextTest(connection, in, out, "Receive timeout (0 timeout)");
+        numReceived = connection.bulkTransfer(in, new byte[1], 1, 0);
+        assertEquals(1, numReceived);
+
+        nextTest(connection, in, out, "Receive timeout (negative == very long timeout)");
+        numReceived = connection.bulkTransfer(in, new byte[1], 1, -1);
+        assertEquals(1, numReceived);
+
+        nextTest(connection, in, out, "Receive timeout (positive timeout, offset)");
+        numReceived = connection.bulkTransfer(in, new byte[2], 1, 1, 100);
+        assertEquals(-1, numReceived);
+
+        nextTest(connection, in, out, "Receive timeout (0 timeout, offset)");
+        numReceived = connection.bulkTransfer(in, new byte[2], 1, 1, 0);
+        assertEquals(1, numReceived);
+
+        nextTest(connection, in, out,
+                "Receive timeout (negative == very long timeout, offset)");
+        numReceived = connection.bulkTransfer(in, new byte[2], 1, 1, -1);
+        assertEquals(1, numReceived);
+
+        endTesting(connection, iface);
+        boolean released = connection.releaseInterface(iface);
+        assertTrue(released);
+    }
+
+    /**
+     * Send signal to the remove device that testing is finished.
+     *
+     * @param connection The connection to use for testing
+     * @param iface      The interface of the android accessory interface of the device
+     */
+    private void endTesting(@NonNull UsbDeviceConnection connection, @NonNull UsbInterface iface) {
+        // "done" signals that testing is over
+        nextTest(connection, getEndpoint(iface, UsbConstants.USB_DIR_IN),
+                getEndpoint(iface, UsbConstants.USB_DIR_OUT), "done");
+    }
+
+    /**
+     * Test the behavior of {@link UsbDeviceConnection#claimInterface} and
+     * {@link UsbDeviceConnection#releaseInterface}.
+     *
+     * <p>Note: The interface under test is <u>not</u> claimed by a kernel driver, hence there is
+     * no difference in behavior between force and non-force versions of
+     * {@link UsbDeviceConnection#claimInterface}</p>
+     *
+     * @param connection The connection to use
+     * @param iface The interface to claim and release
+     *
+     * @throws Throwable
+     */
+    private void claimInterfaceTests(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbInterface iface) throws Throwable {
+        // The interface is not claimed by the kernel driver, so not forcing it should work
+        boolean claimed = connection.claimInterface(iface, false);
+        assertTrue(claimed);
+        boolean released = connection.releaseInterface(iface);
+        assertTrue(released);
+
+        // Forcing if it is not necessary does no harm
+        claimed = connection.claimInterface(iface, true);
+        assertTrue(claimed);
+
+        // Re-claiming does nothing
+        claimed = connection.claimInterface(iface, true);
+        assertTrue(claimed);
+
+        released = connection.releaseInterface(iface);
+        assertTrue(released);
+
+        // Re-releasing is not allowed
+        released = connection.releaseInterface(iface);
+        assertFalse(released);
+
+        // Using an unclaimed interface claims it automatically
+        int numSent = connection.bulkTransfer(getEndpoint(iface, UsbConstants.USB_DIR_OUT), null, 0,
+                0);
+        assertEquals(0, numSent);
+
+        released = connection.releaseInterface(iface);
+        assertTrue(released);
+
+        assertException(() -> connection.claimInterface(null, true), NullPointerException.class);
+        assertException(() -> connection.claimInterface(null, false), NullPointerException.class);
+        assertException(() -> connection.releaseInterface(null), NullPointerException.class);
+    }
+
+    /**
+     * Test all input parameters to {@link UsbDeviceConnection#setConfiguration} .
+     *
+     * <p>Note:
+     * <ul>
+     *     <li>The device under test only supports one configuration, hence changing configuration
+     * is not tested.</li>
+     *     <li>This test sets the current configuration again. This resets the device.</li>
+     * </ul></p>
+     *
+     * @param device the device under test
+     * @param connection The connection to use
+     * @param iface An interface of the device
+     *
+     * @throws Throwable
+     */
+    private void setConfigurationTests(@NonNull UsbDevice device,
+            @NonNull UsbDeviceConnection connection, @NonNull UsbInterface iface) throws Throwable {
+        assumeTrue(device.getConfigurationCount() == 1);
+        boolean wasSet = connection.setConfiguration(device.getConfiguration(0));
+        assertTrue(wasSet);
+
+        // Cannot set configuration for a device with a claimed interface
+        boolean claimed = connection.claimInterface(iface, false);
+        assertTrue(claimed);
+        wasSet = connection.setConfiguration(device.getConfiguration(0));
+        assertFalse(wasSet);
+        boolean released = connection.releaseInterface(iface);
+        assertTrue(released);
+
+        assertException(() -> connection.setConfiguration(null), NullPointerException.class);
+    }
+
+    /**
+     * Test all input parameters to {@link UsbDeviceConnection#setConfiguration} .
+     *
+     * <p>Note: The interface under test only supports one settings, hence changing the setting can
+     * not be tested.</p>
+     *
+     * @param connection The connection to use
+     * @param iface The interface to test
+     *
+     * @throws Throwable
+     */
+    private void setInterfaceTests(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbInterface iface) throws Throwable {
+        boolean claimed = connection.claimInterface(iface, false);
+        assertTrue(claimed);
+        boolean wasSet = connection.setInterface(iface);
+        assertTrue(wasSet);
+        boolean released = connection.releaseInterface(iface);
+        assertTrue(released);
+
+        // Setting the interface for an unclaimed interface automatically claims it
+        wasSet = connection.setInterface(iface);
+        assertTrue(wasSet);
+        released = connection.releaseInterface(iface);
+        assertTrue(released);
+
+        assertException(() -> connection.setInterface(null), NullPointerException.class);
+    }
+
+    /**
      * Run tests.
      *
      * @param device The device to run the test against. This device is running
@@ -354,164 +684,55 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private void runTests(@NonNull UsbDevice device) {
         try {
+            // Find the AOAP interface
+            UsbInterface iface = null;
+            for (int i = 0; i < device.getConfigurationCount(); i++) {
+                if (device.getInterface(i).getName().equals("Android Accessory Interface")) {
+                    iface = device.getInterface(i);
+                    break;
+                }
+            }
+            assumeNotNull(iface);
+
             UsbDeviceConnection connection = mUsbManager.openDevice(device);
             assertNotNull(connection);
 
-            // Find bulk in and out endpoints
-            assertTrue(device.getInterfaceCount() > 1);
-            UsbInterface iface = device.getInterface(0);
+            claimInterfaceTests(connection, iface);
+            ctrlTransferTests(connection);
+            bulkTransferTests(connection, iface);
+            setInterfaceTests(connection, iface);
+            setConfigurationTests(device, connection, iface);
 
-            assertEquals(2, iface.getEndpointCount());
+            assertFalse(connection.getFileDescriptor() == -1);
+            assertNotNull(connection.getRawDescriptors());
+            assertFalse(connection.getRawDescriptors().length == 0);
+            assertEquals(device.getSerialNumber(), connection.getSerial());
 
-            UsbEndpoint inTmp = null;
-            UsbEndpoint outTmp = null;
-            for (int i = 0; i < iface.getEndpointCount(); i++) {
-                UsbEndpoint ep = iface.getEndpoint(i);
-                if (ep.getDirection() == UsbConstants.USB_DIR_IN) {
-                    if (inTmp == null) {
-                        inTmp = ep;
-                    }
-                } else {
-                    if (outTmp == null) {
-                        outTmp = ep;
-                    }
-                }
-            }
-            final UsbEndpoint in = inTmp;
-            final UsbEndpoint out = outTmp;
+            connection.close();
 
-            assertNotNull(in);
-            assertNotNull(out);
+            // We should not be able to communicate with the device anymore
+            assertFalse(connection.claimInterface(iface, true));
+            assertFalse(connection.releaseInterface(iface));
+            assertFalse(connection.setConfiguration(device.getConfiguration(0)));
+            assertFalse(connection.setInterface(iface));
+            assertTrue(connection.getFileDescriptor() == -1);
+            assertNull(connection.getRawDescriptors());
+            assertNull(connection.getSerial());
+            assertEquals(-1, connection.bulkTransfer(getEndpoint(iface, UsbConstants.USB_DIR_OUT),
+                    new byte[1], 1, 0));
+            assertEquals(-1, connection.bulkTransfer(getEndpoint(iface, UsbConstants.USB_DIR_OUT),
+                    null, 0, 0));
+            assertEquals(-1, connection.bulkTransfer(getEndpoint(iface, UsbConstants.USB_DIR_IN),
+                    null, 0, 0));
 
-            // Transmission tests
-            nextTest(connection, in, out, "Echo 1 byte");
-            echoBulkTransfer(connection, in, out, 1);
-
-            nextTest(connection, in, out, "Echo 42 bytes (with offset 23)");
-            echoBulkTransferOffset(connection, in, out, 23, 42);
-
-            nextTest(connection, in, out, "Echo max bytes");
-            echoBulkTransfer(connection, in, out, MAX_BUFFER_SIZE);
-
-            nextTest(connection, in, out, "Echo oversized buffer");
-            echoOversizedBulkTransfer(connection, in, out);
-
-            nextTest(connection, in, out, "Receive oversized buffer");
-            receiveOversizedBulkTransfer(connection, in);
-
-            // Illegal arguments
-            nextTest(connection, in, out, "Length more than buffer size (out)");
-            assertException(() -> connection.bulkTransfer(out, new byte[1], 2, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Length more than buffer size (in)");
-            assertException(() -> connection.bulkTransfer(in, new byte[1], 2, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Offset + length more than buffer size (out)");
-            assertException(() -> connection.bulkTransfer(out, new byte[2], 1, 2, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Offset + length more than buffer size (in)");
-            assertException(() -> connection.bulkTransfer(in, new byte[2], 1, 2, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Negative length (out)");
-            assertException(() -> connection.bulkTransfer(out, new byte[1], -1, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Negative length (in)");
-            assertException(() -> connection.bulkTransfer(in, new byte[1], -1, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Negative offset (out)");
-            assertException(() -> connection.bulkTransfer(out, new byte[1], 1, -1, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Negative offset (in)");
-            assertException(() -> connection.bulkTransfer(in, new byte[1], 1, -1, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Negative length and offset (out)");
-            assertException(() -> connection.bulkTransfer(out, new byte[1], -1, -1, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Negative length and offset (in)");
-            assertException(() -> connection.bulkTransfer(in, new byte[1], -1, -1, 0),
-                    IllegalArgumentException.class);
-
-            nextTest(connection, in, out, "Null endpoint");
-            assertException(() -> connection.bulkTransfer(null, new byte[1], 1, 0),
-                    NullPointerException.class);
-
-            // Transmissions that do nothing
-            nextTest(connection, in, out, "Null buffer (out)");
-            int numSent = connection.bulkTransfer(out, null, 0, 0);
-            assertEquals(0, numSent);
-
-            nextTest(connection, in, out, "Null buffer (with offset, out)");
-            numSent = connection.bulkTransfer(out, null, 0, 0, 0);
-            assertEquals(0, numSent);
-
-            nextTest(connection, in, out, "Empty buffer (out)");
-            numSent = connection.bulkTransfer(out, new byte[0], 0, 0);
-            assertEquals(0, numSent);
-
-            nextTest(connection, in, out, "Empty buffer (with offset, out)");
-            numSent = connection.bulkTransfer(out, new byte[0], 0, 0, 0);
-            assertEquals(0, numSent);
-
-            nextTest(connection, in, out, "Offset == buffer.size (out)");
-            numSent = connection.bulkTransfer(out, new byte[2], 2, 0, 0);
-            assertEquals(0, numSent);
-
-            // Transmissions that do not transfer data:
-            // - first transfer blocks until data is received, but does not return the data.
-            // - The data is read in the second transfer
-            nextTest(connection, in, out, "Null buffer (in)");
-            receiveWithEmptyBuffer(connection, in, null, 0, 0);
-
-            nextTest(connection, in, out, "Empty buffer (in)");
-            receiveWithEmptyBuffer(connection, in, new byte[0], 0, 0);
-
-            nextTest(connection, in, out, "Offset == buffer.size (in)");
-            receiveWithEmptyBuffer(connection, in, new byte[2], 2, 0);
-
-            // Timeouts
-            nextTest(connection, in, out, "Receive timeout (small positive timeout)");
-            int numReceived = connection.bulkTransfer(in, new byte[1], 1, 100);
-            assertEquals(-1, numReceived);
-
-            nextTest(connection, in, out, "Receive timeout (large positive timeout)");
-            numReceived = connection.bulkTransfer(in, new byte[1], 1, 10000);
-            assertEquals(1, numReceived);
-
-            nextTest(connection, in, out, "Receive timeout (0 timeout)");
-            numReceived = connection.bulkTransfer(in, new byte[1], 1, 0);
-            assertEquals(1, numReceived);
-
-            nextTest(connection, in, out, "Receive timeout (negative == very long timeout)");
-            numReceived = connection.bulkTransfer(in, new byte[1], 1, -1);
-            assertEquals(1, numReceived);
-
-            nextTest(connection, in, out, "Receive timeout (positive timeout, offset)");
-            numReceived = connection.bulkTransfer(in, new byte[2], 1, 1, 100);
-            assertEquals(-1, numReceived);
-
-            nextTest(connection, in, out, "Receive timeout (0 timeout, offset)");
-            numReceived = connection.bulkTransfer(in, new byte[2], 1, 1, 0);
-            assertEquals(1, numReceived);
-
-            nextTest(connection, in, out,
-                    "Receive timeout (negative == very long timeout, offset)");
-            numReceived = connection.bulkTransfer(in, new byte[2], 1, 1, -1);
-            assertEquals(1, numReceived);
-
-            // "done" signals that testing is over
-            nextTest(connection, in, out, "done");
+            // Double close should do no harm
             connection.close();
 
             setTestResultAndFinish(true);
+        } catch (AssumptionViolatedException e) {
+            // Assumptions failing means that somehow the device/connection is set up incorrectly
+            Toast.makeText(this, getString(R.string.usb_device_unexpected, e.getLocalizedMessage()),
+                    Toast.LENGTH_LONG).show();
         } catch (Throwable e) {
             fail(null, e);
         }
