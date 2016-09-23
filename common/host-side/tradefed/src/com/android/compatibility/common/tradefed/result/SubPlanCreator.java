@@ -20,9 +20,13 @@ import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
 import com.android.compatibility.common.tradefed.testtype.SubPlan;
 import com.android.compatibility.common.tradefed.util.OptionHelper;
+import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.IModuleResult;
+import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
+import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.config.ArgsOptionParser;
 import com.android.tradefed.config.ConfigurationException;
@@ -35,11 +39,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -47,9 +52,18 @@ import java.util.Set;
  */
 public class SubPlanCreator {
 
-    private static final String PASSED = "passed";
-    private static final String FAILED = "failed";
-    private static final String NOT_EXECUTED = "not_executed";
+    // result types
+    public static final String PASSED = "passed";
+    public static final String FAILED = "failed";
+    public static final String NOT_EXECUTED = "not_executed";
+    // static mapping of result types to TestStatuses
+    private static final Map<String, TestStatus> mStatusMap;
+    static {
+        Map<String, TestStatus> statusMap = new HashMap<String, TestStatus>();
+        statusMap.put(PASSED, TestStatus.PASS);
+        statusMap.put(FAILED, TestStatus.FAIL);
+        mStatusMap = Collections.unmodifiableMap(statusMap);
+    }
 
     @Option (name = "name", shortName = 'n', description = "the name of the subplan to create",
             importance=Importance.IF_UNSET)
@@ -59,21 +73,21 @@ public class SubPlanCreator {
             importance=Importance.IF_UNSET)
     private Integer mSessionId = null;
 
-    @Option (name = "result", shortName = 'r',
+    @Option (name = "result-type", shortName = 'r',
             description = "the result type to include. One of passed, failed, not_executed."
             + " Option may be repeated",
             importance=Importance.IF_UNSET)
-    private Set<String> mResultFilterStrings = new HashSet<String>();
+    private Set<String> mResultTypes = new HashSet<String>();
 
     @Option(name = CompatibilityTest.INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
             importance = Importance.NEVER)
-    private List<String> mIncludeFilters = new ArrayList<>();
+    private Set<String> mIncludeFilters = new HashSet<String>();
 
     @Option(name = CompatibilityTest.EXCLUDE_FILTER_OPTION,
             description = "the exclude module filters to apply.",
             importance = Importance.NEVER)
-    private List<String> mExcludeFilters = new ArrayList<>();
+    private Set<String> mExcludeFilters = new HashSet<String>();
 
     @Option(name = CompatibilityTest.MODULE_OPTION, shortName = 'm',
             description = "the test module to run.",
@@ -87,7 +101,7 @@ public class SubPlanCreator {
 
     @Option(name = CompatibilityTest.ABI_OPTION, shortName = 'a',
             description = "the abi to test.",
-            importance = Importance.IF_UNSET)
+            importance = Importance.NEVER)
     private String mAbiName = null;
 
     File mSubPlanFile = null;
@@ -104,10 +118,26 @@ public class SubPlanCreator {
     /**
      * Create a {@link SubPlanCreator} using the specified option values.
      */
-    public SubPlanCreator(String name, int session, Collection<String> resultFilterStrings) {
+    public SubPlanCreator(String name, int session, Collection<String> resultTypes) {
         mSubPlanName = name;
         mSessionId = session;
-        mResultFilterStrings.addAll(resultFilterStrings);
+        mResultTypes.addAll(resultTypes);
+    }
+
+    /**
+     * Set the result from which to derive the subplan.
+     * @param result
+     */
+    public void setResult(IInvocationResult result) {
+        mResult = result;
+    }
+
+    /**
+     * Add a result type from which to derive the subplan. PASSED, FAILED, or NOT_EXECUTED
+     * @param resultType
+     */
+    public void addResultType(String resultType) {
+        mResultTypes.add(resultType);
     }
 
     /**
@@ -137,8 +167,7 @@ public class SubPlanCreator {
     /**
      * Create a subplan derived from a result.
      * <p/>
-     * {@link Option} values must all be set before this is called.
-     *
+     * {@link Option} values must be set before this is called.
      * @param build
      * @return subplan
      * @throws ConfigurationException
@@ -147,37 +176,114 @@ public class SubPlanCreator {
             throws ConfigurationException {
         setupFields(buildHelper);
         ISubPlan subPlan = new SubPlan();
-        // At least one of the following three is true
-        boolean notExecuted = mResultFilterStrings.contains(NOT_EXECUTED);
-        boolean passed = mResultFilterStrings.contains(PASSED);
-        boolean failed = mResultFilterStrings.contains(FAILED);
-        if (notExecuted) {
-            // if including not_executed tests, include filters from previous session to
-            // track which tests must run
-            subPlan.addAllIncludeFilters(new HashSet<String>(mIncludeFilters));
-            subPlan.addAllExcludeFilters(new HashSet<String>(mExcludeFilters));
-            if (mModuleName != null) {
-                subPlan.addIncludeFilter(
-                        new TestFilter(mAbiName, mModuleName, mTestName).toString());
-            }
-            if (!passed) {
-                subPlan.excludePassed(mResult);
-            }
-            if (!failed) {
-                subPlan.excludeFailed(mResult);
-            }
-        } else {
-            // if only including executed tests, add each filter explicitly without filters from
-            // previous session
-            if (passed) {
-                subPlan.includePassed(mResult);
-            }
-            if (failed) {
-                subPlan.includeFailed(mResult);
-            }
+
+        // add filters from previous session to track which tests must run
+        subPlan.addAllIncludeFilters(mIncludeFilters);
+        subPlan.addAllExcludeFilters(mExcludeFilters);
+        if (mModuleName != null) {
+            subPlan.addIncludeFilter(new TestFilter(mAbiName, mModuleName, mTestName).toString());
         }
 
+        for (IModuleResult module : mResult.getModules()) {
+            if (shouldRunModule(module)) {
+                Set<TestStatus> statusesToRun = getStatusesToRun();
+                TestFilter moduleInclude =
+                            new TestFilter(module.getAbi(), module.getName(), null /*test*/);
+                if (shouldRunEntireModule(module)) {
+                    // include entire module
+                    subPlan.addIncludeFilter(moduleInclude.toString());
+                } else if (mResultTypes.contains(NOT_EXECUTED) && !module.isDone()) {
+                    // add module include and test excludes
+                    subPlan.addIncludeFilter(moduleInclude.toString());
+                    for (ICaseResult caseResult : module.getResults()) {
+                        for (ITestResult testResult : caseResult.getResults()) {
+                            if (!statusesToRun.contains(testResult.getResultStatus())) {
+                                TestFilter testExclude = new TestFilter(module.getAbi(),
+                                        module.getName(), testResult.getFullName());
+                                subPlan.addExcludeFilter(testExclude.toString());
+                            }
+                        }
+                    }
+                } else {
+                    // Not-executed tests should not be rerun and/or this module is completed
+                    // In any such case, it suffices to add includes for each test to rerun
+                    for (ICaseResult caseResult : module.getResults()) {
+                        for (ITestResult testResult : caseResult.getResults()) {
+                            if (statusesToRun.contains(testResult.getResultStatus())) {
+                                TestFilter testInclude = new TestFilter(module.getAbi(),
+                                        module.getName(), testResult.getFullName());
+                                subPlan.addIncludeFilter(testInclude.toString());
+                            }
+                        }
+                    }
+                }
+            } else {
+                // module should not run, exclude entire module
+                TestFilter moduleExclude =
+                        new TestFilter(module.getAbi(), module.getName(), null /*test*/);
+                subPlan.addExcludeFilter(moduleExclude.toString());
+            }
+        }
         return subPlan;
+    }
+
+    /**
+     * Whether any tests within the given {@link IModuleResult} should be run, based on
+     * the content of mResultTypes.
+     * @param module
+     * @return true if at least one test in the module should run
+     */
+    private boolean shouldRunModule(IModuleResult module) {
+        if (mResultTypes.contains(NOT_EXECUTED) && !module.isDone()) {
+            // module has not executed tests that the subplan should run
+            return true;
+        }
+        for (TestStatus status : getStatusesToRun()) {
+            if (module.countResults(status) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether all tests within the given {@link IModuleResult} should be run, based on
+     * the content of mResultTypes.
+     * @param module
+     * @return true if every test in the module should run
+     */
+    private boolean shouldRunEntireModule(IModuleResult module) {
+        if (!mResultTypes.contains(NOT_EXECUTED) && !module.isDone()) {
+            // module has not executed tests that the subplan should not run
+            return false;
+        }
+        Set<TestStatus> statusesToRun = getStatusesToRun();
+        for (TestStatus status : TestStatus.values()) {
+            if (!statusesToRun.contains(status)) {
+                // status is a TestStatus we don't want to run
+                if (module.countResults(status) > 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Retrieves a {@link Set} of {@link TestStatus}es to run, based on the content of
+     * mResultTypes. Does not account for result type NOT_EXECUTED, since no such TestStatus
+     * exists.
+     * @return set of TestStatuses to run
+     */
+    private Set<TestStatus> getStatusesToRun() {
+        Set<TestStatus> statusesToRun = new HashSet<TestStatus>();
+        for (String resultType : mResultTypes) {
+            // no test status exists for not-executed tests
+            if (resultType != NOT_EXECUTED) {
+                statusesToRun.add(mStatusMap.get(resultType));
+            }
+        }
+        return statusesToRun;
     }
 
     /**
@@ -186,17 +292,19 @@ public class SubPlanCreator {
      * @throws ConfigurationException if any option has an invalid value
      */
     private void setupFields(CompatibilityBuildHelper buildHelper) throws ConfigurationException {
-        if (mSessionId == null) {
-            throw new ConfigurationException("Missing --session argument");
-        }
-        try {
-            mResult = ResultHandler.findResult(buildHelper.getResultsDir(), mSessionId);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
         if (mResult == null) {
-            throw new IllegalArgumentException(String.format(
-                    "Could not find session with id %d", mSessionId));
+            if (mSessionId == null) {
+                throw new ConfigurationException("Missing --session argument");
+            }
+            try {
+                mResult = ResultHandler.findResult(buildHelper.getResultsDir(), mSessionId);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            if (mResult == null) {
+                throw new IllegalArgumentException(String.format(
+                        "Could not find session with id %d", mSessionId));
+            }
         }
 
         String retryCommandLineArgs = mResult.getCommandLineArgs();
@@ -210,18 +318,15 @@ public class SubPlanCreator {
             }
         }
 
-        if (mResultFilterStrings.isEmpty()) {
+        if (mResultTypes.isEmpty()) {
             // add all valid values, include all tests of all statuses
-            mResultFilterStrings.addAll(
+            mResultTypes.addAll(
                     new HashSet<String>(Arrays.asList(PASSED, FAILED, NOT_EXECUTED)));
         }
         // validate all test status values
-        for (String filterString : mResultFilterStrings) {
-            if (!filterString.equals(PASSED)
-                    && !filterString.equals(FAILED)
-                    && !filterString.equals(NOT_EXECUTED)) {
-                throw new ConfigurationException(String.format("result filter string %s invalid",
-                        filterString));
+        for (String type : mResultTypes) {
+            if (!type.equals(PASSED) && !type.equals(FAILED) && !type.equals(NOT_EXECUTED)) {
+                throw new ConfigurationException(String.format("result type %s invalid", type));
             }
         }
 
@@ -239,10 +344,19 @@ public class SubPlanCreator {
         }
     }
 
+    /**
+     * Helper to create a plan name if none is explicitly set
+     */
     private String createPlanName() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.join("_", mResultFilterStrings));
-        sb.append(Integer.toString(mSessionId));
+        sb.append(String.join("_", mResultTypes));
+        sb.append("_");
+        if (mSessionId != null) {
+            sb.append(Integer.toString(mSessionId));
+            sb.append("_");
+        }
+        // use unique start time for name
+        sb.append(CompatibilityBuildHelper.getDirSuffix(mResult.getStartTime()));
         return sb.toString();
     }
 }
