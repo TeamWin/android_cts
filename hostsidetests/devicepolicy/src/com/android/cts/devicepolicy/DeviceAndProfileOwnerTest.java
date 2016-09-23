@@ -106,6 +106,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
+            getDevice().uninstallPackage(TEST_APP_PKG);
 
             // Press the HOME key to close any alart dialog that may be shown.
             getDevice().executeShellCommand("input keyevent 3");
@@ -288,11 +289,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // We need to ensure that the policy is deactivated for the device owner case, so making
         // sure the second test is run even if the first one fails
         try {
-            executeDeviceTestMethod(".ScreenCaptureDisabledTest",
-                    "testSetScreenCaptureDisabled_true");
+            setScreenCaptureDisabled(mUserId, true);
         } finally {
-            executeDeviceTestMethod(".ScreenCaptureDisabledTest",
-                    "testSetScreenCaptureDisabled_false");
+            setScreenCaptureDisabled(mUserId, false);
         }
     }
 
@@ -616,5 +615,41 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         CLog.d("Output for command " + adbCommand + ": " + commandOutput);
         assertTrue("Command was expected to succeed " + commandOutput,
                 commandOutput.contains("Status: ok"));
+    }
+
+    /**
+     * Start SimpleActivity synchronously in a particular user.
+     */
+    protected void startScreenCaptureDisabledActivity(int userId) throws Exception {
+        installAppAsUser(TEST_APP_APK, userId);
+        String command = "am start -W --user " + userId + " " + TEST_APP_PKG + "/"
+                + TEST_APP_PKG + ".SimpleActivity";
+        getDevice().executeShellCommand(command);
+    }
+
+    // TODO: Remove this after investigation in b/28995242 is done
+    // So we can check which one is the top window / activity.
+    private void runDumpsysWindow() throws Exception {
+        String command = "dumpsys window displays";
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
+        command = "dumpsys window policy";
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
+        command = "dumpsys activity a";
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
+    }
+
+    protected void setScreenCaptureDisabled(int userId, boolean disabled) throws Exception {
+        String testMethodName = disabled
+                ? "testSetScreenCaptureDisabled_true"
+                : "testSetScreenCaptureDisabled_false";
+        executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+        startScreenCaptureDisabledActivity(userId);
+        // [b/28995242], dump windows to make sure the top window is
+        // ScreenCaptureDisabledActivity.
+        runDumpsysWindow();
+        testMethodName = disabled
+                ? "testScreenCaptureImpossible"
+                : "testScreenCapturePossible";
+        executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
     }
 }
