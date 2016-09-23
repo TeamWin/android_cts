@@ -15,13 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.util.ICaseResult;
-import com.android.compatibility.common.util.IInvocationResult;
-import com.android.compatibility.common.util.IModuleResult;
-import com.android.compatibility.common.util.ITestResult;
-
 import com.android.compatibility.common.util.TestFilter;
-import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.util.xml.AbstractXmlParser;
 
 import org.kxml2.io.KXmlSerializer;
@@ -60,88 +54,6 @@ public class SubPlan extends AbstractXmlParser implements ISubPlan {
     public SubPlan() {
         mIncludes = new HashSet<String>();
         mExcludes = new HashSet<String>();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void includePassed(IInvocationResult result) {
-        for (IModuleResult module : result.getModules()) {
-            if (module.isPassed()) {
-                // Whole module passed, exclude
-                TestFilter filter =
-                        new TestFilter(module.getAbi(), module.getName(), null /*test*/);
-                mIncludes.add(filter.toString());
-            } else {
-                for (ICaseResult testResultList : module.getResults()) {
-                    for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
-                        // Test passed, exclude
-                        TestFilter filter = new TestFilter(
-                                module.getAbi(), module.getName(), testResult.getFullName());
-                        mIncludes.add(filter.toString());
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void includeFailed(IInvocationResult result) {
-        for (IModuleResult moduleResult : result.getModules()) {
-            for (ICaseResult caseResult : moduleResult.getResults()) {
-                for (ITestResult testResult : caseResult.getResults(TestStatus.FAIL)) {
-                    // Test failed, include for retry
-                    TestFilter filter = new TestFilter(moduleResult.getAbi(),
-                            moduleResult.getName(), testResult.getFullName());
-                    mIncludes.add(filter.toString());
-                }
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void excludePassed(IInvocationResult result) {
-        for (IModuleResult module : result.getModules()) {
-            if (module.isPassed()) {
-                // Whole module passed, exclude
-                TestFilter filter =
-                        new TestFilter(module.getAbi(), module.getName(), null /*test*/);
-                mExcludes.add(filter.toString());
-            } else {
-                for (ICaseResult testResultList : module.getResults()) {
-                    for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
-                        // Test passed, exclude
-                        TestFilter filter = new TestFilter(
-                                module.getAbi(), module.getName(), testResult.getFullName());
-                        mExcludes.add(filter.toString());
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void excludeFailed(IInvocationResult result) {
-        for (IModuleResult moduleResult : result.getModules()) {
-            for (ICaseResult caseResult : moduleResult.getResults()) {
-                for (ITestResult testResult : caseResult.getResults(TestStatus.FAIL)) {
-                    // Test failed, include for retry
-                    TestFilter filter = new TestFilter(moduleResult.getAbi(),
-                            moduleResult.getName(), testResult.getFullName());
-                    mExcludes.add(filter.toString());
-                }
-            }
-        }
     }
 
     /**

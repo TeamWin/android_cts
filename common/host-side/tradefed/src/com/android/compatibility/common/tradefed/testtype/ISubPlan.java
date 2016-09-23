@@ -15,7 +15,6 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.util.IInvocationResult;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
@@ -35,30 +34,6 @@ public interface ISubPlan extends ITestFilterReceiver {
      * @param xmlInputStream the {@link InputStream} containing subplan XML
      */
     public void parse(InputStream xmlInputStream) throws ParseException;
-
-    /**
-     * Add include filters for {@link ITestResult}s that have passed.
-     * @param result the {@link IInvocationResult} from which to read {@link TestStatus}es
-     */
-    public void includePassed(IInvocationResult result);
-
-    /**
-     * Add include filters for {@link ITestResult}s that have failed.
-     * @param result the {@link IInvocationResult} from which to read {@link TestStatus}es
-     */
-    public void includeFailed(IInvocationResult result);
-
-    /**
-     * Add exclude filters for {@link ITestResult}s that have passed.
-     * @param result the {@link IInvocationResult} from which to read {@link TestStatus}es
-     */
-    public void excludePassed(IInvocationResult result);
-
-    /**
-     * Add exclude filters for {@link ITestResult}s that have failed.
-     * @param result the {@link IInvocationResult} from which to read {@link TestStatus}es
-     */
-    public void excludeFailed(IInvocationResult result);
 
     /**
      * Retrieve the set of include filters previously added or parsed from XML.
