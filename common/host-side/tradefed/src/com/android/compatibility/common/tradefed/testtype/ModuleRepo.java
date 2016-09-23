@@ -206,8 +206,8 @@ public class ModuleRepo implements IModuleRepo {
      */
     @Override
     public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
-            List<String> testArgs, List<String> moduleArgs, List<String> includeFilters,
-            List<String> excludeFilters, IBuildInfo buildInfo) {
+            List<String> testArgs, List<String> moduleArgs, Set<String> includeFilters,
+            Set<String> excludeFilters, IBuildInfo buildInfo) {
         CLog.d("Initializing ModuleRepo\nShards:%d\nTests Dir:%s\nABIs:%s\nDevice Tokens:%s\n" +
                 "Test Args:%s\nModule Args:%s\nIncludes:%s\nExcludes:%s",
                 shards, testsDir.getAbsolutePath(), abis, deviceTokens, testArgs, moduleArgs,
@@ -327,7 +327,7 @@ public class ModuleRepo implements IModuleRepo {
         return shardedList;
     }
 
-    private static void addFilters(List<String> stringFilters,
+    private static void addFilters(Set<String> stringFilters,
             Map<String, List<TestFilter>> filters, Set<IAbi> abis) {
         for (String filterString : stringFilters) {
             TestFilter filter = TestFilter.createFrom(filterString);

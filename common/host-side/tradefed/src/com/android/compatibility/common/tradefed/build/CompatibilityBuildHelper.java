@@ -232,6 +232,18 @@ public class CompatibilityBuildHelper {
     }
 
     /**
+     * @return a {@link File} representing the directory to store derivedplan files.
+     * @throws FileNotFoundException if the directory structure is not valid.
+     */
+    public File getSubPlansDir() throws FileNotFoundException {
+        File subPlansDir = new File(getDir(), "subplans");
+        if (!subPlansDir.exists()) {
+            subPlansDir.mkdirs();
+        }
+        return subPlansDir;
+    }
+
+    /**
      * @return a {@link File} representing the test modules directory.
      * @throws FileNotFoundException if the directory structure is not valid.
      */
