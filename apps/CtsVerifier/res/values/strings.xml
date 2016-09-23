@@ -1104,6 +1104,18 @@
     <string name="usb_test_passed">Test passed, pass button enabled! You can interact with the device again.</string>
     <string name="usb_file_descriptor_error">Could not open file descriptor for USB accessory... try reconnecting and restarting the accessory?</string>
 
+    <!-- String for the USB device test activity -->
+    <string name="usb_device_test">USB Device Test</string>
+    <string name="usb_device_test_info">
+        1. Install the Cts Verifier USB Companion app on a separate helper device.
+        \n\n2. Start the device test companion in the Cts Verifier USB Companion.
+        \n\n3. Connect the two devices. If using a OTG adapter make sure the adapter is directly connected to this device. If not make sure that this device is set as "supply power to the attached device".
+        \n\n4. Confirm access to the USB device on this device.
+        \n\n5. Confirm access to the USB accessory on the helper device
+        \n\n6. Confirm access to the USB device on this device again.
+        \n\n7. Test will run and complete automatically
+    </string>
+
     <!-- Strings for MTP host test activity -->
     <string name="mtp_host_test">MTP Host Test</string>
     <string name="mtp_host_test_info">The CTS-verifier tests the MTP host feature with another Android device. Please connect another Android device to this Android device by using OTG cable or USB type C cable, then follow the instructions on this screen. Note the test creates/deletes files in the connected Android device.</string>
