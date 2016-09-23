@@ -16,6 +16,13 @@
 
 package android.uirendering.cts.testclasses;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import android.annotation.ColorInt;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
@@ -24,13 +31,35 @@ import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
+import android.uirendering.cts.util.DrawCountDown;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.TextureView.SurfaceTextureListener;
+import android.view.ViewGroup;
 
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
 
 @MediumTest
 public class TextureViewTests extends ActivityTestBase {
+
+    private static SurfaceTexture sRedTexture;
+
+    @BeforeClass
+    public static void setupClass() {
+        sRedTexture = createSurfaceTexture(true, Color.RED);
+    }
+
+    @AfterClass
+    public static void teardownClass() {
+        sRedTexture.release();
+        sRedTexture = null;
+    }
+
     @Test
     public void testConstructDetachedSingleBuffered() {
         testConstructDetached(true);
@@ -41,16 +70,79 @@ public class TextureViewTests extends ActivityTestBase {
     }
 
     private void testConstructDetached(boolean singleBuffered) {
+        final SurfaceTexture texture = createSurfaceTexture(singleBuffered, Color.RED);
         createTest()
                 .addLayout(R.layout.textureview, (ViewInitializer) view -> {
-                    SurfaceTexture texture = new SurfaceTexture(singleBuffered);
-                    Surface producer = new Surface(texture);
-                    Canvas canvas = producer.lockCanvas(null);
-                    canvas.drawColor(Color.RED);
-                    producer.unlockCanvasAndPost(canvas);
                     TextureView textureview = (TextureView) view;
                     textureview.setSurfaceTexture(texture);
                 }, true)
                 .runWithVerifier(new ColorVerifier(Color.RED));
+        Assert.assertTrue(texture.isReleased());
+    }
+
+    private static SurfaceTexture createSurfaceTexture(boolean singleBuffered,
+            @ColorInt int fillColor) {
+        SurfaceTexture texture = new SurfaceTexture(singleBuffered);
+        texture.setDefaultBufferSize(TEST_WIDTH, TEST_HEIGHT);
+        Surface producer = new Surface(texture);
+        Canvas canvas = producer.lockCanvas(null);
+        canvas.drawColor(fillColor);
+        producer.unlockCanvasAndPost(canvas);
+        return texture;
+    }
+
+    @Test
+    public void testReuseSurfaceTexture() {
+        final CountDownLatch fence = new CountDownLatch(1);
+        SurfaceTextureListener stlistener = mock(SurfaceTextureListener.class);
+        when(stlistener.onSurfaceTextureDestroyed(any(SurfaceTexture.class)))
+                .thenReturn(false);
+        createTest()
+                .addLayout(R.layout.textureview, (ViewInitializer) view -> {
+                    final TextureView textureview = (TextureView) view;
+                    final ViewGroup parent = (ViewGroup) textureview.getParent();
+                    textureview.setSurfaceTextureListener(stlistener);
+                    textureview.setSurfaceTexture(sRedTexture);
+                    DrawCountDown.countDownDraws(parent, 1, () -> {
+                        parent.removeView(textureview);
+                    });
+                    DrawCountDown.countDownDraws(parent, 2, () -> {
+                        parent.addView(textureview);
+                        textureview.setSurfaceTexture(sRedTexture);
+                        textureview.post(fence::countDown);
+                    });
+                }, true, fence)
+                .runWithVerifier(new ColorVerifier(Color.RED));
+        verify(stlistener, times(2)).onSurfaceTextureDestroyed(any(SurfaceTexture.class));
+    }
+
+    @Test
+    public void testLockCanvas() {
+        final CountDownLatch fence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.textureview, (ViewInitializer) view -> {
+                    final TextureView textureview = (TextureView) view;
+                    textureview.setSurfaceTextureListener(new SurfaceTextureListener() {
+                        @Override
+                        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+                            textureview.post(fence::countDown);
+                        }
+                        @Override
+                        public void onSurfaceTextureSizeChanged(SurfaceTexture surface,
+                                int width, int height) {}
+                        @Override
+                        public void onSurfaceTextureAvailable(SurfaceTexture surface,
+                                int width, int height) {
+                            Canvas canvas = textureview.lockCanvas();
+                            canvas.drawColor(Color.BLUE);
+                            textureview.unlockCanvasAndPost(canvas);
+                        }
+                        @Override
+                        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                            return true;
+                        }
+                    });
+                }, true, fence)
+                .runWithVerifier(new ColorVerifier(Color.BLUE));
     }
 }
