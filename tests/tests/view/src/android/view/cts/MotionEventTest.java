@@ -19,6 +19,7 @@ package android.view.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.Matrix;
@@ -868,6 +869,42 @@ public class MotionEventTest {
                 MotionEvent.ACTION_BUTTON_PRESS, X_3F, Y_4F, 0);
         mMotionEventDynamic.setActionButton(MotionEvent.BUTTON_SECONDARY);
         assertEquals(MotionEvent.BUTTON_SECONDARY, mMotionEventDynamic.getActionButton());
+    }
+
+    @Test
+    public void testIsButtonPressed() {
+        mMotionEventDynamic = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_DOWN, X_3F, Y_4F, 0);
+        mMotionEventDynamic.setSource(InputDevice.SOURCE_MOUSE);
+
+        mMotionEventDynamic.setButtonState(
+                MotionEvent.BUTTON_PRIMARY | MotionEvent.BUTTON_STYLUS_PRIMARY);
+        assertTrue(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_PRIMARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_SECONDARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_TERTIARY));
+        assertTrue(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_STYLUS_PRIMARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_STYLUS_SECONDARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_BACK));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_FORWARD));
+
+        mMotionEventDynamic.setButtonState(MotionEvent.BUTTON_PRIMARY);
+        assertTrue(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_PRIMARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_SECONDARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_TERTIARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_STYLUS_PRIMARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_STYLUS_SECONDARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_BACK));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_FORWARD));
+
+        mMotionEventDynamic.setButtonState(
+                MotionEvent.BUTTON_FORWARD | MotionEvent.BUTTON_TERTIARY);
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_PRIMARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_SECONDARY));
+        assertTrue(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_TERTIARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_STYLUS_PRIMARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_STYLUS_SECONDARY));
+        assertFalse(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_BACK));
+        assertTrue(mMotionEventDynamic.isButtonPressed(MotionEvent.BUTTON_FORWARD));
     }
 
     private static PointerCoordsBuilder withCoords(float x, float y) {
