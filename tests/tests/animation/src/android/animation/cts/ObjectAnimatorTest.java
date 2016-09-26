@@ -20,8 +20,7 @@ import static android.cts.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -239,6 +238,24 @@ public class ObjectAnimatorTest {
         assertEquals(0, green);
 
         mActivityRule.runOnUiThread(animator::cancel);
+    }
+
+    @Test
+    public void testNullObject() throws Throwable {
+        final ObjectAnimator anim = ObjectAnimator.ofFloat(null, "dummyValue", 0f, 1f);
+        anim.setDuration(300);
+        final ValueAnimator.AnimatorUpdateListener updateListener =
+                mock(ValueAnimator.AnimatorUpdateListener.class);
+        anim.addUpdateListener(updateListener);
+        final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
+        anim.addListener(listener);
+
+        mActivityRule.runOnUiThread(anim::start);
+        verify(listener, within(500)).onAnimationEnd(anim);
+        // Verify that null target ObjectAnimator didn't get canceled.
+        verify(listener, times(0)).onAnimationCancel(anim);
+        // Verify that the update listeners gets called a few times.
+        verify(updateListener, atLeast(8)).onAnimationUpdate(anim);
     }
 
     @Test
