@@ -23,12 +23,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 
 // This is not a standard test of an android activity (such as
 // ActivityInstrumentationTestCase2) as it is attempting to test the actual
 // life cycle and how it is affected by lock task, rather than mock intents
 // and setup.
 public class LockTaskTest extends BaseDeviceOwnerTest {
+
+    private static final String TAG = "LockTaskTest";
 
     private static final String TEST_PACKAGE = "com.google.android.example.somepackage";
 
@@ -47,7 +50,6 @@ public class LockTaskTest extends BaseDeviceOwnerTest {
     private static final int ACTIVITY_RESUMED_TIMEOUT_MILLIS = 20000;  // 20 seconds
     private static final int ACTIVITY_RUNNING_TIMEOUT_MILLIS = 10000;  // 10 seconds
     private static final int ACTIVITY_DESTROYED_TIMEOUT_MILLIS = 60000;  // 60 seconds
-    private static final int UPDATE_LOCK_TASK_TIMEOUT_MILLIS = 1000; // 1 second
     public static final String RECEIVING_ACTIVITY_CREATED_ACTION
             = "com.android.cts.deviceowner.RECEIVING_ACTIVITY_CREATED_ACTION";
     /**
@@ -62,6 +64,7 @@ public class LockTaskTest extends BaseDeviceOwnerTest {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            Log.d(TAG, "onReceive: " + action);
             if (LockTaskUtilityActivity.CREATE_ACTION.equals(action)) {
                 synchronized (mActivityRunningLock) {
                     mIsActivityRunning = true;
@@ -183,7 +186,7 @@ public class LockTaskTest extends BaseDeviceOwnerTest {
         mDevicePolicyManager.setLockTaskPackages(getWho(), new String[0]);
 
         synchronized (mActivityRunningLock) {
-            mActivityRunningLock.wait(UPDATE_LOCK_TASK_TIMEOUT_MILLIS);
+            mActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
         }
 
         assertLockTaskModeInactive();
@@ -298,7 +301,7 @@ public class LockTaskTest extends BaseDeviceOwnerTest {
         mDevicePolicyManager.setLockTaskPackages(getWho(), new String[0]);
 
         synchronized (mActivityRunningLock) {
-            mActivityRunningLock.wait(UPDATE_LOCK_TASK_TIMEOUT_MILLIS);
+            mActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
         }
 
         assertLockTaskModeInactive();
