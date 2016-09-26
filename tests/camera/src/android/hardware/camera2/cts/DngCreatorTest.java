@@ -316,12 +316,11 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 Date dateTime = dngDateTimeStampFormat.parse(dateTimeString);
                 long captureTimeMs = dateTime.getTime();
 
-                if (VERBOSE) {
-                    Log.v(TAG, "DateTime tag: " + dateTimeString);
-                    Log.v(TAG, "Before capture: " + beforeCaptureDate.getTime());
-                    Log.v(TAG, "Capture time: " + captureTimeMs);
-                    Log.v(TAG, "After capture: " + afterCaptureDate.getTime());
-                }
+                Log.i(TAG, "DNG DateTime tag: " + dateTimeString);
+                Log.i(TAG, "Before capture time: " + beforeCaptureDate.getTime());
+                Log.i(TAG, "Capture time: " + captureTimeMs);
+                Log.i(TAG, "After capture time: " + afterCaptureDate.getTime());
+
                 // Offset beforeCaptureTime by 1 second to account for rounding down of
                 // DNG tag
                 long beforeCaptureTimeMs = beforeCaptureDate.getTime() - 1000;
