@@ -39,11 +39,6 @@ public class ScreenCaptureDisabledTest extends BaseDeviceAdminTest {
     }
 
     public void testScreenCaptureImpossible() throws Exception {
-        if (getInstrumentation().getUiAutomation().takeScreenshot() != null) {
-            // TODO: Remove this after investigation in b/28995242 is done
-            Log.e(TAG, "testScreenCaptureImpossible: Can capture screenshot, try one more time.");
-            Thread.sleep(5000);
-        }
         assertNull(getInstrumentation().getUiAutomation().takeScreenshot());
     }
 
