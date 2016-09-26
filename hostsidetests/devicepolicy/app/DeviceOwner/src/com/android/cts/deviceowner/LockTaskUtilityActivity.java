@@ -18,8 +18,10 @@ package com.android.cts.deviceowner;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Log;
 
 public class LockTaskUtilityActivity extends Activity {
+    private static final String TAG = "LockTaskUtilityActivity";
 
     public static final String START_LOCK_TASK = "startLockTask";
     public static final String STOP_LOCK_TASK = "stopLockTask";
@@ -81,6 +83,7 @@ public class LockTaskUtilityActivity extends Activity {
     }
 
     private void sendLocalBroadcast(Intent intent) {
+        Log.d(TAG, "sendLocalBroadcast: " + intent.getAction());
         intent.setPackage(this.getPackageName());
         intent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         sendBroadcast(intent);
