@@ -23,7 +23,11 @@ import matplotlib.pyplot
 import numpy
 
 #AE must converge within this number of auto requests for EV
-THREASH_CONVERGE_FOR_EV = 8
+THRESH_CONVERGE_FOR_EV = 8
+YUV_FULL_SCALE = 255.0
+YUV_SATURATION_MIN = 253.0
+YUV_SATURATION_TOL = 1.0
+
 
 def main():
     """Tests that EV compensation is applied.
@@ -66,9 +70,19 @@ def main():
         pylab.plot(evs, lumas, 'r')
         matplotlib.pyplot.savefig("%s_plot_means.png" % (NAME))
 
-        # trim trailing 1.0s (for saturated image)
-        while lumas and lumas[-1] == 1.0:
-            lumas.pop(-1)
+        # Trim extra saturated images
+        while lumas and lumas[-1] >= YUV_SATURATION_MIN/YUV_FULL_SCALE:
+            if (np.isclose(reds[-1], greens[-1],
+                           YUV_SATURATION_TOL/YUV_FULL_SCALE) and
+                    np.isclose(blues[-1], greens[-1],
+                               YUV_SATURATION_TOL/YUV_FULL_SCALE)):
+                lumas.pop(-1)
+                reds.pop(-1)
+                greens.pop(-1)
+                blues.pop(-1)
+                print 'Removed saturated image.'
+            else:
+                break
         # Only allow positive EVs to give saturated image
         assert(len(lumas) > 2)
         luma_diffs = numpy.diff(lumas)
