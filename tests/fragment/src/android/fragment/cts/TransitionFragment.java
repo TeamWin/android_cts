@@ -23,9 +23,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
+import android.cts.util.transition.TrackingTransition;
+import android.cts.util.transition.TrackingVisibility;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.transition.Transition;
 import android.view.LayoutInflater;
 import android.view.View;

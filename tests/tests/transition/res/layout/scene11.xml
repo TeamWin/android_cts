@@ -14,11 +14,12 @@
      limitations under the License.
 -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:transitionName="holder"
-                android:id="@+id/holder">
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:transitionName="holder"
+    android:id="@+id/holder">
     <ImageView
         android:id="@+id/redSquare"
         android:src="#F00"

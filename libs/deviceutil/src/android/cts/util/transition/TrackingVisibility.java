@@ -13,58 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.fragment.cts;
+package android.cts.util.transition;
 
 import android.animation.Animator;
 import android.graphics.Rect;
-import android.transition.Transition;
 import android.transition.TransitionValues;
+import android.transition.Visibility;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
 /**
- * A transition that tracks which targets are applied to it.
- * It will assume any target that it applies to will have differences
- * between the start and end state, regardless of the differences
- * that actually exist. In other words, it doesn't actually check
- * any size or position differences or any other property of the view.
- * It just records the difference.
- * <p>
- * Both start and end value Views are recorded, but no actual animation
- * is created.
+ * Visibility transition that tracks which targets are applied to it.
+ * This transition does no animation.
  */
-class TrackingTransition extends Transition implements TargetTracking {
+public class TrackingVisibility extends Visibility implements TargetTracking {
     public final ArrayList<View> targets = new ArrayList<>();
     private final Rect[] mEpicenter = new Rect[1];
-    private static String PROP = "tracking:prop";
-    private static String[] PROPS = { PROP };
 
     @Override
-    public String[] getTransitionProperties() {
-        return PROPS;
-    }
-
-    @Override
-    public void captureStartValues(TransitionValues transitionValues) {
-        transitionValues.values.put(PROP, 0);
-    }
-
-    @Override
-    public void captureEndValues(TransitionValues transitionValues) {
-        transitionValues.values.put(PROP, 1);
-    }
-
-    @Override
-    public Animator createAnimator(ViewGroup sceneRoot, TransitionValues startValues,
+    public Animator onAppear(ViewGroup sceneRoot, View view, TransitionValues startValues,
             TransitionValues endValues) {
-        if (startValues != null) {
-            targets.add(startValues.view);
+        targets.add(endValues.view);
+        Rect epicenter = getEpicenter();
+        if (epicenter != null) {
+            mEpicenter[0] = new Rect(epicenter);
+        } else {
+            mEpicenter[0] = null;
         }
-        if (endValues != null) {
-            targets.add(endValues.view);
-        }
+        return null;
+    }
+
+    @Override
+    public Animator onDisappear(ViewGroup sceneRoot, View view, TransitionValues startValues,
+            TransitionValues endValues) {
+        targets.add(startValues.view);
         Rect epicenter = getEpicenter();
         if (epicenter != null) {
             mEpicenter[0] = new Rect(epicenter);
