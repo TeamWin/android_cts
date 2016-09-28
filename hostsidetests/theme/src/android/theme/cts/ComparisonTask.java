@@ -36,6 +36,9 @@ public class ComparisonTask implements Callable<File> {
 
     private static final int IMAGE_THRESHOLD = 2;
 
+    /** Maximum allowable number of consecutive failed pixels. */
+    private static final int MAX_CONSECUTIVE_FAILURES = 1;
+
     private final File mExpected;
     private final File mActual;
 
@@ -95,6 +98,8 @@ public class ComparisonTask implements Callable<File> {
         }
 
         for (int i = 0; i < w; i++) {
+            int consecutive = 0;
+
             for (int j = 0; j < h; j++) {
                 final int p1 = reference.getRGB(i, j);
                 final int p2 = generated.getRGB(i, j);
@@ -106,7 +111,13 @@ public class ComparisonTask implements Callable<File> {
                 if (Math.abs(db) > threshold ||
                         Math.abs(dg) > threshold ||
                         Math.abs(dr) > threshold) {
-                    return false;
+                    consecutive++;
+
+                    if (consecutive > MAX_CONSECUTIVE_FAILURES) {
+                        return false;
+                    }
+                } else {
+                    consecutive = 0;
                 }
             }
         }
