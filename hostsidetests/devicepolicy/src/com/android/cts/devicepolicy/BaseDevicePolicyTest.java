@@ -80,6 +80,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
 
+    /** Whether file-based encryption (FBE) is supported. */
+    protected boolean mSupportsFbe;
+
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
@@ -95,6 +98,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mHasFeature = getDevice().getApiLevel() >= 21 /* Build.VERSION_CODES.L */
                 && hasDeviceFeature("android.software.device_admin");
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
+        mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mFixedPackages = getDevice().getInstalledPackageNames();
 
         // disable the package verifier to avoid the dialog when installing an app
@@ -273,6 +277,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         TestRunResult runResult = listener.getCurrentRunResults();
         printTestResult(runResult);
         return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
+    }
+
+    /** Reboots the device and block until the boot complete flag is set. */
+    protected void rebootAndWaitUntilReady() throws DeviceNotAvailableException {
+        getDevice().rebootUntilOnline();
+        assertTrue("Device failed to boot", getDevice().waitForBootComplete(60000));
     }
 
     /** Returns true if the system supports the split between system and primary user. */
