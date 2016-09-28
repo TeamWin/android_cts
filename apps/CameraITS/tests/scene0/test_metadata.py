@@ -97,9 +97,12 @@ def main():
         print "Assert field of view: %.1f degrees" % fov
         assert 30 <= fov <= 130
 
-        hyperfocal = 1.0 / props["android.lens.info.hyperfocalDistance"]
-        print "Assert hyperfocal distance: %.2f m" % hyperfocal
-        assert 0.02 <= hyperfocal
+        if its.caps.lens_approx_calibrated(props):
+            diopter_hyperfocal = props["android.lens.info.hyperfocalDistance"]
+            if diopter_hyperfocal != 0.0:
+                hyperfocal = 1.0 / diopter_hyperfocal
+                print "Assert hyperfocal distance: %.2f m" % hyperfocal
+                assert 0.02 <= hyperfocal
 
 
 def getval(expr, default=None):
