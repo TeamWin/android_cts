@@ -166,10 +166,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
             return;
         }
+        installAppAsUser(WIFI_CONFIG_CREATOR_APK, mProfileUserId);
+
         assertTrue("WiFi config already exists and could not be removed", runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId));
 
-        installAppAsUser(WIFI_CONFIG_CREATOR_APK, mProfileUserId);
         assertTrue("Failed to add WiFi config", runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId));
 
