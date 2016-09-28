@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.webkit.cts;
+package com.android.cts.webkit;
 
 import android.app.Activity;
 import android.os.Bundle;

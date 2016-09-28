@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,43 @@
  * limitations under the License.
  */
 
-package android.webkit.cts;
+package com.android.cts.webkit;
 
 
-import android.content.Context;
 import android.cts.util.NullWebViewUtils;
-import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
-import android.webkit.WebView;
+import android.webkit.cts.CtsTestServer;
+import android.webkit.cts.WebViewOnUiThread;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class WebViewStartupTest
+/**
+ * Test class testing different aspects of WebView loading.
+ * The test methods in this class should be run one-and-one from the host-side to ensure we
+ * don't run the tests in the same process (since we can only load WebView into a process
+ * once - after that we will reuse the same webview provider).
+ * This works because the instrumentation used to run device-tests from the host-side terminates the
+ * testing process after each run.
+ */
+public class WebViewDeviceSideStartupTest
         extends ActivityInstrumentationTestCase2<WebViewStartupCtsActivity> {
 
-    private static final int TEST_TIMEOUT = 5000;
-    private static final String TAG = "WebViewStartupTest";
+    private static final String TAG = WebViewDeviceSideStartupTest.class.getSimpleName();
 
     private WebViewStartupCtsActivity mActivity;
 
-    public WebViewStartupTest() {
-        super("android.webkit.cts", WebViewStartupCtsActivity.class);
+    public WebViewDeviceSideStartupTest() {
+        super("com.android.cts.webkit", WebViewStartupCtsActivity.class);
     }
 
     @Override
     public void setUp() throws Exception {
+        super.setUp();
         mActivity = getActivity();
     }
 
