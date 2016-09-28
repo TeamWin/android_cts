@@ -208,6 +208,7 @@ public abstract class ActivityTestBase {
                 mBitmapAsserter.assertBitmapIsVerified(testCaseBitmap, bitmapVerifier,
                         getName(), testCase.getDebugString());
             }
+            getActivity().reset();
         }
 
         private static final int VERIFY_ANIMATION_LOOP_COUNT = 20;

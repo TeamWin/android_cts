@@ -24,6 +24,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.uirendering.cts.R;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.ViewTreeObserver;
 
@@ -74,6 +75,17 @@ public class DrawActivity extends Activity {
         return point;
     }
 
+    public void reset() {
+        mHandler.sendEmptyMessage(RenderSpecHandler.RESET_MSG);
+        synchronized (mLock) {
+            try {
+                mLock.wait(TIME_OUT_MS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private ViewInitializer mViewInitializer;
 
     private void notifyOnDrawCompleted() {
@@ -83,6 +95,7 @@ public class DrawActivity extends Activity {
     }
 
     private class RenderSpecHandler extends Handler {
+        public static final int RESET_MSG = 0;
         public static final int LAYOUT_MSG = 1;
         public static final int CANVAS_MSG = 2;
 
@@ -92,6 +105,14 @@ public class DrawActivity extends Activity {
         }
 
         public void handleMessage(Message message) {
+            if (message.what == RESET_MSG) {
+                ((ViewGroup)findViewById(android.R.id.content)).removeAllViews();
+                synchronized (mLock) {
+                    mLock.set(-1, -1);
+                    mLock.notify();
+                }
+                return;
+            }
             setContentView(R.layout.test_container);
             ViewStub stub = (ViewStub) findViewById(R.id.test_content_stub);
             mViewWrapper = findViewById(R.id.test_content_wrapper);
