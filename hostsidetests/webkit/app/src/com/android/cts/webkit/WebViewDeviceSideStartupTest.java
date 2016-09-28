@@ -19,11 +19,13 @@ package com.android.cts.webkit;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.cts.util.NullWebViewUtils;
+import android.os.StrictMode;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.webkit.WebView;
 import android.webkit.cts.CtsTestServer;
 import android.webkit.cts.WebViewOnUiThread;
 import android.webkit.WebView;
@@ -143,5 +145,57 @@ public class WebViewDeviceSideStartupTest
         assertEquals(expected.versionCode, actual.versionCode);
         assertEquals(expected.versionName, actual.versionName);
         assertEquals(expected.lastUpdateTime, actual.lastUpdateTime);
+    }
+
+    @UiThreadTest
+    public void testStrictModeNotViolatedOnStartup() throws Throwable {
+        StrictMode.ThreadPolicy oldThreadPolicy = StrictMode.getThreadPolicy();
+        StrictMode.VmPolicy oldVmPolicy = StrictMode.getVmPolicy();
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .penaltyDeath()
+                .build());
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .penaltyDeath()
+                .build());
+
+        try {
+            createWebViewAndNavigate();
+            // Try to force Garbage Collection to catch any StrictMode violations triggered in
+            // finalizers.
+            for(int n = 0; n < 5; n++) {
+                Runtime.getRuntime().gc();
+                Thread.sleep(200);
+            }
+        } finally {
+            StrictMode.setThreadPolicy(oldThreadPolicy);
+            StrictMode.setVmPolicy(oldVmPolicy);
+        }
+    }
+
+    private void createWebViewAndNavigate() {
+        try {
+            mActivity.createAndAttachWebView();
+        } catch (Throwable t) {
+            NullWebViewUtils.determineIfWebViewAvailable(mActivity, t);
+            if (NullWebViewUtils.isWebViewAvailable()) {
+                // Rethrow t if WebView is available (because then we failed in some way that
+                // indicates that the device supports WebView but couldn't load it for some reason).
+                throw t;
+            } else {
+                // No WebView available - bail out!
+                return;
+            }
+        }
+
+        // WebView is available, so try to call some WebView APIs to ensure they don't cause
+        // strictmode violations
+
+        WebViewOnUiThread onUiThread = new WebViewOnUiThread(this, mActivity.getWebView());
+        onUiThread.loadUrlAndWaitForCompletion("about:blank");
+        onUiThread.loadUrlAndWaitForCompletion("");
     }
 }
