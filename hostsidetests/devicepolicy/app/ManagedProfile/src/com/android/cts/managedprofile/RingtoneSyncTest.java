@@ -29,6 +29,9 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
 
     private ContentResolver mContentResolver;
 
+    // TODO: Expose this as SystemApi in android.provider.Settings
+    private final String SETTING_SYNC_PARENT_SOUNDS = "sync_parent_sounds";
+
     private static final int[] RINGTONE_TYPES = {
             RingtoneManager.TYPE_RINGTONE, RingtoneManager.TYPE_NOTIFICATION,
             RingtoneManager.TYPE_ALARM
@@ -49,8 +52,6 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
      * another user from the caller.
      */
     public void testRingtoneSync() throws Exception {
-        final String SETTING_SYNC_PARENT_SOUNDS = "sync_parent_sounds";
-
         // Managed profile was just created, so sync should be active by default
         assertEquals(1, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
 
@@ -68,11 +69,41 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
     }
 
     private void validateRingtoneManagerGetRingtone(String actualRingtone, int type) {
+        Uri actualRingtoneUri = (actualRingtone == null ? null
+                : Utils.getUriWithoutUserId(Uri.parse(actualRingtone)));
         Uri ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(mContext, type);
         if (ringtoneUri == null) {
             assertNull(actualRingtone);
         } else {
-            assertEquals(ringtoneUri.toString(), actualRingtone);
+            assertEquals(Utils.getUriWithoutUserId(ringtoneUri).toString(),
+                    actualRingtoneUri.toString());
         }
+    }
+
+    /*
+     * Tests that setting a work ringtone disables Settings.Secure.SYNC_PARENT_SOUNDS, so that
+     * setting should be "true" before calling
+     */
+    private void testSoundDisableSync(int ringtoneType) throws Exception {
+        assertEquals(1, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
+        try {
+            RingtoneManager.setActualDefaultRingtoneUri(mContext, ringtoneType, null);
+            assertEquals(0, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
+        } finally {
+            // Reset the setting we just changed.
+            Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 1);
+        }
+    }
+
+    public void testRingtoneDisableSync() throws Exception {
+        testSoundDisableSync(RingtoneManager.TYPE_RINGTONE);
+    }
+
+    public void testNotificationDisableSync() throws Exception {
+        testSoundDisableSync(RingtoneManager.TYPE_NOTIFICATION);
+    }
+
+    public void testAlarmDisableSync() throws Exception {
+        testSoundDisableSync(RingtoneManager.TYPE_ALARM);
     }
 }
