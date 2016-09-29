@@ -81,8 +81,8 @@ public class SurfaceViewSyncTests {
         UiSelector acceptButtonSelector = new UiSelector().resourceId("android:id/button1");
         UiObject acceptButton = uiDevice.findObject(acceptButtonSelector);
         if (acceptButton.waitForExists(PERMISSION_DIALOG_WAIT_MS)) {
-            Log.d(TAG, "found permission dialog, dismissing...");
-            assertTrue(acceptButton.click());
+            boolean success = acceptButton.click();
+            Log.d(TAG, "found permission dialog, click attempt success = " + success);
         }
     }
 
