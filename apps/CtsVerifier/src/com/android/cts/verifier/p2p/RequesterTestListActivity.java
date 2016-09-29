@@ -100,7 +100,6 @@ public abstract class RequesterTestListActivity extends
         Intent intent = new Intent(this, getRequesterActivityClass());
         intent.putExtra(TestCase.EXTRA_TEST_NAME,
                 testcase.getTestId());
-        adapter.add(TestListItem.newTest(testcase.getTestName(), testcase.getTestId(),
-                intent, null));
+        adapter.add(TestListItem.newTest(testcase.getTestName(), testcase.getTestId(), intent));
     }
 }

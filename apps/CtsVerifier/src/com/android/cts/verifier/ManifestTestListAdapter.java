@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -24,6 +25,11 @@ import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;
+
+import com.android.cts.verifier.ConditionalTest;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -136,7 +142,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
         List<TestListItem> allRows = new ArrayList<TestListItem>();
         for (String testCategory : testCategories) {
-            List<TestListItem> tests = filterTests(testsByCategory.get(testCategory));
+            List<TestListItem> tests = testsByCategory.get(testCategory);
             if (!tests.isEmpty()) {
                 allRows.add(TestListItem.newCategory(testCategory));
                 Collections.sort(tests, new Comparator<TestListItem>() {
@@ -189,9 +195,13 @@ public class ManifestTestListAdapter extends TestListAdapter {
             String[] requiredFeatures = getRequiredFeatures(info.activityInfo.metaData);
             String[] excludedFeatures = getExcludedFeatures(info.activityInfo.metaData);
             String[] applicableFeatures = getApplicableFeatures(info.activityInfo.metaData);
-            TestListItem item = TestListItem.newTest(title, testName, intent, requiredFeatures,
-                    excludedFeatures, applicableFeatures);
 
+            if (!checkFeatures(requiredFeatures, excludedFeatures, applicableFeatures)
+                || !checkConditionalTest(testName)) {
+                continue;
+            }
+
+            TestListItem item = TestListItem.newTest(title, testName, intent);
             String testCategory = getTestCategory(mContext, info.activityInfo.metaData);
             addTestToCategory(testsByCategory, testCategory, item);
         }
@@ -304,15 +314,68 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return true;
     }
 
-    List<TestListItem> filterTests(List<TestListItem> tests) {
-        List<TestListItem> filteredTests = new ArrayList<TestListItem>();
-        for (TestListItem test : tests) {
-            if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)) {
-                if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
-                    filteredTests.add(test);
-                }
+    private boolean checkFeatures(String[] requiredFeatures, String[] excludedFeatures,
+        String[] applicableFeatures) {
+
+        if (!hasAnyFeature(excludedFeatures) && hasAllFeatures(requiredFeatures)) {
+            if (applicableFeatures == null || hasAnyFeature(applicableFeatures)) {
+                return true;
             }
         }
-        return filteredTests;
+        return false;
+    }
+
+    private String[] parseFeaturesString(String features) {
+        if (features == null || features.isEmpty()) {
+            return null;
+        } else {
+            return features.split(":");
+        }
+    }
+
+    private boolean checkConditionalTest(String testName) {
+        try {
+            Class<?> testClass = Class.forName(testName);
+            if (!testClass.isAnnotationPresent(ConditionalTest.class)) {
+                return true;
+            }
+
+            ConditionalTest annotation = testClass.getAnnotation(ConditionalTest.class);
+
+            String condFQName = annotation.value();
+            boolean instantiate = annotation.instantiate();
+            String[] requiredFts = parseFeaturesString(annotation.requiredFeatures());
+            String[] excludedFts = parseFeaturesString(annotation.excludedFeatures());
+            String[] applicableFts = parseFeaturesString(annotation.applicableFeatures());
+
+            if (requiredFts != null || excludedFts != null || applicableFts != null) {
+                if (!condFQName.isEmpty() || instantiate) {
+                    Log.e("CtsVerifier", "ConditionalTest restrictions violated: " +
+                        "Feature properties can not be used together with value or instantiate.");
+                    // TODO: Dialog
+                    return false;
+                }
+
+                return checkFeatures(requiredFts, excludedFts, applicableFts);
+            }
+
+            Class<?> condClass = testClass;
+            if (!condFQName.isEmpty()) {
+                if (!condFQName.contains(".")) {
+                    condFQName = testClass.getPackage().getName() + "." + condFQName;
+                }
+                condClass = Class.forName(condFQName);
+            }
+
+            Method shouldRun = condClass.getMethod(ConditionalTest.CONDITION_CLASS_METHOD_NAME,
+                Context.class, Class.class);
+            Object instance = (instantiate) ? condClass.newInstance() : null;
+            return (Boolean) shouldRun.invoke(instance, mContext, testClass);
+        } catch (Exception e) {
+            Log.w("CtsVerifier", "ConditionalTest exception: " + e.getMessage());
+            e.printStackTrace();
+            // TODO: Dialog
+            return true;
+        }
     }
 }

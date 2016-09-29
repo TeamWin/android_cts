@@ -88,49 +88,13 @@ public abstract class TestListAdapter extends BaseAdapter {
         /** Intent used to launch the activity from the list. Null for categories. */
         final Intent intent;
 
-        /** Features necessary to run this test. */
-        final String[] requiredFeatures;
-
-        /** Features such that, if any present, the test gets excluded from being shown. */
-        final String[] excludedFeatures;
-
-        /** If any of of the features are present the test is meaningful to run. */
-        final String[] applicableFeatures;
-
         public static TestListItem newTest(Context context, int titleResId, String testName,
-                Intent intent, String[] requiredFeatures, String[] excludedFeatures,
-                String[] applicableFeatures) {
-            return newTest(context.getString(titleResId), testName, intent, requiredFeatures,
-                    excludedFeatures, applicableFeatures);
+            Intent intent) {
+            return newTest(context.getString(titleResId), testName, intent);
         }
 
-        public static TestListItem newTest(Context context, int titleResId, String testName,
-                Intent intent, String[] requiredFeatures, String[] excludedFeatures) {
-            return newTest(context.getString(titleResId), testName, intent, requiredFeatures,
-                    excludedFeatures, null);
-        }
-
-        public static TestListItem newTest(Context context, int titleResId, String testName,
-                Intent intent, String[] requiredFeatures) {
-            return newTest(context.getString(titleResId), testName, intent, requiredFeatures, null,
-                    null);
-        }
-
-        public static TestListItem newTest(String title, String testName, Intent intent,
-                String[] requiredFeatures, String[] excludedFeatures, String[] applicableFeatures) {
-            return new TestListItem(title, testName, intent, requiredFeatures, excludedFeatures,
-                    applicableFeatures);
-        }
-
-        public static TestListItem newTest(String title, String testName, Intent intent,
-                String[] requiredFeatures, String[] excludedFeatures) {
-            return new TestListItem(title, testName, intent, requiredFeatures, excludedFeatures,
-                    null);
-        }
-
-        public static TestListItem newTest(String title, String testName, Intent intent,
-                String[] requiredFeatures) {
-            return new TestListItem(title, testName, intent, requiredFeatures, null, null);
+        public static TestListItem newTest(String title, String testName, Intent intent) {
+            return new TestListItem(title, testName, intent);
         }
 
         public static TestListItem newCategory(Context context, int titleResId) {
@@ -138,17 +102,13 @@ public abstract class TestListAdapter extends BaseAdapter {
         }
 
         public static TestListItem newCategory(String title) {
-            return new TestListItem(title, null, null, null, null, null);
+            return new TestListItem(title, null, null);
         }
 
-        protected TestListItem(String title, String testName, Intent intent,
-                String[] requiredFeatures, String[] excludedFeatures, String[] applicableFeatures) {
+        protected TestListItem(String title, String testName, Intent intent) {
             this.title = title;
             this.testName = testName;
             this.intent = intent;
-            this.requiredFeatures = requiredFeatures;
-            this.excludedFeatures = excludedFeatures;
-            this.applicableFeatures = applicableFeatures;
         }
 
         boolean isTest() {
