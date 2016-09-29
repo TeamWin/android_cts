@@ -32,6 +32,8 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 	libctscamera2_jni \
 	libnativehelper_compat_libc++
 
+LOCAL_NDK_STL_VARIANT := c++_shared
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
 
 # Tag this module as a cts test artifact
