@@ -461,7 +461,13 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
 
         for (int i = 0; i < fpsRanges.length; i += 1) {
             fpsRange = fpsRanges[i];
-            maxPreviewSz = getMaxPreviewSizeForFpsRange(fpsRange);
+            if (mStaticInfo.isHardwareLevelLegacy()) {
+                // Legacy devices don't report minimum frame duration for preview sizes. The FPS
+                // range should be valid for any supported preview size.
+                maxPreviewSz = mOrderedPreviewSizes.get(0);
+            } else {
+                maxPreviewSz = getMaxPreviewSizeForFpsRange(fpsRange);
+            }
 
             requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
             // Turn off auto antibanding to avoid exposure time and frame duration interference
