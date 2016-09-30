@@ -394,6 +394,59 @@ def edge_mode(props, mode):
             "android.edge.availableEdgeModes") and mode \
             in props["android.edge.availableEdgeModes"];
 
+
+def lens_calibrated(props):
+    """Returns whether lens position is calibrated or not.
+
+    android.lens.info.focusDistanceCalibration has 3 modes.
+    0: Uncalibrated
+    1: Approximate
+    2: Calibrated
+
+    Args:
+        props: Camera properties objects.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.lens.info.focusDistanceCalibration") and \
+         props["android.lens.info.focusDistanceCalibration"] == 2
+
+
+def lens_approx_calibrated(props):
+    """Returns whether lens position is calibrated or not.
+
+    android.lens.info.focusDistanceCalibration has 3 modes.
+    0: Uncalibrated
+    1: Approximate
+    2: Calibrated
+
+    Args:
+        props: Camera properties objects.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.lens.info.focusDistanceCalibration") and \
+        (props["android.lens.info.focusDistanceCalibration"] == 1 or
+         props["android.lens.info.focusDistanceCalibration"] == 2)
+
+
+def fixed_focus(props):
+    """Returns whether a device is fixed focus.
+
+    props[android.lens.info.minimumFocusDistance] == 0 is fixed focus
+
+    Args:
+        props: Camera properties objects.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.lens.info.minimumFocusDistance") and \
+        props["android.lens.info.minimumFocusDistance"] == 0
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """
