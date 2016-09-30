@@ -627,8 +627,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void runDumpsysWindow() throws Exception {
         String command = "dumpsys window displays";
         CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
-        command = "dumpsys window policy";
-        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
         command = "dumpsys activity a";
         CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
     }
