@@ -273,7 +273,8 @@ public class SurfaceViewSyncTests {
                 },
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 view -> makeInfinite(ObjectAnimator.ofInt(view, "offset", 10, 30)),
-                (blackishPixelCount, width, height) -> blackishPixelCount == 100));
+                (blackishPixelCount, width, height) ->
+                        blackishPixelCount >= 90 && blackishPixelCount <= 110));
     }
 
     /**
