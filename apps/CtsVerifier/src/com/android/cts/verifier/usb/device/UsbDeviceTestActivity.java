@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.usb.UsbConfiguration;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -31,7 +32,9 @@ import android.hardware.usb.UsbRequest;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.ArraySet;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -41,7 +44,9 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -1008,6 +1013,100 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
+     * Enumerate all known devices and check basic relationship between the properties.
+     */
+    private void enumerateDevices() throws Exception {
+        Set<Integer> knownDeviceIds = new ArraySet<>();
+
+        for (Map.Entry<String, UsbDevice> entry : mUsbManager.getDeviceList().entrySet()) {
+            UsbDevice device = entry.getValue();
+
+            assertEquals(entry.getKey(), device.getDeviceName());
+            assertNotNull(device.getDeviceName());
+
+            // Device ID should be unique
+            assertFalse(knownDeviceIds.contains(device.getDeviceId()));
+            knownDeviceIds.add(device.getDeviceId());
+
+            assertEquals(device.getDeviceName(), UsbDevice.getDeviceName(device.getDeviceId()));
+
+            // Properties without constraints
+            device.getManufacturerName();
+            device.getProductName();
+            device.getVersion();
+            device.getSerialNumber();
+            device.getVendorId();
+            device.getProductId();
+            device.getDeviceClass();
+            device.getDeviceSubclass();
+            device.getDeviceProtocol();
+
+            Set<UsbInterface> interfacesFromAllConfigs = new ArraySet<>();
+            Set<Pair<Integer, Integer>> knownInterfaceIds = new ArraySet<>();
+            Set<Integer> knownConfigurationIds = new ArraySet<>();
+            int numConfigurations = device.getConfigurationCount();
+            for (int configNum = 0; configNum < numConfigurations; configNum++) {
+                UsbConfiguration config = device.getConfiguration(configNum);
+
+                // Configuration ID should be unique
+                assertFalse(knownConfigurationIds.contains(config.getId()));
+                knownConfigurationIds.add(config.getId());
+
+                assertTrue(config.getMaxPower() >= 0);
+
+                // Properties without constraints
+                config.getName();
+                config.isSelfPowered();
+                config.isRemoteWakeup();
+
+                int numInterfaces = config.getInterfaceCount();
+                for (int interfaceNum = 0; interfaceNum < numInterfaces; interfaceNum++) {
+                    UsbInterface iface = config.getInterface(interfaceNum);
+                    interfacesFromAllConfigs.add(iface);
+
+                    Pair<Integer, Integer> ifaceId = new Pair<>(iface.getId(),
+                            iface.getAlternateSetting());
+                    assertFalse(knownInterfaceIds.contains(ifaceId));
+                    knownInterfaceIds.add(ifaceId);
+
+                    // Properties without constraints
+                    iface.getName();
+                    iface.getInterfaceClass();
+                    iface.getInterfaceSubclass();
+                    iface.getInterfaceProtocol();
+
+                    int numEndpoints = iface.getEndpointCount();
+                    for (int endpointNum = 0; endpointNum < numEndpoints; endpointNum++) {
+                        UsbEndpoint endpoint = iface.getEndpoint(endpointNum);
+
+                        assertEquals(endpoint.getAddress(),
+                                endpoint.getEndpointNumber() | endpoint.getDirection());
+
+                        assertTrue(endpoint.getDirection() == UsbConstants.USB_DIR_OUT ||
+                                endpoint.getDirection() == UsbConstants.USB_DIR_IN);
+
+                        assertTrue(endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_CONTROL ||
+                                endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_ISOC ||
+                                endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK ||
+                                endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_INT);
+
+                        assertTrue(endpoint.getMaxPacketSize() >= 0);
+                        assertTrue(endpoint.getInterval() >= 0);
+
+                        // Properties without constraints
+                        endpoint.getAttributes();
+                    }
+                }
+            }
+
+            int numInterfaces = device.getInterfaceCount();
+            for (int interfaceNum = 0; interfaceNum < numInterfaces; interfaceNum++) {
+                assertTrue(interfacesFromAllConfigs.contains(device.getInterface(interfaceNum)));
+            }
+        }
+    }
+
+    /**
      * Run tests.
      *
      * @param device The device to run the test against. This device is running
@@ -1024,6 +1123,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 }
             }
             assumeNotNull(iface);
+
+            enumerateDevices();
 
             UsbDeviceConnection connection = mUsbManager.openDevice(device);
             assertNotNull(connection);
