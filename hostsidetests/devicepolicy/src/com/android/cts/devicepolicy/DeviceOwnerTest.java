@@ -97,7 +97,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testWifi() throws Exception {
-        if (hasDeviceFeature("android.hardware.wifi")) {
+        if (!hasDeviceFeature("android.hardware.wifi")) {
             return;
         }
         executeDeviceOwnerTest("WifiTest");
