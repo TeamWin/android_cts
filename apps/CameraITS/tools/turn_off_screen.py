@@ -23,6 +23,11 @@ def main():
     for s in sys.argv[1:]:
         if s[:7] == 'screen=' and len(s) > 7:
             screen_id = s[7:]
+
+    if not screen_id:
+        print 'Error: need to specify screen serial'
+        assert False
+
     cmd = ('adb -s %s shell dumpsys power | egrep "Display Power"'
            % screen_id)
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
