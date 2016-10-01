@@ -16,32 +16,8 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-test_executable := CtsNativeMediaSlTestCases
-list_executable := $(test_executable)_list
-
 include $(CLEAR_VARS)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-
-LOCAL_MODULE := $(list_executable)
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := \
-    src/SLObjectCreationTest.cpp
-
-LOCAL_CFLAGS := \
-    -DBUILD_ONLY \
-    -Werror -Wall
-
-LOCAL_SHARED_LIBRARIES := \
-    liblog \
-
-include $(BUILD_HOST_NATIVE_TEST)
-
-include $(CLEAR_VARS)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-
-LOCAL_MODULE := $(test_executable)
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE := CtsNativeMediaSlTestCases
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
@@ -62,8 +38,6 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_STATIC_LIBRARIES := \
     libOpenSLESUT \
     libgtest
-
-LOCAL_CTS_GTEST_LIST_EXECUTABLE := $(ALL_MODULES.$(list_executable).INSTALLED)
 
 LOCAL_CTS_TEST_PACKAGE := android.nativemedia.sl
 
