@@ -20,6 +20,8 @@ import com.android.internal.util.ArrayUtils;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -62,12 +64,44 @@ public class DragDropTest {
 
     private CountDownLatch mEndReceived;
 
-    static boolean equal(DragEvent ev1, DragEvent ev2) {
+    private static boolean equal(ClipDescription d1, ClipDescription d2) {
+        if ((d1 == null) != (d2 == null)) {
+            return false;
+        }
+        if (d1 == null) {
+            return true;
+        }
+        return d1.getLabel().equals(d2.getLabel()) &&
+                d1.getMimeTypeCount() == 1 && d2.getMimeTypeCount() == 1 &&
+                d1.getMimeType(0).equals(d2.getMimeType(0));
+    }
+
+    private static boolean equal(ClipData.Item i1, ClipData.Item i2) {
+        return Objects.equals(i1.getIntent(), i2.getIntent()) &&
+                Objects.equals(i1.getHtmlText(), i2.getHtmlText()) &&
+                Objects.equals(i1.getText(), i2.getText()) &&
+                Objects.equals(i1.getUri(), i2.getUri());
+    }
+
+    private static boolean equal(ClipData d1, ClipData d2) {
+        if ((d1 == null) != (d2 == null)) {
+            return false;
+        }
+        if (d1 == null) {
+            return true;
+        }
+        return equal(d1.getDescription(), d2.getDescription()) &&
+                Objects.equals(d1.getIcon(), d2.getIcon()) &&
+                d1.getItemCount() == 1 && d2.getItemCount() == 1 &&
+                equal(d1.getItemAt(0), d2.getItemAt(0));
+    }
+
+    private static boolean equal(DragEvent ev1, DragEvent ev2) {
         return ev1.getAction() == ev2.getAction() &&
                 ev1.getX() == ev2.getX() &&
                 ev1.getY() == ev2.getY() &&
-                Objects.equals(ev1.getClipData(), ev2.getClipData()) &&
-                Objects.equals(ev1.getClipDescription(), ev2.getClipDescription()) &&
+                equal(ev1.getClipData(), ev2.getClipData()) &&
+                equal(ev1.getClipDescription(), ev2.getClipDescription()) &&
                 Objects.equals(ev1.getDragAndDropPermissions(), ev2.getDragAndDropPermissions()) &&
                 Objects.equals(ev1.getLocalState(), ev2.getLocalState()) &&
                 ev1.getResult() == ev2.getResult();
@@ -92,8 +126,19 @@ public class DragDropTest {
     final private ArrayList<LogEntry> mActual = new ArrayList<LogEntry> ();
     final private ArrayList<LogEntry> mExpected = new ArrayList<LogEntry> ();
 
+    private static ClipDescription createClipDescription() {
+        return new ClipDescription("TestLabel", new String[]{"text/plain"});
+    }
+
+    private static ClipData createClipData() {
+        return new ClipData(createClipDescription(), new ClipData.Item("TestText"));
+    }
+
     static private DragEvent obtainDragEvent(int action, int x, int y, boolean result) {
-        return DragEvent.obtain(action, x, y, null, null, null, null, result);
+        final ClipDescription description =
+                action != DragEvent.ACTION_DRAG_ENDED ? createClipDescription() : null;
+        final ClipData data = action == DragEvent.ACTION_DROP ? createClipData() : null;
+        return DragEvent.obtain(action, x, y, null, description, data, null, result);
     }
 
     private void logEvent(View v, DragEvent ev) {
@@ -269,7 +314,7 @@ public class DragDropTest {
             // Start drag.
             View v = mActivity.findViewById(R.id.draggable);
             assertTrue("Couldn't start drag",
-                    v.startDragAndDrop(null, new View.DragShadowBuilder(v), null, 0));
+                    v.startDragAndDrop(createClipData(), new View.DragShadowBuilder(v), null, 0));
         });
     }
 
