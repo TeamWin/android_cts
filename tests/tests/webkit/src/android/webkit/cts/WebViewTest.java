@@ -1456,6 +1456,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 + "</body></html>", "text/html", null);
 
         WaitForFindResultsListener l = new WaitForFindResultsListener(mOnUiThread, "find", 2, true);
+        mOnUiThread.setFindListener(l);
         mOnUiThread.findAll("find");
         assertEquals(2, l.get(MIN_FIND_WAIT_MS, TimeUnit.MILLISECONDS).intValue());
     }
