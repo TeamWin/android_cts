@@ -16,10 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.log.LogUtil.CLog;
-
-import java.lang.AssertionError;
-
 /**
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
@@ -78,13 +74,44 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
         // start the ScreenCaptureDisabledActivity in the parent
         installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
-        startScreenCaptureDisabledActivity(mParentUserId);
+        startSimpleActivityAsUser(mParentUserId);
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testScreenCapturePossible");
     }
 
+    /**
+     * Verify the Profile Owner of a managed profile can create and change the password,
+     * but cannot remove it.
+     */
     @Override
-    public void testResetPassword() {
-        // Managed profile owner can't call resetPassword().
+    public void testResetPassword() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
+    }
+
+    /**
+     *  Verify the Profile Owner of a managed profile can only change the password when FBE is
+     *  unlocked, and cannot remove the password even when FBE is unlocked.
+     */
+    @Override
+    public void testResetPasswordFbe() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+
+        // Lock FBE and verify resetPassword is disabled
+        executeDeviceTestMethod(FBE_HELPER_CLASS, "testSetPassword");
+        rebootAndWaitUntilReady();
+        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordDisabled");
+
+        // Start an activity in managed profile to trigger work challenge
+        startSimpleActivityAsUser(mUserId);
+
+        // Unlock FBE and verify resetPassword is enabled again
+        executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
+        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
     }
 
     public void testCannotClearProfileOwner() throws Exception {

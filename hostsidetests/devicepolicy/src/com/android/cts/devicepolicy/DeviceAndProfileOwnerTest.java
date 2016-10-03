@@ -19,7 +19,6 @@ package com.android.cts.devicepolicy;
 import android.platform.test.annotations.RequiresDevice;
 
 import com.android.cts.migration.MigrationHelper;
-import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -40,6 +39,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DEVICE_ADMIN_APK = "CtsDeviceAndProfileOwnerApp.apk";
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
+
+    protected static final String RESET_PASSWORD_TEST_CLASS = ".ResetPasswordTest";
+    protected static final String FBE_HELPER_CLASS = ".FbeHelper";
 
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
@@ -123,11 +125,28 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".CaCertManagementTest");
     }
 
+    /** Test for resetPassword for all devices. */
     public void testResetPassword() throws Exception {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestClass(".ResetPasswordTest");
+        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
+    }
+
+    /** Additional test for resetPassword for FBE-enabled devices. */
+    public void testResetPasswordFbe() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+
+        // Lock FBE and verify resetPassword is disabled
+        executeDeviceTestMethod(FBE_HELPER_CLASS, "testSetPassword");
+        rebootAndWaitUntilReady();
+        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordDisabled");
+
+        // Unlock FBE and verify resetPassword is enabled again
+        executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
+        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
     }
 
     public void testApplicationRestrictions() throws Exception {
@@ -626,7 +645,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     /**
      * Start SimpleActivity synchronously in a particular user.
      */
-    protected void startScreenCaptureDisabledActivity(int userId) throws Exception {
+    protected void startSimpleActivityAsUser(int userId) throws Exception {
         installAppAsUser(TEST_APP_APK, userId);
         String command = "am start -W --user " + userId + " " + TEST_APP_PKG + "/"
                 + TEST_APP_PKG + ".SimpleActivity";
@@ -647,7 +666,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ? "testSetScreenCaptureDisabled_true"
                 : "testSetScreenCaptureDisabled_false";
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-        startScreenCaptureDisabledActivity(userId);
+        startSimpleActivityAsUser(userId);
         // [b/28995242], dump windows to make sure the top window is
         // ScreenCaptureDisabledActivity.
         runDumpsysWindow();
