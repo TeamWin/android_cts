@@ -149,7 +149,7 @@
                 </div>
 
                 <xsl:call-template name="filteredResultTestReport">
-                    <xsl:with-param name="header" select="'Failured Tests'" />
+                    <xsl:with-param name="header" select="'Failed Tests'" />
                     <xsl:with-param name="resultFilter" select="'fail'" />
                 </xsl:call-template>
 
