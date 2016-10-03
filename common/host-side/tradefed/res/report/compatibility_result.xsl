@@ -168,7 +168,7 @@
     <xsl:template name="filteredResultTestReport">
         <xsl:param name="header" />
         <xsl:param name="resultFilter" />
-        <xsl:variable name="numMatching" select="count(Result/Module/Test[@result=$resultFilter])" />
+        <xsl:variable name="numMatching" select="count(Result/Module/TestCase/Test[@result=$resultFilter])" />
         <xsl:if test="$numMatching &gt; 0">
             <h2 align="center"><xsl:value-of select="$header" /> (<xsl:value-of select="$numMatching"/>)</h2>
             <xsl:call-template name="detailedTestReport">
@@ -182,7 +182,7 @@
         <div>
             <xsl:for-each select="Result/Module">
                 <xsl:if test="$resultFilter=''
-                        or count(Test[@result=$resultFilter]) &gt; 0">
+                        or count(TestCase/Test[@result=$resultFilter]) &gt; 0">
 
                     <table class="testdetails">
                         <tr>
@@ -202,7 +202,7 @@
                             <xsl:variable name="TestCase" select="."/>
                             <!-- test -->
                             <xsl:for-each select="Test">
-                                <xsl:if test="$resultFilter='' or $resultFilter=@result">
+                                <xsl:if test="$resultFilter='' or @result=$resultFilter">
                                     <tr>
                                         <td class="testname"> <xsl:value-of select="$TestCase/@name"/>#<xsl:value-of select="@name"/></td>
 
