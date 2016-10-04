@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.UiAutomation;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import java.util.List;
@@ -103,8 +104,9 @@ public abstract class AccessibilityActivityTestCase<T extends Activity>
                         .getWindows();
                 // Wait for a window state changed event with our window showing
                 for (int i = 0; i < windows.size(); i++) {
-                    if (windows.get(i).getRoot().getPackageName()
-                            .equals(getActivity().getPackageName())) {
+                    AccessibilityNodeInfo root = windows.get(i).getRoot();
+                    if ((root != null) &&
+                            root.getPackageName().equals(getActivity().getPackageName())) {
                         return (event.getEventType()
                                 == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
                     }
