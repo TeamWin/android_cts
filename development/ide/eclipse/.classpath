@@ -93,8 +93,6 @@
         <classpathentry kind="src" path="cts/tools/dex-tools/src"/>
         <classpathentry kind="src" path="cts/tools/signature-tools/src"/>
         <classpathentry kind="src" path="cts/tools/signature-tools/test"/>
-        <classpathentry kind="src" path="cts/tools/tradefed-host/src"/>
-        <classpathentry kind="src" path="cts/tools/tradefed-host/tests/src"/>
         <classpathentry kind="src" path="cts/tools/utils"/>
         <classpathentry kind="src" path="cts/tools/vm-tests-tf/src"/>
         <classpathentry kind="src" path="external/easymock/src"/>
