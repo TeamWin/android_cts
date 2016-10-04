@@ -208,6 +208,44 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         checkOutputExist();
     }
 
+    public void testRecorderMPEG2TS() throws Exception {
+        int width;
+        int height;
+        Camera camera = null;
+        if (!hasCamera()) {
+            MediaUtils.skipTest("no camera");
+            return;
+        }
+        if (!hasMicrophone() || !hasAac()) {
+            MediaUtils.skipTest("no audio codecs or microphone");
+            return;
+        }
+        // Try to get camera profile for QUALITY_LOW; if unavailable,
+        // set the video size to default value.
+        CamcorderProfile profile = CamcorderProfile.get(
+                0 /* cameraId */, CamcorderProfile.QUALITY_LOW);
+        if (profile != null) {
+            width = profile.videoFrameWidth;
+            height = profile.videoFrameHeight;
+        } else {
+            width = VIDEO_WIDTH;
+            height = VIDEO_HEIGHT;
+        }
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mMediaRecorder.setVideoSize(width, height);
+        mMediaRecorder.setVideoEncodingBitRate(VIDEO_BIT_RATE_IN_BPS);
+        mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
+        mMediaRecorder.prepare();
+        mMediaRecorder.start();
+        Thread.sleep(RECORD_TIME_MS);
+        mMediaRecorder.stop();
+        checkOutputExist();
+    }
+
     @UiThreadTest
     public void testSetCamera() throws Exception {
         recordVideoUsingCamera(false, false);
