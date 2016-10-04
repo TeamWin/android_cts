@@ -47,6 +47,10 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -67,6 +71,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
     private UsbManager mUsbManager;
     private final BroadcastReceiver mUsbDeviceConnectionReceiver;
+    private Thread mTestThread;
 
     /**
      * Run a {@link Invokable} and expect a {@link Throwable} of a certain type.
@@ -117,7 +122,15 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                                         connection.close();
                                     }
                                 } else {
-                                    runTests(device);
+                                    // Do not run test on main thread
+                                    mTestThread = new Thread() {
+                                        @Override
+                                        public void run() {
+                                            runTests(device);
+                                        }
+                                    };
+
+                                    mTestThread.start();
                                 }
                             } else {
                                 fail("Permission to connect to " + device.getProductName()
@@ -773,6 +786,491 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         req2.close();
     }
 
+    /** State of a {@link UsbRequest} in flight */
+    private static class RequestState {
+        final ByteBuffer buffer;
+        final Object clientData;
+
+        private RequestState(ByteBuffer buffer, Object clientData) {
+            this.buffer = buffer;
+            this.clientData = clientData;
+        }
+    }
+
+    /** Recycles elements that might be expensive to create */
+    private abstract class Recycler<T> {
+        private final Random mRandom;
+        private final LinkedList<T> mData;
+
+        protected Recycler() {
+            mData = new LinkedList<>();
+            mRandom = new Random();
+        }
+
+        /**
+         * Add a new element to be recycled.
+         *
+         * @param newElement The element that is not used anymore and can be used by someone else.
+         */
+        private void recycle(@NonNull T newElement) {
+            synchronized (mData) {
+                if (mRandom.nextBoolean()) {
+                    mData.addLast(newElement);
+                } else {
+                    mData.addFirst(newElement);
+                }
+            }
+        }
+
+        /**
+         * Get a recycled element or create a new one if needed.
+         *
+         * @return An element that can be used (maybe recycled)
+         */
+        private @NonNull T get() {
+            T recycledElement;
+
+            try {
+                synchronized (mData) {
+                    recycledElement = mData.pop();
+                }
+            } catch (NoSuchElementException ignored) {
+                recycledElement = create();
+            }
+
+            reset(recycledElement);
+
+            return recycledElement;
+        }
+
+        /** Reset internal state of {@code recycledElement} */
+        protected abstract void reset(@NonNull T recycledElement);
+
+        /** Create a new element */
+        protected abstract @NonNull T create();
+
+        /** Get all elements that are currently recycled and waiting to be used again */
+        public @NonNull LinkedList<T> getAll() {
+            return mData;
+        }
+    }
+
+    /**
+     * Common code between {@link QueuerThread} and {@link ReceiverThread}.
+     */
+    private class TestThread extends Thread {
+        /** State copied from the main thread (see runTest()) */
+        protected final UsbDeviceConnection mConnection;
+        protected final Recycler<UsbRequest> mInRequestRecycler;
+        protected final Recycler<UsbRequest> mOutRequestRecycler;
+        protected final Recycler<ByteBuffer> mBufferRecycler;
+        protected final HashMap<UsbRequest, RequestState> mRequestsInFlight;
+        protected final HashMap<Integer, Integer> mData;
+        protected final ArrayList<Throwable> mErrors;
+
+        protected volatile boolean mShouldStop;
+
+        TestThread(@NonNull UsbDeviceConnection connection,
+                @NonNull Recycler<UsbRequest> inRequestRecycler,
+                @NonNull Recycler<UsbRequest> outRequestRecycler,
+                @NonNull Recycler<ByteBuffer> bufferRecycler,
+                @NonNull HashMap<UsbRequest, RequestState> requestsInFlight,
+                @NonNull HashMap<Integer, Integer> data,
+                @NonNull ArrayList<Throwable> errors) {
+            super();
+
+            mShouldStop = false;
+            mConnection = connection;
+            mBufferRecycler = bufferRecycler;
+            mInRequestRecycler = inRequestRecycler;
+            mOutRequestRecycler = outRequestRecycler;
+            mRequestsInFlight = requestsInFlight;
+            mData = data;
+            mErrors = errors;
+        }
+
+        /**
+         * Stop thread
+         */
+        void abort() {
+            mShouldStop = true;
+            interrupt();
+        }
+    }
+
+    /**
+     * A thread that queues matching write and read {@link UsbRequest requests}. We expect the
+     * writes to be echoed back and return in unchanged in the read requests.
+     * <p> This thread just issues the requests and does not care about them anymore after the
+     * system took them. The {@link ReceiverThread} handles the result of both write and read
+     * requests.</p>
+     */
+    private class QueuerThread extends TestThread {
+        private static final int MAX_IN_FLIGHT = 64;
+
+        private final AtomicInteger mCounter;
+
+        /**
+         * Create a new thread that queues matching write and read UsbRequests.
+         *
+         * @param connection Connection to communicate with
+         * @param inRequestRecycler Pool of in-requests that can be reused
+         * @param outRequestRecycler Pool of out-requests that can be reused
+         * @param bufferRecycler Pool of byte buffers that can be reused
+         * @param requestsInFlight State of the requests currently in flight
+         * @param data Mapping counter -> data
+         * @param counter An atomic counter
+         * @param errors Pool of throwables created by threads like this
+         */
+        QueuerThread(@NonNull UsbDeviceConnection connection,
+                @NonNull Recycler<UsbRequest> inRequestRecycler,
+                @NonNull Recycler<UsbRequest> outRequestRecycler,
+                @NonNull Recycler<ByteBuffer> bufferRecycler,
+                @NonNull HashMap<UsbRequest, RequestState> requestsInFlight,
+                @NonNull HashMap<Integer, Integer> data,
+                @NonNull AtomicInteger counter,
+                @NonNull ArrayList<Throwable> errors) {
+            super(connection, inRequestRecycler, outRequestRecycler, bufferRecycler,
+                    requestsInFlight, data, errors);
+
+            mCounter = counter;
+        }
+
+        @Override
+        public void run() {
+            Random random = new Random();
+
+            while (!mShouldStop) {
+                try {
+                    int counter = mCounter.getAndIncrement();
+
+                    if (counter % 1024 == 0) {
+                        Log.i(LOG_TAG, "Counter is " + counter);
+                    }
+
+                    // Write [1:counter:data]
+                    UsbRequest writeRequest = mOutRequestRecycler.get();
+                    ByteBuffer writeBuffer = mBufferRecycler.get();
+                    int data = random.nextInt();
+                    writeBuffer.put((byte)1).putInt(counter).putInt(data);
+
+                    // Send read that will receive the data back from the write as the other side
+                    // will echo all requests.
+                    UsbRequest readRequest = mInRequestRecycler.get();
+                    ByteBuffer readBuffer = mBufferRecycler.get();
+
+                    // Register requests
+                    synchronized (mRequestsInFlight) {
+                        // Wait until previous requests were processed
+                        while (mRequestsInFlight.size() > MAX_IN_FLIGHT) {
+                            try {
+                                mRequestsInFlight.wait();
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+
+                        if (mShouldStop) {
+                            break;
+                        } else {
+                            mRequestsInFlight.put(writeRequest, new RequestState(writeBuffer,
+                                    writeRequest.getClientData()));
+                            mRequestsInFlight.put(readRequest, new RequestState(readBuffer,
+                                    readRequest.getClientData()));
+                            mRequestsInFlight.notifyAll();
+                        }
+                    }
+
+                    // Store which data was written for the counter
+                    synchronized (mData) {
+                        mData.put(counter, data);
+                    }
+
+                    // Send both requests to the system. Once they finish the ReceiverThread will
+                    // be notified
+                    boolean isQueued = writeRequest.queue(writeBuffer, 9);
+                    assertTrue(isQueued);
+
+                    isQueued = readRequest.queue(readBuffer, 9);
+                    assertTrue(isQueued);
+                } catch (Throwable t) {
+                    synchronized (mErrors) {
+                        mErrors.add(t);
+                        mErrors.notify();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * A thread that receives processed UsbRequests and compares the expected result. The requests
+     * can be both read and write requests. The requests were created and given to the system by
+     * the {@link QueuerThread}.
+     */
+    private class ReceiverThread extends TestThread {
+        private final UsbEndpoint mOut;
+
+        /**
+         * Create a thread that receives processed UsbRequests and compares the expected result.
+         *
+         * @param connection Connection to communicate with
+         * @param out Endpoint to queue write requests on
+         * @param inRequestRecycler Pool of in-requests that can be reused
+         * @param outRequestRecycler Pool of out-requests that can be reused
+         * @param bufferRecycler Pool of byte buffers that can be reused
+         * @param requestsInFlight State of the requests currently in flight
+         * @param data Mapping counter -> data
+         * @param errors Pool of throwables created by threads like this
+         */
+        ReceiverThread(@NonNull UsbDeviceConnection connection, @NonNull UsbEndpoint out,
+                @NonNull Recycler<UsbRequest> inRequestRecycler,
+                @NonNull Recycler<UsbRequest> outRequestRecycler,
+                @NonNull Recycler<ByteBuffer> bufferRecycler,
+                @NonNull HashMap<UsbRequest, RequestState> requestsInFlight,
+                @NonNull HashMap<Integer, Integer> data, @NonNull ArrayList<Throwable> errors) {
+            super(connection, inRequestRecycler, outRequestRecycler, bufferRecycler,
+                    requestsInFlight, data, errors);
+
+            mOut = out;
+        }
+
+        @Override
+        public void run() {
+            while (!mShouldStop) {
+                try {
+                    // Wait until a request is queued as mConnection.requestWait() cannot be
+                    // interrupted.
+                    synchronized (mRequestsInFlight) {
+                        while (mRequestsInFlight.isEmpty()) {
+                            try {
+                                mRequestsInFlight.wait();
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+
+                        if (mShouldStop) {
+                            break;
+                        }
+                    }
+
+                    // Receive request
+                    UsbRequest request = mConnection.requestWait();
+                    assertNotNull(request);
+
+                    // Find the state the request should have
+                    RequestState state;
+                    synchronized (mRequestsInFlight) {
+                        state = mRequestsInFlight.remove(request);
+                        mRequestsInFlight.notifyAll();
+                    }
+
+                    // Compare client data
+                    assertSame(state.clientData, request.getClientData());
+
+                    // There is nothing more to check about write requests, but for read requests
+                    // (the ones going to an out endpoint) we know that it just an echoed back write
+                    // request.
+                    if (!request.getEndpoint().equals(mOut)) {
+                        state.buffer.flip();
+
+                        // Read request buffer, check that data is correct
+                        byte alive = state.buffer.get();
+                        int counter = state.buffer.getInt();
+                        int receivedData = state.buffer.getInt();
+
+                        // We stored which data-combinations were written
+                        int expectedData;
+                        synchronized(mData) {
+                            expectedData = mData.remove(counter);
+                        }
+
+                        // Make sure read request matches a write request we sent before
+                        assertEquals(1, alive);
+                        assertEquals(expectedData, receivedData);
+                    }
+
+                    // Recycle buffers and requests so they can be reused later.
+                    mBufferRecycler.recycle(state.buffer);
+
+                    if (request.getEndpoint().equals(mOut)) {
+                        mOutRequestRecycler.recycle(request);
+                    } else {
+                        mInRequestRecycler.recycle(request);
+                    }
+                } catch (Throwable t) {
+                    synchronized (mErrors) {
+                        mErrors.add(t);
+                        mErrors.notify();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Tests parallel issuance and receiving of {@link UsbRequest usb requests}.
+     *
+     * @param connection The connection to use for testing
+     * @param iface      The interface of the android accessory interface of the device
+     */
+    private void parallelUsbRequestsTests(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbInterface iface) {
+        // Find bulk in and out endpoints
+        assumeTrue(iface.getEndpointCount() == 2);
+        final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
+        final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
+        assertNotNull(in);
+        assertNotNull(out);
+
+        // Recycler for requests for the in-endpoint
+        Recycler<UsbRequest> inRequestRecycler = new Recycler<UsbRequest>() {
+            @Override
+            protected void reset(@NonNull UsbRequest recycledElement) {
+                recycledElement.setClientData(new Object());
+            }
+
+            @Override
+            protected @NonNull UsbRequest create() {
+                UsbRequest request = new UsbRequest();
+                request.initialize(connection, in);
+
+                return request;
+            }
+        };
+
+        // Recycler for requests for the in-endpoint
+        Recycler<UsbRequest> outRequestRecycler = new Recycler<UsbRequest>() {
+            @Override
+            protected void reset(@NonNull UsbRequest recycledElement) {
+                recycledElement.setClientData(new Object());
+            }
+
+            @Override
+            protected @NonNull UsbRequest create() {
+                UsbRequest request = new UsbRequest();
+                request.initialize(connection, out);
+
+                return request;
+            }
+        };
+
+        // Recycler for requests for read and write buffers
+        Recycler<ByteBuffer> bufferRecycler = new Recycler<ByteBuffer>() {
+            @Override
+            protected void reset(@NonNull ByteBuffer recycledElement) {
+                recycledElement.rewind();
+            }
+
+            @Override
+            protected @NonNull ByteBuffer create() {
+                return ByteBuffer.allocate(9);
+            }
+        };
+
+        HashMap<UsbRequest, RequestState> requestsInFlight = new HashMap<>();
+
+        // Data in the requests
+        HashMap<Integer, Integer> data = new HashMap<>();
+        AtomicInteger counter = new AtomicInteger(0);
+
+        // Errors created in the threads
+        ArrayList<Throwable> errors = new ArrayList<>();
+
+        // Create two threads that queue read and write requests
+        QueuerThread queuer1 = new QueuerThread(connection, inRequestRecycler,
+                outRequestRecycler, bufferRecycler, requestsInFlight, data, counter, errors);
+        QueuerThread queuer2 = new QueuerThread(connection, inRequestRecycler,
+                outRequestRecycler, bufferRecycler, requestsInFlight, data, counter, errors);
+
+        // Create a thread that receives the requests after they are processed.
+        ReceiverThread receiver = new ReceiverThread(connection, out, inRequestRecycler,
+                outRequestRecycler, bufferRecycler, requestsInFlight, data, errors);
+
+        nextTest(connection, in, out, "Echo until stop signal");
+
+        queuer1.start();
+        queuer2.start();
+        receiver.start();
+
+        // Run for 10 seconds or until we have an error
+        final long RUN_TIME = 10 * 1000;
+
+        long startTime = System.currentTimeMillis();
+        while (true) {
+            long timeLeft = RUN_TIME - (System.currentTimeMillis() - startTime);
+
+            synchronized (errors) {
+                if (!errors.isEmpty() || timeLeft < 0) {
+                    break;
+                } else {
+                    try {
+                        errors.wait(timeLeft);
+                    } catch (InterruptedException e) {
+                        errors.add(e);
+                        break;
+                    }
+                }
+            }
+        }
+
+        Log.i(LOG_TAG, "Stopping sending new requests");
+        queuer1.abort();
+        queuer2.abort();
+
+        try {
+            queuer1.join();
+            queuer2.join();
+        } catch (InterruptedException e) {
+            synchronized(errors) {
+                errors.add(e);
+            }
+        }
+
+        if (errors.isEmpty()) {
+            Log.i(LOG_TAG, "Wait for all requests to finish");
+            synchronized (requestsInFlight) {
+                while (!requestsInFlight.isEmpty()) {
+                    try {
+                        requestsInFlight.wait();
+                    } catch (InterruptedException e) {
+                        synchronized(errors) {
+                            errors.add(e);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            receiver.abort();
+
+            try {
+                receiver.join();
+            } catch (InterruptedException e) {
+                synchronized(errors) {
+                    errors.add(e);
+                }
+            }
+
+            // Close all requests that are currently recycled
+            inRequestRecycler.getAll().forEach(UsbRequest::close);
+            outRequestRecycler.getAll().forEach(UsbRequest::close);
+        } else {
+            receiver.abort();
+        }
+
+        for (Throwable t : errors) {
+            Log.e(LOG_TAG, "Error during test", t);
+        }
+
+        byte[] stopBytes = new byte[9];
+        connection.bulkTransfer(out, stopBytes, 9, 0);
+
+        // If we had any error make the test fail
+        assertEquals(0, errors.size());
+    }
+
     /**
      * Tests {@link UsbDeviceConnection#bulkTransfer}.
      *
@@ -1135,6 +1633,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             assertTrue(claimed);
 
             usbRequestTests(connection, iface);
+            parallelUsbRequestsTests(connection, iface);
             ctrlTransferTests(connection);
             bulkTransferTests(connection, iface);
 
