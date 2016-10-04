@@ -63,7 +63,7 @@ $(foreach fp, $(ALL_MODULES.$(LOCAL_MODULE).BUILT_INSTALLED),\
   $(eval cts_support_apks += $(installed)))
 
 # Have the module name depend on the cts files; so the cts files get generated when you run mm/mmm/mma/mmma.
-$(my_register_name) : $(cts_support_apks)
+$(my_all_targets) : $(cts_support_apks)
 
 
 ###########################################################
@@ -94,4 +94,4 @@ $(foreach fp, $(ALL_MODULES.$(LOCAL_MODULE).BUILT_INSTALLED),\
   $(eval cts_support_apks += $(installed)))
 
 # Have the module name depend on the cts files; so the cts files get generated when you run mm/mmm/mma/mmma.
-$(my_register_name) : $(cts_support_apks)
+$(my_all_targets) : $(cts_support_apks)
