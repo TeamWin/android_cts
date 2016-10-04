@@ -57,6 +57,7 @@ public class SurfaceViewTests extends ParentChildTestBase {
         String svName = "SurfaceView - " + getBaseWindowName() + activityName();
         final String[] waitForVisible = new String[] { svName };
 
+        mAmWmState.setUseActivityNamesForWindowNames(false);
         mAmWmState.computeState(mDevice, waitForVisible);
         WindowState sv = getSingleWindow(svName);
         WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
