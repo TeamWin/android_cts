@@ -17,6 +17,7 @@ package android.car.cts;
 
 import android.car.Car;
 import android.car.CarInfoManager;
+import android.os.Bundle;
 
 public class CarInfoManagerTest extends CarApiTestBase {
 
@@ -29,44 +30,18 @@ public class CarInfoManagerTest extends CarApiTestBase {
     }
 
     public void testManufacturer() throws Exception {
-        // The values are not guaranteed, so just checking data types here.
-        mCarInfoManager.getString(CarInfoManager.KEY_MANUFACTURER);
-        mCarInfoManager.getInt(CarInfoManager.KEY_MODEL_YEAR);
-        mCarInfoManager.getString(CarInfoManager.KEY_VEHICLE_ID);
-        mCarInfoManager.getString(CarInfoManager.KEY_MODEL);
-        try {
-            mCarInfoManager.getFloat(CarInfoManager.KEY_MANUFACTURER);
-            fail("type check failed");
-        } catch (IllegalArgumentException e) {
-            // Expected.
-        }
-        try {
-            mCarInfoManager.getInt(CarInfoManager.KEY_MANUFACTURER);
-            fail("type check failed");
-        } catch (IllegalArgumentException e) {
-            // Expected.
-        }
+        final String NO_SUCH_NAME = "no-such-information-available";
+        Bundle info = mCarInfoManager.getBasicInfo();
+        info.getString(CarInfoManager.BASIC_INFO_KEY_MANUFACTURER);
+        info.getString(CarInfoManager.BASIC_INFO_KEY_MODEL);
+        info.getString(CarInfoManager.BASIC_INFO_KEY_MODEL_YEAR);
+        assertNotNull(info.getString(CarInfoManager.BASIC_INFO_KEY_VEHICLE_ID));
     }
 
     public void testNoSuchInfo() throws Exception {
         final String NO_SUCH_NAME = "no-such-information-available";
-        try {
-            mCarInfoManager.getString(NO_SUCH_NAME);
-            fail("wrong param check");
-        } catch (IllegalArgumentException e) {
-            // Expected.
-        }
-        try {
-            mCarInfoManager.getInt(NO_SUCH_NAME);
-            fail("wrong param check");
-        } catch (IllegalArgumentException e) {
-            // Expected.
-        }
-        try {
-            mCarInfoManager.getFloat(NO_SUCH_NAME);
-            fail("wrong param check");
-        } catch (IllegalArgumentException e) {
-            // Expected.
-        }
+        Bundle info = mCarInfoManager.getBasicInfo();
+        assertNotNull(info);
+        assertNull(info.getCharSequence(NO_SUCH_NAME));
     }
 }
