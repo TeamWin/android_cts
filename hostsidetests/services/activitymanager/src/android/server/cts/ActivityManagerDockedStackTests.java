@@ -16,6 +16,9 @@
 
 package android.server.cts;
 
+import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.log.LogUtil.CLog;
+
 import java.awt.Rectangle;
 
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
@@ -40,6 +43,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testDockActivity() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
@@ -57,6 +65,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSide() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         launchActivityToSide();
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME});
@@ -217,6 +230,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRotationWhenDocked() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         launchActivityToSide();
         final String[] waitForActivitiesVisible = new String[] {LAUNCHING_ACTIVITY};
@@ -250,6 +268,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRotationWhenDockedWhileLocked() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         launchActivityToSide();
         final String[] waitForActivitiesVisible = new String[] {LAUNCHING_ACTIVITY};
@@ -280,6 +303,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testResizeDockedStack() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
@@ -296,6 +324,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         final Rectangle fullScreenBounds =
