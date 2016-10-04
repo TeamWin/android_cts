@@ -28,5 +28,5 @@ $(cts_library_jar): $(LOCAL_BUILT_MODULE)
 	$(copy-file-to-target)
 
 # Have the module name depend on the cts files; so the cts files get generated when you run mm/mmm/mma/mmma.
-$(my_register_name) : $(cts_library_jar)
+$(my_all_targets) : $(cts_library_jar)
 

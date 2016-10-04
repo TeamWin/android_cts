@@ -18,7 +18,7 @@ $(cts_module_test_config): $(LOCAL_CTS_MODULE_CONFIG) | $(ACP)
 	$(call copy-file-to-target)
 # Have the module name depend on the module test config, so it gets generated
 # when you run mm/mmm/mma/mmma.
-$(my_register_name) : $(cts_module_test_config)
+$(my_all_targets) : $(cts_module_test_config)
 endif
 # clear var
 LOCAL_CTS_MODULE_CONFIG :=
