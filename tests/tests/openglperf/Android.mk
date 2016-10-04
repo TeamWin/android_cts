@@ -41,10 +41,4 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_PACKAGE)
 
-# Make the replica island app and copy it to CTS out dir.
-cts_replica_name := com.replica.replicaisland
-cts_replica_apk := $(CTS_TESTCASES_OUT)/$(cts_replica_name).apk
-$(cts_replica_apk): $(call intermediates-dir-for,APPS,$(cts_replica_name))/package.apk
-	$(call copy-file-to-target)
-
 include $(call all-makefiles-under,$(LOCAL_PATH))

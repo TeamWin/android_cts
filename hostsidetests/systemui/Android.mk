@@ -28,8 +28,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
 LOCAL_CTS_TEST_PACKAGE := android.host.systemui
 
-LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
-
 LOCAL_SDK_VERSION := current
 
 # Tag this module as a cts test artifact
