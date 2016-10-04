@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.sensors;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.sensors.base.SensorCtsTestActivity;
 
 import android.hardware.cts.SensorIntegrationTests;
@@ -24,6 +25,7 @@ import android.hardware.cts.SensorIntegrationTests;
  * Activity to execute CTS sensor integration tests.
  * It is a wrapper for {@link SensorIntegrationTests} running with AndroidJUnitRunner.
  */
+@ConditionalTest(applicable_features = "android.hardware.sensor.accelerometer:android.hardware.sensor.compass:android.hardware.sensor.gyroscope")
 public class SensorIntegrationTestsActivity extends SensorCtsTestActivity {
     public SensorIntegrationTestsActivity() {
         super(SensorIntegrationTests.class);

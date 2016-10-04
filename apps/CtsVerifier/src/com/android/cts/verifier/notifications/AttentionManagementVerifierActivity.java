@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.notifications;
 
+import com.android.cts.verifier.ConditionalTest;
 import static com.android.cts.verifier.notifications.MockListener.JSON_AMBIENT;
 import static com.android.cts.verifier.notifications.MockListener.JSON_MATCHES_ZEN_FILTER;
 import static com.android.cts.verifier.notifications.MockListener.JSON_TAG;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ConditionalTest(excluded_features = "android.hardware.type.watch:android.software.leanback")
 public class AttentionManagementVerifierActivity
         extends InteractiveVerifierActivity {
     private static final String TAG = "NoListenerAttentionVerifier";

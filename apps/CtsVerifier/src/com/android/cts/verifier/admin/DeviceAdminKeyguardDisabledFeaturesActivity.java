@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.admin;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -34,6 +35,7 @@ import com.android.cts.verifier.managedprovisioning.KeyguardDisabledFeaturesActi
 /**
  * Tests for Device Admin keyguard disabled features.
  */
+@ConditionalTest(required_features = "android.software.device_admin")
 public class DeviceAdminKeyguardDisabledFeaturesActivity extends KeyguardDisabledFeaturesActivity {
     @Override
     protected int getKeyguardDisabledFeatures() {

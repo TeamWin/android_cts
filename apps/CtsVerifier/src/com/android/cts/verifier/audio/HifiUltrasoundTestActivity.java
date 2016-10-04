@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.audio;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -41,6 +42,7 @@ import com.androidplot.xy.SimpleXYSeries;
 import com.androidplot.xy.XYSeries;
 import com.androidplot.xy.*;
 
+@ConditionalTest(required_features = "android.hardware.microphone")
 public class HifiUltrasoundTestActivity extends PassFailButtons.Activity {
 
   public enum Status {

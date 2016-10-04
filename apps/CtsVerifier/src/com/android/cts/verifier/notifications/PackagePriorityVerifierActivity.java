@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.notifications;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.Notification;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -33,6 +34,7 @@ import java.util.List;
  * result in the notificaitons from that package being ranked higher than those from
  * other packages.
  */
+@ConditionalTest(excluded_features = "android.hardware.type.watch:android.software.leanback")
 public class PackagePriorityVerifierActivity
         extends InteractiveVerifierActivity {
     private static final String ACTION_POST = "com.android.cts.robot.ACTION_POST";

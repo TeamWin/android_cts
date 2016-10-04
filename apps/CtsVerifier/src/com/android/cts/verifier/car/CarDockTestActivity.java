@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.car;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.UiModeManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -36,6 +37,7 @@ import com.android.cts.verifier.TestResult;
  * Tests that CAR_DOCK mode opens the app associated with car dock when going into
  * car mode.
  */
+@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback:android.hardware.type.watch")
 public class CarDockTestActivity extends PassFailButtons.Activity {
 
     private static final String CAR_DOCK1 =

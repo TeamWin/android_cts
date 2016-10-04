@@ -15,6 +15,7 @@
  */
 package com.android.cts.verifier.camera.formats;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -57,6 +58,7 @@ import java.util.TreeSet;
  * Tests for manual verification of the CDD-required camera output formats
  * for preview callbacks
  */
+@ConditionalTest(required_features = "android.hardware.camera.any")
 public class CameraFormatsActivity extends PassFailButtons.Activity
         implements TextureView.SurfaceTextureListener, Camera.PreviewCallback {
 

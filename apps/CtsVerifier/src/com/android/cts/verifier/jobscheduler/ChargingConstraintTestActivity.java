@@ -1,5 +1,6 @@
 package com.android.cts.verifier.jobscheduler;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -26,6 +27,7 @@ import com.android.cts.verifier.TimerProgressBar;
  *      not run.
  */
 @TargetApi(21)
+@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class ChargingConstraintTestActivity extends ConstraintTestActivity {
 
     private static final int ON_CHARGING_JOB_ID =

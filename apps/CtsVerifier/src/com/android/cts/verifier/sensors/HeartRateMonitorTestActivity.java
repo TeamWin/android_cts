@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.sensors;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.hardware.Sensor;
@@ -33,6 +34,7 @@ import com.android.cts.verifier.R;
  * CTS Verifier case for verifying correct integration of heart rate monitor.
  * If a user is wearing a device with an HRM, the value is between <> and <>
  */
+@ConditionalTest(required_features = "android.hardware.sensor.heartrate")
 public class HeartRateMonitorTestActivity extends PassFailButtons.Activity {
     private SensorManager mSensorManager;
     private Sensor mSensor;

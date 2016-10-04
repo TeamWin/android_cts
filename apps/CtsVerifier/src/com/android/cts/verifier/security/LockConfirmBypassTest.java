@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.security;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
@@ -36,6 +37,7 @@ import com.android.cts.verifier.R;
  * if he/she was prompted for the original pattern or password. If the user wasn't prompted,
  * the test fails.
  */
+@ConditionalTest(required_features = "android.software.device_admin")
 public class LockConfirmBypassTest extends PassFailButtons.Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {

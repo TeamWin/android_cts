@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.backup;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -54,6 +55,7 @@ import java.util.Scanner;
  * several preferences and contents of files that should get backed up and restored after
  * running the backup manager and reinstalling the CTS verifier.
  */
+@ConditionalTest(required_features = "android.software.backup")
 public class BackupTestActivity extends PassFailButtons.ListActivity {
 
     private static final String TAG = BackupTestActivity.class.getSimpleName();

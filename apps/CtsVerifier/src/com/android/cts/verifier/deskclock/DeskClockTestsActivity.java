@@ -2,6 +2,7 @@
 
 package com.android.cts.verifier.deskclock;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import java.util.Calendar;
 /**
  * Activity that lists all the DeskClock tests.
  */
+@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class DeskClockTestsActivity extends PassFailButtons.TestListActivity {
 
     private static final String SHOW_ALARMS_TEST = "SHOW_ALARMS";
