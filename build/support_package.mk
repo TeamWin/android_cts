@@ -23,14 +23,3 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
 include $(BUILD_PACKAGE)
-
-cts_support_apks :=
-$(foreach fp, $(ALL_MODULES.$(LOCAL_PACKAGE_NAME).BUILT_INSTALLED),\
-  $(eval pair := $(subst :,$(space),$(fp)))\
-  $(eval built := $(word 1,$(pair)))\
-  $(eval installed := $(CTS_TESTCASES_OUT)/$(notdir $(word 2,$(pair))))\
-  $(eval $(call copy-one-file, $(built), $(installed)))\
-  $(eval cts_support_apks += $(installed)))
-
-# Have the module name depend on the cts files; so the cts files get generated when you run mm/mmm/mma/mmma.
-$(my_all_targets) : $(cts_support_apks)
