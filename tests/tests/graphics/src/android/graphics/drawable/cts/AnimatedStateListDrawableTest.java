@@ -250,6 +250,16 @@ public class AnimatedStateListDrawableTest {
         assertEquals(4, asldState.getChildCount());
     }
 
+    @Test
+    public void testParsingTransitionDefinedWithAVD() {
+        AnimatedStateListDrawable asld = (AnimatedStateListDrawable) mContext.getDrawable(
+                R.drawable.animated_state_list_with_avd);
+        DrawableContainerState asldState = (DrawableContainerState) asld.getConstantState();
+        // Ensure that everything defined in xml after the definition of a transition with AVD is
+        // parsed by checking the total drawables parsed.
+        assertEquals(6, asldState.getChildCount());
+    }
+
     public abstract class MockTransition extends MockDrawable implements Animatable, Animatable2 {
         private HashSet<AnimationCallback> mCallbacks = new HashSet<>();
 
