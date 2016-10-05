@@ -22,6 +22,7 @@ import android.print.PrintAttributes.MediaSize;
 import android.print.PrintAttributes.Resolution;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintJobInfo;
+import android.print.PrintManager;
 import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
 import android.print.PrinterInfo;
@@ -321,27 +322,64 @@ public class PrintJobTest extends BasePrintTest {
                     assertEquals(0, printJob.getAdvancedIntOption(VALID_STRING_KEY));
                 });
 
+        final int[] callCount = new int[1];
+
         CustomPrintOptionsActivity.setCallBack(
                 (printJob, printer) -> {
-                    PrintJobInfo.Builder printJobBuilder = new PrintJobInfo.Builder(printJob);
+                    if (callCount[0] == 0) {
+                        PrintJobInfo.Builder printJobBuilder = new PrintJobInfo.Builder(printJob);
 
-                    try {
-                        printJobBuilder.putAdvancedOption(null, STRING_VALUE);
-                        throw new RuntimeException("Should not be able to use a null key");
-                    } catch (NullPointerException e) {
-                        // expected
+                        try {
+                            printJobBuilder.putAdvancedOption(null, STRING_VALUE);
+                            throw new RuntimeException("Should not be able to use a null key");
+                        } catch (NullPointerException e) {
+                            // expected
+                        }
+
+                        // Second put overrides the first
+                        printJobBuilder.putAdvancedOption(VALID_STRING_KEY, "something");
+                        printJobBuilder.putAdvancedOption(VALID_STRING_KEY, STRING_VALUE);
+
+                        printJobBuilder.putAdvancedOption(VALID_INT_KEY, "something");
+                        printJobBuilder.putAdvancedOption(VALID_INT_KEY, INT_VALUE);
+
+                        printJobBuilder.putAdvancedOption(VALID_NULL_KEY, null);
+
+                        // Rotate the media size to force adapter to write again
+                        PrintAttributes.Builder attributeBuilder = new PrintAttributes.Builder();
+                        attributeBuilder.setMediaSize(printJob.getAttributes().getMediaSize()
+                                .asLandscape());
+                        attributeBuilder.setResolution(printJob.getAttributes().getResolution());
+                        attributeBuilder.setDuplexMode(printJob.getAttributes().getDuplexMode());
+                        attributeBuilder.setColorMode(printJob.getAttributes().getColorMode());
+                        attributeBuilder.setMinMargins(printJob.getAttributes().getMinMargins());
+
+                        printJobBuilder.setAttributes(attributeBuilder.build());
+
+                        return printJobBuilder.build();
+                    } else {
+                        // Check that options are readable
+                        assertTrue(printJob.hasAdvancedOption(VALID_STRING_KEY));
+                        assertEquals(STRING_VALUE,
+                                printJob.getAdvancedStringOption(VALID_STRING_KEY));
+
+                        assertFalse(printJob.hasAdvancedOption(INVALID_STRING_KEY));
+                        assertNull(printJob.getAdvancedStringOption(INVALID_STRING_KEY));
+
+                        assertTrue(printJob.hasAdvancedOption(VALID_INT_KEY));
+                        assertEquals(INT_VALUE, printJob.getAdvancedIntOption(VALID_INT_KEY));
+
+                        assertTrue(printJob.hasAdvancedOption(VALID_NULL_KEY));
+                        assertNull(printJob.getAdvancedStringOption(VALID_NULL_KEY));
+
+                        assertFalse(printJob.hasAdvancedOption(INVALID_INT_KEY));
+                        assertEquals(0, printJob.getAdvancedIntOption(INVALID_INT_KEY));
+
+                        assertNull(printJob.getAdvancedStringOption(VALID_INT_KEY));
+                        assertEquals(0, printJob.getAdvancedIntOption(VALID_STRING_KEY));
+
+                        return null;
                     }
-
-                    // Second put overrides the first
-                    printJobBuilder.putAdvancedOption(VALID_STRING_KEY, "something");
-                    printJobBuilder.putAdvancedOption(VALID_STRING_KEY, STRING_VALUE);
-
-                    printJobBuilder.putAdvancedOption(VALID_INT_KEY, "something");
-                    printJobBuilder.putAdvancedOption(VALID_INT_KEY, INT_VALUE);
-
-                    printJobBuilder.putAdvancedOption(VALID_NULL_KEY, null);
-
-                    return printJobBuilder.build();
                 });
 
         // Configure the print services.
@@ -354,8 +392,41 @@ public class PrintJobTest extends BasePrintTest {
         PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
 
         // Start printing.
-        print(adapter);
+        print(adapter, "advancedOption");
+
+        waitForWriteAdapterCallback(1);
+
         openPrintOptions();
+        openCustomPrintOptions();
+
+        waitForWriteAdapterCallback(2);
+
+        callCount[0]++;
+
+        // The advanced option should not be readable from the activity
+        getActivity().getSystemService(PrintManager.class).getPrintJobs().stream()
+                .filter(printJob -> printJob.getInfo().getLabel().equals("advancedOption"))
+                .forEach(printJob -> {
+                    assertFalse(printJob.getInfo().hasAdvancedOption(VALID_STRING_KEY));
+                    assertEquals(null,
+                            printJob.getInfo().getAdvancedStringOption(VALID_STRING_KEY));
+
+                    assertFalse(printJob.getInfo().hasAdvancedOption(INVALID_STRING_KEY));
+                    assertNull(printJob.getInfo().getAdvancedStringOption(INVALID_STRING_KEY));
+
+                    assertFalse(printJob.getInfo().hasAdvancedOption(VALID_INT_KEY));
+                    assertEquals(0, printJob.getInfo().getAdvancedIntOption(VALID_INT_KEY));
+
+                    assertFalse(printJob.getInfo().hasAdvancedOption(VALID_NULL_KEY));
+                    assertNull(printJob.getInfo().getAdvancedStringOption(VALID_NULL_KEY));
+
+                    assertFalse(printJob.getInfo().hasAdvancedOption(INVALID_INT_KEY));
+                    assertEquals(0, printJob.getInfo().getAdvancedIntOption(INVALID_INT_KEY));
+
+                    assertNull(printJob.getInfo().getAdvancedStringOption(VALID_INT_KEY));
+                    assertEquals(0, printJob.getInfo().getAdvancedIntOption(VALID_STRING_KEY));
+                });
+
         openCustomPrintOptions();
         clickPrintButton();
 
