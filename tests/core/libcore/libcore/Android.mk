@@ -20,5 +20,4 @@ LOCAL_PACKAGE_NAME := android.core.tests.libcore.package.libcore
 # android.test.runner (which might pull in a different version from the
 # one that would be pulled in here).
 LOCAL_STATIC_JAVA_LIBRARIES := core-tests mockito-target-minus-junit4
-LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 include $(BUILD_CTSCORE_PACKAGE)
