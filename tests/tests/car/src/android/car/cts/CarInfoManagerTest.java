@@ -29,19 +29,14 @@ public class CarInfoManagerTest extends CarApiTestBase {
         mCarInfoManager = (CarInfoManager) getCar().getCarManager(Car.INFO_SERVICE);
     }
 
-    public void testManufacturer() throws Exception {
-        final String NO_SUCH_NAME = "no-such-information-available";
-        Bundle info = mCarInfoManager.getBasicInfo();
-        info.getString(CarInfoManager.BASIC_INFO_KEY_MANUFACTURER);
-        info.getString(CarInfoManager.BASIC_INFO_KEY_MODEL);
-        info.getString(CarInfoManager.BASIC_INFO_KEY_MODEL_YEAR);
-        assertNotNull(info.getString(CarInfoManager.BASIC_INFO_KEY_VEHICLE_ID));
+    public void testVehicleId() throws Exception {
+        assertNotNull(mCarInfoManager.getVehicleId());
     }
 
-    public void testNoSuchInfo() throws Exception {
-        final String NO_SUCH_NAME = "no-such-information-available";
-        Bundle info = mCarInfoManager.getBasicInfo();
-        assertNotNull(info);
-        assertNull(info.getCharSequence(NO_SUCH_NAME));
+    public void testNullables() throws Exception {
+        // no guarantee of existence. just call and check if it throws exception.
+        mCarInfoManager.getManufacturer();
+        mCarInfoManager.getModel();
+        mCarInfoManager.getModelYear();
     }
 }
