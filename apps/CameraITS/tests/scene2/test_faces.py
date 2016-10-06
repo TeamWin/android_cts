@@ -25,6 +25,7 @@ def main():
     FD_MODE_OFF = 0
     FD_MODE_SIMPLE = 1
     FD_MODE_FULL = 2
+    W, H = 640, 480
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
@@ -42,14 +43,12 @@ def main():
             assert(FD_MODE_OFF <= fd_mode <= FD_MODE_FULL)
             req = its.objects.auto_capture_request()
             req['android.statistics.faceDetectMode'] = fd_mode
-            caps = cam.do_capture([req]*NUM_TEST_FRAMES)
+            fmt = {"format":"yuv", "width":W, "height":H}
+            caps = cam.do_capture([req]*NUM_TEST_FRAMES, fmt)
             for i,cap in enumerate(caps):
                 md = cap['metadata']
                 assert(md['android.statistics.faceDetectMode'] == fd_mode)
                 faces = md['android.statistics.faces']
-                img = its.image.convert_capture_to_rgb_image(cap, props=props)
-                img_name = "%s_fd_mode_%s.jpg" % (NAME, fd_mode)
-                its.image.write_image(img, img_name)
 
                 # 0 faces should be returned for OFF mode
                 if fd_mode == FD_MODE_OFF:
@@ -58,6 +57,9 @@ def main():
                 # Face detection could take several frames to warm up,
                 # but it should detect at least one face in last frame
                 if i == NUM_TEST_FRAMES - 1:
+                    img = its.image.convert_capture_to_rgb_image(cap, props=props)
+                    img_name = "%s_fd_mode_%s.jpg" % (NAME, fd_mode)
+                    its.image.write_image(img, img_name)
                     if len(faces) == 0:
                         print "Error: no face detected in mode", fd_mode
                         assert(0)
