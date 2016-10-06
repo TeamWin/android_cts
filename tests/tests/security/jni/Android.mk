@@ -50,6 +50,7 @@ LOCAL_SHARED_LIBRARIES := libnativehelper \
 		libcamera_client \
 		libgui \
 		libaudioutils \
+		libaudiohal \
 		libnbaio \
 		libpcre \
 		libpackagelistparser \
@@ -61,7 +62,8 @@ LOCAL_SHARED_LIBRARIES := libnativehelper \
 		libcamera_metadata \
 		libspeexresampler \
 		liblzma \
-		libstagefright_foundation
+		libstagefright_foundation \
+		libeffects
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
