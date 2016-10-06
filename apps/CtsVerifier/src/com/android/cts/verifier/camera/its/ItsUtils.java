@@ -187,13 +187,16 @@ public class ItsUtils {
             ByteBuffer buffer = planes[0].getBuffer();
             if (quota != null) {
                 try {
+                    Logt.i(TAG, "Start waiting for quota Semaphore");
                     quota.acquire(buffer.capacity());
+                    Logt.i(TAG, "Acquired quota Semaphore. Start reading image");
                 } catch (java.lang.InterruptedException e) {
                     Logt.e(TAG, "getDataFromImage error acquiring memory quota. Interrupted", e);
                 }
             }
             data = new byte[buffer.capacity()];
             buffer.get(data);
+            Logt.i(TAG, "Done reading jpeg image, format %d");
             return data;
         } else if (format == ImageFormat.YUV_420_888 || format == ImageFormat.RAW_SENSOR
                 || format == ImageFormat.RAW10 || format == ImageFormat.RAW12) {
@@ -201,7 +204,9 @@ public class ItsUtils {
             int dataSize = width * height * ImageFormat.getBitsPerPixel(format) / 8;
             if (quota != null) {
                 try {
+                    Logt.i(TAG, "Start waiting for quota Semaphore");
                     quota.acquire(dataSize);
+                    Logt.i(TAG, "Acquired quota Semaphore. Start reading image");
                 } catch (java.lang.InterruptedException e) {
                     Logt.e(TAG, "getDataFromImage error acquiring memory quota. Interrupted", e);
                 }
@@ -220,8 +225,9 @@ public class ItsUtils {
                 int pixelStride = planes[i].getPixelStride();
                 int bytesPerPixel = ImageFormat.getBitsPerPixel(format) / 8;
                 Logt.i(TAG, String.format(
-                        "Reading image: fmt %d, plane %d, w %d, h %d, rowStride %d, pixStride %d",
-                        format, i, width, height, rowStride, pixelStride));
+                        "Reading image: fmt %d, plane %d, w %d, h %d," +
+                        "rowStride %d, pixStride %d, bytesPerPixel %d",
+                        format, i, width, height, rowStride, pixelStride, bytesPerPixel));
                 // For multi-planar yuv images, assuming yuv420 with 2x2 chroma subsampling.
                 int w = (i == 0) ? width : width / 2;
                 int h = (i == 0) ? height : height / 2;
