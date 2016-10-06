@@ -53,13 +53,6 @@ import android.util.Log;
         intentFilter.addAction(AudioManager.ACTION_HDMI_AUDIO_PLUG);
         Intent intent = context.registerReceiver(null, intentFilter);
 
-        String action = intent.getAction();
-        boolean isHDMIConnected = false;
-        if (action.equals(AudioManager.ACTION_HDMI_AUDIO_PLUG)) {
-            isHDMIConnected =
-                    intent.getIntExtra(AudioManager.EXTRA_AUDIO_PLUG_STATE, 0) != 0;
-        }
-
-        return isHDMIConnected;
+        return intent != null && intent.getIntExtra(AudioManager.EXTRA_AUDIO_PLUG_STATE, 0) != 0;
     }
 }
