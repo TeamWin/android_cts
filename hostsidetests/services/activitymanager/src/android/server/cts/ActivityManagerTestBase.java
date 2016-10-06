@@ -190,6 +190,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         moveActivityToDockStack(activityName);
     }
 
+    protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
+            String targetActivity) throws Exception {
+        launchActivity(true /* toSide */, randomData, multipleTaskFlag, targetActivity);
+    }
+
     protected void moveActivityToDockStack(String activityName) throws Exception {
         moveActivityToStack(activityName, DOCKED_STACK_ID);
     }
@@ -461,7 +466,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
     private static final Pattern sNewConfigPattern = Pattern.compile(
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)" +
-            " metricsSize=\\((\\d+),(\\d+)\\)");
+            " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
 
@@ -472,6 +477,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int displayHeight;
         int metricsWidth;
         int metricsHeight;
+        int smallestWidthDp;
+
+        @Override
+        public String toString() {
+            return "ReportedSizes: {widthDp=" + widthDp + " heightDp=" + heightDp +
+                    " displayWidth=" + displayWidth + " displayHeight=" + displayHeight +
+                    " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight +
+                    " smallestWidthDp=" + smallestWidthDp + "}";
+        }
     }
 
     protected ReportedSizes getLastReportedSizesForActivity(String activityName)
@@ -488,6 +502,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 details.displayHeight = Integer.parseInt(matcher.group(5));
                 details.metricsWidth = Integer.parseInt(matcher.group(6));
                 details.metricsHeight = Integer.parseInt(matcher.group(7));
+                details.smallestWidthDp = Integer.parseInt(matcher.group(8));
                 return details;
             }
         }
