@@ -48,7 +48,7 @@ public class CapturedActivity extends Activity {
     }
 
     private static final String TAG = "CapturedActivity";
-    private static final long TIME_OUT_MS = 20000;
+    private static final long TIME_OUT_MS = 25000;
     private static final int PERMISSION_CODE = 1;
     private MediaProjectionManager mProjectionManager;
     private MediaProjection mMediaProjection;
@@ -59,7 +59,7 @@ public class CapturedActivity extends Activity {
 
     public static final long CAPTURE_DURATION_MS = 10000;
 
-    private static final long START_CAPTURE_DELAY_MS = 1500;
+    private static final long START_CAPTURE_DELAY_MS = 4000;
     private static final long END_CAPTURE_DELAY_MS = START_CAPTURE_DELAY_MS + CAPTURE_DURATION_MS;
     private static final long END_DELAY_MS = END_CAPTURE_DELAY_MS + 1000;
 
@@ -118,6 +118,7 @@ public class CapturedActivity extends Activity {
         if (resultCode != RESULT_OK) {
             throw new IllegalStateException("User denied screen sharing permission");
         }
+        Log.d(TAG, "onActivityResult");
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
         mMediaProjection.registerCallback(new MediaProjectionCallback(), null);
     }
