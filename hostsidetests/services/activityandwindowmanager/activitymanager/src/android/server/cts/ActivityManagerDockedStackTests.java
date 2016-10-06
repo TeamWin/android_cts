@@ -20,7 +20,7 @@ import java.awt.Rectangle;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerDockedStackTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerDockedStackTests
  */
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 

@@ -27,7 +27,7 @@ package android.server.cts;
  * The exact animation is unspecified and can be overridden.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerTransitionSelectionTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerTransitionSelectionTests
  */
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
 

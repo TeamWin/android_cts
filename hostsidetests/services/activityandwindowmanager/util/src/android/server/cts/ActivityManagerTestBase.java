@@ -169,7 +169,6 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         try {
-            unlockDevice();
             executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
             // Restore rotation settings to the state they were before test.
             setAccelerometerRotation(mInitialAccelerometerRotation);
@@ -179,6 +178,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
             executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
             executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
+            unlockDevice();
         } catch (DeviceNotAvailableException e) {
         }
     }
@@ -362,10 +362,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void unlockDevice() throws DeviceNotAvailableException {
-        if (!isDisplayOn()) {
-            runCommandAndPrintOutput("input keyevent 224");
-            runCommandAndPrintOutput("input keyevent 82");
-        }
+        runCommandAndPrintOutput("input keyevent 224");
+        runCommandAndPrintOutput("input keyevent 82");
     }
 
     protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {

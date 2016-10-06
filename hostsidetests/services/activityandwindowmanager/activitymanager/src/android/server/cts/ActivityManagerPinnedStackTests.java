@@ -21,7 +21,7 @@ import java.lang.String;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerPinnedStackTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerPinnedStackTests
  */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String PIP_ACTIVITY = "PipActivity";
