@@ -21,6 +21,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.testtype.ITestCollector;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ import java.util.Set;
  * Container for Compatibility test info.
  */
 public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDeviceTest,
-        IRemoteTest, IRuntimeHintProvider {
+        IRemoteTest, IRuntimeHintProvider, ITestCollector {
 
     /**
      * @return The name of this module.

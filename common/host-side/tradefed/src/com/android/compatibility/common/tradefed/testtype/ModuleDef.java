@@ -310,4 +310,12 @@ public class ModuleDef implements IModuleDef {
             CLog.e(e);
         }
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setCollectTestsOnly(boolean collectTestsOnly) {
+        ((ITestCollector) mTest).setCollectTestsOnly(collectTestsOnly);
+    }
 }

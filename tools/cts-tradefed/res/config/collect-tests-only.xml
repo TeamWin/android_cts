@@ -29,25 +29,6 @@
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.ApkInstaller" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.FilePusher" />
 
-    <!-- Tell all AndroidJUnitTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:collect-tests-only:true" />
-
-    <!-- Tell all GTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.android.tradefed.testtype.GTest:collect-tests-only:true" />
-
-    <!-- Tell all HostTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.android.tradefed.testtype.HostTest:collect-tests-only:true" />
-
-    <!-- Tell all DEQPTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.drawelements.deqp.runner.DeqpTestRunner:collect-tests-only:true" />
-
-    <!-- Tell all JarHostTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:collect-tests-only:true" />
-
-    <!-- Tell all DalvikTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.android.compatibility.testtype.DalvikTest:collect-tests-only:true" />
-
-    <!-- Tell all LibcoreTests to only list the tests -->
-    <option name="compatibility:test-arg" value="com.android.compatibility.testtype.LibcoreTest:collect-tests-only:true" />
+    <option name="compatibility:collect-tests-only" value="true" />
 
 </configuration>
