@@ -24,7 +24,6 @@ LOCAL_NO_EMMA_COMPILE := true
 LOCAL_CTS_TEST_PACKAGE := android.libcore.oj
 LOCAL_CTS_TARGET_RUNTIME_ARGS := cts_jdwp_test_runtime_target := dalvikvm|\#ABI\#|
 LOCAL_CTS_TESTCASE_XML_INPUT := $(LOCAL_PATH)/CtsTestPackage.xml
-LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 # Also include the source code as part of the jar. DO NOT REMOVE.
 # FIXME: build/core/java_library.mk:14: *** cts/tests/tests/libcoreoj: Target java libraries may not set LOCAL_ASSET_DIR.
 #LOCAL_ASSET_DIR := libcore/ojluni/src/test
