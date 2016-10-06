@@ -27,8 +27,6 @@ LOCAL_PACKAGE_NAME := android.core.tests.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-test-runner
 
-LOCAL_JAVA_LANGUAGE_VERSION := 1.8
-
 include $(BUILD_CTSCORE_PACKAGE)
 
 #==========================================================
@@ -47,8 +45,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android.test.runner \
     vogarexpect \
     testng
-
-LOCAL_JAVA_LANGUAGE_VERSION := 1.8
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
