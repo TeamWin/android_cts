@@ -45,14 +45,6 @@ DEFAULT_INVGAMMA_LUT = numpy.array(
 
 MAX_LUT_SIZE = 65536
 
-CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
-                                  'test_images', 'ISO12233.png')
-CHART_HEIGHT = 16.5  # cm
-CHART_DISTANCE = 40.0  # cm
-CHART_SCALE_START = 0.65
-CHART_SCALE_STOP = 1.35
-CHART_SCALE_STEP = 0.05
-
 NUM_TRYS = 2
 NUM_FRAMES = 4
 
@@ -773,21 +765,6 @@ def normalize_img(img):
     return (img - numpy.amin(img))/(numpy.amax(img) - numpy.amin(img))
 
 
-def find_chart_bbox(img, chart, scale_factor):
-    """Find the crop area for the chart."""
-    scale_start = CHART_SCALE_START * scale_factor
-    scale_stop = CHART_SCALE_STOP * scale_factor
-    scale_step = CHART_SCALE_STEP * scale_factor
-    bbox = its.image.find_chart(chart, img,
-                                scale_start, scale_stop, scale_step)
-    # convert bbox to (xnorm, ynorm, wnorm, hnorm)
-    wnorm = float((bbox[1][0]) - bbox[0][0]) / img.shape[1]
-    hnorm = float((bbox[1][1]) - bbox[0][1]) / img.shape[0]
-    xnorm = float(bbox[0][0]) / img.shape[1]
-    ynorm = float(bbox[0][1]) / img.shape[0]
-    return xnorm, ynorm, wnorm, hnorm
-
-
 def stationary_lens_cap(cam, req, fmt):
     """Take up to NUM_TRYS caps and save the 1st one with lens stationary.
 
@@ -813,98 +790,134 @@ def stationary_lens_cap(cam, req, fmt):
     return cap[NUM_FRAMES-1]
 
 
-def find_af_chart(cam, props, sensitivity, exp, af_fd):
-    """Take an AF image to find the chart location.
+class Chart(object):
+    """Definition for chart object.
 
-    Args:
-        cam:            An open device session.
-        props:          Properties of cam
-        sensitivity:    Sensitivity for the AF request as defined in
-                        android.sensor.sensitivity
-        exp:            Exposure time for the AF request as defined in
-                        android.sensor.exposureTime
-        af_fd:          float; autofocus lens position
-    Returns:
-        xnorm:  float; x location normalized to [0, 1]
-        ynorm:  float; y location normalized to [0, 1]
-        wnorm:  float; width normalized to [0, 1]
-        hnorm:  float; height normalized to [0, 1]
+    Defines PNG reference file, chart size and distance, and scaling range.
     """
-    # find maximum size 4:3 format
-    fmts = props['android.scaler.streamConfigurationMap']['availableStreamConfigurations']
-    fmts = [f for f in fmts if f['format'] == 256]
-    fmt = {'format': 'yuv', 'width': fmts[0]['width'],
-           'height': fmts[0]['height']}
-    req = its.objects.manual_capture_request(sensitivity, exp)
-    req['android.lens.focusDistance'] = af_fd
-    cap_chart = stationary_lens_cap(cam, req, fmt)
-    y, _, _ = its.image.convert_capture_to_planes(cap_chart, props)
-    template = cv2.imread(CHART_FILE, cv2.IMREAD_ANYDEPTH)
-    focal_l = cap_chart['metadata']['android.lens.focalLength']
-    pixel_pitch = (props['android.sensor.info.physicalSize']['height'] /
-                   y.shape[0])
-    print ' Chart distance: %.2fcm' % CHART_DISTANCE
-    print ' Chart height: %.2fcm' % CHART_HEIGHT
-    print ' Focal length: %.2fmm' % focal_l
-    print ' Pixel pitch: %.2fum' % (pixel_pitch*1E3)
-    print ' Template height: %dpixels' % template.shape[0]
-    chart_pixel_h = CHART_HEIGHT * focal_l / (CHART_DISTANCE * pixel_pitch)
-    scale_factor = template.shape[0] / chart_pixel_h
-    print 'Chart/image scale factor = %.2f' % scale_factor
-    return find_chart_bbox(y, template, scale_factor)
 
+    def __init__(self, chart_file, height, distance, scale_start, scale_stop,
+                 scale_step):
+        """Initial constructor for class.
 
-def find_chart(chart, img, scale_start, scale_stop, scale_step):
-    """Find the chart in the image.
+        Args:
+            chart_file:     str; absolute path to png file of chart
+            height:         float; height in cm of displayed chart
+            distance:       float; distance in cm from camera of displayed chart
+            scale_start:    float; start value for scaling for chart search
+            scale_stop:     float; stop value for scaling for chart search
+            scale_step:     float; step value for scaling for chart search
+        """
+        self._file = chart_file
+        self._height = height
+        self._distance = distance
+        self._scale_start = scale_start
+        self._scale_stop = scale_stop
+        self._scale_step = scale_step
 
-    Args:
-        chart:          numpy array; chart image
-        img:            numpy array; camera image containing chart
-        scale_start:    float; start of scaling factor
-        scale_stop:     float; stop of scaling factor
-        scale_step:     float; step of scaling factor
+    def _calc_scale_factors(self, cam, props, fmt, s, e, fd):
+        """Take an image with s, e, & fd to find the chart location.
 
-    Returns:
-        bounding box (top_right, bottom_left) coordinates in img
-    """
-    max_match = []
-    # check for normalized image
-    if numpy.amax(img) <= 1.0:
-        img = (img * 255.0).astype(numpy.uint8)
-    if len(img.shape) == 2:
-        img_gray = img.copy()
-    elif len(img.shape) == 3:
-        if img.shape[2] == 1:
-            img_gray = img[:, :, 0]
-        else:
-            img_gray = cv2.cvtColor(img.copy(), cv2.COLOR_RGB2GRAY)
-    print 'Finding chart in image...'
-    for scale in numpy.arange(scale_start, scale_stop, scale_step):
-        img_scaled = scale_img(img_gray, scale)
-        result = cv2.matchTemplate(img_scaled, chart, cv2.TM_CCOEFF)
-        _, opt_val, _, top_left_scaled = cv2.minMaxLoc(result)
-        # print out scale and match
-        print ' scale factor: %.3f, optimization val: %.f' % (scale, opt_val)
-        max_match.append((opt_val, top_left_scaled))
+        Args:
+            cam:            An open device session.
+            props:          Properties of cam
+            fmt:            Image format for the capture
+            s:              Sensitivity for the AF request as defined in
+                            android.sensor.sensitivity
+            e:              Exposure time for the AF request as defined in
+                            android.sensor.exposureTime
+            fd:             float; autofocus lens position
+        Returns:
+            img:            numpy array; RGB image for chart location
+            template:       numpy array; chart template for locator
+            scale_factor:   float; scaling factor for chart search
+        """
+        req = its.objects.manual_capture_request(s, e)
+        req['android.lens.focusDistance'] = fd
+        cap_chart = stationary_lens_cap(cam, req, fmt)
+        img_3a = convert_capture_to_rgb_image(cap_chart, props)
+        write_image(img_3a, 'af_scene.jpg')
+        template = cv2.imread(self._file, cv2.IMREAD_ANYDEPTH)
+        focal_l = cap_chart['metadata']['android.lens.focalLength']
+        pixel_pitch = (props['android.sensor.info.physicalSize']['height'] /
+                       img_3a.shape[0])
+        print ' Chart distance: %.2fcm' % self._distance
+        print ' Chart height: %.2fcm' % self._height
+        print ' Focal length: %.2fmm' % focal_l
+        print ' Pixel pitch: %.2fum' % (pixel_pitch*1E3)
+        print ' Template height: %dpixels' % template.shape[0]
+        chart_pixel_h = self._height * focal_l / (self._distance * pixel_pitch)
+        scale_factor = template.shape[0] / chart_pixel_h
+        print 'Chart/image scale factor = %.2f' % scale_factor
+        return template, img_3a, scale_factor
 
-    # determine if optimization results are valid
-    opt_values = [x[0] for x in max_match]
-    if 2.0*min(opt_values) > max(opt_values):
-        estring = ('Unable to find chart in scene!\n'
-                   'Check camera distance and self-reported '
-                   'pixel pitch, focal length and hyperfocal distance.')
-        raise its.error.Error(estring)
-    # find max and draw bbox
-    match_index = max_match.index(max(max_match, key=lambda x: x[0]))
-    scale = scale_start + scale_step * match_index
-    print 'Optimum scale factor: %.3f' %  scale
-    top_left_scaled = max_match[match_index][1]
-    h, w = chart.shape
-    bottom_right_scaled = (top_left_scaled[0] + w, top_left_scaled[1] + h)
-    top_left = (int(top_left_scaled[0]/scale), int(top_left_scaled[1]/scale))
-    bottom_right = (int(bottom_right_scaled[0]/scale),
-                    int(bottom_right_scaled[1]/scale))
-    return (top_left, bottom_right)
+    def locate(self, cam, props, fmt, s, e, fd):
+        """Find the chart in the image.
+
+        Args:
+            cam:            An open device session
+            props:          Properties of cam
+            fmt:            Image format for the capture
+            s:              Sensitivity for the AF request as defined in
+                            android.sensor.sensitivity
+            e:              Exposure time for the AF request as defined in
+                            android.sensor.exposureTime
+            fd:             float; autofocus lens position
+
+        Returns:
+            xnorm:          float; [0, 1] left loc of chart in scene
+            ynorm:          float; [0, 1] top loc of chart in scene
+            wnorm:          float; [0, 1] width of chart in scene
+            hnorm:          float; [0, 1] height of chart in scene
+        """
+        chart, scene, s_factor = self._calc_scale_factors(cam, props, fmt,
+                                                          s, e, fd)
+        scale_start = self._scale_start * s_factor
+        scale_stop = self._scale_stop * s_factor
+        scale_step = self._scale_step * s_factor
+        max_match = []
+        # check for normalized image
+        if numpy.amax(scene) <= 1.0:
+            scene = (scene * 255.0).astype(numpy.uint8)
+        if len(scene.shape) == 2:
+            scene_gray = scene.copy()
+        elif len(scene.shape) == 3:
+            if scene.shape[2] == 1:
+                scene_gray = scene[:, :, 0]
+            else:
+                scene_gray = cv2.cvtColor(scene.copy(), cv2.COLOR_RGB2GRAY)
+        print 'Finding chart in scene...'
+        for scale in numpy.arange(scale_start, scale_stop, scale_step):
+            scene_scaled = scale_img(scene_gray, scale)
+            result = cv2.matchTemplate(scene_scaled, chart, cv2.TM_CCOEFF)
+            _, opt_val, _, top_left_scaled = cv2.minMaxLoc(result)
+            # print out scale and match
+            print ' scale factor: %.3f, opt val: %.f' % (scale, opt_val)
+            max_match.append((opt_val, top_left_scaled))
+
+        # determine if optimization results are valid
+        opt_values = [x[0] for x in max_match]
+        if 2.0*min(opt_values) > max(opt_values):
+            estring = ('Unable to find chart in scene!\n'
+                       'Check camera distance and self-reported '
+                       'pixel pitch, focal length and hyperfocal distance.')
+            raise its.error.Error(estring)
+        # find max and draw bbox
+        match_index = max_match.index(max(max_match, key=lambda x: x[0]))
+        scale = scale_start + scale_step * match_index
+        print 'Optimum scale factor: %.3f' %  scale
+        top_left_scaled = max_match[match_index][1]
+        h, w = chart.shape
+        bottom_right_scaled = (top_left_scaled[0] + w, top_left_scaled[1] + h)
+        top_left = (int(top_left_scaled[0]/scale),
+                    int(top_left_scaled[1]/scale))
+        bottom_right = (int(bottom_right_scaled[0]/scale),
+                        int(bottom_right_scaled[1]/scale))
+        wnorm = float((bottom_right[0]) - top_left[0]) / scene.shape[1]
+        hnorm = float((bottom_right[1]) - top_left[1]) / scene.shape[0]
+        xnorm = float(top_left[0]) / scene.shape[1]
+        ynorm = float(top_left[1]) / scene.shape[0]
+        return xnorm, ynorm, wnorm, hnorm
 
 
 class __UnitTest(unittest.TestCase):
@@ -968,6 +981,7 @@ class __UnitTest(unittest.TestCase):
                                       numpy.sqrt(2), atol=0.1))
         self.assertTrue(numpy.isclose(sharpness[4]/sharpness[8],
                                       numpy.sqrt(2), atol=0.1))
+
 
 if __name__ == '__main__':
     unittest.main()
