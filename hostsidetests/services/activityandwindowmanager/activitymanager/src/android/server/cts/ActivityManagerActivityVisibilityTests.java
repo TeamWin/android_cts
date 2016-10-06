@@ -23,9 +23,9 @@ import java.lang.String;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerActivityVisiblityTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerActivityVisibilityTests
  */
-public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBase {
+public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String VISIBLE_BEHIND_ACTIVITY = "VisibleBehindActivity";
     private static final String PIP_ON_PIP_ACTIVITY = "LaunchPipOnPipActivity";

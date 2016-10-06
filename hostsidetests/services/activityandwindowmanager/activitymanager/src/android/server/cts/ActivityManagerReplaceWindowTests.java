@@ -31,7 +31,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts-tradefed run commandAndExit cts-dev --module CtsServicesHostTestCases --test android.server.cts.ActivityManagerReplaceWindowTests --disable-reboot --skip-device-info --skip-connectivity-check --skip-preconditions
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerReplaceWindowTests
  */
 public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
