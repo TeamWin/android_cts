@@ -219,6 +219,14 @@ public class ListPopupWindowTest extends
                 Gravity.getAbsoluteGravity(gravity, upperAnchor.getLayoutDirection());
         if (absoluteGravity == Gravity.RIGHT) {
             expectedListViewOnScreenX -= (listView.getWidth() - upperAnchor.getWidth());
+        } else {
+            // On narrow screens, it's possible for the popup to reach the edge
+            // of the screen.
+            int rightmostX =
+                    getDisplay().getWidth() - mPopupWindow.getWidth() + listViewInWindowXY[0];
+            if (expectedListViewOnScreenX > rightmostX) {
+                expectedListViewOnScreenX = rightmostX;
+            }
         }
         int expectedListViewOnScreenY = anchorXY[1] + listViewInWindowXY[1]
                 + upperAnchor.getHeight() + verticalOffset;
