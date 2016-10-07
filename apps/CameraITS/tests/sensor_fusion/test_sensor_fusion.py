@@ -23,7 +23,7 @@ import os.path
 import matplotlib
 import matplotlib.pyplot
 import json
-import Image
+from PIL import Image
 import numpy
 import cv2
 import bisect
