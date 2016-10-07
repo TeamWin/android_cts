@@ -21,7 +21,6 @@ import pylab
 import matplotlib
 import matplotlib.pyplot as plt
 import math
-import Image
 import time
 import numpy as np
 import scipy.stats
@@ -157,7 +156,7 @@ def main():
                         np.var(tile(hp, tile_size), axis=(0, 1)).flatten()
 
                     for (mean, var) in zip(means_tiled, vars_tiled):
-                        # Don't include the tile if it has samples that might 
+                        # Don't include the tile if it has samples that might
                         # be clipped.
                         if mean + 2*math.sqrt(var) < max_signal_level:
                             samples_e.append([mean, var])
@@ -175,7 +174,7 @@ def main():
             samples.extend([(round(s), mean, var) for (mean, var) in samples_s])
 
             # Add the linear fit to the plot for this sensitivity.
-            plt_s.plot([0, max_signal_level], [O, O + S*max_signal_level], 'r-', 
+            plt_s.plot([0, max_signal_level], [O, O + S*max_signal_level], 'r-',
                        label="Linear fit")
             xmax = max([x for (x, _) in samples_s])*1.25
             plt_s.set_xlim(xmin=0, xmax=xmax)
@@ -219,7 +218,7 @@ def main():
 
         [A, B, C, D], _, _, _ = np.linalg.lstsq(a, b)
 
-        # Plot the noise model components with the values predicted by the 
+        # Plot the noise model components with the values predicted by the
         # noise model.
         S_model = A*sens + B
         O_model = \
@@ -228,14 +227,14 @@ def main():
         (fig, (plt_S, plt_O)) = plt.subplots(2, 1)
         plt_S.set_title("Noise model")
         plt_S.set_ylabel("S")
-        plt_S.loglog(sens, S_measured, 'r+', basex=10, basey=10, 
+        plt_S.loglog(sens, S_measured, 'r+', basex=10, basey=10,
                      label="Measured")
         plt_S.loglog(sens, S_model, 'bx', basex=10, basey=10, label="Model")
         plt_S.legend(loc=2)
 
         plt_O.set_xlabel("ISO")
         plt_O.set_ylabel("O")
-        plt_O.loglog(sens, O_measured, 'r+', basex=10, basey=10, 
+        plt_O.loglog(sens, O_measured, 'r+', basex=10, basey=10,
                      label="Measured")
         plt_O.loglog(sens, O_model, 'bx', basex=10, basey=10, label="Model")
         fig.savefig("%s.png" % (NAME))
@@ -246,7 +245,7 @@ def main():
             dg = max(s/sens_max_analog, 1)
             S = A*s + B
             O = C*s*s + D*dg*dg
-            plt_s.plot([0, max_signal_level], [O, O + S*max_signal_level], 'b-', 
+            plt_s.plot([0, max_signal_level], [O, O + S*max_signal_level], 'b-',
                        label="Model")
             plt_s.legend(loc=2)
 
