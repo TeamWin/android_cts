@@ -16,7 +16,6 @@
 package android.car.cts;
 
 import android.car.CarNotConnectedException;
-import android.car.CarNotSupportedException;
 import android.test.AndroidTestCase;
 
 public class ExceptionsTest extends AndroidTestCase {
@@ -37,23 +36,6 @@ public class ExceptionsTest extends AndroidTestCase {
         assertEquals(CAUSE, exception.getCause());
 
         exception = new CarNotConnectedException(CAUSE);
-        assertEquals(CAUSE, exception.getCause());
-    }
-
-    public void testCarNotSupportedException() {
-        CarNotSupportedException exception = new CarNotSupportedException();
-        assertNull(exception.getMessage());
-        assertNull(exception.getCause());
-
-        exception = new CarNotSupportedException(MESSAGE);
-        assertEquals(MESSAGE, exception.getMessage());
-        assertNull(exception.getCause());
-
-        exception = new CarNotSupportedException(MESSAGE, CAUSE);
-        assertEquals(MESSAGE, exception.getMessage());
-        assertEquals(CAUSE, exception.getCause());
-
-        exception = new CarNotSupportedException(CAUSE);
         assertEquals(CAUSE, exception.getCause());
     }
 }
