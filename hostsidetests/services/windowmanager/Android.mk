@@ -18,7 +18,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 
-# Must match the package name in OldCtsTestCaseList.mk
 LOCAL_MODULE := CtsDragAndDropHostTestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
@@ -26,8 +25,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
 
 LOCAL_CTS_TEST_PACKAGE := android.wm.cts
-
-LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts

@@ -34,13 +34,6 @@ $(LOCAL_BUILT_MODULE) : frameworks/base/api/current.txt | $(APICHECK)
 	@mkdir -p $(dir $@)
 	$(hide) $(APICHECK_COMMAND) -convert2xml $< $@
 
-# For CTS v1
-cts_api_xml_v1 := $(CTS_TESTCASES_OUT)/current.api
-$(cts_api_xml_v1):  $(LOCAL_BUILT_MODULE) | $(ACP)
-	$(call copy-file-to-new-target)
-
-$(CTS_TESTCASES_OUT)/CtsSignatureTestCases.xml: $(cts_api_xml_v1)
-
 include $(CLEAR_VARS)
 
 # current api, in XML format.
@@ -59,10 +52,3 @@ $(LOCAL_BUILT_MODULE) : frameworks/base/api/system-current.txt | $(APICHECK)
 	@echo "Convert API file $@"
 	@mkdir -p $(dir $@)
 	$(hide) $(APICHECK_COMMAND) -convert2xml $< $@
-
-# For CTS v1
-cts_api_xml_v1 := $(CTS_TESTCASES_OUT)/system-current.api
-$(cts_api_xml_v1):  $(LOCAL_BUILT_MODULE) | $(ACP)
-	$(call copy-file-to-new-target)
-
-$(CTS_TESTCASES_OUT)/CtsSignatureTestCases.xml: $(cts_api_xml_v1)

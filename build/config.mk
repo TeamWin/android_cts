@@ -14,8 +14,6 @@
 
 # Test XMLs, native executables, and packages will be placed in this
 # directory before creating the final CTS distribution.
-CTS_TESTCASES_OUT := $(HOST_OUT)/old-cts/old-android-cts/repository/testcases
-
 COMPATIBILITY_TESTCASES_OUT_cts := $(HOST_OUT)/cts/android-cts/testcases
 
 # Scanners of source files for tests which are then inputed into
