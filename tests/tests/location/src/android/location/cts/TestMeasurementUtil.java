@@ -692,6 +692,8 @@ public final class TestMeasurementUtil {
             // if message type == TYPE_L1CA, verify PRN & Data Size.
             int messageType = message.getType();
             if (messageType == GnssNavigationMessage.TYPE_GPS_L1CA) {
+                softAssert.assertTrue("Message ID and Sub Message ID cannot be 0",
+                    message.getMessageId() != 0 && message.getSubmessageId() != 0);
                 int svid = message.getSvid();
                 softAssert.assertTrue("Space Vehicle ID : expected = [1, 32], actual = " +
                                 svid,
