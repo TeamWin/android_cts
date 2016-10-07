@@ -142,12 +142,26 @@ public class AbsListViewTest {
     }
 
     @Test
-    public void testAccessFastScrollEnabled() {
+    @UiThreadTest
+    public void testAccessFastScrollEnabled_UiThread() {
+        mListView.setFastScrollAlwaysVisible(false);
         mListView.setFastScrollEnabled(false);
         assertFalse(mListView.isFastScrollEnabled());
 
+        mListView.setFastScrollAlwaysVisible(true);
         mListView.setFastScrollEnabled(true);
         assertTrue(mListView.isFastScrollEnabled());
+    }
+
+    @Test
+    public void testAccessFastScrollEnabled() {
+        mListView.setFastScrollAlwaysVisible(false);
+        mListView.setFastScrollEnabled(false);
+        PollingCheck.waitFor(() -> !mListView.isFastScrollEnabled());
+
+        mListView.setFastScrollAlwaysVisible(true);
+        mListView.setFastScrollEnabled(true);
+        PollingCheck.waitFor(mListView::isFastScrollEnabled);
     }
 
     @Test
