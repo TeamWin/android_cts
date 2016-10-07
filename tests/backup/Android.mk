@@ -34,8 +34,6 @@ LOCAL_PACKAGE_NAME := CtsBackupTestCases
 
 LOCAL_SDK_VERSION := test_current
 
-LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
-
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

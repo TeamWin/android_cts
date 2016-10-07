@@ -66,8 +66,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-fil
 
 LOCAL_PACKAGE_NAME := CtsHardwareTestCases
 
-LOCAL_CTS_MODULE_CONFIG := $(LOCAL_PATH)/Old$(CTS_MODULE_TEST_CONFIG)
-
 LOCAL_SDK_VERSION := current
 
 LOCAL_JAVA_LIBRARIES := android.test.runner

@@ -59,14 +59,7 @@ selinux_neverallow_gen := cts/tools/selinux/SELinuxNeverallowTestGen.py
 
 selinux_neverallow_gen_data := cts/tools/selinux/SELinuxNeverallowTestFrame.py
 
-old_cts_sepolicy-analyze := $(CTS_TESTCASES_OUT)/sepolicy-analyze
-
-LOCAL_ADDITIONAL_DEPENDENCIES := $(COMPATIBILITY_TESTCASES_OUT_cts)/sepolicy-analyze \
-    $(old_cts_sepolicy-analyze)
-
-$(old_cts_sepolicy-analyze) : $(HOST_OUT_EXECUTABLES)/sepolicy-analyze
-	mkdir -p $(dir $@)
-	$(copy-file-to-target)
+LOCAL_ADDITIONAL_DEPENDENCIES := $(COMPATIBILITY_TESTCASES_OUT_cts)/sepolicy-analyze
 
 LOCAL_GENERATED_SOURCES := $(call local-generated-sources-dir)/android/cts/security/SELinuxNeverallowRulesTest.java
 
