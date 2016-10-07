@@ -43,6 +43,7 @@ public class DeviceIdleControllerTest extends AndroidTestCase {
         try {
             service.shellCommand(FileDescriptor.in, FileDescriptor.out, FileDescriptor.err,
                     new String[]{"whitelist", "+" + mContext.getPackageName()},
+                    null,
                     new ResultReceiver(null) {
                         @Override
                         protected void onReceiveResult(int resultCode, Bundle resultData) {
@@ -65,4 +66,3 @@ public class DeviceIdleControllerTest extends AndroidTestCase {
         assertFalse(pm.isIgnoringBatteryOptimizations(mContext.getPackageName()));
     }
 }
-
