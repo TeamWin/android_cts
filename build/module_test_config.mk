@@ -13,12 +13,5 @@
 # limitations under the License.
 
 ifneq ($(LOCAL_CTS_MODULE_CONFIG),)
-cts_module_test_config := $(CTS_TESTCASES_OUT)/$(LOCAL_MODULE).config
-$(cts_module_test_config): $(LOCAL_CTS_MODULE_CONFIG) | $(ACP)
-	$(call copy-file-to-target)
-# Have the module name depend on the module test config, so it gets generated
-# when you run mm/mmm/mma/mmma.
-$(my_all_targets) : $(cts_module_test_config)
+$(error Should not reach here) # to be cleaned up later with CTSv1 build rules
 endif
-# clear var
-LOCAL_CTS_MODULE_CONFIG :=
