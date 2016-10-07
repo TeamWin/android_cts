@@ -50,10 +50,12 @@ public class Contacts_PeopleTest extends InstrumentationTestCase {
 
     private static final String[] PEOPLE_PROJECTION = new String[] {
             People._ID,
-            People.LAST_TIME_CONTACTED
+            People.LAST_TIME_CONTACTED,
+            People.TIMES_CONTACTED
         };
     private static final int PEOPLE_ID_INDEX = 0;
     private static final int PEOPLE_LAST_CONTACTED_INDEX = 1;
+    private static final int PEOPLE_TIMES_CONTACTED_INDEX = 1;
 
     private static final String[] GROUPS_PROJECTION = new String[] {
         Groups._ID,
@@ -230,23 +232,16 @@ public class Contacts_PeopleTest extends InstrumentationTestCase {
                     null, null, null, null);
             cursor.moveToFirst();
             int personId = cursor.getInt(PEOPLE_ID_INDEX);
-            long oldLastContacted = cursor.getLong(PEOPLE_LAST_CONTACTED_INDEX);
-            cursor.close();
-            People.markAsContacted(mContentResolver, personId);
-            cursor = mProvider.query(mPeopleRowsAdded.get(0), PEOPLE_PROJECTION,
-                    null, null, null, null);
-            cursor.moveToFirst();
-            long lastContacted = cursor.getLong(PEOPLE_LAST_CONTACTED_INDEX);
-            assertTrue(oldLastContacted < lastContacted);
-            oldLastContacted = lastContacted;
+            assertEquals(0, cursor.getLong(PEOPLE_LAST_CONTACTED_INDEX));
+            assertEquals(0, cursor.getLong(PEOPLE_TIMES_CONTACTED_INDEX));
             cursor.close();
 
             People.markAsContacted(mContentResolver, personId);
             cursor = mProvider.query(mPeopleRowsAdded.get(0), PEOPLE_PROJECTION,
                     null, null, null, null);
             cursor.moveToFirst();
-            lastContacted = cursor.getLong(PEOPLE_LAST_CONTACTED_INDEX);
-            assertTrue(oldLastContacted < lastContacted);
+            assertEquals(0, cursor.getLong(PEOPLE_LAST_CONTACTED_INDEX));
+            assertEquals(0, cursor.getLong(PEOPLE_TIMES_CONTACTED_INDEX));
             cursor.close();
         } catch (RemoteException e) {
             fail("Unexpected RemoteException");

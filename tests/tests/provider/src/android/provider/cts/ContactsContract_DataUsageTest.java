@@ -45,14 +45,40 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
 
         // Update just 1 data item at a time.
         updateDataUsageAndAssert(dataIds[1], 1);
-        updateDataUsageAndAssert(dataIds[1], 2);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 1);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 10);
 
         updateDataUsageAndAssert(dataIds[2], 1);
-        updateDataUsageAndAssert(dataIds[2], 2);
-        updateDataUsageAndAssert(dataIds[2], 3);
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 1);
 
         // Go back and update the previous data item again.
-        updateDataUsageAndAssert(dataIds[1], 3);
+        updateDataUsageAndAssert(dataIds[1], 10);
+        updateDataUsageAndAssert(dataIds[1], 20);
+
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 1);
+        updateDataUsageAndAssert(dataIds[2], 10);
+
 
         deleteDataUsage();
         RawContactUtil.delete(mResolver, ids.mRawContactId, true);
@@ -69,13 +95,15 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
         assertDataUsageEquals(dataIds, 0, 1, 1, 0);
 
         updateMultipleAndAssertUpdateSuccess(new long[]{dataIds[1], dataIds[2]});
-        assertDataUsageEquals(dataIds, 0, 2, 2, 0);
+        assertDataUsageEquals(dataIds, 0, 1, 1, 0);
 
-        updateDataUsageAndAssert(dataIds[1], 3);
-        assertDataUsageEquals(dataIds, 0, 3, 2, 0);
+        for (int i = 0; i < 8; i++) {
+            updateMultipleAndAssertUpdateSuccess(new long[]{dataIds[1]});
+        }
+        assertDataUsageEquals(dataIds, 0, 10, 1, 0);
 
         updateMultipleAndAssertUpdateSuccess(new long[]{dataIds[0], dataIds[1]});
-        assertDataUsageEquals(dataIds, 1, 4, 2, 0);
+        assertDataUsageEquals(dataIds, 1, 10, 1, 0);
 
         deleteDataUsage();
         RawContactUtil.delete(mResolver, ids.mRawContactId, true);
