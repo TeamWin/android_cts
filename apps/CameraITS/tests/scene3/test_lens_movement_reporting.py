@@ -27,6 +27,13 @@ POSITION_TOL = 0.10  # percentage
 VGA_WIDTH = 640
 VGA_HEIGHT = 480
 NAME = os.path.basename(__file__).split('.')[0]
+CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
+                          'test_images', 'ISO12233.png')
+CHART_HEIGHT = 13.5  # cm
+CHART_DISTANCE = 30.0  # cm
+CHART_SCALE_START = 0.65
+CHART_SCALE_STOP = 1.35
+CHART_SCALE_STEP = 0.025
 
 
 def test_lens_movement_reporting(cam, props, fmt, sensitivity, exp, af_fd):
@@ -49,10 +56,16 @@ def test_lens_movement_reporting(cam, props, fmt, sensitivity, exp, af_fd):
             'sharpness'
     """
 
-    print 'Take AF image for chart locator.'
-    xnorm, ynorm, wnorm, hnorm = its.image.find_af_chart(cam, props,
-                                                         sensitivity,
-                                                         exp, af_fd)
+    # initialize chart class
+    chart = its.image.Chart(CHART_FILE, CHART_HEIGHT, CHART_DISTANCE,
+                            CHART_SCALE_START, CHART_SCALE_STOP,
+                            CHART_SCALE_STEP)
+
+    # find chart location
+    xnorm, ynorm, wnorm, hnorm = chart.locate(cam, props, fmt, sensitivity,
+                                              exp, af_fd)
+
+    # initialize variables and take data sets
     data_set = {}
     white_level = int(props['android.sensor.info.whiteLevel'])
     min_fd = props['android.lens.info.minimumFocusDistance']
