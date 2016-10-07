@@ -191,26 +191,15 @@
 
     <!-- Strings for BluetoothActivity -->
     <string name="bluetooth_test">Bluetooth Test</string>
-    <string name="bluetooth_test_info">
-        The Bluetooth Control tests check whether or not the device
-        can disable and enable Bluetooth properly.
-        \n\nThe Bluetooth tests require two devices, and Bluetooth data is exchanged between them.
-        \nThere are two types of connections: Insecure and Secure. There are two types of roles: Server and Client. You must pass all connection and role combinations.
-        \nThis is a list of the tests:
-        \nThis Device x Other Device
-        \n\n\"Bluetooth LE Insecure Client Test\" x \"Bluetooth LE Insecure Server Test\"
-        \n\n\"Bluetooth LE Insecure Server Test\" x \"Bluetooth LE Insecure Client Test\"
-        \n\n\"Bluetooth LE Secure Client Test\" x \"Bluetooth LE Secure Server Test\"
-        \n\n\"Bluetooth LE Secure Server Test\" x \"Bluetooth LE Secure Client Test\"
-        \n\nThe Device Communication tests require two
+    <string name="bluetooth_test_info">The Bluetooth Control tests check whether or not the device
+        can disable and enable Bluetooth properly.\n\nThe Device Communication tests require two
         devices to pair and exchange messages. The two devices must be:
         \n\n1. a candidate device implementation running the software build to be tested
-        \n\n2. a separate device implementation already known to be compatible
-    </string>
+        \n\n2. a separate device implementation already known to be compatible</string>
 
     <string name="bt_control">Bluetooth Control</string>
     <string name="bt_device_communication">Device Communication</string>
-    <string name="bt_le">Bluetooth LE</string>
+    <string name="bt_le">Bluetooth Low Energy</string>
 
     <string name="bt_toggle_bluetooth">Toggle Bluetooth</string>
     <string name="bt_toggle_instructions">Disable and enable Bluetooth to successfully complete this test.</string>
@@ -258,12 +247,6 @@
     <string name="bt_pick_server">Pick Server</string>
     <string name="bt_insecure_pairing_error_title">Pairing dialog shown?</string>
     <string name="bt_insecure_pairing_error_message">Insecure connections should not show the pairing dialog!</string>
-    <string name="bt_advertise_unsupported_title">Advertising is not supported</string>
-    <string name="bt_advertise_unsupported_message">Advertising is not supported on this device.\nTest finishes.</string>
-    <string name="bt_open_failed_title">BLE open failed</string>
-    <string name="bt_open_failed_message">Cannot open BLE GattService.\nTest finishes.</string>
-    <string name="bt_add_service_failed_title">Add service failed</string>
-    <string name="bt_add_service_failed_message">Failed to add services.\nTest finishes.</string>
 
     <string name="bt_secure_client">Secure Client</string>
     <string name="bt_insecure_client">Insecure Client</string>
@@ -279,22 +262,18 @@
 
     <!-- BLE client side strings -->
     <string name="ble_client_service_name">Bluetooth LE GATT Client Handler Service</string>
-    <string name="ble_client_test_name">01 Bluetooth LE Client Test</string>
-    <string name="ble_client_connect_name">Bluetooth LE Client Connect</string>
-    <string name="ble_discover_service_name">Bluetooth LE Discover Service</string>
-    <string name="ble_read_characteristic_name">Bluetooth LE Read Characteristic</string>
-    <string name="ble_write_characteristic_name">Bluetooth LE Write Characteristic</string>
-    <string name="ble_reliable_write_name">Bluetooth LE Reliable Write</string>
-    <string name="ble_reliable_write_bad_resp_name">Bluetooth LE Reliable Write (receive bad response)</string>
-    <string name="ble_notify_characteristic_name">Bluetooth LE Notify Characteristic</string>
-    <string name="ble_read_descriptor_name">Bluetooth LE Read Descriptor</string>
-    <string name="ble_write_descriptor_name">Bluetooth LE Write Descriptor</string>
-    <string name="ble_read_rssi_name">Bluetooth LE Read RSSI</string>
-    <string name="ble_client_disconnect_name">Bluetooth LE Client Disconnect</string>
-    <string name="ble_client_test_info">
-        The Bluetooth LE test must be done simultaneously on two devices. This device is the client.
-        All tests listed here must be done with out pairing.
-    </string>
+    <string name="ble_client_test_name">BLE Client Test</string>
+    <string name="ble_client_connect_name">BLE Client Connect</string>
+    <string name="ble_discover_service_name">BLE Discover Service</string>
+    <string name="ble_read_characteristic_name">BLE Read Characteristic</string>
+    <string name="ble_write_characteristic_name">BLE Write Characteristic</string>
+    <string name="ble_reliable_write_name">BLE Reliable Write</string>
+    <string name="ble_notify_characteristic_name">BLE Notify Characteristic</string>
+    <string name="ble_read_descriptor_name">BLE Read Descriptor</string>
+    <string name="ble_write_descriptor_name">BLE Write Descriptor</string>
+    <string name="ble_read_rssi_name">BLE Read RSSI</string>
+    <string name="ble_client_disconnect_name">BLE Client Disconnect</string>
+    <string name="ble_client_test_info">The BLE test must be done simultaneously on two devices. This device is the client. All tests listed here must be done in order.</string>
     <string name="ble_client_send_connect_info">Type in the Bluetooth address of the remote device to connect to, and verify that the devices are connected.</string>
     <string name="ble_discover_service_info">Verify that the service is discovered when you press the "Discover Service" button.</string>
     <string name="ble_read_write_info">Write values to and read values from the server to verify that the write and read functionalities are working correctly.</string>
@@ -317,82 +296,32 @@
     <string name="ble_read_rssi">Read RSSI</string>
     <string name="ble_disconnect">Disconnect</string>
     <string name="ble_test_text">TEST</string>
-    <string name="ble_test_finished">Test finished</string>
-    <string name="ble_test_next">Next</string>
-    <string name="ble_test_running">Test Running</string>
-    <string name="ble_test_running_message">This test requires a few minutes. Don\'t interrupt the test.</string>
-    <string name="ble_mtu_23_name">Bluetooth LE Request MTU(23bytes)</string>
-    <string name="ble_mtu_512_name">Bluetooth LE Request MTU(512bytes)</string>
 
     <!-- BLE server side strings -->
     <string name="ble_server_service_name">Bluetooth LE GATT Server Handler Service</string>
-    <string name="ble_server_start_name">01 Bluetooth LE Server Test</string>
-    <string name="ble_server_start_info">
-        The Bluetooth LE test must be done simultaneously on two devices, a server device and a client device. This device is the server.
-    </string>
-    <string name="ble_server_receiving_connect">Waiting on connection from Bluetooth LE client.</string>
-    <string name="ble_server_add_service">Adding service to Bluetooth LE server.</string>
+    <string name="ble_server_start_name">BLE Server Test</string>
+    <string name="ble_server_start_info">The BLE test must be done simultaneously on two devices, a server device and a client device. This device is the server.</string>
+    <string name="ble_server_receiving_connect">Waiting on connection from BLE client.</string>
+    <string name="ble_server_add_service">Adding service to BLE server.</string>
     <string name="ble_server_write_characteristic">Waiting on write characteristic request</string>
     <string name="ble_server_read_characteristic">Waiting on read characteristic request</string>
     <string name="ble_server_write_descriptor">Waiting on write descriptor request</string>
     <string name="ble_server_read_descriptor">Waiting on read descriptor request</string>
     <string name="ble_server_reliable_write">Waiting on reliable write from client</string>
-    <string name="ble_server_reliable_write_bad_resp">Waiting on reliable write from client (send bad response)</string>
-    <string name="ble_server_receiving_disconnect">Waiting on disconnection from Bluetooth LE client</string>
-    <string name="ble_connection_priority_server_name">02 Bluetooth LE Connection Priority Server Test</string>
-    <string name="ble_connection_priority_server_info">Bluetooth LE Connection Priority Server receive message from message in 3 different priority.</string>
-    <string name="ble_server_notify_characteristic">Waiting on notify characteristic request</string>
-    <string name="ble_server_write_characteristic_without_permission">Waiting on write characteristic request without permission</string>
-    <string name="ble_server_read_characteristic_without_permission">Waiting on read characteristic request without permission</string>
-    <string name="ble_server_write_descriptor_without_permission">Waiting on write descriptor request without permission</string>
-    <string name="ble_server_read_descriptor_without_permission"> Waiting on read descriptor request without permission</string>
-    <string name="ble_server_write_characteristic_need_encrypted">Waiting on write encrypted characteristic request</string>
-    <string name="ble_server_read_characteristic_need_encrypted">Waiting on read encryptedcharacteristic request</string>
-    <string name="ble_server_write_descriptor_need_encrypted">Waiting on write encrypted descriptor request</string>
-    <string name="ble_server_read_descriptor_need_encrypted"> Waiting on read encrypted descriptor request</string>
-    <string name="ble_server_indicate_characteristic">Waiting on indicate characteristic request</string>
-    <string name="ble_server_mtu_23bytes">Waiting on MTU request(23 bytes)</string>
-    <string name="ble_server_mtu_512bytes">Waiting on MTU request(512 bytes)</string>
-    <string name="ble_encrypted_server_name">03 Bluetooth LE Encrypted Server Test</string>
-    <string name="ble_encrypted_server_info">Bluetooth LE Encrypted Server Waiting on read/write characteristic and descriptor request need encrypted.</string>
-    <string name="ble_insecure_server_enctypted_info">Bluetooth LE Server is in operation.\nThis test does not change server state.\n\nIf Bluetooth pairing request was notified by system, you must cancel it.\n\nOnce the client tests are all successful, please change the state of the server-side to the "success".</string>
-    <string name="ble_insecure_server_test_list_name">Bluetooth LE Insecure Server Test</string>
-    <string name="ble_insecure_server_test_list_info">
-        This test is mostly automated, but requires some user interaction.
-        Once the list items below have check marks, the test is complete.
-        \n\nTap \"01 Bluetooth LE Server Test\" on this device, then tap \"01 Bluetooth LE Client Test\" on the other device.
-        \nWhen the test is complete, move to the next item. You must complete all tests.
-    </string>
-    <string name="ble_secure_server_test_list_name">Bluetooth LE Secure Server Test</string>
-    <string name="ble_secure_server_test_list_info">
-        This test is mostly automated, but requires some user interaction.
-        You can pass this test once the list items below are checked.
-        \n\nTap \"01 Bluetooth LE Server Test\" on this device, then tap \"01 Bluetooth LE Client Test \"on other device.
-        \nTest completed, then test next item. You must be done all tests.
-    </string>
+    <string name="ble_server_receiving_disconnect">Waiting on disconnection from BLE client</string>
 
     <!-- BLE advertiser side strings -->
-    <string name="ble_advertiser_test_name">Bluetooth LE Advertiser Test</string>
-    <string name="ble_advertiser_test_info">
-        The Bluetooth LE Advertiser Test and Scanner Test is a paired test.
-        \nTap \"Bluetooth LE Advertiser Test\" on this device. Once it is passed, tap \"Bluetooth LE Scanner Test\".
-        \nTap \"Bluetooth LE Scanner Test\" on this device. Once it is passed, tap \"Bluetooth LE Advertiser Test\".
-    </string>
+    <string name="ble_advertiser_test_name">BLE Advertiser Test</string>
+    <string name="ble_advertiser_test_info">The BLE test must be done simultaneously on two devices, an advertiser and a scanner. This device is the advertiser.</string>
     <string name="ble_advertiser_service_name">Bluetooth LE Advertiser Handler Service</string>
-    <string name="ble_privacy_mac_name">Bluetooth LE Privacy Mac</string>
-    <string name="ble_privacy_mac_info">Bluetooth LE Advertiser should advertise in non-repeating MAC address.</string>
-    <string name="ble_advertiser_privacy_mac_instruction">Click start to start advertising, you can disconnect USB and lock the screen of advertiser. Counts and mac address will show on scanner. You may receive message that this device does not support Bluetooth LE advertising.</string>
-    <string name="ble_power_level_name">Bluetooth LE Tx Power Level</string>
-    <string name="ble_power_level_info">Bluetooth LE Advertiser advertises in 4 different power levels. Scanner should receive them in different strength of Rssi, cannot receive weak signals beyond several feet.</string>
-    <string name="ble_advertiser_power_level_instruction">
-        Click start to start multi-advertising. Data packets are advertised in 4 different power levels.
-        You may receive a message that this device does not support multi-advertising.
-        If the advertiser does not advertise in 4 power levels, and you do not receive an error message,
-        you may not have stopped advertising in the previous test, or this device may not support 4 advertisers at the same time.
-        Try rebooting the device and running the test again to free those advertisers in use.
-    </string>
-    <string name="ble_advertiser_scan_filter_name">Bluetooth LE Hardware Scan Filter</string>
-    <string name="ble_advertiser_scan_filter_info">Bluetooth LE Advertiser advertises with 2 different data separately. One can wake up the scanner, the other cannot. This test cares about behavior on scanner only.</string>
+    <string name="ble_privacy_mac_name">BLE Privacy Mac</string>
+    <string name="ble_privacy_mac_info">BLE Advertiser should advertise in non-repeating MAC address.</string>
+    <string name="ble_advertiser_privacy_mac_instruction">Click start to start advertising, you can disconnect USB and lock the screen of advertiser. Counts and mac address will show on scanner. You may receive message that this device does not support BLE advertising.</string>
+    <string name="ble_power_level_name">BLE Tx Power Level</string>
+    <string name="ble_power_level_info">BLE Advertiser advertises in 4 different power levels. Scanner should receive them in different strength of Rssi, cannot receive weak signals beyond several feet.</string>
+    <string name="ble_advertiser_power_level_instruction">Click start to start multi-advertising. Data packets are advertised in 4 different power levels. You may receive message that this device does not support multi advertising. If advertiser does not advertise in 4 power levels, neither you receive the error message, you may not stop the advertising in previous test, or this device does not support 4 advertisers at the same time. Try rebooting the device and run the test to free those advertisers in use.</string>
+    <string name="ble_advertiser_scan_filter_name">BLE Hardware Scan Filter</string>
+    <string name="ble_advertiser_scan_filter_info">BLE Advertiser advertises with 2 different data separately. One can wake up the scanner, the other cannot. This test cares about behavior on scanner only.</string>
     <string name="ble_advertiser_scannable">Scannable advertising</string>
     <string name="ble_advertiser_scannable_instruction">Start scannable advertising, expect scanner consume more power on Monsoon monitor, or see log of GattService from scanner logcat.</string>
     <string name="ble_advertiser_unscannable">Unscannble advertising</string>
@@ -401,9 +330,9 @@
     <string name="ble_advertiser_stop">Stop</string>
 
     <!-- BLE scanner side strings -->
-    <string name="ble_scanner_test_name">Bluetooth LE Scanner Test</string>
+    <string name="ble_scanner_test_name">BLE Scanner Test</string>
     <string name="ble_scanner_service_name">Bluetooth LE Scanner Handler Service</string>
-    <string name="ble_scanner_test_info">The Bluetooth LE test must be done simultaneously on two devices, an advertiser and a scanner. This device is the scanner.</string>
+    <string name="ble_scanner_test_info">The BLE test must be done simultaneously on two devices, an advertiser and a scanner. This device is the scanner.</string>
     <string name="ble_scanner_privacy_mac">Hold for 15 min to see if receive a different MAC address from advertiser.</string>
     <string name="ble_scanner_privacy_mac_instruction">Mac address, counts are shown on screen. It should continuously receive data packet from advertiser. Every 15 min, a new mac address should show up, which prevents mac address disclosure.</string>
     <string name="ble_ultra_low">Ultra low</string>
@@ -411,87 +340,13 @@
     <string name="ble_medium">Medium</string>
     <string name="ble_high">High</string>
     <string name="ble_scanner_power_level_instruction">Count: Ultra low &lt; low &lt; medium &lt; high\nRssi: Ultra low &lt; low &lt; medium &lt; high\nDistance to see count freezing: Ultra low &lt; low &lt; medium &lt; high\nA common error is ultra low, low and medium behave similarly, with similar rssi, freeze at similar distance.\n\n All power level receive a different mac address. After 15 mins, a green text "Get a new Mac address" will show up.</string>
-    <string name="ble_scanner_scan_filter_name">Bluetooth LE Hardware Scan Filter</string>
+    <string name="ble_scanner_scan_filter_name">BLE Hardware Scan Filter</string>
     <string name="ble_scanner_scan_filter_info">Lock the screen of scanner, and connect to monsoon. It will not wake up when advertiser is advertising unscannable, and scanner is scanning with filter.</string>
     <string name="ble_scanner_scan_filter_instruction">Scan filter is to scan data with service UUID = 0x6666 only. If you scan without scan filter, data with service UUID = 0x5555 and 0x6666 will show up on screen.\nFor monsoon test:\n\tClick scan with filter, lock the screen, connect to monsoon. It will not wake up when advertiser is advertising unscannable data packets, but will show a peak in power usage when advertiser is advertising scannable data.\nFor logcat test:\n\tClick scan with filter, logcat the scanner. No data will be received by GattService when advertiser is advertising unscannable data.</string>
     <string name="ble_scan_with_filter">Scan with filter</string>
     <string name="ble_scan_without_filter">Scan without filter</string>
     <string name="ble_scan_start">Start scan</string>
     <string name="ble_scan_stop">Stop scan</string>
-
-    <!-- BLE connection priority test strings -->
-    <string name="ble_client_connection_priority">Testing priority: </string>
-    <string name="ble_connection_priority_balanced">BALANCED</string>
-    <string name="ble_connection_priority_high">HIGH</string>
-    <string name="ble_connection_priority_low">LOW</string>
-    <string name="ble_server_connection_priority_result_passed">All test passed</string>
-    <string name="ble_server_connection_priority_result_failed">Test failed.</string>
-    <string name="ble_server_connection_priority_result_intervals">
-        Transfer interval time (msec):\nHIGH=%1$d\nBALANCED=%2$d\nLOW=%3$d\n\nRequirements:\n HIGH &lt;= BALANCED &lt;= LOW
-    </string>
-
-    <!-- BLE Test Name -->
-    <string name="ble_secure_client_test_name">Bluetooth LE Secure Client Test</string>
-    <string name="ble_insecure_client_test_name">Bluetooth LE Insecure Client Test</string>
-    <string name="ble_secure_server_test_name">Bluetooth LE Secure Server Test</string>
-    <string name="ble_insecure_server_test_name">Bluetooth LE Insecure Server Test</string>
-
-    <string name="ble_read_characteristic_nopermission_name">Bluetooth LE Read Characteristic Without Perrmission</string>
-    <string name="ble_write_characteristic_nopermission_name">Bluetooth LE Write Characteristic Without Permission</string>
-    <string name="ble_read_descriptor_nopermission_name">Bluetooth LE Read Descriptor Without Perrmission</string>
-    <string name="ble_write_descriptor_nopermission_name">Bluetooth LE Write Descriptor Without Permission</string>
-    <string name="ble_connection_priority_client_name">02 Bluetooth LE Connection Priority Client Test</string>
-    <string name="ble_connection_priority_client_info">Bluetooth LE Connection Priority Client send message in 3 different priority.</string>
-    <string name="ble_read_authenticated_characteristic_name">Bluetooth LE Read Encrypted Characteristic</string>
-    <string name="ble_write_authenticated_characteristic_name">Bluetooth LE Write Encrypted Characteristic</string>
-    <string name="ble_read_authenticated_descriptor_name">Bluetooth LE Read Encrypted Descriptor</string>
-    <string name="ble_write_authenticated_descriptor_name">Bluetooth LE Write Encrypted Descriptor</string>
-    <string name="ble_connection_priority_client_high">Bluetooth LE Send With CONNECTION_PRIORITY_HIGH</string>
-    <string name="ble_connection_priority_client_low">Bluetooth LE Send With CONNECTION_PRIORITY_LOW_POWER</string>
-    <string name="ble_connection_priority_client_balanced">Bluetooth LE Send With CONNECTION_PRIORITY_BALANCED</string>
-    <string name="ble_indicate_characteristic_name">Bluetooth LE Indicate Characteristic</string>
-    <string name="ble_encrypted_client_name">03 Bluetooth LE Encrypted Client Test</string>
-    <string name="ble_encrypted_client_info">Bluetooth LE Encrypted Client read/write on characteristic and descriptor need encrypted.</string>
-    <string name="ble_insecure_client_test_list_name">Bluetooth LE Insecure Client Test</string>
-    <string name="ble_insecure_client_test_list_info">
-        The Bluetooth LE test must be done simultaneously on two devices. This device is the client.
-        All tests listed here must be done without pairing. Tap \"Bluetooth LE Insecure Server Test\" on the other device.
-        \n\nTap \"01 Bluetooth LE Client Test\" on this device, then tap \"01 Bluetooth LE Server Test\" on the other device.
-        \nWhen the test is complete, move to the next item. You must complete all tests.
-    </string>
-    <string name="ble_secure_client_test_list_name">Bluetooth LE Secure Client Test</string>
-    <string name="ble_secure_client_test_list_info">
-        The Bluetooth LE test must be done simultaneously on two devices.
-        This device is the client. All tests listed here must be done with pairing.
-        \n\nTap \"01 Bluetooth LE Client Test\" on this device, then tap \"01 Bluetooth LE Server Test\" on the other device.
-        \nWhen the test is complete, move to the next item. You must complete all tests.
-    </string>
-    <string name="ble_encrypted_client_no_encrypted_characteristic">Error!\nThe Characteristics unencrypted.</string>
-    <string name="ble_encrypted_client_no_encrypted_descriptor">Error!\nThe Descriptor unencrypted.</string>
-    <string name="ble_encrypted_client_fail_write_encrypted_characteristic">It failed to write to Characteristic.</string>
-    <string name="ble_encrypted_client_fail_write_encrypted_descriptor">It failed to write to Descriptor.</string>
-    <string name="ble_encrypted_client_fail_read_encrypted_characteristic">It failed to read the Characteristic.</string>
-    <string name="ble_encrypted_client_fail_read_encrypted_descriptor">It failed to read the Descriptor.</string>
-    <string name="ble_secure_client_test_info">
-        The Bluetooth LE test must be done simultaneously on two devices. This device is the client.
-        All tests listed here must be done with pairing.
-    </string>
-
-    <string name="ble_bluetooth_disable_title">Bluetooth Disable!</string>
-    <string name="ble_bluetooth_disable_message">Please set bluetooth enable.</string>
-
-    <string name="ble_bluetooth_mismatch_title">Bluetooth pairing state is a mismatch!</string>
-    <string name="ble_bluetooth_mismatch_secure_message">
-        And even though it has already been trying to run a test of Secure, the device has not been paired.
-        \nGo setting mode, set Bluetooth to pair other device.
-    </string>
-    <string name="ble_bluetooth_mismatch_insecure_message">
-        And even though it has already been trying to run a test of Insecure, the device has already been paired.
-        \nGo setting mode, set Bluetooth to unpair other device.
-    </string>
-
-    <string name="ble_mtu_mismatch_message">MTU is not correct.(Request:%1$d, Actual:%2$d)</string>
-    <string name="ble_mtu_fail_message">MTU test: failed to receive data</string>
 
     <!-- Strings for FeatureSummaryActivity -->
     <string name="feature_summary">Hardware/Software Feature Summary</string>

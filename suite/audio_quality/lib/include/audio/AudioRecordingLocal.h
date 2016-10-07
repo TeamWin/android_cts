@@ -27,7 +27,7 @@
 
 class AudioRecordingLocal: public AudioLocal {
 public:
-    explicit AudioRecordingLocal(int hwId);
+    AudioRecordingLocal(int hwId);
     virtual ~AudioRecordingLocal();
 protected:
     bool doPrepare(AudioHardware::SamplingRate, int samplesInOneGo);

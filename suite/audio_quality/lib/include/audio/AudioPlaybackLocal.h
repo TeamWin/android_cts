@@ -27,7 +27,7 @@
 
 class AudioPlaybackLocal: public AudioLocal {
 public:
-    explicit AudioPlaybackLocal(int hwId);
+    AudioPlaybackLocal(int hwId);
     virtual ~AudioPlaybackLocal();
 protected:
     bool doPrepare(AudioHardware::SamplingRate, int samplesInOneGo);

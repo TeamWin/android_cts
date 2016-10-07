@@ -20,7 +20,7 @@
 
 class TransformationNode: public SceneGraphNode {
 public:
-    explicit TransformationNode(Matrix* matrix);
+    TransformationNode(Matrix* matrix);
     virtual ~TransformationNode();
 protected:
     virtual void before(Program& program, Matrix& model, Matrix& view,

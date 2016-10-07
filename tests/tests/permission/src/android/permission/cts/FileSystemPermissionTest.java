@@ -816,6 +816,91 @@ public class FileSystemPermissionTest extends AndroidTestCase {
         assertTrue("/data is not mounted NODEV", (vfs.f_flag & OsConstants.ST_NODEV) != 0);
     }
 
+    public void testAllBlockDevicesAreSecure() throws Exception {
+        Set<File> insecure = getAllInsecureDevicesInDirAndSubdir(new File("/dev"), FileUtils.S_IFBLK);
+        assertTrue("Found insecure block devices: " + insecure.toString(),
+                insecure.isEmpty());
+    }
+
+    private static final Set<File> CHAR_DEV_EXCEPTIONS = new HashSet<File>(
+            Arrays.asList(
+                // All exceptions should be alphabetical and associated with a bug number.
+                new File("/dev/adsprpc-smd"), // b/11710243
+                new File("/dev/alarm"),      // b/9035217
+                new File("/dev/ashmem"),
+                new File("/dev/binder"),
+                new File("/dev/card0"),       // b/13159510
+                new File("/dev/renderD128"),
+                new File("/dev/renderD129"),  // b/23798677
+                new File("/dev/dri/card0"),   // b/13159510
+                new File("/dev/dri/renderD128"),
+                new File("/dev/dri/renderD129"), // b/23798677
+                new File("/dev/felica"),     // b/11142586
+                new File("/dev/felica_ant"), // b/11142586
+                new File("/dev/felica_cen"), // b/11142586
+                new File("/dev/felica_pon"), // b/11142586
+                new File("/dev/felica_rfs"), // b/11142586
+                new File("/dev/felica_rws"), // b/11142586
+                new File("/dev/felica_uicc"), // b/11142586
+                new File("/dev/full"),
+                new File("/dev/galcore"),
+                new File("/dev/genlock"),    // b/9035217
+                new File("/dev/graphics/galcore"),
+                new File("/dev/ion"),
+                new File("/dev/kgsl-2d0"),   // b/11271533
+                new File("/dev/kgsl-2d1"),   // b/11271533
+                new File("/dev/kgsl-3d0"),   // b/9035217
+                new File("/dev/log/events"), // b/9035217
+                new File("/dev/log/main"),   // b/9035217
+                new File("/dev/log/radio"),  // b/9035217
+                new File("/dev/log/system"), // b/9035217
+                new File("/dev/mali0"),       // b/9106968
+                new File("/dev/mali"),        // b/11142586
+                new File("/dev/mm_interlock"), // b/12955573
+                new File("/dev/mm_isp"),      // b/12955573
+                new File("/dev/mm_v3d"),      // b/12955573
+                new File("/dev/msm_rotator"), // b/9035217
+                new File("/dev/null"),
+                new File("/dev/nvhost-as-gpu"),
+                new File("/dev/nvhost-ctrl"), // b/9088251
+                new File("/dev/nvhost-ctrl-gpu"),
+                new File("/dev/nvhost-dbg-gpu"),
+                new File("/dev/nvhost-gpu"),
+                new File("/dev/nvhost-gr2d"), // b/9088251
+                new File("/dev/nvhost-gr3d"), // b/9088251
+                new File("/dev/nvhost-tsec"),
+                new File("/dev/nvhost-prof-gpu"),
+                new File("/dev/nvhost-vic"),
+                new File("/dev/nvmap"),       // b/9088251
+                new File("/dev/ptmx"),        // b/9088251
+                new File("/dev/pvrsrvkm"),    // b/9108170
+                new File("/dev/pvr_sync"),
+                new File("/dev/quadd"),
+                new File("/dev/random"),
+                new File("/dev/snfc_cen"),    // b/11142586
+                new File("/dev/snfc_hsel"),   // b/11142586
+                new File("/dev/snfc_intu_poll"), // b/11142586
+                new File("/dev/snfc_rfs"),    // b/11142586
+                new File("/dev/tegra-throughput"),
+                new File("/dev/tiler"),       // b/9108170
+                new File("/dev/tty"),
+                new File("/dev/urandom"),
+                new File("/dev/ump"),         // b/11142586
+                new File("/dev/xt_qtaguid"),  // b/9088251
+                new File("/dev/zero"),
+                new File("/dev/fimg2d"),      // b/10428016
+                new File("/dev/mobicore-user") // b/10428016
+            ));
+
+    public void testAllCharacterDevicesAreSecure() throws Exception {
+        Set<File> insecure = getAllInsecureDevicesInDirAndSubdir(new File("/dev"), FileUtils.S_IFCHR);
+        Set<File> insecurePts = getAllInsecureDevicesInDirAndSubdir(new File("/dev/pts"), FileUtils.S_IFCHR);
+        insecure.removeAll(CHAR_DEV_EXCEPTIONS);
+        insecure.removeAll(insecurePts);
+        assertTrue("Found insecure character devices: " + insecure.toString(),
+                insecure.isEmpty());
+    }
+
     public void testDevRandomWorldReadableAndWritable() throws Exception {
         File f = new File("/dev/random");
 
@@ -927,6 +1012,67 @@ public class FileSystemPermissionTest extends AndroidTestCase {
                 .add(OsConstants.CAP_SETUID)
                 .add(OsConstants.CAP_SETGID)
                 .fileHasOnly("/system/bin/run-as"));
+    }
+
+    private static Set<File>
+    getAllInsecureDevicesInDirAndSubdir(File dir, int type) throws Exception {
+        assertTrue(dir.isDirectory());
+        Set<File> retval = new HashSet<File>();
+
+        if (isSymbolicLink(dir)) {
+            // don't examine symbolic links.
+            return retval;
+        }
+
+        File[] subDirectories = dir.listFiles(new FileFilter() {
+            @Override public boolean accept(File pathname) {
+                return pathname.isDirectory();
+            }
+        });
+
+
+        /* recurse into subdirectories */
+        if (subDirectories != null) {
+            for (File f : subDirectories) {
+                retval.addAll(getAllInsecureDevicesInDirAndSubdir(f, type));
+            }
+        }
+
+        File[] filesInThisDirectory = dir.listFiles();
+        if (filesInThisDirectory == null) {
+            return retval;
+        }
+
+        for (File f: filesInThisDirectory) {
+            FileUtils.FileStatus status = new FileUtils.FileStatus();
+            FileUtils.getFileStatus(f.getAbsolutePath(), status, false);
+            if (status.isOfType(type)) {
+                if (f.canRead() || f.canWrite() || f.canExecute()) {
+                    retval.add(f);
+                }
+                if (status.uid == 2000) {
+                    // The shell user should not own any devices
+                    retval.add(f);
+                }
+
+                // Don't allow devices owned by GIDs
+                // accessible to non-privileged applications.
+                if ((status.gid == 1007)           // AID_LOG
+                          || (status.gid == 1015)  // AID_SDCARD_RW
+                          || (status.gid == 1023)  // AID_MEDIA_RW
+                          || (status.gid == 1028)  // AID_SDCARD_R
+                          || (status.gid == 2000)) // AID_SHELL
+                {
+                    if (status.hasModeFlag(FileUtils.S_IRGRP)
+                            || status.hasModeFlag(FileUtils.S_IWGRP)
+                            || status.hasModeFlag(FileUtils.S_IXGRP))
+                    {
+                        retval.add(f);
+                    }
+                }
+            }
+        }
+        return retval;
     }
 
     private Set<File> getWritableDirectoriesAndSubdirectoriesOf(File dir) throws Exception {

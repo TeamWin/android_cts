@@ -69,7 +69,7 @@ private:
     class Param {
     public:
         Param(ParamType type, android::String8& string);
-        explicit Param(TaskCase::Value& val);
+        Param(TaskCase::Value& val);
         ParamType getType();
         android::String8& getParamString();
         TaskCase::Value& getValue();
