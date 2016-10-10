@@ -43,7 +43,9 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 public class ValueAnimatorTest {
     private static final float EPSILON = 0.0001f;
+    private static float sPreviousAnimatorScale = 1.0f;
 
     private AnimationActivity mActivity;
     private ValueAnimator mValueAnimator;
@@ -69,6 +72,17 @@ public class ValueAnimatorTest {
         InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
         mActivity = mActivityRule.getActivity();
         mValueAnimator = mActivity.createAnimatorWithDuration(mDuration);
+    }
+
+    @BeforeClass
+    public static void beforeClass() {
+        sPreviousAnimatorScale = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(1.0f);
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ValueAnimator.setDurationScale(sPreviousAnimatorScale);
     }
 
     @Test
@@ -583,6 +597,51 @@ public class ValueAnimatorTest {
         });
         mActivityRule.runOnUiThread(() -> {
             animator.start();
+            animator.end();
+        });
+    }
+
+    @Test
+    public void testAnimatorsEnabled() throws Throwable {
+        float currentDurationScale = ValueAnimator.getDurationScale();
+        try {
+            testAnimatorsEnabledImpl(true);
+            testAnimatorsEnabledImpl(false);
+        } finally {
+            // restore scale value to avoid messing up future tests
+            ValueAnimator.setDurationScale(currentDurationScale);
+        }
+    }
+
+    private void testAnimatorsEnabledImpl(boolean enabled) throws Throwable {
+        final CountDownLatch endLatch = new CountDownLatch(1);
+        final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+        animator.setDuration(1000);
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                endLatch.countDown();
+            }
+        });
+        mActivityRule.runOnUiThread(() -> {
+            animator.start();
+        });
+
+        float durationScale = enabled ? 1 : 0;
+        ValueAnimator.setDurationScale(durationScale);
+
+        if (enabled) {
+            assertTrue("Animators not enabled with duration scale 1",
+                    ValueAnimator.areAnimatorsEnabled());
+            assertFalse("Animator ended too early when animators enabled = ",
+                    endLatch.await(50, TimeUnit.MILLISECONDS));
+        } else {
+            assertFalse("Animators enabled with duration scale 0",
+                    ValueAnimator.areAnimatorsEnabled());
+            assertTrue("Animator did not end when animators enabled = ",
+                    endLatch.await(50, TimeUnit.MILLISECONDS));
+        }
+        mActivityRule.runOnUiThread(() -> {
             animator.end();
         });
     }
