@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import its.error
-import pylab
+from matplotlib import pylab
 import sys
 from PIL import Image
 import numpy

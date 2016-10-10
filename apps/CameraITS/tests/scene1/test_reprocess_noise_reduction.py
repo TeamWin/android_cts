@@ -22,7 +22,7 @@ import matplotlib
 import matplotlib.pyplot
 import numpy
 import os.path
-import pylab
+from matplotlib import pylab
 
 def main():
     """Test that the android.noiseReduction.mode param is applied when set for
