@@ -17,13 +17,16 @@
 package android.os.cts;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.MemoryFile;
 import android.os.SystemClock;
@@ -300,7 +303,7 @@ public class SeccompTest extends AndroidTestCase {
     public static class IsolatedService extends Service {
         private final ISeccompIsolatedService.Stub mService = new ISeccompIsolatedService.Stub() {
             public boolean installFilter() {
-                return installTestFilter();
+                return installTestFilter(getAssets());
             }
 
             public boolean createThread() {
@@ -395,14 +398,78 @@ public class SeccompTest extends AndroidTestCase {
     }
 
     /**
+     * Loads an architecture-specific policy file from the AssetManager and
+     * installs it using Minijail.
+     */
+    private static boolean installTestFilter(final AssetManager assets) {
+        final String arch = getPolicyAbiString();
+        if (arch == null) {
+            throw new RuntimeException("Unsupported architecture/ABI");
+        }
+
+        try {
+            // Create a pipe onto which we will write the composite Seccomp policy.
+            ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
+            final ParcelFileDescriptor.AutoCloseOutputStream outputStream =
+                    new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]);
+
+            // The policy files to concat together.
+            final AssetFileDescriptor[] policyFiles = {
+                assets.openFd("minijail/isolated-" + arch + ".policy"),
+                assets.openFd("minijail/isolated-common.policy"),
+                arch.equals("i386") ? null : assets.openFd("minijail/isolated-common-not-i386.policy"),
+            };
+
+            // Convert our PID to ASCII byte string.
+            final byte[] myPidBytes = Integer.toString(Process.myPid()).getBytes();
+
+            // Concatenate all the policyFiles together on the pipe.
+            final byte[] buffer = new byte[2048];
+            for (AssetFileDescriptor policyFile : policyFiles) {
+                if (policyFile == null)
+                    continue;
+
+                final FileInputStream policyStream = policyFile.createInputStream();
+                while (true) {
+                    int bytesRead = policyStream.read(buffer);
+                    if (bytesRead == -1)
+                        break;
+
+                    // Replace the literal '$' with our PID. This allows us to lock down
+                    // certain syscalls that take a pid/tgid.
+                    for (int i = 0; i < bytesRead; i++) {
+                        if (buffer[i] == '$') {
+                            outputStream.write(myPidBytes);
+                        } else {
+                            outputStream.write(buffer[i]);
+                        }
+                    }
+                }
+                policyStream.close();
+            }
+            outputStream.close();
+
+            return nativeInstallTestFilter(pipe[0].detachFd());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load policy file", e);
+        }
+    }
+
+    /**
+     * Returns the architecture name policy file substring.
+     */
+    private static native String getPolicyAbiString();
+
+    /**
      * Runs the seccomp_bpf_unittest of the given name.
      */
     private native boolean runKernelUnitTest(final String name);
 
     /**
-     * Installs a test seccomp-bpf filter program that.
+     * Installs a Minijail seccomp policy from a FD. This takes ownership of
+     * the FD and closes it.
      */
-    private native static boolean installTestFilter();
+    private native static boolean nativeInstallTestFilter(int policyFd);
 
     /**
      * Attempts to get the CLOCK_BOOTTIME, which is a violation of the

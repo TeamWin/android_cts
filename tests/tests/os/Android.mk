@@ -45,6 +45,9 @@ LOCAL_COMPATIBILITY_SUITE := cts
 #LOCAL_SDK_VERSION := current
 LOCAL_JAVA_LIBRARIES += android.test.runner
 
+# Do not compress minijail policy files.
+LOCAL_AAPT_FLAGS := -0 .policy
+
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
