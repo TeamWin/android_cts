@@ -173,7 +173,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     @Option(name = DEVICE_TOKEN_OPTION,
             description = "Holds the devices' tokens, used when scheduling tests that have"
-                    + "prerequisits such as requiring a SIM card. Format is <serial>:<token>",
+                    + "prerequisites such as requiring a SIM card. Format is <serial>:<token>",
             importance = Importance.ALWAYS)
     private List<String> mDeviceTokens = new ArrayList<>();
 
