@@ -19,7 +19,7 @@ import its.objects
 import its.target
 import numpy
 import math
-import pylab
+from matplotlib import pylab
 import os.path
 import matplotlib
 import matplotlib.pyplot
