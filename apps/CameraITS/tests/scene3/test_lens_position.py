@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+
 import its.caps
 import its.device
 import its.image
@@ -99,20 +100,21 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
     for i, fd in enumerate(fds_f):
         reqs.append(its.objects.manual_capture_request(sensitivity, exp))
         reqs[i]['android.lens.focusDistance'] = fd
-    cap = cam.do_capture(reqs, fmt)
-    for i, _ in enumerate(reqs):
+    caps = cam.do_capture(reqs, fmt)
+    for i, cap in enumerate(caps):
         data = {'fd': fds_f[i]}
-        data['loc'] = cap[i]['metadata']['android.lens.focusDistance']
-        data['lens_moving'] = (cap[i]['metadata']['android.lens.state']
+        data['loc'] = cap['metadata']['android.lens.focusDistance']
+        data['lens_moving'] = (cap['metadata']['android.lens.state']
                                == 1)
-        timestamp = cap[i]['metadata']['android.sensor.timestamp'] * 1E-6
+        timestamp = cap['metadata']['android.sensor.timestamp'] * 1E-6
         if i == 0:
             timestamp_init = timestamp
         timestamp -= timestamp_init
         data['timestamp'] = timestamp
         print ' focus distance (diopters): %.3f' % data['fd']
         print ' current lens location (diopters): %.3f' % data['loc']
-        y, _, _ = its.image.convert_capture_to_planes(cap[i], props)
+        y, _, _ = its.image.convert_capture_to_planes(cap, props)
+        y = its.image.flip_mirror_img_per_argv(y)
         chart = its.image.normalize_img(its.image.get_image_patch(y,
                                                                   xnorm, ynorm,
                                                                   wnorm, hnorm))
