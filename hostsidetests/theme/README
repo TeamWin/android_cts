@@ -39,7 +39,7 @@ generate a new set of reference images, do the following:
      adb devices
 
   2. Image generation occurs on all devices in parallel. Resulting sets of
-     reference images are saved in assets/<api>/<dpi>.zip and will overwrite
+     reference images are saved in assets/<dpi>.zip and will overwrite
      any existing sets. Image generation may be started using:
 
      ./cts/hostsidetests/theme/generate_images.sh
