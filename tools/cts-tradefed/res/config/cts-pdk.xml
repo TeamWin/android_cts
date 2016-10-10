@@ -30,6 +30,7 @@
     <option name="compatibility:include-filter" value="CtsDeqpTestCases" />
     <option name="compatibility:include-filter" value="CtsRenderscriptTestCases" />
     <option name="compatibility:include-filter" value="CtsRenderscriptLegacyTestCases" />
+    <option name="compatibility:include-filter" value="CtsSensorTestCases" />
     <option name="compatibility:include-filter" value="CtsTelephonyTestCases" />
     <option name="compatibility:include-filter" value="CtsTelephony2TestCases" />
     <option name="compatibility:include-filter" value="CtsRsBlasTestCases" />
