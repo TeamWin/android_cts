@@ -2894,10 +2894,6 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test minimum mandatory requirements.
         assertTrue(doesMimeTypeHaveMinimumSpecVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_HEVC));
-        decodeInParallel(
-                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
-                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz,
-                300, 30 /* fps */, 1);
 
         boolean hevcIsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_HEVC);
         if (!hevcIsReady) {
@@ -2914,10 +2910,6 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         // Test minimum mandatory requirements.
         assertTrue(doesMimeTypeHaveMinimumSpecVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_VP9));
-        decodeInParallel(
-                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
-                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz,
-                300, 30 /* fps */, 1);
 
         boolean vp9IsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_VP9);
         if (!vp9IsReady) {
