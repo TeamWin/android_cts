@@ -21,8 +21,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaPlayer;
@@ -39,6 +37,11 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import android.view.cts.R;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import static org.junit.Assert.*;
+
 
 public class CapturedActivity extends Activity {
     public static class TestResult {
@@ -67,6 +70,7 @@ public class CapturedActivity extends Activity {
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private volatile boolean mOnWatch;
+    private CountDownLatch mCountDownLatch;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -83,6 +87,7 @@ public class CapturedActivity extends Activity {
         mProjectionManager =
                 (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
+        mCountDownLatch = new CountDownLatch(1);
         startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
 
         mMediaPlayer = MediaPlayer.create(this, R.raw.colors_video);
@@ -121,9 +126,10 @@ public class CapturedActivity extends Activity {
         Log.d(TAG, "onActivityResult");
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
         mMediaProjection.registerCallback(new MediaProjectionCallback(), null);
+        mCountDownLatch.countDown();
     }
 
-    public TestResult runTest(AnimationTestCase animationTestCase) {
+    public TestResult runTest(AnimationTestCase animationTestCase) throws InterruptedException {
         TestResult testResult = new TestResult();
         if (mOnWatch) {
             /**
@@ -137,6 +143,9 @@ public class CapturedActivity extends Activity {
             testResult.failFrames = 0;
             return testResult;
         }
+
+        assertTrue("Can't initialize mediaProjection",
+                mCountDownLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
 
         mHandler.post(() -> {
             Log.d(TAG, "Setting up test case");
@@ -189,11 +198,7 @@ public class CapturedActivity extends Activity {
         }, END_DELAY_MS);
 
         synchronized (mLock) {
-            try {
-                mLock.wait(TIME_OUT_MS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            mLock.wait(TIME_OUT_MS);
         }
         Log.d(TAG, "Test finished, passFrames " + testResult.passFrames
                 + ", failFrames " + testResult.failFrames);
