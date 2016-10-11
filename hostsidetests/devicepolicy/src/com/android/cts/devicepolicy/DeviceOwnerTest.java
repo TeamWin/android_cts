@@ -385,9 +385,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         // This case runs when DO is provisioned
         // mHasFeature == true and provisioned, can't provision DO again.
         executeDeviceTestMethod(".PreDeviceOwnerTest", "testIsProvisioningAllowedFalse");
-        // Can't provision Managed Profile when DO is on
+        // Can provision Managed Profile when DO is on
+        // STOPSHIP: Only allow creating a managed profile if allowed by the device owner.
+        // b/31952368
         executeDeviceTestMethod(".PreDeviceOwnerTest",
-                "testIsProvisioningAllowedFalseForManagedProfileAction");
+                "testIsProvisioningAllowedTrueForManagedProfileAction");
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
