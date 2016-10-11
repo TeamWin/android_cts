@@ -66,13 +66,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
         setDeviceRotation(0);
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes orientationASizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 FULLSCREEN_WORKSPACE_STACK_ID);
 
-        setDeviceRotation(1);
-        final ReportedSizes orientationBSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        assertSizesRotate(orientationASizes, orientationBSizes);
+        rotateAndCheckSizes(initialSizes, FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
     /**
@@ -82,13 +79,37 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         setDeviceRotation(0);
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
-        final ReportedSizes orientationASizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
 
-        setDeviceRotation(1);
-        final ReportedSizes orientationBSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
-                DOCKED_STACK_ID);
-        assertSizesRotate(orientationASizes, orientationBSizes);
+        rotateAndCheckSizes(initialSizes, DOCKED_STACK_ID);
+    }
+
+    /**
+     * Same as {@link #testConfigurationUpdatesWhenRotatingWhileDocked()} but when the Activity
+     * is launched to side from docked stack.
+     */
+    public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
+        setDeviceRotation(0);
+
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        launchActivityToSide(false /* randomData */, false /* multipleTaskFlag */,
+                RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        rotateAndCheckSizes(initialSizes, FULLSCREEN_WORKSPACE_STACK_ID);
+    }
+
+    private void rotateAndCheckSizes(ReportedSizes prevSizes, int stackId) throws Exception {
+        for (int rotation = 3; rotation >= 0; --rotation) {
+            clearLogcat();
+            setDeviceRotation(rotation);
+            final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                    stackId);
+            assertSizesRotate(prevSizes, rotatedSizes);
+            prevSizes = rotatedSizes;
+        }
     }
 
     /**
@@ -207,6 +228,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         final boolean afterConfigPortrait = rotationB.widthDp < rotationB.heightDp;
         assertEquals(beforePortrait, beforeConfigPortrait);
         assertEquals(afterPortrait, afterConfigPortrait);
+
+        assertEquals(rotationA.smallestWidthDp, rotationB.smallestWidthDp);
     }
 
     /**
@@ -238,6 +261,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertEquals(firstSize.displayHeight, secondSize.displayHeight);
         assertEquals(firstSize.metricsWidth, secondSize.metricsWidth);
         assertEquals(firstSize.metricsHeight, secondSize.metricsHeight);
+        assertEquals(firstSize.smallestWidthDp, secondSize.smallestWidthDp);
     }
 
     private ReportedSizes getActivityDisplaySize(String activityName, int stackId)
