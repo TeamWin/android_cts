@@ -17,7 +17,6 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.util.NoOpTestInvocationListener;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
@@ -25,6 +24,7 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.StubTestInvocationListener;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
@@ -133,7 +133,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         return success;
     }
 
-    public class TargetPreparerListener extends NoOpTestInvocationListener {
+    public class TargetPreparerListener extends StubTestInvocationListener {
 
         @Override
         public void testEnded(TestIdentifier test, Map<String, String> metrics) {
