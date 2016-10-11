@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -102,6 +104,37 @@ class DeviceTestCompanion extends TestCompanion {
         return true;
     }
 
+    /**
+     * Read packages of (size:data) send the data back to the sender. Do this until the package size
+     * is declared as 0.
+     *
+     * @param is Stream to read from
+     * @param os Stream to write to
+     *
+     * @return {@code true} iff the bytes could be read and written
+     *
+     * @throws IOException
+     */
+    private boolean echoUntilStopSignal(@NonNull InputStream is, @NonNull OutputStream os) {
+        try {
+            while (!shouldAbort()) {
+                byte[] dataBytes = new byte[9];
+                int numRead = is.read(dataBytes);
+                assertEquals(9, numRead);
+
+                if (shouldAbort() || dataBytes[0] == 0) {
+                    break;
+                }
+
+                os.write(dataBytes);
+            }
+
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     @Override
     protected void runTest() throws Throwable {
         UsbAccessory accessory;
@@ -172,6 +205,9 @@ class DeviceTestCompanion extends TestCompanion {
                             isSuccess = true;
                         }
                         break;
+                        case "Echo until stop signal":
+                            isSuccess = echoUntilStopSignal(is, os);
+                            break;
                         case "done":
                         default:
                             isSuccess = true;

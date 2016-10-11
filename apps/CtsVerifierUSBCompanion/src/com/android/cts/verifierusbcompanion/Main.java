@@ -21,6 +21,7 @@ import android.support.annotation.Nullable;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -36,6 +37,8 @@ public class Main extends Activity implements TestCompanion.TestObserver {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.main);
 
