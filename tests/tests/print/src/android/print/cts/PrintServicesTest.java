@@ -39,6 +39,7 @@ import android.print.PrinterCapabilitiesInfo;
 import android.print.PrinterId;
 import android.print.PrinterInfo;
 import android.print.cts.services.FirstPrintService;
+import android.print.cts.services.InfoActivity;
 import android.print.cts.services.PrintServiceCallbacks;
 import android.print.cts.services.PrinterDiscoverySessionCallbacks;
 import android.print.cts.services.SecondPrintService;
@@ -46,11 +47,11 @@ import android.print.cts.services.StubbablePrintService;
 import android.print.cts.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
+import android.printservice.PrintService;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -83,7 +84,7 @@ public class PrintServicesTest extends BasePrintTest {
      * @return The mock session callbacks
      */
     private PrinterDiscoverySessionCallbacks createMockPrinterDiscoverySessionCallbacks(
-            String printerName) {
+            String printerName, ArrayList<String> trackedPrinters) {
         return createMockPrinterDiscoverySessionCallbacks(invocation -> {
             // Get the session.
             StubbablePrinterDiscoverySession session =
@@ -106,9 +107,11 @@ public class PrintServicesTest extends BasePrintTest {
                                 PrintAttributes.COLOR_MODE_COLOR)
                         .build();
 
-                Intent infoIntent = new Intent(getActivity(), Activity.class);
+                Intent infoIntent = new Intent(getActivity(), InfoActivity.class);
+                infoIntent.putExtra("PRINTER_NAME", PRINTER_NAME);
+
                 PendingIntent infoPendingIntent = PendingIntent.getActivity(getActivity(), 0,
-                        infoIntent, PendingIntent.FLAG_IMMUTABLE);
+                        infoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
                 sPrinter = new PrinterInfo.Builder(printerId, printerName,
                         PrinterInfo.STATUS_IDLE)
@@ -124,7 +127,16 @@ public class PrintServicesTest extends BasePrintTest {
             onPrinterDiscoverySessionCreateCalled();
 
             return null;
-        }, null, null, invocation -> null, invocation -> {
+        }, null, null, invocation -> {
+            if (trackedPrinters != null) {
+                synchronized (trackedPrinters) {
+                    trackedPrinters
+                            .add(((PrinterId) invocation.getArguments()[0]).getLocalId());
+                    trackedPrinters.notifyAll();
+                }
+            }
+            return null;
+        }, invocation -> {
             CustomPrinterIconCallback callback = (CustomPrinterIconCallback) invocation
                     .getArguments()[2];
 
@@ -132,7 +144,16 @@ public class PrintServicesTest extends BasePrintTest {
                 callback.onCustomPrinterIconLoaded(mIcon);
             }
             return null;
-        }, null, invocation -> {
+        }, invocation -> {
+            if (trackedPrinters != null) {
+                synchronized (trackedPrinters) {
+                    trackedPrinters.remove(((PrinterId) invocation.getArguments()[0]).getLocalId());
+                    trackedPrinters.notifyAll();
+                }
+            }
+
+            return null;
+        }, invocation -> {
             // Take a note onDestroy was called.
             onPrinterDiscoverySessionDestroyCalled();
             return null;
@@ -247,7 +268,7 @@ public class PrintServicesTest extends BasePrintTest {
     public void progress() throws Throwable {
         // Create the session callbacks that we will be checking.
         PrinterDiscoverySessionCallbacks sessionCallbacks
-                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME);
+                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME, null);
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks serviceCallbacks = createMockPrinterServiceCallbacks(
@@ -353,7 +374,7 @@ public class PrintServicesTest extends BasePrintTest {
     public void updateIcon() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks sessionCallbacks
-                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME);
+                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME, null);
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks serviceCallbacks = createMockPrinterServiceCallbacks(
@@ -417,7 +438,7 @@ public class PrintServicesTest extends BasePrintTest {
     public void cannotUseAttachBaseContext() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks sessionCallbacks
-                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME);
+                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME, null);
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks serviceCallbacks = createMockPrinterServiceCallbacks(
@@ -461,14 +482,14 @@ public class PrintServicesTest extends BasePrintTest {
 
             // Configure first print service
             PrinterDiscoverySessionCallbacks sessionCallbacks1
-                    = createMockPrinterDiscoverySessionCallbacks("Printer1");
+                    = createMockPrinterDiscoverySessionCallbacks("Printer1", null);
             PrintServiceCallbacks serviceCallbacks1 = createMockPrinterServiceCallbacks(
                     sessionCallbacks1);
             FirstPrintService.setCallbacks(serviceCallbacks1);
 
             // Configure second print service
             PrinterDiscoverySessionCallbacks sessionCallbacks2
-                    = createMockPrinterDiscoverySessionCallbacks("Printer2");
+                    = createMockPrinterDiscoverySessionCallbacks("Printer2", null);
             PrintServiceCallbacks serviceCallbacks2 = createMockPrinterServiceCallbacks(
                     sessionCallbacks2);
             SecondPrintService.setCallbacks(serviceCallbacks2);
@@ -545,5 +566,66 @@ public class PrintServicesTest extends BasePrintTest {
         } finally {
             clearPrintSpoolerData();
         }
+    }
+
+    /**
+     * Test that the icon get be updated.
+     *
+     * @throws Throwable If anything is unexpected.
+     */
+    @Test
+    public void selectViaInfoIntent() throws Throwable {
+        ArrayList<String> trackedPrinters = new ArrayList<>();
+
+        // Create the session callbacks that we will be checking.
+        final PrinterDiscoverySessionCallbacks sessionCallbacks
+                = createMockPrinterDiscoverySessionCallbacks(PRINTER_NAME, trackedPrinters);
+
+        // Create the service callbacks for the first print service.
+        PrintServiceCallbacks serviceCallbacks = createMockPrinterServiceCallbacks(
+                sessionCallbacks);
+
+        // Configure the print services.
+        FirstPrintService.setCallbacks(serviceCallbacks);
+
+        // We don't use the second service, but we have to still configure it
+        SecondPrintService.setCallbacks(createMockPrintServiceCallbacks(null, null, null));
+
+        // Create a print adapter that respects the print contract.
+        PrintDocumentAdapter adapter = createDefaultPrintDocumentAdapter(1);
+
+        // Start printing.
+        print(adapter);
+
+        // Enter select printer activity
+        selectPrinter("All printers…");
+
+        assertFalse(trackedPrinters.contains(PRINTER_NAME));
+
+        InfoActivity.addObserver(activity -> {
+            Intent intent = activity.getIntent();
+
+            assertEquals(PRINTER_NAME, intent.getStringExtra("PRINTER_NAME"));
+            assertTrue(intent.getBooleanExtra(PrintService.EXTRA_CAN_SELECT_PRINTER,
+                            false));
+
+            activity.setResult(Activity.RESULT_OK,
+                    (new Intent()).putExtra(PrintService.EXTRA_SELECT_PRINTER, true));
+            activity.finish();
+        });
+
+        // Open info activity which executed the code above
+        UiObject moreInfoButton = getUiDevice().findObject(new UiSelector().resourceId(
+                "com.android.printspooler:id/more_info"));
+        moreInfoButton.click();
+
+        // Wait until printer is selected and thereby tracked
+        eventually(() -> assertTrue(trackedPrinters.contains(PRINTER_NAME)));
+
+        InfoActivity.clearObservers();
+
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 }

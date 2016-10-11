@@ -461,13 +461,14 @@ abstract class BasePrintTest {
 
     void selectPrinter(String printerName) throws UiObjectNotFoundException, IOException {
         try {
-            long delay = 100;
+            long delay = 1;
             while (true) {
                 try {
                     UiObject destinationSpinner = sUiDevice.findObject(new UiSelector().resourceId(
                             "com.android.printspooler:id/destination_spinner"));
 
                     destinationSpinner.click();
+                    getUiDevice().waitForIdle();
 
                     // Give spinner some time to expand
                     try {
@@ -484,17 +485,24 @@ abstract class BasePrintTest {
                     Log.e(LOG_TAG, "Could not select printer " + printerName, e);
                 }
 
-                // Make sure printer is selected
-                if (getUiDevice().hasObject(By.text(printerName))) {
-                    break;
-                } else {
-                    if (delay <= OPERATION_TIMEOUT_MILLIS) {
-                        Log.w(LOG_TAG, "Cannot find printer " + printerName + ", retrying.");
-                        delay *= 2;
+                getUiDevice().waitForIdle();
+
+                if (!printerName.equals("All printers…")) {
+                    // Make sure printer is selected
+                    if (getUiDevice().hasObject(By.text(printerName))) {
+                        break;
                     } else {
-                        throw new UiObjectNotFoundException("Could find printer " + printerName +
-                                " even though we retried");
+                        if (delay <= OPERATION_TIMEOUT_MILLIS) {
+                            Log.w(LOG_TAG, "Cannot find printer " + printerName + ", retrying.");
+                            delay *= 2;
+                        } else {
+                            throw new UiObjectNotFoundException(
+                                    "Could find printer " + printerName +
+                                            " even though we retried");
+                        }
                     }
+                } else {
+                    break;
                 }
             }
         } catch (UiObjectNotFoundException e) {
