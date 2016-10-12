@@ -227,7 +227,7 @@ public class SurfaceViewSyncTest {
     // Tests
     ///////////////////////////////////////////////////////////////////////////
 
-    private void verifyTest(AnimationTestCase testCase) {
+    private void verifyTest(AnimationTestCase testCase) throws InterruptedException {
         CapturedActivity.TestResult result = mActivity.runTest(testCase);
         saveFailureCaptures(result.failures);
 
@@ -247,7 +247,7 @@ public class SurfaceViewSyncTest {
 
     /** Draws a moving 10x10 black rectangle, validates 100 pixels of black are seen each frame */
     @Test
-    public void testSmallRect() {
+    public void testSmallRect() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 context -> new View(context) {
                     // draw a single pixel
@@ -276,7 +276,7 @@ public class SurfaceViewSyncTest {
      * approximate to avoid rounding brittleness.
      */
     @Test
-    public void testEmptySurfaceView() {
+    public void testEmptySurfaceView() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sEmptySurfaceViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
@@ -286,7 +286,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testSurfaceViewSmallScale() {
+    public void testSurfaceViewSmallScale() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
@@ -295,7 +295,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testSurfaceViewBigScale() {
+    public void testSurfaceViewBigScale() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
@@ -304,7 +304,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewTranslate() {
+    public void testVideoSurfaceViewTranslate() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
@@ -313,7 +313,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewRotated() {
+    public void testVideoSurfaceViewRotated() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
@@ -325,7 +325,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewEdgeCoverage() {
+    public void testVideoSurfaceViewEdgeCoverage() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
@@ -343,7 +343,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewCornerCoverage() {
+    public void testVideoSurfaceViewCornerCoverage() throws InterruptedException {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
