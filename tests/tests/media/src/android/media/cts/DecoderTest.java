@@ -2742,6 +2742,32 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     /**
+     * Returns true if there exists a codec supporting the given MIME type that meets the
+     * minimum specification for VR high performance requirements.
+     *
+     * The requirements are as follows:
+     *   - At least 243000 blocks per second (where blocks are defined as 16x16 -- note this
+     *   is equivalent to 1920x1080@30fps)
+     *   - Feature adaptive-playback present
+     */
+    private static boolean doesMimeTypeHaveMinimumSpecVrReadyCodec(String mimeType) {
+        List<CodecCapabilities> caps = getCodecCapabilitiesForMimeType(mimeType);
+        for (CodecCapabilities c : caps) {
+            if (!c.isFeatureSupported(CodecCapabilities.FEATURE_AdaptivePlayback)) {
+                continue;
+            }
+
+            if (!c.getVideoCapabilities().areSizeAndRateSupported(1920, 1080, 30.0)) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Returns true if there exists a codec supporting the given MIME type that meets VR high
      * performance requirements.
      *
@@ -2861,6 +2887,13 @@ public class DecoderTest extends MediaPlayerTestBase {
             return;
         }
 
+        // Test minimum mandatory requirements.
+        assertTrue(doesMimeTypeHaveMinimumSpecVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        decodeInParallel(
+                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
+                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz,
+                300, 30 /* fps */, 1);
+
         boolean hevcIsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_HEVC);
         if (!hevcIsReady) {
             MediaUtils.skipTest(TAG, "HEVC isn't required to be VR ready");
@@ -2879,6 +2912,13 @@ public class DecoderTest extends MediaPlayerTestBase {
             MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
             return;
         }
+
+        // Test minimum mandatory requirements.
+        assertTrue(doesMimeTypeHaveMinimumSpecVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_VP9));
+        decodeInParallel(
+                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
+                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz,
+                300, 30 /* fps */, 1);
 
         boolean vp9IsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_VP9);
         if (!vp9IsReady) {
