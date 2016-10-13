@@ -274,14 +274,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 .putExtra(IntentDrivenTestActivity.EXTRA_ID, id)
                 .putExtra(IntentDrivenTestActivity.EXTRA_TITLE, titleRes)
                 .putExtra(IntentDrivenTestActivity.EXTRA_INFO, infoRes)
-                .putExtra(IntentDrivenTestActivity.EXTRA_BUTTONS, buttonInfos),
-                null);
+                .putExtra(IntentDrivenTestActivity.EXTRA_BUTTONS, buttonInfos));
     }
 
     static TestListItem createTestItem(Activity activity, String id, int titleRes,
             Intent intent) {
-        return TestListItem.newTest(activity, titleRes, id, intent.putExtra(EXTRA_TEST_ID, id),
-                null);
+        return TestListItem.newTest(activity, titleRes, id, intent.putExtra(EXTRA_TEST_ID, id));
     }
 
     private Intent createTearDownIntent() {

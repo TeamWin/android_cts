@@ -49,85 +49,85 @@ public class HceEmulatorTestActivity extends PassFailButtons.TestListActivity {
              * Only add this test when supported in platform
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_default_route_emulator,
                     DefaultRouteEmulatorActivity.class.getName(),
-                    new Intent(this, DefaultRouteEmulatorActivity.class), null));
+                    new Intent(this, DefaultRouteEmulatorActivity.class)));
             */
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_protocol_params_emulator,
                     ProtocolParamsEmulatorActivity.class.getName(),
-                    new Intent(this, ProtocolParamsEmulatorActivity.class), null));
+                    new Intent(this, ProtocolParamsEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_single_payment_emulator,
                     SinglePaymentEmulatorActivity.class.getName(),
-                    new Intent(this, SinglePaymentEmulatorActivity.class), null));
+                    new Intent(this, SinglePaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_dual_payment_emulator,
                     DualPaymentEmulatorActivity.class.getName(),
-                    new Intent(this, DualPaymentEmulatorActivity.class), null));
+                    new Intent(this, DualPaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_change_default_emulator,
                     ChangeDefaultEmulatorActivity.class.getName(),
-                    new Intent(this, ChangeDefaultEmulatorActivity.class), null));
+                    new Intent(this, ChangeDefaultEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_foreground_payment_emulator,
                     ForegroundPaymentEmulatorActivity.class.getName(),
-                    new Intent(this, ForegroundPaymentEmulatorActivity.class), null));
+                    new Intent(this, ForegroundPaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_single_non_payment_emulator,
                     SingleNonPaymentEmulatorActivity.class.getName(),
-                    new Intent(this, SingleNonPaymentEmulatorActivity.class), null));
+                    new Intent(this, SingleNonPaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_dual_non_payment_emulator,
                     DualNonPaymentEmulatorActivity.class.getName(),
-                    new Intent(this, DualNonPaymentEmulatorActivity.class), null));
+                    new Intent(this, DualNonPaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_conflicting_non_payment_emulator,
                     ConflictingNonPaymentEmulatorActivity.class.getName(),
-                    new Intent(this, ConflictingNonPaymentEmulatorActivity.class), null));
+                    new Intent(this, ConflictingNonPaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_foreground_non_payment_emulator,
                     ForegroundNonPaymentEmulatorActivity.class.getName(),
-                    new Intent(this, ForegroundNonPaymentEmulatorActivity.class), null));
+                    new Intent(this, ForegroundNonPaymentEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_throughput_emulator,
                     ThroughputEmulatorActivity.class.getName(),
-                    new Intent(this, ThroughputEmulatorActivity.class), null));
+                    new Intent(this, ThroughputEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_tap_test_emulator,
                     TapTestEmulatorActivity.class.getName(),
-                    new Intent(this, TapTestEmulatorActivity.class), null));
+                    new Intent(this, TapTestEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_offhost_service_emulator,
                     OffHostEmulatorActivity.class.getName(),
-                    new Intent(this, OffHostEmulatorActivity.class), null));
+                    new Intent(this, OffHostEmulatorActivity.class)));
 
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_on_and_offhost_service_emulator,
                     OnAndOffHostEmulatorActivity.class.getName(),
-                    new Intent(this, OnAndOffHostEmulatorActivity.class), null));
+                    new Intent(this, OnAndOffHostEmulatorActivity.class)));
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 adapter.add(TestListItem.newTest(this, R.string.nfc_hce_large_num_aids_emulator,
                         LargeNumAidsEmulatorActivity.class.getName(),
-                        new Intent(this, LargeNumAidsEmulatorActivity.class), null));
+                        new Intent(this, LargeNumAidsEmulatorActivity.class)));
 
                 adapter.add(TestListItem.newTest(this, R.string.nfc_hce_payment_dynamic_aids_emulator,
                         DynamicAidEmulatorActivity.class.getName(),
-                        new Intent(this, DynamicAidEmulatorActivity.class), null));
+                        new Intent(this, DynamicAidEmulatorActivity.class)));
 
                 if (cardEmulation.supportsAidPrefixRegistration()) {
                     adapter.add(TestListItem.newTest(this, R.string.nfc_hce_payment_prefix_aids_emulator,
                             PrefixPaymentEmulatorActivity.class.getName(),
-                            new Intent(this, PrefixPaymentEmulatorActivity.class), null));
+                            new Intent(this, PrefixPaymentEmulatorActivity.class)));
 
                     adapter.add(TestListItem.newTest(this, R.string.nfc_hce_payment_prefix_aids_emulator_2,
                             PrefixPaymentEmulator2Activity.class.getName(),
-                            new Intent(this, PrefixPaymentEmulator2Activity.class), null));
+                            new Intent(this, PrefixPaymentEmulator2Activity.class)));
 
                     adapter.add(TestListItem.newTest(this, R.string.nfc_hce_other_prefix_aids_emulator,
                             DualNonPaymentPrefixEmulatorActivity.class.getName(),
-                            new Intent(this, DualNonPaymentPrefixEmulatorActivity.class), null));
+                            new Intent(this, DualNonPaymentPrefixEmulatorActivity.class)));
 
                     adapter.add(TestListItem.newTest(this, R.string.nfc_hce_other_conflicting_prefix_aids_emulator,
                             ConflictingNonPaymentPrefixEmulatorActivity.class.getName(),
-                            new Intent(this, ConflictingNonPaymentPrefixEmulatorActivity.class), null));
+                            new Intent(this, ConflictingNonPaymentPrefixEmulatorActivity.class)));
                 }
             }
         }

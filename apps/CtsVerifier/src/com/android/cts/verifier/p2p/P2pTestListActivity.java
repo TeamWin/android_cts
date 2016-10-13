@@ -71,31 +71,31 @@ public class P2pTestListActivity extends PassFailButtons.TestListActivity {
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_go_neg_responder_test,
                 GoNegResponderTestActivity.class.getName(),
-                new Intent(this, GoNegResponderTestActivity.class), null));
+                new Intent(this, GoNegResponderTestActivity.class)));
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_go_neg_requester_test,
                 GoNegRequesterTestListActivity.class.getName(),
-                new Intent(this, GoNegRequesterTestListActivity.class), null));
+                new Intent(this, GoNegRequesterTestListActivity.class)));
 
         adapter.add(TestListItem.newCategory(this, R.string.p2p_join));
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_group_owner_test,
                 GoTestActivity.class.getName(),
-                new Intent(this, GoTestActivity.class), null));
+                new Intent(this, GoTestActivity.class)));
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_group_client_test,
                 P2pClientTestListActivity.class.getName(),
-                new Intent(this, P2pClientTestListActivity.class), null));
+                new Intent(this, P2pClientTestListActivity.class)));
 
         adapter.add(TestListItem.newCategory(this, R.string.p2p_service_discovery));
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_service_discovery_responder_test,
                 ServiceResponderTestActivity.class.getName(),
-                new Intent(this, ServiceResponderTestActivity.class), null));
+                new Intent(this, ServiceResponderTestActivity.class)));
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_service_discovery_requester_test,
                 ServiceRequesterTestListActivity.class.getName(),
-                new Intent(this, ServiceRequesterTestListActivity.class), null));
+                new Intent(this, ServiceRequesterTestListActivity.class)));
 
 
         adapter.registerDataSetObserver(new DataSetObserver() {

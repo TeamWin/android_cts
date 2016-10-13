@@ -224,12 +224,12 @@ public abstract class DialogTestListActivity extends PassFailButtons.TestListAct
         private String mManualInstruction;
 
         public DialogTestListItem(Context context, int nameResId, String testId) {
-            super(context.getString(nameResId), testId, null, null, null, null);
+            super(context.getString(nameResId), testId, null);
         }
 
         public DialogTestListItem(Context context, int nameResId, String testId,
                 int testInstructionResId, Intent testIntent) {
-            super(context.getString(nameResId), testId, testIntent, null, null, null);
+            super(context.getString(nameResId), testId, testIntent);
             mManualInstruction = context.getString(testInstructionResId);
         }
 
