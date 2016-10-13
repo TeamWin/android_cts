@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.security;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -59,10 +58,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-@ConditionalTest(
-    required_features = "android.hardware.fingerprint",
-    excluded_features = "android.hardware.type.television:android.software.leanback:android.hardware.type.watch"
-)
 public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     private static final String TAG = "FingerprintBoundKeysTest";
 

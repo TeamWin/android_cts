@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.sensors.base.SensorCtsTestActivity;
 
 import android.hardware.cts.SensorTest;
@@ -25,7 +24,6 @@ import android.hardware.cts.SensorTest;
  * Activity to execute CTS sensor tests.
  * It is a wrapper for {@link SensorTest} running with AndroidJUnitRunner.
  */
-@ConditionalTest(applicable_features = "android.hardware.sensor.accelerometer:android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector:android.hardware.sensor.heartrate:android.hardware.sensor.compass:android.hardware.sensor.ambient_temperature")
 public class SensorTestActivity extends SensorCtsTestActivity {
     public SensorTestActivity() {
         super(SensorTest.class);

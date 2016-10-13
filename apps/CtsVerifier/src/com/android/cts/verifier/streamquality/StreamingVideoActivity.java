@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.streamquality;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -47,7 +46,6 @@ import java.net.URL;
  * different protocols for a short amount of time, after which users can mark Pass/Fail depending
  * on the smoothness and subjective quality of the video.
  */
-@ConditionalTest(excluded_features = "android.hardware.type.watch")
 public class StreamingVideoActivity extends PassFailButtons.TestListActivity {
     /**
      * Simple storage class for stream information.

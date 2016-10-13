@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.projection.video;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -24,7 +23,6 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.projection.ProjectionActivity;
 import com.android.cts.verifier.projection.ProjectionPresentationType;
 
-@ConditionalTest(excluded_features = "android.hardware.type.watch")
 public class ProjectionVideoActivity extends ProjectionActivity {
     private static final String TAG = ProjectionVideoActivity.class.getSimpleName();
 

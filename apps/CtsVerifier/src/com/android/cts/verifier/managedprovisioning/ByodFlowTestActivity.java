@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -48,7 +47,6 @@ import com.android.cts.verifier.TestResult;
  * The first two verifications are performed automatically, by interacting with profile owner using
  * cross-profile intents, while the last two are carried out manually by the user.
  */
-@ConditionalTest(required_features = "android.software.managed_users:android.software.device_admin")
 public class ByodFlowTestActivity extends DialogTestListActivity {
 
     private final String TAG = "ByodFlowTestActivity";

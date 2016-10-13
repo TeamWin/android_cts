@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.net;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -76,7 +75,6 @@ import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
  *     [4] The screen is put to sleep.
  *     [5] After two minutes, another IPv6 connectivity test is performed.
  */
-@ConditionalTest(required_features = "android.hardware.wifi")
 public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity {
 
     private static final String TAG = ConnectivityScreenOffTestActivity.class.getSimpleName();

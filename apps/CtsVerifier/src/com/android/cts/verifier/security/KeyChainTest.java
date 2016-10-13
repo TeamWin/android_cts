@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.security;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -72,7 +71,6 @@ import org.mockito.Mockito;
 /**
  * Simple activity based test that exercises the KeyChain API
  */
-@ConditionalTest(excluded_features = "android.hardware.type.watch:android.hardware.type.television:android.software.leanback")
 public class KeyChainTest extends PassFailButtons.Activity implements View.OnClickListener {
 
     private static final String TAG = "KeyChainTest";

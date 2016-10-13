@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.projection.list;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -25,7 +24,6 @@ import com.android.cts.verifier.projection.ProjectionActivity;
 import com.android.cts.verifier.projection.ProjectionPresentationType;
 import com.android.cts.verifier.projection.cube.ProjectionCubeActivity;
 
-@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class ProjectionListActivity extends ProjectionActivity {
     private static final String TAG = ProjectionCubeActivity.class.getSimpleName();
 

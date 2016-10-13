@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.sensors.base.SensorCtsVerifierTestActivity;
 import com.android.cts.verifier.sensors.renderers.GLRotationGuideRenderer;
@@ -33,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Semi-automated test that focuses on characteristics associated with Gyroscope measurements.
  */
-@ConditionalTest(required_features = "android.hardware.sensor.gyroscope")
 public class GyroscopeMeasurementTestActivity extends SensorCtsVerifierTestActivity {
     private static final float THRESHOLD_CALIBRATED_UNCALIBRATED_RAD_SEC = 0.01f;
     private static final float THRESHOLD_AXIS_UNDER_ROTATION_DEG = 10.0f;

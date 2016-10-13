@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.tv;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -37,7 +36,6 @@ import android.widget.Toast;
  * Tests for verifying TV app behavior on parental control.
  */
 @SuppressLint("NewApi")
-@ConditionalTest(required_features = "android.software.live_tv")
 public class ParentalControlTestActivity extends TvAppVerifierActivity
         implements View.OnClickListener {
     private static final String TAG = "ParentalControlTestActivity";

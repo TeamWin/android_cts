@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.security;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -51,7 +50,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-@ConditionalTest(required_features = "android.software.device_admin")
 public class ScreenLockBoundKeysTest extends PassFailButtons.Activity {
 
     /** Alias for our key in the Android Key Store. */

@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.usb;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
@@ -55,10 +54,6 @@ import java.io.OutputStream;
  * Test for USB accessories. The test activity interacts with a cts-usb-accessory program that
  * acts as an accessory by exchanging a series of messages.
  */
-@ConditionalTest(
-    required_features = "android.hardware.usb.accessory",
-    excluded_features = "android.hardware.type.watch"
-)
 public class UsbAccessoryTestActivity extends PassFailButtons.Activity {
 
     private static final String TAG = "UsbAccessoryTest";

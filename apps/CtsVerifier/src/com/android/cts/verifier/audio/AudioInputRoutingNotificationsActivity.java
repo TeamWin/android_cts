@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 
 import android.content.Context;
@@ -40,7 +39,6 @@ import android.widget.TextView;
 /**
  * Tests AudioRecord (re)Routing messages.
  */
-@ConditionalTest(required_features = "android.hardware.microphone")
 public class AudioInputRoutingNotificationsActivity extends HeadsetHonorSystemActivity {
     private static final String TAG = "AudioInputRoutingNotificationsActivity";
 

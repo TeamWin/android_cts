@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.compatibility.common.util.ReportLog;
@@ -47,10 +46,6 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
-@ConditionalTest(
-    required_features = "android.hardware.microphone:android.hardware.audio.output",
-    excluded_features = "android.hardware.type.watch:android.hardware.type.television"
-)
 public class AudioLoopbackActivity extends PassFailButtons.Activity {
     private static final String TAG = "AudioLoopbackActivity";
 

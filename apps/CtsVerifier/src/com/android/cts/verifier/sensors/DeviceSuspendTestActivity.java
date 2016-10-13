@@ -1,6 +1,5 @@
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -46,7 +45,6 @@ import android.view.View;
 
 import junit.framework.Assert;
 
-@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class DeviceSuspendTestActivity
             extends SensorCtsVerifierTestActivity {
         public DeviceSuspendTestActivity() {

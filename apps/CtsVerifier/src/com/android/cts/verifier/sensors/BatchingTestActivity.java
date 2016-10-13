@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.sensors.base.SensorCtsVerifierTestActivity;
 
@@ -34,7 +33,6 @@ import java.util.concurrent.TimeUnit;
  * If a sensor supports the batching mode, FifoReservedEventCount for that sensor should be greater
  * than one.
  */
-@ConditionalTest(applicable_features = "android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector:android.hardware.sensor.proximity:android.hardware.sensor.light")
 public class BatchingTestActivity extends SensorCtsVerifierTestActivity {
     public BatchingTestActivity() {
         super(BatchingTestActivity.class);
