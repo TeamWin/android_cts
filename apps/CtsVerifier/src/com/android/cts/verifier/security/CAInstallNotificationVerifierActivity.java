@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.security;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -40,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@ConditionalTest(excluded_features = "android.hardware.type.watch:android.hardware.type.television:android.software.leanback")
 public class CAInstallNotificationVerifierActivity extends PassFailButtons.Activity
 implements Runnable {
     static final String TAG = CAInstallNotificationVerifierActivity.class.getSimpleName();

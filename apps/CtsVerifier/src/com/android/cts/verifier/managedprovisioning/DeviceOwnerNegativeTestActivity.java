@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
@@ -32,7 +31,6 @@ import com.android.cts.verifier.TestListAdapter.TestListItem;
 /**
  * Activity that lists all device owner negative tests.
  */
-@ConditionalTest(required_features = "android.software.device_admin")
 public class DeviceOwnerNegativeTestActivity extends PassFailButtons.TestListActivity {
 
     private static final String ACTION_PROVISION_MANAGED_DEVICE

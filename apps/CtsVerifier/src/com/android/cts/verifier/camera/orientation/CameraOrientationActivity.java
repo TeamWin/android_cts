@@ -13,7 +13,6 @@
  */
 package com.android.cts.verifier.camera.orientation;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -47,7 +46,6 @@ import java.util.TreeSet;
  * Tests for manual verification of the CDD-required camera output formats
  * for preview callbacks
  */
-@ConditionalTest(required_features = "android.hardware.camera.any")
 public class CameraOrientationActivity extends PassFailButtons.Activity
 implements OnClickListener, SurfaceHolder.Callback {
 

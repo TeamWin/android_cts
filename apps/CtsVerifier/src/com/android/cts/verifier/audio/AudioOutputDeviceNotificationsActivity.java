@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 
 import android.content.Context;
@@ -37,7 +36,6 @@ import android.widget.TextView;
  * Tests Audio Device Connection events for output devices by prompting the user to
  * insert/remove a wired headset and noting the presence (or absence) of notifications.
  */
-@ConditionalTest(required_features = "android.hardware.audio.output")
 public class AudioOutputDeviceNotificationsActivity extends HeadsetHonorSystemActivity {
     Context mContext;
 

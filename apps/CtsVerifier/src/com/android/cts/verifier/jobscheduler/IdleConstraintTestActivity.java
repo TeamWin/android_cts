@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.jobscheduler;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 
 import android.annotation.TargetApi;
@@ -40,7 +39,6 @@ import android.widget.TextView;
  *      turn off the screen to run to run tests that require idle mode to be on.
  */
 @TargetApi(21)
-@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class IdleConstraintTestActivity extends ConstraintTestActivity {
     private static final String TAG = "IdleModeTestActivity";
     /**

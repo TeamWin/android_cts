@@ -16,12 +16,10 @@
 
 package com.android.cts.verifier.location;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.location.LocationManager;
 import android.provider.Settings.Secure;
 import com.android.cts.verifier.R;
 
-@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class LocationModeOffTestActivity extends LocationModeTestActivity {
 
     @Override

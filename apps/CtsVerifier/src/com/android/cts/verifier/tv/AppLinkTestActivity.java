@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.tv;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
@@ -31,7 +30,6 @@ import com.android.cts.verifier.R;
 /**
  * Tests for verifying TV app behavior for TV app-link.
  */
-@ConditionalTest(required_features = "android.software.live_tv")
 public class AppLinkTestActivity extends TvAppVerifierActivity implements View.OnClickListener {
     private static final long TIMEOUT_MS = 5l * 60l * 1000l;  // 5 mins.
 

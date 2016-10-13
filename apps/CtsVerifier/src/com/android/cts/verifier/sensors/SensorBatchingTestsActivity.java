@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.sensors.base.SensorCtsTestActivity;
 
 import android.hardware.cts.SensorBatchingTests;
@@ -25,7 +24,6 @@ import android.hardware.cts.SensorBatchingTests;
  * Activity to execute CTS sensor batching tests.
  * It is a wrapper for {@link SensorBatchingTests} running with AndroidJUnitRunner.
  */
-@ConditionalTest(applicable_features = "android.hardware.sensor.accelerometer:android.hardware.sensor.compass:android.hardware.sensor.gyroscope:android.hardware.sensor.barometer")
 public class SensorBatchingTestsActivity extends SensorCtsTestActivity {
     public SensorBatchingTestsActivity() {
         super(SensorBatchingTests.class);

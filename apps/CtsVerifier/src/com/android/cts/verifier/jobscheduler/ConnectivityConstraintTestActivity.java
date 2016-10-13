@@ -1,6 +1,5 @@
 package com.android.cts.verifier.jobscheduler;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.content.BroadcastReceiver;
@@ -24,7 +23,6 @@ import com.android.cts.verifier.R;
  * run in the absence of an internet connection.
  */
 @TargetApi(21)
-@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class ConnectivityConstraintTestActivity extends ConstraintTestActivity {
     private static final String TAG = "ConnectivityConstraintTestActivity";
     private static final int ANY_CONNECTIVITY_JOB_ID =

@@ -15,7 +15,6 @@
  */
 package com.android.cts.verifier.camera.intents;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -55,7 +54,6 @@ import java.util.TreeSet;
  *  (e.g. social network apps that upload a photo after you take a picture)
  *  rely on this functionality present and correctly working.
  */
-@ConditionalTest(required_features = "android.hardware.camera.any")
 public class CameraIntentsActivity extends PassFailButtons.Activity
 implements OnClickListener, SurfaceHolder.Callback {
 

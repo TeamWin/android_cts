@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.security;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.AlertDialog;
 import android.app.KeyguardManager;
 import android.content.DialogInterface;
@@ -50,7 +49,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback:android.hardware.type.watch")
 public class WiFiCACertificateBugTest extends PassFailButtons.Activity {
 
     private static final String CERT_ASSET_NAME = "myCA.cer";

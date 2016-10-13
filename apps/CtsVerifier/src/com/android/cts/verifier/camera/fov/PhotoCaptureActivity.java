@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.camera.fov;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -56,7 +55,6 @@ import java.util.List;
 /**
  * An activity for showing the camera preview and taking a picture.
  */
-@ConditionalTest(required_features = "android.hardware.sensor.gyroscope:android.hardware.camera.any")
 public class PhotoCaptureActivity extends Activity
         implements PictureCallback, SurfaceHolder.Callback {
     private static final String TAG = PhotoCaptureActivity.class.getSimpleName();

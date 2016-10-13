@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.sensors.base.SensorCtsVerifierTestActivity;
 
@@ -38,7 +37,6 @@ import android.hardware.cts.helpers.sensorverification.StandardDeviationVerifica
  * Also, it is recommended to execute these tests outdoors, or at least far from magnetic
  * disturbances.
  */
-@ConditionalTest(required_features = "android.hardware.sensor.compass")
 public class MagneticFieldMeasurementTestActivity extends SensorCtsVerifierTestActivity {
     private static final float THRESHOLD_CALIBRATED_UNCALIBRATED_UT = 3f;
 

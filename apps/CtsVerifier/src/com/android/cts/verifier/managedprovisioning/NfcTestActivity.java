@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
@@ -44,7 +43,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
-@ConditionalTest(required_features = "android.hardware.nfc")
 public class NfcTestActivity extends Activity {
     private static final String TAG = "NfcTestActivity";
 

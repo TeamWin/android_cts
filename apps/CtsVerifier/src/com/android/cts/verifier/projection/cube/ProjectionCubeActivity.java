@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.projection.cube;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 
 import android.os.Bundle;
@@ -25,7 +24,6 @@ import android.util.Log;
 import com.android.cts.verifier.projection.ProjectionActivity;
 import com.android.cts.verifier.projection.ProjectionPresentationType;
 
-@ConditionalTest(required_features = "android.hardware.faketouch")
 public class ProjectionCubeActivity extends ProjectionActivity {
     private static final String TAG = ProjectionCubeActivity.class.getSimpleName();
 

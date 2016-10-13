@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.projection.touch;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -25,7 +24,6 @@ import com.android.cts.verifier.projection.ProjectionActivity;
 import com.android.cts.verifier.projection.ProjectionPresentationType;
 import com.android.cts.verifier.projection.cube.ProjectionCubeActivity;
 
-@ConditionalTest(required_features = "android.hardware.faketouch:android.hardware.touchscreen.multitouch")
 public class ProjectionTouchActivity extends ProjectionActivity {
     private static final String TAG = ProjectionCubeActivity.class.getSimpleName();
 

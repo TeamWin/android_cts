@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.nfc;
 
-import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -33,7 +32,6 @@ import android.os.Build;
 import android.os.Bundle;
 
 /** Activity that lists all the NFC tests. */
-@ConditionalTest(required_features = "android.hardware.nfc")
 public class NfcTestActivity extends PassFailButtons.TestListActivity {
 
     private static final String NDEF_ID =

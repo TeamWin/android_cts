@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.sensors;
 
-import com.android.cts.verifier.ConditionalTest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -53,7 +52,6 @@ import java.util.concurrent.CountDownLatch;
  * Currently only ROTATION_VECTOR sensor is used.
  *
  */
-@ConditionalTest(required_features = "android.hardware.sensor.accelerometer:android.hardware.sensor.gyroscope:android.hardware.sensor.compass:android.hardware.camera.any")
 public class RVCVXCheckTestActivity
         extends SensorCtsVerifierTestActivity {
     public RVCVXCheckTestActivity() {
