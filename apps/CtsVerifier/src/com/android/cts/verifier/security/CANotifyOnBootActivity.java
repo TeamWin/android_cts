@@ -1,5 +1,6 @@
 package com.android.cts.verifier.security;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@ConditionalTest(excluded_features = "android.hardware.type.watch:android.hardware.type.television:android.software.leanback")
 public class CANotifyOnBootActivity extends PassFailButtons.Activity {
 
     private static final String TAG = CANotifyOnBootActivity.class.getSimpleName();

@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.camera.its;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -50,6 +51,7 @@ import com.android.cts.verifier.R;
  * This test activity requires a USB connection to a computer, and a corresponding host-side run of
  * the python scripts found in the CameraITS directory.
  */
+@ConditionalTest(required_features = "android.hardware.camera.any")
 public class ItsTestActivity extends PassFailButtons.Activity {
     private static final String TAG = "ItsTestActivity";
     private static final String EXTRA_CAMERA_ID = "camera.its.extra.CAMERA_ID";

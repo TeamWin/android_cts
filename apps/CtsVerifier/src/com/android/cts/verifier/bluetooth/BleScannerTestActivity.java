@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.ManifestTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -26,6 +27,7 @@ import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.List;
 
+@ConditionalTest(required_features = "android.hardware.bluetooth_le")
 public class BleScannerTestActivity extends PassFailButtons.TestListActivity {
 
     @Override

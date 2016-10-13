@@ -15,6 +15,7 @@
  */
 package com.android.cts.verifier.admin;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.admin.DevicePolicyManager;
 
 import android.content.Intent;
@@ -31,6 +32,7 @@ import com.android.cts.verifier.managedprovisioning.ByodHelperActivity;
  * would mask KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS.
  *  */
 
+@ConditionalTest(required_features = "android.software.device_admin")
 public class RedactedNotificationKeyguardDisabledFeaturesActivity
     extends DeviceAdminKeyguardDisabledFeaturesActivity {
   @Override

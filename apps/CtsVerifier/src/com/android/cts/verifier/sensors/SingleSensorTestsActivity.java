@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.sensors;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.sensors.base.SensorCtsTestActivity;
 
 import android.hardware.cts.SingleSensorTests;
@@ -24,6 +25,7 @@ import android.hardware.cts.SingleSensorTests;
  * Activity to execute CTS single sensor tests.
  * It is a wrapper for {@link SingleSensorTests} running with AndroidJUnitRunner.
  */
+@ConditionalTest(applicable_features = "android.hardware.sensor.accelerometer:android.hardware.sensor.compass:android.hardware.sensor.gyroscope:android.hardware.sensor.barometer")
 public class SingleSensorTestsActivity extends SensorCtsTestActivity {
     public SingleSensorTestsActivity() {
         super(SingleSensorTests.class);

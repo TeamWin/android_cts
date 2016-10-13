@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.projection.offscreen;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -50,6 +51,7 @@ import com.android.cts.verifier.projection.ProjectionService;
 
 import java.nio.ByteBuffer;
 
+@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback")
 public class ProjectionOffscreenActivity extends PassFailButtons.Activity
         implements ImageReader.OnImageAvailableListener {
     private static String TAG = ProjectionOffscreenActivity.class.getSimpleName();

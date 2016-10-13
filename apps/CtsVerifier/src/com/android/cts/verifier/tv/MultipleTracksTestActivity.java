@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.tv;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.R;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -37,6 +38,7 @@ import android.widget.Toast;
  * Tests for verifying TV app behavior on multiple tracks and subtitle.
  */
 @SuppressLint("NewApi")
+@ConditionalTest(required_features = "android.software.live_tv")
 public class MultipleTracksTestActivity extends TvAppVerifierActivity
         implements View.OnClickListener {
     private static final String TAG = "MultipleTracksTestActivity";

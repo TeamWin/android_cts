@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.admin;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -46,6 +47,7 @@ import java.util.Random;
  * returning to the test, the activity checks that the device manager is reporting the values
  * it set before the user rebooted the device.
  */
+@ConditionalTest(required_features = "android.software.device_admin")
 public class PolicySerializationTestActivity extends PassFailButtons.ListActivity {
 
     /**

@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.camera.flashlight;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -37,6 +38,7 @@ import java.util.HashMap;
  * turns on or off the flashlight, it asks for user input to verify the flashlight status. The
  * test will pass when the user input is correct for all camera devices with a flash unit.
  */
+@ConditionalTest(required_features = "android.hardware.camera.flash")
 public class CameraFlashlightActivity extends PassFailButtons.Activity {
 
     private static final String TAG = "CameraFlashlight";

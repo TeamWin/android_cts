@@ -15,6 +15,7 @@
  */
 package com.android.cts.verifier.camera.video;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.graphics.Matrix;
@@ -56,6 +57,7 @@ import java.util.TreeSet;
 /**
  * Tests for manual verification of camera video capture
  */
+@ConditionalTest(required_features = "android.hardware.camera.any")
 public class CameraVideoActivity extends PassFailButtons.Activity
         implements TextureView.SurfaceTextureListener {
 

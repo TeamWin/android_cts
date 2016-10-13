@@ -15,6 +15,7 @@
  */
 package com.android.cts.verifier.p2p;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -36,6 +37,7 @@ import com.android.cts.verifier.TestListAdapter.TestListItem;
 /**
  * Activity that lists all the WiFi Direct tests.
  */
+@ConditionalTest(required_features = "android.hardware.wifi.direct")
 public class P2pTestListActivity extends PassFailButtons.TestListActivity {
 
     /*

@@ -15,6 +15,7 @@
  */
 package com.android.cts.verifier.screenpinning;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.ActivityManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,7 @@ import android.widget.TextView;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+@ConditionalTest(excluded_features = "android.hardware.type.television:android.software.leanback:android.hardware.type.watch")
 public class ScreenPinningTestActivity extends PassFailButtons.Activity {
 
     private static final String TAG = "ScreenPinningTestActivity";

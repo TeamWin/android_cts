@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.projection.widgets;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
@@ -28,6 +29,7 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.projection.ProjectionActivity;
 import com.android.cts.verifier.projection.ProjectionPresentationType;
 
+@ConditionalTest(required_features = "android.hardware.faketouch")
 public class ProjectionWidgetActivity extends ProjectionActivity {
     private static final String TAG = ProjectionWidgetActivity.class.getSimpleName();
 

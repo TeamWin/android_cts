@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.widget;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -29,6 +30,7 @@ import android.os.Bundle;
 /**
  * CTS Verifier case for verifying basic widget framework functionality.
  */
+@ConditionalTest(required_features = "android.software.app_widgets")
 public class WidgetTestActivity extends PassFailButtons.Activity {
 
     @Override

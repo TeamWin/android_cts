@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.admin;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -32,6 +33,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+@ConditionalTest(required_features = "android.software.device_admin")
 public class ScreenLockTestActivity extends PassFailButtons.Activity {
 
     private static final int ADD_DEVICE_ADMIN_REQUEST_CODE = 1;

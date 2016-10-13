@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.tv;
 
+import com.android.cts.verifier.ConditionalTest;
 import android.app.SearchableInfo;
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +29,7 @@ import com.android.cts.verifier.R;
 /**
  * Tests for verifying TV app behavior for third-party TV input apps.
  */
+@ConditionalTest(required_features = "android.software.live_tv")
 public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
         implements View.OnClickListener {
     private static final String TAG = "TvInputDiscoveryTestActivity";

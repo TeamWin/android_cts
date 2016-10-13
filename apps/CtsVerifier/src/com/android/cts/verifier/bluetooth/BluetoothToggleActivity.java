@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import com.android.cts.verifier.ConditionalTest;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -37,6 +38,7 @@ import android.widget.ToggleButton;
  * a button that toggles Bluetooth by disabling it via {@link BluetoothAdapter#disable()} and
  * enabling it via the Intent action {@link BluetoothAdapter#ACTION_REQUEST_ENABLE}.
  */
+@ConditionalTest(excluded_features = "android.software.leanback")
 public class BluetoothToggleActivity extends PassFailButtons.Activity {
 
     private static final String TAG = BluetoothToggleActivity.class.getName();
