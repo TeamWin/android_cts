@@ -61,6 +61,13 @@ public class HoverTest {
     private View mInner21;
     private View mInner22;
 
+    private View mOverlapping;
+    private View mLayer1;
+    private View mLayer2;
+    private View mLayer3;
+    private View mLayer4Left;
+    private View mLayer4Right;
+
     @Rule
     public ActivityTestRule<HoverCtsActivity> mActivityRule =
             new ActivityTestRule<>(HoverCtsActivity.class);
@@ -119,6 +126,13 @@ public class HoverTest {
         mInner12 = mActivity.findViewById(R.id.inner12);
         mInner21 = mActivity.findViewById(R.id.inner21);
         mInner22 = mActivity.findViewById(R.id.inner22);
+
+        mOverlapping = mActivity.findViewById(R.id.overlapping);
+        mLayer1 = mActivity.findViewById(R.id.layer1);
+        mLayer2 = mActivity.findViewById(R.id.layer2);
+        mLayer3 = mActivity.findViewById(R.id.layer3);
+        mLayer4Left = mActivity.findViewById(R.id.layer4_left);
+        mLayer4Right = mActivity.findViewById(R.id.layer4_right);
     }
 
     private void verifyHoverSequence(
@@ -335,4 +349,32 @@ public class HoverTest {
         verifyEnterMoveExit(inner21Listener, mInner21, 2);
         verifyEnterMove(inner22Listener, mInner22, 1);
     }
+
+    @Test
+    public void testOverlappingHoverTargets() throws Throwable {
+        View.OnHoverListener overlapping = installHoverListener(mOverlapping);
+        View.OnHoverListener listener1 = installHoverListener(mLayer1);
+        View.OnHoverListener listener2 = installHoverListener(mLayer2);
+        View.OnHoverListener listener3 = installHoverListener(mLayer3, false);
+        View.OnHoverListener listener4_left = installHoverListener(mLayer4Left, false);
+        View.OnHoverListener listener4_right = installHoverListener(mLayer4Right, false);
+
+        injectHoverMove(mLayer4Left);
+        injectHoverMove(mLayer4Left, 1, 1);
+        injectHoverMove(mLayer4Right);
+        injectHoverMove(mMiddle1);
+
+        clearHoverListener(mLayer1);
+        clearHoverListener(mLayer2);
+        clearHoverListener(mLayer3);
+        clearHoverListener(mLayer4Left);
+        clearHoverListener(mLayer4Right);
+
+        verifyNoMoreInteractions(overlapping);
+        verifyNoMoreInteractions(listener1);
+        verifyEnterMoveExit(listener2, mLayer2, 4);
+        verifyEnterMoveExit(listener3, mLayer3, 4);
+        verifyEnterMoveExit(listener4_left, mLayer4Left, 3);
+        verifyEnterMoveExit(listener4_right, mLayer4Right, 2);
+   }
 }

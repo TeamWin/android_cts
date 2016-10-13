@@ -75,6 +75,41 @@
 
         </LinearLayout>
 
+        <RelativeLayout
+                android:id="@+id/overlapping"
+                android:layout_width="100dp"
+                android:layout_height="20dp"
+                android:layout_margin="20dp"
+                android:background="#ddd">
+
+            <View
+                    android:id="@+id/layer1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+            <View
+                    android:id="@+id/layer2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+            <View
+                    android:id="@+id/layer3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+            <View
+                    android:id="@+id/layer4_left"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"/>
+
+            <View
+                    android:id="@+id/layer4_right"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:layout_toRightOf="@+id/layer4_left" />
+
+        </RelativeLayout>
+
     </LinearLayout>
 
 </LinearLayout>
