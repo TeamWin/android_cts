@@ -228,6 +228,9 @@ public class MediaStore_Video_MediaTest extends AndroidTestCase {
 
     private Uri insertVideo(Context context) throws IOException {
         File file = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
+        // clean up any potential left over entries from a previous aborted run
+        cleanExternalMediaFile(file.getAbsolutePath());
+
         new FileCopyHelper(context).copyToExternalStorage(R.raw.testvideo, file);
 
         ContentValues values = new ContentValues();
