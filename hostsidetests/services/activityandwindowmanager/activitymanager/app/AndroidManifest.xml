@@ -99,6 +99,19 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
+        <activity android:name=".TapToFinishActivity"
+                  android:resizeableActivity="true"
+                  android:supportsPictureInPicture="true"
+                  android:exported="true"
+                  android:taskAffinity="nobody.but.TapToFinish"
+        />
+        <activity android:name=".LaunchTapToFinishActivity"
+                  android:resizeableActivity="true"
+                  android:supportsPictureInPicture="true"
+                  androidprv:alwaysFocusable="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:exported="true"
+        />
         <activity android:name=".FreeformActivity"
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.FreeformActivity"
