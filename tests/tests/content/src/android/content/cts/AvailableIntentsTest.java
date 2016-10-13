@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
 
 import java.util.List;
@@ -132,6 +133,50 @@ public class AvailableIntentsTest extends AndroidTestCase {
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Uri uri = Uri.parse("voicemail:");
             Intent intent = new Intent(Intent.ACTION_DIAL, uri);
+            assertCanBeHandled(intent);
+        }
+    }
+
+    /**
+     * Test ACTION_CHANGE_PHONE_ACCOUNTS, it will display the phone account preferences.
+     */
+    public void testChangePhoneAccounts() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Intent intent = new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS);
+            assertCanBeHandled(intent);
+        }
+    }
+
+    /**
+     * Test ACTION_SHOW_CALL_ACCESSIBILITY_SETTINGS, it will display the call accessibility preferences.
+     */
+    public void testShowCallAccessibilitySettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Intent intent = new Intent(TelecomManager.ACTION_SHOW_CALL_ACCESSIBILITY_SETTINGS);
+            assertCanBeHandled(intent);
+        }
+    }
+
+    /**
+     * Test ACTION_SHOW_CALL_SETTINGS, it will display the call preferences.
+     */
+    public void testShowCallSettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Intent intent = new Intent(TelecomManager.ACTION_SHOW_CALL_SETTINGS);
+            assertCanBeHandled(intent);
+        }
+    }
+
+    /**
+     * Test ACTION_SHOW_RESPOND_VIA_SMS_SETTINGS, it will display the respond by SMS preferences.
+     */
+    public void testShowRespondViaSmsSettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Intent intent = new Intent(TelecomManager.ACTION_SHOW_RESPOND_VIA_SMS_SETTINGS);
             assertCanBeHandled(intent);
         }
     }
