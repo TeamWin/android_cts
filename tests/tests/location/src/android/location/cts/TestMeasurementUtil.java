@@ -684,15 +684,7 @@ public final class TestMeasurementUtil {
                 int dataSize = message.getData().length;
                 softAssert.assertTrue("Data size: expected = 40, actual = " + dataSize,
                         dataSize == 40);
-            } else if (messageType == GnssNavigationMessage.TYPE_GLO_L1CA) {
-                int svid = message.getSvid();
-                softAssert.assertTrue("Space Vehicle ID : expected = [1, 24] or [93,107], actual = "
-                                svid,
-                        (svid >= 1 && svid <= 32) || ((svid >= 93 && svid <= 107)));
-                int dataSize = message.getData().length;
-                softAssert.assertTrue("Data size: expected = 11, actual = "  dataSize,
-                        dataSize == 11);
-             else {
+            } else {
                 Log.i(TAG, "GnssNavigationMessage (type = " + messageType
                         + ") skipped for verification.");
             }
