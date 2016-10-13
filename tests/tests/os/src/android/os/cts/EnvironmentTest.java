@@ -15,8 +15,12 @@
  */
 package android.os.cts;
 
-import junit.framework.TestCase;
 import android.os.Environment;
+
+import junit.framework.TestCase;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class EnvironmentTest extends TestCase {
     public void testEnvironment() {
@@ -37,5 +41,26 @@ public class EnvironmentTest extends TestCase {
     public void testNoTmpDir() {
         assertNull("environment variable TMPDIR should not be set",
                 System.getenv("TMPDIR"));
+    }
+
+    /**
+     * Verify that all writable block filesystems are mounted "noatime" to avoid
+     * unnecessary flash churn.
+     */
+    public void testNoAtime() throws Exception {
+        try (BufferedReader br = new BufferedReader(new FileReader("/proc/mounts"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                final String[] fields = line.split(" ");
+                final String source = fields[0];
+                final String options = fields[3];
+
+                if (source.startsWith("/dev/block/") && !options.startsWith("ro,")
+                        && !options.contains("noatime")) {
+                    fail("Found device mounted at " + source + " without 'noatime' option, "
+                            + "which can cause unnecessary flash churn; please update your fstab.");
+                }
+            }
+        }
     }
 }
