@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.SubPlanCreator;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
 import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
 import com.android.compatibility.common.tradefed.util.OptionHelper;
@@ -57,9 +58,13 @@ import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.TimeUtil;
+import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -78,12 +83,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     private static final String PLAN_OPTION = "plan";
-    private static final String MODULE_OPTION = "module";
-    private static final String TEST_OPTION = "test";
+    private static final String SUBPLAN_OPTION = "subplan";
+    public static final String MODULE_OPTION = "module";
+    public static final String TEST_OPTION = "test";
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
-    private static final String ABI_OPTION = "abi";
+    public static final String RETRY_TYPE_OPTION = "retry-type";
+    public static final String ABI_OPTION = "abi";
     private static final String SHARD_OPTION = "shards";
     public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
@@ -101,15 +108,20 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             importance = Importance.ALWAYS)
     private String mSuitePlan;
 
+    @Option(name = SUBPLAN_OPTION,
+            description = "the subplan to run",
+            importance = Importance.IF_UNSET)
+    private String mSubPlan;
+
     @Option(name = INCLUDE_FILTER_OPTION,
             description = "the include module filters to apply.",
             importance = Importance.ALWAYS)
-    private List<String> mIncludeFilters = new ArrayList<>();
+    private Set<String> mIncludeFilters = new HashSet<>();
 
     @Option(name = EXCLUDE_FILTER_OPTION,
             description = "the exclude module filters to apply.",
             importance = Importance.ALWAYS)
-    private List<String> mExcludeFilters = new ArrayList<>();
+    private Set<String> mExcludeFilters = new HashSet<>();
 
     @Option(name = MODULE_OPTION,
             shortName = 'm',
@@ -135,11 +147,21 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             importance = Importance.ALWAYS)
     private List<String> mTestArgs = new ArrayList<>();
 
+    public enum RetryType {
+        FAILED, NOT_EXECUTED;
+    }
+
     @Option(name = RETRY_OPTION,
             shortName = 'r',
-            description = "retry a previous session.",
+            description = "retry a previous session's failed and not executed tests.",
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
+
+    @Option(name = RETRY_TYPE_OPTION,
+            description = "used with " + RETRY_OPTION + ", retry tests of a certain status. "
+            + "Possible values include \"failed\" and \"not_executed\".",
+            importance = Importance.IF_UNSET)
+    private RetryType mRetryType = null;
 
     @Option(name = ABI_OPTION,
             shortName = 'a',
@@ -579,26 +601,46 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     throw new RuntimeException(e);
                 }
             }
-            // Append each test that failed or was not executed to the filters
-            for (IModuleResult module : result.getModules()) {
-                if (module.isPassed()) {
-                    // Whole module passed, exclude entire module
-                    TestFilter filter = new TestFilter(module.getAbi(), module.getName(), null);
-                    mExcludeFilters.add(filter.toString());
-                } else {
-                    for (ICaseResult testResultList : module.getResults()) {
-                        for (ITestResult testResult : testResultList.getResults(TestStatus.PASS)) {
-                            // Test passed, exclude it for retry
-                            TestFilter filter = new TestFilter(
-                                    module.getAbi(), module.getName(), testResult.getFullName());
-                            mExcludeFilters.add(filter.toString());
-                        }
-                    }
+
+            SubPlanCreator retryPlanCreator = new SubPlanCreator();
+            retryPlanCreator.setResult(result);
+            if (RetryType.FAILED.equals(mRetryType)) {
+                // retry only failed tests
+                retryPlanCreator.addResultType(SubPlanCreator.FAILED);
+            } else if (RetryType.NOT_EXECUTED.equals(mRetryType)){
+                // retry only not executed tests
+                retryPlanCreator.addResultType(SubPlanCreator.NOT_EXECUTED);
+            } else {
+                // retry both failed and not executed tests
+                retryPlanCreator.addResultType(SubPlanCreator.FAILED);
+                retryPlanCreator.addResultType(SubPlanCreator.NOT_EXECUTED);
+            }
+            try {
+                ISubPlan retryPlan = retryPlanCreator.createSubPlan(mBuildHelper);
+                mIncludeFilters.addAll(retryPlan.getIncludeFilters());
+                mExcludeFilters.addAll(retryPlan.getExcludeFilters());
+            } catch (ConfigurationException e) {
+                throw new RuntimeException ("Failed to create subplan for retry", e);
+            }
+        }
+        if (mSubPlan != null) {
+            try {
+                File subPlanFile = new File(mBuildHelper.getSubPlansDir(), mSubPlan + ".xml");
+                if (!subPlanFile.exists()) {
+                    throw new IllegalArgumentException(
+                            String.format("Could not retrieve subplan \"%s\"", mSubPlan));
                 }
+                InputStream subPlanInputStream = new FileInputStream(subPlanFile);
+                ISubPlan subPlan = new SubPlan();
+                subPlan.parse(subPlanInputStream);
+                mIncludeFilters.addAll(subPlan.getIncludeFilters());
+                mExcludeFilters.addAll(subPlan.getExcludeFilters());
+            } catch (FileNotFoundException | ParseException e) {
+                throw new RuntimeException(
+                        String.format("Unable to find or parse subplan %s", mSubPlan), e);
             }
         }
         if (mModuleName != null) {
-            mIncludeFilters.clear();
             try {
                 List<String> modules = ModuleRepo.getModuleNamesMatching(
                         mBuildHelper.getTestsDir(), mModuleName);
@@ -611,19 +653,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                             mModuleName, ArrayUtil.join("\n", modules)));
                 } else {
                     String module = modules.get(0);
+                    cleanFilters(mIncludeFilters, module);
+                    cleanFilters(mExcludeFilters, module);
                     mIncludeFilters.add(new TestFilter(mAbiName, module, mTestName).toString());
-                    // We will run this module with previous exclusions,
-                    // unless they exclude the whole module.
-                    List<String> excludeFilters = new ArrayList<>();
-                    for (String excludeFilter : mExcludeFilters) {
-                        TestFilter filter = TestFilter.createFrom(excludeFilter);
-                        String name = filter.getName();
-                        // Add the filter if it applies to this module
-                        if (module.equals(name)) {
-                            excludeFilters.add(excludeFilter);
-                        }
-                    }
-                    mExcludeFilters = excludeFilters;
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -637,6 +669,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 mIncludeFilters.add(arg.split(":")[0]);
             }
         }
+    }
+
+    /* Helper method designed to remove filters in a list not applicable to the given module */
+    private static void cleanFilters(Set<String> filters, String module) {
+        Set<String> cleanedFilters = new HashSet<String>();
+        for (String filter : filters) {
+            if (module.equals(TestFilter.createFrom(filter).getName())) {
+                cleanedFilters.add(filter); // Module name matches, filter passes
+            }
+        }
+        filters.clear();
+        filters.addAll(cleanedFilters);
     }
 
     /**
