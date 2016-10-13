@@ -71,6 +71,15 @@
             <meta-data android:name="android.view.im"
                        android:resource="@xml/method" />
         </service>
+
+        <provider
+            android:name=".contacts.DummyGalProvider"
+            android:authorities="android.provider.cts.contacts.dgp"
+            android:exported="true"
+            android:readPermission="android.permission.BIND_DIRECTORY_SEARCH" >
+            <meta-data android:name="android.content.ContactDirectory" android:value="true" />
+        </provider>
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
