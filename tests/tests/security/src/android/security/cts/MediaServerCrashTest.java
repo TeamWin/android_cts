@@ -90,31 +90,6 @@ public class MediaServerCrashTest extends AndroidTestCase {
         }
     }
 
-    public void testInvalidMidiNullPointerAccess() throws Exception {
-        testIfMediaServerDied(R.raw.midi_crash);
-    }
-
-    private void testIfMediaServerDied(int res) throws Exception {
-        AssetFileDescriptor afd = getContext().getResources().openRawResourceFd(res);
-        mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        afd.close();
-        try {
-            mMediaPlayer.prepareAsync();
-            if (!mOnPrepareCalled.block(5000)) {
-                Log.w(TAG, "testIfMediaServerDied: Timed out waiting for prepare");
-                return;
-            }
-            mMediaPlayer.start();
-            if (!mOnCompletionCalled.block(5000)) {
-                Log.w(TAG, "testIfMediaServerDied: Timed out waiting for Error/Completion");
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "playback failed", e);
-        } finally {
-            mMediaPlayer.release();
-        }
-    }
-
     public void testDrmManagerClientReset() throws Exception {
         checkIfMediaServerDiedForDrm(R.raw.drm_uaf);
     }
