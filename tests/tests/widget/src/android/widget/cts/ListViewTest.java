@@ -23,7 +23,7 @@ import org.xmlpull.v1.XmlPullParser;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.PollingCheck;
+import android.cts.util.DrawWaiter;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -137,37 +137,34 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     }
 
     public void testAccessDividerHeight() {
+        final DrawWaiter drawWaiter = new DrawWaiter();
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mListView.setAdapter(mAdapter_countries);
+                drawWaiter.registerDrawCompleteCallback(mListView);
             }
         });
-        mInstrumentation.waitForIdleSync();
+        drawWaiter.waitForDrawComplete();
 
         Drawable d = mListView.getDivider();
         final Rect r = d.getBounds();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return r.bottom - r.top > 0;
-            }
-        }.run();
-
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mListView.setDividerHeight(20);
+                drawWaiter.registerDrawCompleteCallback(mListView);
             }
         });
-        mInstrumentation.waitForIdleSync();
+        drawWaiter.waitForDrawComplete();
         assertEquals(20, mListView.getDividerHeight());
         assertEquals(20, r.bottom - r.top);
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mListView.setDividerHeight(10);
+                drawWaiter.registerDrawCompleteCallback(mListView);
             }
         });
-        mInstrumentation.waitForIdleSync();
+        drawWaiter.waitForDrawComplete();
         assertEquals(10, mListView.getDividerHeight());
         assertEquals(10, r.bottom - r.top);
     }
@@ -304,7 +301,6 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
                 mListView.addFooterView(footerView2);
             }
         });
-
         mInstrumentation.waitForIdleSync();
         assertEquals(2, mListView.getFooterViewsCount());
 
@@ -409,39 +405,37 @@ public class ListViewTest extends ActivityInstrumentationTestCase2<ListViewCtsAc
     }
 
     public void testAccessDivider() {
+        final DrawWaiter drawWaiter = new DrawWaiter();
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mListView.setAdapter(mAdapter_countries);
+                drawWaiter.registerDrawCompleteCallback(mListView);
             }
         });
-        mInstrumentation.waitForIdleSync();
+        drawWaiter.waitForDrawComplete();
 
         Drawable defaultDrawable = mListView.getDivider();
         final Rect r = defaultDrawable.getBounds();
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return r.bottom - r.top > 0;
-            }
-        }.run();
 
         final Drawable d = mActivity.getResources().getDrawable(R.drawable.scenery);
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mListView.setDivider(d);
+                drawWaiter.registerDrawCompleteCallback(mListView);
             }
         });
-        mInstrumentation.waitForIdleSync();
+        drawWaiter.waitForDrawComplete();
         assertSame(d, mListView.getDivider());
         assertEquals(d.getBounds().height(), mListView.getDividerHeight());
 
         mInstrumentation.runOnMainSync(new Runnable() {
             public void run() {
                 mListView.setDividerHeight(10);
+                drawWaiter.registerDrawCompleteCallback(mListView);
             }
         });
-        mInstrumentation.waitForIdleSync();
+        drawWaiter.waitForDrawComplete();
         assertEquals(10, mListView.getDividerHeight());
         assertEquals(10, d.getBounds().height());
     }
