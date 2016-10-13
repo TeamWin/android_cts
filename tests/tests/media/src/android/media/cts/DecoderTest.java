@@ -2798,69 +2798,6 @@ public class DecoderTest extends MediaPlayerTestBase {
         return false;
     }
 
-    private class DecodeRunnable implements Runnable {
-        private int video;
-        private int frames;
-        private long durationMillis;
-
-        public DecodeRunnable(int video) {
-            this.video = video;
-            this.frames = 0;
-            this.durationMillis = 0;
-        }
-
-        @Override
-        public void run() {
-            long start = System.currentTimeMillis();
-            int actual = 0;
-            try {
-                actual = countFrames(this.video, RESET_MODE_NONE, -1, null);
-            } catch (Exception e) {
-                actual = -1;
-            }
-            long durationMillis = System.currentTimeMillis() - start;
-
-            synchronized (this) {
-                this.frames = actual;
-                this.durationMillis = durationMillis;
-            }
-        }
-
-        public synchronized int getFrames() {
-            return this.frames;
-        }
-
-        public synchronized double getMeasuredFps() {
-            return this.frames / (this.durationMillis / 1000.0);
-        }
-    }
-
-    private void decodeInParallel(int video, int frames, int fps, int parallel) throws Exception {
-        DecodeRunnable[] runnables = new DecodeRunnable[parallel];
-        Thread[] threads = new Thread[parallel];
-
-        for (int i = 0; i < parallel; ++i) {
-            runnables[i] = new DecodeRunnable(video);
-            threads[i] = new Thread(runnables[i]);
-            threads[i].start();
-        }
-
-        for (Thread t : threads) {
-            t.join();
-        }
-
-        for (DecodeRunnable dr : runnables) {
-            assertTrue("Expected to decode " + frames + " frames, found " + dr.getFrames(),
-                    frames == dr.getFrames());
-        }
-
-        for (DecodeRunnable dr : runnables) {
-            Log.d(TAG, "Decoded at " + dr.getMeasuredFps());
-            assertTrue("Expected to decode at " + fps + " fps, measured " + dr.getMeasuredFps(),
-                    fps < dr.getMeasuredFps());
-        }
-    }
-
     public void testVrHighPerformanceH264() throws Exception {
         if (!supportsVrHighPerformance()) {
             MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
@@ -2869,16 +2806,6 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         boolean h264IsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_AVC);
         assertTrue("Did not find a VR ready H.264 decoder", h264IsReady);
-
-        // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
-        decodeInParallel(
-                R.raw.bbb_s4_1920x1080_wide_mp4_h264_mp4_20mbps_30fps_aac_he_5ch_200kbps_44100hz,
-                150, 30, 4);
-
-        // Test throughput by decoding 1920x1080 @ 60fps x 2 instances.
-        decodeInParallel(
-                R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
-                300, 60, 2);
     }
 
     public void testVrHighPerformanceHEVC() throws Exception {
@@ -2892,15 +2819,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         boolean hevcIsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_HEVC);
         if (!hevcIsReady) {
-            MediaUtils.skipTest(TAG, "HEVC isn't required to be VR ready");
+            Log.d(TAG, "HEVC isn't required to be VR ready");
             return;
         }
-
-        // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
-        decodeInParallel(
-                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
-                R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz,
-                300, 30 /* fps */, 4);
     }
 
     public void testVrHighPerformanceVP9() throws Exception {
@@ -2914,15 +2835,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         boolean vp9IsReady = doesMimeTypeHaveVrReadyCodec(MediaFormat.MIMETYPE_VIDEO_VP9);
         if (!vp9IsReady) {
-            MediaUtils.skipTest(TAG, "VP9 isn't required to be VR ready");
+            Log.d(TAG, "VP9 isn't required to be VR ready");
             return;
         }
-
-        // Test throughput by decoding 1920x1080 @ 30fps x 4 instances.
-        decodeInParallel(
-                // using the 60fps sample to save on apk size, but decoding only at 30fps @ 5Mbps
-                R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz,
-                300, 30 /* fps */, 4);
     }
 
     private boolean supportsVrHighPerformance() {
