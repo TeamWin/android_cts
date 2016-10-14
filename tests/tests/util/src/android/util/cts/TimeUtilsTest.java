@@ -119,6 +119,7 @@ public class TimeUtilsTest {
                                      country);
     }
 
+    @Test
     public void testFormatDuration() {
         assertFormatDuration("0", 0);
         assertFormatDuration("-1ms", -1);
@@ -135,6 +136,7 @@ public class TimeUtilsTest {
         assertFormatDuration("+1d0h0m0s30ms", 86400030);
     }
 
+    @Test
     public void testFormatHugeDuration() {
         assertFormatDuration("+15542d1h11m11s555ms", 1342833071555L);
         assertFormatDuration("-15542d1h11m11s555ms", -1342833071555L);
