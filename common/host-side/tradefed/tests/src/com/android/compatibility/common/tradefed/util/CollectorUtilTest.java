@@ -47,5 +47,4 @@ public class CollectorUtilTest extends TestCase {
         String reformattedJson = CollectorUtil.reformatJsonString(UNFORMATTED_JSON);
         assertEquals(reformattedJson, REFORMATTED_JSON);
     }
-
 }
