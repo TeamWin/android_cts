@@ -2258,10 +2258,6 @@ You should be prompted to select credentials; choose the ones you just installed
         This was expected.\n
         Mark this test as passed.\n
     </string>
-    <string name="device_owner_vpn_connection_canceled">
-        Cannot establish a VPN connection.\n
-        Connection canceled by user.\n
-    </string>
     <string name="device_owner_vpn_test">Check VPN</string>
     <string name="device_owner_vpn_info_default">Vpn test message</string>
 
@@ -2275,7 +2271,8 @@ You should be prompted to select credentials; choose the ones you just installed
         - You cannot edit, add or remove any existing VPNs.\n
         - Trying to perform any of the above actions will trigger a support message.\n\n
         2. Press Check VPN to check programmatic Vpn test.\n
-        - Check Vpn setup\n\n
+        - Check Vpn setup is not allowed\n
+        - If prompted to allow a VPN connection, press OK.\n\n
         Use the Back button to return to this page.
     </string>
     <string name="device_owner_user_vpn_restriction_set">Set VPN restriction</string>
