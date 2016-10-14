@@ -765,6 +765,21 @@ def normalize_img(img):
     return (img - numpy.amin(img))/(numpy.amax(img) - numpy.amin(img))
 
 
+def flip_mirror_img_per_argv(img):
+    """Flip/mirror an image if "flip" or "mirror" is in argv
+
+    Args:
+        img: 2-D numpy array of image values
+    Returns:
+        Flip/mirrored image
+    """
+    img_out = img
+    if "flip" in sys.argv:
+        img_out = np.flipud(img_out)
+    if "mirror" in sys.argv:
+        img_out = np.fliplr(img_out)
+    return img_out
+
 def stationary_lens_cap(cam, req, fmt):
     """Take up to NUM_TRYS caps and save the 1st one with lens stationary.
 
@@ -828,14 +843,15 @@ class Chart(object):
                             android.sensor.exposureTime
             fd:             float; autofocus lens position
         Returns:
-            img:            numpy array; RGB image for chart location
             template:       numpy array; chart template for locator
+            img_3a:         numpy array; RGB image for chart location
             scale_factor:   float; scaling factor for chart search
         """
         req = its.objects.manual_capture_request(s, e)
         req['android.lens.focusDistance'] = fd
         cap_chart = stationary_lens_cap(cam, req, fmt)
         img_3a = convert_capture_to_rgb_image(cap_chart, props)
+        img_3a = flip_mirror_img_per_argv(img_3a)
         write_image(img_3a, 'af_scene.jpg')
         template = cv2.imread(self._file, cv2.IMREAD_ANYDEPTH)
         focal_l = cap_chart['metadata']['android.lens.focalLength']
