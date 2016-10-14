@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class ModuleRepoTest extends TestCase {
 
@@ -260,6 +261,26 @@ public class ModuleRepoTest extends TestCase {
         assertTrue("Should be initialized", mRepo.isInitialized());
 
         assertArrayEquals(EXPECTED_MODULE_IDS, mRepo.getModuleIds());
+    }
+
+    public void testIsPrepared() {
+        mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES, mBuild);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        mRepo.setPrepared(true);
+        mRepo.setPrepared(true);
+        mRepo.setPrepared(true); // each shard should call setPrepared() once
+        assertTrue(mRepo.isPrepared(0, TimeUnit.MINUTES));
+    }
+
+    public void testIsNotPrepared() {
+        mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
+                EXCLUDES, mBuild);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        mRepo.setPrepared(true);
+        mRepo.setPrepared(false); // mRepo should return false for setPrepared() after third call
+        mRepo.setPrepared(true);
+        assertFalse(mRepo.isPrepared(0, TimeUnit.MINUTES));
     }
 
     private void assertArrayEquals(Object[] expected, Object[] actual) {

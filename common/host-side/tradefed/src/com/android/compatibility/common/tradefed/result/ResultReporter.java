@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -488,6 +489,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void invocationFailed(Throwable cause) {
         warn("Invocation failed: %s", cause);
+        InvocationFailureHandler.setFailed(mBuildHelper, cause);
     }
 
     /**

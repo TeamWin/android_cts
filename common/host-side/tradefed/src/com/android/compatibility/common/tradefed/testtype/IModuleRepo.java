@@ -22,11 +22,22 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Interface for accessing tests from the Compatibility repository.
  */
 public interface IModuleRepo {
+
+    /**
+     * @return true after each shard has prepared successfully.
+     */
+    boolean isPrepared(long timeout, TimeUnit unit);
+
+    /**
+     * Indicates to the repo whether a shard is prepared to run.
+     */
+    void setPrepared(boolean isPrepared);
 
     /**
      * @return true if this repository has been initialized.

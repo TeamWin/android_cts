@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.result.SubPlanCreator;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
 import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
@@ -73,6 +74,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Test for running Compatibility Suites
@@ -97,6 +99,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
     private static final String URL = "dynamic-config-url";
+
+    // Constants for checking invocation or preconditions preparation failure
+    private static final int NUM_PREP_ATTEMPTS = 10;
+    private static final int MINUTES_PER_PREP_ATTEMPT = 2;
 
     /* API Key for compatibility test project, used for dynamic configuration */
     private static final String API_KEY = "AIzaSyAbwX5JRlmsLeygY2WWihpIJPXFLueOQ3U";
@@ -364,13 +370,32 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
 
             // Set values and run preconditions
+            boolean isPrepared = true; // whether the device has been successfully prepared
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);
                 module.setBuild(mBuildHelper.getBuildInfo());
                 module.setDevice(mDevice);
                 module.setPreparerWhitelist(mPreparerWhitelist);
-                module.prepare(mSkipPreconditions);
+                isPrepared &= (module.prepare(mSkipPreconditions));
             }
+            mModuleRepo.setPrepared(isPrepared);
+
+            int prepAttempt = 1;
+            while (!mModuleRepo.isPrepared(MINUTES_PER_PREP_ATTEMPT, TimeUnit.MINUTES)) {
+                if (prepAttempt >= NUM_PREP_ATTEMPTS
+                        || InvocationFailureHandler.hasFailed(mBuildHelper)) {
+                    CLog.logAndDisplay(LogLevel.ERROR,
+                            "Incorrect preparation detected, exiting test run from %s",
+                            mDevice.getSerialNumber());
+                    return;
+                } else {
+                    CLog.logAndDisplay(LogLevel.INFO,
+                            "Device %s on standby while all shards complete preparation",
+                            mDevice.getSerialNumber());
+                }
+                prepAttempt++;
+            }
+
             // Run the tests
             for (int i = 0; i < moduleCount; i++) {
                 IModuleDef module = modules.get(i);
