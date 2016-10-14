@@ -15,6 +15,7 @@
 import os
 
 import its.caps
+import its.cv2image
 import its.device
 import its.image
 import its.objects
@@ -58,9 +59,9 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, af_fd):
     """
 
     # initialize chart class
-    chart = its.image.Chart(CHART_FILE, CHART_HEIGHT, CHART_DISTANCE,
-                            CHART_SCALE_START, CHART_SCALE_STOP,
-                            CHART_SCALE_STEP)
+    chart = its.cv2image.Chart(CHART_FILE, CHART_HEIGHT, CHART_DISTANCE,
+                                CHART_SCALE_START, CHART_SCALE_STOP,
+                                CHART_SCALE_STEP)
 
     # find chart location
     xnorm, ynorm, wnorm, hnorm = chart.locate(cam, props, fmt, sensitivity,
