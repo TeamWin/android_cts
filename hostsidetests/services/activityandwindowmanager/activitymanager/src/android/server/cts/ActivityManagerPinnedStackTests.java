@@ -16,6 +16,7 @@
 
 package android.server.cts;
 
+import java.awt.Rectangle;
 import java.lang.Exception;
 import java.lang.String;
 
@@ -29,6 +30,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
+    private static final String TAP_TO_FINISH_ACTIVITY = "TapToFinishActivity";
+    private static final String LAUNCH_TAP_TO_FINISH_ACTIVITY = "LaunchTapToFinishActivity";
 
     public void testEnterPictureInPictureMode() throws Exception {
         pinnedStackTester(AUTO_ENTER_PIP_ACTIVITY, AUTO_ENTER_PIP_ACTIVITY, false, false);
@@ -45,6 +48,26 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testLaunchIntoPinnedStack() throws Exception {
         pinnedStackTester(
                 LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY, false, true);
+    }
+
+    public void testNonTappablePipActivity() throws Exception {
+        // Launch the tap-to-finish activity at a specific place
+        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_ACTIVITY));
+        mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        Rectangle pinnedStackBounds =
+                mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
+        // Tap the screen at a known location in the pinned stack bounds, and ensure that it is
+        // not passed down to the top task
+        int tapX = pinnedStackBounds.x + pinnedStackBounds.width - 100;
+        int tapY = pinnedStackBounds.y + pinnedStackBounds.height - 100;
+        executeShellCommand(String.format("input tap %d %d", tapX, tapY));
+        mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
+        mAmWmState.assertVisibility(TAP_TO_FINISH_ACTIVITY, true);
     }
 
     private void pinnedStackTester(String startActivity, String topActivityName,
