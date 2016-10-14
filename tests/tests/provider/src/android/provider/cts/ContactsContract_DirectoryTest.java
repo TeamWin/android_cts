@@ -109,6 +109,9 @@ public class ContactsContract_DirectoryTest extends AndroidTestCase {
                 .appendPath("[QUERY]")
                 .appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY, "12")
                 .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY, "" + directoryId)
+
+                // This should be ignored.
+                .appendQueryParameter(Directory.CALLER_PACKAGE_PARAM_KEY, "abcdef")
                 .build();
 
         try (Cursor c = getContext().getContentResolver().query(

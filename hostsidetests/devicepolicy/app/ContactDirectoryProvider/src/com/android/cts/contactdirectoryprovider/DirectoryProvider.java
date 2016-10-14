@@ -145,6 +145,14 @@ public class DirectoryProvider extends ContentProvider {
             case GAL_PHONE_LOOKUP:
             case GAL_CALLABLES_FILTER:
             case GAL_EMAIL_LOOKUP: {
+                // This parameter must always exist, and set to the device side app package name.
+                final String callerPackage = uri.getQueryParameter(
+                        Directory.CALLER_PACKAGE_PARAM_KEY);
+                if (!"com.android.cts.managedprofile".equals(callerPackage)) {
+                    throw new RuntimeException("Expected caller package name not set: uri="
+                            + uri);
+                }
+
                 // TODO: Add all CTS tests for these APIs
                 final MatrixCursor cursor = new MatrixCursor(projection);
                 final Object[] row = new Object[projection.length];
