@@ -38,11 +38,11 @@ public class TimeUtilsTest extends TestCase {
             Calendar c = Calendar.getInstance(tz);
             TimeZone guess;
 
-            c.set(2008, Calendar.OCTOBER, 20, 12, 00, 00);
+            c.set(2016, Calendar.OCTOBER, 20, 12, 0, 0);
             guess = guessTimeZone(c, "us");
             assertEquals(name, guess.getID());
 
-            c.set(2009, Calendar.JANUARY, 20, 12, 00, 00);
+            c.set(2017, Calendar.JANUARY, 20, 12, 0, 0);
             guess = guessTimeZone(c, "us");
             assertEquals(name, guess.getID());
         }
@@ -59,7 +59,7 @@ public class TimeUtilsTest extends TestCase {
             Calendar c = Calendar.getInstance(tz);
             TimeZone guess;
 
-            c.set(2008, Calendar.OCTOBER, 20, 12, 00, 00);
+            c.set(2016, Calendar.OCTOBER, 20, 12, 0, 0);
             guess = guessTimeZone(c, "us");
             assertEquals(name, guess.getID());
         }
@@ -75,7 +75,7 @@ public class TimeUtilsTest extends TestCase {
             Calendar c = Calendar.getInstance(tz);
             TimeZone guess;
 
-            c.set(2005, Calendar.OCTOBER, 20, 12, 00, 00);
+            c.set(2005, Calendar.OCTOBER, 20, 12, 0, 0);
             guess = guessTimeZone(c, "us");
             assertEquals(name, guess.getID());
         }
@@ -95,7 +95,7 @@ public class TimeUtilsTest extends TestCase {
             Calendar c = Calendar.getInstance(tz);
             TimeZone guess;
 
-            c.set(2009, Calendar.JULY, 20, 12, 00, 00);
+            c.set(2016, Calendar.JULY, 20, 12, 0, 0);
             guess = guessTimeZone(c, country);
             assertEquals(name, guess.getID());
         }
