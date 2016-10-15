@@ -13,16 +13,11 @@
 # limitations under the License.
 
 #
-# Builds an executable and defines a rule to generate the associated test
-# package XML needed by CTS.
+# Builds an executable:
 #
-# 1. Replace "include $(BUILD_EXECUTABLE)"
-#    with "include $(BUILD_CTS_EXECUTABLE)"
-#
-# 2. Define LOCAL_CTS_TEST_PACKAGE to group the tests under a package
-#    as needed by CTS.
+# * Replace "include $(BUILD_EXECUTABLE)"
+#   with "include $(BUILD_CTS_EXECUTABLE)"
 #
 
 LOCAL_CXX_STL := libc++
 include $(BUILD_EXECUTABLE)
-include $(BUILD_CTS_MODULE_TEST_CONFIG)
