@@ -34,17 +34,12 @@ CTS_UNSUPPORTED_ABIS := cts/tests/expectations/unsupportedabis.txt
 # Holds the target architecture to build for.
 CTS_TARGET_ARCH := $(TARGET_ARCH)
 
-# default module config filename
-CTS_MODULE_TEST_CONFIG := AndroidTest.xml
-
 # CTS build rules
 BUILD_COMPATIBILITY_SUITE := cts/build/compatibility_test_suite.mk
 BUILD_CTS_EXECUTABLE := cts/build/test_executable.mk
 BUILD_CTS_PACKAGE := cts/build/test_package.mk
-BUILD_CTS_GTEST_PACKAGE := cts/build/test_gtest_package.mk
-BUILD_CTS_HOST_JAVA_LIBRARY := cts/build/test_host_java_library.mk
+BUILD_CTS_HOST_JAVA_LIBRARY := $(BUILD_HOST_JAVA_LIBRARY)
 BUILD_CTS_TARGET_JAVA_LIBRARY := cts/build/test_target_java_library.mk
 BUILD_CTS_SUPPORT_PACKAGE := cts/build/support_package.mk
-BUILD_CTS_MODULE_TEST_CONFIG := cts/build/module_test_config.mk
 BUILD_CTS_DEVICE_INFO_PACKAGE := cts/build/device_info_package.mk
 BUILD_CTS_TARGET_TESTNG_PACKAGE := cts/build/test_target_testng_package.mk
