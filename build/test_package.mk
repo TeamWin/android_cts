@@ -25,4 +25,3 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_STATIC_JAVA_LIBRARIES += platform-test-annotations
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
-include $(BUILD_CTS_MODULE_TEST_CONFIG)
