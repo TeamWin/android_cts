@@ -2096,9 +2096,9 @@ You should be prompted to select credentials; choose the ones you just installed
     Is there an option to turn off parental controls on this device?
     </string>
     <string name="tv_parental_control_test_block_tv_ma">
-    Select the \"Launch TV app\" button and block the \"Fake\" rating for \"CtsVerifier\" rating
+    Select the \"Launch TV app\" button and block the \"Custom Rating\" for \"CtsVerifier\" rating
     system in the parental control settings. If the rating system is disabled by default, enable it.
-    If the \"Fake\" rating is already blocked, unblock it, save, and then block again.
+    If the \"Custom Rating\" is already blocked, unblock it, save, and then block again.
     </string>
     <string name="tv_parental_control_test_verify_receive_broadcast2">
     TV input service must have received ACTION_BLOCKED_RATINGS_CHANGED broadcast.
@@ -2192,7 +2192,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
 
     <string name="overlay_view_text">Overlay View Dummy Text</string>
-    <string name="fake_rating">Fake</string>
+    <string name="custom_rating">Example of input app specific custom rating.</string>
 
     <!-- A list of fully-qualified test classes that should not be run. -->
     <string-array name="disabled_tests" />
