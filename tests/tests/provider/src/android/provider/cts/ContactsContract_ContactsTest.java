@@ -66,20 +66,54 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
     public void testMarkAsContacted() throws Exception {
         TestRawContact rawContact = mBuilder.newRawContact().insert().load();
         TestContact contact = rawContact.getContact().load();
-        long oldLastContacted = contact.getLong(Contacts.LAST_TIME_CONTACTED);
 
-        Contacts.markAsContacted(mResolver, contact.getId());
-        contact.load(); // Reload
+        assertEquals(0, contact.getLong(Contacts.LAST_TIME_CONTACTED));
+        assertEquals(0, contact.getLong(Contacts.TIMES_CONTACTED));
 
-        long lastContacted = contact.getLong(Contacts.LAST_TIME_CONTACTED);
-        assertTrue(oldLastContacted < lastContacted);
-        oldLastContacted = lastContacted;
+        assertEquals(0, rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
+        assertEquals(0, rawContact.getLong(Contacts.TIMES_CONTACTED));
 
-        Contacts.markAsContacted(mResolver, contact.getId());
-        contact.load();
+        for (int i = 0; i < 9; i++) {
+            Contacts.markAsContacted(mResolver, contact.getId());
+            contact.load();
+            rawContact.load();
 
-        lastContacted = contact.getLong(Contacts.LAST_TIME_CONTACTED);
-        assertTrue(oldLastContacted < lastContacted);
+            assertEquals(System.currentTimeMillis() / 86400 * 86400,
+                    contact.getLong(Contacts.LAST_TIME_CONTACTED));
+            assertEquals("#" + i, 1, contact.getLong(Contacts.TIMES_CONTACTED));
+
+            assertEquals(System.currentTimeMillis() / 86400 * 86400,
+                    rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
+            assertEquals("#" + i, 1, rawContact.getLong(Contacts.TIMES_CONTACTED));
+        }
+
+        for (int i = 0; i < 10; i++) {
+            Contacts.markAsContacted(mResolver, contact.getId());
+            contact.load();
+            rawContact.load();
+
+            assertEquals(System.currentTimeMillis() / 86400 * 86400,
+                    contact.getLong(Contacts.LAST_TIME_CONTACTED));
+            assertEquals("#" + i, 10, contact.getLong(Contacts.TIMES_CONTACTED));
+
+            assertEquals(System.currentTimeMillis() / 86400 * 86400,
+                    rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
+            assertEquals("#" + i, 10, rawContact.getLong(Contacts.TIMES_CONTACTED));
+        }
+
+        for (int i = 0; i < 10; i++) {
+            Contacts.markAsContacted(mResolver, contact.getId());
+            contact.load();
+            rawContact.load();
+
+            assertEquals(System.currentTimeMillis() / 86400 * 86400,
+                    contact.getLong(Contacts.LAST_TIME_CONTACTED));
+            assertEquals("#" + i, 20, contact.getLong(Contacts.TIMES_CONTACTED));
+
+            assertEquals(System.currentTimeMillis() / 86400 * 86400,
+                    rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
+            assertEquals("#" + i, 20, rawContact.getLong(Contacts.TIMES_CONTACTED));
+        }
     }
 
     public void testContentUri() {

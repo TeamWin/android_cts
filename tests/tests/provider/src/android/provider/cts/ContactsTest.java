@@ -125,10 +125,10 @@ public class ContactsTest extends InstrumentationTestCase {
             assertTrue(cursor.moveToNext());
             assertEquals(updatePeopleName, cursor.getString(NAME_INDEX));
             assertEquals(updatePeopleNotes, cursor.getString(NOTES_INDEX));
-            assertEquals((int) now, cursor.getInt(LAST_TIME_CONTACTED_INDEX));
+            assertEquals(0, cursor.getInt(LAST_TIME_CONTACTED_INDEX)); // Not supported by CP1
             assertNull(cursor.getString(CUSTOM_RINGTONE_INDEX));
-            assertEquals(1, cursor.getInt(SEND_TO_VOICEMAIL_INDEX));
-            assertEquals(1, cursor.getInt(TIMES_CONTACTED_INDEX));
+            assertEquals(1, cursor.getInt(SEND_TO_VOICEMAIL_INDEX)); // Not supported by CP1
+            assertEquals(0, cursor.getInt(TIMES_CONTACTED_INDEX));
             assertEquals(0, cursor.getInt(STARRED_INDEX));
             // TODO: Figure out what can be tested for the SYNC_* columns
             cursor.close();
