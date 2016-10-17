@@ -23,7 +23,6 @@ import android.content.ContentValues;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
-import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestContact;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestRawContact;
@@ -235,5 +234,78 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
                 RAW_CONTACTS_PROJECTION,
                 new long[]{rawContact.getId()}
         );
+    }
+
+    public void testInsertUsageStat() throws Exception {
+        final long now = System.currentTimeMillis();
+        {
+            TestRawContact rawContact = mBuilder.newRawContact()
+                    .with(RawContacts.ACCOUNT_TYPE, "test_type")
+                    .with(RawContacts.ACCOUNT_NAME, "test_name")
+                    .with(RawContacts.TIMES_CONTACTED, 12345) // should be ignored.
+                    .with(RawContacts.LAST_TIME_CONTACTED, now)
+                    .insert();
+
+            rawContact.load();
+            assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
+        }
+
+        {
+            TestRawContact rawContact = mBuilder.newRawContact()
+                    .with(RawContacts.ACCOUNT_TYPE, "test_type")
+                    .with(RawContacts.ACCOUNT_NAME, "test_name")
+                    .with(RawContacts.TIMES_CONTACTED, 12345) // should be ignored.
+                    .insert();
+
+            rawContact.load();
+            assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
+        }
+        {
+            TestRawContact rawContact = mBuilder.newRawContact()
+                    .with(RawContacts.ACCOUNT_TYPE, "test_type")
+                    .with(RawContacts.ACCOUNT_NAME, "test_name")
+                    .with(RawContacts.LAST_TIME_CONTACTED, now)
+                    .insert();
+
+            rawContact.load();
+            assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+            assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
+        }
+    }
+
+    public void testUpdateUsageStat() throws Exception {
+        ContentValues values = new ContentValues();
+
+        final long now = System.currentTimeMillis();
+        TestRawContact rawContact = mBuilder.newRawContact()
+                .with(RawContacts.ACCOUNT_TYPE, "test_type")
+                .with(RawContacts.ACCOUNT_NAME, "test_name")
+                .with(RawContacts.TIMES_CONTACTED, 12345) // should be ignored.
+                .with(RawContacts.LAST_TIME_CONTACTED, now)
+                .insert();
+
+        rawContact.load();
+        assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
+
+        values.clear();
+        values.put(RawContacts.TIMES_CONTACTED, 99999);
+        RawContactUtil.update(mResolver, rawContact.getId(), values);
+
+        // Shouldn't change.
+        rawContact.load();
+        assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals(now / 86400 * 86400, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
+
+        values.clear();
+        values.put(RawContacts.LAST_TIME_CONTACTED, now + 86400);
+        RawContactUtil.update(mResolver, rawContact.getId(), values);
+
+        rawContact.load();
+        assertEquals(0L, rawContact.getLong(RawContacts.TIMES_CONTACTED));
+        assertEquals((now / 86400 * 86400) + 86400,
+                rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
     }
 }
