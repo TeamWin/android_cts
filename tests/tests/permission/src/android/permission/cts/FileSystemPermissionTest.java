@@ -426,9 +426,11 @@ public class FileSystemPermissionTest extends AndroidTestCase {
             }
         });
 
+        if (dir == null)
+            return;
         for(String cpuDir : dir) {
             File fCpu = new File(cpuDir + "/current");
-            assertTrue(f.canRead());
+            assertTrue(fCpu.canRead());
         }
     }
 
