@@ -73,7 +73,7 @@ public class FileUtil {
      */
     public static File createNewFile(Context context, String dirName) {
         File topDir = new File(context.getFilesDir(), dirName);
-        topDir.mkdir();
+        topDir.mkdirs();
         String[] list = topDir.list();
 
         String newFileName;
