@@ -36,7 +36,11 @@ import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
 class ActivityManagerState {
+    public static final int DUMP_MODE_ACTIVITIES = 0;
+    public static final int DUMP_MODE_PIP = 1;
+
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
+    private static final String DUMPSYS_ACTIVITY_PIP = "dumpsys activity pip";
 
     // Copied from ActivityRecord.java
     private static final int APPLICATION_ACTIVITY_TYPE = 0;
@@ -49,6 +53,10 @@ class ActivityManagerState {
             Pattern.compile("ResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
     private final Pattern mFocusedStackPattern =
             Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)\\}(.+)");
+    private final Pattern mDefaultPinnedStackBoundsPattern = Pattern.compile(
+            "defaultBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
+    private final Pattern mPinnedStackMovementBoundsPattern = Pattern.compile(
+            "movementBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
 
     private final Pattern[] mExtractStackExitPatterns =
             { mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern};
@@ -59,8 +67,14 @@ class ActivityManagerState {
     private String mResumedActivityRecord = null;
     private final List<String> mResumedActivities = new ArrayList();
     private final LinkedList<String> mSysDump = new LinkedList();
+    private final Rectangle mDefaultPinnedStackBounds = new Rectangle();
+    private final Rectangle mPinnedStackMovementBounds = new Rectangle();
 
     void computeState(ITestDevice device) throws DeviceNotAvailableException {
+        computeState(device, DUMP_MODE_ACTIVITIES);
+    }
+
+    void computeState(ITestDevice device, int dumpMode) throws DeviceNotAvailableException {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
@@ -84,7 +98,14 @@ class ActivityManagerState {
             }
 
             final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            device.executeShellCommand(DUMPSYS_ACTIVITY_ACTIVITIES, outputReceiver);
+            String dumpsysCmd = "";
+            switch (dumpMode) {
+                case DUMP_MODE_ACTIVITIES:
+                    dumpsysCmd = DUMPSYS_ACTIVITY_ACTIVITIES; break;
+                case DUMP_MODE_PIP:
+                    dumpsysCmd = DUMPSYS_ACTIVITY_PIP; break;
+            }
+            device.executeShellCommand(dumpsysCmd, outputReceiver);
             dump = outputReceiver.getOutput();
             parseSysDump(dump);
 
@@ -153,6 +174,30 @@ class ActivityManagerState {
                 final String displayId = matcher.group(2);
                 log(displayId);
                 currentDisplayId = Integer.parseInt(displayId);
+            }
+
+            matcher = mDefaultPinnedStackBoundsPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                int left = Integer.parseInt(matcher.group(1));
+                int top = Integer.parseInt(matcher.group(2));
+                int right = Integer.parseInt(matcher.group(3));
+                int bottom = Integer.parseInt(matcher.group(4));
+                mDefaultPinnedStackBounds.setBounds(left, top, right - left, bottom - top);
+                log(mDefaultPinnedStackBounds.toString());
+                continue;
+            }
+
+            matcher = mPinnedStackMovementBoundsPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                int left = Integer.parseInt(matcher.group(1));
+                int top = Integer.parseInt(matcher.group(2));
+                int right = Integer.parseInt(matcher.group(3));
+                int bottom = Integer.parseInt(matcher.group(4));
+                mPinnedStackMovementBounds.setBounds(left, top, right - left, bottom - top);
+                log(mPinnedStackMovementBounds.toString());
+                continue;
             }
         }
     }
@@ -273,6 +318,14 @@ class ActivityManagerState {
             }
         }
         return null;
+    }
+
+    Rectangle getDefaultPinnedStackBounds() {
+        return mDefaultPinnedStackBounds;
+    }
+
+    Rectangle getPinnedStackMomentBounds() {
+        return mPinnedStackMovementBounds;
     }
 
     static class ActivityStack extends ActivityContainer {

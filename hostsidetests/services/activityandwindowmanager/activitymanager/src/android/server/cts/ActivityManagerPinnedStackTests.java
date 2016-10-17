@@ -70,6 +70,28 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(TAP_TO_FINISH_ACTIVITY, true);
     }
 
+    public void testPinnedStackDefaultBounds() throws Exception {
+        ActivityManagerState amState = mAmWmState.getAmState();
+        WindowManagerState wmState = mAmWmState.getWmState();
+        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
+        Rectangle defaultPipBounds = amState.getDefaultPinnedStackBounds();
+        Rectangle stableBounds = wmState.getStableBounds();
+        assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
+        assertTrue(stableBounds.contains(defaultPipBounds));
+    }
+
+    public void testPinnedStackMovementBounds() throws Exception {
+        ActivityManagerState amState = mAmWmState.getAmState();
+        WindowManagerState wmState = mAmWmState.getWmState();
+        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
+        Rectangle pipMovementBounds = amState.getPinnedStackMomentBounds();
+        Rectangle stableBounds = wmState.getStableBounds();
+        assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
+        assertTrue(stableBounds.contains(pipMovementBounds));
+    }
+
     private void pinnedStackTester(String startActivity, String topActivityName,
             boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
 
