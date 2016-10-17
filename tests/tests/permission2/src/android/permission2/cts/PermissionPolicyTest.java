@@ -197,6 +197,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 case "setup": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SETUP;
                 } break;
+                case "ephemeral": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_EPHEMERAL;
+                } break;
             }
         }
         return protectionLevel;
