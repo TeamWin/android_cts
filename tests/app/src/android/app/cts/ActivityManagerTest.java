@@ -510,7 +510,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         // The application finished tracker.
         ActivityReceiverFilter appEndReceiver = new ActivityReceiverFilter(
-                ACTIVITY_LAUNCHED_ACTION);
+                ACTIVITY_CHAIN_EXIT_ACTION);
 
         // The filter for the time event.
         ActivityReceiverFilter timeReceiver = new ActivityReceiverFilter(ACTIVITY_TIME_TRACK_INFO);
