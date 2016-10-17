@@ -70,7 +70,7 @@ public class DeviceOwnerNegativeTestActivity extends PassFailButtons.TestListAct
 
 
         adapter.add(TestListItem.newTest(this, DEVICE_OWNER_NEGATIVE_TEST_INFO.getTitle(),
-                DEVICE_OWNER_NEGATIVE_TEST_INFO.getTestId(), startTestIntent, null));
+                DEVICE_OWNER_NEGATIVE_TEST_INFO.getTestId(), startTestIntent));
 
         adapter.registerDataSetObserver(new DataSetObserver() {
             @Override

@@ -160,8 +160,7 @@ public class DeskClockTestsActivity extends PassFailButtons.TestListActivity {
                     .putExtra(IntentDrivenTestActivity.EXTRA_ID, info.getTestId())
                     .putExtra(IntentDrivenTestActivity.EXTRA_TITLE, title)
                     .putExtra(IntentDrivenTestActivity.EXTRA_INFO, info.getInfoText())
-                    .putExtra(IntentDrivenTestActivity.EXTRA_BUTTONS, info.getButtons()),
-                    null));
+                    .putExtra(IntentDrivenTestActivity.EXTRA_BUTTONS, info.getButtons())));
         }
     }
 

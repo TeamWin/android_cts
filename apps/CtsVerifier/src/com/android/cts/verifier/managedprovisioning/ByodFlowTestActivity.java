@@ -299,24 +299,22 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         mKeyguardDisabledFeaturesTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_keyguard_disabled_features,
                 KeyguardDisabledFeaturesActivity.class.getName(),
-                new Intent(this, KeyguardDisabledFeaturesActivity.class), null);
+                new Intent(this, KeyguardDisabledFeaturesActivity.class));
 
         mAuthenticationBoundKeyTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_auth_bound_key,
                 AuthenticationBoundKeyTestActivity.class.getName(),
-                new Intent(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST),
-                null);
+                new Intent(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST));
 
         mVpnTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_vpn,
                 VpnTestActivity.class.getName(),
-                new Intent(VpnTestActivity.ACTION_VPN),
-                null);
+                new Intent(VpnTestActivity.ACTION_VPN));
 
         mDisallowAppsControlTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_disallow_apps_control,
                 DisallowAppsControlActivity.class.getName(),
-                new Intent(this, DisallowAppsControlActivity.class), null);
+                new Intent(this, DisallowAppsControlActivity.class));
 
         // Test for checking if the required intent filters are set during managed provisioning.
         mIntentFiltersTest = new DialogTestListItem(this,
