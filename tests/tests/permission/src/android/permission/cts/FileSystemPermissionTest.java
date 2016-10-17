@@ -828,6 +828,7 @@ public class FileSystemPermissionTest extends AndroidTestCase {
                 new File("/dev/nvhost-prof-gpu"),
                 new File("/dev/nvhost-vic"),
                 new File("/dev/nvmap"),       // b/9088251
+                new File("/dev/pmsg0"),       // b/31857082
                 new File("/dev/ptmx"),        // b/9088251
                 new File("/dev/pvrsrvkm"),    // b/9108170
                 new File("/dev/pvr_sync"),
