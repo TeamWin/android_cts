@@ -50,6 +50,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.util.TypedValue;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,11 +62,11 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
     private final String[] mShortList = new String[] {
         "This", "is", "short", "!",
     };
-    private final String[] mCountryList = new String[] {
+    private final String[] mSample = new String[] {
         "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States",
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States",
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
     };
+
+    private String[] mCountryList;
 
     private ListView mListView;
     private Activity mActivity;
@@ -98,10 +101,34 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
 
         mAdapter_short = new ArrayAdapter<String>(mActivity,
                 android.R.layout.simple_list_item_1, mShortList);
+
+        generateContriesList(mActivity);
         mAdapter_countries = new ArrayAdapter<String>(mActivity,
                 android.R.layout.simple_list_item_1, mCountryList);
 
         mListView = (ListView)mActivity.findViewById(R.id.listview_default);
+    }
+
+    private void generateContriesList(Context context) {
+        //just for sure.
+        int totalN = getListViewVisibleItemsNumber(context) / mSample.length + 2;
+        mCountryList = new String[totalN * mSample.length];
+        for (int i = 0; i < totalN; i++) {
+            System.arraycopy(mSample, 0, mCountryList, i*mSample.length, mSample.length);
+        }
+    }
+
+    private int getListViewVisibleItemsNumber(Context context) {
+        TypedValue value = new TypedValue();
+        DisplayMetrics metrics = new DisplayMetrics();
+
+        context.getTheme().resolveAttribute(
+                android.R.attr.listPreferredItemHeight, value, true);
+        ((WindowManager) (context.getSystemService(Context.WINDOW_SERVICE)))
+                .getDefaultDisplay().getMetrics(metrics);
+
+        float itemHeight = TypedValue.complexToDimension(value.data, metrics);
+        return (int)(metrics.heightPixels / itemHeight) + 1;
     }
 
     public void testConstructor() {
