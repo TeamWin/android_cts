@@ -16,6 +16,14 @@
 
 -keepclasseswithmembers class * extends com.android.cts.verifier.location.LocationModeTestActivity
 
+# keep conditionalized tests related classes and methods
+-keep @com.android.cts.verifier.ConditionalTest class * { *; }
+
+-keepclassmembers @com.android.cts.verifier.ConditionalTest class * {
+    public static boolean shouldRun(android.content.Context, java.lang.Class);
+    public boolean shouldRun(android.content.Context, java.lang.Class);
+}
+
 # keep mockito methods
 -keep class org.mockito.** { *; }
 -keep interface org.mockito.** { *; }

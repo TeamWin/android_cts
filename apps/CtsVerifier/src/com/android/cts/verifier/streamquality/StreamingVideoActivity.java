@@ -216,8 +216,7 @@ public class StreamingVideoActivity extends PassFailButtons.TestListActivity {
     private void addStreamToTests(ArrayTestListAdapter streams, Stream stream) {
         Intent i = new Intent(StreamingVideoActivity.this, PlayVideoActivity.class);
         i.putExtra(PlayVideoActivity.EXTRA_STREAM, stream);
-        streams.add(TestListItem.newTest(stream.name, PlayVideoActivity.getTestId(stream.code),
-                i, null));
+        streams.add(TestListItem.newTest(stream.name, PlayVideoActivity.getTestId(stream.code), i));
     }
 
     /** @returns the appropriate RTSP url, or null in case of failure */
