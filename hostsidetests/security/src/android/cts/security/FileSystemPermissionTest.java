@@ -73,6 +73,7 @@ public class FileSystemPermissionTest extends DeviceTestCase {
             "/dev/nvhost-prof-gpu",
             "/dev/nvhost-vic",
             "/dev/nvmap",       // b/9088251
+            "/dev/pmsg0",       // b/31857082
             "/dev/ptmx",        // b/9088251
             "/dev/pvrsrvkm",    // b/9108170
             "/dev/pvr_sync",
