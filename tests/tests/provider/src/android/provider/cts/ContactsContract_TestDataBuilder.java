@@ -62,6 +62,7 @@ public class ContactsContract_TestDataBuilder {
         private Uri mUri;
         private long mId = -1;
         private Cursor mCursor;
+        private boolean mAlreadyDeleted;
 
         protected abstract Uri getContentUri();
 
@@ -139,6 +140,9 @@ public class ContactsContract_TestDataBuilder {
         }
 
         public void deletePermanently() throws Exception {
+            if (mAlreadyDeleted) {
+                return;
+            }
             Uri uri = getUri().buildUpon()
                     .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
                     .build();
@@ -192,6 +196,10 @@ public class ContactsContract_TestDataBuilder {
             }
             mId = mCursor.getLong(getColumnIndex(BaseColumns._ID));
             return (T)this;
+        }
+
+        public boolean isNull(String columnName) {
+            return mCursor.isNull(mCursor.getColumnIndex(columnName));
         }
 
         public long getLong(String columnName) {
@@ -250,6 +258,9 @@ public class ContactsContract_TestDataBuilder {
             mLoadedRows.remove(this);
         }
 
+        public void setAlreadyDeleted() {
+            mAlreadyDeleted = true;
+        }
     }
 
     public class TestRawContact extends Builder<TestRawContact> {

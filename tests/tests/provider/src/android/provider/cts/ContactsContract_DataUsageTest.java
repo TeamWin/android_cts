@@ -22,6 +22,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.Data;
 import android.provider.cts.contacts.DataUtil;
 import android.provider.cts.contacts.DatabaseAsserts;
 import android.provider.cts.contacts.RawContactUtil;
@@ -79,6 +80,9 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
         updateDataUsageAndAssert(dataIds[2], 1);
         updateDataUsageAndAssert(dataIds[2], 10);
 
+        updateDataUsageAndAssert(dataIds[1], 20);
+        updateDataUsageAndAssert(dataIds[1], 20);
+        updateDataUsageAndAssert(dataIds[1], 20);
 
         deleteDataUsage();
         RawContactUtil.delete(mResolver, ids.mRawContactId, true);
@@ -175,6 +179,10 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
             actual = Long.parseLong(record[0]);
         }
         assertEquals(expectedValue, actual);
+
+        // Also make sure the rounded value is used in 'where' too.
+        assertEquals("Query should match", 1, DataUtil.queryById(mResolver, dataId, projection,
+                Data.TIMES_USED + "=" + expectedValue, null).length);
     }
 
     private void deleteDataUsage() {
