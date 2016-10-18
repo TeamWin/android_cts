@@ -16,6 +16,9 @@
 
 package com.android.cts.verifierusbcompanion;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.content.Context;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
@@ -26,12 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Companion code for com.android.cts.verifier.usb.device.UsbDeviceTestActivity
@@ -199,12 +197,15 @@ class DeviceTestCompanion extends TestCompanion {
                             isSuccess = true;
                         }
                         break;
-                        case "Receive byte after some time": {
+                        case "Receive byte after some time":
                             Thread.sleep(200);
                             os.write(new byte[1]);
                             isSuccess = true;
-                        }
-                        break;
+                            break;
+                        case "Receive byte immediately":
+                            os.write(new byte[1]);
+                            isSuccess = true;
+                            break;
                         case "Echo until stop signal":
                             isSuccess = echoUntilStopSignal(is, os);
                             break;
