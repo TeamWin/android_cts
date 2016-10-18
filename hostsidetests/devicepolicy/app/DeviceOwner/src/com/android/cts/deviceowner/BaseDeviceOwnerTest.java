@@ -62,6 +62,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         assertNotNull(dpm);
         assertTrue(dpm.isAdminActive(getWho()));
         assertTrue(dpm.isDeviceOwnerApp(PACKAGE_NAME));
+        assertFalse(dpm.isManagedProfile(getWho()));
     }
 
     protected static ComponentName getWho() {
