@@ -408,8 +408,9 @@ def get_black_level(chan, props, cap_res):
     Returns:
         The black level value for the specified channel.
     """
-    if cap_res.has_key("android.sensor.dynamicBlackLevel"):
-        black_levels = cap_res["android.sensor.dynamicBlackLevel"]
+    if (cap_res.has_key('android.sensor.dynamicBlackLevel') and
+            cap_res['android.sensor.dynamicBlackLevel'] is not None):
+        black_levels = cap_res['android.sensor.dynamicBlackLevel']
     else:
         black_levels = props['android.sensor.blackLevelPattern']
     idxs = its.image.get_canonical_cfa_order(props)
