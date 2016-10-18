@@ -25,7 +25,6 @@ my_bionic_testlib_files := \
   libdl_preempt_test_1.so \
   libdl_preempt_test_2.so \
   libdl_test_df_1_global.so \
-  libgnu-hash-table-library.so \
   libsysv-hash-table-library.so \
   libtest_atexit.so \
   libtest_check_order_dlsym_1_left.so \
@@ -60,7 +59,6 @@ my_bionic_testlib_files := \
   libtest_dlsym_weak_func.so \
   libtest_dt_runpath_d.so \
   libtest_empty.so \
-  libtest_ifunc.so \
   libtest_nodelete_1.so \
   libtest_nodelete_2.so \
   libtest_nodelete_dt_flags_1.so \
@@ -101,6 +99,11 @@ my_bionic_testlib_files := \
   private_namespace_libs/libnstest_root.so \
   public_namespace_libs/libnstest_public.so \
 
+# These libraries are not built for mips.
+my_bionic_testlib_files_non_mips := \
+  libgnu-hash-table-library.so \
+  libtest_ifunc.so \
+
 my_bionic_testlibs_src_dir := \
   $($(cts_bionic_tests_2nd_arch_prefix)TARGET_OUT_DATA_NATIVE_TESTS)/bionic-loader-test-libs
 my_bionic_testlibs_out_dir := $(cts_bionic_tests_dir)/bionic-loader-test-libs
@@ -109,7 +112,14 @@ LOCAL_COMPATIBILITY_SUPPORT_FILES += \
   $(foreach lib, $(my_bionic_testlib_files), \
     $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
 
+ifneq ($(TARGET_ARCH),mips)
+LOCAL_COMPATIBILITY_SUPPORT_FILES += \
+  $(foreach lib, $(my_bionic_testlib_files_non_mips), \
+    $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
+endif
+
 my_bionic_testlib_files :=
+my_bionic_testlib_files_non_mips :=
 my_bionic_testlibs_src_dir :=
 my_bionic_testlibs_out_dir :=
 cts_bionic_tests_dir :=
