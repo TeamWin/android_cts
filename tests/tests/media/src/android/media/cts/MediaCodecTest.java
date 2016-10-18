@@ -34,6 +34,8 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.test.filters.SmallTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
@@ -56,6 +58,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
+@SmallTest
+@RequiresDevice
 public class MediaCodecTest extends AndroidTestCase {
     private static final String TAG = "MediaCodecTest";
     private static final boolean VERBOSE = false;           // lots of logging

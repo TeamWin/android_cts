@@ -24,6 +24,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.opengl.GLES20;
+import android.support.test.filters.SmallTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -33,7 +35,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import javax.microedition.khronos.opengles.GL10;
-
 
 /**
  * Generates a series of video frames, encodes them, decodes them, and tests for significant
@@ -47,6 +48,8 @@ import javax.microedition.khronos.opengles.GL10;
  * file, and read it back in from disk.  The data we're generating is just an elementary
  * stream, so we'd need to perform additional steps to make that happen.
  */
+@SmallTest
+@RequiresDevice
 public class EncodeDecodeTest extends AndroidTestCase {
     private static final String TAG = "EncodeDecodeTest";
     private static final boolean VERBOSE = false;           // lots of logging
@@ -390,7 +393,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
                 return;
             }
             if (VERBOSE) Log.d(TAG, "found codec: " + codec);
-            
+
             String codec_decoder = mcl.findDecoderForFormat(format);
             if (codec_decoder == null) {
                 Log.e(TAG, "Unable to find an appropriate codec for " + format);

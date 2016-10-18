@@ -24,6 +24,8 @@ import android.cts.util.MediaUtils;
 import android.media.MediaDataSource;
 import android.media.MediaMetadataRetriever;
 import android.graphics.Bitmap;
+import android.support.test.filters.SmallTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -34,6 +36,8 @@ import static android.media.MediaMetadataRetriever.OPTION_PREVIOUS_SYNC;
 
 import java.io.IOException;
 
+@SmallTest
+@RequiresDevice
 public class MediaMetadataRetrieverTest extends AndroidTestCase {
     private static final String TAG = "MediaMetadataRetrieverTest";
     private static final boolean SAVE_BITMAP_OUTPUT = false;

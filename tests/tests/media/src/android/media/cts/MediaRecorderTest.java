@@ -33,6 +33,8 @@ import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
 import android.os.ConditionVariable;
+import android.support.test.filters.SmallTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
 import android.view.Surface;
@@ -48,6 +50,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@SmallTest
+@RequiresDevice
 public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStubActivity> {
     private final String TAG = "MediaRecorderTest";
     private final String OUTPUT_PATH;
