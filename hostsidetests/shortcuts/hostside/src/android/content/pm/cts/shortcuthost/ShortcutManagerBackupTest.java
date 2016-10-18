@@ -40,16 +40,24 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     private static final String PUBLISHER3_PKG =
             "android.content.pm.cts.shortcut.backup.publisher3";
 
+    private static final String FEATURE_BACKUP = "android.software.backup";
+
+    private boolean mSupportsBackup;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
-        clearShortcuts(LAUNCHER1_PKG, getPrimaryUserId());
-        clearShortcuts(LAUNCHER2_PKG, getPrimaryUserId());
-        clearShortcuts(LAUNCHER3_PKG, getPrimaryUserId());
-        clearShortcuts(PUBLISHER1_PKG, getPrimaryUserId());
-        clearShortcuts(PUBLISHER2_PKG, getPrimaryUserId());
-        clearShortcuts(PUBLISHER3_PKG, getPrimaryUserId());
+        mSupportsBackup = getDevice().hasFeature(FEATURE_BACKUP);
+
+        if (mSupportsBackup) {
+            clearShortcuts(LAUNCHER1_PKG, getPrimaryUserId());
+            clearShortcuts(LAUNCHER2_PKG, getPrimaryUserId());
+            clearShortcuts(LAUNCHER3_PKG, getPrimaryUserId());
+            clearShortcuts(PUBLISHER1_PKG, getPrimaryUserId());
+            clearShortcuts(PUBLISHER2_PKG, getPrimaryUserId());
+            clearShortcuts(PUBLISHER3_PKG, getPrimaryUserId());
+        }
     }
 
     @Override
@@ -58,13 +66,15 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
             dumpsys("tearDown");
         }
 
-        getDevice().uninstallPackage(LAUNCHER1_PKG);
-        getDevice().uninstallPackage(LAUNCHER2_PKG);
-        getDevice().uninstallPackage(LAUNCHER3_PKG);
+        if (mSupportsBackup) {
+            getDevice().uninstallPackage(LAUNCHER1_PKG);
+            getDevice().uninstallPackage(LAUNCHER2_PKG);
+            getDevice().uninstallPackage(LAUNCHER3_PKG);
 
-        getDevice().uninstallPackage(PUBLISHER1_PKG);
-        getDevice().uninstallPackage(PUBLISHER2_PKG);
-        getDevice().uninstallPackage(PUBLISHER3_PKG);
+            getDevice().uninstallPackage(PUBLISHER1_PKG);
+            getDevice().uninstallPackage(PUBLISHER2_PKG);
+            getDevice().uninstallPackage(PUBLISHER3_PKG);
+        }
 
         super.tearDown();
     }
@@ -97,6 +107,10 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     }
 
     public void testBackupAndRestore() throws Exception {
+        if (!mSupportsBackup) {
+            return;
+        }
+
         installAppAsUser(LAUNCHER1_APK, getPrimaryUserId());
         installAppAsUser(LAUNCHER2_APK, getPrimaryUserId());
         installAppAsUser(LAUNCHER3_APK, getPrimaryUserId());
@@ -183,6 +197,9 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     }
 
     public void testBackupAndRestore_withNoUninstall() throws Exception {
+        if (!mSupportsBackup) {
+            return;
+        }
 
         installAppAsUser(PUBLISHER1_APK, getPrimaryUserId());
 
