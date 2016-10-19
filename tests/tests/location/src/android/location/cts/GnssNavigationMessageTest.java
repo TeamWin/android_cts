@@ -88,7 +88,7 @@ public class GnssNavigationMessageTest extends GnssTestCase {
         assertTrue("No Gps Navigation Message received.", !events.isEmpty());
 
         // Verify mandatory GnssNavigationMessage field values.
-        TestMeasurementUtil.verifyGnssNavMessageMandatoryField(events);
+        TestMeasurementUtil.verifyGnssNavMessageMandatoryField(mTestLocationManager, events);
     }
 
     private static void setTestValues(GnssNavigationMessage message) {

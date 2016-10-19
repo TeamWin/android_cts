@@ -70,6 +70,8 @@ public final class TestMeasurementUtil {
             0x0602
         ));
 
+    private static final int YEAR_2016 = 2016;
+
     /**
      * Check if test can be run on the current device.
      *
@@ -678,9 +680,11 @@ public final class TestMeasurementUtil {
      * Assert all mandatory fields in Gnss Navigation Message are in expected range.
      * See mandatory fields in {@code gps.h}.
      *
+     * @param testLocationManager TestLocationManager
      * @param events GnssNavigationMessageEvents
      */
-    public static void verifyGnssNavMessageMandatoryField(List<GnssNavigationMessage> events) {
+    public static void verifyGnssNavMessageMandatoryField(TestLocationManager testLocationManager,
+                                                          List<GnssNavigationMessage> events) {
         // Verify mandatory GnssNavigationMessage field values.
         SoftAssert softAssert = new SoftAssert(TAG);
         for (GnssNavigationMessage message : events) {
@@ -688,6 +692,12 @@ public final class TestMeasurementUtil {
             softAssert.assertTrue("Gnss Navigation Message Type:expected [" +
                 getGnssNavMessageTypes() + "] actual = " + type,
                     GNSS_NAVIGATION_MESSAGE_TYPE.contains(type));
+
+            int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
+            if (gnssYearOfHardware >= YEAR_2016) {
+                softAssert.assertTrue("Message ID cannot be 0", message.getMessageId() != 0);
+                softAssert.assertTrue("Sub Message ID cannot be 0", message.getSubmessageId() != 0);
+            }
 
             // if message type == TYPE_L1CA, verify PRN & Data Size.
             int messageType = message.getType();
