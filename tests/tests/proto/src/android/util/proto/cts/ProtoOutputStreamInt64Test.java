@@ -17,6 +17,7 @@
 package android.util.proto.cts;
 
 import android.util.proto.ProtoOutputStream;
+import android.util.proto.cts.nano.Test;
 
 import com.google.protobuf.nano.MessageNano;
 import junit.framework.TestCase;
