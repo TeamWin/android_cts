@@ -54,6 +54,8 @@ public class ActivityAndWindowManagersState extends Assert {
 
     private final List<WindowManagerState.WindowState> mTempWindowList = new ArrayList<>();
 
+    private boolean mUseActivityNames = true;
+
     /**
      * Compute AM and WM state of device, check sanity and bounds.
      * WM state will include only visible windows, stack and task bounds will be compared.
@@ -108,6 +110,17 @@ public class ActivityAndWindowManagersState extends Assert {
 
         assertSanity();
         assertValidBounds(compareTaskAndStackBounds);
+    }
+
+    /**
+     * By default computeState allows you to pass only the activity name it and
+     * it will generate the full window name for the main activity window. In the
+     * case of secondary application windows though this isn't helpful, as they
+     * may follow a different format, so this method lets you disable that behavior,
+     * prior to calling a computeState variant
+     */
+    void setUseActivityNamesForWindowNames(boolean useActivityNames) {
+        mUseActivityNames = useActivityNames;
     }
 
     /**
@@ -226,8 +239,11 @@ public class ActivityAndWindowManagersState extends Assert {
         List<WindowManagerState.WindowState> matchingWindowStates = new ArrayList<>();
         for (int i = 0; i < waitForActivitiesVisible.length; i++) {
             // Check if window is visible - it should be represented as one of the window states.
-            final String windowName =
-                    ActivityManagerTestBase.getWindowName(waitForActivitiesVisible[i]);
+            final String windowName = mUseActivityNames ?
+                    ActivityManagerTestBase.getWindowName(waitForActivitiesVisible[i])
+                    : waitForActivitiesVisible[i];
+
+
             mWmState.getMatchingWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
             if (!activityWindowVisible) {
