@@ -215,4 +215,7 @@
 
     <!-- b/26235244 -->
     <option name="compatibility:exclude-filter" value="android.util.cts.EventLogTest#testWriteEventWithOversizeValue" />
+
+    <!-- b/31803630 -->
+    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.ListeningPortsTest" />
 </configuration>
