@@ -1967,6 +1967,7 @@ public class TextViewTest extends ActivityInstrumentationTestCase2<TextViewCtsAc
                 assertEquals("bca", mTextView.getText().toString());
             }
         });
+        mInstrumentation.waitForIdleSync();
     }
 
     private static boolean hasSpansAtMiddleOfText(final TextView textView, final Class<?> type) {
