@@ -258,6 +258,13 @@ public class CompatibilityBuildHelper {
     }
 
     /**
+     * @return a {@link File} in the resultDir for logging invocation failures
+     */
+    public File getInvocationFailureFile() throws FileNotFoundException {
+        return new File(getResultDir(), "invocation_failure.txt");
+    }
+
+    /**
      * @return a {@link String} to use for directory suffixes created from the given time.
      */
     public static String getDirSuffix(long millis) {
