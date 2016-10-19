@@ -45,6 +45,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.support.test.filters.SmallTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -66,6 +68,8 @@ import junit.framework.AssertionFailedError;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
+@SmallTest
+@RequiresDevice
 public class MediaPlayerTest extends MediaPlayerTestBase {
 
     private String RECORDED_FILE;

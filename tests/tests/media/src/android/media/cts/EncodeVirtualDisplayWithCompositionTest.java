@@ -43,6 +43,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
+import android.support.test.filters.SmallTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -76,6 +78,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * detect any issues. The test itself does not check the output as it is already done in other
  * tests.
  */
+@SmallTest
+@RequiresDevice
 public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
     private static final String TAG = "EncodeVirtualDisplayWithCompositionTest";
     private static final boolean DBG = true;
