@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class ModuleRepoTest extends TestCase {
 
@@ -269,7 +270,7 @@ public class ModuleRepoTest extends TestCase {
         mRepo.setPrepared(true);
         mRepo.setPrepared(true);
         mRepo.setPrepared(true); // each shard should call setPrepared() once
-        assertTrue(mRepo.isPrepared());
+        assertTrue(mRepo.isPrepared(0, TimeUnit.MINUTES));
     }
 
     public void testIsNotPrepared() {
@@ -279,7 +280,7 @@ public class ModuleRepoTest extends TestCase {
         mRepo.setPrepared(true);
         mRepo.setPrepared(false); // mRepo should return false for setPrepared() after third call
         mRepo.setPrepared(true);
-        assertFalse(mRepo.isPrepared());
+        assertFalse(mRepo.isPrepared(0, TimeUnit.MINUTES));
     }
 
     private void assertArrayEquals(Object[] expected, Object[] actual) {
