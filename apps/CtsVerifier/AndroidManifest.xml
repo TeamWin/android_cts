@@ -1557,9 +1557,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_location" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
         <activity android:name=".location.LocationModeHighAccuracyTestActivity"
                 android:label="@string/location_mode_high_accuracy_test">
@@ -1571,9 +1569,7 @@
             <meta-data android:name="test_required_features"
                     android:value="android.hardware.location.network:android.hardware.location.gps" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
         <activity android:name=".location.LocationModeBatterySavingTestActivity"
                 android:label="@string/location_mode_battery_saving_test">
@@ -1584,9 +1580,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_location" />
             <meta-data android:name="test_required_features" android:value="android.hardware.location.network" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
         <activity android:name=".location.LocationModeDeviceOnlyTestActivity"
                 android:label="@string/location_mode_device_only_test">
@@ -1597,9 +1591,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_location" />
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
 
         <activity android:name=".camera.formats.CameraFormatsActivity"
@@ -1726,8 +1718,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive:android.hardware.type.television" />
         </activity>
 
 <!-- Turned off Sensor Power Test in initial L release
@@ -1771,9 +1763,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                       android:value="android.software.leanback" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
         </activity>
 
         <activity android:name=".notifications.AttentionManagementVerifierActivity"
@@ -1879,11 +1869,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.watch" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
         </activity>
         <activity android:name=".security.CANotifyOnBootActivity"
                 android:label="@string/caboot_test">
@@ -1893,11 +1879,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.watch" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
         </activity>
 
         <activity android:name=".security.KeyChainTest"
@@ -1909,11 +1891,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
             <!-- KeyChain is only installed on communication-oriented devices inheriting core.mk -->
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.watch" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
         </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
@@ -1990,9 +1968,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_deskclock" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
 
 <!-- TODO: enable when not requiring to tap the screen and timeouts are tuned -->
@@ -2021,9 +1997,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
 
         <receiver android:name="com.android.cts.verifier.sensors.DeviceSuspendTestActivity$AlarmReceiver">
@@ -2480,9 +2454,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_jobscheduler" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
 -->
 
@@ -2493,9 +2465,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_jobscheduler" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
 
         <activity android:name=".jobscheduler.ConnectivityConstraintTestActivity" android:label="@string/js_connectivity_test">
@@ -2505,9 +2475,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_jobscheduler" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback" />
         </activity>
 
         <service android:name=".jobscheduler.MockJobService"
@@ -2660,8 +2628,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.watch" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch:android.hardware.type.television" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyLineActivity"
