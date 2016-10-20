@@ -48,7 +48,7 @@ public class CtsBuildProvider implements IDeviceBuildProvider {
     @Option(name="branch", description="build branch name to supply.")
     private String mBranch = null;
 
-    public static final String CTS_BUILD_VERSION = "7.0_r0";
+    public static final String CTS_BUILD_VERSION = "7.0_r201612s";
     public static final String CTS_PACKAGE = "com.android.cts.tradefed.testtype";
 
     /**
