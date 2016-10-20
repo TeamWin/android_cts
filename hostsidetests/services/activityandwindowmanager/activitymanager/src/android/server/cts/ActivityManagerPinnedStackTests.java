@@ -19,6 +19,8 @@ package android.server.cts;
 import java.awt.Rectangle;
 import java.lang.Exception;
 import java.lang.String;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -90,6 +92,38 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         Rectangle stableBounds = wmState.getStableBounds();
         assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
         assertTrue(stableBounds.contains(pipMovementBounds));
+    }
+
+    public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
+        // Launch an activity into the pinned stack
+        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_ACTIVITY));
+
+        // Get the display dimensions
+        String windowName = getWindowName(TAP_TO_FINISH_ACTIVITY);
+        mAmWmState.computeState(mDevice, true /* visibleOnly */,
+                new String[] {TAP_TO_FINISH_ACTIVITY});
+
+        final WindowManagerState wmState = mAmWmState.getWmState();
+        final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
+        wmState.getMatchingWindowState(windowName, tempWindowList);
+
+        WindowManagerState.WindowState windowState = tempWindowList.get(0);
+        WindowManagerState.Display display = wmState.getDisplay(windowState.getDisplayId());
+        Rectangle displayRect = display.getDisplayRect();
+
+        // Move the pinned stack offscreen
+        String moveStackOffscreenCommand = String.format("am stack resize 4 %d %d %d %d",
+                displayRect.width - 200, 0, displayRect.width + 200, 500);
+        executeShellCommand(moveStackOffscreenCommand);
+
+        // Ensure that the surface insets are not negative
+        mAmWmState.computeState(mDevice, true /* visibleOnly */,
+                new String[] {ALWAYS_FOCUSABLE_PIP_ACTIVITY});
+        wmState.getMatchingWindowState(windowName, tempWindowList);
+        windowState = tempWindowList.get(0);
+        Rectangle contentInsets = windowState.getContentInsets();
+        assertTrue(contentInsets.x >= 0 && contentInsets.y >= 0 && contentInsets.width >= 0 &&
+                contentInsets.height >= 0);
     }
 
     private void pinnedStackTester(String startActivity, String topActivityName,

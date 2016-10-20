@@ -654,6 +654,8 @@ public class WindowManagerState {
         private static final int WINDOW_TYPE_DEBUGGER = 3;
 
         private static final String RECT_STR = "\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]";
+        private static final String NEGATIVE_VALUES_ALLOWED_RECT_STR =
+                "\\[([-\\d]+),([-\\d]+)\\]\\[([-\\d]+),([-\\d]+)\\]";
         private static final Pattern sMainFramePattern = Pattern.compile("mFrame=" + RECT_STR + ".+");
         private static final Pattern sFramePattern =
                 Pattern.compile("Frames: containing=" + RECT_STR + " parent=" + RECT_STR);
@@ -663,6 +665,8 @@ public class WindowManagerState {
                 Pattern.compile("mDisplayId=(\\d+) stackId=(\\d+) (.+)");
         private static final Pattern sSurfaceInsetsPattern =
             Pattern.compile("Cur insets.+surface=" + RECT_STR + ".+");
+        private static final Pattern sContentInsetsPattern =
+                Pattern.compile("Cur insets.+content=" + NEGATIVE_VALUES_ALLOWED_RECT_STR + ".+");
         private static final Pattern sLayerPattern =
             Pattern.compile("Surface:.+layer=(\\d+).+");
         private static final Pattern sCropPattern =
@@ -679,6 +683,7 @@ public class WindowManagerState {
         private Rectangle mContentFrame = new Rectangle();
         private Rectangle mFrame = new Rectangle();
         private Rectangle mSurfaceInsets = new Rectangle();
+        private Rectangle mContentInsets = new Rectangle();
         private Rectangle mCrop = new Rectangle();
 
 
@@ -730,6 +735,10 @@ public class WindowManagerState {
 
         Rectangle getSurfaceInsets() {
             return mSurfaceInsets;
+        }
+
+        Rectangle getContentInsets() {
+            return mContentInsets;
         }
 
         Rectangle getContentFrame() {
@@ -810,6 +819,12 @@ public class WindowManagerState {
                 if (matcher.matches()) {
                     log(TAG + "INSETS: " + line);
                     mSurfaceInsets = extractBounds(matcher);
+                }
+
+                matcher = sContentInsetsPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "CONTENT INSETS: " + line);
+                    mContentInsets = extractBounds(matcher);
                 }
 
                 matcher = sLayerPattern.matcher(line);
