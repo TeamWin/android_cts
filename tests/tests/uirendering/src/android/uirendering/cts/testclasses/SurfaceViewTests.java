@@ -99,7 +99,6 @@ public class SurfaceViewTests extends ActivityTestBase {
             }
         };
         Screenshotter screenshotter = testOffset -> {
-            getInstrumentation().waitForIdleSync();
             Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
             return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
         };
