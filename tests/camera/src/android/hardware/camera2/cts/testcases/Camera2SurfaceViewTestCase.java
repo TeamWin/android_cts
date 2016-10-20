@@ -55,6 +55,7 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -696,6 +697,27 @@ public class Camera2SurfaceViewTestCase extends
             CaptureRequest.Builder stillRequest, Size previewSz, Size captureSz, int format,
             CaptureCallback resultListener, int maxNumImages,
             ImageReader.OnImageAvailableListener imageListener) throws Exception {
+        prepareCaptureAndStartPreview(previewRequest, stillRequest, previewSz, captureSz,
+            format, resultListener, null, maxNumImages, imageListener);
+    }
+
+    /**
+     * Setup single capture configuration and start preview.
+     *
+     * @param previewRequest The capture request to be used for preview
+     * @param stillRequest The capture request to be used for still capture
+     * @param previewSz Preview size
+     * @param captureSz Still capture size
+     * @param format The single capture image format
+     * @param resultListener Capture result listener
+     * @param sessionListener Session listener
+     * @param maxNumImages The max number of images set to the image reader
+     * @param imageListener The single capture capture image listener
+     */
+    protected void prepareCaptureAndStartPreview(CaptureRequest.Builder previewRequest,
+            CaptureRequest.Builder stillRequest, Size previewSz, Size captureSz, int format,
+            CaptureCallback resultListener, CameraCaptureSession.StateCallback sessionListener,
+            int maxNumImages, ImageReader.OnImageAvailableListener imageListener) throws Exception {
         if (VERBOSE) {
             Log.v(TAG, String.format("Prepare single capture (%s) and preview (%s)",
                     captureSz.toString(), previewSz.toString()));
@@ -711,7 +733,11 @@ public class Camera2SurfaceViewTestCase extends
         List<Surface> outputSurfaces = new ArrayList<Surface>();
         outputSurfaces.add(mPreviewSurface);
         outputSurfaces.add(mReaderSurface);
-        mSessionListener = new BlockingSessionCallback();
+        if (sessionListener == null) {
+            mSessionListener = new BlockingSessionCallback();
+        } else {
+            mSessionListener = new BlockingSessionCallback(sessionListener);
+        }
         mSession = configureCameraSession(mCamera, outputSurfaces, mSessionListener, mHandler);
 
         // Configure the requests.
@@ -790,5 +816,34 @@ public class Camera2SurfaceViewTestCase extends
             cap = CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING;
         }
         return info.isCapabilitySupported(cap);
+    }
+
+    protected Range<Integer> getSuitableFpsRangeForDuration(String cameraId, long frameDuration) {
+        // Add 0.05 here so Fps like 29.99 evaluated to 30
+        int minBurstFps = (int) Math.floor(1e9 / frameDuration + 0.05f);
+        boolean foundConstantMaxYUVRange = false;
+        boolean foundYUVStreamingRange = false;
+
+        // Find suitable target FPS range - as high as possible that covers the max YUV rate
+        // Also verify that there's a good preview rate as well
+        List<Range<Integer> > fpsRanges = Arrays.asList(
+                mStaticInfo.getAeAvailableTargetFpsRangesChecked());
+        Range<Integer> targetRange = null;
+        for (Range<Integer> fpsRange : fpsRanges) {
+            if (fpsRange.getLower() == minBurstFps && fpsRange.getUpper() == minBurstFps) {
+                foundConstantMaxYUVRange = true;
+                targetRange = fpsRange;
+            }
+            if (fpsRange.getLower() <= 15 && fpsRange.getUpper() == minBurstFps) {
+                foundYUVStreamingRange = true;
+            }
+        }
+
+        assertTrue(String.format("Cam %s: Target FPS range of (%d, %d) must be supported",
+                cameraId, minBurstFps, minBurstFps), foundConstantMaxYUVRange);
+        assertTrue(String.format(
+                "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
+                cameraId, minBurstFps), foundYUVStreamingRange);
+        return targetRange;
     }
 }
