@@ -38,10 +38,12 @@ public class WindowManagerState {
     public static final int DUMP_MODE_APPS = 0;
     public static final int DUMP_MODE_VISIBLE = 1;
     public static final int DUMP_MODE_VISIBLE_APPS = 2;
+    public static final int DUMP_MODE_POLICY = 3;
 
     private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window -a apps";
     private static final String DUMPSYS_WINDOWS_VISIBLE = "dumpsys window -a visible";
     private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
+    private static final String DUMPSYS_WINDOWS_POLICY = "dumpsys window policy";
 
     private static final Pattern sWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+)\\}\\:");
@@ -62,6 +64,8 @@ public class WindowManagerState {
     private static final Pattern sFocusedAppPattern =
             Pattern.compile("mFocusedApp=AppWindowToken\\{(.+) token=Token\\{(.+) "
                     + "ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)");
+    private static final Pattern sStableBoundsPattern = Pattern.compile(
+            "mStable=\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)");
 
     private static final Pattern sLastAppTransitionPattern =
             Pattern.compile("mLastUsedAppTransition=(.+)");
@@ -82,6 +86,7 @@ public class WindowManagerState {
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private String mLastTransition = null;
+    private Rectangle mStableBounds = new Rectangle();
     private final LinkedList<String> mSysDump = new LinkedList();
 
     void computeState(ITestDevice device, int dumpMode) throws DeviceNotAvailableException {
@@ -111,6 +116,8 @@ public class WindowManagerState {
             switch (dumpMode) {
             case DUMP_MODE_APPS:
                 dumpsysCmd = DUMPSYS_WINDOWS_APPS; break;
+            case DUMP_MODE_POLICY:
+                dumpsysCmd = DUMPSYS_WINDOWS_POLICY; break;
             case DUMP_MODE_VISIBLE:
                 dumpsysCmd = DUMPSYS_WINDOWS_VISIBLE; break;
             case DUMP_MODE_VISIBLE_APPS:
@@ -234,6 +241,18 @@ public class WindowManagerState {
                 mLastTransition = lastAppTransitionPattern;
                 continue;
             }
+
+            matcher = sStableBoundsPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                int left = Integer.parseInt(matcher.group(1));
+                int top = Integer.parseInt(matcher.group(2));
+                int right = Integer.parseInt(matcher.group(3));
+                int bottom = Integer.parseInt(matcher.group(4));
+                mStableBounds.setBounds(left, top, right - left, bottom - top);
+                log(mStableBounds.toString());
+                continue;
+            }
         }
     }
 
@@ -313,6 +332,10 @@ public class WindowManagerState {
             }
         }
         return null;
+    }
+
+    Rectangle getStableBounds() {
+        return mStableBounds;
     }
 
     private void reset() {
