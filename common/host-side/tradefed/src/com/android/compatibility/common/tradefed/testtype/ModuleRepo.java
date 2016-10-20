@@ -202,13 +202,13 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public boolean isPrepared() {
+    public boolean isPrepared(long timeout, TimeUnit unit) {
+        // returns true only if CountDownLatch reaches zero && no shards have setPrepared to false
         try {
-            mPreparedLatch.await();
+            return (mPreparedLatch.await(timeout, unit)) ? mPrepared : false;
         } catch (InterruptedException e) {
             return false;
         }
-        return mPrepared;
     }
 
     /**
