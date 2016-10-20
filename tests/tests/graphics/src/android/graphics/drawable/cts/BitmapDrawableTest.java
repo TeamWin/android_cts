@@ -55,6 +55,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
+import android.util.LayoutDirection;
 import android.util.Xml;
 import android.view.Gravity;
 
@@ -534,15 +535,9 @@ public class BitmapDrawableTest {
     };
 
     private static final int[] DENSITY_IMAGES = new int[] {
-            R.drawable.bitmap_density
-    };
-
-    private static final int[][] DENSITY_GOLDEN_IMAGES = new int[][] {
-            {
-                    R.drawable.bitmap_density_golden_160,
-                    R.drawable.bitmap_density_golden_80,
-                    R.drawable.bitmap_density_golden_320,
-            }
+            R.drawable.bitmap_density,
+            R.drawable.bitmap_shader_density,
+            R.drawable.bitmap_shader_am_density,
     };
 
     @Test
@@ -550,15 +545,16 @@ public class BitmapDrawableTest {
         final Resources res = mContext.getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            verifyPreloadDensityInner(res, DENSITY_IMAGES[0], DENSITY_VALUES,
-                    DENSITY_GOLDEN_IMAGES[0]);
+            for (int i = 0; i < DENSITY_IMAGES.length; i++) {
+                verifyPreloadDensityInner(res, DENSITY_IMAGES[i], DENSITY_VALUES);
+            }
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void verifyPreloadDensityInner(Resources res, int sourceResId, int[] densities,
-            int[] goldenResIds) throws XmlPullParserException, IOException {
+    private void verifyPreloadDensityInner(Resources res, int sourceResId, int[] densities)
+            throws XmlPullParserException, IOException {
         final Rect tempPadding = new Rect();
 
         // Capture initial state at preload density.
@@ -574,7 +570,7 @@ public class BitmapDrawableTest {
         final int origHeight = preloadedDrawable.getIntrinsicHeight();
         assertFalse(preloadedDrawable.getPadding(tempPadding));
 
-        compareOrSave(preloadedDrawable, preloadDensityDpi, sourceResId, goldenResIds[0]);
+        compareOrSave(preloadedDrawable, preloadDensityDpi, sourceResId);
 
         for (int i = 1; i < densities.length; i++) {
             final int scaledDensityDpi = densities[i];
@@ -583,6 +579,7 @@ public class BitmapDrawableTest {
 
             final BitmapDrawable scaledDrawable =
                     (BitmapDrawable) preloadedConstantState.newDrawable(res);
+            scaledDrawable.setLayoutDirection(LayoutDirection.RTL);
 
             // Sizes are rounded.
             assertEquals(Math.round(origWidth * scale), scaledDrawable.getIntrinsicWidth());
@@ -591,7 +588,7 @@ public class BitmapDrawableTest {
             // Bitmaps have no padding.
             assertFalse(scaledDrawable.getPadding(tempPadding));
 
-            compareOrSave(scaledDrawable, scaledDensityDpi, sourceResId, goldenResIds[i]);
+            compareOrSave(scaledDrawable, scaledDensityDpi, sourceResId);
 
             // Ensure theme density is applied correctly. Unlike most
             // drawables, we don't have any loss of accuracy because density
@@ -606,7 +603,7 @@ public class BitmapDrawableTest {
         }
     }
 
-    private void compareOrSave(Drawable dr, int densityDpi, int sourceResId, int goldenResId) {
+    private void compareOrSave(Drawable dr, int densityDpi, int sourceResId) {
         final int width = dr.getIntrinsicWidth();
         final int height = dr.getIntrinsicHeight();
         final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -619,6 +616,7 @@ public class BitmapDrawableTest {
         if (DBG_DUMP_PNG) {
             saveGoldenImage(bitmap, sourceResId, densityDpi);
         } else {
+            final int goldenResId = getGoldenImageResId(sourceResId, densityDpi);
             final Bitmap golden = BitmapFactory.decodeResource(
                     mContext.getResources(), goldenResId);
             DrawableTestUtils.compareImages(densityDpi + " dpi", golden, bitmap,
@@ -626,28 +624,32 @@ public class BitmapDrawableTest {
         }
     }
 
+    private int getGoldenImageResId(int sourceResId, int densityDpi) {
+        final String name = getGoldenImageName(sourceResId, densityDpi);
+        return mContext.getResources().getIdentifier(name, "drawable", mContext.getPackageName());
+    }
+
+    private String getGoldenImageName(int sourceResId, int densityDpi) {
+        return mContext.getResources().getResourceEntryName(sourceResId) + "_golden_" + densityDpi;
+    }
+
     private void saveGoldenImage(Bitmap bitmap, int sourceResId, int densityDpi) {
         // Save the image to the disk.
         FileOutputStream out = null;
 
         try {
-            final String outputFolder = "/sdcard/temp/";
-            final File folder = new File(outputFolder);
-            if (!folder.exists()) {
-                folder.mkdir();
+            final File outputFolder = new File("/sdcard/temp/");
+            if (!outputFolder.exists()) {
+                outputFolder.mkdir();
             }
 
-            final String sourceFilename = new File(
-                    mContext.getResources().getString(sourceResId)).getName();
-            final String sourceTitle = sourceFilename.substring(0, sourceFilename.lastIndexOf("."));
-            final String outputTitle = sourceTitle + "_golden_" + densityDpi;
-            final String outputFilename = outputFolder + outputTitle + ".png";
-            final File outputFile = new File(outputFilename);
-            if (!outputFile.exists()) {
-                outputFile.createNewFile();
+            final String goldenFilename = getGoldenImageName(sourceResId, densityDpi) + ".png";
+            final File goldenFile = new File(outputFolder, goldenFilename);
+            if (!goldenFile.exists()) {
+                goldenFile.createNewFile();
             }
 
-            out = new FileOutputStream(outputFile, false);
+            out = new FileOutputStream(goldenFile, false);
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
         } catch (Exception e) {
             e.printStackTrace();
