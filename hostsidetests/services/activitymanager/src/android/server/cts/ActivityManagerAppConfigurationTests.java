@@ -105,7 +105,13 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         }
 
         setDeviceRotation(0);
-        launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        // Launch our own activity to side in case Recents (or other activity to side) doesn't
+        // support rotation.
+        launchActivityToSide(false /* randomData */, false /* multipleTask */, TEST_ACTIVITY_NAME);
+        // Launch target activity in docked stack.
+        launchActivity(false /* toSide */, false /* randomData */, false /* multipleTask */,
+                RESIZEABLE_ACTIVITY_NAME);
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
 
