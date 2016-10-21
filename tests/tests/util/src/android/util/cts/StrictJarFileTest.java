@@ -25,8 +25,10 @@ import static org.junit.Assert.fail;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.system.OsConstants;
 import android.util.jar.StrictJarFile;
 
+import libcore.io.IoBridge;
 import libcore.io.Streams;
 
 import org.junit.Before;
@@ -34,6 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,6 +70,16 @@ public class StrictJarFileTest {
         new StrictJarFile("Wrong.file");
     }
 
+    @Test(expected=IOException.class)
+    public void testConstructorWrongFile_FD() throws IOException {
+        new StrictJarFile(new FileDescriptor());
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testConstructorWrongFile_FD_null() throws IOException {
+        new StrictJarFile((FileDescriptor) null);
+    }
+
     @Test
     public void testConstructor() throws Exception {
         copyFile(JAR_1);
@@ -76,11 +89,32 @@ public class StrictJarFileTest {
     }
 
     @Test
+    public void testConstructor_FD() throws Exception {
+        copyFile(JAR_1);
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, JAR_1).getAbsolutePath(), OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        jarFile.close();
+    }
+
+    @Test
     public void testIteration() throws Exception {
         copyFile(JAR_1);
         StrictJarFile jarFile =
                 new StrictJarFile(new File(mResourcesFile, JAR_1).getAbsolutePath());
+        checkIteration(jarFile);
+    }
 
+    @Test
+    public void testIteration_FD() throws Exception {
+        copyFile(JAR_1);
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, JAR_1).getAbsolutePath(), OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        checkIteration(jarFile);
+    }
+
+    private static void checkIteration(StrictJarFile jarFile) throws Exception {
         Iterator<ZipEntry> it = jarFile.iterator();
         HashMap<String, ZipEntry> entries = new HashMap<>();
         while (it.hasNext()) {
@@ -119,7 +153,19 @@ public class StrictJarFileTest {
         copyFile(JAR_1);
         StrictJarFile jarFile =
                 new StrictJarFile(new File(mResourcesFile, JAR_1).getAbsolutePath());
+        checkFindEntry(jarFile);
+    }
 
+    @Test
+    public void testFindEntry_FD() throws Exception {
+        copyFile(JAR_1);
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, JAR_1).getAbsolutePath(), OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        checkFindEntry(jarFile);
+    }
+
+    private static void checkFindEntry(StrictJarFile jarFile) throws Exception {
         assertNull(jarFile.findEntry("foobar"));
         assertNull(jarFile.findEntry("blah.txt"));
         assertNotNull(jarFile.findEntry("Blah.txt"));
@@ -136,7 +182,19 @@ public class StrictJarFileTest {
         copyFile(JAR_1);
         StrictJarFile jarFile =
                 new StrictJarFile(new File(mResourcesFile, JAR_1).getAbsolutePath());
+        checkGetManifest(jarFile);
+    }
 
+    @Test
+    public void testGetManifest_FD() throws Exception {
+        copyFile(JAR_1);
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, JAR_1).getAbsolutePath(), OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        checkGetManifest(jarFile);
+    }
+
+    private static void checkGetManifest(StrictJarFile jarFile) throws Exception {
         assertNotNull(jarFile.getManifest());
         assertEquals("1.4.2 (IBM Corporation)",
                 jarFile.getManifest().getMainAttributes().getValue("Created-By"));
@@ -147,6 +205,20 @@ public class StrictJarFileTest {
         copyFile("Integrate.jar");
         StrictJarFile jarFile =
                 new StrictJarFile(new File(mResourcesFile, "Integrate.jar").getAbsolutePath());
+        checkJarSigning_wellFormed(jarFile);
+    }
+
+    @Test
+    public void testJarSigning_wellFormed_FD() throws IOException {
+        copyFile("Integrate.jar");
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, "Integrate.jar").getAbsolutePath(),
+                        OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        checkJarSigning_wellFormed(jarFile);
+    }
+
+    private static void checkJarSigning_wellFormed(StrictJarFile jarFile) throws IOException {
         Iterator<ZipEntry> entries = jarFile.iterator();
         while (entries.hasNext()) {
             ZipEntry zipEntry = entries.next();
@@ -163,7 +235,20 @@ public class StrictJarFileTest {
         copyFile("Integrate.jar");
         StrictJarFile jarFile = new StrictJarFile(
                 new File(mResourcesFile, "Integrate.jar").getAbsolutePath());
+        checkJarSigning_fudgedEntry(jarFile);
+    }
 
+    @Test
+    public void testJarSigning_fudgedEntry_FD() throws IOException {
+        copyFile("Integrate.jar");
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, "Integrate.jar").getAbsolutePath(),
+                        OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        checkJarSigning_fudgedEntry(jarFile);
+    }
+
+    private static void checkJarSigning_fudgedEntry(StrictJarFile jarFile) throws IOException {
         ZipEntry ze = jarFile.findEntry("Test.class");
         jarFile.getInputStream(ze).skip(Long.MAX_VALUE);
 
@@ -181,7 +266,21 @@ public class StrictJarFileTest {
         copyFile("Modified_Class.jar");
         StrictJarFile jarFile = new StrictJarFile(
                 new File(mResourcesFile,  "Modified_Class.jar").getAbsolutePath());
+        checkJarSigning_modifiedClass(jarFile);
+    }
 
+    @Test
+    public void testJarSigning_modifiedClass_FD() throws IOException {
+        copyFile("Modified_Class.jar");
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, "Modified_Class.jar").getAbsolutePath(),
+                        OsConstants.O_RDONLY);
+        StrictJarFile jarFile = new StrictJarFile(fd);
+        checkJarSigning_modifiedClass(jarFile);
+    }
+
+    private static void checkJarSigning_modifiedClass(StrictJarFile jarFile)
+            throws IOException {
         ZipEntry ze = jarFile.findEntry("Test.class");
         try {
             jarFile.getInputStream(ze).skip(Long.MAX_VALUE);
@@ -196,8 +295,18 @@ public class StrictJarFileTest {
     }
 
     @Test
+    public void testJarSigning_brokenMainAttributes_FD() throws Exception {
+        verifyThrowsOnInitFD("Modified_Manifest_MainAttributes.jar");
+    }
+
+    @Test
     public void testJarSigning_brokenEntryAttributes() throws Exception {
         verifyThrowsOnInit("Modified_Manifest_EntryAttributes.jar");
+    }
+
+    @Test
+    public void testJarSigning_brokenEntryAttributes_FD() throws Exception {
+        verifyThrowsOnInitFD("Modified_Manifest_EntryAttributes.jar");
     }
 
     @Test
@@ -206,14 +315,36 @@ public class StrictJarFileTest {
     }
 
     @Test
+    public void testJarSigning_brokenSignatureFile_FD() throws Exception {
+        verifyThrowsOnInitFD("Modified_SF_EntryAttributes.jar");
+    }
+
+    @Test
     public void testJarSigning_removedEntry() throws Exception {
         verifyThrowsOnInit("removed.jar");
+    }
+
+    @Test
+    public void testJarSigning_removedEntry_FD() throws Exception {
+        verifyThrowsOnInitFD("removed.jar");
     }
 
     private void verifyThrowsOnInit(String name) throws Exception {
         copyFile(name);
         try {
             new StrictJarFile(new File(mResourcesFile,  name).getAbsolutePath());
+            fail();
+        } catch (SecurityException expected) {
+        }
+    }
+
+    private void verifyThrowsOnInitFD(String name) throws Exception {
+        copyFile(name);
+        FileDescriptor fd = IoBridge.open(
+                new File(mResourcesFile, name).getAbsolutePath(),
+                        OsConstants.O_RDONLY);
+        try {
+            new StrictJarFile(fd);
             fail();
         } catch (SecurityException expected) {
         }
