@@ -56,6 +56,7 @@ readlink: return EPERM
 rename: return EPERM
 rmdir: return EPERM
 select: 1
+set_thread_area: 1
 setfsgid32: return EPERM
 setfsuid32: return EPERM
 setgid32: return EPERM
