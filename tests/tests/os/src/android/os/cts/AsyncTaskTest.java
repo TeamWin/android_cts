@@ -16,12 +16,14 @@
 
 package android.os.cts;
 
+import android.support.annotation.NonNull;
 
 import android.cts.util.PollingCheck;
 import android.os.AsyncTask;
 import android.test.InstrumentationTestCase;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class AsyncTaskTest extends InstrumentationTestCase {
@@ -164,6 +166,47 @@ public class AsyncTaskTest extends InstrumentationTestCase {
         }
         mAsyncTask.cancel(false);
         readyToThrow.countDown();
+        if (!calledOnCancelled.await(5, TimeUnit.SECONDS)) {
+            fail("onCancelled not called!");
+        }
+    }
+
+    public void testException() throws Throwable {
+        final CountDownLatch calledOnCancelled = new CountDownLatch(1);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mAsyncTask = new AsyncTask() {
+                    @Override
+                    protected Object doInBackground(Object... params) {
+                        throw new RuntimeException();
+                    }
+
+                    @Override
+                    protected void onPostExecute(Object o) {
+                        fail("onPostExecute should not be called");
+                    }
+
+                    @Override
+                    protected void onCancelled(Object o) {
+                        calledOnCancelled.countDown();
+                    }
+                };
+            }
+        });
+
+        mAsyncTask.executeOnExecutor(new Executor() {
+            @Override
+            public void execute(@NonNull Runnable command) {
+                try {
+                    command.run();
+                    fail("Exception not thrown");
+                } catch (Throwable tr) {
+                    // expected
+                }
+            }
+        });
+
         if (!calledOnCancelled.await(5, TimeUnit.SECONDS)) {
             fail("onCancelled not called!");
         }
