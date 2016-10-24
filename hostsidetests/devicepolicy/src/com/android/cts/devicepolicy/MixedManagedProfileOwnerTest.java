@@ -132,20 +132,4 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // DISALLOW_UNMUTE_MICROPHONE and DISALLOW_ADJUST_VOLUME can only be set by device owners
         // and profile owners on the primary user.
     }
-
-    @Override
-    public void testDelegatedCertInstaller() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        try {
-            super.testDelegatedCertInstaller();
-        } finally {
-            // In managed profile, clearing password through dpm is not allowed. Recreate user to
-            // clear password instead.
-            removeUser(mUserId);
-            createManagedProfile();
-        }
-    }
 }
