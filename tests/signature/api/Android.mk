@@ -18,6 +18,9 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 # current api, in XML format.
+# NOTE: the output XML file is also used
+# in //cts/hostsidetests/devicepolicy/AndroidTest.xml
+# by com.android.cts.managedprofile.CurrentApiHelper
 # ============================================================
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts-current-api
