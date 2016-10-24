@@ -164,6 +164,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_3755);
     }
 
+    public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
