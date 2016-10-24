@@ -16,10 +16,7 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
-import com.android.compatibility.common.tradefed.testtype.IModuleDef;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -88,11 +85,6 @@ public class ModuleRepoTest extends TestCase {
         "armeabi-v7a FooModuleC",
         "armeabi-v7a FooModuleB"
     };
-    private static final String ROOT_DIR_NAME = "root";
-    private static final String BASE_DIR_NAME = "android-tests";
-    private static final String TESTCASES = "testcases";
-    private static final String ROOT_PROPERTY = "TESTS_ROOT";
-    private static final String SUITE_NAME = "TESTS";
 
     static {
         SERIALS.add(SERIAL1);
@@ -111,26 +103,12 @@ public class ModuleRepoTest extends TestCase {
     }
     private IModuleRepo mRepo;
     private File mTestsDir;
-    private IBuildInfo mBuild;
     private File mRoot = null;
 
     @Override
     public void setUp() throws Exception {
         mTestsDir = setUpConfigs();
         mRepo = new ModuleRepo();
-        mRoot = FileUtil.createTempDir(ROOT_DIR_NAME);
-        File base = new File(mRoot, BASE_DIR_NAME);
-        base.mkdirs();
-        File tests = new File(base, TESTCASES);
-        tests.mkdirs();
-        System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
-        CompatibilityBuildProvider provider = new CompatibilityBuildProvider() {
-            @Override
-            protected String getSuiteInfoName() {
-                return SUITE_NAME;
-            }
-        };
-        mBuild = provider.getBuild();
     }
 
     private File setUpConfigs() throws IOException {
@@ -145,7 +123,8 @@ public class ModuleRepoTest extends TestCase {
         createConfig(testsDir, name, token, TEST_STUB);
     }
 
-    private void createConfig(File testsDir, String name, String token, String moduleClass) throws IOException {
+    private void createConfig(File testsDir, String name, String token, String moduleClass)
+            throws IOException {
         File config = new File(testsDir, String.format(FILENAME, name));
         String preparer = "";
         if (token != null) {
@@ -166,7 +145,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testInitialization() throws Exception {
         mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mBuild);
+                EXCLUDES);
         assertTrue("Should be initialized", mRepo.isInitialized());
         assertEquals("Wrong number of shards", 3, mRepo.getNumberOfShards());
         assertEquals("Wrong number of modules per shard", 2, mRepo.getModulesPerShard());
@@ -211,7 +190,7 @@ public class ModuleRepoTest extends TestCase {
         excludeFilters.add(ID_A_32);
         excludeFilters.add(MODULE_NAME_B);
         mRepo.initialize(1, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, includeFilters,
-                excludeFilters, mBuild);
+                excludeFilters);
         List<IModuleDef> modules = mRepo.getModules(SERIAL1);
         assertEquals("Incorrect number of modules", 1, modules.size());
         IModuleDef module = modules.get(0);
@@ -221,7 +200,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testParsing() throws Exception {
         mRepo.initialize(1, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mBuild);
+                EXCLUDES);
         List<IModuleDef> modules = mRepo.getModules(SERIAL3);
         Set<String> idSet = new HashSet<>();
         for (IModuleDef module : modules) {
@@ -256,7 +235,7 @@ public class ModuleRepoTest extends TestCase {
         ArrayList<String> emptyList = new ArrayList<>();
 
         mRepo.initialize(3, mTestsDir, abis, DEVICE_TOKENS, emptyList, emptyList, INCLUDES,
-                         EXCLUDES, mBuild);
+                         EXCLUDES);
 
         List<IModuleDef> modules = new ArrayList<>();
         modules.addAll(mRepo.getLargeModules());
@@ -268,7 +247,6 @@ public class ModuleRepoTest extends TestCase {
         for (IModuleDef def : modules) {
             IRemoteTest test = def.getTest();
             if (test instanceof IShardableTest) {
-                assertNotNull("Build not set", ((ShardableTestStub)test).mBuildInfo);
                 shardableCount++;
             }
         }
@@ -277,7 +255,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testGetModuleIds() {
         mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mBuild);
+                EXCLUDES);
         assertTrue("Should be initialized", mRepo.isInitialized());
 
         assertArrayEquals(EXPECTED_MODULE_IDS, mRepo.getModuleIds());
@@ -285,7 +263,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testIsPrepared() {
         mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mBuild);
+                EXCLUDES);
         assertTrue("Should be initialized", mRepo.isInitialized());
         mRepo.setPrepared(true);
         mRepo.setPrepared(true);
@@ -295,7 +273,7 @@ public class ModuleRepoTest extends TestCase {
 
     public void testIsNotPrepared() {
         mRepo.initialize(3, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
-                EXCLUDES, mBuild);
+                EXCLUDES);
         assertTrue("Should be initialized", mRepo.isInitialized());
         mRepo.setPrepared(true);
         mRepo.setPrepared(false); // mRepo should return false for setPrepared() after third call

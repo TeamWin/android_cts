@@ -66,13 +66,15 @@ public class SubPlanTest extends TestCase {
 
         // Serialize to file
         File subPlanFile = FileUtil.createTempFile("test-subPlan-serialization", ".txt");
-        OutputStream subPlanOutputStream = new FileOutputStream(subPlanFile);
-        subPlan.serialize(subPlanOutputStream);
-        subPlanOutputStream.close();
-
-        // Parse subPlan and assert correctness
-        checkSubPlan(subPlanFile);
-
+        try {
+            OutputStream subPlanOutputStream = new FileOutputStream(subPlanFile);
+            subPlan.serialize(subPlanOutputStream);
+            subPlanOutputStream.close();
+            // Parse subPlan and assert correctness
+            checkSubPlan(subPlanFile);
+        } finally {
+            FileUtil.deleteFile(subPlanFile);
+        }
     }
 
     public void testParsing() throws Exception {
@@ -97,6 +99,7 @@ public class SubPlanTest extends TestCase {
             checkSubPlan(planFile);
         } finally {
             writer.close();
+            FileUtil.deleteFile(planFile);
         }
     }
 
