@@ -495,6 +495,17 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
         </activity>
 
+        <activity android:name=".location.GnssStatusTestsActivity"
+            android:label="@string/location_gnss_status_test"
+            android:screenOrientation="locked">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
+            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
+        </activity>
+
         <activity android:name=".location.LocationListenerActivity"
                 android:label="@string/location_listener_activity"
                 android:configChanges="keyboardHidden|orientation|screenSize">
