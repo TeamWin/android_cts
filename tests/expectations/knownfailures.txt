@@ -1,5 +1,12 @@
 [
 {
+  description: "Disable ListeningPortsTest",
+  names: [
+    "android.security.cts.ListeningPortsTest"
+  ],
+  bug: 31803630
+},
+{
   description: "some AlarmClockTests are not robust across different device types",
   names: [
     "android.alarmclock.cts.DismissAlarmTest#testAll",
