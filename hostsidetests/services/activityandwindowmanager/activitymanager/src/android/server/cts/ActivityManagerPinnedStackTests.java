@@ -67,12 +67,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand(String.format("input tap %d %d", tapX, tapY));
         mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
-        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
-        mAmWmState.assertFrontStack("Pinned stack must be the front stack.", PINNED_STACK_ID);
         mAmWmState.assertVisibility(TAP_TO_FINISH_ACTIVITY, true);
     }
 
     public void testPinnedStackDefaultBounds() throws Exception {
+        setDeviceRotation(0 /* ROTATION_0 */);
         ActivityManagerState amState = mAmWmState.getAmState();
         WindowManagerState wmState = mAmWmState.getWmState();
         amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
@@ -81,15 +80,36 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         Rectangle stableBounds = wmState.getStableBounds();
         assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
         assertTrue(stableBounds.contains(defaultPipBounds));
+
+        setDeviceRotation(1 /* ROTATION_90 */);
+        amState = mAmWmState.getAmState();
+        wmState = mAmWmState.getWmState();
+        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
+        defaultPipBounds = amState.getDefaultPinnedStackBounds();
+        stableBounds = wmState.getStableBounds();
+        assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
+        assertTrue(stableBounds.contains(defaultPipBounds));
     }
 
     public void testPinnedStackMovementBounds() throws Exception {
+        setDeviceRotation(0 /* ROTATION_0 */);
         ActivityManagerState amState = mAmWmState.getAmState();
         WindowManagerState wmState = mAmWmState.getWmState();
         amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
         wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
         Rectangle pipMovementBounds = amState.getPinnedStackMomentBounds();
         Rectangle stableBounds = wmState.getStableBounds();
+        assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
+        assertTrue(stableBounds.contains(pipMovementBounds));
+
+        setDeviceRotation(1 /* ROTATION_90 */);
+        amState = mAmWmState.getAmState();
+        wmState = mAmWmState.getWmState();
+        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
+        pipMovementBounds = amState.getPinnedStackMomentBounds();
+        stableBounds = wmState.getStableBounds();
         assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
         assertTrue(stableBounds.contains(pipMovementBounds));
     }
