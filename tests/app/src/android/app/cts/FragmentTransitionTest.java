@@ -20,7 +20,6 @@ import android.app.stubs.FragmentTestActivity;
 import android.app.stubs.FragmentTestActivity.OnTransitionListener;
 import android.app.stubs.FragmentTestActivity.TestFragment;
 import android.app.stubs.R;
-import android.os.Debug;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
@@ -369,6 +368,7 @@ public class FragmentTransitionTest extends
                 mActivity.getFragmentManager().beginTransaction()
                         .replace(R.id.content, mEndFragment)
                         .replace(R.id.content, mStartFragment)
+                        .setAllowOptimization(false)
                         .addToBackStack(null)
                         .commit();
                 mActivity.getFragmentManager().executePendingTransactions();
