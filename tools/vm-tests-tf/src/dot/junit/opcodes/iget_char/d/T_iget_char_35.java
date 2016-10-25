@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package dot.junit.opcodes.iget_char;
+package dot.junit.opcodes.iget_char.d;
 
-public class TestStubs {
-    // used by testVFE4
-    private char TestStubField = 50;
-    // ussed by testVFE15 and testVFE35
-    protected char TestStubProtectedField = 50;
+public class T_iget_char_35 {
+
+    public char run() {
+        return 0;
+    }
 }

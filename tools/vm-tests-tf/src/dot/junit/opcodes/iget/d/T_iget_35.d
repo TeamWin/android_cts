@@ -1,4 +1,4 @@
-; Copyright (C) 2008 The Android Open Source Project
+; Copyright (C) 2016 The Android Open Source Project
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License");
 ; you may not use this file except in compliance with the License.
@@ -12,26 +12,20 @@
 ; See the License for the specific language governing permissions and
 ; limitations under the License.
 
-.source T_iget_short_21.java
-.class public dot.junit.opcodes.iget_short.d.T_iget_short_21
+.source T_iget_35.java
+.class public dot.junit.opcodes.iget.d.T_iget_35
 .super java/lang/Object
-
 
 .method public <init>()V
 .limit regs 1
-
        invoke-direct {v0}, java/lang/Object/<init>()V
        return-void
 .end method
 
-.method public run()S
-.limit regs 3
-
-       new-instance v0, Ldot/junit/opcodes/iget_short/TestStubs;
-       invoke-direct {v0}, dot/junit/opcodes/iget_short/TestStubs/<init>()V
-
-       iget-short v1, v0, dot.junit.opcodes.iget_short.TestStubs.TestStubProtectedField S
-       return v1
+.method public run()I
+.limit regs 2
+       iget v0, v1, dot.junit.opcodes.iget.TestStubs.TestStubProtectedField I
+       return v0
 .end method
 
 
