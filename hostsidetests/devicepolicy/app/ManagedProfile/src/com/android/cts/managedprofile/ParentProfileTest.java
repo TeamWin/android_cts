@@ -62,6 +62,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getPasswordExpirationTimeout")
             .add("setPasswordExpirationTimeout")
             .add("getPasswordExpiration")
+            .add("getPasswordMaximumLength")
             .add("isActivePasswordSufficient")
             .add("getCurrentFailedPasswordAttempts")
             .add("getMaximumFailedPasswordsForWipe")
