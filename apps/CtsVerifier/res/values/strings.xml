@@ -423,6 +423,7 @@
     <string name="location_gnss_reg_test">GNSS Measurement Registration Test</string>
     <string name="location_gnss_value_test">GNSS Measurement Values Test</string>
     <string name="location_gnss_nav_msg_test">GNSS Navigation Message Test</string>
+    <string name="location_gnss_status_test">GNSS Status Test</string>
     <string name="location_gnss_test_info">This test verifies basic GNSS behavior.
         Make sure the device has line of sight to GNSS satellites
         (for example, stationary on a windowsill.  If needed, try again, outside, also with the
