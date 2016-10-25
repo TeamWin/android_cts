@@ -19,7 +19,6 @@ package android.server.cts;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 
 import java.awt.Rectangle;
 import java.lang.String;
@@ -351,9 +350,12 @@ public class WindowManagerState {
     static class WindowStack extends WindowContainer {
 
         private static final Pattern sTaskIdPattern = Pattern.compile("taskId=(\\d+)");
+        private static final Pattern sWindowAnimationBackgroundSurfacePattern =
+                Pattern.compile("mWindowAnimationBackgroundSurface:");
 
         int mStackId;
         ArrayList<WindowTask> mTasks = new ArrayList();
+        boolean mWindowAnimationBackgroundSurfaceShowing;
 
         private WindowStack() {
 
@@ -385,6 +387,7 @@ public class WindowManagerState {
             final List<Pattern> taskExitPatterns = new ArrayList();
             Collections.addAll(taskExitPatterns, exitPatterns);
             taskExitPatterns.add(sTaskIdPattern);
+            taskExitPatterns.add(sWindowAnimationBackgroundSurfacePattern);
             final Pattern[] taskExitPatternsArray =
                     taskExitPatterns.toArray(new Pattern[taskExitPatterns.size()]);
 
@@ -406,7 +409,20 @@ public class WindowManagerState {
                 if (extractBounds(line)) {
                     continue;
                 }
+
+                if (extractWindowAnimationBackgroundSurface(line)) {
+                    continue;
+                }
             }
+        }
+
+        boolean extractWindowAnimationBackgroundSurface(String line) {
+            if (sWindowAnimationBackgroundSurfacePattern.matcher(line).matches()) {
+                log(line);
+                mWindowAnimationBackgroundSurfaceShowing = true;
+                return true;
+            }
+            return false;
         }
 
         WindowTask getTask(int taskId) {
@@ -416,6 +432,10 @@ public class WindowManagerState {
                 }
             }
             return null;
+        }
+
+        boolean isWindowAnimationBackgroundSurfaceShowing() {
+            return mWindowAnimationBackgroundSurfaceShowing;
         }
     }
 

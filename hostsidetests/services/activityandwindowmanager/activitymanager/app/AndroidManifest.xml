@@ -199,6 +199,9 @@
                   android:exported="true"
                   android:theme="@style/TranslucentTheme"
         />
+        <activity android:name=".AnimationTestActivity"
+                  android:exported="true"
+        />
     </application>
 </manifest>
 
