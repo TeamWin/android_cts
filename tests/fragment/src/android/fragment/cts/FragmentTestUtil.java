@@ -17,15 +17,31 @@ package android.fragment.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentController;
+import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
+import android.os.Handler;
+import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
+import android.util.Pair;
 import android.view.ViewGroup;
 
 public class FragmentTestUtil {
-    public static boolean executePendingTransactions(final ActivityTestRule<FragmentTestActivity> rule)
-            throws Throwable {
+    public static void waitForExecution(final ActivityTestRule<FragmentTestActivity> rule) {
+        // Wait for two cycles. When starting a postponed transition, it will post to
+        // the UI thread and then the execution will be added onto the queue after that.
+        // The two-cycle wait makes sure fragments have the opportunity to complete both
+        // before returning.
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.runOnMainSync(() -> {});
+        instrumentation.runOnMainSync(() -> {});
+    }
+
+    public static boolean executePendingTransactions(
+            final ActivityTestRule<FragmentTestActivity> rule) {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final boolean[] ret = new boolean[1];
         instrumentation.runOnMainSync(new Runnable() {
@@ -37,8 +53,7 @@ public class FragmentTestUtil {
         return ret[0];
     }
 
-    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule)
-            throws Throwable {
+    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule) {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final boolean[] ret = new boolean[1];
         instrumentation.runOnMainSync(new Runnable() {
@@ -51,7 +66,7 @@ public class FragmentTestUtil {
     }
 
     public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
-            final int id, final int flags) throws Throwable {
+            final int id, final int flags) {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final boolean[] ret = new boolean[1];
         instrumentation.runOnMainSync(new Runnable() {
@@ -64,7 +79,7 @@ public class FragmentTestUtil {
     }
 
     public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
-            final String name, final int flags) throws Throwable {
+            final String name, final int flags) {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final boolean[] ret = new boolean[1];
         instrumentation.runOnMainSync(new Runnable() {
@@ -95,5 +110,54 @@ public class FragmentTestUtil {
             assertEquals("Wrong Fragment View order for [" + i + "]", container.getChildAt(i),
                     fragments[i].getView());
         }
+    }
+
+    public static FragmentController createController(ActivityTestRule<FragmentTestActivity> rule) {
+        final FragmentController[] controller = new FragmentController[1];
+        final FragmentTestActivity activity = rule.getActivity();
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.runOnMainSync(() -> {
+            HostCallbacks hostCallbacks = new HostCallbacks(activity, null, 0);
+            controller[0] = FragmentController.createController(hostCallbacks);
+        });
+        return controller[0];
+    }
+
+
+    public static void resume(ActivityTestRule<FragmentTestActivity> rule,
+            FragmentController fragmentController,
+            Pair<Parcelable, FragmentManagerNonConfig> savedState) {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.runOnMainSync(() -> {
+            fragmentController.attachHost(null);
+            if (savedState != null) {
+                fragmentController.restoreAllState(savedState.first, savedState.second);
+            }
+            fragmentController.dispatchCreate();
+            fragmentController.dispatchActivityCreated();
+            fragmentController.noteStateNotSaved();
+            fragmentController.execPendingActions();
+            fragmentController.dispatchStart();
+            fragmentController.reportLoaderStart();
+            fragmentController.dispatchResume();
+            fragmentController.execPendingActions();
+        });
+    }
+
+    public static Pair<Parcelable, FragmentManagerNonConfig> destroy(
+            ActivityTestRule<FragmentTestActivity> rule, FragmentController fragmentController) {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final Pair<Parcelable, FragmentManagerNonConfig>[] result = new Pair[1];
+        instrumentation.runOnMainSync(() -> {
+            fragmentController.dispatchPause();
+            final Parcelable savedState = fragmentController.saveAllState();
+            final FragmentManagerNonConfig nonConfig = fragmentController.retainNestedNonConfig();
+            fragmentController.dispatchStop();
+            fragmentController.doLoaderStop(false);
+            fragmentController.dispatchDestroy();
+            fragmentController.doLoaderDestroy();
+            result[0] = Pair.create(savedState, nonConfig);
+        });
+        return result[0];
     }
 }

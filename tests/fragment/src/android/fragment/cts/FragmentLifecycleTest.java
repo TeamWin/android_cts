@@ -18,6 +18,7 @@
 package android.fragment.cts;
 
 import android.app.FragmentManager;
+import android.os.Debug;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;

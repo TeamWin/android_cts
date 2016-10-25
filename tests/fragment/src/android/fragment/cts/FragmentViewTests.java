@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.Instrumentation;
+import android.os.Debug;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -252,7 +253,6 @@ public class FragmentViewTests {
         FragmentTestUtil.assertChildren(container, replacement1);
         assertTrue(replacement1.isHidden());
         assertEquals(View.GONE, replacement1.getView().getVisibility());
-        mInstrumentation.waitForIdleSync();
     }
 
     // Removing a detached fragment should do nothing to the View and popping should bring
@@ -827,6 +827,51 @@ public class FragmentViewTests {
 
         assertChildren(container1);
         assertChildren(container2);
+    }
+
+    // Test to prevent regressions in FragmentManager fragment replace method. See b/24693644
+    @Test
+    public void testReplaceFragment() throws Throwable {
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+        StrictViewFragment fragmentA = new StrictViewFragment();
+        fragmentA.setLayoutId(R.layout.text_a);
+
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragmentA)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        assertNotNull(findViewById(R.id.textA));
+        assertNull(findViewById(R.id.textB));
+        assertNull(findViewById(R.id.textC));
+
+        StrictViewFragment fragmentB = new StrictViewFragment();
+        fragmentB.setLayoutId(R.layout.text_b);
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragmentB)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertNotNull(findViewById(R.id.textA));
+        assertNotNull(findViewById(R.id.textB));
+        assertNull(findViewById(R.id.textC));
+
+        StrictViewFragment fragmentC = new StrictViewFragment();
+        fragmentC.setLayoutId(R.layout.text_c);
+        fm.beginTransaction()
+                .replace(R.id.fragmentContainer, fragmentC)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertNull(findViewById(R.id.textA));
+        assertNull(findViewById(R.id.textB));
+        assertNotNull(findViewById(R.id.textC));
+    }
+
+    private View findViewById(int viewId) {
+        return mActivityRule.getActivity().findViewById(viewId);
     }
 
     private void assertChildren(ViewGroup container, Fragment... fragments) {
