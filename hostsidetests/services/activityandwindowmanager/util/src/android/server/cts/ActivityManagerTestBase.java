@@ -371,6 +371,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         runCommandAndPrintOutput("input keyevent 82");
     }
 
+    /**
+     * Sets the device rotation, value corresponds to one of {@link Surface.ROTATION_0},
+     * {@link Surface.ROTATION_90}, {@link Surface.ROTATION_180}, {@link Surface.ROTATION_270}.
+     */
     protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {
         setAccelerometerRotation(0);
         setUserRotation(rotation);
