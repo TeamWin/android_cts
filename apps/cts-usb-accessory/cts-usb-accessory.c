@@ -29,6 +29,8 @@
 #include <usbhost/usbhost.h>
 #include <linux/usb/f_accessory.h>
 
+#define USB_CONTROL_READ_TIMEOUT_MS 200
+
 static struct usb_device *sDevice = NULL;
 static int sAfterUnplug = 0;
 static char* sDeviceSerial = NULL;
@@ -91,7 +93,7 @@ static int usb_device_added(const char *devname, void* client_data) {
         return 0;
     }
 
-    char* serial = usb_device_get_serial(device);
+    char* serial = usb_device_get_serial(device, USB_CONTROL_READ_TIMEOUT_MS);
     if (sDeviceSerial && (!serial || strcmp(sDeviceSerial, serial))) {
         free(serial);
         return 0;
@@ -111,7 +113,7 @@ static int usb_device_added(const char *devname, void* client_data) {
         printf("Found Android device in accessory mode (%x:%x)...\n",
                vendorId, productId);
         sDevice = device;
-        sDeviceSerial = usb_device_get_serial(sDevice);
+        sDeviceSerial = usb_device_get_serial(sDevice, USB_CONTROL_READ_TIMEOUT_MS);
 
         usb_descriptor_iter_init(device, &iter);
         while ((desc = usb_descriptor_iter_next(&iter)) != NULL && (!intf || !ep1 || !ep2)) {
