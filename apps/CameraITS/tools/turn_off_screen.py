@@ -33,10 +33,10 @@ def main():
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     cmd_ret = process.stdout.read()
     screen_state = re.split(r'[s|=]', cmd_ret)[-1]
-    if screen_state == 'OFF\n':
-        print 'Screen OFF. Turning ON.'
+    if 'OFF' in screen_state:
+        print 'Screen already OFF.'
     else:
-        wakeup = ('adb -s %s shell input keyevent POWER' % screen_id)
-        subprocess.Popen(wakeup.split())
+        pwrdn = ('adb -s %s shell input keyevent POWER' % screen_id)
+        subprocess.Popen(pwrdn.split())
 if __name__ == '__main__':
     main()
