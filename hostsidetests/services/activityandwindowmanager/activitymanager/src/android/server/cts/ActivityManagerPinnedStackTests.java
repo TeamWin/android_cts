@@ -115,19 +115,13 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
+        final WindowManagerState wmState = mAmWmState.getWmState();
+
         // Launch an activity into the pinned stack
         executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_ACTIVITY));
 
         // Get the display dimensions
-        String windowName = getWindowName(TAP_TO_FINISH_ACTIVITY);
-        mAmWmState.computeState(mDevice, true /* visibleOnly */,
-                new String[] {TAP_TO_FINISH_ACTIVITY});
-
-        final WindowManagerState wmState = mAmWmState.getWmState();
-        final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
-        wmState.getMatchingWindowState(windowName, tempWindowList);
-
-        WindowManagerState.WindowState windowState = tempWindowList.get(0);
+        WindowManagerState.WindowState windowState = getWindowState(TAP_TO_FINISH_ACTIVITY);
         WindowManagerState.Display display = wmState.getDisplay(windowState.getDisplayId());
         Rectangle displayRect = display.getDisplayRect();
 
@@ -137,13 +131,51 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand(moveStackOffscreenCommand);
 
         // Ensure that the surface insets are not negative
-        mAmWmState.computeState(mDevice, true /* visibleOnly */,
-                new String[] {ALWAYS_FOCUSABLE_PIP_ACTIVITY});
-        wmState.getMatchingWindowState(windowName, tempWindowList);
-        windowState = tempWindowList.get(0);
+        windowState = getWindowState(TAP_TO_FINISH_ACTIVITY);
         Rectangle contentInsets = windowState.getContentInsets();
         assertTrue(contentInsets.x >= 0 && contentInsets.y >= 0 && contentInsets.width >= 0 &&
                 contentInsets.height >= 0);
+    }
+
+    public void testPinnedStackInBoundsAfterRotation() throws Exception {
+        // Launch an activity into the pinned stack
+        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_ACTIVITY));
+
+        // Ensure that the PIP stack is fully visible in each orientation
+        setDeviceRotation(0 /* ROTATION_0 */);
+        assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_ACTIVITY);
+        setDeviceRotation(1 /* ROTATION_90 */);
+        assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_ACTIVITY);
+        setDeviceRotation(2 /* ROTATION_180 */);
+        assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_ACTIVITY);
+        setDeviceRotation(3 /* ROTATION_270 */);
+        assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_ACTIVITY);
+        setDeviceRotation(0 /* ROTATION_0 */);
+    }
+
+    /**
+     * Asserts that the pinned stack bounds is contained in the display bounds.
+     */
+    private void assertPinnedStackActivityIsInDisplayBounds(String activity) throws Exception {
+        final WindowManagerState.WindowState windowState = getWindowState(TAP_TO_FINISH_ACTIVITY);
+        final WindowManagerState.Display display = mAmWmState.getWmState().getDisplay(
+                windowState.getDisplayId());
+        final Rectangle displayRect = display.getDisplayRect();
+        final Rectangle pinnedStackBounds =
+                mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
+        assertTrue(displayRect.contains(pinnedStackBounds));
+    }
+
+    /**
+     * @return the window state for the given {@param activity}'s window.
+     */
+    private WindowManagerState.WindowState getWindowState(String activity) throws Exception {
+        String windowName = getWindowName(activity);
+        mAmWmState.computeState(mDevice, true /* visibleOnly */,
+                new String[] {activity});
+        final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
+        mAmWmState.getWmState().getMatchingWindowState(windowName, tempWindowList);
+        return tempWindowList.get(0);
     }
 
     private void pinnedStackTester(String startActivity, String topActivityName,
