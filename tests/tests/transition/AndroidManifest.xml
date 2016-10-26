@@ -21,6 +21,8 @@
     <application>
         <activity android:name="android.transition.cts.TransitionActivity"
             android:label="TransitionActivity"/>
+        <activity android:name="android.transition.cts.TargetActivity"
+            android:label="TargetActivity"/>
         <uses-library android:name="android.test.runner" />
     </application>
 
