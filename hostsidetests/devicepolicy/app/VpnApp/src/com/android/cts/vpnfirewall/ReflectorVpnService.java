@@ -16,6 +16,8 @@
 
 package com.android.cts.vpnfirewall;
 
+import android.R;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -33,6 +35,7 @@ import java.net.UnknownHostException;
 public class ReflectorVpnService extends VpnService {
 
     private static String TAG = "ReflectorVpnService";
+    private static final int NOTIFICATION_ID = 1;
     private static int MTU = 1799;
 
     private ParcelFileDescriptor mFd = null;
@@ -45,8 +48,13 @@ public class ReflectorVpnService extends VpnService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Put ourself in the foreground to stop the system killing us while we wait for orders from
+        // the hostside test.
+        startForeground(NOTIFICATION_ID, new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ic_dialog_alert)
+                .build());
         start();
-        return START_NOT_STICKY;
+        return START_REDELIVER_INTENT;
     }
 
     @Override
