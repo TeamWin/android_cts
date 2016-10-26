@@ -27,6 +27,7 @@ import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import android.view.cts.util.ViewTestUtils;
 import android.view.FrameMetrics;
 import android.view.View;
 import android.view.Window;
@@ -88,16 +89,8 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
             }
         });
 
-        mInstrumentation.waitForIdleSync();
+        scrollView.postInvalidate();
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scrollView.fling(-100);
-            }
-        });
-
-        mInstrumentation.waitForIdleSync();
         new PollingCheck() {
             @Override
             protected boolean check() {
@@ -109,21 +102,17 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
             @Override
             public void run() {
                 mActivity.getWindow().removeOnFrameMetricsAvailableListener(listener);
-                data.clear();
             }
         });
 
-        mInstrumentation.waitForIdleSync();
+        data.clear();
 
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                scrollView.fling(100);
-                assertEquals(0, data.size());
-            }
-        });
-
-        mInstrumentation.waitForIdleSync();
+        // Produce 5 frames and assert no metric listeners were invoked
+        for (int i = 0; i < 5; i++) {
+            ViewTestUtils.runOnMainAndDrawSync(mInstrumentation, mActivity,
+                                               () -> { scrollView.invalidate(); });
+        }
+        assertEquals(0, data.size());
     }
 
     public void testMultipleListeners() throws Throwable {
@@ -245,5 +234,3 @@ public class FrameMetricsListenerTest extends ActivityInstrumentationTestCase2<M
         });
     }
 }
-
-
