@@ -16,6 +16,16 @@
 
 package com.android.cts.verifier.usb.device;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
+
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -36,31 +46,23 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+
 import org.junit.AssumptionViolatedException;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private static final String ACTION_USB_PERMISSION =
@@ -72,6 +74,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private UsbManager mUsbManager;
     private final BroadcastReceiver mUsbDeviceConnectionReceiver;
     private Thread mTestThread;
+
+    private static long now() {
+        return System.nanoTime() / 1000000;
+    }
 
     /**
      * Run a {@link Invokable} and expect a {@link Throwable} of a certain type.
@@ -356,14 +362,14 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private void receiveWithEmptyBuffer(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, @Nullable byte[] buffer, int offset, int length) {
-        long startTime = System.currentTimeMillis();
+        long startTime = now();
         int numReceived;
         if (offset == 0) {
             numReceived = connection.bulkTransfer(in, buffer, length, 0);
         } else {
             numReceived = connection.bulkTransfer(in, buffer, offset, length, 0);
         }
-        long endTime = System.currentTimeMillis();
+        long endTime = now();
         assertEquals(-1, numReceived);
 
         // The transfer should block
@@ -601,6 +607,51 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
+     * Time out while waiting for USB requests.
+     *
+     * @param connection The connection to use
+     */
+    private void timeoutWhileWaitingForUsbRequest(@NonNull UsbDeviceConnection connection)
+            throws Throwable {
+        assertException(() -> connection.requestWait(-1), IllegalArgumentException.class);
+
+        long startTime = now();
+        UsbRequest req = connection.requestWait(100);
+        assertNull(req);
+        assertTrue(now() - startTime >= 100);
+        assertTrue(now() - startTime < 400);
+
+        startTime = now();
+        req = connection.requestWait(0);
+        assertNull(req);
+        assertTrue(now() - startTime < 400);
+    }
+
+    /**
+     * Receive a USB request before a timeout triggers
+     *
+     * @param connection The connection to use
+     * @param in         The endpoint to receive requests from
+     */
+    private void receiveAfterTimeout(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint in, int timeout) throws InterruptedException {
+        UsbRequest reqQueued = new UsbRequest();
+        ByteBuffer buffer = ByteBuffer.allocate(1);
+
+        reqQueued.initialize(connection, in);
+        reqQueued.queue(buffer, 1);
+
+        // Let the kernel receive and process the request
+        Thread.sleep(50);
+
+        long startTime = now();
+        UsbRequest reqFinished = connection.requestWait(timeout);
+        assertTrue(now() - startTime < timeout + 50);
+        assertSame(reqQueued, reqFinished);
+        reqFinished.close();
+    }
+
+    /**
      * Send a USB request with size 0.
      *
      * @param connection      The connection to use
@@ -665,11 +716,11 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         ArrayList<UsbRequest> finished = new ArrayList<>(2);
 
         // We expect both request to come back after the delay, but then quickly
-        long startTime = System.currentTimeMillis();
+        long startTime = now();
         finished.add(connection.requestWait());
-        long firstReturned = System.currentTimeMillis();
+        long firstReturned = now();
         finished.add(connection.requestWait());
-        long secondReturned = System.currentTimeMillis();
+        long secondReturned = now();
 
         assumeTrue(firstReturned - startTime > 100);
         assumeTrue(secondReturned - firstReturned < 100);
@@ -713,6 +764,17 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         // Send empty requests
         sendZeroLengthRequest(connection, out, true);
         sendZeroLengthRequest(connection, out, false);
+
+        // waitRequest with timeout
+        timeoutWhileWaitingForUsbRequest(connection);
+
+        nextTest(connection, in, out, "Receive byte after some time");
+        receiveAfterTimeout(connection, in, 400);
+
+        nextTest(connection, in, out, "Receive byte immediately");
+        // Make sure the data is received before we queue the request for it
+        Thread.sleep(50);
+        receiveAfterTimeout(connection, in, 0);
 
         /* TODO: Unreliable
 
@@ -907,6 +969,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private class QueuerThread extends TestThread {
         private static final int MAX_IN_FLIGHT = 64;
+        private static final long RUN_TIME = 10 * 1000;
 
         private final AtomicInteger mCounter;
 
@@ -940,7 +1003,9 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         public void run() {
             Random random = new Random();
 
-            while (!mShouldStop) {
+            long endTime = now() + RUN_TIME;
+
+            while (now() < endTime && !mShouldStop) {
                 try {
                     int counter = mCounter.getAndIncrement();
 
@@ -998,6 +1063,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                         mErrors.add(t);
                         mErrors.notify();
                     }
+                    break;
                 }
             }
         }
@@ -1104,6 +1170,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                         mErrors.add(t);
                         mErrors.notify();
                     }
+                    break;
                 }
             }
         }
@@ -1194,30 +1261,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         queuer2.start();
         receiver.start();
 
-        // Run for 10 seconds or until we have an error
-        final long RUN_TIME = 10 * 1000;
-
-        long startTime = System.currentTimeMillis();
-        while (true) {
-            long timeLeft = RUN_TIME - (System.currentTimeMillis() - startTime);
-
-            synchronized (errors) {
-                if (!errors.isEmpty() || timeLeft < 0) {
-                    break;
-                } else {
-                    try {
-                        errors.wait(timeLeft);
-                    } catch (InterruptedException e) {
-                        errors.add(e);
-                        break;
-                    }
-                }
-            }
-        }
-
-        Log.i(LOG_TAG, "Stopping sending new requests");
-        queuer1.abort();
-        queuer2.abort();
+        Log.i(LOG_TAG, "Waiting for queuers to stop");
 
         try {
             queuer1.join();
