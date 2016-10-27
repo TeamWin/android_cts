@@ -29,6 +29,13 @@ public class StrictViewFragment extends StrictFragment {
     public void setLayoutId(int layoutId) {
         mLayoutId = layoutId;
     }
+
+    public static StrictViewFragment create(int layoutId) {
+        StrictViewFragment fragment = new StrictViewFragment();
+        fragment.mLayoutId = layoutId;
+        return fragment;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
