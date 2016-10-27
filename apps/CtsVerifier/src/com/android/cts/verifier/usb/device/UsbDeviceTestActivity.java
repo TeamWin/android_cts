@@ -430,7 +430,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
-     * Send a USB request and receive it back.
+     * Send a USB request using the {@link UsbRequest#queue legacy path} and receive it back.
      *
      * @param connection      The connection to use
      * @param in              The endpoint to receive requests from
@@ -443,9 +443,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      * @param limitInSlice    The limited parameter in the final buffer
      * @param useDirectBuffer If the buffer to be used should be a direct buffer
      */
-    private void echoUsbRequest(@NonNull UsbDeviceConnection connection, @NonNull UsbEndpoint in,
-            @NonNull UsbEndpoint out, int size, int originalSize, int sliceStart, int sliceEnd,
-            int positionInSlice, int limitInSlice, boolean useDirectBuffer) {
+    private void echoUsbRequestLegacy(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint in, @NonNull UsbEndpoint out, int size, int originalSize,
+            int sliceStart, int sliceEnd, int positionInSlice, int limitInSlice,
+            boolean useDirectBuffer) {
         Random random = new Random();
 
         UsbRequest sent = new UsbRequest();
@@ -548,12 +549,127 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      * @param connection      The connection to use
      * @param in              The endpoint to receive requests from
      * @param out             The endpoint to send requests to
+     * @param originalSize    The size of the original buffer
+     * @param sliceStart      The start of the final buffer in the original buffer
+     * @param sliceEnd        The end of the final buffer in the original buffer
+     * @param positionInSlice The position parameter in the final buffer
+     * @param limitInSlice    The limited parameter in the final buffer
+     * @param useDirectBuffer If the buffer to be used should be a direct buffer
+     */
+    private void echoUsbRequest(@NonNull UsbDeviceConnection connection, @NonNull UsbEndpoint in,
+            @NonNull UsbEndpoint out, int originalSize, int sliceStart, int sliceEnd,
+            int positionInSlice, int limitInSlice, boolean useDirectBuffer,
+            boolean makeSendBufferReadOnly) {
+        Random random = new Random();
+
+        UsbRequest sent = new UsbRequest();
+        boolean isInited = sent.initialize(connection, out);
+        assertTrue(isInited);
+        Object sentClientData = new Object();
+        sent.setClientData(sentClientData);
+
+        UsbRequest receive = new UsbRequest();
+        isInited = receive.initialize(connection, in);
+        assertTrue(isInited);
+        Object receiveClientData = new Object();
+        receive.setClientData(receiveClientData);
+
+        ByteBuffer bufferSent;
+        if (useDirectBuffer) {
+            bufferSent = ByteBuffer.allocateDirect(originalSize);
+        } else {
+            bufferSent = ByteBuffer.allocate(originalSize);
+        }
+        for (int i = 0; i < originalSize; i++) {
+            bufferSent.put((byte) random.nextInt());
+        }
+        if (makeSendBufferReadOnly) {
+            bufferSent = bufferSent.asReadOnlyBuffer();
+        }
+        bufferSent.position(sliceStart);
+        bufferSent.limit(sliceEnd);
+        ByteBuffer bufferSentSliced = bufferSent.slice();
+        bufferSentSliced.position(positionInSlice);
+        bufferSentSliced.limit(limitInSlice);
+
+        bufferSent.position(0);
+        bufferSent.limit(originalSize);
+
+        ByteBuffer bufferReceived;
+        if (useDirectBuffer) {
+            bufferReceived = ByteBuffer.allocateDirect(originalSize);
+        } else {
+            bufferReceived = ByteBuffer.allocate(originalSize);
+        }
+        bufferReceived.position(sliceStart);
+        bufferReceived.limit(sliceEnd);
+        ByteBuffer bufferReceivedSliced = bufferReceived.slice();
+        bufferReceivedSliced.position(positionInSlice);
+        bufferReceivedSliced.limit(limitInSlice);
+
+        bufferReceived.position(0);
+        bufferReceived.limit(originalSize);
+
+        boolean wasQueued = receive.enqueue(bufferReceivedSliced);
+        assertTrue(wasQueued);
+        wasQueued = sent.enqueue(bufferSentSliced);
+        assertTrue(wasQueued);
+
+        for (int reqRun = 0; reqRun < 2; reqRun++) {
+            UsbRequest finished = connection.requestWait();
+
+            if (finished == receive) {
+                assertEquals(limitInSlice, bufferReceivedSliced.limit());
+                assertEquals(limitInSlice, bufferReceivedSliced.position());
+
+                for (int i = 0; i < originalSize; i++) {
+                    if (i >= sliceStart + positionInSlice && i < sliceStart + limitInSlice) {
+                        assertEquals(bufferSent.get(i), bufferReceived.get(i));
+                    } else {
+                        assertEquals(0, bufferReceived.get(i));
+                    }
+                }
+
+                assertSame(receiveClientData, finished.getClientData());
+                assertSame(in, finished.getEndpoint());
+            } else {
+                assertEquals(limitInSlice, bufferSentSliced.limit());
+                assertEquals(limitInSlice, bufferSentSliced.position());
+
+                assertSame(sent, finished);
+                assertSame(sentClientData, finished.getClientData());
+                assertSame(out, finished.getEndpoint());
+            }
+            finished.close();
+        }
+    }
+
+    /**
+     * Send a USB request using the {@link UsbRequest#queue legacy path} and receive it back.
+     *
+     * @param connection      The connection to use
+     * @param in              The endpoint to receive requests from
+     * @param out             The endpoint to send requests to
+     * @param size            The size of the request to send
+     * @param useDirectBuffer If the buffer to be used should be a direct buffer
+     */
+    private void echoUsbRequestLegacy(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint in, @NonNull UsbEndpoint out, int size, boolean useDirectBuffer) {
+        echoUsbRequestLegacy(connection, in, out, size, size, 0, size, 0, size, useDirectBuffer);
+    }
+
+    /**
+     * Send a USB request and receive it back.
+     *
+     * @param connection      The connection to use
+     * @param in              The endpoint to receive requests from
+     * @param out             The endpoint to send requests to
      * @param size            The size of the request to send
      * @param useDirectBuffer If the buffer to be used should be a direct buffer
      */
     private void echoUsbRequest(@NonNull UsbDeviceConnection connection, @NonNull UsbEndpoint in,
             @NonNull UsbEndpoint out, int size, boolean useDirectBuffer) {
-        echoUsbRequest(connection, in, out, size, size, 0, size, 0, size, useDirectBuffer);
+        echoUsbRequest(connection, in, out, size, 0, size, 0, size, useDirectBuffer, false);
     }
 
     /**
@@ -563,7 +679,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      * @param in              The endpoint to receive requests from
      * @param out             The endpoint to send requests to
      */
-    private void echoOversizedUsbRequest(@NonNull UsbDeviceConnection connection,
+    private void echoOversizedUsbRequestLegacy(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, @NonNull UsbEndpoint out) {
         Random random = new Random();
         int totalSize = MAX_BUFFER_SIZE * 3 / 2;
@@ -639,7 +755,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         ByteBuffer buffer = ByteBuffer.allocate(1);
 
         reqQueued.initialize(connection, in);
-        reqQueued.queue(buffer, 1);
+        reqQueued.enqueue(buffer);
 
         // Let the kernel receive and process the request
         Thread.sleep(50);
@@ -652,12 +768,13 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
-     * Send a USB request with size 0.
+     * Send a USB request with size 0 using the {@link UsbRequest#queue legacy path}.
      *
      * @param connection      The connection to use
      * @param out             The endpoint to send requests to
+     * @param useDirectBuffer Send data from a direct buffer
      */
-    private void sendZeroLengthRequest(@NonNull UsbDeviceConnection connection,
+    private void sendZeroLengthRequestLegacy(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint out, boolean useDirectBuffer) {
         UsbRequest sent = new UsbRequest();
         boolean isInited = sent.initialize(connection, out);
@@ -678,12 +795,58 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
+     * Send a USB request with size 0.
+     *
+     * @param connection      The connection to use
+     * @param out             The endpoint to send requests to
+     * @param useDirectBuffer Send data from a direct buffer
+     */
+    private void sendZeroLengthRequest(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint out, boolean useDirectBuffer) {
+        UsbRequest sent = new UsbRequest();
+        boolean isInited = sent.initialize(connection, out);
+        assertTrue(isInited);
+
+        ByteBuffer buffer;
+        if (useDirectBuffer) {
+            buffer = ByteBuffer.allocateDirect(0);
+        } else {
+            buffer = ByteBuffer.allocate(0);
+        }
+
+        boolean isQueued = sent.enqueue(buffer);
+        assumeTrue(isQueued);
+        UsbRequest finished = connection.requestWait();
+        assertSame(finished, sent);
+        finished.close();
+    }
+
+    /**
+     * Send a USB request with a null buffer.
+     *
+     * @param connection      The connection to use
+     * @param out             The endpoint to send requests to
+     */
+    private void sendNullRequest(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint out) {
+        UsbRequest sent = new UsbRequest();
+        boolean isInited = sent.initialize(connection, out);
+        assertTrue(isInited);
+
+        boolean isQueued = sent.enqueue(null);
+        assumeTrue(isQueued);
+        UsbRequest finished = connection.requestWait();
+        assertSame(finished, sent);
+        finished.close();
+    }
+
+    /**
      * Receive a USB request with size 0.
      *
      * @param connection      The connection to use
      * @param in             The endpoint to recevie requests from
      */
-    private void receiveZeroLengthRequest(@NonNull UsbDeviceConnection connection,
+    private void receiveZeroLengthRequestLegacy(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, boolean useDirectBuffer) {
         UsbRequest zeroReceived = new UsbRequest();
         boolean isInited = zeroReceived.initialize(connection, in);
@@ -707,9 +870,9 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             buffer1 = ByteBuffer.allocate(1);
         }
 
-        boolean isQueued = zeroReceived.queue(buffer, 0);
+        boolean isQueued = zeroReceived.enqueue(buffer);
         assumeTrue(isQueued);
-        isQueued = oneReceived.queue(buffer1, 0);
+        isQueued = oneReceived.enqueue(buffer1);
         assumeTrue(isQueued);
 
         // We expect both to be returned after some time
@@ -727,6 +890,130 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
         assertTrue(finished.contains(zeroReceived));
         assertTrue(finished.contains(oneReceived));
+    }
+
+    /**
+     * Tests the {@link UsbRequest#queue legacy implementaion} of {@link UsbRequest} and
+     * {@link UsbDeviceConnection#requestWait()}.
+     *
+     * @param connection The connection to use for testing
+     * @param iface      The interface of the android accessory interface of the device
+     * @throws Throwable
+     */
+    private void usbRequestLegacyTests(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbInterface iface) throws Throwable {
+        // Find bulk in and out endpoints
+        assumeTrue(iface.getEndpointCount() == 2);
+        final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
+        final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
+        assertNotNull(in);
+        assertNotNull(out);
+
+        // Single threaded send and receive
+        nextTest(connection, in, out, "Echo 1 byte");
+        echoUsbRequestLegacy(connection, in, out, 1, true);
+
+        nextTest(connection, in, out, "Echo 1 byte");
+        echoUsbRequestLegacy(connection, in, out, 1, false);
+
+        nextTest(connection, in, out, "Echo max bytes");
+        echoUsbRequestLegacy(connection, in, out, MAX_BUFFER_SIZE, true);
+
+        nextTest(connection, in, out, "Echo max bytes");
+        echoUsbRequestLegacy(connection, in, out, MAX_BUFFER_SIZE, false);
+
+        nextTest(connection, in, out, "Echo oversized buffer");
+        echoOversizedUsbRequestLegacy(connection, in, out);
+
+        // Send empty requests
+        sendZeroLengthRequestLegacy(connection, out, true);
+        sendZeroLengthRequestLegacy(connection, out, false);
+
+        // waitRequest with timeout
+        timeoutWhileWaitingForUsbRequest(connection);
+
+        nextTest(connection, in, out, "Receive byte after some time");
+        receiveAfterTimeout(connection, in, 400);
+
+        nextTest(connection, in, out, "Receive byte immediately");
+        // Make sure the data is received before we queue the request for it
+        Thread.sleep(50);
+        receiveAfterTimeout(connection, in, 0);
+
+        /* TODO: Unreliable
+
+        // Zero length means waiting for the next data and then return
+        nextTest(connection, in, out, "Receive byte after some time");
+        receiveZeroLengthRequestLegacy(connection, in, true);
+
+        nextTest(connection, in, out, "Receive byte after some time");
+        receiveZeroLengthRequestLegacy(connection, in, true);
+
+        */
+
+        // UsbRequest.queue ignores position, limit, arrayOffset, and capacity
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 42, 0, 42, 5, 42, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 42, 0, 42, 0, 36, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 42, 5, 42, 0, 36, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 42, 0, 36, 0, 31, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 47, 0, 47, 0, 47, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 47, 5, 47, 0, 42, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 47, 0, 42, 0, 42, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 47, 0, 47, 5, 47, false);
+
+        nextTest(connection, in, out, "Echo 42 bytes");
+        echoUsbRequestLegacy(connection, in, out, 42, 47, 5, 47, 5, 36, false);
+
+        // Illegal arguments
+        final UsbRequest req1 = new UsbRequest();
+        assertException(() -> req1.initialize(null, in), NullPointerException.class);
+        assertException(() -> req1.initialize(connection, null), NullPointerException.class);
+        boolean isInited = req1.initialize(connection, in);
+        assertTrue(isInited);
+        assertException(() -> req1.queue(null, 0), NullPointerException.class);
+        assertException(() -> req1.queue(ByteBuffer.allocate(1).asReadOnlyBuffer(), 1),
+                IllegalArgumentException.class);
+        req1.close();
+
+        // Cannot queue closed request
+        assertException(() -> req1.queue(ByteBuffer.allocate(1), 1), NullPointerException.class);
+        assertException(() -> req1.queue(ByteBuffer.allocateDirect(1), 1),
+                NullPointerException.class);
+    }
+
+    /**
+     * Repeat c n times
+     *
+     * @param c The character to repeat
+     * @param n The number of times to repeat
+     *
+     * @return c repeated n times
+     */
+    public static String repeat(char c, int n) {
+        final StringBuilder result = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            if (c != ' ' && i % 10 == 0) {
+                result.append(i / 10);
+            } else {
+                result.append(c);
+            }
+        }
+        return result.toString();
     }
 
     /**
@@ -758,23 +1045,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         nextTest(connection, in, out, "Echo max bytes");
         echoUsbRequest(connection, in, out, MAX_BUFFER_SIZE, false);
 
-        nextTest(connection, in, out, "Echo oversized buffer");
-        echoOversizedUsbRequest(connection, in, out);
-
         // Send empty requests
         sendZeroLengthRequest(connection, out, true);
         sendZeroLengthRequest(connection, out, false);
-
-        // waitRequest with timeout
-        timeoutWhileWaitingForUsbRequest(connection);
-
-        nextTest(connection, in, out, "Receive byte after some time");
-        receiveAfterTimeout(connection, in, 400);
-
-        nextTest(connection, in, out, "Receive byte immediately");
-        // Make sure the data is received before we queue the request for it
-        Thread.sleep(50);
-        receiveAfterTimeout(connection, in, 0);
+        sendNullRequest(connection, out);
 
         /* TODO: Unreliable
 
@@ -787,33 +1061,38 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
         */
 
-        // UsbRequest.queue ignores position, limit, arrayOffset, and capacity
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 42, 0, 42, 5, 42, false);
+        for (int startOfSlice : new int[]{0, 1}) {
+            for (int endOffsetOfSlice : new int[]{0, 2}) {
+                for (int positionInSlice : new int[]{0, 5}) {
+                    for (int limitOffsetInSlice : new int[]{0, 11}) {
+                        for (boolean useDirectBuffer : new boolean[]{true, false}) {
+                            for (boolean makeSendBufferReadOnly : new boolean[]{true, false}) {
+                                int sliceSize = 42 + positionInSlice + limitOffsetInSlice;
+                                int originalSize = sliceSize + startOfSlice + endOffsetOfSlice;
 
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 42, 0, 42, 0, 36, false);
+                                nextTest(connection, in, out, "Echo 42 bytes");
 
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 42, 5, 42, 0, 36, false);
+                                // Log buffer, slice, and data offsets
+                                Log.i(LOG_TAG,
+                                        "buffer" + (makeSendBufferReadOnly ? "(ro): [" : ":     [")
+                                                + repeat('.', originalSize) + "]");
+                                Log.i(LOG_TAG,
+                                        "slice:     " + repeat(' ', startOfSlice) + " [" + repeat(
+                                                '.', sliceSize) + "]");
+                                Log.i(LOG_TAG,
+                                        "data:      " + repeat(' ', startOfSlice + positionInSlice)
+                                                + " [" + repeat('.', 42) + "]");
 
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 42, 0, 36, 0, 31, false);
-
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 47, 0, 47, 0, 47, false);
-
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 47, 5, 47, 0, 42, false);
-
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 47, 0, 42, 0, 42, false);
-
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 47, 0, 47, 5, 47, false);
-
-        nextTest(connection, in, out, "Echo 42 bytes");
-        echoUsbRequest(connection, in, out, 42, 47, 5, 47, 5, 36, false);
+                                echoUsbRequest(connection, in, out, originalSize, startOfSlice,
+                                        originalSize - endOffsetOfSlice, positionInSlice,
+                                        sliceSize - limitOffsetInSlice, useDirectBuffer,
+                                        makeSendBufferReadOnly);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Illegal arguments
         final UsbRequest req1 = new UsbRequest();
@@ -821,15 +1100,16 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         assertException(() -> req1.initialize(connection, null), NullPointerException.class);
         boolean isInited = req1.initialize(connection, in);
         assertTrue(isInited);
-        assertException(() -> req1.queue(null, 0), NullPointerException.class);
-        assertException(() -> req1.queue(ByteBuffer.allocate(1).asReadOnlyBuffer(), 1),
+        assertException(() -> req1.enqueue(ByteBuffer.allocate(16384 + 1).asReadOnlyBuffer()),
+                IllegalArgumentException.class);
+        assertException(() -> req1.enqueue(ByteBuffer.allocate(1).asReadOnlyBuffer()),
                 IllegalArgumentException.class);
         req1.close();
 
         // Cannot queue closed request
-        assertException(() -> req1.queue(ByteBuffer.allocate(1), 1), NullPointerException.class);
-        assertException(() -> req1.queue(ByteBuffer.allocateDirect(1), 1),
-                NullPointerException.class);
+        assertException(() -> req1.enqueue(ByteBuffer.allocate(1)), IllegalStateException.class);
+        assertException(() -> req1.enqueue(ByteBuffer.allocateDirect(1)),
+                IllegalStateException.class);
 
         // Initialize
         UsbRequest req2 = new UsbRequest();
@@ -1018,6 +1298,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                     ByteBuffer writeBuffer = mBufferRecycler.get();
                     int data = random.nextInt();
                     writeBuffer.put((byte)1).putInt(counter).putInt(data);
+                    writeBuffer.flip();
 
                     // Send read that will receive the data back from the write as the other side
                     // will echo all requests.
@@ -1053,7 +1334,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
                     // Send both requests to the system. Once they finish the ReceiverThread will
                     // be notified
-                    boolean isQueued = writeRequest.queue(writeBuffer, 9);
+                    boolean isQueued = writeRequest.enqueue(writeBuffer);
                     assertTrue(isQueued);
 
                     isQueued = readRequest.queue(readBuffer, 9);
@@ -1232,7 +1513,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
             @Override
             protected @NonNull ByteBuffer create() {
-                return ByteBuffer.allocate(9);
+                return ByteBuffer.allocateDirect(9);
             }
         };
 
@@ -1676,6 +1957,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             boolean claimed = connection.claimInterface(iface, false);
             assertTrue(claimed);
 
+            usbRequestLegacyTests(connection, iface);
             usbRequestTests(connection, iface);
             parallelUsbRequestsTests(connection, iface);
             ctrlTransferTests(connection);
