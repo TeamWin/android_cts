@@ -202,6 +202,9 @@
         <activity android:name=".AnimationTestActivity"
                   android:exported="true"
         />
+        <activity android:name=".VirtualDisplayActivity"
+                  android:exported="true"
+        />
     </application>
 </manifest>
 
