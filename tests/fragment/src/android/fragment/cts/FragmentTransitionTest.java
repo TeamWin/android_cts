@@ -15,7 +15,7 @@
  */
 package android.fragment.cts;
 
-import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -499,6 +499,99 @@ public class FragmentTransitionTest {
         assertNull(fragment2.returnTransition.getEpicenterCallback());
         assertNull(fragment2.sharedElementReturn.getEpicenterCallback());
         assertNull(fragment2.reenterTransition.getEpicenterCallback());
+    }
+
+    // Ensure that transitions are done when a fragment is shown and hidden
+    @Test
+    public void showHideTransition() throws Throwable {
+        TransitionFragment fragment1 = setupInitialFragment();
+        TransitionFragment fragment2 = new TransitionFragment();
+        fragment2.setLayoutId(R.layout.scene2);
+
+        final View startBlue = findBlue();
+        final View startGreen = findGreen();
+
+        mFragmentManager.beginTransaction()
+                .setAllowOptimization(mOptimize)
+                .add(R.id.fragmentContainer, fragment2)
+                .hide(fragment1)
+                .addToBackStack(null)
+                .commit();
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        fragment1.waitForTransition();
+        fragment2.waitForTransition();
+
+        final View endGreen = findViewById(fragment2, R.id.greenSquare);
+        final View endBlue = findViewById(fragment2, R.id.blueSquare);
+
+        assertEquals(View.GONE, fragment1.getView().getVisibility());
+        assertEquals(View.VISIBLE, startGreen.getVisibility());
+        assertEquals(View.VISIBLE, startBlue.getVisibility());
+
+        verifyAndClearTransition(fragment1.exitTransition, null, startGreen, startBlue);
+        verifyNoOtherTransitions(fragment1);
+
+        verifyAndClearTransition(fragment2.enterTransition, null, endGreen, endBlue);
+        verifyNoOtherTransitions(fragment2);
+
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        fragment1.waitForTransition();
+        fragment2.waitForTransition();
+
+        verifyAndClearTransition(fragment1.reenterTransition, null, startGreen, startBlue);
+        verifyNoOtherTransitions(fragment1);
+
+        assertEquals(View.VISIBLE, fragment1.getView().getVisibility());
+        assertEquals(View.VISIBLE, startGreen.getVisibility());
+        assertEquals(View.VISIBLE, startBlue.getVisibility());
+
+        verifyAndClearTransition(fragment2.returnTransition, null, endGreen, endBlue);
+        verifyNoOtherTransitions(fragment2);
+    }
+
+    // Ensure that transitions are done when a fragment is attached and detached
+    @Test
+    public void attachDetachTransition() throws Throwable {
+        TransitionFragment fragment1 = setupInitialFragment();
+        TransitionFragment fragment2 = new TransitionFragment();
+        fragment2.setLayoutId(R.layout.scene2);
+
+        final View startBlue = findBlue();
+        final View startGreen = findGreen();
+
+        mFragmentManager.beginTransaction()
+                .setAllowOptimization(mOptimize)
+                .add(R.id.fragmentContainer, fragment2)
+                .detach(fragment1)
+                .addToBackStack(null)
+                .commit();
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        final View endGreen = findViewById(fragment2, R.id.greenSquare);
+        final View endBlue = findViewById(fragment2, R.id.blueSquare);
+
+        verifyAndClearTransition(fragment1.exitTransition, null, startGreen, startBlue);
+        verifyNoOtherTransitions(fragment1);
+
+        verifyAndClearTransition(fragment2.enterTransition, null, endGreen, endBlue);
+        verifyNoOtherTransitions(fragment2);
+
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        final View reenterBlue = findBlue();
+        final View reenterGreen = findGreen();
+
+        verifyAndClearTransition(fragment1.reenterTransition, null, reenterGreen, reenterBlue);
+        verifyNoOtherTransitions(fragment1);
+
+        verifyAndClearTransition(fragment2.returnTransition, null, endGreen, endBlue);
+        verifyNoOtherTransitions(fragment2);
     }
 
     private TransitionFragment setupInitialFragment() throws Throwable {
