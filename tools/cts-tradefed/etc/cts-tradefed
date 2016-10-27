@@ -100,7 +100,7 @@ OPTIONAL_JARS="
   google-tf-prod-tests"
 
 for JAR in $OPTIONAL_JARS; do
-    if [ -f "$JAR.jar" ]; then
+    if [ -f "${JAR_DIR}/${JAR}.jar" ]; then
         JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
     fi;
 done
