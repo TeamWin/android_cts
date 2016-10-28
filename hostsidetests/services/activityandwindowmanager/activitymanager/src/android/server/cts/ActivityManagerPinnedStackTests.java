@@ -71,44 +71,50 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackDefaultBounds() throws Exception {
+        // Launch the tap-to-finish activity at a specific place
+        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_ACTIVITY));
+        mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+
         setDeviceRotation(0 /* ROTATION_0 */);
-        ActivityManagerState amState = mAmWmState.getAmState();
         WindowManagerState wmState = mAmWmState.getWmState();
-        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
         wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        Rectangle defaultPipBounds = amState.getDefaultPinnedStackBounds();
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        Rectangle defaultPipBounds = wmState.getDefaultPinnedStackBounds();
         Rectangle stableBounds = wmState.getStableBounds();
         assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
         assertTrue(stableBounds.contains(defaultPipBounds));
 
         setDeviceRotation(1 /* ROTATION_90 */);
-        amState = mAmWmState.getAmState();
         wmState = mAmWmState.getWmState();
-        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
         wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        defaultPipBounds = amState.getDefaultPinnedStackBounds();
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        defaultPipBounds = wmState.getDefaultPinnedStackBounds();
         stableBounds = wmState.getStableBounds();
         assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
         assertTrue(stableBounds.contains(defaultPipBounds));
     }
 
     public void testPinnedStackMovementBounds() throws Exception {
+        // Launch the tap-to-finish activity at a specific place
+        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_ACTIVITY));
+        mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+
         setDeviceRotation(0 /* ROTATION_0 */);
-        ActivityManagerState amState = mAmWmState.getAmState();
         WindowManagerState wmState = mAmWmState.getWmState();
-        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
         wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        Rectangle pipMovementBounds = amState.getPinnedStackMomentBounds();
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        Rectangle pipMovementBounds = wmState.getPinnedStackMomentBounds();
         Rectangle stableBounds = wmState.getStableBounds();
         assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
         assertTrue(stableBounds.contains(pipMovementBounds));
 
         setDeviceRotation(1 /* ROTATION_90 */);
-        amState = mAmWmState.getAmState();
         wmState = mAmWmState.getWmState();
-        amState.computeState(mDevice, ActivityManagerState.DUMP_MODE_PIP);
         wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        pipMovementBounds = amState.getPinnedStackMomentBounds();
+        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        pipMovementBounds = wmState.getPinnedStackMomentBounds();
         stableBounds = wmState.getStableBounds();
         assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
         assertTrue(stableBounds.contains(pipMovementBounds));
@@ -157,7 +163,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the pinned stack bounds is contained in the display bounds.
      */
     private void assertPinnedStackActivityIsInDisplayBounds(String activity) throws Exception {
-        final WindowManagerState.WindowState windowState = getWindowState(TAP_TO_FINISH_ACTIVITY);
+        final WindowManagerState.WindowState windowState = getWindowState(activity);
         final WindowManagerState.Display display = mAmWmState.getWmState().getDisplay(
                 windowState.getDisplayId());
         final Rectangle displayRect = display.getDisplayRect();
