@@ -42,7 +42,7 @@ public class InvocationFailureHandler {
             return (f.exists() && f.length() != 0);
         } catch (FileNotFoundException e) {
             CLog.e("Could not find invocation failure file for session %s",
-                buildHelper.getDirSuffix(buildHelper.getStartTime()));
+                CompatibilityBuildHelper.getDirSuffix(buildHelper.getStartTime()));
             CLog.e(e);
             return false;
         }
