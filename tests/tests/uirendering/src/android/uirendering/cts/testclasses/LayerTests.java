@@ -17,8 +17,8 @@
 package android.uirendering.cts.testclasses;
 
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.ColorInt;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
@@ -152,8 +152,8 @@ public class LayerTests extends ActivityTestBase {
                 root.addView(child);
 
                 mAnimator = ObjectAnimator.ofInt(child, "translationY", 0, 20);
-                mAnimator.setRepeatMode(mAnimator.REVERSE);
-                mAnimator.setRepeatCount(mAnimator.INFINITE);
+                mAnimator.setRepeatMode(ValueAnimator.REVERSE);
+                mAnimator.setRepeatCount(ValueAnimator.INFINITE);
                 mAnimator.setDuration(200);
                 mAnimator.start();
             }
@@ -165,8 +165,7 @@ public class LayerTests extends ActivityTestBase {
 
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
-                .runWithAnimationVerifier(new ColorCountVerifier(Color.WHITE, 90 * 90 - 50 * 50),
-                        null);
+                .runWithAnimationVerifier(new ColorCountVerifier(Color.WHITE, 90 * 90 - 50 * 50));
     }
 
     @Test

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.app.Instrumentation;
+import android.cts.util.SynchronousPixelCopy;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
@@ -31,8 +32,6 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Debug;
 import android.os.Debug.MemoryInfo;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
@@ -40,9 +39,7 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.PixelCopy;
-import android.view.PixelCopy.OnPixelCopyFinishedListener;
 import android.view.Surface;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 
@@ -449,76 +446,6 @@ public class PixelCopyTest {
         error += Math.abs(Color.green(ideal) - Color.green(given));
         error += Math.abs(Color.blue(ideal) - Color.blue(given));
         return (error < threshold);
-    }
-
-    private static class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
-        private static Handler sHandler;
-        static {
-            HandlerThread thread = new HandlerThread("PixelCopyHelper");
-            thread.start();
-            sHandler = new Handler(thread.getLooper());
-        }
-
-        private int mStatus = -1;
-
-        public int request(Surface source, Bitmap dest) {
-            synchronized (this) {
-                PixelCopy.request(source, dest, this, sHandler);
-                return getResultLocked();
-            }
-        }
-
-        public int request(Surface source, Rect srcRect, Bitmap dest) {
-            synchronized (this) {
-                PixelCopy.request(source, srcRect, dest, this, sHandler);
-                return getResultLocked();
-            }
-        }
-
-        public int request(SurfaceView source, Bitmap dest) {
-            synchronized (this) {
-                PixelCopy.request(source, dest, this, sHandler);
-                return getResultLocked();
-            }
-        }
-
-        public int request(SurfaceView source, Rect srcRect, Bitmap dest) {
-            synchronized (this) {
-                PixelCopy.request(source, srcRect, dest, this, sHandler);
-                return getResultLocked();
-            }
-        }
-
-        public int request(Window source, Bitmap dest) {
-            synchronized (this) {
-                PixelCopy.request(source, dest, this, sHandler);
-                return getResultLocked();
-            }
-        }
-
-        public int request(Window source, Rect srcRect, Bitmap dest) {
-            synchronized (this) {
-                PixelCopy.request(source, srcRect, dest, this, sHandler);
-                return getResultLocked();
-            }
-        }
-
-        private int getResultLocked() {
-            try {
-                this.wait(1000);
-            } catch (InterruptedException e) {
-                fail("PixelCopy request didn't complete within 1s");
-            }
-            return mStatus;
-        }
-
-        @Override
-        public void onPixelCopyFinished(int copyResult) {
-            synchronized (this) {
-                mStatus = copyResult;
-                this.notify();
-            }
-        }
     }
 
     private static class SurfaceTextureRule implements TestRule {
