@@ -17,6 +17,7 @@
 
 package android.fragment.cts;
 
+import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.os.Debug;
 import android.support.test.rule.ActivityTestRule;
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.*;
 
+@MediumTest
 @RunWith(AndroidJUnit4.class)
 public class FragmentLifecycleTest {
 
@@ -40,7 +42,6 @@ public class FragmentLifecycleTest {
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
 
     @Test
-    @MediumTest
     public void basicLifecycle() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictFragment strictFragment = new StrictFragment();
@@ -68,7 +69,6 @@ public class FragmentLifecycleTest {
     }
 
     @Test
-    @MediumTest
     public void detachment() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictFragment f1 = new StrictFragment();
@@ -108,7 +108,6 @@ public class FragmentLifecycleTest {
     }
 
     @Test
-    @MediumTest
     public void basicBackStack() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictFragment f1 = new StrictFragment();
@@ -139,7 +138,6 @@ public class FragmentLifecycleTest {
     }
 
     @Test
-    @MediumTest
     public void attachBackStack() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictFragment f1 = new StrictFragment();
@@ -161,7 +159,6 @@ public class FragmentLifecycleTest {
     }
 
     @Test
-    @MediumTest
     public void viewLifecycle() throws Throwable {
         // Test basic lifecycle when the fragment creates a view
 
@@ -186,7 +183,6 @@ public class FragmentLifecycleTest {
     }
 
     @Test
-    @MediumTest
     public void viewReplace() throws Throwable {
         // Replace one view with another, then reverse it with the back stack
 
@@ -227,7 +223,6 @@ public class FragmentLifecycleTest {
     }
 
     @Test
-    @MediumTest
     public void viewReplaceMultiple() throws Throwable {
         // Replace several views with one, then reverse it with the back stack
 
@@ -283,6 +278,33 @@ public class FragmentLifecycleTest {
         assertTrue("fragment 2's view not attached", newView2.isAttachedToWindow());
         assertSame(newView1, ((ViewGroup)newView1.getParent()).getChildAt(0));
         assertSame(newView2, ((ViewGroup)newView1.getParent()).getChildAt(1));
+    }
+
+    /**
+     * This tests that fragments call onDestroy when the activity finishes.
+     */
+    @Test
+    public void fragmentDestroyedOnFinish() throws Throwable {
+        final FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+        FragmentTestUtil.resume(mActivityRule, fc, null);
+        final StrictViewFragment fragmentA = StrictViewFragment.create(R.layout.text_a);
+        final StrictViewFragment fragmentB = StrictViewFragment.create(R.layout.text_b);
+        mActivityRule.runOnUiThread(() -> {
+            FragmentManager fm = fc.getFragmentManager();
+
+            fm.beginTransaction()
+                    .add(android.R.id.content, fragmentA)
+                    .commit();
+            fm.executePendingTransactions();
+            fm.beginTransaction()
+                    .replace(android.R.id.content, fragmentB)
+                    .addToBackStack(null)
+                    .commit();
+            fm.executePendingTransactions();
+        });
+        FragmentTestUtil.destroy(mActivityRule, fc);
+        assertTrue(fragmentB.mCalledOnDestroy);
+        assertTrue(fragmentA.mCalledOnDestroy);
     }
 
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
