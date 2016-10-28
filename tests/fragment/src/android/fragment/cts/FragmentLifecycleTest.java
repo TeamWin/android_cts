@@ -18,20 +18,37 @@
 package android.fragment.cts;
 
 import android.app.FragmentController;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentController;
+import android.app.FragmentHostCallback;
 import android.app.FragmentManager;
+import android.app.FragmentManager.FragmentLifecycleCallbacks;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.os.Debug;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.view.Window;
+import android.widget.TextView;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
+
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -307,6 +324,75 @@ public class FragmentLifecycleTest {
         assertTrue(fragmentA.mCalledOnDestroy);
     }
 
+    /**
+     * This test confirms that as long as a parent fragment has called super.onCreate,
+     * any child fragments added, committed and with transactions executed will be brought
+     * to at least the CREATED state by the time the parent fragment receives onCreateView.
+     * This means the child fragment will have received onAttach/onCreate.
+     */
+    @Test
+    @MediumTest
+    public void childFragmentManagerAttach() throws Throwable {
+        mActivityRule.runOnUiThread(new Runnable() {
+            public void run() {
+                FragmentController fc = FragmentController.createController(
+                        new HostCallbacks(mActivityRule.getActivity()));
+                fc.attachHost(null);
+                fc.dispatchCreate();
+
+                FragmentLifecycleCallbacks mockLc = mock(FragmentLifecycleCallbacks.class);
+                FragmentLifecycleCallbacks mockRecursiveLc = mock(FragmentLifecycleCallbacks.class);
+
+                FragmentManager fm = fc.getFragmentManager();
+                fm.registerFragmentLifecycleCallbacks(mockLc, false);
+                fm.registerFragmentLifecycleCallbacks(mockRecursiveLc, true);
+
+                ChildFragmentManagerFragment fragment = new ChildFragmentManagerFragment();
+                fm.beginTransaction()
+                        .add(android.R.id.content, fragment)
+                        .commitNow();
+
+                verify(mockLc, times(1)).onFragmentCreated(fm, fragment, null);
+
+                fc.dispatchActivityCreated();
+
+                Fragment childFragment = fragment.getChildFragment();
+
+                verify(mockLc, times(1)).onFragmentActivityCreated(fm, fragment, null);
+                verify(mockRecursiveLc, times(1)).onFragmentActivityCreated(fm, fragment, null);
+                verify(mockRecursiveLc, times(1)).onFragmentActivityCreated(fm, childFragment, null);
+
+                fc.dispatchStart();
+
+                verify(mockLc, times(1)).onFragmentStarted(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentStarted(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentStarted(fm, childFragment);
+
+                fc.dispatchResume();
+
+                verify(mockLc, times(1)).onFragmentResumed(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentResumed(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentResumed(fm, childFragment);
+
+                // Confirm that the parent fragment received onAttachFragment
+                assertTrue("parent fragment did not receive onAttachFragment",
+                        fragment.mCalledOnAttachFragment);
+
+                fc.dispatchStop();
+
+                verify(mockLc, times(1)).onFragmentStopped(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentStopped(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentStopped(fm, childFragment);
+
+                fc.dispatchDestroy();
+
+                verify(mockLc, times(1)).onFragmentDestroyed(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentDestroyed(fm, fragment);
+                verify(mockRecursiveLc, times(1)).onFragmentDestroyed(fm, childFragment);
+            }
+        });
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override
@@ -314,5 +400,136 @@ public class FragmentLifecycleTest {
                 fm.executePendingTransactions();
             }
         });
+    }
+
+    /**
+     * This tests a deliberately odd use of a child fragment, added in onCreateView instead
+     * of elsewhere. It simulates creating a UI child fragment added to the view hierarchy
+     * created by this fragment.
+     */
+    public static class ChildFragmentManagerFragment extends StrictFragment {
+        private FragmentManager mSavedChildFragmentManager;
+        private ChildFragmentManagerChildFragment mChildFragment;
+
+        @Override
+        public void onAttach(Context context) {
+            super.onAttach(context);
+            mSavedChildFragmentManager = getChildFragmentManager();
+        }
+
+
+        @Override
+        public View onCreateView(LayoutInflater inflater,  ViewGroup container,
+                 Bundle savedInstanceState) {
+            assertSame("child FragmentManagers not the same instance", mSavedChildFragmentManager,
+                    getChildFragmentManager());
+            ChildFragmentManagerChildFragment child =
+                    (ChildFragmentManagerChildFragment) mSavedChildFragmentManager
+                            .findFragmentByTag("tag");
+            if (child == null) {
+                child = new ChildFragmentManagerChildFragment("foo");
+                mSavedChildFragmentManager.beginTransaction()
+                        .add(child, "tag")
+                        .commitNow();
+                assertEquals("argument strings don't match", "foo", child.getString());
+            }
+            mChildFragment = child;
+            return new TextView(container.getContext());
+        }
+
+
+        public Fragment getChildFragment() {
+            return mChildFragment;
+        }
+    }
+
+    public static class ChildFragmentManagerChildFragment extends StrictFragment {
+        private String mString;
+
+        public ChildFragmentManagerChildFragment() {
+        }
+
+        public ChildFragmentManagerChildFragment(String arg) {
+            final Bundle b = new Bundle();
+            b.putString("string", arg);
+            setArguments(b);
+        }
+
+        @Override
+        public void onAttach(Context context) {
+            super.onAttach(context);
+            mString = getArguments().getString("string", "NO VALUE");
+        }
+
+        public String getString() {
+            return mString;
+        }
+    }
+
+    static class HostCallbacks extends FragmentHostCallback<Activity> {
+        private final Activity mActivity;
+
+        public HostCallbacks(Activity activity) {
+            super(activity, null, 0);
+            mActivity = activity;
+        }
+
+        @Override
+        public void onDump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
+        }
+
+        @Override
+        public boolean onShouldSaveFragmentState(Fragment fragment) {
+            return !mActivity.isFinishing();
+        }
+
+        @Override
+        public LayoutInflater onGetLayoutInflater() {
+            return mActivity.getLayoutInflater().cloneInContext(mActivity);
+        }
+
+        @Override
+        public Activity onGetHost() {
+            return mActivity;
+        }
+
+        @Override
+        public void onStartActivityFromFragment(
+                Fragment fragment, Intent intent, int requestCode,  Bundle options) {
+            mActivity.startActivityFromFragment(fragment, intent, requestCode, options);
+        }
+
+        @Override
+        public void onRequestPermissionsFromFragment( Fragment fragment,
+                 String[] permissions, int requestCode) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean onHasWindowAnimations() {
+            return mActivity.getWindow() != null;
+        }
+
+        @Override
+        public int onGetWindowAnimations() {
+            final Window w = mActivity.getWindow();
+            return (w == null) ? 0 : w.getAttributes().windowAnimations;
+        }
+
+        @Override
+        public void onAttachFragment(Fragment fragment) {
+            mActivity.onAttachFragment(fragment);
+        }
+
+        @Override
+        public View onFindViewById(int id) {
+            return mActivity.findViewById(id);
+        }
+
+        @Override
+        public boolean onHasView() {
+            final Window w = mActivity.getWindow();
+            return (w != null && w.peekDecorView() != null);
+        }
     }
 }
