@@ -15,6 +15,9 @@
  */
 package android.devicepolicy.cts.uiautomatertest;
 
+import static android.content.Intent.CATEGORY_DEFAULT;
+import static android.provider.Settings.ACTION_SETTINGS;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
@@ -26,6 +29,19 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.provider.Settings;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.Until;
+import android.util.Log;
 import android.widget.ScrollView;
 
 import org.junit.After;
@@ -38,18 +54,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.regex.Pattern;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.filters.LargeTest;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiScrollable;
-import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
-import android.util.Log;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -59,14 +63,6 @@ public class DeviceAdminUninstallTest {
             "android.devicepolicy.cts.emptydeviceadmin";
     private static final String URI_PACKAGE_PREFIX = "package:";
     private static final String UNINSTALL_BUTTON_TEXT_REGEX = "(?i)uninstall";
-
-    private static final UiSelector DEACTIVATE_AND_UNINSTALL_BUTTON_SELECTOR = new UiSelector()
-            .resourceId("com.android.settings:id/action_button");
-    // Changing the below two selectors to match the button based on text due to b/29960172
-    private static final UiSelector UNINSTALL_BUTTON_SELECTOR = new UiSelector()
-            .clickable(true).textMatches(UNINSTALL_BUTTON_TEXT_REGEX);
-    private static final BySelector UNINSTALL_BUTTON_BYSELECTOR = By
-            .clickable(true).text(Pattern.compile(UNINSTALL_BUTTON_TEXT_REGEX));
 
     private static final UiSelector OK_BUTTON_SELECTOR = new UiSelector()
             .resourceId("android:id/button1");
@@ -83,7 +79,10 @@ public class DeviceAdminUninstallTest {
     private DevicePolicyManager mDpm;
     private PackageManager mPm;
     private Activity mActivity;
+    private UiSelector mDeactivateAndUninstallButtonSelector;
+    private BySelector mUninstallButtonSelector;
     private boolean mHasFeature;
+    private boolean mIsWatch;
 
     @Before
     public void setUp() throws Exception {
@@ -97,6 +96,17 @@ public class DeviceAdminUninstallTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mUiDevice = UiDevice.getInstance(mInstrumentation);
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
+        mIsWatch = mPm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (mIsWatch) {
+            mUninstallButtonSelector = By.clickable(true).hasDescendant(
+                    By.text(Pattern.compile(UNINSTALL_BUTTON_TEXT_REGEX)));
+        } else {
+            mUninstallButtonSelector = By.clickable(true).text(
+                    Pattern.compile(UNINSTALL_BUTTON_TEXT_REGEX));
+        }
+        mDeactivateAndUninstallButtonSelector = new UiSelector().resourceId(
+                getDefaultSettingsPackageName() + ":id/action_button");
+
         startTestActivity();
     }
 
@@ -158,15 +168,21 @@ public class DeviceAdminUninstallTest {
     private void automateUninstallThroughUi() {
         String errorMessage = "No exception in UI Automation";
 
-        UiObject uninstallButton = mUiDevice.findObject(UNINSTALL_BUTTON_SELECTOR);
         UiScrollable scrollable = new UiScrollable(SCROLL_VIEW_SELECTOR);
-        UiObject deactivateButton = mUiDevice.findObject(DEACTIVATE_AND_UNINSTALL_BUTTON_SELECTOR);
+        UiObject deactivateButton = mUiDevice.findObject(mDeactivateAndUninstallButtonSelector);
         UiObject okButton = mUiDevice.findObject(OK_BUTTON_SELECTOR);
 
-        mUiDevice.wait(Until.hasObject(UNINSTALL_BUTTON_BYSELECTOR), WAIT_FOR_ACTIVITY_TIMEOUT);
         try {
-            uninstallButton.clickAndWaitForNewWindow();
-            scrollable.scrollIntoView(DEACTIVATE_AND_UNINSTALL_BUTTON_SELECTOR);
+            UiObject2 uninstallButton = mUiDevice.wait(
+                    Until.findObject(mUninstallButtonSelector), WAIT_FOR_ACTIVITY_TIMEOUT);
+            uninstallButton.clickAndWait(Until.newWindow(), WAIT_FOR_ACTIVITY_TIMEOUT);
+
+            /** Watch specific: Extra confirm button click */
+            if (mIsWatch) {
+                okButton.clickAndWaitForNewWindow();
+            }
+
+            scrollable.scrollIntoView(mDeactivateAndUninstallButtonSelector);
             deactivateButton.clickAndWaitForNewWindow();
             waitTillNoActiveAdmin();
             okButton.clickAndWaitForNewWindow();
@@ -183,6 +199,12 @@ public class DeviceAdminUninstallTest {
         StringWriter errorWriter = new StringWriter();
         t.printStackTrace(new PrintWriter(errorWriter));
         return errorWriter.toString();
+    }
+
+    private String getDefaultSettingsPackageName() {
+        Intent intent = new Intent(ACTION_SETTINGS).addCategory(CATEGORY_DEFAULT);
+        String packageName = intent.resolveActivity(mPm).getPackageName();
+        return packageName;
     }
 
     @Test
