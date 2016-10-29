@@ -16,8 +16,6 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-
 import java.lang.Exception;
 import java.lang.String;
 
@@ -37,7 +35,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     public void testVisibleBehindHomeActivity() throws Exception {
         executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
-        mAmWmState.waitForValidState(mDevice, true, new String[] {VISIBLE_BEHIND_ACTIVITY},
+        mAmWmState.waitForValidState(mDevice, new String[] {VISIBLE_BEHIND_ACTIVITY},
                 new int[] {FULLSCREEN_WORKSPACE_STACK_ID}, false /* compareTaskAndStackBounds */);
 
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
@@ -139,7 +137,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testTurnScreenOnActivity() throws Exception {
-        lockDevice();
+        sleepDevice();
         executeShellCommand(getAmStartCmd(TURN_SCREEN_ON_ACTIVITY_NAME));
         mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_ACTIVITY_NAME });
         mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);

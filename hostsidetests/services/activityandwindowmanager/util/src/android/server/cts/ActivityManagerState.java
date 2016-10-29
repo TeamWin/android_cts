@@ -58,6 +58,7 @@ class ActivityManagerState {
 
     // Stacks in z-order with the top most at the front of the list.
     private final List<ActivityStack> mStacks = new ArrayList();
+    private KeyguardControllerState mKeyguardControllerState;
     private int mFocusedStackId = -1;
     private String mResumedActivityRecord = null;
     private final List<String> mResumedActivities = new ArrayList();
@@ -100,8 +101,8 @@ class ActivityManagerState {
             dump = outputReceiver.getOutput();
             parseSysDump(dump);
 
-            retry = mStacks.isEmpty() || mFocusedStackId == -1 || mResumedActivityRecord == null
-                    || mResumedActivities.isEmpty();
+            retry = mStacks.isEmpty() || mFocusedStackId == -1 || (mResumedActivityRecord == null
+                    || mResumedActivities.isEmpty()) && !mKeyguardControllerState.keyguardShowing;
         } while (retry && retriesLeft-- > 0);
 
         if (retry) {
@@ -140,6 +141,13 @@ class ActivityManagerState {
                 continue;
             }
 
+            KeyguardControllerState controller = KeyguardControllerState.create(
+                    mSysDump, new Pattern[0]);
+            if (controller != null) {
+                mKeyguardControllerState = controller;
+                continue;
+            }
+
             final String line = mSysDump.pop().trim();
 
             Matcher matcher = mFocusedStackPattern.matcher(line);
@@ -175,6 +183,7 @@ class ActivityManagerState {
         mResumedActivityRecord = null;
         mResumedActivities.clear();
         mSysDump.clear();
+        mKeyguardControllerState = null;
     }
 
     int getFrontStackId() {
@@ -195,6 +204,10 @@ class ActivityManagerState {
 
     int getResumedActivitiesCount() {
         return mResumedActivities.size();
+    }
+
+    public KeyguardControllerState getKeyguardControllerState() {
+        return mKeyguardControllerState;
     }
 
     boolean containsStack(int stackId) {
@@ -650,6 +663,60 @@ class ActivityManagerState {
 
         int getMinHeight() {
             return mMinHeight;
+        }
+    }
+
+    static class KeyguardControllerState {
+        private static final Pattern NAME_PATTERN = Pattern.compile("KeyguardController:");
+        private static final Pattern SHOWING_PATTERN = Pattern.compile("mKeyguardShowing=(\\S+)");
+        private static final Pattern OCCLUDED_PATTERN = Pattern.compile("mOccluded=(\\S+)");
+
+        boolean keyguardShowing;
+        boolean keyguardOccluded;
+
+        private KeyguardControllerState() {
+        }
+
+        static KeyguardControllerState create(LinkedList<String> dump, Pattern[] exitPatterns) {
+            final String line = dump.peek().trim();
+
+            final Matcher matcher = NAME_PATTERN.matcher(line);
+            if (!matcher.matches()) {
+                // Not KeyguardController
+                return null;
+            }
+
+            // For the KeyguardController line we just read.
+            dump.pop();
+
+            final KeyguardControllerState controller = new KeyguardControllerState();
+            controller.extract(dump, exitPatterns);
+            return controller;
+        }
+
+        private void extract(LinkedList<String> dump, Pattern[] exitPatterns) {
+
+            while (!doneExtracting(dump, exitPatterns)) {
+                final String line = dump.pop().trim();
+
+                Matcher matcher = SHOWING_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    final String showingString = matcher.group(1);
+                    keyguardShowing = Boolean.valueOf(showingString);
+                    log(showingString);
+                    continue;
+                }
+
+                matcher = OCCLUDED_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    final String occludedString = matcher.group(1);
+                    keyguardOccluded = Boolean.valueOf(occludedString);
+                    log(occludedString);
+                    continue;
+                }
+            }
         }
     }
 

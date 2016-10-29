@@ -293,7 +293,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
 
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
-        mAmWmState.getWmState().getMatchingWindowState(windowName, tempWindowList);
+        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
 
         assertEquals("Should have exactly one window state for the activity.", 1,
                 tempWindowList.size());

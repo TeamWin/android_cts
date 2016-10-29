@@ -36,6 +36,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY = "LaunchTapToFinishPipActivity";
     private static final String LAUNCH_IME_WITH_PIP_ACTIVITY = "LaunchImeWithPipActivity";
 
+    private static final int ROTATION_0 = 0;
+    private static final int ROTATION_90 = 1;
+    private static final int ROTATION_180 = 2;
+    private static final int ROTATION_270 = 3;
+
     public void testEnterPictureInPictureMode() throws Exception {
         pinnedStackTester(AUTO_ENTER_PIP_ACTIVITY, AUTO_ENTER_PIP_ACTIVITY, false, false);
     }
@@ -77,19 +82,17 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
-        setDeviceRotation(0 /* ROTATION_0 */);
+        setDeviceRotation(ROTATION_0);
         WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice);
         Rectangle defaultPipBounds = wmState.getDefaultPinnedStackBounds();
         Rectangle stableBounds = wmState.getStableBounds();
         assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
         assertTrue(stableBounds.contains(defaultPipBounds));
 
-        setDeviceRotation(1 /* ROTATION_90 */);
+        setDeviceRotation(ROTATION_90);
         wmState = mAmWmState.getWmState();
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice);
         defaultPipBounds = wmState.getDefaultPinnedStackBounds();
         stableBounds = wmState.getStableBounds();
         assertTrue(defaultPipBounds.width > 0 && defaultPipBounds.height > 0);
@@ -102,19 +105,17 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, new String[] {TAP_TO_FINISH_PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
-        setDeviceRotation(0 /* ROTATION_0 */);
+        setDeviceRotation(ROTATION_0);
         WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice);
         Rectangle pipMovementBounds = wmState.getPinnedStackMomentBounds();
         Rectangle stableBounds = wmState.getStableBounds();
         assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
         assertTrue(stableBounds.contains(pipMovementBounds));
 
-        setDeviceRotation(1 /* ROTATION_90 */);
+        setDeviceRotation(ROTATION_90);
         wmState = mAmWmState.getWmState();
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_POLICY);
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice);
         pipMovementBounds = wmState.getPinnedStackMomentBounds();
         stableBounds = wmState.getStableBounds();
         assertTrue(pipMovementBounds.width > 0 && pipMovementBounds.height > 0);
@@ -149,15 +150,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY));
 
         // Ensure that the PIP stack is fully visible in each orientation
-        setDeviceRotation(0 /* ROTATION_0 */);
+        setDeviceRotation(ROTATION_0);
         assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_PIP_ACTIVITY);
-        setDeviceRotation(1 /* ROTATION_90 */);
+        setDeviceRotation(ROTATION_90);
         assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_PIP_ACTIVITY);
-        setDeviceRotation(2 /* ROTATION_180 */);
+        setDeviceRotation(ROTATION_180);
         assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_PIP_ACTIVITY);
-        setDeviceRotation(3 /* ROTATION_270 */);
+        setDeviceRotation(ROTATION_270);
         assertPinnedStackActivityIsInDisplayBounds(TAP_TO_FINISH_PIP_ACTIVITY);
-        setDeviceRotation(0 /* ROTATION_0 */);
+        setDeviceRotation(ROTATION_0);
     }
 
     public void testPinnedStackOffsetForIME() throws Exception {
@@ -174,7 +175,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotIntersectIME();
         setDeviceRotation(3 /* ROTATION_270 */);
         assertPinnedStackDoesNotIntersectIME();
-        setDeviceRotation(0 /* ROTATION_0 */);
     }
 
     /**
@@ -183,7 +183,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private void assertPinnedStackDoesNotIntersectIME() throws Exception {
         // Ensure that the IME is visible
         WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_VISIBLE);
+        wmState.computeState(mDevice);
         WindowManagerState.WindowState imeWinState = wmState.getInputMethodWindowState();
         assertTrue(imeWinState != null);
 
@@ -195,7 +195,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 imeContentFrame.y + imeContentInsets.y,
                 imeContentFrame.width - imeContentInsets.width,
                 imeContentFrame.height - imeContentInsets.height);
-        wmState.computeState(mDevice, WindowManagerState.DUMP_MODE_PIP);
+        wmState.computeState(mDevice);
         Rectangle pipMovementBounds = wmState.getPinnedStackMomentBounds();
         assertTrue(!pipMovementBounds.intersects(imeBounds));
     }
@@ -220,7 +220,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         String windowName = getWindowName(activity);
         mAmWmState.computeState(mDevice, true /* visibleOnly */, new String[] {activity});
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
-        mAmWmState.getWmState().getMatchingWindowState(windowName, tempWindowList);
+        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
         return tempWindowList.get(0);
     }
 
@@ -232,7 +232,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
         }
 
-        mAmWmState.waitForValidState(mDevice, true, new String[] {topActivityName},
+        mAmWmState.waitForValidState(mDevice, new String[] {topActivityName},
                 new int[] {PINNED_STACK_ID}, false /* compareTaskAndStackBounds */);
         mAmWmState.computeState(mDevice, null);
 

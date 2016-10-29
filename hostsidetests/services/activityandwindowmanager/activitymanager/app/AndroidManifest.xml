@@ -19,6 +19,8 @@
           xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
           package="android.server.cts">
 
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
     <application>
         <activity android:name=".TestActivity"
                 android:resizeableActivity="true"
@@ -212,6 +214,27 @@
         />
         <activity android:name=".VirtualDisplayActivity"
                   android:exported="true"
+        />
+        <activity android:name=".ShowWhenLockedActivity"
+                  android:exported="true"
+        />
+        <activity android:name=".ShowWhenLockedWithDialogActivity"
+                  android:exported="true"
+        />
+        <activity android:name=".ShowWhenLockedDialogActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Dialog"
+        />
+        <activity android:name=".ShowWhenLockedTranslucentActivity"
+                  android:exported="true"
+                  android:theme="@android:style/Theme.Translucent"
+        />
+        <activity android:name=".DismissKeyguardActivity"
+                  android:exported="true"
+        />
+        <activity android:name=".WallpaperActivity"
+            android:exported="true"
+            android:theme="@style/WallpaperTheme"
         />
     </application>
 </manifest>

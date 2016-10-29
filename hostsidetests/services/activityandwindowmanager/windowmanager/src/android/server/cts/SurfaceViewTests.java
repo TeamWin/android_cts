@@ -21,13 +21,8 @@ import java.util.ArrayList;
 import java.awt.Rectangle;
 
 import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
 
-import android.server.cts.ActivityManagerTestBase;
 import android.server.cts.WindowManagerState.WindowState;
 
 public class SurfaceViewTests extends ParentChildTestBase {
@@ -45,7 +40,7 @@ public class SurfaceViewTests extends ParentChildTestBase {
 
     WindowState getSingleWindow(String fullWindowName) {
         try {
-            mAmWmState.getWmState().getMatchingWindowState(fullWindowName, mWindowList);
+            mAmWmState.getWmState().getMatchingVisibleWindowState(fullWindowName, mWindowList);
             return mWindowList.get(0);
         } catch (Exception e) {
             CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + fullWindowName);

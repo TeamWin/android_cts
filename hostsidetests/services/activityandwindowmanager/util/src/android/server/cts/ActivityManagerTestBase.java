@@ -154,7 +154,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
-        unlockDevice();
+        wakeUpAndUnlockDevice();
         // Remove special stacks.
         executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
         executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
@@ -178,7 +178,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
             executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
             executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
-            unlockDevice();
+            wakeUpAndUnlockDevice();
         } catch (DeviceNotAvailableException e) {
         }
     }
@@ -307,6 +307,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
+    protected boolean isHandheld() throws DeviceNotAvailableException {
+        return !hasDeviceFeature("android.software.leanback")
+                && !hasDeviceFeature("android.software.watch");
+    }
+
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
         if (mAvailableFeatures == null) {
             // TODO: Move this logic to ITestDevice.
@@ -348,7 +353,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return false;
     }
 
-    protected void lockDevice() throws DeviceNotAvailableException {
+    protected void sleepDevice() throws DeviceNotAvailableException {
         int retriesLeft = 5;
         runCommandAndPrintOutput("input keyevent 26");
         do {
@@ -366,18 +371,32 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         } while (retriesLeft-- > 0);
     }
 
-    protected void unlockDevice() throws DeviceNotAvailableException {
+    protected void wakeUpAndUnlockDevice() throws DeviceNotAvailableException {
+        wakeUpDevice();
+        unlockDevice();
+    }
+
+    protected void wakeUpDevice() throws DeviceNotAvailableException {
         runCommandAndPrintOutput("input keyevent 224");
+    }
+
+    protected void unlockDevice() throws DeviceNotAvailableException {
         runCommandAndPrintOutput("input keyevent 82");
+    }
+
+    protected void gotoKeyguard() throws DeviceNotAvailableException {
+        sleepDevice();
+        wakeUpDevice();
     }
 
     /**
      * Sets the device rotation, value corresponds to one of {@link Surface.ROTATION_0},
      * {@link Surface.ROTATION_90}, {@link Surface.ROTATION_180}, {@link Surface.ROTATION_270}.
      */
-    protected void setDeviceRotation(int rotation) throws DeviceNotAvailableException {
+    protected void setDeviceRotation(int rotation) throws Exception {
         setAccelerometerRotation(0);
         setUserRotation(rotation);
+        mAmWmState.waitForRotation(mDevice, rotation);
     }
 
     private int getAccelerometerRotation() throws DeviceNotAvailableException {
