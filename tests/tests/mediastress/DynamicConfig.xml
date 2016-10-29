@@ -1,0 +1,347 @@
+<!-- Copyright (C) 2016 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<dynamicConfig>
+  <entry key="bbb_full/1280x720/mp4_libx264_libfaac/bbb_full.ffmpeg.1280x720.mp4.libx264_1350kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/1280x720/mp4_libx264_libfaac/bbb_full.ffmpeg.1280x720.mp4.libx264_1750kbps_30fps.libfaac_stereo_192kbps_48000Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/1280x720/mp4_libx265_libfaac/bbb_full.ffmpeg.1280x720.mp4.libx265_1140kbps_30fps.libfaac_stereo_128kbps_48000Hz.mp4">
+    <value>mime=video/hevc,bitrate=999120,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=127968,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/1280x720/mp4_libx265_libfaac/bbb_full.ffmpeg.1280x720.mp4.libx265_880kbps_24fps.libfaac_stereo_128kbps_48000Hz.mp4">
+    <value>mime=video/hevc,bitrate=748632,width=1280,height=720,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,bitrate=127976,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/176x144/3gp_h263_libfaac/bbb_full.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_mono_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/1920x1080/mp4_libx264_libfaac/bbb_full.ffmpeg.1920x1080.mp4.libx264_10000kbps_30fps.libfaac_stereo_192kbps_48000Hz.mp4">
+    <value>mime=video/avc,width=1920,height=1080,frame-rate=24,profile=1,level=4096;mime=audio/mp4a-latm,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/1920x1080/mp4_libx265_libfaac/bbb_full.ffmpeg.1920x1080.mp4.libx265_6500kbps_30fps.libfaac_stereo_128kbps_48000Hz.mp4">
+    <value>mime=video/hevc,width=1920,height=1080,frame-rate=30,profile=1,level=1024;mime=audio/mp4a-latm,bitrate=128006,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/480x360/webm_libvpx_libvorbis/bbb_full.ffmpeg.480x360.webm.libvpx_500kbps_25fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_full/720x480/mp4_libx264_libfaac/bbb_full.ffmpeg.720x480.mp4.libx264_500kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_full/720x480/mp4_libx265_libfaac/bbb_full.ffmpeg.720x480.mp4.libx265_325kbps_24fps.libfaac_stereo_128kbps_48000Hz.mp4">
+    <value>mime=video/hevc,bitrate=280872,width=720,height=480,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,bitrate=127976,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1000kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1000kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1000kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1000kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1350kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1350kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1350kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1350kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_1750kbps_30fps.libfaac_stereo_192kbps_48000Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_500kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_500kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_500kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx264_libfaac/bbb_short.ffmpeg.1280x720.mp4.libx264_500kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=1280,height=720,frame-rate=24,profile=1,level=512;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_1140kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_3250kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_325kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_325kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_6500kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_650kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_650kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_880kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1280x720/mp4_libx265_libfaac/bbb_short.fmpeg.1280x720.mp4.libx265_880kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1280,height=720,frame-rate=30,profile=1,level=256;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_12fps.libfaac_mono_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_12fps.libfaac_mono_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_12fps.libfaac_stereo_128kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_12fps.libfaac_stereo_128kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_12fps.libfaac_stereo_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_12fps.libfaac_stereo_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_25fps.libfaac_mono_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_25fps.libfaac_mono_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_25fps.libfaac_stereo_128kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_25fps.libfaac_stereo_128kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_25fps.libfaac_stereo_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_300kbps_25fps.libfaac_stereo_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_mono_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_mono_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_stereo_128kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_stereo_128kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_stereo_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_12fps.libfaac_stereo_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=12,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_25fps.libfaac_mono_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_25fps.libfaac_mono_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=1,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_25fps.libfaac_stereo_128kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_25fps.libfaac_stereo_128kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_25fps.libfaac_stereo_24kbps_11025Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=11025,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/176x144/3gp_h263_libfaac/bbb_short.ffmpeg.176x144.3gp.h263_56kbps_25fps.libfaac_stereo_24kbps_22050Hz.3gp">
+    <value>mime=video/3gpp,width=176,height=144,frame-rate=25,profile=1,level=1;mime=audio/mp4a-latm,sample-rate=22050,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1920x1080/mp4_libx264_libfaac/bbb_short.ffmpeg.1920x1080.mp4.libx264_10000kbps_30fps.libfaac_stereo_192kbps_48000Hz.mp4">
+    <value>mime=video/avc,width=1920,height=1080,frame-rate=24,profile=1,level=4096;mime=audio/mp4a-latm,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1920x1080/mp4_libx264_libfaac/bbb_short.ffmpeg.1920x1080.mp4.libx264_1750kbps_30fps.libfaac_stereo_192kbps_48000Hz.mp4">
+    <value>mime=video/avc,width=1920,height=1080,frame-rate=24,profile=1,level=2048;mime=audio/mp4a-latm,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1920x1080/mp4_libx264_libfaac/bbb_short.ffmpeg.1920x1080.mp4.libx264_5000kbps_30fps.libfaac_stereo_192kbps_48000Hz.mp4">
+    <value>mime=video/avc,width=1920,height=1080,frame-rate=24,profile=1,level=2048;mime=audio/mp4a-latm,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1920x1080/mp4_libx265_libfaac/bbb_short.fmpeg.1920x1080.mp4.libx265_1140kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1920,height=1080,frame-rate=30,profile=1,level=1024;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1920x1080/mp4_libx265_libfaac/bbb_short.fmpeg.1920x1080.mp4.libx265_3250kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1920,height=1080,frame-rate=30,profile=1,level=1024;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/1920x1080/mp4_libx265_libfaac/bbb_short.fmpeg.1920x1080.mp4.libx265_6500kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=1920,height=1080,frame-rate=30,profile=1,level=1024;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1000kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1000kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1000kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1000kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1350kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1350kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1350kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_1350kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_500kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_500kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_500kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx264_libfaac/bbb_short.ffmpeg.480x360.mp4.libx264_500kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=480,height=360,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx265_libfaac/bbb_short.fmpeg.480x360.mp4.libx265_325kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=640,height=480,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx265_libfaac/bbb_short.fmpeg.480x360.mp4.libx265_325kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=640,height=480,frame-rate=30,profile=1,level=64;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx265_libfaac/bbb_short.fmpeg.480x360.mp4.libx265_650kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=480,height=360,frame-rate=24,profile=1,level=16;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx265_libfaac/bbb_short.fmpeg.480x360.mp4.libx265_650kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=480,height=360,frame-rate=30,profile=1,level=16;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx265_libfaac/bbb_short.fmpeg.480x360.mp4.libx265_880kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=480,height=360,frame-rate=24,profile=1,level=16;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/mp4_libx265_libfaac/bbb_short.fmpeg.480x360.mp4.libx265_880kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=480,height=360,frame-rate=30,profile=1,level=16;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1000kbps_25fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1000kbps_25fps.libvorbis_stereo_192kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1000kbps_30fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1000kbps_30fps.libvorbis_stereo_192kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1350kbps_25fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1350kbps_25fps.libvorbis_stereo_192kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1350kbps_30fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_1350kbps_30fps.libvorbis_stereo_192kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_500kbps_25fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_500kbps_25fps.libvorbis_stereo_192kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_500kbps_30fps.libvorbis_stereo_128kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/480x360/webm_libvpx_libvorbis/bbb_short.ffmpeg.480x360.webm.libvpx_500kbps_30fps.libvorbis_stereo_192kbps_44100Hz.webm">
+    <value>mime=video/x-vnd.on2.vp8,width=480,height=360;mime=audio/vorbis,sample-rate=44100,channel-count=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1000kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1000kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1000kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1000kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1350kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1350kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1350kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_1350kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_500kbps_25fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_500kbps_25fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_500kbps_30fps.libfaac_stereo_128kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx264_libfaac/bbb_short.ffmpeg.720x480.mp4.libx264_500kbps_30fps.libfaac_stereo_192kbps_44100Hz.mp4">
+    <value>mime=video/avc,width=720,height=480,frame-rate=24,profile=1,level=256;mime=audio/mp4a-latm,sample-rate=44100,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx265_libfaac/bbb_short.fmpeg.720x480.mp4.libx265_325kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=720,height=480,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx265_libfaac/bbb_short.fmpeg.720x480.mp4.libx265_325kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=720,height=480,frame-rate=30,profile=1,level=64;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx265_libfaac/bbb_short.fmpeg.720x480.mp4.libx265_650kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=720,height=480,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx265_libfaac/bbb_short.fmpeg.720x480.mp4.libx265_650kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=720,height=480,frame-rate=30,profile=1,level=64;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx265_libfaac/bbb_short.fmpeg.720x480.mp4.libx265_880kbps_24fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=720,height=480,frame-rate=24,profile=1,level=64;mime=audio/mp4a-latm,bitrate=129452,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+  <entry key="bbb_short/720x480/mp4_libx265_libfaac/bbb_short.fmpeg.720x480.mp4.libx265_880kbps_30fps.libfaac_stereo_128kbps_48000hz.mp4">
+    <value>mime=video/hevc,width=720,height=480,frame-rate=30,profile=1,level=64;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
+  </entry>
+</dynamicConfig>
