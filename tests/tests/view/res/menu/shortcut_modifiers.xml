@@ -16,37 +16,23 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:id="@+id/visible_item"
-        android:title="Visible"
+    <item android:id="@+id/no_modifiers"
+        android:onClick="handleMenuItem"
         android:alphabeticShortcut="a" />
 
-    <item android:id="@+id/hidden_item"
-        android:title="Hidden"
-        android:visible="false"
-        android:alphabeticShortcut="b" />
-
-    <group android:id="@+id/hidden_group"
-        android:visible="false">
-
-        <item android:id="@+id/hidden_by_group"
-            android:title="Hidden by group"
-            android:alphabeticShortcut="c" />
-
-    </group>
-
-    <item android:id="@+id/no_modifiers"
-          android:alphabeticShortcut="d" />
-
     <item android:id="@+id/default_modifiers"
-          android:alphabeticShortcut="e"
-          android:alphabeticModifiers="CTRL" />
+        android:alphabeticShortcut="b"
+        android:onClick="handleMenuItem"
+        android:alphabeticModifiers="CTRL" />
 
     <item android:id="@+id/single_modifier"
-          android:alphabeticShortcut="f"
-          android:alphabeticModifiers="SHIFT" />
+        android:alphabeticShortcut="c"
+        android:onClick="handleMenuItem"
+        android:alphabeticModifiers="SHIFT" />
 
     <item android:id="@+id/multiple_modifiers"
-          android:alphabeticShortcut="g"
-          android:alphabeticModifiers="CTRL|SHIFT" />
+        android:alphabeticShortcut="d"
+        android:onClick="handleMenuItem"
+        android:alphabeticModifiers="CTRL|SHIFT" />
 
 </menu>

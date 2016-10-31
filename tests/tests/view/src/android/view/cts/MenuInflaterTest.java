@@ -31,6 +31,7 @@ import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -108,6 +109,30 @@ public class MenuInflaterTest {
         assertEquals(R.id.hidden_group, mMenu.findItem(R.id.hidden_by_group).getGroupId());
         assertFalse(mMenu.findItem(R.id.hidden_by_group).isVisible());
         assertEquals('c', mMenu.findItem(R.id.hidden_by_group).getAlphabeticShortcut());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testInflateShortcutModifiersFromXml() {
+        mMenuInflater.inflate(R.menu.visible_shortcut, mMenu);
+        MenuItem mMenuItem;
+
+        mMenuItem = mMenu.findItem(R.id.no_modifiers);
+        assertEquals('d', mMenuItem.getAlphabeticShortcut());
+        assertEquals(KeyEvent.META_CTRL_ON, mMenuItem.getAlphabeticModifiers());
+
+        mMenuItem = mMenu.findItem(R.id.default_modifiers);
+        assertEquals('e', mMenuItem.getAlphabeticShortcut());
+        assertEquals(KeyEvent.META_CTRL_ON, mMenuItem.getAlphabeticModifiers());
+
+        mMenuItem = mMenu.findItem(R.id.single_modifier);
+        assertEquals('f', mMenuItem.getAlphabeticShortcut());
+        assertEquals(KeyEvent.META_SHIFT_ON, mMenuItem.getAlphabeticModifiers());
+
+        mMenuItem = mMenu.findItem(R.id.multiple_modifiers);
+        assertEquals('g', mMenuItem.getAlphabeticShortcut());
+        assertEquals(KeyEvent.META_CTRL_ON | KeyEvent.META_SHIFT_ON,
+                mMenuItem.getAlphabeticModifiers());
     }
 
     @UiThreadTest
