@@ -270,6 +270,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         assertNotNull(mUserHandle);
 
         boolean removed = mDevicePolicyManager.removeUser(getWho(), mUserHandle);
-        assertFalse(removed);
+        // When the device owner itself has set the user restriction, it should still be allowed
+        // to remove a user.
+        assertTrue(removed);
     }
 }
