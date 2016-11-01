@@ -51,9 +51,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
      */
     private boolean mHasDisabledEphemeralUserFeature;
 
-    /** CreateAndManageUser is available and an additional user can be created. */
-    private boolean mHasCreateAndManageUserFeature;
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -69,7 +66,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         mHasEphemeralUserFeature = mHasFeature && canCreateAdditionalUsers(1) && hasUserSplit();
         mHasDisabledEphemeralUserFeature =
                 mHasFeature && canCreateAdditionalUsers(1) && !hasUserSplit();
-        mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1);
     }
 
     @Override
