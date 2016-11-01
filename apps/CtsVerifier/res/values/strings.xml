@@ -2180,9 +2180,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_usb_file_transfer_test">Disallow USB file transfer</string>
     <string name="device_owner_disallow_usb_file_transfer_test_info">
             Please press below button to set the \"disallow USB file transfer\" restriction.\n
-            Next, connect your device to your desktop computer through USB, open the USB notification from the status bar
-            and check that the \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and triggers a support message when trying to select them.\n
-            Also, check that if you can download files from your phone to the desktop computer. The test is successful if the files from your phone are not and cannot be downloaded through USB.\n
+            If a USB notification appears, open the notification and check that the
+            \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and trigger a
+            support message when trying to select them.\n
+            Check if you can mount the device as a USB drive on your desktop computer. The test is
+            successful if you cannot mount the device, and files from your phone cannot be
+            downloaded through USB.\n
             Please mark the test accordingly.
     </string>
     <string name="device_owner_set_user_icon">Setting the user icon</string>
