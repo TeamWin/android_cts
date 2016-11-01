@@ -494,7 +494,7 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
         </activity>
 
-        <activity android:name=".location.GnssStatusTestsActivity"
+        <!--  activity android:name=".location.GnssStatusTestsActivity"
             android:label="@string/location_gnss_status_test"
             android:screenOrientation="locked">
             <intent-filter>
@@ -503,7 +503,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
-        </activity>
+        </activity -->
 
         <activity android:name=".location.LocationListenerActivity"
                 android:label="@string/location_listener_activity"
