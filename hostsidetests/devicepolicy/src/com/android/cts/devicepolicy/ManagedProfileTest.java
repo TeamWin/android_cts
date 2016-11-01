@@ -321,6 +321,21 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
+    /** Tests for the API helper class. */
+    public void testCurrentApiHelper() throws Exception {
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CurrentApiHelperTest",
+                mProfileUserId));
+    }
+
+    /** Test: unsupported public APIs are disabled on a parent profile. */
+    public void testParentProfileApiDisabled() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertTrue(runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
+                "testParentProfileApiDisabled", mProfileUserId));
+    }
+
     // TODO: This test is not specific to managed profiles, but applies to multi-user in general.
     // Move it to a MultiUserTest class when there is one. Should probably move
     // SetPolicyActivity to a more generic apk too as it might be useful for different kinds
