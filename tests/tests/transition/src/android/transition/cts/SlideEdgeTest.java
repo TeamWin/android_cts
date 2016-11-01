@@ -36,8 +36,6 @@ import android.view.ViewGroup;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeUnit;
-
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SlideEdgeTest extends BaseTransitionTest  {

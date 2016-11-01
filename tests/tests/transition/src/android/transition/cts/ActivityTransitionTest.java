@@ -17,7 +17,7 @@ package android.transition.cts;
 
 import static android.cts.util.CtsMockitoUtils.within;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;

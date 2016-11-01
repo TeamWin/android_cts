@@ -16,7 +16,9 @@
 
 package android.view.cts;
 
-import com.android.internal.util.ArrayUtils;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
@@ -33,21 +35,18 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.android.internal.util.ArrayUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.lang.InterruptedException;
-import java.lang.StringBuilder;
-import java.lang.Thread;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.Objects;
-
-import static junit.framework.TestCase.*;
 
 @RunWith(AndroidJUnit4.class)
 public class DragDropTest {

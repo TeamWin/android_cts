@@ -15,6 +15,8 @@
  */
 package android.view.cts.surfacevalidator;
 
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -39,10 +41,6 @@ import android.widget.FrameLayout;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import static org.junit.Assert.*;
 
 
 public class CapturedActivity extends Activity {

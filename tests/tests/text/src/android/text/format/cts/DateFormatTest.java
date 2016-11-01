@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.cts.util.SystemUtil;
 import android.os.ParcelFileDescriptor;
