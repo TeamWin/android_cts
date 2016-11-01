@@ -24,7 +24,6 @@ import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.result.ITestInvocationListener;
-import com.android.tradefed.result.StubTestInvocationListener;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.TargetSetupError;
@@ -133,7 +132,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         return success;
     }
 
-    public class TargetPreparerListener extends StubTestInvocationListener {
+    private class TargetPreparerListener implements ITestInvocationListener {
 
         @Override
         public void testEnded(TestIdentifier test, Map<String, String> metrics) {

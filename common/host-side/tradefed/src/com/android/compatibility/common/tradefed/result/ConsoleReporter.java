@@ -23,7 +23,6 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
-import com.android.tradefed.result.StubTestInvocationListener;
 import com.android.tradefed.util.TimeUtil;
 
 import java.util.Map;
@@ -31,7 +30,7 @@ import java.util.Map;
 /**
  * Write test progress to the test console.
  */
-public class ConsoleReporter extends StubTestInvocationListener implements IShardableListener {
+public class ConsoleReporter implements IShardableListener {
 
     private static final String UNKNOWN_DEVICE = "unknown_device";
 
