@@ -82,17 +82,18 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
-    private static final String SUBPLAN_OPTION = "subplan";
+    public static final String SUBPLAN_OPTION = "subplan";
     public static final String MODULE_OPTION = "module";
     public static final String TEST_OPTION = "test";
-    private static final String MODULE_ARG_OPTION = "module-arg";
-    private static final String TEST_ARG_OPTION = "test-arg";
+    public static final String MODULE_ARG_OPTION = "module-arg";
+    public static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
     public static final String RETRY_TYPE_OPTION = "retry-type";
     public static final String ABI_OPTION = "abi";
-    private static final String SHARD_OPTION = "shards";
+    public static final String SHARD_OPTION = "shards";
     public static final String SKIP_DEVICE_INFO_OPTION = "skip-device-info";
     public static final String SKIP_PRECONDITIONS_OPTION = "skip-preconditions";
+    public static final String SKIP_HOST_ARCH_CHECK = "skip-host-arch-check";
     public static final String PRIMARY_ABI_RUN = "primary-abi-only";
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
@@ -170,6 +171,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             shortName = 'd',
             description = "Whether device info collection should be skipped")
     private boolean mSkipDeviceInfo = false;
+
+    @Option(name = SKIP_HOST_ARCH_CHECK,
+            description = "Whether host architecture check should be skipped")
+    private boolean mSkipHostArchCheck = false;
 
     @Option(name = SKIP_PRECONDITIONS_OPTION,
             shortName = 'o',
@@ -448,7 +453,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     Set<IAbi> getAbis() throws DeviceNotAvailableException {
         Set<IAbi> abis = new HashSet<>();
-        Set<String> archAbis = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        Set<String> archAbis = getAbisForBuildTargetArch();
         if (mPrimaryAbiRun) {
             if (mAbiName == null) {
                 // Get the primary from the device and make it the --abi to run.
@@ -459,8 +464,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
         }
         if (mAbiName != null) {
-            // A particular abi was requested
-            if (!archAbis.contains(mAbiName)) {
+            // A particular abi was requested, it still need to be supported by the build.
+            if ((!mSkipHostArchCheck && !archAbis.contains(mAbiName)) ||
+                    !AbiUtils.isAbiSupportedByCompatibility(mAbiName)) {
                 throw new IllegalArgumentException(String.format("Your CTS hasn't been built with "
                         + "abi '%s' support, this CTS currently supports '%s'.",
                         mAbiName, archAbis));
@@ -472,7 +478,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             // Run on all abi in common between the device and CTS.
             List<String> deviceAbis = Arrays.asList(AbiFormatter.getSupportedAbis(mDevice, ""));
             for (String abi : deviceAbis) {
-                if (AbiUtils.isAbiSupportedByCompatibility(abi) && archAbis.contains(abi)) {
+                if ((mSkipHostArchCheck || archAbis.contains(abi)) &&
+                        AbiUtils.isAbiSupportedByCompatibility(abi)) {
                     abis.add(new Abi(abi, AbiUtils.getBitness(abi)));
                 } else {
                     CLog.d("abi '%s' is supported by device but not by this CTS build (%s), tests "
@@ -486,6 +493,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             }
             return abis;
         }
+    }
+
+    /**
+     * Return the abis supported by the Host build target architecture.
+     * Exposed for testing.
+     */
+    protected Set<String> getAbisForBuildTargetArch() {
+        return AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
     }
 
     private List<SystemStatusChecker> initSystemStatusCheckers() throws ConfigurationException {
