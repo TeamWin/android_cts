@@ -47,6 +47,13 @@
             android:text="@string/device_test_button" />
 
     <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/deviceTest"
+        android:id="@+id/accessoryTest"
+        android:text="@string/accessory_test_button" />
+
+    <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/status"

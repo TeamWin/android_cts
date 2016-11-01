@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.usb.device;
 
+import static com.android.cts.verifier.usb.Util.runAndAssertException;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -45,6 +47,9 @@ import android.support.annotation.Nullable;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
@@ -72,37 +77,35 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private static final int MAX_BUFFER_SIZE = 16384;
 
     private UsbManager mUsbManager;
-    private final BroadcastReceiver mUsbDeviceConnectionReceiver;
+    private BroadcastReceiver mUsbDeviceConnectionReceiver;
     private Thread mTestThread;
+    private TextView mStatus;
+    private ProgressBar mProgress;
 
     private static long now() {
         return System.nanoTime() / 1000000;
     }
 
-    /**
-     * Run a {@link Invokable} and expect a {@link Throwable} of a certain type.
-     *
-     * @param r             The {@link Invokable} to run
-     * @param expectedClass The expected {@link Throwable} type
-     */
-    private static void assertException(@NonNull Invokable r,
-            @NonNull Class<? extends Throwable> expectedClass) throws Throwable {
-        try {
-            r.run();
-        } catch (Throwable e) {
-            if (e.getClass().isAssignableFrom(expectedClass)) {
-                return;
-            } else {
-                Log.e(LOG_TAG, "Expected: " + expectedClass.getName() + ", got: "
-                        + e.getClass().getName());
-                throw e;
-            }
-        }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        throw new AssertionError("No throwable thrown");
-    }
+        setContentView(R.layout.usb_main);
+        setInfoResources(R.string.usb_device_test, R.string.usb_device_test_info, -1);
 
-    public UsbDeviceTestActivity() {
+        mStatus = (TextView) findViewById(R.id.status);
+        mProgress = (ProgressBar) findViewById(R.id.progress_bar);
+
+        mUsbManager = getSystemService(UsbManager.class);
+
+        getPassButton().setEnabled(false);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_USB_PERMISSION);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+
+        mStatus.setText(R.string.usb_device_test_step1);
+
         mUsbDeviceConnectionReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -111,6 +114,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
                     switch (intent.getAction()) {
                         case UsbManager.ACTION_USB_DEVICE_ATTACHED:
+                            if (!AoapInterface.isDeviceInAoapMode(device)) {
+                                mStatus.setText(R.string.usb_device_test_step2);
+                            }
+
                             mUsbManager.requestPermission(device,
                                     PendingIntent.getBroadcast(UsbDeviceTestActivity.this, 0,
                                             new Intent(ACTION_USB_PERMISSION), 0));
@@ -121,6 +128,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
                             if (granted) {
                                 if (!AoapInterface.isDeviceInAoapMode(device)) {
+                                    mStatus.setText(R.string.usb_device_test_step3);
+
                                     UsbDeviceConnection connection = mUsbManager.openDevice(device);
                                     try {
                                         makeThisDeviceAnAccessory(connection);
@@ -128,6 +137,13 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                                         connection.close();
                                     }
                                 } else {
+                                    mStatus.setText(R.string.usb_device_test_step4);
+                                    mProgress.setIndeterminate(true);
+                                    mProgress.setVisibility(View.VISIBLE);
+
+                                    unregisterReceiver(mUsbDeviceConnectionReceiver);
+                                    mUsbDeviceConnectionReceiver = null;
+
                                     // Do not run test on main thread
                                     mTestThread = new Thread() {
                                         @Override
@@ -147,22 +163,6 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 }
             }
         };
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.usb_main);
-        setInfoResources(R.string.usb_device_test, R.string.usb_device_test_info, -1);
-
-        mUsbManager = getSystemService(UsbManager.class);
-
-        getPassButton().setEnabled(false);
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
 
         registerReceiver(mUsbDeviceConnectionReceiver, filter);
     }
@@ -390,22 +390,22 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      * @throws Throwable
      */
     private void ctrlTransferTests(@NonNull UsbDeviceConnection connection) throws Throwable {
-        assertException(() -> connection.controlTransfer(0, 0, 0, 0, null, 1, 0),
+        runAndAssertException(() -> connection.controlTransfer(0, 0, 0, 0, null, 1, 0),
                 IllegalArgumentException.class);
 
-        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], -1, 0),
+        runAndAssertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], -1, 0),
                 IllegalArgumentException.class);
 
-        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 2, 0),
+        runAndAssertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 2, 0),
                 IllegalArgumentException.class);
 
-        assertException(() -> connection.controlTransfer(0, 0, 0, 0, null, 0, 1, 0),
+        runAndAssertException(() -> connection.controlTransfer(0, 0, 0, 0, null, 0, 1, 0),
                 IllegalArgumentException.class);
 
-        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 0, -1, 0),
+        runAndAssertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 0, -1, 0),
                 IllegalArgumentException.class);
 
-        assertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 1, 1, 0),
+        runAndAssertException(() -> connection.controlTransfer(0, 0, 0, 0, new byte[1], 1, 1, 0),
                 IllegalArgumentException.class);
     }
 
@@ -729,7 +729,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private void timeoutWhileWaitingForUsbRequest(@NonNull UsbDeviceConnection connection)
             throws Throwable {
-        assertException(() -> connection.requestWait(-1), IllegalArgumentException.class);
+        runAndAssertException(() -> connection.requestWait(-1), IllegalArgumentException.class);
 
         long startTime = now();
         UsbRequest req = connection.requestWait(100);
@@ -981,18 +981,19 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
         // Illegal arguments
         final UsbRequest req1 = new UsbRequest();
-        assertException(() -> req1.initialize(null, in), NullPointerException.class);
-        assertException(() -> req1.initialize(connection, null), NullPointerException.class);
+        runAndAssertException(() -> req1.initialize(null, in), NullPointerException.class);
+        runAndAssertException(() -> req1.initialize(connection, null), NullPointerException.class);
         boolean isInited = req1.initialize(connection, in);
         assertTrue(isInited);
-        assertException(() -> req1.queue(null, 0), NullPointerException.class);
-        assertException(() -> req1.queue(ByteBuffer.allocate(1).asReadOnlyBuffer(), 1),
+        runAndAssertException(() -> req1.queue(null, 0), NullPointerException.class);
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocate(1).asReadOnlyBuffer(), 1),
                 IllegalArgumentException.class);
         req1.close();
 
         // Cannot queue closed request
-        assertException(() -> req1.queue(ByteBuffer.allocate(1), 1), NullPointerException.class);
-        assertException(() -> req1.queue(ByteBuffer.allocateDirect(1), 1),
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocate(1), 1),
+                NullPointerException.class);
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocateDirect(1), 1),
                 NullPointerException.class);
     }
 
@@ -1096,19 +1097,20 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
         // Illegal arguments
         final UsbRequest req1 = new UsbRequest();
-        assertException(() -> req1.initialize(null, in), NullPointerException.class);
-        assertException(() -> req1.initialize(connection, null), NullPointerException.class);
+        runAndAssertException(() -> req1.initialize(null, in), NullPointerException.class);
+        runAndAssertException(() -> req1.initialize(connection, null), NullPointerException.class);
         boolean isInited = req1.initialize(connection, in);
         assertTrue(isInited);
-        assertException(() -> req1.enqueue(ByteBuffer.allocate(16384 + 1).asReadOnlyBuffer()),
+        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocate(16384 + 1).asReadOnlyBuffer()),
                 IllegalArgumentException.class);
-        assertException(() -> req1.enqueue(ByteBuffer.allocate(1).asReadOnlyBuffer()),
+        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocate(1).asReadOnlyBuffer()),
                 IllegalArgumentException.class);
         req1.close();
 
         // Cannot queue closed request
-        assertException(() -> req1.enqueue(ByteBuffer.allocate(1)), IllegalStateException.class);
-        assertException(() -> req1.enqueue(ByteBuffer.allocateDirect(1)),
+        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocate(1)),
+                IllegalStateException.class);
+        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocateDirect(1)),
                 IllegalStateException.class);
 
         // Initialize
@@ -1629,27 +1631,27 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         receiveOversizedBulkTransfer(connection, in);
 
         // Illegal arguments
-        assertException(() -> connection.bulkTransfer(out, new byte[1], 2, 0),
+        runAndAssertException(() -> connection.bulkTransfer(out, new byte[1], 2, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(in, new byte[1], 2, 0),
+        runAndAssertException(() -> connection.bulkTransfer(in, new byte[1], 2, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(out, new byte[2], 1, 2, 0),
+        runAndAssertException(() -> connection.bulkTransfer(out, new byte[2], 1, 2, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(in, new byte[2], 1, 2, 0),
+        runAndAssertException(() -> connection.bulkTransfer(in, new byte[2], 1, 2, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(out, new byte[1], -1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(out, new byte[1], -1, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(in, new byte[1], -1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(in, new byte[1], -1, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(out, new byte[1], 1, -1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(out, new byte[1], 1, -1, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(in, new byte[1], 1, -1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(in, new byte[1], 1, -1, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(out, new byte[1], -1, -1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(out, new byte[1], -1, -1, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(in, new byte[1], -1, -1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(in, new byte[1], -1, -1, 0),
                 IllegalArgumentException.class);
-        assertException(() -> connection.bulkTransfer(null, new byte[1], 1, 0),
+        runAndAssertException(() -> connection.bulkTransfer(null, new byte[1], 1, 0),
                 NullPointerException.class);
 
         // Transmissions that do nothing
@@ -1768,9 +1770,11 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         released = connection.releaseInterface(iface);
         assertTrue(released);
 
-        assertException(() -> connection.claimInterface(null, true), NullPointerException.class);
-        assertException(() -> connection.claimInterface(null, false), NullPointerException.class);
-        assertException(() -> connection.releaseInterface(null), NullPointerException.class);
+        runAndAssertException(() -> connection.claimInterface(null, true),
+                NullPointerException.class);
+        runAndAssertException(() -> connection.claimInterface(null, false),
+                NullPointerException.class);
+        runAndAssertException(() -> connection.releaseInterface(null), NullPointerException.class);
     }
 
     /**
@@ -1803,7 +1807,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         boolean released = connection.releaseInterface(iface);
         assertTrue(released);
 
-        assertException(() -> connection.setConfiguration(null), NullPointerException.class);
+        runAndAssertException(() -> connection.setConfiguration(null), NullPointerException.class);
     }
 
     /**
@@ -1832,7 +1836,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         released = connection.releaseInterface(iface);
         assertTrue(released);
 
-        assertException(() -> connection.setInterface(null), NullPointerException.class);
+        runAndAssertException(() -> connection.setInterface(null), NullPointerException.class);
     }
 
     /**
@@ -2010,14 +2014,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mUsbDeviceConnectionReceiver);
-        super.onDestroy();
-    }
+        if (mUsbDeviceConnectionReceiver != null) {
+            unregisterReceiver(mUsbDeviceConnectionReceiver);
+        }
 
-    /**
-     * A {@link Runnable} that can throw an {@link Throwable}.
-     */
-    private interface Invokable {
-        void run() throws Throwable;
+        super.onDestroy();
     }
 }

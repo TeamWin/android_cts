@@ -18,6 +18,7 @@
 <resources>
     <string name="status_label">Status:</string>
     <string name="device_test_button">Start device test companion</string>
+    <string name="accessory_test_button">Start accessory test companion</string>
     <string name="abort_button">Abort</string>
     <string name="app_name">Cts Verifier USB Companion</string>
     <string name="status_no_test">No test run</string>
