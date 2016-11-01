@@ -28,11 +28,6 @@ import android.renderscript.Type;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Surface;
-import android.view.cts.surfacevalidator.PixelChecker;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 
 public class SurfacePixelValidator {
     private static final String TAG = "SurfacePixelValidator";

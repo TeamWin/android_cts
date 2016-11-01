@@ -17,10 +17,8 @@
 package android.view.cts;
 
 import android.app.Activity;
-import android.view.cts.R;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class PanicPressBackActivity extends Activity {
 

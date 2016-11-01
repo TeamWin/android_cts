@@ -35,8 +35,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.SpannedString;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

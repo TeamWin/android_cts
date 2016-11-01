@@ -23,7 +23,6 @@ import android.animation.Keyframe;
 import android.animation.TimeInterpolator;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.InstrumentationTestCase;
 import android.view.animation.AccelerateInterpolator;
 
 import org.junit.Test;
