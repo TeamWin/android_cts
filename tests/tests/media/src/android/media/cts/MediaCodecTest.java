@@ -86,6 +86,13 @@ public class MediaCodecTest extends AndroidTestCase {
     private boolean mAudioEncoderHadError = false;
     private volatile boolean mVideoEncodingOngoing = false;
 
+    private static final int INPUT_RESOURCE_ID =
+            R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
+
+    // The test should fail if the decoder never produces output frames for the input.
+    // Time out decoding, as we have no way to query whether the decoder will produce output.
+    private static final int DECODING_TIMEOUT_MS = 10000;
+
     /**
      * Tests:
      * <br> Exceptions for MediaCodec factory methods
@@ -547,6 +554,103 @@ public class MediaCodecTest extends AndroidTestCase {
         callbackThread.join();
     }
 
+    public void testAsyncFlushAndReset() throws Exception, InterruptedException {
+        testAsyncReset(false /* testStop */);
+    }
+
+    public void testAsyncStopAndReset() throws Exception, InterruptedException {
+        testAsyncReset(true /* testStop */);
+    }
+
+    private void testAsyncReset(boolean testStop) throws Exception, InterruptedException {
+        // Test video and audio 10x each
+        for (int i = 0; i < 10; i++) {
+            testAsyncReset(false /* audio */, (i % 2) == 0 /* swap */, testStop);
+        }
+        for (int i = 0; i < 10; i++) {
+            testAsyncReset(true /* audio */, (i % 2) == 0 /* swap */, testStop);
+        }
+    }
+
+    /*
+     * This method simulates a race between flush (or stop) and reset() called from
+     * two threads. Neither call should get stuck. This should be run multiple rounds.
+     */
+    private void testAsyncReset(boolean audio, boolean swap, final boolean testStop)
+            throws Exception, InterruptedException {
+        String mimeTypePrefix  = audio ? "audio/" : "video/";
+        final MediaExtractor mediaExtractor = getMediaExtractorForMimeType(
+                INPUT_RESOURCE_ID, mimeTypePrefix);
+        MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
+                mediaExtractor.getSampleTrackIndex());
+        if (!MediaUtils.checkDecoderForFormat(mediaFormat)) {
+            return; // skip
+        }
+
+        OutputSurface outputSurface = audio ? null : new OutputSurface(1, 1);
+        final Surface surface = outputSurface == null ? null : outputSurface.getSurface();
+
+        String mimeType = mediaFormat.getString(MediaFormat.KEY_MIME);
+        final MediaCodec mediaCodec = MediaCodec.createDecoderByType(mimeType);
+
+        try {
+            mediaCodec.configure(mediaFormat, surface, null /* crypto */, 0 /* flags */);
+
+            mediaCodec.start();
+
+            assertTrue(runDecodeTillFirstOutput(mediaCodec, mediaExtractor));
+
+            Thread flushingThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (testStop) {
+                            mediaCodec.stop();
+                        } else {
+                            mediaCodec.flush();
+                        }
+                    } catch (IllegalStateException e) {
+                        // This is okay, since we're simulating a race between flush and reset.
+                        // If reset executed first, flush could fail.
+                    }
+                }
+            });
+
+            Thread resettingThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    mediaCodec.reset();
+                }
+            });
+
+            // start flushing (or stopping) and resetting in two threads
+            if (swap) {
+                flushingThread.start();
+                resettingThread.start();
+            } else {
+                resettingThread.start();
+                flushingThread.start();
+            }
+
+            // wait for at most 5 sec, and check if the thread exits properly
+            flushingThread.join(5000);
+            assertFalse(flushingThread.isAlive());
+
+            resettingThread.join(5000);
+            assertFalse(resettingThread.isAlive());
+        } finally {
+            if (mediaCodec != null) {
+                mediaCodec.release();
+            }
+            if (mediaExtractor != null) {
+                mediaExtractor.release();
+            }
+            if (outputSurface != null) {
+                outputSurface.release();
+            }
+        }
+    }
+
     private static class FlushThread extends Thread {
         final MediaCodec mEncoder;
         final CountDownLatch mBuffersExhausted;
@@ -882,13 +986,6 @@ public class MediaCodecTest extends AndroidTestCase {
     }
 
     private void testDecodeAfterFlush(final boolean audio) throws InterruptedException {
-        final int INPUT_RESOURCE_ID =
-                R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
-
-        // The test should fail if the decoder never produces output frames for the input.
-        // Time out decoding, as we have no way to query whether the decoder will produce output.
-        final int DECODING_TIMEOUT_MS = 10000;
-
         final AtomicBoolean completed = new AtomicBoolean(false);
         Thread decodingThread = new Thread(new Runnable() {
             @Override
