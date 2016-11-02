@@ -150,10 +150,10 @@
                                     <xsl:value-of select="count(TestCase/Test[@result = 'fail'])"/>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(TestCase/Test[@result = 'not_executed'])"/>
+                                    <xsl:value-of select="@not_executed"/>
                                 </td>
                                 <td>
-                                    <xsl:value-of select="count(TestCase/Test)"/>
+                                    <xsl:value-of select="count(TestCase/Test) + @not_executed"/>
                                 </td>
                             </tr>
                         </xsl:for-each> <!-- end Module -->
