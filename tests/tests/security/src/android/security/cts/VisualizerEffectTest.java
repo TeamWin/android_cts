@@ -25,7 +25,6 @@ import android.media.audiofx.Visualizer;
 import android.test.AndroidTestCase;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
-import com.android.cts.security.R;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
