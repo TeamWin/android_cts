@@ -18,10 +18,10 @@ package android.server.cts;
 
 import android.app.Activity;
 
-public class LaunchTapToFinishActivity extends Activity {
+public class LaunchTapToFinishPipActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        TapToFinishActivity.launchActivity(this);
+        TapToFinishPipActivity.launchActivity(this);
     }
 }

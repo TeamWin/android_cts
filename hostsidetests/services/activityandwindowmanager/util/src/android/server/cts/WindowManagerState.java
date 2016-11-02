@@ -67,15 +67,18 @@ public class WindowManagerState {
                     + "ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)");
     private static final Pattern sStableBoundsPattern = Pattern.compile(
             "mStable=\\((\\d+),(\\d+)\\)-\\((\\d+),(\\d+)\\)");
-    private static final Pattern mDefaultPinnedStackBoundsPattern = Pattern.compile(
+    private static final Pattern sDefaultPinnedStackBoundsPattern = Pattern.compile(
             "defaultBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
-    private static final Pattern mPinnedStackMovementBoundsPattern = Pattern.compile(
+    private static final Pattern sPinnedStackMovementBoundsPattern = Pattern.compile(
             "movementBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
 
     private static final Pattern sLastAppTransitionPattern =
             Pattern.compile("mLastUsedAppTransition=(.+)");
 
     private static final Pattern sStackIdPattern = Pattern.compile("mStackId=(\\d+)");
+
+    private static final Pattern sInputMethodWindowPattern =
+            Pattern.compile("mInputMethodWindow=Window\\{([0-9a-fA-F]+) u\\d+ .+\\}.*");
 
     private static final Pattern[] sExtractStackExitPatterns = {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
@@ -91,6 +94,7 @@ public class WindowManagerState {
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private String mLastTransition = null;
+    private String mInputMethodWindowAppToken = null;
     private Rectangle mStableBounds = new Rectangle();
     private final Rectangle mDefaultPinnedStackBounds = new Rectangle();
     private final Rectangle mPinnedStackMovementBounds = new Rectangle();
@@ -263,7 +267,7 @@ public class WindowManagerState {
                 continue;
             }
 
-            matcher = mDefaultPinnedStackBoundsPattern.matcher(line);
+            matcher = sDefaultPinnedStackBoundsPattern.matcher(line);
             if (matcher.matches()) {
                 log(line);
                 int left = Integer.parseInt(matcher.group(1));
@@ -275,7 +279,7 @@ public class WindowManagerState {
                 continue;
             }
 
-            matcher = mPinnedStackMovementBoundsPattern.matcher(line);
+            matcher = sPinnedStackMovementBoundsPattern.matcher(line);
             if (matcher.matches()) {
                 log(line);
                 int left = Integer.parseInt(matcher.group(1));
@@ -284,6 +288,14 @@ public class WindowManagerState {
                 int bottom = Integer.parseInt(matcher.group(4));
                 mPinnedStackMovementBounds.setBounds(left, top, right - left, bottom - top);
                 log(mPinnedStackMovementBounds.toString());
+                continue;
+            }
+
+            matcher = sInputMethodWindowPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                mInputMethodWindowAppToken = matcher.group(1);
+                log(mInputMethodWindowAppToken);
                 continue;
             }
         }
@@ -306,6 +318,15 @@ public class WindowManagerState {
                 windowList.add(ws);
             }
         }
+    }
+
+    WindowState getWindowStateForAppToken(String appToken) {
+        for (WindowState ws : mWindowStates) {
+            if (ws.getToken().equals(appToken)) {
+                return ws;
+            }
+        }
+        return null;
     }
 
     Display getDisplay(int displayId) {
@@ -367,6 +388,10 @@ public class WindowManagerState {
         return null;
     }
 
+    WindowState getInputMethodWindowState() {
+        return getWindowStateForAppToken(mInputMethodWindowAppToken);
+    }
+
     Rectangle getStableBounds() {
         return mStableBounds;
     }
@@ -387,6 +412,7 @@ public class WindowManagerState {
         mWindowStates.clear();
         mFocusedWindow = null;
         mFocusedApp = null;
+        mInputMethodWindowAppToken = null;
     }
 
     static class WindowStack extends WindowContainer {
@@ -729,10 +755,13 @@ public class WindowManagerState {
             Pattern.compile("Cur insets.+surface=" + RECT_STR + ".+");
         private static final Pattern sContentInsetsPattern =
                 Pattern.compile("Cur insets.+content=" + NEGATIVE_VALUES_ALLOWED_RECT_STR + ".+");
+        private static final Pattern sGivenContentInsetsPattern =
+                Pattern.compile("mGivenContentInsets=" + RECT_STR + ".+");
         private static final Pattern sLayerPattern =
             Pattern.compile("Surface:.+layer=(\\d+).+");
         private static final Pattern sCropPattern =
             Pattern.compile(".+mLastClipRect=" + RECT_STR + ".*");
+
 
         private final String mName;
         private final String mAppToken;
@@ -746,6 +775,7 @@ public class WindowManagerState {
         private Rectangle mFrame = new Rectangle();
         private Rectangle mSurfaceInsets = new Rectangle();
         private Rectangle mContentInsets = new Rectangle();
+        private Rectangle mGivenContentInsets = new Rectangle();
         private Rectangle mCrop = new Rectangle();
 
 
@@ -801,6 +831,10 @@ public class WindowManagerState {
 
         Rectangle getContentInsets() {
             return mContentInsets;
+        }
+
+        Rectangle getGivenContentInsets() {
+            return mGivenContentInsets;
         }
 
         Rectangle getContentFrame() {
@@ -900,6 +934,13 @@ public class WindowManagerState {
                     log(TAG + "CROP: " + line);
                     mCrop = extractBounds(matcher);
                 }
+
+                matcher = sGivenContentInsetsPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "GIVEN CONTENT INSETS: " + line);
+                    mGivenContentInsets = extractBounds(matcher);
+                }
+
                 // Extract other info here if needed
             }
         }
