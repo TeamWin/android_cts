@@ -27,7 +27,7 @@
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.admin.cts" />
-        <option name="runtime-hint" value="20s" />
+        <option name="runtime-hint" value="17m" />
     </test>
 
     <!-- Instrument the app to clear the device admins so the apk can be uninstalled -->

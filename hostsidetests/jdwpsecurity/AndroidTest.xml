@@ -16,5 +16,6 @@
 <configuration description="Config for the CTS JDWP host test cases">
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsJdwpSecurityHostTestCases.jar" />
+        <option name="runtime-hint" value="10m30s" />
     </test>
 </configuration>

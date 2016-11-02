@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.graphics2.cts" />
+        <option name="runtime-hint" value="7m" />
     </test>
 </configuration>

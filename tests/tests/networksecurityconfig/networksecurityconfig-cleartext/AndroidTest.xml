@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.security.net.config.cts.CtsNetSecConfigCleartextTrafficTestCases" />
+        <option name="runtime-hint" value="8m10s" />
     </test>
 </configuration>

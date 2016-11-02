@@ -19,6 +19,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.appwidget.cts" />
-        <option name="runtime-hint" value="3m30s" />
+        <option name="runtime-hint" value="9m30s" />
     </test>
 </configuration>

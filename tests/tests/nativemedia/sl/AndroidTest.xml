@@ -22,5 +22,6 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="CtsNativeMediaSlTestCases" />
+        <option name="runtime-hint" value="8m" />
     </test>
 </configuration>

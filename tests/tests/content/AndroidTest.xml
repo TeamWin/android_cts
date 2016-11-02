@@ -20,6 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.content.cts" />
-        <option name="runtime-hint" value="3m30s" />
+        <option name="runtime-hint" value="21m30s" />
     </test>
 </configuration>

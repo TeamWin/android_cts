@@ -22,5 +22,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.backup.cts" />
+        <option name="runtime-hint" value="8m20s" />
     </test>
 </configuration>

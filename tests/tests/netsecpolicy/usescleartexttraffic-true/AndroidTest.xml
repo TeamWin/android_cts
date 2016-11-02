@@ -21,5 +21,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.netsecpolicy.usescleartext.true" />
+        <option name="runtime-hint" value="8m" />
     </test>
 </configuration>

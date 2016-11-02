@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsTrustedVoiceHostTestCases.jar" />
+        <option name="runtime-hint" value="12m" />
     </test>
 </configuration>

@@ -16,6 +16,6 @@
 <configuration description="Config for the CTS ShortcutManager host tests">
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsShortcutHostTestCases.jar" />
-        <option name="runtime-hint" value="20m" />
+        <option name="runtime-hint" value="10m" />
     </test>
 </configuration>

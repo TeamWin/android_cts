@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.security.net.config.cts.CtsNetSecConfigNestedDomainConfigTestCases" />
+        <option name="runtime-hint" value="7m45s" />
     </test>
 </configuration>

@@ -37,7 +37,7 @@
         <option name="core-expectation" value="/icebox.txt" />
         <option name="core-expectation" value="/taggedtests.txt" />
         <option name="core-expectation" value="/expectations/cts-runner-specific-failures.txt" />
-        <option name="runtime-hint" value="45m"/>
+        <option name="runtime-hint" value="35m"/>
         <!-- 20x default timeout of 600sec -->
         <option name="shell-timeout" value="12000000"/>
     </test>

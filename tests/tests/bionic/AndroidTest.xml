@@ -27,6 +27,6 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="CtsBionicTestCases" />
-        <option name="runtime-hint" value="1m10s" />
+        <option name="runtime-hint" value="12m10s" />
     </test>
 </configuration>

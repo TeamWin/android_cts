@@ -36,6 +36,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts" />
-        <option name="runtime-hint" value="1m11s" />
+        <option name="runtime-hint" value="7m11s" />
     </test>
 </configuration>

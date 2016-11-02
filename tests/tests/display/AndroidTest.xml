@@ -25,5 +25,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.display.cts" />
+        <option name="runtime-hint" value="17m" />
     </test>
 </configuration>

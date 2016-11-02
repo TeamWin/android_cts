@@ -20,5 +20,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.transition.cts" />
+        <option name="runtime-hint" value="11m10s" />
     </test>
 </configuration>
