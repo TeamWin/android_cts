@@ -1,6 +1,10 @@
 # Minijail Seccomp Policy for isolated_app processes on X86-64.
 
 access: return EPERM
+
+# arch_prctl: arg0 == ARCH_SET_GS
+arch_prctl: arg0 == 0x1001; return EPERM
+
 chmod: return EPERM
 chown: return EPERM
 creat: return EPERM
