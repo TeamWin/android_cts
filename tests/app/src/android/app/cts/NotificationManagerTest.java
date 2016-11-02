@@ -22,6 +22,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.provider.Telephony.Threads;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -52,20 +53,29 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testCreateChannel() {
-        NotificationChannel channel = new NotificationChannel("id", "name");
+        NotificationChannel channel =
+                new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setVibration(true);
+        channel.setRingtone(new Uri.Builder().scheme("test").build());
+        channel.setLights(true);
+        channel.setBypassDnd(true);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
         try {
             mNotificationManager.createNotificationChannel(channel);
-            assertEquals(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+            NotificationChannel created =
+                    mNotificationManager.getNotificationChannel(channel.getId());
+            compareChannels(channel, created);
         } finally {
             mNotificationManager.deleteNotificationChannel(channel.getId());
         }
     }
 
     public void testCreateChannelAlreadyExists() {
-        NotificationChannel channel = new NotificationChannel("id", "name");
+        NotificationChannel channel =
+                new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
         try {
             mNotificationManager.createNotificationChannel(channel);
-            assertEquals(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+            compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
             try {
                 mNotificationManager.createNotificationChannel(channel);
                 fail("Created channel with duplicate id");
@@ -77,19 +87,28 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testCreateChannelInvalidImportance() {
+        NotificationChannel channel =
+                new NotificationChannel("id2", "name", NotificationManager.IMPORTANCE_UNSPECIFIED);
+        try {
+            mNotificationManager.createNotificationChannel(channel);
+        } catch (IllegalArgumentException e) {
+            //success
+        }
+    }
+
     public void testDeleteChannel() {
-        NotificationChannel channel = new NotificationChannel("id", "name");
+        NotificationChannel channel =
+                new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_LOW);
         mNotificationManager.createNotificationChannel(channel);
-        assertEquals(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+        compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
         mNotificationManager.deleteNotificationChannel(channel.getId());
         assertNull(mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
     public void testCannotDeleteDefaultChannel() {
-        NotificationChannel channel =
-                new NotificationChannel(NotificationChannel.DEFAULT_CHANNEL_ID, "name");
         try {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
+            mNotificationManager.deleteNotificationChannel(NotificationChannel.DEFAULT_CHANNEL_ID);
             fail("Deleted default channel");
         } catch (IllegalArgumentException e) {
             //success
@@ -97,47 +116,33 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testGetChannel() {
-        NotificationChannel channel1 = new NotificationChannel("id", "name");
-        NotificationChannel channel2 = new NotificationChannel("id2", "name2");
-        NotificationChannel channel3 = new NotificationChannel("id3", "name3");
-        NotificationChannel channel4 = new NotificationChannel("id4", "name4");
+        NotificationChannel channel1 =
+                new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel channel2 =
+                new NotificationChannel("id2", "name2", NotificationManager.IMPORTANCE_HIGH);
+        NotificationChannel channel3 =
+                new NotificationChannel("id3", "name3", NotificationManager.IMPORTANCE_LOW);
+        NotificationChannel channel4 =
+                new NotificationChannel("id4", "name4", NotificationManager.IMPORTANCE_MIN);
         try {
             mNotificationManager.createNotificationChannel(channel1);
             mNotificationManager.createNotificationChannel(channel2);
             mNotificationManager.createNotificationChannel(channel3);
             mNotificationManager.createNotificationChannel(channel4);
 
-            assertEquals(channel2, mNotificationManager.getNotificationChannel(channel2.getId()));
-            assertEquals(channel3, mNotificationManager.getNotificationChannel(channel3.getId()));
-            assertEquals(channel1, mNotificationManager.getNotificationChannel(channel1.getId()));
-            assertEquals(channel4, mNotificationManager.getNotificationChannel(channel4.getId()));
+            compareChannels(channel2,
+                    mNotificationManager.getNotificationChannel(channel2.getId()));
+            compareChannels(channel3,
+                    mNotificationManager.getNotificationChannel(channel3.getId()));
+            compareChannels(channel1,
+                    mNotificationManager.getNotificationChannel(channel1.getId()));
+            compareChannels(channel4,
+                    mNotificationManager.getNotificationChannel(channel4.getId()));
         } finally {
             mNotificationManager.deleteNotificationChannel(channel1.getId());
             mNotificationManager.deleteNotificationChannel(channel2.getId());
             mNotificationManager.deleteNotificationChannel(channel3.getId());
             mNotificationManager.deleteNotificationChannel(channel4.getId());
-        }
-    }
-
-    public void testUpdateChannel() {
-        NotificationChannel channel = new NotificationChannel("id", "name");
-        try {
-            mNotificationManager.createNotificationChannel(channel);
-            channel.setLights(true);
-            mNotificationManager.updateNotificationChannel(channel);
-            assertEquals(channel, mNotificationManager.getNotificationChannel(channel.getId()));
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
-    }
-
-    public void testUpdateChannelDoesNotExist() {
-        try {
-            mNotificationManager.updateNotificationChannel(
-                    new NotificationChannel("blah", "blahname"));
-            fail("Update on non existent channel succeeded");
-        } catch (IllegalArgumentException e){
-            // pass
         }
     }
 
@@ -234,5 +239,16 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
         }
         return found == shouldExist;
+    }
+
+    private void compareChannels(NotificationChannel expected, NotificationChannel actual) {
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
+        assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
+        assertEquals(expected.getImportance(), actual.getImportance());
+        assertEquals(expected.getLockscreenVisibility(), actual.getLockscreenVisibility());
+        assertEquals(expected.getRingtone(), actual.getRingtone());
+        assertEquals(expected.canBypassDnd(), actual.canBypassDnd());
     }
 }

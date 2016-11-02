@@ -16,7 +16,6 @@
 
 package android.app.cts;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.net.Uri;
@@ -32,23 +31,26 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testDescribeContents() {
         final int expected = 0;
-        NotificationChannel channel = new NotificationChannel("1", "1");
+        NotificationChannel channel =
+                new NotificationChannel("1", "1", NotificationManager.IMPORTANCE_DEFAULT);
         assertEquals(expected, channel.describeContents());
     }
 
     public void testConstructor() {
-        NotificationChannel channel = new NotificationChannel("1", "one");
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         assertEquals("1", channel.getId());
         assertEquals("one", channel.getName());
         assertEquals(false, channel.canBypassDnd());
         assertEquals(false, channel.shouldShowLights());
         assertEquals(false, channel.shouldVibrate());
-        assertEquals(NotificationManager.IMPORTANCE_UNSPECIFIED, channel.getImportance());
-        assertEquals(null, channel.getDefaultRingtone());
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.getImportance());
+        assertEquals(null, channel.getRingtone());
     }
 
     public void testWriteToParcel() {
-        NotificationChannel channel = new NotificationChannel("1", "one");
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         Parcel parcel = Parcel.obtain();
         channel.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -57,7 +59,8 @@ public class NotificationChannelTest extends AndroidTestCase {
     }
 
     public void testLights() {
-        NotificationChannel channel = new NotificationChannel("1", "one");
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setLights(true);
         assertTrue(channel.shouldShowLights());
         channel.setLights(false);
@@ -65,7 +68,8 @@ public class NotificationChannelTest extends AndroidTestCase {
     }
 
     public void testVibration() {
-        NotificationChannel channel = new NotificationChannel("1", "one");
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setVibration(true);
         assertTrue(channel.shouldVibrate());
         channel.setVibration(false);
@@ -75,8 +79,9 @@ public class NotificationChannelTest extends AndroidTestCase {
     public void testRingtone() {
         Uri expected = new Uri.Builder().scheme("fruit").appendQueryParameter("favorite", "bananas")
                 .build();
-        NotificationChannel channel = new NotificationChannel("1", "one");
-        channel.setDefaultRingtone(expected);
-        assertEquals(expected, channel.getDefaultRingtone());
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setRingtone(expected);
+        assertEquals(expected, channel.getRingtone());
     }
 }
