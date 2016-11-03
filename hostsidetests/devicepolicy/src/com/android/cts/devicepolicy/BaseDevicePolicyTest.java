@@ -565,4 +565,18 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             }
         }
     }
+
+    protected void enableComponent(int userId, String componentName)
+            throws DeviceNotAvailableException {
+        String command = "pm enable --user " + userId + " " + componentName;
+        CLog.d("Output for command " + command + ": "
+                + getDevice().executeShellCommand(command));
+    }
+
+    protected void disableComponent(int userId, String componentName)
+            throws DeviceNotAvailableException {
+        String command = "pm disable --user " + userId + " " + componentName;
+        CLog.d("Output for command " + command + ": "
+                + getDevice().executeShellCommand(command));
+    }
 }
