@@ -288,7 +288,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             throws Exception {
         final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(mDevice, true /* visibleOnly */, new String[] {activityName});
+        mAmWmState.computeState(mDevice, new String[] {activityName});
 
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
 

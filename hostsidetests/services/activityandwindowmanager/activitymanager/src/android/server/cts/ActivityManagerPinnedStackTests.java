@@ -218,7 +218,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private WindowManagerState.WindowState getWindowState(String activity) throws Exception {
         String windowName = getWindowName(activity);
-        mAmWmState.computeState(mDevice, true /* visibleOnly */, new String[] {activity});
+        mAmWmState.computeState(mDevice, new String[] {activity});
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
         mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
         return tempWindowList.get(0);
@@ -232,8 +232,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
         }
 
-        mAmWmState.waitForValidState(mDevice, new String[] {topActivityName},
-                new int[] {PINNED_STACK_ID}, false /* compareTaskAndStackBounds */);
+        mAmWmState.waitForValidState(mDevice, topActivityName, PINNED_STACK_ID);
         mAmWmState.computeState(mDevice, null);
 
         if (supportsPip()) {

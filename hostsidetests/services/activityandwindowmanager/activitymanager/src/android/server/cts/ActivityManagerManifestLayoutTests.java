@@ -145,7 +145,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             throws Exception {
         final String windowName = getWindowName(activityName);
 
-        mAmWmState.computeState(mDevice, true /* visibleOnly */, new String[] {activityName});
+        mAmWmState.computeState(mDevice, new String[] {activityName});
 
         if (checkFocus) {
             mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);

@@ -252,9 +252,9 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         executeShellCommand(topStartCmd);
         Thread.sleep(5000);
         if (testOpen) {
-            mAmWmState.computeState(mDevice, false, topActivityArray);
+            mAmWmState.computeState(mDevice, topActivityArray);
         } else {
-            mAmWmState.computeState(mDevice, false, bottomActivityArray);
+            mAmWmState.computeState(mDevice, bottomActivityArray);
         }
 
         assertEquals("Picked wrong transition", expectedTransit,

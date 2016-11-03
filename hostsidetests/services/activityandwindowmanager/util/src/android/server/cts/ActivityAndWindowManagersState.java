@@ -68,7 +68,6 @@ public class ActivityAndWindowManagersState extends Assert {
 
     /**
      * Compute AM and WM state of device, check sanity and bounds.
-     * WM state will include only visible windows.
      *
      * @param device test device.
      * @param waitForActivitiesVisible array of activity names to wait for.
@@ -77,34 +76,8 @@ public class ActivityAndWindowManagersState extends Assert {
      */
     void computeState(ITestDevice device, String[] waitForActivitiesVisible,
                       boolean compareTaskAndStackBounds) throws Exception {
-        computeState(device, true, waitForActivitiesVisible, compareTaskAndStackBounds);
-    }
-
-    /**
-     * Compute AM and WM state of device, check sanity and bounds.
-     * Stack and task bounds will be compared.
-     *
-     * @param device test device.
-     * @param visibleOnly pass 'true' to include only visible windows in WM state.
-     * @param waitForActivitiesVisible array of activity names to wait for.
-     */
-    void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible)
-            throws Exception {
-        computeState(device, visibleOnly, waitForActivitiesVisible, true);
-    }
-
-    /**
-     * Compute AM and WM state of device, check sanity and bounds.
-     *
-     * @param device test device.
-     * @param visibleOnly pass 'true' if WM state should include only visible windows.
-     * @param waitForActivitiesVisible array of activity names to wait for.
-     * @param compareTaskAndStackBounds pass 'true' if stack and task bounds should be compared,
-     *                                  'false' otherwise.
-     */
-    void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible,
-                      boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(device, waitForActivitiesVisible, null, compareTaskAndStackBounds);
+        waitForValidState(device, waitForActivitiesVisible, null /* stackIds */,
+                compareTaskAndStackBounds);
 
         assertSanity();
         assertValidBounds(compareTaskAndStackBounds);
@@ -150,16 +123,28 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     /**
-     * Wait for consistent state in AM and WM.
+     * Wait for the activity to appear in proper stack and for valid state in AM and WM.
+     *
+     * @param device test device.
+     * @param waitForActivityVisible name of activity to wait for.
+     * @param stackId id of the stack where provided activity should be found.
+     */
+    void waitForValidState(ITestDevice device, String waitForActivityVisible, int stackId)
+            throws Exception {
+        waitForValidState(device, new String[]{waitForActivityVisible}, new int[]{stackId},
+                false /* compareTaskAndStackBounds */);
+    }
+
+    /**
+     * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
      *
      * @param device test device.
      * @param waitForActivitiesVisible array of activity names to wait for.
      * @param stackIds ids of stack where provided activities should be found.
      *                 Pass null to skip this check.
      */
-    void waitForValidState(ITestDevice device,
-                           String[] waitForActivitiesVisible, int[] stackIds,
-                           boolean compareTaskAndStackBounds) throws Exception {
+    void waitForValidState(ITestDevice device, String[] waitForActivitiesVisible, int[] stackIds,
+            boolean compareTaskAndStackBounds) throws Exception {
         int retriesLeft = 5;
         do {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by

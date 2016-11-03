@@ -226,16 +226,23 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void launchActivityInStack(String activityName, int stackId) throws Exception {
         executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
+
+        mAmWmState.waitForValidState(mDevice, activityName, stackId);
     }
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
         executeShellCommand(getAmStartCmd(activityName));
         moveActivityToDockStack(activityName);
+
+        mAmWmState.waitForValidState(mDevice, activityName, DOCKED_STACK_ID);
     }
 
     protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
             String targetActivity) throws Exception {
-        launchActivity(true /* toSide */, randomData, multipleTaskFlag, targetActivity);
+        final String activityToLaunch = targetActivity != null ? targetActivity : "TestActivity";
+        launchActivity(true /* toSide */, randomData, multipleTaskFlag, activityToLaunch);
+
+        mAmWmState.waitForValidState(mDevice, activityToLaunch, FULLSCREEN_WORKSPACE_STACK_ID);
     }
 
     protected void moveActivityToDockStack(String activityName) throws Exception {
@@ -246,6 +253,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
         executeShellCommand(cmd);
+
+        mAmWmState.waitForValidState(mDevice, activityName, stackId);
     }
 
     protected void resizeActivityTask(String activityName, int left, int top, int right, int bottom)

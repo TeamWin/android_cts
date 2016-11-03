@@ -114,7 +114,10 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         String reportedActivity = null;
         String componentActivityName = getActivityComponentName(activity);
 
-        for (String line : result.split("\\n")) {
+        final String[] lines = result.split("\\n");
+        // Going from the end of logs to beginning in case if some other activity is started first.
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
             Matcher matcher = sNotStartedWarningPattern.matcher(line);
             if (matcher.matches()) {
                 warningFound = true;
