@@ -344,24 +344,25 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             return;
         }
 
-        IConnectionStatus wifiStatus = new WifiStatus(mContext);
-        if (!wifiStatus.isEnabled()) {
-            throw new Error("Wifi is not enabled, please enable Wifi to run tests.");
+        IConnectionStatus connectionStatus = new ConnectionStatus(mContext);
+        if (!connectionStatus.isAvailable()) {
+            throw new Error("Network is not available, reason: " +
+                    connectionStatus.getNotConnectedReason());
         }
-        // If Wifi is not connected, recheck the status a few times.
+
+        // If device is not online, recheck the status a few times.
         int retries = 0;
-        while (!wifiStatus.isConnected()) {
+        while (!connectionStatus.isConnected()) {
             if (retries++ >= CONNECTION_RETRIES) {
-                wifiStatus.printConnectionInfo();
-                throw new Error("Wifi is not connected, reason: " +
-                        wifiStatus.getNotConnectedReason());
+                throw new Error("Device is not online, reason: " +
+                        connectionStatus.getNotConnectedReason());
             }
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
             }
         }
-        wifiStatus.testConnection(videoUrl);
+        connectionStatus.testConnection(videoUrl);
 
         mSessionId = openSession(drm);
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
