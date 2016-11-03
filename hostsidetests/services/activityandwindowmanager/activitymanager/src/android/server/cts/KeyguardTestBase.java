@@ -16,6 +16,11 @@
 
 package android.server.cts;
 
+import static android.server.cts.StateLogger.log;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class KeyguardTestBase extends ActivityManagerTestBase {
 
     protected void assertShowingAndOccluded() {
@@ -30,5 +35,37 @@ public class KeyguardTestBase extends ActivityManagerTestBase {
 
     protected void assertKeyguardGone() {
         assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+    }
+
+    protected void assertOnDismissSucceededInLogcat() throws Exception {
+        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded");
+    }
+
+    protected void assertOnDismissCancelledInLogcat() throws Exception {
+        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissCancelled");
+    }
+
+    protected void assertOnDismissErrorInLogcat() throws Exception {
+        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissError");
+    }
+
+    private void assertInLogcat(String activityName, String entry) throws Exception {
+        final Pattern pattern = Pattern.compile("(.+)" + entry);
+        int tries = 0;
+        while (tries < 5) {
+            final String[] lines = getDeviceLogsForComponent(activityName);
+            log("Looking at logcat");
+            for (int i = lines.length - 1; i >= 0; i--) {
+                final String line = lines[i].trim();
+                log(line);
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.matches()) {
+                    return;
+                }
+            }
+            tries++;
+            Thread.sleep(500);
+        }
+        fail("Not in logcat: " + entry);
     }
 }

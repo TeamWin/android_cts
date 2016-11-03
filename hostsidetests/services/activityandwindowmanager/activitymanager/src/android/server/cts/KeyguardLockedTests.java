@@ -82,4 +82,38 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         assertKeyguardGone();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
     }
+
+    public void testDismissKeyguardActivity_method() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+        clearLogcat();
+        gotoKeyguard();
+        mAmWmState.computeState(mDevice, null);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        executeShellCommand(getAmStartCmd("DismissKeyguardMethodActivity"));
+        enterAndConfirmLockCredential();
+        mAmWmState.waitForKeyguardGone(mDevice);
+        mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardMethodActivity"});
+        mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
+        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        assertOnDismissSucceededInLogcat();
+    }
+
+    public void testDismissKeyguardActivity_method_cancelled() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+        clearLogcat();
+        gotoKeyguard();
+        mAmWmState.computeState(mDevice, null);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        executeShellCommand(getAmStartCmd("DismissKeyguardMethodActivity"));
+        pressBackButton();
+        assertOnDismissCancelledInLogcat();
+        mAmWmState.computeState(mDevice, new String[] {});
+        mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        unlockDeviceWithCredential();
+    }
 }
