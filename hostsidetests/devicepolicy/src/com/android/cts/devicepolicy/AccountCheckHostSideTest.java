@@ -63,7 +63,7 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     }
 
     private void runTest(String method) throws Exception {
-        assertTrue(runDeviceTests(PACKAGE_AUTH, TEST_CLASS, method));
+        runDeviceTests(PACKAGE_AUTH, TEST_CLASS, method);
     }
 
     private void runCleanupTestOnlyOwner() throws Exception {

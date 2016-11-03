@@ -51,7 +51,7 @@ public class ProfileOwnerTestApi23 extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        assertTrue("DelegatedCertInstaller failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                ".DelegatedCertInstallerTest", "testSetNotExistCertInstallerPackage",  mUserId));
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
+                ".DelegatedCertInstallerTest", "testSetNotExistCertInstallerPackage",  mUserId);
     }
 }

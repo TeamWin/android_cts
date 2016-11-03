@@ -44,8 +44,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 assertTrue("Failed to clear owner",
                         removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                                 mDeviceOwnerUserId));
-                assertTrue("Some user restrictions are still set",
-                        runTests("userrestrictions.CheckNoOwnerRestrictionsTest", mDeviceOwnerUserId));
+                runTests("userrestrictions.CheckNoOwnerRestrictionsTest", mDeviceOwnerUserId);
             }
 
             // DO/PO might have set DISALLOW_REMOVE_USER, so it needs to be done after removing
@@ -56,14 +55,14 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
-    private boolean runTests(@Nonnull String className,
+    private void runTests(@Nonnull String className,
             @Nullable String method, int userId) throws DeviceNotAvailableException {
-        return runDeviceTestsAsUser(DEVICE_ADMIN_PKG, "." + className, method, userId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, "." + className, method, userId);
     }
 
-    private boolean runTests(@Nonnull String className, int userId)
+    private void runTests(@Nonnull String className, int userId)
             throws DeviceNotAvailableException {
-        return runTests(className, null, userId);
+        runTests(className, null, userId);
     }
 
     public void testUserRestrictions_deviceOwnerOnly() throws Exception {

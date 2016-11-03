@@ -58,7 +58,6 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         String testClass = PROFILE_OWNER_PKG + "." + testClassName;
-        assertTrue(testClass + " failed.", runDeviceTestsAsUser(PROFILE_OWNER_PKG, testClass,
-                mPrimaryUserId));
+        runDeviceTestsAsUser(PROFILE_OWNER_PKG, testClass, mPrimaryUserId);
     }
 }

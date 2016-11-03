@@ -93,15 +93,15 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
-    protected boolean runTests(@Nonnull String apk, @Nonnull String className,
+    protected void runTests(@Nonnull String apk, @Nonnull String className,
             @Nullable String method) throws DeviceNotAvailableException {
-        return runDeviceTestsAsUser(apk,
+        runDeviceTestsAsUser(apk,
                 getDeviceAdminJavaPackage() + "." + className, method, mUserId);
     }
 
-    protected boolean runTests(@Nonnull String apk, @Nonnull String className)
+    protected void runTests(@Nonnull String apk, @Nonnull String className)
             throws DeviceNotAvailableException {
-        return runTests(apk, className, null);
+        runTests(apk, className, null);
     }
 
     /**
@@ -111,14 +111,11 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-
-        assertTrue("Some of device side tests failed",
-                runTests(getDeviceAdminApkPackage(), "DeviceAdminTest"));
+        runTests(getDeviceAdminApkPackage(), "DeviceAdminTest");
     }
 
     private void clearPasswordForDeviceOwner() throws Exception {
-        assertTrue("Failed to clear password",
-                runTests(getDeviceAdminApkPackage(), "ClearPasswordTest"));
+        runTests(getDeviceAdminApkPackage(), "ClearPasswordTest");
     }
 
     private void makeDoAndClearPassword() throws Exception {
@@ -142,8 +139,8 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
         // If there's a password, clear it.
         makeDoAndClearPassword();
         try {
-            assertTrue(runTests(getDeviceAdminApkPackage(), "DeviceAdminPasswordTest",
-                            "testResetPassword_nycRestrictions"));
+            runTests(getDeviceAdminApkPackage(), "DeviceAdminPasswordTest",
+                            "testResetPassword_nycRestrictions");
         } finally {
             makeDoAndClearPassword();
         }
@@ -162,8 +159,7 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
         clearPasswordForDeviceOwner();
 
         try {
-            assertTrue("Some of device side tests failed",
-                    runTests(getDeviceAdminApkPackage(), "DeviceOwnerPasswordTest"));
+            runTests(getDeviceAdminApkPackage(), "DeviceOwnerPasswordTest");
         } finally {
             clearPasswordForDeviceOwner();
         }

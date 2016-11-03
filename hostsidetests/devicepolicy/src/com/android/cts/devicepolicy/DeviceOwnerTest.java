@@ -409,12 +409,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         String testClass = DEVICE_OWNER_PKG + "." + testClassName;
-        assertTrue(testClass + " failed.",
-                runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId));
+        runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId);
     }
 
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
-        assertTrue(runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
-                /* deviceOwnerUserId */ mPrimaryUserId));
+        runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
+                /* deviceOwnerUserId */ mPrimaryUserId);
     }
 }
