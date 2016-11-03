@@ -38,8 +38,6 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
     private static final String SLOW_CREATE_ACTIVITY_NAME = "SlowCreateActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
 
-    private static final String AM_MOVE_TASK = "am stack movetask ";
-
     private List<String> mTempWindowTokens = new ArrayList();
 
     public void testReplaceWindow_Dock_Relaunch() throws Exception {

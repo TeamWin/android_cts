@@ -75,7 +75,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
 
-    private static final String AM_MOVE_TASK = "am stack movetask ";
+    static final String AM_MOVE_TASK = "am stack move-task ";
 
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
 
