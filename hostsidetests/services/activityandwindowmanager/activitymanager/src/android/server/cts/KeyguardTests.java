@@ -187,6 +187,21 @@ public class KeyguardTests extends ActivityManagerTestBase {
         }
     }
 
+    public void testKeyguardLock() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertShowingAndNotOccluded();
+        executeShellCommand(getAmStartCmd("KeyguardLockActivity"));
+        mAmWmState.computeState(mDevice, new String[] { "KeyguardLockActivity" });
+        mAmWmState.assertVisibility("KeyguardLockActivity", true);
+        executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertShowingAndNotOccluded();
+    }
+
     private void assertShowingAndOccluded() {
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardOccluded);
