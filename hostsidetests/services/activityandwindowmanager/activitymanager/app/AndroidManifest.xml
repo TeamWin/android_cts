@@ -236,6 +236,9 @@
             android:exported="true"
             android:theme="@style/WallpaperTheme"
         />
+        <activity android:name=".KeyguardLockActivity"
+                  android:exported="true"
+        />
     </application>
 </manifest>
 

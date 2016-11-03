@@ -272,12 +272,16 @@ public class ActivityAndWindowManagersState extends Assert {
             final String windowName = mUseActivityNames ?
                     ActivityManagerTestBase.getWindowName(waitForActivitiesVisible[i])
                     : waitForActivitiesVisible[i];
-
+            final String activityComponentName =
+                    ActivityManagerTestBase.getActivityComponentName(waitForActivitiesVisible[i]);
 
             mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
             if (!activityWindowVisible) {
                 log("Activity window not visible: " + windowName);
+                allActivityWindowsVisible = false;
+            } else if (!mAmState.isActivityVisible(activityComponentName)) {
+                log("Activity not visible: " + activityComponentName);
                 allActivityWindowsVisible = false;
             } else if (stackIds != null) {
                 // Check if window is already in stack requested by test.
