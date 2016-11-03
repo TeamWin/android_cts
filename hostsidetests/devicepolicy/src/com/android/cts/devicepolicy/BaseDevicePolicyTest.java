@@ -231,28 +231,27 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
-    /** Returns true if the specified tests passed. Tests are run as given user. */
-    protected boolean runDeviceTestsAsUser(
+    protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, int userId)
             throws DeviceNotAvailableException {
-        return runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
+        runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
     }
 
-    /** Returns true if the specified tests passed. Tests are run as given user. */
-    protected boolean runDeviceTestsAsUser(
+    protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, String testMethodName, int userId)
             throws DeviceNotAvailableException {
         Map<String, String> params = Collections.emptyMap();
-        return runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
+        runDeviceTestsAsUser(pkgName, testClassName, testMethodName, userId, params);
     }
 
-    protected boolean runDeviceTests(
+    protected void runDeviceTests(
             String pkgName, @Nullable String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
-        return runDeviceTestsAsUser(pkgName, testClassName, testMethodName, mPrimaryUserId);
+        runDeviceTestsAsUser(pkgName, testClassName, testMethodName, mPrimaryUserId);
     }
 
-    protected boolean runDeviceTestsAsUser(String pkgName, @Nullable String testClassName,
+    protected void runDeviceTestsAsUser(
+            String pkgName, @Nullable String testClassName,
             @Nullable String testMethodName, int userId,
             Map<String, String> params) throws DeviceNotAvailableException {
         if (testClassName != null && testClassName.startsWith(".")) {
@@ -274,9 +273,28 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         CollectingTestListener listener = new CollectingTestListener();
         assertTrue(getDevice().runInstrumentationTestsAsUser(testRunner, userId, listener));
 
-        TestRunResult runResult = listener.getCurrentRunResults();
-        printTestResult(runResult);
-        return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
+        final TestRunResult result = listener.getCurrentRunResults();
+        if (result.isRunFailure()) {
+            throw new AssertionError("Failed to successfully run device tests for "
+                    + result.getName() + ": " + result.getRunFailureMessage());
+        }
+        if (result.getNumTests() == 0) {
+            throw new AssertionError("No tests were run on the device");
+        }
+
+        if (result.hasFailedTests()) {
+            // build a meaningful error message
+            StringBuilder errorBuilder = new StringBuilder("On-device tests failed:\n");
+            for (Map.Entry<TestIdentifier, TestResult> resultEntry :
+                    result.getTestResults().entrySet()) {
+                if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
+                    errorBuilder.append(resultEntry.getKey().toString());
+                    errorBuilder.append(":\n");
+                    errorBuilder.append(resultEntry.getValue().getStackTrace());
+                }
+            }
+            throw new AssertionError(errorBuilder.toString());
+        }
     }
 
     /** Reboots the device and block until the boot complete flag is set. */
@@ -313,17 +331,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected boolean canCreateAdditionalUsers(int numberOfUsers)
             throws DeviceNotAvailableException {
         return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
-    }
-
-    private void printTestResult(TestRunResult runResult) {
-        for (Map.Entry<TestIdentifier, TestResult> testEntry :
-                runResult.getTestResults().entrySet()) {
-            TestResult testResult = testEntry.getValue();
-            CLog.d("Test " + testEntry.getKey() + ": " + testResult.getStatus());
-            if (testResult.getStatus() != TestStatus.PASSED) {
-                CLog.d(testResult.getStackTrace());
-            }
-        }
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {

@@ -175,9 +175,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             if (parentUserId != mUserId) {
                 installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, parentUserId);
                 installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, parentUserId);
-                assertTrue(runDeviceTestsAsUser(
+                runDeviceTestsAsUser(
                         APP_RESTRICTIONS_MANAGING_APP_PKG, ".ApplicationRestrictionsManagerTest",
-                        "testCannotManageAppRestrictions", parentUserId));
+                        "testCannotManageAppRestrictions", parentUserId);
             }
 
             // Revoking the permission for APP_RESTRICTIONS_MANAGING_APP_PKG to manage restrictions.
@@ -430,15 +430,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             // Set a non-empty device lockscreen password, which is a precondition for installing
             // private key pairs.
-            assertTrue("Set lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    ".ResetPasswordHelper", "testSetPassword", mUserId));
-            assertTrue("DelegatedCertInstaller failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                    ".DelegatedCertInstallerTest", mUserId));
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordHelper", "testSetPassword",
+                    mUserId);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
         } finally {
             if (!isManagedProfile) {
                 // Skip managed profile as dpm doesn't allow clear password
-                assertTrue("Clear lockscreen password failed", runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                        ".ResetPasswordHelper", "testClearPassword", mUserId));
+                runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
+                        ".ResetPasswordHelper", "testClearPassword", mUserId);
             }
         }
     }
@@ -456,8 +455,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             changeUserRestrictionForUser(DISALLOW_SET_WALLPAPER, COMMAND_ADD_USER_RESTRICTION,
                     mUserId);
-            assertTrue(runDeviceTestsAsUser(CUSTOMIZATION_APP_PKG, ".CustomizationTest",
-                "testSetWallpaper_disallowed", mUserId));
+            runDeviceTestsAsUser(CUSTOMIZATION_APP_PKG, ".CustomizationTest",
+                "testSetWallpaper_disallowed", mUserId);
         } finally {
             changeUserRestrictionForUser(DISALLOW_SET_WALLPAPER, COMMAND_CLEAR_USER_RESTRICTION,
                     mUserId);
@@ -506,8 +505,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(TEST_APP_PKG);
             changeUserRestrictionForUser(DISALLOW_INSTALL_UNKNOWN_SOURCES,
                     COMMAND_ADD_USER_RESTRICTION, mUserId);
-            assertTrue(runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
-                    "testManualInstallBlocked", mUserId));
+            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
+                    "testManualInstallBlocked", mUserId);
 
             // Clear restrictions and test if we can install the apk.
             changeUserRestrictionForUser(DISALLOW_INSTALL_UNKNOWN_SOURCES,
@@ -526,8 +525,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     mUserId);
             putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING, "0", mUserId);
             // Skip verifying above setting values as some of them may be overrided.
-            assertTrue(runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
-                    "testManualInstallSucceeded", mUserId));
+            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
+                    "testManualInstallSucceeded", mUserId);
         } finally {
             String command = "rm " + TEST_APP_LOCATION + apk.getName();
             getDevice().executeShellCommand(command);
@@ -581,11 +580,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     protected void executeDeviceTestClass(String className) throws Exception {
-        assertTrue(runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId));
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
 
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
-        assertTrue(runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId));
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId);
     }
 
     private void installAppPermissionAppAsUser()
@@ -594,13 +593,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void executeSuspendPackageTestMethod(String testName) throws Exception {
-        assertTrue(runDeviceTestsAsUser(INTENT_SENDER_PKG, ".SuspendPackageTest",
-                testName, mUserId));
+        runDeviceTestsAsUser(INTENT_SENDER_PKG, ".SuspendPackageTest",
+                testName, mUserId);
     }
 
     private void executeAccountTest(String testName) throws DeviceNotAvailableException {
-        assertTrue(runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountManagementTest",
-                testName, mUserId));
+        runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountManagementTest",
+                testName, mUserId);
         // Send a home intent to dismiss an error dialog.
         String command = "am start -a android.intent.action.MAIN"
                 + " -c android.intent.category.HOME";
@@ -608,8 +607,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void executeAppRestrictionsManagingPackageTest(String testName) throws Exception {
-        assertTrue(runDeviceTestsAsUser(APP_RESTRICTIONS_MANAGING_APP_PKG,
-                ".ApplicationRestrictionsManagerTest", testName, mUserId));
+        runDeviceTestsAsUser(APP_RESTRICTIONS_MANAGING_APP_PKG,
+                ".ApplicationRestrictionsManagerTest", testName, mUserId);
     }
 
     private void changeUserRestrictionForUser(String key, String command, int userId)

@@ -116,9 +116,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     public void testCannotClearProfileOwner() throws Exception {
         if (mHasFeature) {
-            assertTrue("Managed profile owner shouldn't be removed",
-                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS,
-                            mUserId));
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS,
+                    mUserId);
         }
     }
 
