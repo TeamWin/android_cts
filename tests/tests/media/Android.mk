@@ -45,18 +45,20 @@ LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsmediautil \
     compatibility-device-util \
-    ctstestserver \
+    ctsdeviceutillegacy \
+    ctsmediautil \
     ctstestrunner \
-    ndkaudio \
+    ctstestserver \
     junit \
-    legacy-android-test
+    legacy-android-test \
+    ndkaudio
 
 LOCAL_JNI_SHARED_LIBRARIES := \
-    libctsimagereader_jni \
-    libctsmediacodec_jni \
     libaudio_jni \
+    libctsimagereader_jni \
+    libctsmediadrm_jni \
+    libctsmediacodec_jni \
     libnativehelper_compat_libc++ \
     libndkaudioLib
 
