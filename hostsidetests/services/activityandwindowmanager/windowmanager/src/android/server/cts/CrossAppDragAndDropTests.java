@@ -94,7 +94,6 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
 
     private ITestDevice mDevice;
-    private boolean mDeviceSupportsDragAndDrop;
 
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
@@ -108,10 +107,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
         mDevice = getDevice();
 
-        // Do not run this test suite on watches.
-        mDeviceSupportsDragAndDrop = !mDevice.hasFeature("feature:android.hardware.type.watch");
-
-        if (!mDeviceSupportsDragAndDrop) {
+        if (!supportsDragAndDrop()) {
             return;
         }
 
@@ -124,7 +120,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        if (!mDeviceSupportsDragAndDrop) {
+        if (!supportsDragAndDrop()) {
             return;
         }
 
@@ -336,7 +332,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private void assertDragAndDropResults(String sourceMode, String targetMode,
                                           String expectedStartDragResult, String expectedDropResult,
                                           String expectedListenerResults) throws Exception {
-        if (!mDeviceSupportsDragAndDrop) {
+        if (!supportsDragAndDrop()) {
             return;
         }
 
@@ -382,7 +378,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private void assertResult(Map<String, String> results, String resultKey, String expectedResult)
             throws Exception {
-        if (!mDeviceSupportsDragAndDrop) {
+        if (!supportsDragAndDrop()) {
             return;
         }
 
@@ -394,6 +390,18 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             assertTrue("Missing " + resultKey, results.containsKey(resultKey));
             assertEquals(resultKey + " result mismatch,", expectedResult,
                     results.get(resultKey));
+        }
+    }
+
+    private boolean supportsDragAndDrop() throws Exception {
+        String supportsMultiwindow = mDevice.executeShellCommand("am supports-multiwindow").trim();
+        if ("true".equals(supportsMultiwindow)) {
+            return true;
+        } else if ("false".equals(supportsMultiwindow)) {
+            return false;
+        } else {
+            throw new Exception(
+                    "device does not support \"am supports-multiwindow\" shell command.");
         }
     }
 
