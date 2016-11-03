@@ -79,6 +79,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
 
+    private static final String LOCK_CREDENTIAL = "1234";
+
     static String componentName = "android.server.cts";
 
     /** A reference to the device under test. */
@@ -384,9 +386,27 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         runCommandAndPrintOutput("input keyevent 82");
     }
 
+    protected void unlockDeviceWithCredential() throws Exception {
+        runCommandAndPrintOutput("input keyevent 82");
+        enterAndConfirmLockCredential();
+    }
+
+    protected void enterAndConfirmLockCredential() throws Exception {
+        runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
+        runCommandAndPrintOutput("input keyevent KEYCODE_ENTER");
+    }
+
     protected void gotoKeyguard() throws DeviceNotAvailableException {
         sleepDevice();
         wakeUpDevice();
+    }
+
+    protected void setLockCredential() throws DeviceNotAvailableException {
+        runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
+    }
+
+    protected void removeLockCredential() throws DeviceNotAvailableException {
+        runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
     }
 
     /**

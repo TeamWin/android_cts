@@ -20,7 +20,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.WindowManager;
 
-public class ShowWhenLockedActivity extends Activity {
+public class ShowWhenLockedActivity extends BroadcastReceiverActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
