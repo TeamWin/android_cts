@@ -44,7 +44,6 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
             setTheme(R.style.WallpaperTheme);
         }
         setContentView(R.layout.main);
-        getWindow().getAttributes().setTitle("Main");
 
         // Delayed stop is for simulating a case where resume happens before
         // activityStopped() is received by AM, and the transition starts without

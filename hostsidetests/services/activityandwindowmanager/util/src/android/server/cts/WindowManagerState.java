@@ -16,35 +16,40 @@
 
 package android.server.cts;
 
+import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
+
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 
-import java.awt.Rectangle;
-import java.lang.String;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
-import static android.server.cts.StateLogger.log;
-import static android.server.cts.StateLogger.logE;
+import java.util.regex.Pattern;
 
 public class WindowManagerState {
-    public static final int DUMP_MODE_APPS = 0;
-    public static final int DUMP_MODE_VISIBLE = 1;
-    public static final int DUMP_MODE_VISIBLE_APPS = 2;
-    public static final int DUMP_MODE_POLICY = 3;
-    public static final int DUMP_MODE_PIP = 4;
 
-    private static final String DUMPSYS_WINDOWS_APPS = "dumpsys window -a apps";
-    private static final String DUMPSYS_WINDOWS_VISIBLE = "dumpsys window -a visible";
-    private static final String DUMPSYS_WINDOWS_VISIBLE_APPS = "dumpsys window visible-apps";
-    private static final String DUMPSYS_WINDOWS_POLICY = "dumpsys window policy";
-    private static final String DUMPSYS_WINDOWS_PIP = "dumpsys window pip";
+    public static  final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
+    public static final String TRANSIT_ACTIVITY_CLOSE = "TRANSIT_ACTIVITY_CLOSE";
+    public static final String TRANSIT_TASK_OPEN = "TRANSIT_TASK_OPEN";
+    public static final String TRANSIT_TASK_CLOSE = "TRANSIT_TASK_CLOSE";
+
+    public static final String TRANSIT_WALLPAPER_OPEN = "TRANSIT_WALLPAPER_OPEN";
+    public static final String TRANSIT_WALLPAPER_CLOSE = "TRANSIT_WALLPAPER_CLOSE";
+    public static final String TRANSIT_WALLPAPER_INTRA_OPEN = "TRANSIT_WALLPAPER_INTRA_OPEN";
+    public static final String TRANSIT_WALLPAPER_INTRA_CLOSE = "TRANSIT_WALLPAPER_INTRA_CLOSE";
+
+    public static final String TRANSIT_KEYGUARD_GOING_AWAY = "TRANSIT_KEYGUARD_GOING_AWAY";
+    public static final String TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER =
+            "TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER";
+    public static final String TRANSIT_KEYGUARD_OCCLUDE = "TRANSIT_KEYGUARD_OCCLUDE";
+    public static final String TRANSIT_KEYGUARD_UNOCCLUDE = "TRANSIT_KEYGUARD_UNOCCLUDE";
+
+    private static final String DUMPSYS_WINDOW = "dumpsys window -a";
 
     private static final Pattern sWindowPattern =
             Pattern.compile("Window #(\\d+) Window\\{([0-9a-fA-F]+) u(\\d+) (.+)\\}\\:");
@@ -71,6 +76,8 @@ public class WindowManagerState {
             "defaultBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
     private static final Pattern sPinnedStackMovementBoundsPattern = Pattern.compile(
             "movementBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
+    private static final Pattern sRotationPattern = Pattern.compile(
+            "mRotation=(\\d).*");
 
     private static final Pattern sLastAppTransitionPattern =
             Pattern.compile("mLastUsedAppTransition=(.+)");
@@ -84,10 +91,10 @@ public class WindowManagerState {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
             sDebuggerWindowPattern, sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
             sWaitingForDebuggerFocusedWindowPattern,
-            sFocusedAppPattern, sLastAppTransitionPattern };
+            sFocusedAppPattern, sLastAppTransitionPattern, sDefaultPinnedStackBoundsPattern,
+            sPinnedStackMovementBoundsPattern};
 
     // Windows in z-order with the top most at the front of the list.
-    private List<String> mWindows = new ArrayList();
     private List<WindowState> mWindowStates = new ArrayList();
     private List<WindowStack> mStacks = new ArrayList();
     private List<Display> mDisplays = new ArrayList();
@@ -99,8 +106,9 @@ public class WindowManagerState {
     private final Rectangle mDefaultPinnedStackBounds = new Rectangle();
     private final Rectangle mPinnedStackMovementBounds = new Rectangle();
     private final LinkedList<String> mSysDump = new LinkedList();
+    private int mRotation;
 
-    void computeState(ITestDevice device, int dumpMode) throws DeviceNotAvailableException {
+    void computeState(ITestDevice device) throws DeviceNotAvailableException {
         // It is possible the system is in the middle of transition to the right state when we get
         // the dump. We try a few times to get the information we need before giving up.
         int retriesLeft = 3;
@@ -123,35 +131,18 @@ public class WindowManagerState {
             }
 
             final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
-            final String dumpsysCmd;
-            switch (dumpMode) {
-            case DUMP_MODE_APPS:
-                dumpsysCmd = DUMPSYS_WINDOWS_APPS; break;
-            case DUMP_MODE_POLICY:
-                dumpsysCmd = DUMPSYS_WINDOWS_POLICY; break;
-            case DUMP_MODE_VISIBLE:
-                dumpsysCmd = DUMPSYS_WINDOWS_VISIBLE; break;
-            case DUMP_MODE_PIP:
-                dumpsysCmd = DUMPSYS_WINDOWS_PIP; break;
-            case DUMP_MODE_VISIBLE_APPS:
-            default:
-                dumpsysCmd = DUMPSYS_WINDOWS_VISIBLE_APPS; break;
-            }
-            device.executeShellCommand(dumpsysCmd, outputReceiver);
+            device.executeShellCommand(DUMPSYS_WINDOW, outputReceiver);
             dump = outputReceiver.getOutput();
-            final boolean visibleOnly =
-                    dumpMode == DUMP_MODE_VISIBLE ||
-                    dumpMode == DUMP_MODE_VISIBLE_APPS;
-            parseSysDump(dump, visibleOnly);
+            parseSysDump(dump);
 
-            retry = mWindows.isEmpty() || mFocusedWindow == null || mFocusedApp == null;
+            retry = mWindowStates.isEmpty() || mFocusedWindow == null || mFocusedApp == null;
         } while (retry && retriesLeft-- > 0);
 
         if (retry) {
             log(dump);
         }
 
-        if (mWindows.isEmpty()) {
+        if (mWindowStates.isEmpty()) {
             logE("No Windows found...");
         }
         if (mFocusedWindow == null) {
@@ -162,7 +153,7 @@ public class WindowManagerState {
         }
     }
 
-    private void parseSysDump(String sysDump, boolean visibleOnly) {
+    private void parseSysDump(String sysDump) {
         reset();
 
         Collections.addAll(mSysDump, sysDump.split("\\n"));
@@ -189,21 +180,18 @@ public class WindowManagerState {
             if (ws != null) {
                 log(ws.toString());
 
-                if (visibleOnly) {
-                    // Check to see if we are in the middle of transitioning. If we are, we want to
-                    // skip dumping until window manager is done transitioning windows.
-                    if (ws.isStartingWindow()) {
-                        log("Skipping dump due to starting window transition...");
-                        return;
-                    }
-
-                    if (ws.isExitingWindow()) {
-                        log("Skipping dump due to exiting window transition...");
-                        return;
-                    }
+                // Check to see if we are in the middle of transitioning. If we are, we want to
+                // skip dumping until window manager is done transitioning windows.
+                if (ws.isStartingWindow()) {
+                    log("Skipping dump due to starting window transition...");
+                    return;
                 }
 
-                mWindows.add(ws.getName());
+                if (ws.isExitingWindow()) {
+                    log("Skipping dump due to exiting window transition...");
+                    return;
+                }
+
                 mWindowStates.add(ws);
                 continue;
             }
@@ -298,6 +286,13 @@ public class WindowManagerState {
                 log(mInputMethodWindowAppToken);
                 continue;
             }
+
+            matcher = sRotationPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                mRotation = Integer.parseInt(matcher.group(1));
+                continue;
+            }
         }
     }
 
@@ -311,10 +306,11 @@ public class WindowManagerState {
         }
     }
 
-    public void getMatchingWindowState(final String windowName, List<WindowState> windowList) {
+    public void getMatchingVisibleWindowState(final String windowName,
+            List<WindowState> windowList) {
         windowList.clear();
         for (WindowState ws : mWindowStates) {
-            if (windowName.equals(ws.getName())) {
+            if (ws.isShown() && windowName.equals(ws.getName())) {
                 windowList.add(ws);
             }
         }
@@ -339,10 +335,10 @@ public class WindowManagerState {
     }
 
     String getFrontWindow() {
-        if (mWindows == null || mWindows.isEmpty()) {
+        if (mWindowStates == null || mWindowStates.isEmpty()) {
             return null;
         }
-        return mWindows.get(0);
+        return mWindowStates.get(0).getName();
     }
 
     String getFocusedWindow() {
@@ -361,6 +357,10 @@ public class WindowManagerState {
         return mStacks.get(0).mStackId;
     }
 
+    public int getRotation() {
+        return mRotation;
+    }
+
     boolean containsStack(int stackId) {
         for (WindowStack stack : mStacks) {
             if (stackId == stack.mStackId) {
@@ -371,12 +371,27 @@ public class WindowManagerState {
     }
 
     boolean isWindowVisible(String windowName) {
-        for (String window : mWindows) {
-            if (window.equals(windowName)) {
-                return true;
+        for (WindowState window : mWindowStates) {
+            if (window.getName().equals(windowName)) {
+                return window.isShown();
             }
         }
         return false;
+    }
+
+    boolean allWindowsVisible(String windowName) {
+        boolean allVisible = false;
+        for (WindowState window : mWindowStates) {
+            if (window.getName().equals(windowName)) {
+                if (!window.isShown()) {
+                    log("[VISIBLE] not visible" + windowName);
+                    return false;
+                }
+                log("[VISIBLE] visible" + windowName);
+                allVisible = true;
+            }
+        }
+        return allVisible;
     }
 
     WindowStack getStack(int stackId) {
@@ -404,11 +419,19 @@ public class WindowManagerState {
         return mPinnedStackMovementBounds;
     }
 
+    WindowState findFirstWindowWithType(int type) {
+        for (WindowState window : mWindowStates) {
+            if (window.getType() == type) {
+                return window;
+            }
+        }
+        return null;
+    }
+
     private void reset() {
         mSysDump.clear();
         mStacks.clear();
         mDisplays.clear();
-        mWindows.clear();
         mWindowStates.clear();
         mFocusedWindow = null;
         mFocusedApp = null;
@@ -736,6 +759,8 @@ public class WindowManagerState {
     public static class WindowState extends WindowContainer {
         private static final String TAG = "[WindowState] ";
 
+        public static final int TYPE_WALLPAPER = 2013;
+
         private static final int WINDOW_TYPE_NORMAL   = 0;
         private static final int WINDOW_TYPE_STARTING = 1;
         private static final int WINDOW_TYPE_EXITING  = 2;
@@ -757,18 +782,22 @@ public class WindowManagerState {
                 Pattern.compile("Cur insets.+content=" + NEGATIVE_VALUES_ALLOWED_RECT_STR + ".+");
         private static final Pattern sGivenContentInsetsPattern =
                 Pattern.compile("mGivenContentInsets=" + RECT_STR + ".+");
-        private static final Pattern sLayerPattern =
-            Pattern.compile("Surface:.+layer=(\\d+).+");
         private static final Pattern sCropPattern =
             Pattern.compile(".+mLastClipRect=" + RECT_STR + ".*");
+        private static final Pattern sSurfacePattern =
+                Pattern.compile("Surface: shown=(\\S+) layer=(\\d+) alpha=[\\d.]+ rect=\\([\\d.-]+,[\\d.-]+\\) [\\d.]+ x [\\d.]+");
+        private static final Pattern sAttrsPattern=
+                Pattern.compile("mAttrs=WM\\.LayoutParams\\{.*ty=(\\d+).*\\}");
 
 
         private final String mName;
         private final String mAppToken;
         private final int mWindowType;
+        private int mType;
         private int mDisplayId;
         private int mStackId;
         private int mLayer;
+        private boolean mShown;
         private Rectangle mContainingFrame = new Rectangle();
         private Rectangle mParentFrame = new Rectangle();
         private Rectangle mContentFrame = new Rectangle();
@@ -849,6 +878,14 @@ public class WindowManagerState {
             return mCrop;
         }
 
+        boolean isShown() {
+            return mShown;
+        }
+
+        int getType() {
+            return mType;
+        }
+
         static WindowState create(LinkedList<String> dump, Pattern[] exitPatterns) {
             final String line = dump.peek().trim();
 
@@ -923,16 +960,23 @@ public class WindowManagerState {
                     mContentInsets = extractBounds(matcher);
                 }
 
-                matcher = sLayerPattern.matcher(line);
-                if (matcher.matches()) {
-                    log(TAG + "LAYER: " + line);
-                    mLayer = Integer.valueOf(matcher.group(1));
-                }
-
                 matcher = sCropPattern.matcher(line);
                 if (matcher.matches()) {
                     log(TAG + "CROP: " + line);
                     mCrop = extractBounds(matcher);
+                }
+
+                matcher = sSurfacePattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "SURFACE: " + line);
+                    mShown = Boolean.valueOf(matcher.group(1));
+                    mLayer = Integer.valueOf(matcher.group(2));
+                }
+
+                matcher = sAttrsPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(TAG + "ATTRS: " + line);
+                    mType = Integer.valueOf(matcher.group(1));
                 }
 
                 matcher = sGivenContentInsetsPattern.matcher(line);

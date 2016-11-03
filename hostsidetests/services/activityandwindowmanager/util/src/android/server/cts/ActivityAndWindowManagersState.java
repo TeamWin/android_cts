@@ -16,9 +16,9 @@
 
 package android.server.cts;
 
-import com.android.tradefed.device.ITestDevice;
-
-import junit.framework.Assert;
+import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
+import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
+import static android.server.cts.StateLogger.log;
 
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
@@ -26,17 +26,16 @@ import android.server.cts.WindowManagerState.WindowStack;
 import android.server.cts.WindowManagerState.WindowState;
 import android.server.cts.WindowManagerState.WindowTask;
 
-import java.awt.Rectangle;
+import com.android.tradefed.device.ITestDevice;
+
+import junit.framework.Assert;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
-import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
-import static android.server.cts.StateLogger.log;
-import static android.server.cts.WindowManagerState.DUMP_MODE_APPS;
-import static android.server.cts.WindowManagerState.DUMP_MODE_VISIBLE;
-import static android.server.cts.WindowManagerState.DUMP_MODE_VISIBLE_APPS;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /** Combined state of the activity manager and window manager. */
 public class ActivityAndWindowManagersState extends Assert {
@@ -105,8 +104,7 @@ public class ActivityAndWindowManagersState extends Assert {
      */
     void computeState(ITestDevice device, boolean visibleOnly, String[] waitForActivitiesVisible,
                       boolean compareTaskAndStackBounds) throws Exception {
-        waitForValidState(device, visibleOnly, waitForActivitiesVisible, null,
-                compareTaskAndStackBounds);
+        waitForValidState(device, waitForActivitiesVisible, null, compareTaskAndStackBounds);
 
         assertSanity();
         assertValidBounds(compareTaskAndStackBounds);
@@ -136,7 +134,7 @@ public class ActivityAndWindowManagersState extends Assert {
         int retriesLeft = 5;
         do {
             mAmState.computeState(device);
-            mWmState.computeState(device, DUMP_MODE_VISIBLE);
+            mWmState.computeState(device);
             if (shouldWaitForDebuggerWindow() ||
                     shouldWaitForActivityRecords(waitForActivityRecords)) {
                 try {
@@ -155,12 +153,11 @@ public class ActivityAndWindowManagersState extends Assert {
      * Wait for consistent state in AM and WM.
      *
      * @param device test device.
-     * @param visibleOnly pass 'true' if WM state should include only visible windows.
      * @param waitForActivitiesVisible array of activity names to wait for.
      * @param stackIds ids of stack where provided activities should be found.
      *                 Pass null to skip this check.
      */
-    void waitForValidState(ITestDevice device, boolean visibleOnly,
+    void waitForValidState(ITestDevice device,
                            String[] waitForActivitiesVisible, int[] stackIds,
                            boolean compareTaskAndStackBounds) throws Exception {
         int retriesLeft = 5;
@@ -168,8 +165,7 @@ public class ActivityAndWindowManagersState extends Assert {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
             // requesting dump in some intermediate state.
             mAmState.computeState(device);
-            mWmState.computeState(device, visibleOnly?
-                    DUMP_MODE_VISIBLE_APPS : DUMP_MODE_APPS);
+            mWmState.computeState(device);
             if (shouldWaitForValidStacks(compareTaskAndStackBounds)
                     || shouldWaitForActivities(waitForActivitiesVisible, stackIds)) {
                 log("***Waiting for valid stacks and activities states...");
@@ -186,11 +182,45 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     void waitForHomeActivityVisible(ITestDevice device) throws Exception {
+        waitForWithAmState(device, ActivityManagerState::isHomeActivityVisible,
+                "***Waiting for home activity to be visible...");
+    }
+
+    void waitForKeyguardShowingAndNotOccluded(ITestDevice device) throws Exception {
+        waitForWithAmState(device, state -> state.getKeyguardControllerState().keyguardShowing
+                        && !state.getKeyguardControllerState().keyguardOccluded,
+                "***Waiting for Keyguard showing...");
+    }
+
+    void waitForKeyguardGone(ITestDevice device) throws Exception {
+        waitForWithAmState(device, state -> !state.getKeyguardControllerState().keyguardShowing,
+                "***Waiting for Keyguard gone...");
+    }
+
+    void waitForRotation(ITestDevice device, int rotation) throws Exception {
+        waitForWithWmState(device, state -> state.getRotation() == rotation,
+                "***Waiting for Rotation: " + rotation);
+    }
+
+    void waitForWithAmState(ITestDevice device, Predicate<ActivityManagerState> waitCondition,
+            String message) throws Exception{
+        waitFor(device, (amState, wmState) -> waitCondition.test(amState), message);
+    }
+
+    void waitForWithWmState(ITestDevice device, Predicate<WindowManagerState> waitCondition,
+            String message) throws Exception{
+        waitFor(device, (amState, wmState) -> waitCondition.test(wmState), message);
+    }
+
+    void waitFor(ITestDevice device,
+            BiPredicate<ActivityManagerState, WindowManagerState> waitCondition, String message)
+            throws Exception {
         int retriesLeft = 5;
         do {
             mAmState.computeState(device);
-            if (!mAmState.isHomeActivityVisible()) {
-                log("***Waiting for home activity to be visible...");
+            mWmState.computeState(device);
+            if (!waitCondition.test(mAmState, mWmState)) {
+                log(message);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -244,10 +274,10 @@ public class ActivityAndWindowManagersState extends Assert {
                     : waitForActivitiesVisible[i];
 
 
-            mWmState.getMatchingWindowState(windowName, matchingWindowStates);
+            mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
             if (!activityWindowVisible) {
-                log("Activity window not visible: " + waitForActivitiesVisible[i]);
+                log("Activity window not visible: " + windowName);
                 allActivityWindowsVisible = false;
             } else if (stackIds != null) {
                 // Check if window is already in stack requested by test.
@@ -269,7 +299,7 @@ public class ActivityAndWindowManagersState extends Assert {
 
     private boolean shouldWaitForDebuggerWindow() {
         List<WindowManagerState.WindowState> matchingWindowStates = new ArrayList<>();
-        mWmState.getMatchingWindowState("android.server.cts", matchingWindowStates);
+        mWmState.getMatchingVisibleWindowState("android.server.cts", matchingWindowStates);
         for (WindowState ws : matchingWindowStates) {
             if (ws.isDebuggerWindow()) {
                 return false;
@@ -303,8 +333,10 @@ public class ActivityAndWindowManagersState extends Assert {
 
     void assertSanity() throws Exception {
         assertTrue("Must have stacks", mAmState.getStackCount() > 0);
-        assertEquals("There should be one and only one resumed activity in the system.",
-                1, mAmState.getResumedActivitiesCount());
+        if (!mAmState.getKeyguardControllerState().keyguardShowing) {
+            assertEquals("There should be one and only one resumed activity in the system.",
+                    1, mAmState.getResumedActivitiesCount());
+        }
         assertNotNull("Must have focus activity.", mAmState.getFocusedActivity());
 
         for (ActivityStack aStack : mAmState.getStacks()) {

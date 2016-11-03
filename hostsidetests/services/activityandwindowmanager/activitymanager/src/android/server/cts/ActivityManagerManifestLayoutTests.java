@@ -20,8 +20,7 @@ import java.lang.Exception;
 import java.lang.String;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import junit.framework.Assert;
 
 import java.awt.Rectangle;
@@ -31,7 +30,6 @@ import android.server.cts.WindowManagerState.Display;
 import static android.server.cts.ActivityAndWindowManagersState.dpToPx;
 import static com.android.ddmlib.Log.LogLevel.INFO;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
 /**
@@ -155,7 +153,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             mAmWmState.assertVisibility(activityName, true);
         }
 
-        mAmWmState.getWmState().getMatchingWindowState(windowName, mTempWindowList);
+        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mTempWindowList);
 
         Assert.assertEquals("Should have exactly one window state for the activity.",
                 1, mTempWindowList.size());

@@ -262,24 +262,24 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
-        lockDevice();
+        sleepDevice();
         setDeviceRotation(0);
-        unlockDevice();
+        wakeUpAndUnlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
-        lockDevice();
+        sleepDevice();
         setDeviceRotation(1);
-        unlockDevice();
+        wakeUpAndUnlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
-        lockDevice();
+        sleepDevice();
         setDeviceRotation(2);
-        unlockDevice();
+        wakeUpAndUnlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
-        lockDevice();
+        sleepDevice();
         setDeviceRotation(3);
-        unlockDevice();
+        wakeUpAndUnlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
     }
 

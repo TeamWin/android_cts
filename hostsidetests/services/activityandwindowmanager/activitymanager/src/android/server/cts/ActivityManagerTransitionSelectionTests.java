@@ -16,6 +16,15 @@
 
 package android.server.cts;
 
+import static android.server.cts.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
+import static android.server.cts.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
+import static android.server.cts.WindowManagerState.TRANSIT_TASK_CLOSE;
+import static android.server.cts.WindowManagerState.TRANSIT_TASK_OPEN;
+import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_CLOSE;
+import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_INTRA_CLOSE;
+import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_INTRA_OPEN;
+import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
+
 /**
  * This test tests the transition type selection logic in ActivityManager/
  * WindowManager. BottomActivity is started first, then TopActivity, and we
@@ -34,16 +43,6 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     private static final String BOTTOM_ACTIVITY_NAME = "BottomActivity";
     private static final String TOP_ACTIVITY_NAME = "TopActivity";
     private static final String TRANSLUCENT_TOP_ACTIVITY_NAME = "TranslucentTopActivity";
-
-    private static final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
-    private static final String TRANSIT_ACTIVITY_CLOSE = "TRANSIT_ACTIVITY_CLOSE";
-    private static final String TRANSIT_TASK_OPEN = "TRANSIT_TASK_OPEN";
-    private static final String TRANSIT_TASK_CLOSE = "TRANSIT_TASK_CLOSE";
-
-    private static final String TRANSIT_WALLPAPER_OPEN = "TRANSIT_WALLPAPER_OPEN";
-    private static final String TRANSIT_WALLPAPER_CLOSE = "TRANSIT_WALLPAPER_CLOSE";
-    private static final String TRANSIT_WALLPAPER_INTRA_OPEN = "TRANSIT_WALLPAPER_INTRA_OPEN";
-    private static final String TRANSIT_WALLPAPER_INTRA_CLOSE = "TRANSIT_WALLPAPER_INTRA_CLOSE";
 
     //------------------------------------------------------------------------//
 
