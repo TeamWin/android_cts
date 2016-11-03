@@ -94,6 +94,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         super.setUp();
 
         mDevice = getDevice();
+
         if (!supportsDragAndDrop()) {
             return;
         }
@@ -331,8 +332,15 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     }
 
     private boolean supportsDragAndDrop() throws Exception {
-        // Do not run this test on watches.
-        return !mDevice.hasFeature("feature:android.hardware.type.watch");
+        String supportsMultiwindow = mDevice.executeShellCommand("am supports-multiwindow").trim();
+        if ("true".equals(supportsMultiwindow)) {
+            return true;
+        } else if ("false".equals(supportsMultiwindow)) {
+            return false;
+        } else {
+            throw new Exception(
+                    "device does not support \"am supports-multiwindow\" shell command.");
+        }
     }
 
     public void testCancelSoon() throws Exception {
