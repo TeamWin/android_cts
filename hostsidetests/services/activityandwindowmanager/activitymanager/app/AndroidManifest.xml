@@ -239,6 +239,10 @@
         <activity android:name=".KeyguardLockActivity"
                   android:exported="true"
         />
+        <activity android:name=".LogConfigurationActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+        />
     </application>
 </manifest>
 

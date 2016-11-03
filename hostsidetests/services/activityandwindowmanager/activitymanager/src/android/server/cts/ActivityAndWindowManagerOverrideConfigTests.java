@@ -21,10 +21,10 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static android.server.cts.StateLogger.log;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -33,71 +33,57 @@ import java.util.regex.Pattern;
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";
 
-    private static final String AM_MOVE_TASK = "am stack movetask ";
-    private static final String AM_RESIZE_TASK = "am task resize ";
-
     private class ConfigurationChangeObserver {
         private final Pattern mConfigurationChangedPattern =
-            Pattern.compile("(.+): Configuration changed: ");
-        private final LinkedList<String> mLogs = new LinkedList();
+            Pattern.compile("(.+)Configuration changed: (\\d+),(\\d+)");
 
-        public ConfigurationChangeObserver() {
+        private ConfigurationChangeObserver() {
         }
 
-        public boolean findConfigurationChange(String activityName, int widthDp, int heightDp) throws DeviceNotAvailableException, InterruptedException {
+        private boolean findConfigurationChange(String activityName)
+                throws DeviceNotAvailableException, InterruptedException {
             int tries = 0;
-            boolean observed = false;
-            final Pattern mSpecificConfigurationChangedPattern = 
-                Pattern.compile("(.+): Configuration changed: " + widthDp + "," + heightDp);
-            while (tries < 5 && !observed) {
-                final String logs = mDevice.executeAdbCommand(
-                        "logcat", "-v", "brief", "-d", activityName + ":I", "*:S");
-                Collections.addAll(mLogs, logs.split("\\n"));
-                CLog.logAndDisplay(LogLevel.INFO, "Looking at logcat");
-                while (!mLogs.isEmpty()) {
-                    final String line = mLogs.pop().trim();
-                    CLog.logAndDisplay(LogLevel.INFO, line);
+            boolean observedChange = false;
+            while (tries < 5 && !observedChange) {
+                final String[] lines = getDeviceLogsForComponent(activityName);
+                log("Looking at logcat");
+                for (int i = lines.length - 1; i >= 0; i--) {
+                    final String line = lines[i].trim();
+                    log(line);
                     Matcher matcher = mConfigurationChangedPattern.matcher(line);
-                    Matcher specificMatcher = mSpecificConfigurationChangedPattern.matcher(line);
-                    if (specificMatcher.matches()) {
-                        observed = true;
-                    } else {
-                        assertFalse("Expected configuration change with (" + widthDp + "," + heightDp + ") but found " + line, matcher.matches());
+                    if (matcher.matches()) {
+                        observedChange = true;
+                        break;
                     }
                 }
                 tries++;
                 Thread.sleep(500);
             }
-            return observed;
+            return observedChange;
         }
     }
 
-    private void launchTestActivityInFreeform(final String activityName) throws Exception {
-        mDevice.executeShellCommand(getAmStartCmd(activityName));
-        mAmWmState.computeState(mDevice, new String[] {activityName});
-
-        final int taskId = getActivityTaskId(activityName);
-        mDevice.executeShellCommand(AM_MOVE_TASK + taskId + " " + FREEFORM_WORKSPACE_STACK_ID + " true");
-    }
-
-    private void resizeTask(final String activityName, int width, int height) throws Exception {
-        final int taskId = getActivityTaskId(activityName);
-        final String cmd = AM_RESIZE_TASK + taskId + " " + 0 + "," + 0 +
-            "," + width + "," + height;
-        mDevice.executeShellCommand(cmd);
-    }
-
     public void testReceiveOverrideConfigFromRelayout() throws Exception {
-        launchTestActivityInFreeform(TEST_ACTIVITY_NAME);
+        if (!supportsFreeform()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Device doesn't support freeform. Skipping test.");
+            return;
+        }
 
+        launchActivityInStack(TEST_ACTIVITY_NAME, FREEFORM_WORKSPACE_STACK_ID);
+
+        setDeviceRotation(0);
         clearLogcat();
-        resizeTask(TEST_ACTIVITY_NAME, 100, 100);
+        resizeActivityTask(TEST_ACTIVITY_NAME, 0, 0, 100, 100);
         ConfigurationChangeObserver c = new ConfigurationChangeObserver();
-        assertTrue("Expected to observe configuration change when resizing", c.findConfigurationChange(TEST_ACTIVITY_NAME, 100, 100));
-        
+        final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME);
+        assertTrue("Expected to observe configuration change when resizing",
+                reportedSizeAfterResize);
+
         clearLogcat();
         setDeviceRotation(2);
-        assertTrue("Expected to observe configuration change after rotation", c.findConfigurationChange(TEST_ACTIVITY_NAME, 100, 100));
+        final boolean reportedSizeAfterRotation = c.findConfigurationChange(TEST_ACTIVITY_NAME);
+        assertFalse("Not expected to observe configuration change after flip rotation",
+                reportedSizeAfterRotation);
     }
 }
 
