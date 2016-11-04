@@ -353,6 +353,6 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private void launchActivityToSide(boolean randomData, boolean multipleTaskFlag)
             throws Exception {
-        launchActivityToSide(randomData, multipleTaskFlag, null);
+        launchActivityToSide(randomData, multipleTaskFlag, null /* targetActivity */);
     }
 }

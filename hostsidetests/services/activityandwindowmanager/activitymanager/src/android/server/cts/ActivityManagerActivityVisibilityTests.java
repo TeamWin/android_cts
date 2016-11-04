@@ -35,8 +35,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     public void testVisibleBehindHomeActivity() throws Exception {
         executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
-        mAmWmState.waitForValidState(mDevice, new String[] {VISIBLE_BEHIND_ACTIVITY},
-                new int[] {FULLSCREEN_WORKSPACE_STACK_ID}, false /* compareTaskAndStackBounds */);
+        mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY,
+                FULLSCREEN_WORKSPACE_STACK_ID);
 
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
         mAmWmState.waitForHomeActivityVisible(mDevice);
