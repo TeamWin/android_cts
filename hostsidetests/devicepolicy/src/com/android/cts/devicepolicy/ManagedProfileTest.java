@@ -203,7 +203,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // TODO: Test with startActivity
     }
 
-    public void testAppLinks() throws Exception {
+    public void testAppLinks_verificationStatus() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -242,6 +242,61 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         assertAppLinkResult("testReceivedByAppLinkActivityInManaged");
     }
 
+    public void testAppLinks_enabledStatus() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Disable all pre-existing browsers in the managed profile so they don't interfere with
+        // intents resolution.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
+                "testDisableAllBrowsers", mProfileUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
+        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
+        installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
+        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
+
+        final String APP_HANDLER_COMPONENT = "com.android.cts.intent.receiver/.AppLinkActivity";
+
+        // allow_parent_profile_app_linking is not set, try different enabled state combinations.
+        // We should not have app link handler in parent user no matter whether it is enabled.
+
+        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
+
+        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
+
+        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testTwoReceivers");
+
+        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testTwoReceivers");
+
+        // We now set allow_parent_profile_app_linking, and hence we should have the app handler
+        // in parent user if it is enabled.
+        changeUserRestrictionForUser("allow_parent_profile_app_linking", ADD_RESTRICTION_COMMAND,
+                mProfileUserId);
+
+        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testReceivedByBrowserActivityInManaged");
+
+        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testTwoReceivers");
+
+        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testTwoReceivers");
+
+        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        assertAppLinkResult("testThreeReceivers");
+    }
 
     public void testSettingsIntents() throws Exception {
         if (!mHasFeature) {
