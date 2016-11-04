@@ -69,7 +69,8 @@
             android:icon="@drawable/icon"
             android:backupAgent="VerifierBackupAgent"
             android:debuggable="true"
-            android:largeHeap="true">
+            android:largeHeap="true"
+            android:theme="@android:style/Theme.DeviceDefault">
 
         <meta-data android:name="com.google.android.backup.api_key"
                 android:value="AEdPqrEAAAAIbK6ldcOzoeRtQ1u1dFVJ1A7KetRhit-a1Xa82Q" />
