@@ -39,6 +39,16 @@ public class WebViewHostSideStartupTest extends DeviceTestCase {
                     "testCookieManagerBlockingUiThread"));
     }
 
+    public void testWebViewVersionApiOnUiThread() throws DeviceNotAvailableException {
+        assertTrue(runDeviceTest(DEVICE_WEBVIEW_STARTUP_PKG, DEVICE_WEBVIEW_STARTUP_TEST_CLASS,
+                    "testGetCurrentWebViewPackageOnUiThread"));
+    }
+
+    public void testWebViewVersionApi() throws DeviceNotAvailableException {
+        assertTrue(runDeviceTest(DEVICE_WEBVIEW_STARTUP_PKG, DEVICE_WEBVIEW_STARTUP_TEST_CLASS,
+                    "testGetCurrentWebViewPackage"));
+    }
+
     private boolean runDeviceTest(String packageName, String testClassName,
             String testMethodName) throws DeviceNotAvailableException {
         testClassName = packageName + "." + testClassName;
