@@ -456,6 +456,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        boolean mIsWatch = hasDeviceFeature("android.hardware.type.watch");
+        if (mIsWatch) {
+            return;
+        }
         // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES
         final String DISALLOW_INSTALL_UNKNOWN_SOURCES = "no_install_unknown_sources";
         final String UNKNOWN_SOURCES_SETTING = "install_non_market_apps";
