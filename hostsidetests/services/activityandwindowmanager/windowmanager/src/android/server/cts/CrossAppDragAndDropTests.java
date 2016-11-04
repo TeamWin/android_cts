@@ -40,7 +40,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
 
     private static final String AM_FORCE_STOP = "am force-stop ";
-    private static final String AM_MOVE_TASK = "am stack movetask ";
+    private static final String AM_MOVE_TASK = "am stack move-task ";
     private static final String AM_REMOVE_STACK = "am stack remove ";
     private static final String AM_START_N = "am start -n ";
     private static final String AM_STACK_LIST = "am stack list";
