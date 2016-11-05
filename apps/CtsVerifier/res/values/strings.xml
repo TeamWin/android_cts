@@ -746,15 +746,6 @@
     <string name="sample_test">Sample Test</string>
     <string name="sample_test_info">This test verifies that bluetooth sharing is working properly.\nThe test assumes the Device Under Test has bluetooth enabled and is already paired with a second device, also with bluetooth enabled.\nStart this test by clicking share, choose bluetooth from the options, and then select a device to share with.\nNote: This is a sample test, used to demonstrate how to write CTS Verifier tests, so just click pass.</string>
 
-    <!-- Strings for SuidFilesActivity -->
-    <string name="suid_files">SUID File Scanner</string>
-    <string name="suid_files_info">This test will attempt to find unauthorized SUID binaries, but it is not comprehensive due to permission restrictions.\n\nAuthorized SUID binaries will appear green, while unauthorized SUID binaries will appear red.\n\nPress OK to start the scan...</string>
-    <string name="scanning_directory">Scanning directory...</string>
-    <string name="file_status">User: %1$s\nGroup: %2$s\nPermissions: %3$s\nPath: %4$s</string>
-    <string name="no_file_status">Could not stat file...</string>
-    <string name="congratulations">Congratulations!</string>
-    <string name="no_suid_files">No unauthorized suid files detected!</string>
-
     <!-- Strings for Camera Orientation -->
     <string name="camera_orientation">Camera Orientation</string>
     <string name="co_info">This test verifies the orientation capabilities of
