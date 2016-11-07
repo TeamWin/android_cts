@@ -1732,7 +1732,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="test_category_projection">Projection Tests</string>
     <string name="projection_service_name">Projection Service</string>
     <string name="pca_info">This tests whether or not OpenGL projection works.\n
-        You should see two "tumbling cubes." Tapping the screen should case the cubes to explode.</string>
+        You should see two "tumbling cubes." Tapping the screen should cause the cubes to explode.</string>
     <string name="pca_test">Projection Cube Test</string>
     <string name="pwa_info">This tests whether or displaying widets and keyfocus navigation works.\n
         You should see four buttons on the bottom of the screen.\n
