@@ -46,6 +46,8 @@ import android.view.MotionEvent;
 abstract class DocumentsClientTestCase extends InstrumentationTestCase {
     private static final String TAG = "DocumentsClientTestCase";
 
+    static final String PROVIDER_PACKAGE = "com.android.cts.documentprovider";
+
     protected UiDevice mDevice;
     protected MyActivity mActivity;
 
