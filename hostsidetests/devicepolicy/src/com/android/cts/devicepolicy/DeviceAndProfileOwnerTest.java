@@ -86,6 +86,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String COMMAND_UNBLOCK_ACCOUNT_TYPE = "unblock-accounttype";
 
     private static final String DISALLOW_MODIFY_ACCOUNTS = "no_modify_accounts";
+    private static final String DISALLOW_REMOVE_USER = "no_remove_user";
     private static final String ACCOUNT_TYPE
             = "com.android.cts.devicepolicy.accountmanagement.account.type";
 
@@ -581,6 +582,22 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceTestClass(".TrustAgentInfoTest");
+    }
+
+    public void testCannotRemoveUserIfRestrictionSet() throws Exception {
+        if (!mHasCreateAndManageUserFeature) {
+            return;
+        }
+        final int userId = createUser();
+        try {
+            changeUserRestrictionForUser(DISALLOW_REMOVE_USER, COMMAND_ADD_USER_RESTRICTION,
+                    mUserId);
+            assertFalse(getDevice().removeUser(userId));
+        } finally {
+            changeUserRestrictionForUser(DISALLOW_REMOVE_USER, COMMAND_CLEAR_USER_RESTRICTION,
+                    mUserId);
+            assertTrue(getDevice().removeUser(userId));
+        }
     }
 
     protected void executeDeviceTestClass(String className) throws Exception {
