@@ -90,11 +90,20 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return "am start -n " + getActivityComponentName(activityName);
     }
 
+    /**
+     * @return the am command to start the given activity with the following extra key/value pairs.
+     *         {@param keyValuePairs} must be a list of arguments defining each key/value extra.
+     */
     protected static String getAmStartCmd(final String activityName,
-            final String extraDataName,
-            final String extraDataValue) {
+            final String... keyValuePairs) {
         String base = getAmStartCmd(activityName);
-        return base + " --es " + extraDataName + " " + extraDataValue;
+        if (keyValuePairs.length % 2 != 0) {
+            throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
+        }
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            base += " --es " + keyValuePairs[i] + " " + keyValuePairs[i + 1];
+        }
+        return base;
     }
 
     protected static String getAmStartCmdOverHome(final String activityName) {

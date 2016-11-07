@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,34 @@
 package android.server.cts;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 
-public class AutoEnterPipActivity extends Activity {
+/**
+ * This activity will try and enter picture in picture when it is stopped.
+ */
+public class PipOnStopActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        enterPictureInPictureMode();
+
+        startActivity(new Intent(this, PipActivity.class));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        try {
+            enterPictureInPictureMode();
+        } catch (RuntimeException e) {
+            // Known failure, we expect this call to throw an exception
+        }
     }
 }
