@@ -21,7 +21,8 @@
 
     <uses-permission android:name="com.android.cts.managedprofile.permission.SAMPLE"/>
 
-    <application>
+    <application
+        android:testOnly="true">
 
         <uses-library android:name="android.test.runner" />
 
