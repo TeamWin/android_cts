@@ -23,6 +23,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.Context;
 import android.content.cts.util.XmlUtils;
+import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -30,6 +31,7 @@ import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.LocaleList;
@@ -536,6 +538,15 @@ public class ResourcesTest extends AndroidTestCase {
         cs = res.getQuantityText(R.plurals.plurals_test, 500);
         assertEquals("Some Czech dogs", cs.toString());
 
+    }
+
+    public void testChangingConfiguration() {
+        ColorDrawable dr1 = (ColorDrawable) mResources.getDrawable(R.color.varies_uimode);
+        assertEquals(ActivityInfo.CONFIG_UI_MODE, dr1.getChangingConfigurations());
+
+        // Test again with a drawable obtained from the cache.
+        ColorDrawable dr2 = (ColorDrawable) mResources.getDrawable(R.color.varies_uimode);
+        assertEquals(ActivityInfo.CONFIG_UI_MODE, dr2.getChangingConfigurations());
     }
 
     private Resources resourcesForLanguage(final String lang) {
