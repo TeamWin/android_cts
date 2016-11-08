@@ -83,9 +83,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Whether file-based encryption (FBE) is supported. */
     protected boolean mSupportsFbe;
 
-    /** CreateAndManageUser is available and an additional user can be created. */
-    protected boolean mHasCreateAndManageUserFeature;
-
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
@@ -102,7 +99,6 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 && hasDeviceFeature("android.software.device_admin");
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
-        mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1);
         mFixedPackages = getDevice().getInstalledPackageNames();
 
         // disable the package verifier to avoid the dialog when installing an app

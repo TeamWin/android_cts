@@ -266,14 +266,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 //    }
 
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
-        if (mHasCreateAndManageUserFeature) {
+        if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
                 "testCreateAndManageUser_AddRestrictionSet");
         }
     }
 
     public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
-        if (mHasCreateAndManageUserFeature) {
+        if (mHasFeature && canCreateAdditionalUsers(1)) {
             executeDeviceTestMethod(".CreateAndManageUserTest",
                 "testCreateAndManageUser_RemoveRestrictionSet");
         }

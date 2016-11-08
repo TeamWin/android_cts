@@ -585,7 +585,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        if (!mHasCreateAndManageUserFeature) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         final int userId = createUser();
