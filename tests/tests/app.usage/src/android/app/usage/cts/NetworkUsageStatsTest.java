@@ -65,6 +65,8 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
     private interface NetworkInterfaceToTest {
         int getNetworkType();
         int getTransportType();
+        boolean getMetered();
+        void setMetered(boolean metered);
         String getSystemFeature();
         String getErrorMessage();
     }
@@ -72,6 +74,8 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
     private static final NetworkInterfaceToTest[] sNetworkInterfacesToTest =
             new NetworkInterfaceToTest[] {
                     new NetworkInterfaceToTest() {
+                        private boolean metered = false;
+
                         @Override
                         public int getNetworkType() {
                             return ConnectivityManager.TYPE_WIFI;
@@ -80,6 +84,16 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                         @Override
                         public int getTransportType() {
                             return NetworkCapabilities.TRANSPORT_WIFI;
+                        }
+
+                        @Override
+                        public boolean getMetered() {
+                            return metered;
+                        }
+
+                        @Override
+                        public void setMetered(boolean metered) {
+                            this.metered = metered;
                         }
 
                         @Override
@@ -93,6 +107,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                         }
                     },
                     new NetworkInterfaceToTest() {
+                        private boolean metered = false;
                         @Override
                         public int getNetworkType() {
                             return ConnectivityManager.TYPE_MOBILE;
@@ -103,6 +118,15 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                             return NetworkCapabilities.TRANSPORT_CELLULAR;
                         }
 
+                        @Override
+                        public boolean getMetered() {
+                            return metered;
+                        }
+
+                        @Override
+                        public void setMetered(boolean metered) {
+                            this.metered = metered;
+                        }
                         @Override
                         public String getSystemFeature() {
                             return PackageManager.FEATURE_TELEPHONY;
@@ -241,11 +265,13 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         private long mTolerance;
         private URL mUrl;
         public boolean success;
+        public boolean metered;
 
         NetworkCallback(long tolerance, URL url) {
             mTolerance = tolerance;
             mUrl = url;
             success = false;
+            metered = false;
         }
 
         @Override
@@ -255,6 +281,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 exerciseRemoteHost(network, mUrl);
                 mEndTime = System.currentTimeMillis() + mTolerance;
                 success = true;
+                metered = mCm.getNetworkInfo(network).isMetered();
                 synchronized(NetworkUsageStatsTest.this) {
                     NetworkUsageStatsTest.this.notify();
                 }
@@ -284,6 +311,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             }
         }
         if (callback.success) {
+            sNetworkInterfacesToTest[networkTypeIndex].setMetered(callback.metered);
             return true;
         }
 
@@ -324,6 +352,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             assertTimestamps(bucket);
             assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
             assertEquals(bucket.getUid(), NetworkStats.Bucket.UID_ALL);
+            assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "deny");
             try {
                 bucket = mNsm.querySummaryForDevice(
@@ -356,6 +385,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             assertTimestamps(bucket);
             assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
             assertEquals(bucket.getUid(), NetworkStats.Bucket.UID_ALL);
+            assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "deny");
             try {
                 bucket = mNsm.querySummaryForUser(
@@ -387,9 +417,11 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 long totalRxPackets = 0;
                 long totalTxBytes = 0;
                 long totalRxBytes = 0;
+                boolean metered = false;
                 while (result.hasNextBucket()) {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
+                    metered |= bucket.getMetered() == NetworkStats.Bucket.METERED_YES;
                     if (bucket.getUid() == Process.myUid()) {
                         totalTxPackets += bucket.getTxPackets();
                         totalRxPackets += bucket.getRxPackets();
@@ -398,6 +430,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                     }
                 }
                 assertFalse(result.getNextBucket(bucket));
+                assertTrue("Incorrect metering for NetworkType: " +
+                                sNetworkInterfacesToTest[i].getNetworkType(),
+                        sNetworkInterfacesToTest[i].getMetered() == metered);
                 assertTrue("No Rx bytes usage for uid " + Process.myUid(), totalRxBytes > 0);
                 assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
                 assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
@@ -445,6 +480,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
                     assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
+                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
                     if (bucket.getUid() == Process.myUid()) {
                         totalTxPackets += bucket.getTxPackets();
                         totalRxPackets += bucket.getRxPackets();
@@ -500,6 +536,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
                     assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
+                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
                     assertEquals(bucket.getUid(), Process.myUid());
                     totalTxPackets += bucket.getTxPackets();
                     totalRxPackets += bucket.getRxPackets();
@@ -554,6 +591,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
                     assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
+                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
                     assertEquals(bucket.getUid(), Process.myUid());
                     if (bucket.getTag() == NETWORK_TAG) {
                         totalTxPackets += bucket.getTxPackets();
