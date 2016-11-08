@@ -214,7 +214,7 @@ public class CompatibilityConsole extends Console {
         helpBuilder.append("Add:\n");
         helpBuilder.append("  a/add s/subplan: create a subplan from a previous session\n");
         helpBuilder.append("Options:\n");
-        helpBuilder.append("  --session/-s <session_id>: The session used to create a subplan.\n");
+        helpBuilder.append("  --session <session_id>: The session used to create a subplan.\n");
         helpBuilder.append("  --name/-n <subplan_name>: The name of the new subplan.\n");
         helpBuilder.append("  --result-type/-r <status>: Which results to include in the");
         helpBuilder.append(" subplan. One of passed, failed, not_executed. Repeatable.\n");
