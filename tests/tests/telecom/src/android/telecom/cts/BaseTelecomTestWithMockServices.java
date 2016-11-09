@@ -130,7 +130,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             // Generate a vanilla mock connection service, if not provided.
             this.connectionService = new MockConnectionService();
         }
-        CtsConnectionService.setUp(TEST_PHONE_ACCOUNT_HANDLE, this.connectionService);
+        CtsConnectionService.setUp(this.connectionService);
 
         if ((flags & FLAG_REGISTER) != 0) {
             mTelecomManager.registerPhoneAccount(TEST_PHONE_ACCOUNT);
