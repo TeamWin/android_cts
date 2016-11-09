@@ -24,6 +24,9 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Set of tests for use cases that apply to profile and device owner.
@@ -92,6 +95,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String CUSTOMIZATION_APP_PKG = "com.android.cts.customizationapp";
     private static final String CUSTOMIZATION_APP_APK = "CtsCustomizationApp.apk";
+
+    private static final String ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES
+            = "enabled_notification_policy_access_packages";
 
     // ID of the user all tests are run as. For device owner this will be the primary user, for
     // profile owner it is the user id of the created profile.
@@ -556,7 +562,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestClass(".AudioRestrictionTest");
+        // This package may need to toggle zen mode for this test, so allow it to do so.
+        allowNotificationPolicyAccess(DEVICE_ADMIN_PKG, mUserId);
+        try {
+            executeDeviceTestClass(".AudioRestrictionTest");
+        } finally {
+            disallowNotificationPolicyAccess(DEVICE_ADMIN_PKG, mUserId);
+        }
     }
 
     public void testSuspendPackage() throws Exception {
@@ -694,5 +706,47 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ? "testScreenCaptureImpossible"
                 : "testScreenCapturePossible";
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+    }
+
+    /**
+     * Allows packageName to manage notification policy configuration, which
+     * includes toggling zen mode.
+     */
+    private void allowNotificationPolicyAccess(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        List<String> enabledPackages = getEnabledNotificationPolicyPackages(userId);
+        if (!enabledPackages.contains(packageName)) {
+            enabledPackages.add(packageName);
+            setEnabledNotificationPolicyPackages(enabledPackages, userId);
+        }
+    }
+
+    /**
+     * Disallows packageName to manage notification policy configuration, which
+     * includes toggling zen mode.
+     */
+    private void disallowNotificationPolicyAccess(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        List<String> enabledPackages = getEnabledNotificationPolicyPackages(userId);
+        if (enabledPackages.contains(packageName)) {
+            enabledPackages.remove(packageName);
+            setEnabledNotificationPolicyPackages(enabledPackages, userId);
+        }
+    }
+
+    private void setEnabledNotificationPolicyPackages(List<String> packages, int userId)
+            throws DeviceNotAvailableException {
+        getDevice().setSetting(userId, "secure", ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES,
+                String.join(":", packages));
+    }
+
+    private List<String> getEnabledNotificationPolicyPackages(int userId)
+            throws DeviceNotAvailableException {
+        String settingValue = getDevice().getSetting(userId, "secure",
+                ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES);
+        if (settingValue == null) {
+            return new ArrayList<String>();
+        }
+        return new ArrayList<String>(Arrays.asList(settingValue.split(":|\n")));
     }
 }
