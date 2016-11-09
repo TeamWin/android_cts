@@ -22,7 +22,7 @@ import android.server.cts.WindowManagerState.WindowState;
  * Build: mmma -j32 cts/hostsidetests/services
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.KeyguardTests
  */
-public class KeyguardTests extends ActivityManagerTestBase {
+public class KeyguardTests extends KeyguardTestBase {
 
     public void testKeyguardHidesActivity() throws Exception {
         if (!isHandheld()) {
@@ -187,6 +187,19 @@ public class KeyguardTests extends ActivityManagerTestBase {
         }
     }
 
+    public void testDismissKeyguard_fromShowWhenLocked() throws Exception {
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertShowingAndNotOccluded();
+        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
+        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
+        mAmWmState.waitForKeyguardGone(mDevice);
+        assertKeyguardGone();
+        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+    }
+
     public void testKeyguardLock() throws Exception {
         if (!isHandheld()) {
             return;
@@ -200,16 +213,6 @@ public class KeyguardTests extends ActivityManagerTestBase {
         executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
-    }
-
-    private void assertShowingAndOccluded() {
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardOccluded);
-    }
-
-    private void assertShowingAndNotOccluded() {
-        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardOccluded);
     }
 
     private void assertWallpaperShowing() {

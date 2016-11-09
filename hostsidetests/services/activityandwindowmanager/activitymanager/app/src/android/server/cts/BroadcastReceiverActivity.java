@@ -16,12 +16,15 @@
 
 package android.server.cts;
 
+import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 /**
  * Activity that registers broadcast receiver .
@@ -57,6 +60,9 @@ public class BroadcastReceiverActivity extends Activity {
             }
             if (extras.getBoolean("finish")) {
                 finish();
+            }
+            if (extras.getBoolean("dismissKeyguard")) {
+                getWindow().addFlags(FLAG_DISMISS_KEYGUARD);
             }
         }
     }
