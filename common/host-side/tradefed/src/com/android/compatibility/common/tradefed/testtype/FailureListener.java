@@ -68,6 +68,18 @@ public class FailureListener extends ResultForwarder {
     public void testFailed(TestIdentifier test, String trace) {
         super.testFailed(test, trace);
         CLog.i("FailureListener.testFailed %s %b %b %b", test.toString(), mBugReportOnFailure, mLogcatOnFailure, mScreenshotOnFailure);
+        if (mScreenshotOnFailure) {
+            try {
+                InputStreamSource screenSource = mDevice.getScreenshot();
+                super.testLog(String.format("%s-screenshot", test.toString()), LogDataType.PNG,
+                    screenSource);
+                screenSource.cancel();
+            } catch (DeviceNotAvailableException e) {
+                CLog.e(e);
+                CLog.e("Device %s became unavailable while capturing screenshot",
+                    mDevice.getSerialNumber());
+            }
+        }
         if (mBugReportOnFailure) {
            InputStreamSource bugSource = mDevice.getBugreport();
            super.testLog(String.format("%s-bugreport", test.toString()), LogDataType.BUGREPORT,
@@ -81,18 +93,6 @@ public class FailureListener extends ResultForwarder {
             super.testLog(String.format("%s-logcat", test.toString()), LogDataType.LOGCAT,
                     logSource);
             logSource.cancel();
-        }
-        if (mScreenshotOnFailure) {
-            try {
-                InputStreamSource screenSource = mDevice.getScreenshot();
-                super.testLog(String.format("%s-screenshot", test.toString()), LogDataType.PNG,
-                        screenSource);
-                screenSource.cancel();
-            } catch (DeviceNotAvailableException e) {
-                CLog.e(e);
-                CLog.e("Device %s became unavailable while capturing screenshot",
-                        mDevice.getSerialNumber());
-            }
         }
         if (mRebootOnFailure) {
             try {
