@@ -17,6 +17,7 @@
 package android.telephony.cts;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.cts.util.TestThread;
@@ -30,17 +31,18 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
+import android.telephony.ServiceState;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
 import com.android.internal.telephony.PhoneConstants;
-
 import java.util.regex.Pattern;
 
 public class TelephonyManagerTest extends AndroidTestCase {
     private TelephonyManager mTelephonyManager;
     private boolean mOnCellLocationChangedCalled = false;
+    private ServiceState mServiceState;
     private final Object mLock = new Object();
     private static final int TOLERANCE = 1000;
     private PhoneStateListener mListener;
@@ -170,6 +172,20 @@ public class TelephonyManagerTest extends AndroidTestCase {
             .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
         mTelephonyManager.getVoicemailRingtoneUri(defaultAccount);
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
+    }
+
+    public void testCreateForPhoneAccountHandle(){
+        TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
+        PhoneAccountHandle handle =
+                telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+        TelephonyManager telephonyManager = mTelephonyManager.createForPhoneAccountHandle(handle);
+        assertEquals(mTelephonyManager.getSubscriberId(), telephonyManager.getSubscriberId());
+    }
+
+    public void testCreateForPhoneAccountHandle_InvalidHandle(){
+        PhoneAccountHandle handle =
+                new PhoneAccountHandle(new ComponentName("com.example.foo", "bar"), "baz");
+        assertNull(mTelephonyManager.createForPhoneAccountHandle(handle));
     }
 
     /**
@@ -397,5 +413,36 @@ public class TelephonyManagerTest extends AndroidTestCase {
         } else {
             // Non-telephony may still have the property defined if it has a SIM.
         }
+    }
+
+    public void testGetServiceState() throws InterruptedException {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mListener = new PhoneStateListener() {
+                    @Override
+                    public void onServiceStateChanged(ServiceState serviceState) {
+                        synchronized (mLock) {
+                            mServiceState = serviceState;
+                            mLock.notify();
+                        }
+                    }
+                };
+                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+                Looper.loop();
+            }
+        });
+        t.start();
+        synchronized (mLock) {
+            mLock.wait(TOLERANCE);
+        }
+
+        assertEquals(mServiceState, mTelephonyManager.getServiceState());
     }
 }
