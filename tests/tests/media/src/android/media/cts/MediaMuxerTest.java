@@ -62,6 +62,17 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     /**
+     * Test: make sure the muxer handles video, audio and metadata tracks correctly.
+     */
+    public void testVideoAudioMedatadata() throws Exception {
+        int source =
+                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro;
+        String outputFile = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
+                .getAbsolutePath();
+        cloneAndVerify(source, outputFile, 3, 90);
+    }
+
+    /**
      * Test: make sure the muxer handles audio track only file correctly.
      */
     public void testAudioOnly() throws Exception {
