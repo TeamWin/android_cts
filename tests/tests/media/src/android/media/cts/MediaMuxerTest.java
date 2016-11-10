@@ -61,6 +61,27 @@ public class MediaMuxerTest extends AndroidTestCase {
         cloneAndVerify(source, outputFile, 2, 90);
     }
 
+    public void testDualVideoTrack() throws Exception {
+        int source = R.raw.video_176x144_h264_408kbps_30fps_352x288_h264_122kbps_30fps;
+        String outputFile = File.createTempFile("MediaMuxerTest_testDualVideo", ".mp4")
+                .getAbsolutePath();
+        cloneAndVerify(source, outputFile, 2, 90);
+    }
+
+    public void testDualAudioTrack() throws Exception {
+        int source = R.raw.audio_aac_mono_70kbs_44100hz_aac_mono_70kbs_44100hz;
+        String outputFile = File.createTempFile("MediaMuxerTest_testDualAudio", ".mp4")
+                .getAbsolutePath();
+        cloneAndVerify(source, outputFile, 2, 90);
+    }
+
+    public void testDualVideoAndAudioTrack() throws Exception {
+        int source = R.raw.video_h264_30fps_video_h264_30fps_aac_44100hz_aac_44100hz;
+        String outputFile = File.createTempFile("MediaMuxerTest_testDualVideoAudio", ".mp4")
+                .getAbsolutePath();
+        cloneAndVerify(source, outputFile, 4, 90);
+    }
+
     /**
      * Test: make sure the muxer handles video, audio and metadata tracks correctly.
      */
