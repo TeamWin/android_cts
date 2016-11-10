@@ -506,4 +506,33 @@ public class ArrayMapTest {
         dump(map1, map2);
         fail(msg);
     }
+
+    private static void checkEntrySetToArray(ArrayMap<?, ?> testMap) {
+        try {
+            testMap.entrySet().toArray();
+            fail();
+        } catch (UnsupportedOperationException expected) {}
+
+        try {
+            Map.Entry<?, ?>[] entries = new Map.Entry[20];
+            testMap.entrySet().toArray(entries);
+            fail();
+        } catch (UnsupportedOperationException expected) {}
+    }
+
+    // http://b/32294038, Test ArrayMap.entrySet().toArray()
+    @Test
+    public void testEntrySetArray() {
+        // Create
+        ArrayMap<Integer, String> testMap = new ArrayMap<>();
+
+        // Test empty
+        checkEntrySetToArray(testMap);
+
+        // Test non-empty
+        for (int i = 0; i < 10; ++i) {
+            testMap.put(i, String.valueOf(i));
+        }
+        checkEntrySetToArray(testMap);
+    }
 }
