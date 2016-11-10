@@ -70,4 +70,20 @@ public class DocumentsTest extends DocumentsTestCase {
     public void testTransferDocument() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testTransferDocument");
     }
+
+    public void testFindDocumentPathInScopedAccess() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testFindDocumentPathInScopedAccess");
+    }
+
+    public void testOpenDocumentAtInitialLocation() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenDocumentAtInitialLocation");
+    }
+
+    public void testOpenDocumentTreeAtInitialLocation() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenDocumentTreeAtInitialLocation");
+    }
+
+    public void testCreateDocumentAtInitialLocation() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testCreateDocumentAtInitialLocation");
+    }
 }

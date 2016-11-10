@@ -27,6 +27,7 @@ import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
+import android.provider.DocumentsContract.Path;
 import android.provider.DocumentsContract.Root;
 import android.provider.DocumentsProvider;
 import android.util.Log;
@@ -38,6 +39,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -261,6 +263,43 @@ public class MyDocumentsProvider extends DocumentsProvider {
         mDocs.get(sourceParentDocumentId).children.remove(doc);
         mDocs.get(targetParentDocumentId).children.add(doc);
         return doc.docId;
+    }
+
+    @Override
+    public Path findDocumentPath(String documentId, String parentDocumentId)
+            throws FileNotFoundException {
+        if (!mDocs.containsKey(documentId)) {
+            throw new FileNotFoundException(documentId + " is not found.");
+        }
+
+        final Map<String, String> parentMap = new HashMap<>();
+        for (Doc doc : mDocs.values()) {
+            for (Doc childDoc : doc.children) {
+                parentMap.put(childDoc.docId, doc.docId);
+            }
+        }
+
+        String currentDocId = documentId;
+        final LinkedList<String> path = new LinkedList<>();
+        while (!currentDocId.equals(parentDocumentId)
+                && !currentDocId.equals(mLocalRoot.docId)
+                && !currentDocId.equals(mCreateRoot.docId)) {
+            path.addFirst(currentDocId);
+            currentDocId = parentMap.get(currentDocId);
+        }
+
+        if (parentDocumentId != null && !currentDocId.equals(parentDocumentId)) {
+            throw new FileNotFoundException(documentId + " is not found under " + parentDocumentId);
+        }
+
+        // Add the root doc / parent doc
+        path.addFirst(currentDocId);
+
+        String rootId = null;
+        if (parentDocumentId == null) {
+            rootId = currentDocId.equals(mLocalRoot.docId) ? "local" : "create";
+        }
+        return new Path(rootId, path);
     }
 
     @Override

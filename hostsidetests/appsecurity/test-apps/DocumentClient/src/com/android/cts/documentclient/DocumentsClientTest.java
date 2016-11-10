@@ -33,6 +33,8 @@ import android.util.Log;
 
 import com.android.cts.documentclient.MyActivity.Result;
 
+import java.util.List;
+
 /**
  * Tests for {@link DocumentsProvider} and interaction with platform intents
  * like {@link Intent#ACTION_OPEN_DOCUMENT}.
@@ -427,5 +429,99 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         } finally {
             cursorDst.close();
         }
+    }
+
+    public void testFindDocumentPathInScopedAccess() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        mDevice.waitForIdle();
+        findRoot("CtsCreate").click();
+
+        mDevice.waitForIdle();
+        findDocument("DIR2").click();
+        mDevice.waitForIdle();
+        findSaveButton().click();
+
+        final Result result = mActivity.getResult();
+        final Uri uri = result.data.getData();
+
+        // We should have selected DIR2
+        Uri doc = DocumentsContract.buildDocumentUriUsingTree(uri,
+                DocumentsContract.getTreeDocumentId(uri));
+
+        assertEquals("DIR2", getColumn(doc, Document.COLUMN_DISPLAY_NAME));
+
+        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+
+        // Create some documents
+        Uri dir = DocumentsContract.createDocument(resolver, doc, Document.MIME_TYPE_DIR, "my dir");
+        Uri dirPic = DocumentsContract.createDocument(resolver, dir, "image/png", "pic2.png");
+
+        writeFully(dirPic, "dirPic".getBytes());
+
+        // Find the path of a document
+        final List<String> path = DocumentsContract.findDocumentPath(resolver, dirPic);
+        assertEquals(3, path.size());
+        assertEquals(DocumentsContract.getTreeDocumentId(uri), path.get(0));
+        assertEquals(DocumentsContract.getDocumentId(dir), path.get(1));
+        assertEquals(DocumentsContract.getDocumentId(dirPic), path.get(2));
+    }
+
+    public void testOpenDocumentAtInitialLocation() throws Exception {
+        if (!supportedHardware()) return;
+
+        // Clear DocsUI's storage to avoid it opening stored last location
+        // which may make this test pass "luckily".
+        clearDocumentsUi();
+
+        final Uri docUri = DocumentsContract.buildDocumentUri(PROVIDER_PACKAGE, "doc:file1");
+        final Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, docUri);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        mDevice.waitForIdle();
+
+        assertTrue(findDocument("FILE1").exists());
+    }
+
+    public void testOpenDocumentTreeAtInitialLocation() throws Exception {
+        if (!supportedHardware()) return;
+
+        // Clear DocsUI's storage to avoid it opening stored last location
+        // which may make this test pass "luckily".
+        clearDocumentsUi();
+
+        final Uri docUri = DocumentsContract.buildDocumentUri(PROVIDER_PACKAGE, "doc:dir2");
+        final Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, docUri);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        mDevice.waitForIdle();
+
+        assertTrue(findDocument("FILE4").exists());
+    }
+
+    public void testCreateDocumentAtInitialLocation() throws Exception {
+        if (!supportedHardware()) return;
+
+        // Clear DocsUI's storage to avoid it opening stored last location
+        // which may make this test pass "luckily".
+        clearDocumentsUi();
+
+        final Uri treeUri = DocumentsContract.buildTreeDocumentUri(PROVIDER_PACKAGE, "doc:local");
+        final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, "doc:file1");
+        final Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_CREATE_DOCUMENT);
+        intent.setType("plain/text");
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, docUri);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        mDevice.waitForIdle();
+
+        assertTrue(findDocument("FILE1").exists());
     }
 }
