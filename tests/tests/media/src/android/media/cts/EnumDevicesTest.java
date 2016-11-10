@@ -92,7 +92,7 @@ public class EnumDevicesTest extends AndroidTestCase {
             assertTrue(deviceList != null);
 
             numInputDevices = deviceList.length;
-            assertTrue(numOutputDevices != 0);
+            assertTrue(numInputDevices != 0);
 
             // all should be "sources"
             for(int index = 0; index < numInputDevices; index++) {
