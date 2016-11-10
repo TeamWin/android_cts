@@ -16,7 +16,6 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -24,9 +23,6 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.HostTest;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 
@@ -49,8 +45,7 @@ import java.util.jar.JarFile;
 /**
  * Test runner for host-side JUnit tests.
  */
-public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceiver,
-        IRuntimeHintProvider {
+public class JarHostTest extends HostTest implements IRuntimeHintProvider {
 
     @Option(name="jar", description="The jars containing the JUnit test class to run.",
             importance = Importance.IF_UNSET)
@@ -60,27 +55,6 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
             isTimeVal = true,
             description="The hint about the test's runtime.")
     private long mRuntimeHint = 60000;// 1 minute
-
-    private IAbi mAbi;
-    private IBuildInfo mBuild;
-    private CompatibilityBuildHelper mHelper;
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setAbi(IAbi abi) {
-        mAbi = abi;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setBuild(IBuildInfo build) {
-        mBuild = build;
-        mHelper = new CompatibilityBuildHelper(build);
-    }
 
     /**
      * {@inheritDoc}
@@ -96,10 +70,11 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
     @Override
     protected List<Class<?>> getClasses() throws IllegalArgumentException  {
         List<Class<?>> classes = super.getClasses();
+        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
         for (String jarName : mJars) {
             JarFile jarFile = null;
             try {
-                File file = new File(mHelper.getTestsDir(), jarName);
+                File file = new File(helper.getTestsDir(), jarName);
                 jarFile = new JarFile(file);
                 Enumeration<JarEntry> e = jarFile.entries();
                 URL[] urls = {
@@ -118,7 +93,8 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
                         Class<?> cls = cl.loadClass(className);
                         int modifiers = cls.getModifiers();
                         if ((IRemoteTest.class.isAssignableFrom(cls)
-                                || Test.class.isAssignableFrom(cls))
+                                || Test.class.isAssignableFrom(cls)
+                                || hasJUnit4Annotation(cls))
                                 && !Modifier.isStatic(modifiers)
                                 && !Modifier.isPrivate(modifiers)
                                 && !Modifier.isProtected(modifiers)
@@ -149,21 +125,6 @@ public class JarHostTest extends HostTest implements IAbiReceiver, IBuildReceive
     private static String getClassName(String name) {
         // -6 because of .class
         return name.substring(0, name.length() - 6).replace('/', '.');
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected Object loadObject(Class<?> classObj) throws IllegalArgumentException {
-        Object object = super.loadObject(classObj);
-        if (object instanceof IAbiReceiver) {
-            ((IAbiReceiver) object).setAbi(mAbi);
-        }
-        if (object instanceof IBuildReceiver) {
-            ((IBuildReceiver) object).setBuild(mBuild);
-        }
-        return object;
     }
 
     /**
