@@ -1393,8 +1393,14 @@
     <string name="attention_some_are_filtered">Check that \"Priority\" mode doesn\'t filter priority notifications.</string>
     <string name="attention_all_are_filtered">Check that \"None\" mode filters all notifications.</string>
     <string name="nls_test">Notification Listener Test</string>
+    <string name="nas_test">Notification Assistant Test</string>
     <string name="nls_service_name">Notification Listener for CTS Verifier</string>
     <string name="nls_info">This test checks that a NotificationListenerService can be enabled
+        and disabled, and that once enabled the service is able to receive notifications and
+        dismiss them.
+    </string>
+    <string name="nas_service_name">Notification Assistant for CTS Verifier</string>
+    <string name="nas_info">This test checks that a NotificationAssistantService can be enabled
         and disabled, and that once enabled the service is able to receive notifications and
         dismiss them.
     </string>
@@ -1415,18 +1421,25 @@
         under Apps > Gear Icon > Special Access > VR Helper Services and return here.</string>
         <string name="vr_disable_service">Please disable \"VR Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > VR Helper Services and return here.</string>
+    <string name="nas_enable_service">Please enable \"Notification Assistant for CTS Verifier\"
+        under Apps > Gear Icon > Default > Notification Assistant and return here.</string>
+    <string name="nas_disable_service">Please disable \"Notification Assistant for CTS Verifier\"
+        under Apps > Gear Icon > Default > Notification Assistant and return here.</string>
     <string name="nls_enable_service">Please enable \"Notification Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
     <string name="nls_disable_service">Please disable \"Notification Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
     <string name="nls_start_settings">Launch Settings</string>
     <string name="nls_service_started">Service should start once enabled.</string>
+    <string name="nas_note_enqueued_received">Check that notification was enqueued.</string>
     <string name="nls_note_received">Check that notification was received.</string>
     <string name="nls_payload_intact">Check that notification payload was intact.</string>
     <string name="nls_clear_one">Check that service can clear a notification.</string>
+    <string name="nls_clear_one_reason">Check that service can clear a notification and receive the correct reason for dismissal.</string>
     <string name="nls_clear_all">Check that service can clear all notifications.</string>
     <string name="nls_service_stopped">Service should stop once disabled.</string>
     <string name="nls_note_missed">Check that notification was not received.</string>
+    <string name="nas_note_missed_enqueued">Check that notification was not enqueued.</string>
     <string name="cp_test">Condition Provider test</string>
     <string name="cp_service_name">Condition Provider for CTS Verifier</string>
     <string name="cp_info">This test checks that a ConditionProviderService can be enabled
