@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,28 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.service.notification.NotificationListenerService.REASON_LISTENER_CANCEL;
+import static com.android.cts.verifier.notifications.MockAssistant.JSON_FLAGS;
+import static com.android.cts.verifier.notifications.MockAssistant.JSON_ICON;
+import static com.android.cts.verifier.notifications.MockAssistant.JSON_ID;
+import static com.android.cts.verifier.notifications.MockAssistant.JSON_PACKAGE;
+import static com.android.cts.verifier.notifications.MockAssistant.JSON_TAG;
+import static com.android.cts.verifier.notifications.MockAssistant.JSON_WHEN;
+import static com.android.cts.verifier.notifications.MockAssistant.StatusCatcher;
+import static com.android.cts.verifier.notifications.MockAssistant.StringListResultCatcher;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
+import android.content.Intent;
+import android.provider.Settings;
 import android.provider.Settings.Secure;
+import android.service.notification.NotificationListenerService;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 import com.android.cts.verifier.R;
 
@@ -35,11 +50,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.android.cts.verifier.notifications.MockListener.*;
-
-public class NotificationListenerVerifierActivity extends InteractiveVerifierActivity
+public class NotificationAssistantVerifierActivity extends InteractiveVerifierActivity
         implements Runnable {
-    private static final String TAG = "NoListenerVerifier";
+    private static final String TAG = "NoAssistantVerifier";
+
+    protected static final String ASSISTANT_PATH = "com.android.cts.verifier/" +
+            "com.android.cts.verifier.notifications.MockAssistant";
+    private static final String ENABLED_NOTIFICATION_ASSISTANT_SETTING =
+            "enabled_notification_assistant";
 
     private String mTag1;
     private String mTag2;
@@ -59,12 +77,12 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     @Override
     int getTitleResource() {
-        return R.string.nls_test;
+        return R.string.nas_test;
     }
 
     @Override
     int getInstructionsResource() {
-        return R.string.nls_info;
+        return R.string.nas_info;
     }
 
     // Test Setup
@@ -74,13 +92,14 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         List<InteractiveTestCase> tests = new ArrayList<>(9);
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
-        tests.add(new NotificationRecievedTest());
+        tests.add(new NotificationEnqueuedTest());
+        tests.add(new NotificationReceivedTest());
         tests.add(new DataIntactTest());
         tests.add(new DismissOneTest());
-        tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
+        tests.add(new NotificationNotEnqueuedTest());
         tests.add(new NotificationNotReceivedTest());
         return tests;
     }
@@ -147,7 +166,109 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     // Tests
 
-    private class NotificationRecievedTest extends InteractiveTestCase {
+    protected class IsEnabledTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createSettingsItem(parent, R.string.nas_enable_service);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        void test() {
+            mNm.cancelAll();
+            Intent settings = new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS);
+            if (settings.resolveActivity(mPackageManager) == null) {
+                logFail("no settings activity");
+                status = FAIL;
+            } else {
+                String listeners = Secure.getString(getContentResolver(),
+                        ENABLED_NOTIFICATION_ASSISTANT_SETTING);
+                if (listeners != null && listeners.equals(ASSISTANT_PATH)) {
+                    status = PASS;
+                } else {
+                    status = WAIT_FOR_USER;
+                }
+                next();
+            }
+        }
+
+        void tearDown() {
+            // wait for the service to start
+            delay();
+        }
+    }
+
+    protected class ServiceStartedTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_service_started);
+        }
+
+        @Override
+        void test() {
+            MockAssistant.probeListenerStatus(mContext,
+                    new MockAssistant.StatusCatcher() {
+                        @Override
+                        public void accept(int result) {
+                            if (result == Activity.RESULT_OK) {
+                                status = PASS;
+                                next();
+                            } else {
+                                logFail();
+                                status = RETEST;
+                                delay();
+                            }
+                        }
+                    });
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            MockListener.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class NotificationEnqueuedTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_note_enqueued_received);
+
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            // wait for notifications to move through the system
+            delay();
+        }
+
+        @Override
+        void test() {
+            MockAssistant.probeListenerEnqueued(mContext,
+                    new StringListResultCatcher() {
+                        @Override
+                        public void accept(List<String> result) {
+                            if (result != null && result.size() > 0 && result.contains(mTag1)) {
+                                status = PASS;
+                            } else {
+                                logFail();
+                                status = FAIL;
+                            }
+                            next();
+                        }
+                    });
+            delay();  // in case the catcher never returns
+        }
+    }
+
+    private class NotificationReceivedTest extends InteractiveTestCase {
         @Override
         View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_note_received);
@@ -164,8 +285,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void test() {
-            MockListener.probeListenerPosted(mContext,
-                    new MockListener.StringListResultCatcher() {
+            MockAssistant.probeListenerPosted(mContext,
+                    new StringListResultCatcher() {
                         @Override
                         public void accept(List<String> result) {
                             if (result != null && result.size() > 0 && result.contains(mTag1)) {
@@ -189,8 +310,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void test() {
-            MockListener.probeListenerPayloads(mContext,
-                    new MockListener.StringListResultCatcher() {
+            MockAssistant.probeListenerPayloads(mContext,
+                    new StringListResultCatcher() {
                         @Override
                         public void accept(List<String> result) {
                             Set<String> found = new HashSet<String>();
@@ -242,7 +363,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                                     }
                                 } catch (JSONException e) {
                                     pass = false;
-                                    Log.e(TAG, "failed to unpack data from mocklistener", e);
+                                    Log.e(TAG, "failed to unpack data from MockAssistant", e);
                                 }
                             }
 
@@ -257,7 +378,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void tearDown() {
             mNm.cancelAll();
-            MockListener.resetListenerData(mContext);
+            MockAssistant.resetListenerData(mContext);
             delay();
         }
     }
@@ -278,11 +399,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void test() {
             if (status == READY) {
-                MockListener.clearOne(mContext, mTag1, mId1);
+                MockAssistant.clearOne(mContext, mTag1, mId1);
                 status = RETEST;
             } else {
-                MockListener.probeListenerRemoved(mContext,
-                        new MockListener.StringListResultCatcher() {
+                MockAssistant.probeListenerRemoved(mContext,
+                        new StringListResultCatcher() {
                             @Override
                             public void accept(List<String> result) {
                                 if (result != null && result.size() != 0
@@ -304,7 +425,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void tearDown() {
             mNm.cancelAll();
-            MockListener.resetListenerData(mContext);
+            MockAssistant.resetListenerData(mContext);
             delay();
         }
     }
@@ -325,10 +446,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void test() {
             if (status == READY) {
-                MockListener.clearOne(mContext, mTag1, mId1);
+                MockAssistant.clearOne(mContext, mTag1, mId1);
                 status = RETEST;
             } else {
-                MockListener.probeListenerRemovedWithReason(mContext,
+                MockAssistant.probeListenerRemovedWithReason(mContext,
                         new StringListResultCatcher() {
                             @Override
                             public void accept(List<String> result) {
@@ -384,11 +505,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void test() {
             if (status == READY) {
-                MockListener.clearAll(mContext);
+                MockAssistant.clearAll(mContext);
                 status = RETEST;
             } else {
-                MockListener.probeListenerRemoved(mContext,
-                        new MockListener.StringListResultCatcher() {
+                MockAssistant.probeListenerRemoved(mContext,
+                        new StringListResultCatcher() {
                             @Override
                             public void accept(List<String> result) {
                                 if (result != null && result.size() != 0
@@ -410,7 +531,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void tearDown() {
             mNm.cancelAll();
-            MockListener.resetListenerData(mContext);
+            MockAssistant.resetListenerData(mContext);
             delay();
         }
     }
@@ -418,7 +539,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     private class IsDisabledTest extends InteractiveTestCase {
         @Override
         View inflate(ViewGroup parent) {
-            return createNlsSettingsItem(parent, R.string.nls_disable_service);
+            return createSettingsItem(parent, R.string.nas_disable_service);
         }
 
         @Override
@@ -429,8 +550,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void test() {
             String listeners = Secure.getString(getContentResolver(),
-                    ENABLED_NOTIFICATION_LISTENERS);
-            if (listeners == null || !listeners.contains(LISTENER_PATH)) {
+                    ENABLED_NOTIFICATION_ASSISTANT_SETTING);
+            if (listeners == null || !listeners.equals(ASSISTANT_PATH)) {
                 status = PASS;
             } else {
                 status = WAIT_FOR_USER;
@@ -440,7 +561,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void tearDown() {
-            MockListener.resetListenerData(mContext);
+            MockAssistant.resetListenerData(mContext);
             delay();
         }
     }
@@ -453,8 +574,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void test() {
-            MockListener.probeListenerStatus(mContext,
-                    new MockListener.StatusCatcher() {
+            MockAssistant.probeListenerStatus(mContext,
+                    new StatusCatcher() {
                         @Override
                         public void accept(int result) {
                             if (result == Activity.RESULT_OK) {
@@ -476,10 +597,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
-    private class NotificationNotReceivedTest extends InteractiveTestCase {
+    private class NotificationNotEnqueuedTest extends InteractiveTestCase {
         @Override
         View inflate(ViewGroup parent) {
-            return createAutoItem(parent, R.string.nls_note_missed);
+            return createAutoItem(parent, R.string.nas_note_missed_enqueued);
 
         }
 
@@ -492,8 +613,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void test() {
-            MockListener.probeListenerPosted(mContext,
-                    new MockListener.StringListResultCatcher() {
+            MockAssistant.probeListenerEnqueued(mContext,
+                    new StringListResultCatcher() {
                         @Override
                         public void accept(List<String> result) {
                             if (result == null || result.size() == 0) {
@@ -511,8 +632,71 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         void tearDown() {
             mNm.cancelAll();
-            MockListener.resetListenerData(mContext);
+            MockAssistant.resetListenerData(mContext);
             delay();
+        }
+    }
+
+    private class NotificationNotReceivedTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_note_missed);
+
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            MockAssistant.probeListenerPosted(mContext,
+                    new StringListResultCatcher() {
+                        @Override
+                        public void accept(List<String> result) {
+                            if (result == null || result.size() == 0) {
+                                status = PASS;
+                            } else {
+                                logFail();
+                                status = FAIL;
+                            }
+                            next();
+                        }
+                    });
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            MockAssistant.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    protected View createSettingsItem(ViewGroup parent, int messageId) {
+        return createUserItem(parent, R.string.nls_start_settings, messageId);
+    }
+
+    @Override
+    public void launchSettings() {
+        startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
+    }
+
+    @Override
+    public void actionPressed(View v) {
+        Object tag = v.getTag();
+        if (tag instanceof Integer) {
+            int id = ((Integer) tag).intValue();
+            if (id == R.string.nls_start_settings) {
+                launchSettings();
+            } else if (id == R.string.attention_ready) {
+                mCurrentTest.status = READY;
+                next();
+            }
         }
     }
 }

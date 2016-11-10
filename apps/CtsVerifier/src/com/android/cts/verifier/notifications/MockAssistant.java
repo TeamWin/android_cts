@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.service.notification.Adjustment;
+import android.service.notification.NotificationAssistantService;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.ArrayMap;
@@ -29,17 +31,17 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MockListener extends NotificationListenerService {
+public class MockAssistant extends NotificationAssistantService {
     static final String TAG = "MockListener";
 
     static final String SERVICE_BASE = "android.service.notification.cts.";
     static final String SERVICE_CHECK = SERVICE_BASE + "SERVICE_CHECK";
+    static final String SERVICE_ENQUEUED = SERVICE_BASE + "SERVICE_ENQUEUED";
     static final String SERVICE_POSTED = SERVICE_BASE + "SERVICE_POSTED";
     static final String SERVICE_PAYLOADS = SERVICE_BASE + "SERVICE_PAYLOADS";
     static final String SERVICE_REMOVED = SERVICE_BASE + "SERVICE_REMOVED";
@@ -68,7 +70,8 @@ public class MockListener extends NotificationListenerService {
     public static final String JSON_MATCHES_ZEN_FILTER = "matches_zen_filter";
     public static final String JSON_REASON = "reason";
 
-    private ArrayList<String> mPosted = new ArrayList<String>();
+    private ArrayList<String> mEnqueued = new ArrayList<>();
+    private ArrayList<String> mPosted = new ArrayList<>();
     private ArrayMap<String, JSONObject> mNotifications = new ArrayMap<>();
     private ArrayMap<String, String> mNotificationKeys = new ArrayMap<>();
     private ArrayList<String> mRemoved = new ArrayList<String>();
@@ -86,8 +89,10 @@ public class MockListener extends NotificationListenerService {
         mTestPackages.add("com.android.cts.verifier");
         mTestPackages.add("com.android.cts.robot");
 
+        mEnqueued = new ArrayList<String>();
         mPosted = new ArrayList<String>();
         mRemoved = new ArrayList<String>();
+        mRemovedReason = new ArrayMap<>();
 
         mReceiver = new BroadcastReceiver() {
             @Override
@@ -95,6 +100,12 @@ public class MockListener extends NotificationListenerService {
                 String action = intent.getAction();
                 if (SERVICE_CHECK.equals(action)) {
                     Log.d(TAG, "SERVICE_CHECK");
+                    setResultCode(Activity.RESULT_OK);
+                } else if (SERVICE_ENQUEUED.equals(action)) {
+                    Log.d(TAG, "SERVICE_ENQUEUED");
+                    Bundle bundle = new Bundle();
+                    bundle.putStringArrayList(EXTRA_PAYLOAD, mEnqueued);
+                    setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_POSTED.equals(action)) {
                     Log.d(TAG, "SERVICE_POSTED");
@@ -145,13 +156,13 @@ public class MockListener extends NotificationListenerService {
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
                     if (key != null) {
-                        MockListener.this.cancelNotification(key);
+                        MockAssistant.this.cancelNotification(key);
                     } else {
                         Log.w(TAG, "Notification does not exist: " + tag);
                     }
                 } else if (SERVICE_CLEAR_ALL.equals(action)) {
                     Log.d(TAG, "SERVICE_CLEAR_ALL");
-                    MockListener.this.cancelAllNotifications();
+                    MockAssistant.this.cancelAllNotifications();
                 } else if (SERVICE_RESET.equals(action)) {
                     Log.d(TAG, "SERVICE_RESET");
                     resetData();
@@ -164,6 +175,7 @@ public class MockListener extends NotificationListenerService {
         IntentFilter filter = new IntentFilter();
         filter.addAction(SERVICE_CHECK);
         filter.addAction(SERVICE_DND);
+        filter.addAction(SERVICE_ENQUEUED);
         filter.addAction(SERVICE_POSTED);
         filter.addAction(SERVICE_ORDER);
         filter.addAction(SERVICE_PAYLOADS);
@@ -198,6 +210,7 @@ public class MockListener extends NotificationListenerService {
     }
 
     public void resetData() {
+        mEnqueued.clear();
         mPosted.clear();
         mNotifications.clear();
         mRemoved.clear();
@@ -227,19 +240,27 @@ public class MockListener extends NotificationListenerService {
     }
 
     @Override
+    public Adjustment onNotificationEnqueued(StatusBarNotification sbn, int importance,
+            boolean user) {
+        if (!mTestPackages.contains(sbn.getPackageName())) { return null; }
+        Log.d(TAG, "posted: " + sbn.getTag());
+        mEnqueued.add(sbn.getTag());
+        try {
+            mNotifications.put(sbn.getKey(), packNotification(sbn));
+            mNotificationKeys.put(sbn.getTag(), sbn.getKey());
+        } catch (JSONException e) {
+            Log.e(TAG, "failed to pack up notification payload", e);
+        }
+        return null;
+    }
+
+    @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
         if (!mTestPackages.contains(sbn.getPackageName())) { return; }
         Log.d(TAG, "posted: " + sbn.getTag());
         mPosted.add(sbn.getTag());
-        JSONObject notification = new JSONObject();
         try {
-            notification.put(JSON_TAG, sbn.getTag());
-            notification.put(JSON_ID, sbn.getId());
-            notification.put(JSON_PACKAGE, sbn.getPackageName());
-            notification.put(JSON_WHEN, sbn.getNotification().when);
-            notification.put(JSON_ICON, sbn.getNotification().icon);
-            notification.put(JSON_FLAGS, sbn.getNotification().flags);
-            mNotifications.put(sbn.getKey(), notification);
+            mNotifications.put(sbn.getKey(), packNotification(sbn));
             mNotificationKeys.put(sbn.getTag(), sbn.getKey());
         } catch (JSONException e) {
             Log.e(TAG, "failed to pack up notification payload", e);
@@ -274,6 +295,17 @@ public class MockListener extends NotificationListenerService {
         onNotificationRankingUpdate(rankingMap);
     }
 
+    private JSONObject packNotification(StatusBarNotification sbn) throws JSONException {
+        JSONObject notification = new JSONObject();
+        notification.put(JSON_TAG, sbn.getTag());
+        notification.put(JSON_ID, sbn.getId());
+        notification.put(JSON_PACKAGE, sbn.getPackageName());
+        notification.put(JSON_WHEN, sbn.getNotification().when);
+        notification.put(JSON_ICON, sbn.getNotification().icon);
+        notification.put(JSON_FLAGS, sbn.getNotification().flags);
+        return notification;
+    }
+
     public static void resetListenerData(Context context) {
         sendCommand(context, SERVICE_RESET, null, 0);
     }
@@ -284,6 +316,10 @@ public class MockListener extends NotificationListenerService {
 
     public static void probeFilter(Context context, IntegerResultCatcher catcher) {
         requestIntegerResult(context, SERVICE_DND, catcher);
+    }
+
+    public static void probeListenerEnqueued(Context context, StringListResultCatcher catcher) {
+        requestStringListResult(context, SERVICE_ENQUEUED, catcher);
     }
 
     public static void probeListenerPosted(Context context, StringListResultCatcher catcher) {
