@@ -128,7 +128,8 @@ abstract class MediaPlayerStressTest extends InstrumentationTestCase {
         List<MediaFormat> mediaFormats = new ArrayList<MediaFormat>();
         DynamicConfigDeviceSide config = new DynamicConfigDeviceSide(MODULE_NAME);
         String[] components = mediaName.split(VIDEO_TOP_DIR);
-        List<String> mediaFormatStrings = config.getValues(components[components.length - 1]);
+        String key = mediaNameToKey(components[components.length -1]);
+        List<String> mediaFormatStrings = config.getValues(key);
         for (String mediaFormatString : mediaFormatStrings) {
             String[] trackFormatStrings = mediaFormatString.split(";");
             for (String trackFormatString : trackFormatStrings) {
@@ -137,6 +138,10 @@ abstract class MediaPlayerStressTest extends InstrumentationTestCase {
             }
         }
         return mediaFormats;
+    }
+
+    private String mediaNameToKey(String mediaName) {
+        return mediaName.replaceAll("[\\./]", "_").toLowerCase();
     }
 
     /**
