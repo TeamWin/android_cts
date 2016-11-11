@@ -37,7 +37,6 @@ import static android.server.cts.StateLogger.logE;
 
 class ActivityManagerState {
     public static final int DUMP_MODE_ACTIVITIES = 0;
-    public static final int DUMP_MODE_PIP = 1;
 
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
 

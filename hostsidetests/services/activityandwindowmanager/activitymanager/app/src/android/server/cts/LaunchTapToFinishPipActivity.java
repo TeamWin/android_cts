@@ -17,11 +17,12 @@
 package android.server.cts;
 
 import android.app.Activity;
+import android.graphics.Rect;
 
 public class LaunchTapToFinishPipActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        TapToFinishPipActivity.launchActivity(this);
+        PipActivity.launchActivity(this, new Rect(0, 0, 500, 500), true /* tapToLaunch */);
     }
 }

@@ -66,12 +66,7 @@
                 android:supportsPictureInPicture="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                 android:exported="true"
-        />
-        <activity android:name=".AutoEnterPipActivity"
-                  android:resizeableActivity="true"
-                  android:supportsPictureInPicture="true"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-                  android:exported="true"
+                android:taskAffinity="nobody.but.PipActivity"
         />
         <activity android:name=".AlwaysFocusablePipActivity"
                   android:theme="@style/Theme.Transparent"
@@ -100,12 +95,6 @@
                   android:taskAffinity="nobody.but.LaunchPipOnPipActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
-        />
-        <activity android:name=".TapToFinishPipActivity"
-                  android:resizeableActivity="true"
-                  android:supportsPictureInPicture="true"
-                  android:exported="true"
-                  android:taskAffinity="nobody.but.TapToFinishPip"
         />
         <activity android:name=".LaunchTapToFinishPipActivity"
                   android:resizeableActivity="true"
