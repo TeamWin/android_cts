@@ -23,7 +23,7 @@ LOCAL_MODULE_TAGS := optional
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_MODULE := CtsJdwpSecurityHostTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 

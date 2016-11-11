@@ -24,7 +24,7 @@ checkFile() {
 }
 
 JAR_DIR=${ANDROID_HOST_OUT}/framework
-JARS="ddmlib-prebuilt.jar tradefed-prebuilt.jar hosttestlib.jar cts-native-scanner.jar cts-native-scanner-tests.jar"
+JARS="ddmlib-prebuilt.jar tradefed.jar hosttestlib.jar cts-native-scanner.jar cts-native-scanner-tests.jar"
 
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}

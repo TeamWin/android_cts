@@ -21,7 +21,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := CtsHostsideWebViewTests
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := tradefed
 
 LOCAL_CTS_TEST_PACKAGE := android.webkit.hostside
 
