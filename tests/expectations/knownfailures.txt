@@ -260,13 +260,6 @@
    bug: 23144425
 },
 {
-   description: "Telephony returning wrong value.",
-   names: [
-     "android.telephony.cts.CellInfoTest#testCellInfo"
-   ],
-   bug: 23979591
-},
-{
    description: "Video encoding tests are timing out.",
    names: [
      "android.media.cts.VideoEncoderTest#testGoogH264FlexArbitraryW",

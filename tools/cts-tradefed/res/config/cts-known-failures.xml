@@ -195,9 +195,6 @@
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.ExtendedInCallServiceTest#testAddNewOutgoingCallAndThenDisconnect" />
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.RemoteConferenceTest#testRemoteConferenceCallbacks_ConferenceableConnections" />
 
-    <!-- b/23979591 -->
-    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.cts.CellInfoTest#testCellInfo" />
-
     <!-- b/23779020 -->
     <option name="compatibility:exclude-filter" value="CtsTransitionTestCases android.transition.cts.ChangeScrollTest#testChangeScroll" />
 
