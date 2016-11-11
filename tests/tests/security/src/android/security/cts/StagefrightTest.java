@@ -369,7 +369,13 @@ public class StagefrightTest extends InstrumentationTestCase {
         for (int t = 0; t < numtracks; t++) {
             // find all the available decoders for this format
             ArrayList<String> matchingCodecs = new ArrayList<String>();
-            MediaFormat format = ex.getTrackFormat(t);
+            MediaFormat format = null;
+            try {
+                format = ex.getTrackFormat(t);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "could not get track format for track " + t);
+                continue;
+            }
             String mime = format.getString(MediaFormat.KEY_MIME);
             for (MediaCodecInfo info: codecList.getCodecInfos()) {
                 if (info.isEncoder()) {
