@@ -37,7 +37,7 @@ public class VirtualDisplayActivity extends Activity {
     private static final String TAG = "VirtualDisplayActivity";
 
     private static final int DEFAULT_DENSITY_DPI = 160;
-    private static final String KEY_DENSITY_DPI = "densityDpi";
+    private static final String KEY_DENSITY_DPI = "density_dpi";
 
     private DisplayManager mDisplayManager;
     private VirtualDisplay mVirtualDisplay;

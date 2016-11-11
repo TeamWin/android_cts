@@ -58,7 +58,8 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
                 " size=" + buildCoordString(config.screenWidthDp, config.screenHeightDp) +
                 " displaySize=" + buildCoordString(point.x, point.y) +
                 " metricsSize=" + buildCoordString(metrics.widthPixels, metrics.heightPixels) +
-                " smallestScreenWidth=" + config.smallestScreenWidthDp;
+                " smallestScreenWidth=" + config.smallestScreenWidthDp +
+                " densityDpi=" + config.densityDpi;
 
         Log.i(getTag(), line);
     }

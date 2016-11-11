@@ -71,7 +71,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND =
             "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
 
-    protected static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
+    static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
 
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
 
@@ -80,6 +80,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
 
     private static final String LOCK_CREDENTIAL = "1234";
+
+    private static final int INVALID_DISPLAY_ID = -1;
 
     static String componentName = "android.server.cts";
 
@@ -107,6 +109,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
         return base;
     }
+
+    protected static String getAmStartCmd(final String activityName, final int displayId) {
+        return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
+                + " --display " + displayId;
+	}
 
     protected static String getAmStartCmdOverHome(final String activityName) {
         return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
@@ -205,6 +212,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mDevice.executeShellCommand(command, outputReceiver);
     }
 
+    protected void launchActivity(boolean toSide, boolean randomData, boolean multipleTask,
+            String targetActivityName) throws Exception {
+        launchActivity(toSide, randomData, multipleTask, targetActivityName, INVALID_DISPLAY_ID);
+    }
+
     /**
      * Launch specific target activity. It uses existing instance of {@link #LAUNCHING_ACTIVITY}, so
      * that one should be started first.
@@ -214,10 +226,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      * @param targetActivityName Target activity to be launched. Only class name should be provided,
      *                           package name of {@link #LAUNCHING_ACTIVITY} will be added
      *                           automatically.
+     * @param displayId Display id where target activity should be launched.
      * @throws Exception
      */
     protected void launchActivity(boolean toSide, boolean randomData, boolean multipleTask,
-            String targetActivityName) throws Exception {
+            String targetActivityName, int displayId) throws Exception {
         StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(LAUNCHING_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
         if (toSide) {
@@ -231,6 +244,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
         if (targetActivityName != null) {
             commandBuilder.append(" --es target_activity ").append(targetActivityName);
+        }
+        if (displayId != INVALID_DISPLAY_ID) {
+            commandBuilder.append(" --ei display_id ").append(displayId);
         }
         executeShellCommand(commandBuilder.toString());
     }
@@ -568,7 +584,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
     private static final Pattern sNewConfigPattern = Pattern.compile(
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)" +
-            " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+)");
+            " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
 
@@ -580,13 +596,14 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int metricsWidth;
         int metricsHeight;
         int smallestWidthDp;
+        int densityDpi;
 
         @Override
         public String toString() {
             return "ReportedSizes: {widthDp=" + widthDp + " heightDp=" + heightDp +
                     " displayWidth=" + displayWidth + " displayHeight=" + displayHeight +
                     " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight +
-                    " smallestWidthDp=" + smallestWidthDp + "}";
+                    " smallestWidthDp=" + smallestWidthDp + " densityDpi=" + densityDpi + "}";
         }
     }
 
@@ -605,6 +622,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 details.metricsWidth = Integer.parseInt(matcher.group(6));
                 details.metricsHeight = Integer.parseInt(matcher.group(7));
                 details.smallestWidthDp = Integer.parseInt(matcher.group(8));
+                details.densityDpi = Integer.parseInt(matcher.group(9));
                 return details;
             }
         }

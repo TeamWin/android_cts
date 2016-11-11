@@ -16,6 +16,7 @@
 
 package android.server.cts;
 
+import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
@@ -26,8 +27,10 @@ import com.android.tradefed.device.ITestDevice;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,16 +90,23 @@ public class WindowManagerState {
     private static final Pattern sInputMethodWindowPattern =
             Pattern.compile("mInputMethodWindow=Window\\{([0-9a-fA-F]+) u\\d+ .+\\}.*");
 
+    private static final Pattern sDisplayIdPattern =
+            Pattern.compile("Display: mDisplayId=(\\d+)");
+
     private static final Pattern[] sExtractStackExitPatterns = {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
             sDebuggerWindowPattern, sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
             sWaitingForDebuggerFocusedWindowPattern,
             sFocusedAppPattern, sLastAppTransitionPattern, sDefaultPinnedStackBoundsPattern,
-            sPinnedStackMovementBoundsPattern};
+            sPinnedStackMovementBoundsPattern, sDisplayIdPattern };
 
     // Windows in z-order with the top most at the front of the list.
     private List<WindowState> mWindowStates = new ArrayList();
-    private List<WindowStack> mStacks = new ArrayList();
+    // Stacks in z-order with the top most at the front of the list, starting with primary display.
+    private final List<WindowStack> mStacks = new ArrayList();
+    // Stacks on all attached displays, in z-order with the top most at the front of the list.
+    private final Map<Integer, List<WindowStack>> mDisplayStacks
+            = new HashMap<>();
     private List<Display> mDisplays = new ArrayList();
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
@@ -158,12 +168,15 @@ public class WindowManagerState {
 
         Collections.addAll(mSysDump, sysDump.split("\\n"));
 
+        int currentDisplayId = DEFAULT_DISPLAY_ID;
         while (!mSysDump.isEmpty()) {
             final Display display =
                     Display.create(mSysDump, sExtractStackExitPatterns);
             if (display != null) {
                 log(display.toString());
                 mDisplays.add(display);
+                currentDisplayId = display.mDisplayId;
+                mDisplayStacks.put(currentDisplayId, new ArrayList<>());
                 continue;
             }
 
@@ -172,6 +185,7 @@ public class WindowManagerState {
 
             if (stack != null) {
                 mStacks.add(stack);
+                mDisplayStacks.get(currentDisplayId).add(stack);
                 continue;
             }
 
@@ -353,8 +367,8 @@ public class WindowManagerState {
         return mLastTransition;
     }
 
-    int getFrontStackId() {
-        return mStacks.get(0).mStackId;
+    int getFrontStackId(int displayId) {
+        return mDisplayStacks.get(displayId).get(0).mStackId;
     }
 
     public int getRotation() {
@@ -677,8 +691,6 @@ public class WindowManagerState {
     static class Display extends WindowContainer {
         private static final String TAG = "[Display] ";
 
-        private static final Pattern sDisplayIdPattern =
-                Pattern.compile("Display: mDisplayId=(\\d+)");
         private static final Pattern sDisplayInfoPattern =
                 Pattern.compile("(.+) (\\d+)dpi cur=(\\d+)x(\\d+) app=(\\d+)x(\\d+) (.+)");
 

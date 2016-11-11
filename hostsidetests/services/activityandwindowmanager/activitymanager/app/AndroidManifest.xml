@@ -19,6 +19,9 @@
           xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
           package="android.server.cts">
 
+    <!-- virtual display test permissions -->
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
+
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <application>

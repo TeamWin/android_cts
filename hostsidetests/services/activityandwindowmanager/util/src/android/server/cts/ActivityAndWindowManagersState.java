@@ -43,6 +43,7 @@ public class ActivityAndWindowManagersState extends Assert {
     // Clone of android DisplayMetrics.DENSITY_DEFAULT (DENSITY_MEDIUM)
     // (Needed in host-side tests to convert dp to px.)
     private static final int DISPLAY_DENSITY_DEFAULT = 160;
+    static final int DEFAULT_DISPLAY_ID = 0;
 
     // Default minimal size of resizable task, used if none is set explicitly.
     // Must be kept in sync with 'default_minimal_size_resizable_task' dimen from frameworks/base.
@@ -351,8 +352,8 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     void assertFrontStack(String msg, int stackId) throws Exception {
-        assertEquals(msg, stackId, mAmState.getFrontStackId());
-        assertEquals(msg, stackId, mWmState.getFrontStackId());
+        assertEquals(msg, stackId, mAmState.getFrontStackId(DEFAULT_DISPLAY_ID));
+        assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY_ID));
     }
 
     void assertFocusedStack(String msg, int stackId) throws Exception {
