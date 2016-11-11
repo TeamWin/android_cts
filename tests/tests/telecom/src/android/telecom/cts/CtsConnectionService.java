@@ -44,8 +44,9 @@ import java.util.Collections;
  *                     Telecom framework to the test connection service.
  * sTelecomConnectionService: Contains the connection service object registered to the Telecom
  *                            framework. We use this object to forward any communication from the
- *                            test connection service to the Telecom framework.
- *
+ *                            test connection service to the Telecom framework. After Telecom
+ *                            binds to CtsConnectionService, this is set to be the instance of
+ *                            CtsConnectionService created by the framework after Telecom binds.
  */
 public class CtsConnectionService extends ConnectionService {
     private static String LOG_TAG = "CtsConnectionService";
@@ -62,19 +63,9 @@ public class CtsConnectionService extends ConnectionService {
         mIsServiceBound = true;
     }
 
-    // ConnectionService used by default as a fallback if no connection service is specified
-    // during test setup.
-    private static ConnectionService mMockConnectionService = new MockConnectionService();
-
-    /**
-     * Used to control whether the {@link MockVideoProvider} will be created when connections are
-     * created.  Used by {@link VideoCallTest#testVideoCallDelayProvider()} to test scenario where
-     * the {@link MockVideoProvider} is not created immediately when the Connection is created.
-     */
     private static Object sLock = new Object();
 
-    public static void setUp(PhoneAccountHandle phoneAccountHandle,
-            ConnectionService connectionService) throws Exception {
+    public static void setUp(ConnectionService connectionService) throws Exception {
         synchronized(sLock) {
             if (sConnectionService != null) {
                 throw new Exception("Mock ConnectionService exists.  Failed to call tearDown().");
@@ -98,8 +89,7 @@ public class CtsConnectionService extends ConnectionService {
                 return sConnectionService.onCreateOutgoingConnection(
                         connectionManagerPhoneAccount, request);
             } else {
-                return mMockConnectionService.onCreateOutgoingConnection(
-                        connectionManagerPhoneAccount, request);
+                return null;
             }
         }
     }
@@ -112,8 +102,7 @@ public class CtsConnectionService extends ConnectionService {
                 return sConnectionService.onCreateIncomingConnection(
                         connectionManagerPhoneAccount, request);
             } else {
-                return mMockConnectionService.onCreateIncomingConnection(
-                        connectionManagerPhoneAccount, request);
+                return null;
             }
         }
     }
@@ -123,8 +112,6 @@ public class CtsConnectionService extends ConnectionService {
         synchronized(sLock) {
             if (sConnectionService != null) {
                 sConnectionService.onConference(connection1, connection2);
-            } else {
-                mMockConnectionService.onConference(connection1, connection2);
             }
         }
     }
@@ -134,8 +121,6 @@ public class CtsConnectionService extends ConnectionService {
         synchronized(sLock) {
             if (sConnectionService != null) {
                 sConnectionService.onRemoteExistingConnectionAdded(connection);
-            } else {
-                mMockConnectionService.onRemoteExistingConnectionAdded(connection);
             }
         }
     }
@@ -185,8 +170,6 @@ public class CtsConnectionService extends ConnectionService {
         synchronized(sLock) {
             if (sConnectionService != null) {
                 sConnectionService.onRemoteConferenceAdded(conference);
-            } else {
-                mMockConnectionService.onRemoteConferenceAdded(conference);
             }
         }
     }
