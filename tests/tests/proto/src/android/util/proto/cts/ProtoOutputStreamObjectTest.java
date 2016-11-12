@@ -779,4 +779,115 @@ public class ProtoOutputStreamObjectTest extends TestCase {
             // good
         }
     }
+
+    /**
+     * Test writeObject, which takes a pre-encoded and compacted protobuf object and writes it into
+     * a field.
+     */
+    public void testWriteObject() {
+        byte[] innerRaw = new byte[] {
+            // varint 1 -> 42
+            (byte)0x08,
+            (byte)0xd0, (byte)0x02,
+            // string 2 -> "ab"
+            (byte)0x12,
+            (byte)0x02,
+            (byte)0x62, (byte)0x63,
+            // object 3 -> ...
+            (byte)0x1a,
+            (byte)0x4,
+                // varint 4 -> 0
+                (byte)0x20,
+                (byte)0x00,
+                // varint 4 --> 1
+                (byte)0x20,
+                (byte)0x01,
+        };
+
+        final ProtoOutputStream po = new ProtoOutputStream();
+        po.writeObject(ProtoOutputStream.makeFieldId(10,
+                    ProtoOutputStream.FIELD_COUNT_SINGLE | ProtoOutputStream.FIELD_TYPE_OBJECT),
+                innerRaw);
+
+        final byte[] result = po.getBytes();
+        final byte[] expected = new byte[2 + innerRaw.length];
+        expected[0] = (byte)0x52;
+        expected[1] = (byte)0x0d;
+        System.arraycopy(innerRaw, 0, expected, 2, innerRaw.length);
+
+        Assert.assertArrayEquals(expected, result);
+    }
+
+    /**
+     * Test writeObject, which takes a pre-encoded and compacted protobuf object and writes it into
+     * a field.
+     */
+    public void testWriteObjectEmpty() {
+        byte[] innerRaw = new byte[0];
+
+        final ProtoOutputStream po = new ProtoOutputStream();
+        po.writeObject(ProtoOutputStream.makeFieldId(10,
+                    ProtoOutputStream.FIELD_COUNT_SINGLE | ProtoOutputStream.FIELD_TYPE_OBJECT),
+                innerRaw);
+
+        final byte[] result = po.getBytes();
+
+        Assert.assertEquals(0, result.length);
+    }
+
+    /**
+     * Test writeObject, which takes a pre-encoded and compacted protobuf object and writes it into
+     * a field.
+     */
+    public void testWriteObjectRepeated() {
+        byte[] innerRaw = new byte[] {
+            // varint 1 -> 42
+            (byte)0x08,
+            (byte)0xd0, (byte)0x02,
+            // string 2 -> "ab"
+            (byte)0x12,
+            (byte)0x02,
+            (byte)0x62, (byte)0x63,
+            // object 3 -> ...
+            (byte)0x1a,
+            (byte)0x4,
+                // varint 4 -> 0
+                (byte)0x20,
+                (byte)0x00,
+                // varint 4 --> 1
+                (byte)0x20,
+                (byte)0x01,
+        };
+
+        final ProtoOutputStream po = new ProtoOutputStream();
+        po.writeRepeatedObject(ProtoOutputStream.makeFieldId(10,
+                    ProtoOutputStream.FIELD_COUNT_REPEATED | ProtoOutputStream.FIELD_TYPE_OBJECT),
+                innerRaw);
+
+        final byte[] result = po.getBytes();
+        final byte[] expected = new byte[2 + innerRaw.length];
+        expected[0] = (byte)0x52;
+        expected[1] = (byte)0x0d;
+        System.arraycopy(innerRaw, 0, expected, 2, innerRaw.length);
+
+        Assert.assertArrayEquals(expected, result);
+    }
+
+    /**
+     * Test writeObject, which takes a pre-encoded and compacted protobuf object and writes it into
+     * a field.
+     */
+    public void testWriteObjectRepeatedEmpty() {
+        byte[] innerRaw = new byte[0];
+
+        final ProtoOutputStream po = new ProtoOutputStream();
+        po.writeRepeatedObject(ProtoOutputStream.makeFieldId(10,
+                    ProtoOutputStream.FIELD_COUNT_REPEATED | ProtoOutputStream.FIELD_TYPE_OBJECT),
+                innerRaw);
+
+        Assert.assertArrayEquals(new byte[] {
+            (byte)0x52,
+            (byte)0x00
+        }, po.getBytes());
+    }
 }
