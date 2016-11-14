@@ -99,8 +99,8 @@ public class SubPlanCreatorTest extends TestCase {
         optionParser.parse(Arrays.asList(
             "-n", SP_NAME,
             "--session", SP_SESSION,
-            "-r", SP_RESULT_TYPE_FAILED,
-            "-r", SP_RESULT_TYPE_NOT_EXECUTED));
+            "--result-type", SP_RESULT_TYPE_FAILED,
+            "--result-type", SP_RESULT_TYPE_NOT_EXECUTED));
     }
 
     @Override
