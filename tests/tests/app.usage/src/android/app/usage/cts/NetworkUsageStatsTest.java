@@ -417,11 +417,13 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 long totalRxPackets = 0;
                 long totalTxBytes = 0;
                 long totalRxBytes = 0;
-                boolean metered = false;
+                boolean hasCorrectMetering = false;
+                int expectedMetering = sNetworkInterfacesToTest[i].getMetered() ?
+                        NetworkStats.Bucket.METERED_YES : NetworkStats.Bucket.METERED_NO;
                 while (result.hasNextBucket()) {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
-                    metered |= bucket.getMetered() == NetworkStats.Bucket.METERED_YES;
+                    hasCorrectMetering |= bucket.getMetered() == expectedMetering;
                     if (bucket.getUid() == Process.myUid()) {
                         totalTxPackets += bucket.getTxPackets();
                         totalRxPackets += bucket.getRxPackets();
@@ -431,8 +433,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 }
                 assertFalse(result.getNextBucket(bucket));
                 assertTrue("Incorrect metering for NetworkType: " +
-                                sNetworkInterfacesToTest[i].getNetworkType(),
-                        sNetworkInterfacesToTest[i].getMetered() == metered);
+                        sNetworkInterfacesToTest[i].getNetworkType(), hasCorrectMetering);
                 assertTrue("No Rx bytes usage for uid " + Process.myUid(), totalRxBytes > 0);
                 assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
                 assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
