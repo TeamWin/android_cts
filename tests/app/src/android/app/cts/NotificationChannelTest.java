@@ -45,7 +45,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(false, channel.shouldShowLights());
         assertEquals(false, channel.shouldVibrate());
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.getImportance());
-        assertEquals(null, channel.getRingtone());
+        assertEquals(null, channel.getSound());
     }
 
     public void testWriteToParcel() {
@@ -81,7 +81,7 @@ public class NotificationChannelTest extends AndroidTestCase {
                 .build();
         NotificationChannel channel =
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setRingtone(expected);
-        assertEquals(expected, channel.getRingtone());
+        channel.setSound(expected);
+        assertEquals(expected, channel.getSound());
     }
 }
