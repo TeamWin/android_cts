@@ -423,52 +423,55 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
                 Log.i(TAG, "start encoding");
             }
             EncodingHelper encodingHelper = new EncodingHelper();
-            mEncodingSurface = encodingHelper.startEncoding(maxSize.getWidth(), maxSize.getHeight(),
-                    mEncoderEventListener);
-            GlCompositor compositor = new GlCompositor();
-            if (DBG) {
-                Log.i(TAG, "start composition");
-            }
-            compositor.startComposition(mEncodingSurface, maxSize.getWidth(), maxSize.getHeight(),
-                    numDisplays);
-            for (int j = 0; j < NUM_DISPLAY_CREATION; j++) {
+            try {
+                mEncodingSurface = encodingHelper.startEncoding(
+                        maxSize.getWidth(), maxSize.getHeight(), mEncoderEventListener);
+                GlCompositor compositor = new GlCompositor();
                 if (DBG) {
-                    Log.i(TAG, "create display");
+                    Log.i(TAG, "start composition");
                 }
-                for (int k = 0; k < numDisplays; k++) {
-                    virtualDisplays[k] =
-                        new VirtualDisplayPresentation(getContext(),
-                                compositor.getWindowSurface(k),
-                                maxSize.getWidth()/numDisplays, maxSize.getHeight());
-                    virtualDisplays[k].createVirtualDisplay();
-                    virtualDisplays[k].createPresentation();
-                }
-                if (DBG) {
-                    Log.i(TAG, "start rendering");
-                }
-                for (int k = 0; k < NUM_RENDERING; k++) {
-                    for (int l = 0; l < numDisplays; l++) {
-                        virtualDisplays[l].doRendering(COLOR_RED);
+                compositor.startComposition(mEncodingSurface,
+                        maxSize.getWidth(), maxSize.getHeight(), numDisplays);
+                for (int j = 0; j < NUM_DISPLAY_CREATION; j++) {
+                    if (DBG) {
+                        Log.i(TAG, "create display");
                     }
-                    // do not care how many frames are actually rendered.
-                    Thread.sleep(1);
+                    for (int k = 0; k < numDisplays; k++) {
+                        virtualDisplays[k] =
+                            new VirtualDisplayPresentation(getContext(),
+                                    compositor.getWindowSurface(k),
+                                    maxSize.getWidth()/numDisplays, maxSize.getHeight());
+                        virtualDisplays[k].createVirtualDisplay();
+                        virtualDisplays[k].createPresentation();
+                    }
+                    if (DBG) {
+                        Log.i(TAG, "start rendering");
+                    }
+                    for (int k = 0; k < NUM_RENDERING; k++) {
+                        for (int l = 0; l < numDisplays; l++) {
+                            virtualDisplays[l].doRendering(COLOR_RED);
+                        }
+                        // do not care how many frames are actually rendered.
+                        Thread.sleep(1);
+                    }
+                    for (int k = 0; k < numDisplays; k++) {
+                        virtualDisplays[k].dismissPresentation();
+                        virtualDisplays[k].destroyVirtualDisplay();
+                    }
+                    compositor.recreateWindows();
                 }
-                for (int k = 0; k < numDisplays; k++) {
-                    virtualDisplays[k].dismissPresentation();
-                    virtualDisplays[k].destroyVirtualDisplay();
+                if (DBG) {
+                    Log.i(TAG, "stop composition");
                 }
-                compositor.recreateWindows();
+                compositor.stopComposition();
+            } finally {
+                if (DBG) {
+                    Log.i(TAG, "stop encoding");
+                }
+                encodingHelper.stopEncoding();
+                assertTrue(mCodecConfigReceived);
+                assertTrue(mCodecBufferReceived);
             }
-            if (DBG) {
-                Log.i(TAG, "stop composition");
-            }
-            compositor.stopComposition();
-            if (DBG) {
-                Log.i(TAG, "stop encoding");
-            }
-            encodingHelper.stopEncoding();
-            assertTrue(mCodecConfigReceived);
-            assertTrue(mCodecBufferReceived);
         }
     }
 
