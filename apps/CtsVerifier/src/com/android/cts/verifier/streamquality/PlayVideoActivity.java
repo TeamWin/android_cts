@@ -51,7 +51,7 @@ public class PlayVideoActivity extends PassFailButtons.Activity
     static final String EXTRA_STREAM = "com.android.cts.verifier.streamquality.EXTRA_STREAM";
 
     private static final String TAG = PlayVideoActivity.class.getName();
-    private static final long ENABLE_PASS_DELAY = 60 * 1000;
+    private static final long ENABLE_PASS_DELAY = 5 * 1000;
 
     private static final int FAIL_DIALOG_ID = 1;
 
