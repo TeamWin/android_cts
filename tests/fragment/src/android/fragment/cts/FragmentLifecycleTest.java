@@ -17,38 +17,45 @@
 
 package android.fragment.cts;
 
-import android.app.FragmentController;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertNotSame;
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertSame;
+import static junit.framework.TestCase.assertTrue;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentController;
 import android.app.FragmentHostCallback;
 import android.app.FragmentManager;
 import android.app.FragmentManager.FragmentLifecycleCallbacks;
+import android.app.FragmentManagerNonConfig;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Debug;
+import android.os.Parcelable;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.view.Window;
 import android.widget.TextView;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
-
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.TestCase.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -391,6 +398,47 @@ public class FragmentLifecycleTest {
                 verify(mockRecursiveLc, times(1)).onFragmentDestroyed(fm, childFragment);
             }
         });
+    }
+
+    /**
+     * Test to ensure that when dispatch* is called that the fragment manager
+     * doesn't cause the contained fragment states to change even if no state changes.
+     */
+    @Test
+    public void noPrematureStateChange() throws Throwable {
+        final FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+        FragmentTestUtil.resume(mActivityRule, fc, null);
+
+        mActivityRule.runOnUiThread(() -> {
+            fc.getFragmentManager().beginTransaction()
+                    .add(new StrictFragment(), "1")
+                    .commitNow();
+        });
+
+        Pair<Parcelable, FragmentManagerNonConfig> savedState =
+                FragmentTestUtil.destroy(mActivityRule, fc);
+
+        final FragmentController fragmentController = FragmentTestUtil.createController(mActivityRule);
+
+        mActivityRule.runOnUiThread(() -> {
+            fragmentController.attachHost(null);
+            fragmentController.dispatchCreate();
+            fragmentController.dispatchActivityCreated();
+            fragmentController.noteStateNotSaved();
+            fragmentController.execPendingActions();
+            fragmentController.dispatchStart();
+            fragmentController.reportLoaderStart();
+            fragmentController.dispatchResume();
+            fragmentController.restoreAllState(savedState.first, savedState.second);
+            fragmentController.dispatchResume();
+        });
+
+        FragmentManager fm = fragmentController.getFragmentManager();
+
+        StrictFragment fragment1 = (StrictFragment) fm.findFragmentByTag("1");
+
+        assertNotNull(fragment1);
+        assertFalse(fragment1.mCalledOnResume);
     }
 
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
