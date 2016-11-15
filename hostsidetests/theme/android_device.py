@@ -89,6 +89,11 @@ class androidDevice(object):
     def getOrientation(self):
         return int(self.runShellCommand("dumpsys | grep SurfaceOrientation")[0].split()[1])
 
+    def getHWType(self):
+        (output, err) = self.runShellCommand("dumpsys | grep android.hardware.type")
+        output = output.strip()
+        return output
+
 def runAdbDevices():
     devices = subprocess.check_output(["adb", "devices"])
     devices = devices.split('\n')[1:]

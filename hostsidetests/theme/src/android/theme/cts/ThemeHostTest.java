@@ -94,6 +94,9 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     private ExecutorCompletionService<File> mCompletionService;
 
+    /** the string identifying the hardware type. */
+    private String mHardwareType;
+
     @Override
     public void setAbi(IAbi abi) {
         mAbi = abi;
@@ -110,13 +113,14 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
         mDevice = getDevice();
         mDevice.uninstallPackage(APP_PACKAGE_NAME);
+        mHardwareType = mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim();
 
         // Get the APK from the build.
         final File app = MigrationHelper.getTestFile(mBuildInfo, String.format("%s.apk", APK_NAME));
         final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
         mDevice.installPackage(app, true, true, options);
 
-        final String density = getDensityBucketForDevice(mDevice);
+        final String density = getDensityBucketForDevice(mDevice, mHardwareType);
         final String zipFile = String.format("/%s.zip", density);
         mReferences = extractReferenceImages(zipFile);
 
@@ -150,7 +154,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
                 fail("Failed to unzip assets: " + zipFile);
             }
         } else {
-            if (checkHardwareTypeSkipTest(mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim())) {
+            if (checkHardwareTypeSkipTest(mHardwareType)) {
                 Log.logAndDisplay(LogLevel.WARN, LOG_TAG,
                         "Could not obtain resources for skipped themes test: " + zipFile);
             } else {
@@ -178,7 +182,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     }
 
     public void testThemes() throws Exception {
-        if (checkHardwareTypeSkipTest(mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim())) {
+        if (checkHardwareTypeSkipTest(mHardwareType)) {
             Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch");
             return;
         }
@@ -301,14 +305,17 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         return receiver.getOutput().contains("OK ");
     }
 
-    private static String getDensityBucketForDevice(ITestDevice device) {
+    private static String getDensityBucketForDevice(ITestDevice device, String hardwareType) {
+        if (hardwareType.contains("android.hardware.type.television")) {
+            // references images for tv are under bucket "tvdpi".
+            return "tvdpi";
+        }
         final int density;
         try {
             density = getDensityForDevice(device);
         } catch (DeviceNotAvailableException e) {
             throw new RuntimeException("Failed to detect device density", e);
         }
-
         final String bucket;
         switch (density) {
             case 120:
@@ -316,9 +323,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
                 break;
             case 160:
                 bucket = "mdpi";
-                break;
-            case 213:
-                bucket = "tvdpi";
                 break;
             case 240:
                 bucket = "hdpi";
@@ -360,7 +364,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
     }
 
     private static boolean checkHardwareTypeSkipTest(String hardwareTypeString) {
-        return hardwareTypeString.contains("android.hardware.type.watch")
-                || hardwareTypeString.contains("android.hardware.type.television");
+        return hardwareTypeString.contains("android.hardware.type.watch");
     }
 }
