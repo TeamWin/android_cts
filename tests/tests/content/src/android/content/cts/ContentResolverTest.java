@@ -910,6 +910,44 @@ public class ContentResolverTest extends AndroidTestCase {
         }
     }
 
+    public void testRefresh_DefaultImplReturnsFalse() {
+        boolean refreshed = mContentResolver.refresh(TABLE1_URI, null, null);
+        assertFalse(refreshed);
+        MockContentProvider.assertRefreshed(TABLE1_URI);
+    }
+
+    public void testRefresh_ReturnsProviderValue() {
+        try {
+            MockContentProvider.setRefreshReturnValue(true);
+            boolean refreshed = mContentResolver.refresh(TABLE1_URI, null, null);
+            assertTrue(refreshed);
+            MockContentProvider.assertRefreshed(TABLE1_URI);
+        } finally {
+            MockContentProvider.setRefreshReturnValue(false);
+        }
+    }
+
+    public void testRefresh_NullUriThrowsImmediately() {
+        try {
+            mContentResolver.refresh(null, null, null);
+            fail("did not throw NullPointerException when uri is null.");
+        } catch (NullPointerException e) {
+            //expected.
+        }
+    }
+
+    public void testRefresh_CancellableThrowsImmediately() {
+        CancellationSignal cancellationSignal = new CancellationSignal();
+        cancellationSignal.cancel();
+
+        try {
+            mContentResolver.refresh(TABLE1_URI, null, cancellationSignal);
+            fail("Expected OperationCanceledException");
+        } catch (OperationCanceledException ex) {
+            // expected
+        }
+    }
+
     public void testRegisterContentObserver() {
         final MockContentObserver mco = new MockContentObserver();
 

@@ -16,22 +16,15 @@
 
 package android.content.cts;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
+import static junit.framework.Assert.assertEquals;
 
+import android.annotation.Nullable;
 import android.content.ContentProvider;
+import android.content.ContentProvider.PipeDataWriter;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.UriMatcher;
-import android.content.ContentProvider.PipeDataWriter;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -44,6 +37,15 @@ import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.text.TextUtils;
 import android.util.Log;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 
 public class MockContentProvider extends ContentProvider
         implements PipeDataWriter<String> {
@@ -61,6 +63,9 @@ public class MockContentProvider extends ContentProvider
     private static final int TESTTABLE2_ID = 5;
     private static final int SELF_ID = 6;
     private static final int CRASH_ID = 6;
+
+    private static @Nullable Uri sRefreshedUri;
+    private static boolean sRefreshReturnValue;
 
     private final String mAuthority;
     private final String mDbName;
@@ -385,6 +390,13 @@ public class MockContentProvider extends ContentProvider
         }
     }
 
+    @Override
+    public boolean refresh(Uri uri, @Nullable Bundle args,
+            @Nullable CancellationSignal cancellationSignal) {
+        sRefreshedUri = uri;
+        return sRefreshReturnValue;
+    }
+
     private void crashOnLaunchIfNeeded() {
         if (getCrashOnLaunch(getContext())) {
             // The test case wants us to crash our process on first launch.
@@ -411,6 +423,14 @@ public class MockContentProvider extends ContentProvider
         } else {
             file.delete();
         }
+    }
+
+    public static void setRefreshReturnValue(boolean value) {
+        sRefreshReturnValue = value;
+    }
+
+    public static void assertRefreshed(Uri expectedUri) {
+        assertEquals(sRefreshedUri, expectedUri);
     }
 
     private static File getCrashOnLaunchFile(Context context) {
