@@ -25,9 +25,11 @@ import java.lang.Integer;
 import java.lang.String;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -45,7 +47,7 @@ class ActivityManagerState {
     private static final int HOME_ACTIVITY_TYPE = 1;
     private static final int RECENTS_ACTIVITY_TYPE = 2;
 
-    private final Pattern mDisplayIdPattern = Pattern.compile("Display #(\\d+)");
+    private final Pattern mDisplayIdPattern = Pattern.compile("Display #(\\d+).*");
     private final Pattern mStackIdPattern = Pattern.compile("Stack #(\\d+)\\:");
     private final Pattern mResumedActivityPattern =
             Pattern.compile("ResumedActivity\\: ActivityRecord\\{(.+) u(\\d+) (\\S+) (\\S+)\\}");
@@ -53,10 +55,12 @@ class ActivityManagerState {
             Pattern.compile("mFocusedStack=ActivityStack\\{(.+) stackId=(\\d+), (.+)\\}(.+)");
 
     private final Pattern[] mExtractStackExitPatterns =
-            { mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern};
+            { mStackIdPattern, mResumedActivityPattern, mFocusedStackPattern, mDisplayIdPattern };
 
-    // Stacks in z-order with the top most at the front of the list.
+    // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityStack> mStacks = new ArrayList();
+    // Stacks on all attached displays, in z-order with the top most at the front of the list.
+    private final Map<Integer, List<ActivityStack>> mDisplayStacks = new HashMap<>();
     private KeyguardControllerState mKeyguardControllerState;
     private int mFocusedStackId = -1;
     private String mResumedActivityRecord = null;
@@ -134,6 +138,7 @@ class ActivityManagerState {
 
             if (stack != null) {
                 mStacks.add(stack);
+                mDisplayStacks.get(currentDisplayId).add(stack);
                 if (stack.mResumedActivity != null) {
                     mResumedActivities.add(stack.mResumedActivity);
                 }
@@ -169,9 +174,10 @@ class ActivityManagerState {
             matcher = mDisplayIdPattern.matcher(line);
             if (matcher.matches()) {
                 log(line);
-                final String displayId = matcher.group(2);
+                final String displayId = matcher.group(1);
                 log(displayId);
                 currentDisplayId = Integer.parseInt(displayId);
+                mDisplayStacks.put(currentDisplayId, new ArrayList<>());
             }
         }
     }
@@ -185,8 +191,8 @@ class ActivityManagerState {
         mKeyguardControllerState = null;
     }
 
-    int getFrontStackId() {
-        return mStacks.get(0).mStackId;
+    int getFrontStackId(int displayId) {
+        return mDisplayStacks.get(displayId).get(0).mStackId;
     }
 
     int getFocusedStackId() {

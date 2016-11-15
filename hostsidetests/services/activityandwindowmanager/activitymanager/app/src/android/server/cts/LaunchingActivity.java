@@ -21,6 +21,7 @@ import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.content.ComponentName;
 import android.net.Uri;
@@ -59,10 +60,16 @@ public class LaunchingActivity extends Activity {
                         .build();
                 newIntent.setData(data);
             }
-        } else {
-            // We're all set, just launch.
         }
 
-        startActivity(newIntent);
+        ActivityOptions options = null;
+        final int displayId = extras.getInt("display_id", -1);
+        if (displayId != -1) {
+            options = ActivityOptions.makeBasic();
+            options.setLaunchDisplayId(displayId);
+            newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        }
+
+        startActivity(newIntent, options != null ? options.toBundle() : null);
     }
 }
