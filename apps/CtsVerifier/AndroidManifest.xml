@@ -2769,6 +2769,28 @@
                 android:name="com.android.cts.verifier.sensors.sixdof.Activities.TestActivity"
                 android:label="@string/title_activity_cts">
         </activity>
+        <activity android:name=".voicemail.VoicemailBroadcastActivity"
+          android:label="@string/voicemail_broadcast_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <data android:scheme="tel" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_telephony"/>
+        </activity>
+
+        <receiver android:name=".voicemail.VoicemailBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.telephony.action.SHOW_VOICEMAIL_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
