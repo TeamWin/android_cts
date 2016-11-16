@@ -49,6 +49,8 @@ public class ResultHandlerTest extends TestCase {
     private static final String DONE_B = "true";
     private static final String NOT_EXECUTED_A = "1";
     private static final String NOT_EXECUTED_B = "0";
+    private static final String RUNTIME_A = "100";
+    private static final String RUNTIME_B = "200";
     private static final String ABI = "mips64";
     private static final String ID_A = AbiUtils.createId(ABI, NAME_A);
     private static final String ID_B = AbiUtils.createId(ABI, NAME_B);
@@ -109,7 +111,7 @@ public class ResultHandlerTest extends TestCase {
             "  <Summary pass=\"%d\" failed=\"%d\" not_executed=\"%d\" " +
             "modules_done=\"1\" modules_total=\"1\" />\n";
     private static final String XML_MODULE =
-            "  <Module name=\"%s\" abi=\"%s\" device=\"%s\" done=\"%s\" not_executed=\"%s\">\n" +
+            "  <Module name=\"%s\" abi=\"%s\" device=\"%s\" runtime=\"%s\" done=\"%s\" not_executed=\"%s\">\n" +
             "%s" +
             "  </Module>\n";
     private static final String XML_CASE =
@@ -163,6 +165,7 @@ public class ResultHandlerTest extends TestCase {
         result.addInvocationInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
         IModuleResult moduleA = result.getOrCreateModule(ID_A);
         moduleA.setDone(false);
+        moduleA.addRuntime(Integer.parseInt(RUNTIME_A));
         ICaseResult moduleACase = moduleA.getOrCreateResult(CLASS_A);
         ITestResult moduleATest1 = moduleACase.getOrCreateResult(METHOD_1);
         moduleATest1.setResultStatus(TestStatus.PASS);
@@ -172,6 +175,7 @@ public class ResultHandlerTest extends TestCase {
 
         IModuleResult moduleB = result.getOrCreateModule(ID_B);
         moduleB.setDone(true);
+        moduleB.addRuntime(Integer.parseInt(RUNTIME_B));
         ICaseResult moduleBCase = moduleB.getOrCreateResult(CLASS_B);
         ITestResult moduleBTest3 = moduleBCase.getOrCreateResult(METHOD_3);
         moduleBTest3.setResultStatus(TestStatus.FAIL);
@@ -211,7 +215,7 @@ public class ResultHandlerTest extends TestCase {
             String summary = String.format(XML_SUMMARY, 2, 1, 1);
             String moduleATest = String.format(XML_TEST_PASS, METHOD_1);
             String moduleACases = String.format(XML_CASE, CLASS_A, moduleATest);
-            String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, DONE_A,
+            String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, RUNTIME_A, DONE_A,
                     NOT_EXECUTED_A, moduleACases);
             String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, MESSAGE, STACK_TRACE,
                     BUG_REPORT, LOGCAT, SCREENSHOT);
@@ -223,7 +227,7 @@ public class ResultHandlerTest extends TestCase {
                     Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
             String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
             String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
-            String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, DONE_B,
+            String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, RUNTIME_B, DONE_B,
                     NOT_EXECUTED_B, moduleBCases);
             String modules = String.format(JOIN, moduleA, moduleB);
             String hostName = "";
@@ -276,6 +280,7 @@ public class ResultHandlerTest extends TestCase {
         assertEquals("Incorrect ABI", ABI, moduleA.getAbi());
         assertEquals("Incorrect name", NAME_A, moduleA.getName());
         assertEquals("Incorrect ID", ID_A, moduleA.getId());
+        assertEquals("Incorrect runtime", Integer.parseInt(RUNTIME_A), moduleA.getRuntime());
         List<ICaseResult> moduleACases = moduleA.getResults();
         assertEquals("Expected 1 test case", 1, moduleACases.size());
         ICaseResult moduleACase = moduleACases.get(0);
@@ -298,6 +303,7 @@ public class ResultHandlerTest extends TestCase {
         assertEquals("Incorrect ABI", ABI, moduleB.getAbi());
         assertEquals("Incorrect name", NAME_B, moduleB.getName());
         assertEquals("Incorrect ID", ID_B, moduleB.getId());
+        assertEquals("Incorrect runtime", Integer.parseInt(RUNTIME_B), moduleB.getRuntime());
         List<ICaseResult> moduleBCases = moduleB.getResults();
         assertEquals("Expected 1 test case", 1, moduleBCases.size());
         ICaseResult moduleBCase = moduleBCases.get(0);
