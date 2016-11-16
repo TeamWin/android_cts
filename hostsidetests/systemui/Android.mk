@@ -22,7 +22,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE := CtsSystemUiHostTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 

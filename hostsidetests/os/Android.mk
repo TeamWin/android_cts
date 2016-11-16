@@ -23,7 +23,7 @@ LOCAL_MODULE := CtsOsHostTestCases
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util cts-migration-lib
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util cts-migration-lib
 
 LOCAL_CTS_TEST_PACKAGE := android.host.os
 

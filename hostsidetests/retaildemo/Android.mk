@@ -25,7 +25,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_LIBRARIES := \
     tools-common-prebuilt \
     cts-tradefed \
-    tradefed-prebuilt
+    tradefed
 
 LOCAL_CTS_TEST_PACKAGE := android.host.retaildemo
 

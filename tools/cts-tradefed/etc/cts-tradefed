@@ -80,7 +80,7 @@ if [ -z ${CTS_ROOT} ]; then
 fi;
 
 JAR_DIR=${CTS_ROOT}/android-cts/tools
-JARS="tradefed-prebuilt
+JARS="tradefed
   hosttestlib
   compatibility-host-util
   compatibility-host-util-tests

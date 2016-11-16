@@ -56,7 +56,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	descGen \
 	jsr305lib
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt
+LOCAL_JAVA_LIBRARIES := tradefed
 
 LOCAL_MODULE := cts-icu-tools
 
