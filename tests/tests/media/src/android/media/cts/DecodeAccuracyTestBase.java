@@ -44,6 +44,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.util.Pair;
@@ -73,7 +75,12 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
 @TargetApi(16)
+@RunWith(AndroidJUnit4.class)
 public class DecodeAccuracyTestBase
     extends ActivityInstrumentationTestCase2<DecodeAccuracyTestActivity> {
 
@@ -86,9 +93,12 @@ public class DecodeAccuracyTestBase
         super(DecodeAccuracyTestActivity.class);
     }
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
+        injectInstrumentation(InstrumentationRegistry.getInstrumentation());
+        setActivityInitialTouchMode(false);
         mActivity = getActivity();
         getInstrumentation().waitForIdleSync();
         mContext = getInstrumentation().getTargetContext();
@@ -96,8 +106,9 @@ public class DecodeAccuracyTestBase
         testHelper = new TestHelper(mContext, mActivity);
     }
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         mActivity = null;
         super.tearDown();
     }
@@ -114,6 +125,11 @@ public class DecodeAccuracyTestBase
 
     public static <T> T checkNotNull(T reference) {
         assertNotNull(reference);
+        return reference;
+    }
+
+    public static <T> T checkNotNull(String msg, T reference) {
+        assertNotNull(msg, reference);
         return reference;
     }
 
@@ -419,6 +435,8 @@ public class DecodeAccuracyTestBase
     /* Utility class for collecting common test case functionality. */
     class TestHelper {
 
+        private final String TAG =  TestHelper.class.getSimpleName();
+
         private final Context context;
         private final Handler handler;
         private final Activity activity;
@@ -473,13 +491,21 @@ public class DecodeAccuracyTestBase
         }
 
         public synchronized Bitmap generateBitmapFromVideoViewSnapshot(VideoViewSnapshot snapshot) {
+            final long timeOutMs = TimeUnit.SECONDS.toMillis(10);
+            final long start = SystemClock.elapsedRealtime();
             handler.post(snapshot);
             try {
-                while (!snapshot.isBitmapReady()) {
+                while (!snapshot.isBitmapReady()
+                        && (SystemClock.elapsedRealtime() - start < timeOutMs)) {
                     Thread.sleep(100);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                return null;
+            }
+            if (!snapshot.isBitmapReady()) {
+                Log.e(TAG, "Time out in generateBitmapFromVideoViewSnapshot().");
+                return null;
             }
             return snapshot.getBitmap();
         }
@@ -1165,8 +1191,7 @@ class TextureViewSnapshot extends VideoViewSnapshot {
 class SurfaceViewSnapshot extends VideoViewSnapshot  {
 
     private static final String TAG = SurfaceViewSnapshot.class.getSimpleName();
-    private static final int PIXELCOPY_REQUEST_SLEEP_MS = 30;
-    private static final int PIXELCOPY_REQUEST_MAX_ATTEMPTS = 20;
+    private static final int PIXELCOPY_REQUEST_SLEEP_MS = 100;
     private static final int PIXELCOPY_TIMEOUT_MS = 1000;
 
     private final Thread copyThread;
@@ -1182,15 +1207,13 @@ class SurfaceViewSnapshot extends VideoViewSnapshot  {
                 bitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888);
                 try {
                     // Wait for SurfaceView to be available.
-                    for (int i = 0; i < PIXELCOPY_REQUEST_MAX_ATTEMPTS; i++) {
-                        copyResult = copyHelper.request(surfaceView, bitmap);
-                        if (copyResult == PixelCopy.SUCCESS) {
-                            break;
-                        }
+                    while (copyResult != PixelCopy.SUCCESS) {
                         Thread.sleep(PIXELCOPY_REQUEST_SLEEP_MS);
+                        copyResult = copyHelper.request(surfaceView, bitmap);
                     }
                 } catch (InterruptedException e) {
-                    Log.w(TAG, "Pixel Copy is stopped/interrupted before it finishes.", e);
+                    Log.e(TAG, "Pixel Copy is stopped/interrupted before it finishes.", e);
+                    bitmap = null;
                 }
                 copyHelper.release();
             }
@@ -1294,10 +1317,10 @@ class GLSurfaceViewSnapshot extends VideoViewSnapshot {
         try {
             waitForByteBuffer();
         } catch (InterruptedException e) {
-            Log.w(TAG, e.getMessage());
-            Log.w(TAG, "ByteBuffer may contain incorrect pixels.");
+            Log.e(TAG, e.getMessage());
+            bitmap = null;
+            return;
         }
-        // Get ByteBuffer anyway. Let the test fail if ByteBuffer contains incorrect pixels.
         ByteBuffer byteBuffer = glSurfaceViewFactory.getByteBuffer();
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         byteBuffer.rewind();
