@@ -501,9 +501,9 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     private void testTrackSelection(int resid) throws Exception {
         AssetFileDescriptor fd1 = null;
+        MediaExtractor ex1 = new MediaExtractor();
         try {
             fd1 = mResources.openRawResourceFd(resid);
-            MediaExtractor ex1 = new MediaExtractor();
             ex1.setDataSource(fd1.getFileDescriptor(), fd1.getStartOffset(), fd1.getLength());
 
             ByteBuffer buf1 = ByteBuffer.allocate(1024*1024);
@@ -664,6 +664,9 @@ public class DecoderTest extends MediaPlayerTestBase {
             }
 
         } finally {
+            if (ex1 != null) {
+                ex1.release();
+            }
             if (fd1 != null) {
                 fd1.close();
             }
