@@ -1738,7 +1738,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".tv.MockTvInputSetupActivity">
