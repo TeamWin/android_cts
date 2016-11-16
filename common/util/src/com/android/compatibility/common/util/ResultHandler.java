@@ -155,6 +155,8 @@ public class ResultHandler {
                     int notExecuted =
                             Integer.parseInt(parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
                     module.setNotExecuted(notExecuted);
+                    int runtime = Integer.parseInt(parser.getAttributeValue(NS, RUNTIME_ATTR));
+                    module.addRuntime(runtime);
                     while (parser.nextTag() == XmlPullParser.START_TAG) {
                         parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
                         String caseName = parser.getAttributeValue(NS, NAME_ATTR);
