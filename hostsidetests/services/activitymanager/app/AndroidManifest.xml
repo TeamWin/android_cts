@@ -122,7 +122,7 @@
                   <layout android:defaultWidth="25%"
                           android:defaultHeight="35%"
                           android:gravity="top|right"
-                          android:minWidth="100dp"
+                          android:minWidth="90dp"
                           android:minHeight="80dp"
                   />
         </activity>
@@ -133,7 +133,7 @@
                   <layout android:defaultWidth="25%"
                           android:defaultHeight="35%"
                           android:gravity="bottom|left"
-                          android:minWidth="100dp"
+                          android:minWidth="90dp"
                           android:minHeight="80dp"
                   />
         </activity>
