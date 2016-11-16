@@ -38,6 +38,7 @@
     <string name="test_category_features">Features</string>
     <string name="test_category_deskclock">Clock</string>
     <string name="test_category_jobscheduler">Job Scheduler</string>
+    <string name="test_category_telephony">Telephony</string>
     <string name="test_category_tv">TV</string>
     <string name="test_category_other">Other</string>
     <string name="clear">Clear</string>
@@ -3178,5 +3179,18 @@ You should be prompted to select credentials; choose the ones you just installed
         <item>@string/phase2_description</item>
         <item>@string/phase3_description</item>
     </string-array>
+
+    <!-- Strings for voicemail broadcast test -->
+    <string name="voicemail_broadcast_test">Voicemail Broadcast Test</string>
+    <string name="voicemail_broadcast_instructions">This test verifies that the default dialer can intercept the voicemail notification. The test must be conducted on a SIM with visual voicemail disabled</string>
+    <string name="voicemail_set_default_dialer_description">Before the test, the CTS verifier should be set to the default dialer</string>
+    <string name="voicemail_set_default_dialer_button">Set CTS verifier as default dialer"</string>
+    <string name="voicemail_leave_voicemail">Send a voicemail to the device, CTS verifier should receive a voicemail notification broadcast</string>
+    <string name="voicemail_broadcast_received">Voicemail broadcast Received</string>
+    <string name="voicemail_restore_default_dialer_description">(Optional) restore the default dialer setting</string>
+    <string name="voicemail_restore_default_dialer_no_default_description">(Optional) restore the default dialer by going to settings-> apps -> cogwheel -> Phone app</string>
+    <string name="voicemail_restore_default_dialer_button">Restore the default dialer"</string>
+    <string name="voicemail_default_dialer_already_set">Default dialer already set</string>
+    <string name="voicemail_default_dialer_already_restored">Default dialer already restored</string>
 
 </resources>
