@@ -220,7 +220,11 @@ public class ModuleDef implements IModuleDef {
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         IModuleListener moduleListener = new ModuleListener(this, listener);
-
+        // Run DynamicConfigPusher setup once more, in case cleaner has previously
+        // removed dynamic config file from the target (see b/32877809)
+        for (ITargetPreparer preparer : mDynamicConfigPreparers) {
+            runPreparerSetup(preparer);
+        }
         // Setup
         for (ITargetPreparer preparer : mPreparers) {
             runPreparerSetup(preparer);
