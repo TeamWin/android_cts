@@ -16,7 +16,6 @@
 package com.android.compatibility.common.util;
 
 import com.android.compatibility.common.util.ChecksumReporter.ChecksumValidationException;
-import com.android.tradefed.util.AbiUtils;
 
 import com.google.common.base.Strings;
 
@@ -53,7 +52,7 @@ public class ResultHandler {
     private static final String TYPE = "org.kxml2.io.KXmlParser,org.kxml2.io.KXmlSerializer";
     private static final String NS = null;
     private static final String RESULT_FILE_VERSION = "5.0";
-    /* package */ static final String TEST_RESULT_FILE_NAME = "test_result.xml";
+    public static final String TEST_RESULT_FILE_NAME = "test_result.xml";
 
     // XML constants
     private static final String ABI_ATTR = "abi";
@@ -173,7 +172,8 @@ public class ResultHandler {
                     parser.require(XmlPullParser.START_TAG, NS, MODULE_TAG);
                     String name = parser.getAttributeValue(NS, NAME_ATTR);
                     String abi = parser.getAttributeValue(NS, ABI_ATTR);
-                    String moduleId = AbiUtils.createId(abi, name);
+                    // TODO: use AbiUtils#createId when available for use
+                    String moduleId = String.format("%s %s", abi, name);
                     boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
                     IModuleResult module = invocation.getOrCreateModule(moduleId);
                     module.setDone(done);

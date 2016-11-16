@@ -29,7 +29,6 @@ public class HostUnitTests extends TestSuite {
         super();
         addTestSuite(DynamicConfigHandlerTest.class);
         addTestSuite(ModuleResultTest.class);
-        addTestSuite(ResultHandlerTest.class);
         addTestSuite(TestFilterTest.class);
     }
 

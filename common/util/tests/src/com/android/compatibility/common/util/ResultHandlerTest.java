@@ -72,13 +72,8 @@ public class ResultHandlerTest extends TestCase {
     private static final String METHOD_4 = "testBlah4";
     private static final String METHOD_5 = "testBlah5";
     private static final String SUMMARY_SOURCE = String.format("%s#%s:20", CLASS_B, METHOD_4);
-    private static final String DETAILS_SOURCE = String.format("%s#%s:18", CLASS_B, METHOD_4);
     private static final String SUMMARY_MESSAGE = "Headline";
     private static final double SUMMARY_VALUE = 9001;
-    private static final String DETAILS_MESSAGE = "Deats";
-    private static final double DETAILS_VALUE_1 = 14;
-    private static final double DETAILS_VALUE_2 = 18;
-    private static final double DETAILS_VALUE_3 = 17;
     private static final String MESSAGE = "Something small is not alright";
     private static final String STACK_TRACE = "Something small is not alright\n " +
             "at four.big.insects.Marley.sing(Marley.java:10)";
@@ -221,12 +216,9 @@ public class ResultHandlerTest extends TestCase {
                     NOT_EXECUTED_A, moduleACases);
             String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, MESSAGE, STACK_TRACE,
                     BUG_REPORT, LOGCAT, SCREENSHOT);
-            String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4,
-                    SUMMARY_SOURCE, SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
-                    ResultUnit.SCORE.toReportString(), Double.toString(SUMMARY_VALUE),
-                    DETAILS_SOURCE, DETAILS_MESSAGE, ResultType.LOWER_BETTER.toReportString(),
-                    ResultUnit.MS.toReportString(), Double.toString(DETAILS_VALUE_1),
-                    Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
+            String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4, SUMMARY_SOURCE,
+                    SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
+                    ResultUnit.SCORE.toReportString(), Double.toString(SUMMARY_VALUE));
             String moduleBTest5 = String.format(XML_TEST_SKIP, METHOD_5);
             String moduleBTests = String.join("", moduleBTest3, moduleBTest4, moduleBTest5);
             String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
