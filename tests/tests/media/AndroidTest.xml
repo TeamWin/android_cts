@@ -27,5 +27,6 @@
         <option name="package" value="android.media.cts" />
         <!-- test-timeout unit is ms, value = 30 min -->
         <option name="test-timeout" value="1800000" />
+        <option name="runtime-hint" value="3h45m" />
     </test>
 </configuration>
