@@ -79,13 +79,19 @@ public class GnssNavigationMessageTest extends GnssTestCase {
         mTestLocationManager
                 .registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
 
-        mTestGnssNavigationMessageListener.await();
+        boolean success = mTestGnssNavigationMessageListener.await();
+
         if (!mTestGnssNavigationMessageListener.verifyState()) {
             return;
         }
+        SoftAssert.failOrWarning(isMeasurementTestStrict(),
+            "Time elapsed without getting enough navigation messages."
+                + " Possibly, the test has been run deep indoors."
+                + " Consider retrying test outdoors.",
+            success);
+
 
         List<GnssNavigationMessage> events = mTestGnssNavigationMessageListener.getEvents();
-        assertTrue("No Gps Navigation Message received.", !events.isEmpty());
 
         // Verify mandatory GnssNavigationMessage field values.
         TestMeasurementUtil.verifyGnssNavMessageMandatoryField(mTestLocationManager, events);
