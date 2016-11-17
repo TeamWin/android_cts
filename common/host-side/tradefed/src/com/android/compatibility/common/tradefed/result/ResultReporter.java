@@ -408,7 +408,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
         // NOTE: Everything after this line only applies to the master ResultReporter.
 
-
         synchronized(this) {
             // The master ResultReporter tracks the progress of all invocations across
             // shard ResultReporters. Writing results should not proceed until all
@@ -460,16 +459,16 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
         long startTime = mResult.getStartTime();
         try {
+            // Zip the full test results directory.
+            copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
+            copyFormattingFiles(mResultDir);
+
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
                     elapsedTime + startTime, mReferenceUrl, getLogUrl(),
                     mBuildHelper.getCommandLineArgs());
             info("Test Result: %s", resultFile.getCanonicalPath());
-
-            // Zip the full test results directory.
-            copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
-            copyFormattingFiles(mResultDir);
             File zippedResults = zipResults(mResultDir);
             info("Full Result: %s", zippedResults.getCanonicalPath());
 

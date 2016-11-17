@@ -142,4 +142,8 @@ public interface ITestResult extends Comparable<ITestResult> {
      */
     boolean isRetry();
 
+    /**
+     * Clear the existing result and default to 'failed'
+     */
+    void removeResult();
 }

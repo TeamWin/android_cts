@@ -242,6 +242,15 @@ public class TestResult implements ITestResult {
      * {@inheritDoc}
      */
     @Override
+    public void removeResult() {
+        setResultStatus(TestStatus.FAIL);
+        setStackTrace("");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int compareTo(ITestResult another) {
         return getName().compareTo(another.getName());
     }
