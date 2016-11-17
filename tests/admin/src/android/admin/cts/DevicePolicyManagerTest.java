@@ -671,11 +671,13 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     /**
-     * Test that managed provisioning is pre-installed if and only if the device declares the
-     * device admin feature.
+     * Test that managed provisioning is pre-installed if the device declares the device admin
+     * feature.
      */
     public void testManagedProvisioningPreInstalled() throws Exception {
-        assertEquals(mDeviceAdmin, isPackageInstalledOnSystemImage(MANAGED_PROVISIONING_PKG));
+        if (mDeviceAdmin) {
+            assertTrue(isPackageInstalledOnSystemImage(MANAGED_PROVISIONING_PKG));
+        }
     }
 
     private void assertDeviceOwnerMessage(String message) {
