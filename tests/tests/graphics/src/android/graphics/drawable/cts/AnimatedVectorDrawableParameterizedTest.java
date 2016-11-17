@@ -16,7 +16,10 @@
 
 package android.graphics.drawable.cts;
 
-import com.android.compatibility.common.util.SystemUtil;
+import static junit.framework.TestCase.assertTrue;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.res.Resources;
@@ -32,6 +35,9 @@ import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,11 +49,6 @@ import org.junit.runners.Parameterized;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static android.graphics.drawable.cts.AnimatedVectorDrawableTest.saveVectorDrawableIntoPNG;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 @MediumTest
 @RunWith(Parameterized.class)
@@ -147,10 +148,11 @@ public class AnimatedVectorDrawableParameterizedTest {
             counter++;
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
             if (isIdentical) {
-                saveVectorDrawableIntoPNG(screenShot, "screenshot_" + counter);
-                saveVectorDrawableIntoPNG(lastScreenShot, "screenshot_" + (counter - 1));
-                fail("Two consecutive screenshots of AVD are identical, AVD is " +
-                        "likely not animating");
+                DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, "screenshot_" + counter);
+                DrawableTestUtils.saveVectorDrawableIntoPNG(lastScreenShot, "screenshot_"
+                        + (counter - 1));
+                fail("Two consecutive screenshots of AVD are identical, AVD is "
+                        + "likely not animating");
             }
             lastScreenShot = screenShot;
 
@@ -286,12 +288,12 @@ public class AnimatedVectorDrawableParameterizedTest {
                     .takeScreenshot();
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot, imageViewRect);
             if (isIdentical) {
-                saveVectorDrawableIntoPNG(screenShot, "inf_avd_screenshot_" + mLayerType + "_" +
-                        counter);
-                saveVectorDrawableIntoPNG(lastScreenShot, "inf_avd_screenshot_" + mLayerType + "_" +
-                        (counter - 1));
-                fail("Two consecutive screenshots of AVD are identical, AVD is " +
-                        "likely not animating");
+                DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, "inf_avd_screenshot_"
+                        + mLayerType + "_" +         counter);
+                DrawableTestUtils.saveVectorDrawableIntoPNG(lastScreenShot, "inf_avd_screenshot_"
+                        + mLayerType + "_" + (counter - 1));
+                fail("Two consecutive screenshots of AVD are identical, AVD is "
+                        + "likely not animating");
             }
             lastScreenShot = screenShot;
             counter++;

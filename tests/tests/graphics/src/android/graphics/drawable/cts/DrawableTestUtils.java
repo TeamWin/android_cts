@@ -16,27 +16,38 @@
 
 package android.graphics.drawable.cts;
 
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.util.Xml;
+
 import junit.framework.Assert;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.content.res.XmlResourceParser;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.util.AttributeSet;
-import android.util.Xml;
-
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
  * The useful methods for graphics.drawable test.
  */
 public class DrawableTestUtils {
+    private static final String LOGTAG = "DrawableTestUtils";
+    // A small value is actually making sure that the values are matching
+    // exactly with the golden image.
+    // We can increase the threshold if the Skia is drawing with some variance
+    // on different devices. So far, the tests show they are matching correctly.
+    static final float PIXEL_ERROR_THRESHOLD = 0.03f;
+    static final float PIXEL_ERROR_COUNT_THRESHOLD = 0.005f;
+    static final int PIXEL_ERROR_TOLERANCE = 3;
 
     public static void skipCurrentTag(XmlPullParser parser)
             throws XmlPullParserException, IOException {
@@ -193,5 +204,50 @@ public class DrawableTestUtils {
         final int pixel = b.getPixel(x, y);
         b.recycle();
         return pixel;
+    }
+
+
+    /**
+     * Save a bitmap for debugging or golden image (re)generation purpose.
+     * The file name will be referred from the resource id and added "_golden".
+     */
+    static void saveVectorDrawableIntoPNG(Bitmap bitmap, int resId, Resources res) throws
+            IOException {
+        String originalFilePath = res.getString(resId);
+        File originalFile = new File(originalFilePath);
+        String fileFullName = originalFile.getName();
+        String fileTitle = fileFullName.substring(0, fileFullName.lastIndexOf("."));
+        saveVectorDrawableIntoPNG(bitmap, fileTitle);
+    }
+
+    /**
+     * Save a bitmap to the given name plus "_golden" under /sdcard/temp/
+     */
+    static void saveVectorDrawableIntoPNG(Bitmap bitmap, String fileFullName)
+            throws IOException {
+        // Save the image to the disk.
+        FileOutputStream out = null;
+        try {
+            String outputFolder = "/sdcard/temp/";
+            File folder = new File(outputFolder);
+            if (!folder.exists()) {
+                folder.mkdir();
+            }
+            String outputFilename = outputFolder + fileFullName + "_golden.png";
+            File outputFile = new File(outputFilename);
+            if (!outputFile.exists()) {
+                outputFile.createNewFile();
+            }
+
+            out = new FileOutputStream(outputFile, false);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            Log.v(LOGTAG, "Write test No." + outputFilename + " to file successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
     }
 }
