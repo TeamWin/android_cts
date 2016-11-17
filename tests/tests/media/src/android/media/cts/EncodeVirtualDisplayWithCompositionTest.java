@@ -556,15 +556,15 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
                 throw new RuntimeException("encoder "+ MIME_TYPE + " not support : " + format.toString());
             }
 
-            mEncoder = MediaCodec.createByCodecName(codecName);
-            mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-            mEncodingSurface = mEncoder.createInputSurface();
-            mEncoder.start();
-            mInitCompleted.release();
-            if (DBG) {
-                Log.i(TAG, "starting encoder");
-            }
             try {
+                mEncoder = MediaCodec.createByCodecName(codecName);
+                mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+                mEncodingSurface = mEncoder.createInputSurface();
+                mEncoder.start();
+                mInitCompleted.release();
+                if (DBG) {
+                    Log.i(TAG, "starting encoder");
+                }
                 ByteBuffer[] encoderOutputBuffers = mEncoder.getOutputBuffers();
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
                 while (!mStopEncoding) {
@@ -599,11 +599,15 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
                 e.printStackTrace();
                 throw e;
             } finally {
-                mEncoder.stop();
-                mEncoder.release();
-                mEncoder = null;
-                mEncodingSurface.release();
-                mEncodingSurface = null;
+                if (mEncoder != null) {
+                    mEncoder.stop();
+                    mEncoder.release();
+                    mEncoder = null;
+                }
+                if (mEncodingSurface != null) {
+                    mEncodingSurface.release();
+                    mEncodingSurface = null;
+                }
             }
         }
     }
