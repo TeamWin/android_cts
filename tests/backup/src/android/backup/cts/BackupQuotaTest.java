@@ -147,10 +147,6 @@ public class BackupQuotaTest extends InstrumentationTestCase {
                 out.append(str);
             }
             return out.toString();
-        } finally {
-            if (br != null) {
-                closeQuietly(br);
-            }
         }
     }
 
@@ -158,7 +154,7 @@ public class BackupQuotaTest extends InstrumentationTestCase {
                                                                String command) throws Exception {
         final ParcelFileDescriptor pfd =
                 instrumentation.getUiAutomation().executeShellCommand(command);
-        return new FileInputStream(pfd.getFileDescriptor());
+        return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
     }
 
     private static void closeQuietly(AutoCloseable closeable) {
