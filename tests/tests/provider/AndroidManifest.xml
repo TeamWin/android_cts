@@ -51,6 +51,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.provider.cts.GetResultActivity" />
+
         <service android:name="android.provider.cts.contacts.account.MockAccountService"
                  process="android.provider.cts"
                  android:exported="true">
