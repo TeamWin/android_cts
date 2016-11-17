@@ -125,7 +125,6 @@ public abstract class ActivityTestBase {
     }
 
     public Bitmap takeScreenshot(Point testOffset) {
-        getInstrumentation().waitForIdleSync();
         Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
         return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
     }
