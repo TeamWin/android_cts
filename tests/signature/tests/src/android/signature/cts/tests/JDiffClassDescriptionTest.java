@@ -335,7 +335,8 @@ public class JDiffClassDescriptionTest extends TestCase {
         clz.setType(JDiffClassDescription.JDiffType.INTERFACE);
         clz.setModifier(Modifier.PUBLIC | Modifier.STATIC | Modifier.ABSTRACT);
         clz.addMethod(
-                new JDiffClassDescription.JDiffMethod("doSomething", Modifier.PUBLIC, "void"));
+                new JDiffClassDescription.JDiffMethod("doSomething",
+                    Modifier.PUBLIC | Modifier.ABSTRACT, "void"));
         clz.checkSignatureCompliance();
         assertEquals(clz.toSignatureString(), "public interface NormalClass.InnerInterface");
     }
@@ -346,7 +347,8 @@ public class JDiffClassDescriptionTest extends TestCase {
         clz.setType(JDiffClassDescription.JDiffType.INTERFACE);
         clz.setModifier(Modifier.PUBLIC | Modifier.ABSTRACT);
         clz.addMethod(
-                new JDiffClassDescription.JDiffMethod("doSomething", Modifier.PUBLIC, "void"));
+                new JDiffClassDescription.JDiffMethod("doSomething",
+                    Modifier.ABSTRACT| Modifier.PUBLIC, "void"));
         clz.checkSignatureCompliance();
         assertEquals(clz.toSignatureString(), "public interface NormalInterface");
     }
