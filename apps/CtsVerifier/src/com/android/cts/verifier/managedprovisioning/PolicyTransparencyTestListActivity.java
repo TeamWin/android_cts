@@ -122,8 +122,8 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
         for (String restriction : UserRestrictions.getUserRestrictions()) {
             final Intent intent = UserRestrictions.getUserRestrictionTestIntent(this, restriction);
-            if (!UserRestrictions.isRestrictionValid(this, restriction) &&
-                    !mIsDeviceOwner && !UserRestrictions.isValidForPO(restriction)) {
+            if (!UserRestrictions.isRestrictionValid(this, restriction) ||
+                    (!mIsDeviceOwner && !UserRestrictions.isValidForPO(restriction))) {
                 continue;
             }
             final String title = UserRestrictions.getRestrictionLabel(this, restriction);
@@ -135,8 +135,8 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         for (Pair<Intent, Integer> policy : POLICIES) {
             final Intent intent = policy.first;
             String test = intent.getStringExtra(PolicyTransparencyTestActivity.EXTRA_TEST);
-            if (!isPolicyValid(test) &&
-                    !mIsDeviceOwner && !ALSO_VALID_FOR_PO.contains(test)) {
+            if (!isPolicyValid(test) ||
+                    (!mIsDeviceOwner && !ALSO_VALID_FOR_PO.contains(test))) {
                 continue;
             }
             final String title = getString(policy.second);
