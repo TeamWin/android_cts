@@ -191,5 +191,3 @@ public class FrameMetricsListenerTest {
                 (firstDrawFrameMetric == 0) || (firstDrawFrameMetric == 1));
     }
 }
-
-
