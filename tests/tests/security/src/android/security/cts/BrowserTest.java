@@ -172,7 +172,13 @@ public class BrowserTest extends AndroidTestCase {
 
             // do a file request
             intent.setData(Uri.fromFile(htmlFile));
-            mContext.startActivity(intent);
+
+            try {
+                mContext.startActivity(intent);
+            } catch (SecurityException e) {
+                // If browser activity cannot be started, skip the test.
+                continue;
+            }
 
             /*
              * Wait 5 seconds for the browser to contact the server, but
