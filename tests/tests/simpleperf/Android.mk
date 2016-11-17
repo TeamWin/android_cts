@@ -25,6 +25,7 @@ LOCAL_STATIC_LIBRARIES += \
   libbase \
   libcutils \
   liblog \
+  libprocinfo \
   libutils \
   liblzma \
   libLLVMObject \
