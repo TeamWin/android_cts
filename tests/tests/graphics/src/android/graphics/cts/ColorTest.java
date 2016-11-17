@@ -31,7 +31,6 @@ public class ColorTest {
     public void testAlpha() {
         assertEquals(0xff, Color.alpha(Color.RED));
         assertEquals(0xff, Color.alpha(Color.YELLOW));
-        new Color();
     }
 
     @Test
