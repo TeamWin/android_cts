@@ -104,8 +104,11 @@ public class AccessibilityGlobalActionsTest extends InstrumentationTestCase {
         waitForIdle();
 
         // Clean up.
+        // The GLOBAL_ACTION_HOME is needed in the case where additional
+        // notifications showing up, we need to clear them as well for the upcoming
+        // new tests to work properly.
         getInstrumentation().getUiAutomation().performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_BACK);
+                AccessibilityService.GLOBAL_ACTION_HOME);
 
         // Sleep a bit so the UI is settled.
         waitForIdle();
