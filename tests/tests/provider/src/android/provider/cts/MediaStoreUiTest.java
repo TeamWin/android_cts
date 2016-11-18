@@ -109,7 +109,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         }
     }
 
-    public void testGetDocumentUriThrowsWithoutPermission() throws Exception {
+    public void testGetDocumentUri_ThrowsWithoutPermission() throws Exception {
         if (!supportsHardware()) return;
 
         prepareFile();
@@ -133,6 +133,9 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
         final File documents =
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        documents.mkdirs();
+        assertTrue(documents.isDirectory());
+
         mFile = new File(documents, "test.txt");
         try (OutputStream os = new FileOutputStream(mFile)) {
             os.write(CONTENT.getBytes());
@@ -153,7 +156,6 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         mMediaStoreUri = uri;
         latch.countDown();
     }
-
 
     private Uri acquireAccess(File file, String directoryName) {
         StorageManager storageManager =
