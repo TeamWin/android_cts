@@ -16,7 +16,8 @@
 
 package com.android.cts.webkit;
 
-
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.cts.util.NullWebViewUtils;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -25,6 +26,7 @@ import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.cts.CtsTestServer;
 import android.webkit.cts.WebViewOnUiThread;
+import android.webkit.WebView;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +38,8 @@ import java.util.regex.Pattern;
  * once - after that we will reuse the same webview provider).
  * This works because the instrumentation used to run device-tests from the host-side terminates the
  * testing process after each run.
+ * OBS! When adding a test here - remember to add a corresponding host-side test that will start the
+ * device-test added here! See com.android.cts.webkit.WebViewHostSideStartupTest.
  */
 public class WebViewDeviceSideStartupTest
         extends ActivityInstrumentationTestCase2<WebViewStartupCtsActivity> {
@@ -94,5 +98,50 @@ public class WebViewDeviceSideStartupTest
         Matcher m = pat.matcher(cookie);
         assertTrue(m.matches());
         assertEquals("42", m.group(1)); // value got incremented
+    }
+
+    @UiThreadTest
+    public void testGetCurrentWebViewPackageOnUiThread() throws Throwable {
+        runCurrentWebViewPackageTest(true /* alreadyOnMainThread */);
+    }
+
+    public void testGetCurrentWebViewPackage() throws Throwable {
+        runCurrentWebViewPackageTest(false /* alreadyOnMainThread */);
+    }
+
+    private void runCurrentWebViewPackageTest(boolean alreadyOnMainThread) throws Exception {
+        PackageManager pm = mActivity.getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            PackageInfo webViewPackage = WebView.getCurrentWebViewPackage();
+            // Ensure that getCurrentWebViewPackage returns a package recognized by the package
+            // manager.
+            assertPackageEquals(pm.getPackageInfo(webViewPackage.packageName, 0), webViewPackage);
+
+            // Create WebView on the app's main thread
+            if (alreadyOnMainThread) {
+                mActivity.createAndAttachWebView();
+            } else {
+                getInstrumentation().runOnMainSync(new Runnable() {
+                    @Override
+                    public void run() {
+                        mActivity.createAndAttachWebView();
+                    }
+                });
+            }
+
+            // Ensure we are still using the same WebView package.
+            assertPackageEquals(webViewPackage, WebView.getCurrentWebViewPackage());
+        } else {
+            // if WebView isn't supported the API should return null.
+            assertNull(WebView.getCurrentWebViewPackage());
+        }
+    }
+
+    private void assertPackageEquals(PackageInfo expected, PackageInfo actual) {
+        if (expected == null) assertNull(actual);
+        assertEquals(expected.packageName, actual.packageName);
+        assertEquals(expected.versionCode, actual.versionCode);
+        assertEquals(expected.versionName, actual.versionName);
+        assertEquals(expected.lastUpdateTime, actual.lastUpdateTime);
     }
 }
