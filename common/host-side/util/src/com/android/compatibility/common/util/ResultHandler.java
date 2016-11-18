@@ -125,18 +125,20 @@ public class ResultHandler {
                 if (!resultFile.exists()) {
                     continue;
                 }
+                Boolean invocationUseChecksum = useChecksum;
                 IInvocationResult invocation = new InvocationResult();
                 invocation.setRetryDirectory(resultDir);
                 ChecksumReporter checksumReporter = null;
-                try {
-                    checksumReporter = ChecksumReporter.load(resultDir);
-                    invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithChecksum);
-                } catch (ChecksumValidationException e) {
-                    // Unable to read checksum form previous execution
-                    invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithoutChecksum);
-                    useChecksum = false;
+                if (invocationUseChecksum) {
+                    try {
+                        checksumReporter = ChecksumReporter.load(resultDir);
+                        invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithChecksum);
+                    } catch (ChecksumValidationException e) {
+                        // Unable to read checksum form previous execution
+                        invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithoutChecksum);
+                        invocationUseChecksum = false;
+                    }
                 }
-
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 XmlPullParser parser = factory.newPullParser();
                 parser.setInput(new FileReader(resultFile));
@@ -222,7 +224,7 @@ public class ResultHandler {
                                 }
                             }
                             parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
-                            Boolean checksumMismatch = useChecksum
+                            Boolean checksumMismatch = invocationUseChecksum
                                 && !checksumReporter.containsTestResult(
                                     test, module, invocation.getBuildFingerprint());
                             if (checksumMismatch) {
@@ -232,7 +234,7 @@ public class ResultHandler {
                         parser.require(XmlPullParser.END_TAG, NS, CASE_TAG);
                     }
                     parser.require(XmlPullParser.END_TAG, NS, MODULE_TAG);
-                    Boolean checksumMismatch = useChecksum
+                    Boolean checksumMismatch = invocationUseChecksum
                         && !checksumReporter.containsModuleResult(
                                 module, invocation.getBuildFingerprint());
                     if (checksumMismatch) {
