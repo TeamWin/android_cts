@@ -72,7 +72,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             mNotificationManager.createNotificationChannel(channel);
             final NotificationChannel createdChannel =
-                    mNotificationManager.getNotificationChannel("id");
+                    mNotificationManager.getNotificationChannel(mId);
             compareChannels(channel, createdChannel);
             // Lockscreen Visibility and canBypassDnd no longer settable.
             assertTrue(createdChannel.getLockscreenVisibility() != Notification.VISIBILITY_SECRET);
@@ -284,6 +284,31 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertTrue("notification list was not empty after cancelAll", sbns.length == 0);
     }
 
+    public void testNotifyWithTimeout() {
+        mNotificationManager.cancelAll();
+        final int id = 128;
+        final long timeout = 1000;
+
+        final Notification notification = new Notification.Builder(mContext)
+                .setSmallIcon(R.drawable.black)
+                .setContentTitle("notify#" + id)
+                .setContentText("This is #" + id + "notification  ")
+                .setTimeout(System.currentTimeMillis() + timeout)
+                .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + id);
+        }
+
+        try {
+            Thread.sleep(timeout);
+        } catch (InterruptedException ex) {
+            // pass
+        }
+        checkNotificationExistence(id, false);
+    }
+
     private void sendNotification(final int id, final int icon) {
         final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
 
@@ -301,19 +326,31 @@ public class NotificationManagerTest extends AndroidTestCase {
                 .build();
         mNotificationManager.notify(id, notification);
 
-
         if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
             fail("couldn't find posted notification id=" + id);
         }
     }
 
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 200ms before giving up
         boolean found = false;
-        final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-        for (StatusBarNotification sbn : sbns) {
-            if (sbn.getId() == id) {
-                found = true;
-                break;
+        for (int tries=3; tries-->0;) {
+            // Need reset flag.
+            found = false;
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            for (StatusBarNotification sbn : sbns) {
+                if (sbn.getId() == id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found == shouldExist) break;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
             }
         }
         return found == shouldExist;
