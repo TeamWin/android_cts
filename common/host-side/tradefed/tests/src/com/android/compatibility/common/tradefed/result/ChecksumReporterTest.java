@@ -145,7 +145,7 @@ public class ChecksumReporterTest extends TestCase {
         ChecksumReporter storedChecksum = ChecksumReporter.load(mRoot);
         VerifyInvocationResults(mInvocationResult, storedChecksum);
         assertTrue("Serializing checksum maintains file hash",
-                storedChecksum.containsFile(file1, ""));
+                storedChecksum.containsFile(file1, mRoot.getName()));
     }
 
     public void testFileCRCOperations() throws IOException {
@@ -162,18 +162,18 @@ public class ChecksumReporterTest extends TestCase {
         }
 
         mReporter.addDirectory(mRoot);
-
-        assertTrue(mReporter.containsFile(file1, ""));
-        assertTrue(mReporter.containsFile(file2, "/child"));
+        String folderName = mRoot.getName();
+        assertTrue(mReporter.containsFile(file1, folderName));
+        assertTrue(mReporter.containsFile(file2, folderName + "/child"));
         assertFalse("Should not contain non-existent file",
-                mReporter.containsFile(new File(mRoot, "fake.txt"), ""));
+                mReporter.containsFile(new File(mRoot, "fake.txt"), folderName));
 
         File file3 = new File(mRoot, "file3.txt");
         try (FileWriter fileWriter = new FileWriter(file3, false)) {
             fileWriter.append("This is a test file added after crc calculated");
         }
         assertFalse("Should not contain file created after crc calculated",
-                mReporter.containsFile(file3, ""));
+                mReporter.containsFile(file3, mRoot + "/"));
 
     }
 
