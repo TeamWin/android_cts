@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.Telephony.Threads;
-import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -56,7 +55,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationChannel channel =
                 new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setVibration(true);
-        channel.setRingtone(new Uri.Builder().scheme("test").build());
+        channel.setSound(new Uri.Builder().scheme("test").build());
         channel.setLights(true);
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
@@ -248,7 +247,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
         assertEquals(expected.getImportance(), actual.getImportance());
         assertEquals(expected.getLockscreenVisibility(), actual.getLockscreenVisibility());
-        assertEquals(expected.getRingtone(), actual.getRingtone());
+        assertEquals(expected.getSound(), actual.getSound());
         assertEquals(expected.canBypassDnd(), actual.canBypassDnd());
     }
 }
