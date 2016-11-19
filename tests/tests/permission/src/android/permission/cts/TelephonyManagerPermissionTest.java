@@ -16,31 +16,40 @@
 
 package android.permission.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test the non-location-related functionality of TelephonyManager.
  */
-public class TelephonyManagerPermissionTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class TelephonyManagerPermissionTest {
 
     private boolean mHasTelephony;
     TelephonyManager mTelephonyManager = null;
     private AudioManager mAudioManager;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mHasTelephony = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY);
-        mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        mTelephonyManager =
+                (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         assertNotNull(mTelephonyManager);
-        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mAudioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         assertNotNull(mAudioManager);
     }
 
@@ -50,7 +59,7 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      * Requires Permission:
      * {@link android.Manifest.permission#READ_PHONE_STATE}.
      */
-    @SmallTest
+    @Test
     public void testGetDeviceId() {
         if (!mHasTelephony) {
             return;
@@ -76,7 +85,7 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      * Requires Permission:
      * {@link android.Manifest.permission#READ_PHONE_STATE}.
      */
-    @SmallTest
+    @Test
     public void testGetLine1Number() {
         if (!mHasTelephony) {
             return;
@@ -96,7 +105,7 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      * Requires Permission:
      * {@link android.Manifest.permission#READ_PHONE_STATE}.
      */
-    @SmallTest
+    @Test
     public void testGetSimSerialNumber() {
         if (!mHasTelephony) {
             return;
@@ -116,7 +125,7 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      * Requires Permission:
      * {@link android.Manifest.permission#READ_PHONE_STATE}.
      */
-    @SmallTest
+    @Test
     public void testGetSubscriberId() {
         if (!mHasTelephony) {
             return;
@@ -136,7 +145,7 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      * Requires Permission:
      * {@link android.Manifest.permission#READ_PHONE_STATE}.
      */
-    @SmallTest
+    @Test
     public void testVoiceMailNumber() {
         if (!mHasTelephony) {
             return;
@@ -157,7 +166,7 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
      * {@link android.Manifest.permission#MODIFY_PHONE_STATE} for
      * {@link AudioManager#MODE_IN_CALL}.
      */
-    @SmallTest
+    @Test
     public void testSetMode() {
         if (!mHasTelephony) {
             return;
@@ -168,9 +177,28 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
     }
 
     /**
+     * Verify that TelephonyManager.setDataEnabled requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#MODIFY_PHONE_STATE}.
+     */
+    @Test
+    public void testSetDataEnabled() {
+        if (!mHasTelephony) {
+            return;
+        }
+        try {
+            mTelephonyManager.setDataEnabled(false);
+            fail("Able to set data enabled");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
      * Verify that Telephony related broadcasts are protected.
      */
-    @SmallTest
+    @Test
     public void testProtectedBroadcasts() {
         if (!mHasTelephony) {
             return;
@@ -214,5 +242,9 @@ public class TelephonyManagerPermissionTest extends AndroidTestCase {
             fail("SecurityException expected!");
         } catch (SecurityException e) {}
 
+    }
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getContext();
     }
 }
