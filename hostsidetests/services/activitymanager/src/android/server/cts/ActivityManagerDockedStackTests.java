@@ -70,7 +70,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         final String[] waitForFirstVisible = new String[] {TEST_ACTIVITY_NAME};
         final String[] waitForSecondVisible = new String[] {NO_RELAUNCH_ACTIVITY_NAME};
-        mAmWmState.computeState(mDevice, new String[] {LAUNCH_TO_SIDE_ACTIVITY_NAME});
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
 
         // Launch activity to side.
         launchActivityToSide();
@@ -238,7 +238,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds.
         String[] waitForActivitiesVisible =
-            new String[] {LAUNCH_TO_SIDE_ACTIVITY_NAME, TEST_ACTIVITY_NAME};
+            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
         setDeviceRotation(0);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
         setDeviceRotation(1);
@@ -272,7 +272,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
         String[] waitForActivitiesVisible =
-            new String[] {LAUNCH_TO_SIDE_ACTIVITY_NAME, TEST_ACTIVITY_NAME};
+            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
         lockDevice();
         setDeviceRotation(0);
         unlockDevice();
