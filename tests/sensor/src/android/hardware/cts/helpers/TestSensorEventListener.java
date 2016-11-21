@@ -222,17 +222,17 @@ public class TestSensorEventListener implements SensorEventListener2 {
                         deviceWakeUpTimeMs = -1;
                     }
                     builder.append("\n");
-                    builder.append("Timestamp=").append(event.timestamp/1000000).append("ms, ");
-                    builder.append("ReceivedTimestamp=").append(event.receivedTimestamp/1000000).
-                        append("ms, ");
+                    builder.append("Timestamp=").append(event.timestamp/1000).append("us, ");
+                    builder.append("ReceivedTimestamp=").append(event.receivedTimestamp/1000).
+                        append("us, ");
                     builder.append("Accuracy=").append(event.accuracy).append(", ");
                     builder.append("Values=").append(Arrays.toString(event.values));
                     ++i;
                 } else {
                     builder.append("\n");
                     builder.append("ReceivedTimestamp=")
-                    .append(mTimeStampFlushCompleteEvents.get(j)/1000000)
-                    .append("ms Flush complete Event");
+                    .append(mTimeStampFlushCompleteEvents.get(j)/1000)
+                    .append("us Flush complete Event");
                     ++j;
                 }
             }
@@ -245,17 +245,17 @@ public class TestSensorEventListener implements SensorEventListener2 {
                     deviceWakeUpTimeMs = -1;
                 }
                 builder.append("\n");
-                builder.append("Timestamp=").append(event.timestamp/1000000).append("ms, ");
-                builder.append("ReceivedTimestamp=").append(event.receivedTimestamp/1000000).
-                    append("ms, ");
+                builder.append("Timestamp=").append(event.timestamp/1000).append("us, ");
+                builder.append("ReceivedTimestamp=").append(event.receivedTimestamp/1000).
+                    append("us, ");
                 builder.append("Accuracy=").append(event.accuracy).append(", ");
                 builder.append("Values=").append(Arrays.toString(event.values));
             }
             for (;j < mTimeStampFlushCompleteEvents.size(); ++j) {
                 builder.append("\n");
                 builder.append("ReceivedTimestamp=")
-                    .append(mTimeStampFlushCompleteEvents.get(j)/1000000)
-                    .append("ms Flush complete Event");
+                    .append(mTimeStampFlushCompleteEvents.get(j)/1000)
+                    .append("us Flush complete Event");
             }
         }
 
