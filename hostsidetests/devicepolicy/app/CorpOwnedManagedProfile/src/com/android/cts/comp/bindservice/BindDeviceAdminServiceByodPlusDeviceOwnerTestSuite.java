@@ -80,7 +80,7 @@ public class BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite {
             fail("SecurityException should be thrown");
         } catch (SecurityException ex) {
             MoreAsserts.assertContainsRegex(
-                    "must be the same package in order to communicate", ex.getMessage());
+                    "Not allowed to bind to target user id", ex.getMessage());
         }
     }
 
@@ -95,7 +95,7 @@ public class BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite {
             fail("SecurityException should be thrown");
         } catch (SecurityException ex) {
             MoreAsserts.assertContainsRegex(
-                    "must be the same package in order to communicate", ex.getMessage());
+                    "Not allowed to bind to target user id", ex.getMessage());
         }
     }
 

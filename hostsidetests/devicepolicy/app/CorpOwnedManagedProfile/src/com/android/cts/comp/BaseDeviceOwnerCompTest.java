@@ -28,8 +28,9 @@ import java.util.List;
  * Base class for device-owner based tests.
  */
 public abstract class BaseDeviceOwnerCompTest extends AndroidTestCase {
+
     protected DevicePolicyManager mDevicePolicyManager;
-    protected UserHandle mManagedProfileUserHandle;
+    protected List<UserHandle> mOtherProfiles;
 
     @Override
     protected void setUp() throws Exception {
@@ -39,18 +40,11 @@ public abstract class BaseDeviceOwnerCompTest extends AndroidTestCase {
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         assertDeviceOwner(mDevicePolicyManager);
 
-        // Lookup the managed profile user handle.
-        UserManager userManager = mContext.getSystemService(UserManager.class);
-        List<UserHandle> userProfiles = userManager.getUserProfiles();
-        assertTrue(userProfiles.size() > 1);
-        // STOPSHIP: Replace this hack once we have proper API (b/32301911)
-        for (UserHandle userHandle : userProfiles) {
-            if (!userHandle.equals(Process.myUserHandle())) {
-                mManagedProfileUserHandle = userHandle;
-                break;
-            }
-        }
-        assertNotNull("Cannot find managed profile user", mManagedProfileUserHandle);
+        // A managed profile must have been created.
+        mOtherProfiles = mContext.getSystemService(UserManager.class)
+                .getUserProfiles();
+        mOtherProfiles.remove(Process.myUserHandle());
+        assertTrue(mOtherProfiles.size() > 0);
     }
 
     private void assertDeviceOwner(DevicePolicyManager dpm) {

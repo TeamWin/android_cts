@@ -33,7 +33,7 @@ import java.util.List;
 public class BaseManagedProfileCompTest extends AndroidTestCase {
 
     protected DevicePolicyManager mDevicePolicyManager;
-    protected UserHandle mPrimaryUserHandle;
+    protected List<UserHandle> mOtherProfiles;
 
     @Override
     protected void setUp() throws Exception {
@@ -41,25 +41,16 @@ public class BaseManagedProfileCompTest extends AndroidTestCase {
 
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        assertNotNull(mDevicePolicyManager);
-
         assertManagedProfile();
 
-        // Lookup the primary user handle.
-        UserManager userManager = mContext.getSystemService(UserManager.class);
-        List<UserHandle> userProfiles = userManager.getUserProfiles();
-        assertTrue(userProfiles.size() > 1);
-        // STOPSHIP(b/32301911): Replace this hack once we have proper API.
-        for (UserHandle userHandle : userProfiles) {
-            if (!userHandle.equals(Process.myUserHandle())) {
-                mPrimaryUserHandle = userHandle;
-                break;
-            }
-        }
-        assertNotNull("Cannot find primary user", mPrimaryUserHandle);
+        mOtherProfiles = mContext.getSystemService(UserManager.class)
+                .getUserProfiles();
+        mOtherProfiles.remove(Process.myUserHandle());
+        assertTrue(mOtherProfiles.size() > 0);  // The primary profile should be there.
     }
 
     private void assertManagedProfile() {
+        assertNotNull(mDevicePolicyManager);
         assertTrue(mDevicePolicyManager.isAdminActive(
                 AdminReceiver.getComponentName(getContext())));
         assertTrue(mDevicePolicyManager.isProfileOwnerApp(getContext().getPackageName()));
