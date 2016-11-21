@@ -21,6 +21,7 @@
         <option name="class" value="com.android.compatibility.common.util.HostUnitTests" />
         <option name="class" value="com.android.compatibility.common.util.UnitTests" />
         <option name="class" value="com.android.compatibility.tradefed.CtsTradefedTest" />
+        <option name="class" value="com.drawelements.deqp.runner.DeqpTestRunnerTest" />
     </test>
     <logger class="com.android.tradefed.log.FileLogger" />
 

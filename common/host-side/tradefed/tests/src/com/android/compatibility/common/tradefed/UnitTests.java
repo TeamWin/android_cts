@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
 import com.android.compatibility.common.tradefed.config.ConfigurationFactoryTest;
+import com.android.compatibility.common.tradefed.presubmit.PresubmitSetupValidation;
 import com.android.compatibility.common.tradefed.result.ChecksumReporterTest;
 import com.android.compatibility.common.tradefed.result.ConsoleReporterTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
@@ -28,8 +29,8 @@ import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
-import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
+import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -43,21 +44,37 @@ public class UnitTests extends TestSuite {
 
     public UnitTests() {
         super();
+        // build
         addTestSuite(CompatibilityBuildHelperTest.class);
+
+        // command
         addTestSuite(CompatibilityConsoleTest.class);
-        addTestSuite(CompatibilityTestTest.class);
+
+        //config
         addTestSuite(ConfigurationFactoryTest.class);
+
+        // presubmit
+        addTestSuite(PresubmitSetupValidation.class);
+
+        //result
+        addTestSuite(ChecksumReporterTest.class);
         addTestSuite(ConsoleReporterTest.class);
         addTestSuite(ResultReporterTest.class);
-        addTestSuite(ChecksumReporterTest.class);
-        addTestSuite(OptionHelperTest.class);
-        addTestSuite(CollectorUtilTest.class);
-        addTestSuite(ModuleDefTest.class);
-        addTestSuite(ModuleRepoTest.class);
+        addTestSuite(SubPlanCreatorTest.class);
+
+        // targetprep
         addTestSuite(PropertyCheckTest.class);
         addTestSuite(SettingsPreparerTest.class);
+
+        // testtype
+        addTestSuite(CompatibilityTestTest.class);
+        addTestSuite(ModuleDefTest.class);
+        addTestSuite(ModuleRepoTest.class);
         addTestSuite(SubPlanTest.class);
-        addTestSuite(SubPlanCreatorTest.class);
+
+        // util
+        addTestSuite(CollectorUtilTest.class);
+        addTestSuite(OptionHelperTest.class);
     }
 
     public static Test suite() {

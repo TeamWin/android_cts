@@ -130,8 +130,7 @@ public class ChecksumReporterTest extends TestCase {
                 mReporter.containsModuleResult(mModuleResult, fingerprint));
     }
 
-    public void testFileSerialization()
-            throws IOException, ClassNotFoundException, ChecksumValidationException {
+    public void testFileSerialization() throws IOException, ChecksumValidationException {
         mReporter.addInvocation(mInvocationResult);
 
         File file1 = new File(mRoot, "file1.txt");
