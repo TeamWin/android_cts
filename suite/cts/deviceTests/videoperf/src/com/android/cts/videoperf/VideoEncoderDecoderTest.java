@@ -90,6 +90,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private int mVideoWidth;
     private int mVideoHeight;
     private int mFrameRate;
+    private int mBufferStride;
+    private int mBufferVStride;
 
     private MediaFormat mEncInputFormat;
     private MediaFormat mEncOutputFormat;
@@ -995,9 +997,9 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                             ByteBuffer buf = codec.getOutputBuffer(outputBufIndex);
                             if (VERBOSE && (outFrameCount == 0)) {
                                 printByteBuffer("Y ", buf, 0, 20);
-                                printByteBuffer("UV ", buf, mVideoWidth * mVideoHeight, 20);
+                                printByteBuffer("UV ", buf, mBufferStride * mBufferVStride, 20);
                                 printByteBuffer("UV ", buf,
-                                        mVideoWidth * mVideoHeight + mVideoWidth * 60, 20);
+                                        mBufferStride * mBufferVStride + mBufferStride * 60, 20);
                             }
                             for (i = 0; i < pixelCheckPerFrame; i++) {
                                 int w = mRandom.nextInt(mVideoWidth);
@@ -1051,6 +1053,12 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                     Log.w(TAG, "output format changed to unsupported one " +
                             Integer.toHexString(colorFormat) + ", using FlexYUV");
                 }
+                mBufferStride = mDecOutputFormat.getInteger(
+                        mDecOutputFormat.containsKey(MediaFormat.KEY_STRIDE) ?
+                        MediaFormat.KEY_STRIDE : MediaFormat.KEY_WIDTH);
+                mBufferVStride = mDecOutputFormat.getInteger(
+                        mDecOutputFormat.containsKey(MediaFormat.KEY_SLICE_HEIGHT) ?
+                        MediaFormat.KEY_SLICE_HEIGHT : MediaFormat.KEY_HEIGHT);
             }
         }
         long finish = System.currentTimeMillis();
@@ -1183,15 +1191,15 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
      *               instances
      */
     private void getPixelValuesFromOutputBuffer(ByteBuffer buffer, int x, int y, YUVValue result) {
-        result.mY = buffer.get(y * mVideoWidth + x);
+        result.mY = buffer.get(y * mBufferStride + x);
         if (isDstSemiPlanar()) {
-            int index = mVideoWidth * mVideoHeight + y / 2 * mVideoWidth + x / 2 * 2;
+            int index = mBufferStride * mBufferVStride + y / 2 * mBufferStride + x / 2 * 2;
             //Log.d(TAG, "Decoded " + x + "," + y + "," + index);
             result.mU = buffer.get(index);
             result.mV = buffer.get(index + 1);
         } else {
-            int vOffset = mVideoWidth * mVideoHeight / 4;
-            int index = mVideoWidth * mVideoHeight + y / 2 * mVideoWidth / 2 + x / 2;
+            int vOffset = mBufferStride * mBufferVStride / 4;
+            int index = mBufferStride * mBufferVStride + y / 2 * mBufferStride / 2 + x / 2;
             result.mU = buffer.get(index);
             result.mV = buffer.get(index + vOffset);
         }
