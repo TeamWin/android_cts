@@ -234,22 +234,6 @@ public class DisplayTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test that the getCurrentSizeRange method returns correct values.
-     */
-    public void testGetCurrentSizeRange() {
-        Display display = getSecondaryDisplay(mDisplayManager.getDisplays());
-
-        Point smallest = new Point();
-        Point largest = new Point();
-        display.getCurrentSizeRange(smallest, largest);
-
-        assertEquals(SECONDARY_DISPLAY_WIDTH, smallest.x);
-        assertEquals(SECONDARY_DISPLAY_HEIGHT, smallest.y);
-        assertEquals(SECONDARY_DISPLAY_WIDTH, largest.x);
-        assertEquals(SECONDARY_DISPLAY_HEIGHT, largest.y);
-    }
-
-    /**
      * Test that the getFlags method returns no flag bits set for the overlay display.
      */
     public void testFlags() {
