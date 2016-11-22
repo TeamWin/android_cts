@@ -13,7 +13,7 @@
 # limitations under the License.
 
 #
-# Builds a package which is needed by a test package and copies it to CTS
+# Builds a package with dex preopt and proguard disabled
 #
 # Replace "include $(BUILD_PACKAGE)" with "include $(BUILD_CTS_SUPPORT_PACKAGE)"
 #
@@ -23,3 +23,4 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 
 include $(BUILD_PACKAGE)
+

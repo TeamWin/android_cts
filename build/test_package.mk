@@ -13,15 +13,12 @@
 # limitations under the License.
 
 #
-# Builds a package and defines a rule to generate the associated test
-# package XML needed by CTS.
+# Builds a package.
 #
 # Replace "include $(BUILD_PACKAGE)" with "include $(BUILD_CTS_PACKAGE)"
 #
 
-# Disable by default so "m cts" will work in emulator builds
-LOCAL_DEX_PREOPT := false
-LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_STATIC_JAVA_LIBRARIES += platform-test-annotations
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
