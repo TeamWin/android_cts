@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.result;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.result.ResultReporter;
 import com.android.compatibility.common.util.ChecksumReporter;
@@ -25,6 +26,7 @@ import com.android.compatibility.common.util.IModuleResult;
 import com.android.compatibility.common.util.ITestResult;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.TestStatus;
+import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.util.FileUtil;
@@ -44,10 +46,13 @@ public class ChecksumReporterTest extends TestCase {
     private static final String SUITE_PLAN = "cts";
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
+    private static final String DYNAMIC_CONFIG_URL = "";
+    private static final long START_TIME = 123456L;
 
     private ChecksumReporter mReporter;
     private File mRoot = null;
     private IBuildInfo mBuildInfo;
+    private CompatibilityBuildHelper mBuildHelper;
     private ReportLog mReportLog = null;
     private IInvocationResult mInvocationResult;
     private IModuleResult mModuleResult;
@@ -64,25 +69,10 @@ public class ChecksumReporterTest extends TestCase {
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
 
         ResultReporter resultReporter = new ResultReporter();
-        CompatibilityBuildProvider provider = new CompatibilityBuildProvider() {
-            @Override
-            protected String getSuiteInfoName() {
-                return SUITE_NAME;
-            }
-            @Override
-            protected String getSuiteInfoBuildNumber() {
-                return BUILD_NUMBER;
-            }
-            @Override
-            protected String getSuiteInfoVersion() {
-                return BUILD_NUMBER;
-            }
-        };
-        OptionSetter setter = new OptionSetter(provider);
-        setter.setOptionValue("plan", SUITE_PLAN);
-        setter.setOptionValue("dynamic-config-url", "");
-        mBuildInfo = provider.getBuild();
-
+        OptionSetter setter = new OptionSetter(resultReporter);
+        mBuildInfo = new BuildInfo(BUILD_NUMBER, "", "");
+        mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
         resultReporter.invocationStarted(mBuildInfo);
         mInvocationResult = resultReporter.getResult();
         mModuleResult = mInvocationResult.getOrCreateModule("Module-1");
@@ -146,7 +136,7 @@ public class ChecksumReporterTest extends TestCase {
         ChecksumReporter storedChecksum = ChecksumReporter.load(mRoot);
         VerifyInvocationResults(mInvocationResult, storedChecksum);
         assertTrue("Serializing checksum maintains file hash",
-                storedChecksum.containsFile(file1, ""));
+                storedChecksum.containsFile(file1, mRoot.getName()));
     }
 
     public void testFileCRCOperations() throws IOException {
@@ -163,18 +153,18 @@ public class ChecksumReporterTest extends TestCase {
         }
 
         mReporter.addDirectory(mRoot);
-
-        assertTrue(mReporter.containsFile(file1, ""));
-        assertTrue(mReporter.containsFile(file2, "/child"));
+        String folderName = mRoot.getName();
+        assertTrue(mReporter.containsFile(file1, folderName));
+        assertTrue(mReporter.containsFile(file2, folderName + "/child"));
         assertFalse("Should not contain non-existent file",
-                mReporter.containsFile(new File(mRoot, "fake.txt"), ""));
+                mReporter.containsFile(new File(mRoot, "fake.txt"), folderName));
 
         File file3 = new File(mRoot, "file3.txt");
         try (FileWriter fileWriter = new FileWriter(file3, false)) {
             fileWriter.append("This is a test file added after crc calculated");
         }
         assertFalse("Should not contain file created after crc calculated",
-                mReporter.containsFile(file3, ""));
+                mReporter.containsFile(file3, folderName));
 
     }
 
