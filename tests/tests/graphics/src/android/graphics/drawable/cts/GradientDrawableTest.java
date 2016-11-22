@@ -36,6 +36,7 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Xml;
 
 import java.io.IOException;
@@ -499,15 +500,19 @@ public class GradientDrawableTest extends AndroidTestCase {
         final Resources res = getContext().getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res, densityDpi);
+            testPreloadDensityInner(res);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res, int densityDpi)
-            throws XmlPullParserException, IOException {
+    private void testPreloadDensityInner(Resources res) throws XmlPullParserException, IOException {
         final Rect tempPadding = new Rect();
+
+        // Set density to a fixed value so that we're not affected by the
+        // device's native density.
+        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
 
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
