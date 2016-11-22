@@ -16,24 +16,6 @@
 # directory before creating the final CTS distribution.
 COMPATIBILITY_TESTCASES_OUT_cts := $(HOST_OUT)/cts/android-cts/testcases
 
-# Scanners of source files for tests which are then inputed into
-# the XML generator to produce test XMLs.
-CTS_NATIVE_TEST_SCANNER := $(HOST_OUT_EXECUTABLES)/cts-native-scanner
-CTS_JAVA_TEST_SCANNER := $(HOST_OUT_EXECUTABLES)/cts-java-scanner
-CTS_JAVA_TEST_SCANNER_DOCLET := $(HOST_OUT_JAVA_LIBRARIES)/cts-java-scanner-doclet.jar
-
-# Generator of test XMLs from scanner output.
-CTS_XML_GENERATOR := $(HOST_OUT_EXECUTABLES)/cts-xml-generator
-
-# File indicating which tests should be blacklisted due to problems.
-CTS_EXPECTATIONS := cts/tests/expectations/knownfailures.txt
-
-# File indicating which tests should be blacklisted due to unsupported abi.
-CTS_UNSUPPORTED_ABIS := cts/tests/expectations/unsupportedabis.txt
-
-# Holds the target architecture to build for.
-CTS_TARGET_ARCH := $(TARGET_ARCH)
-
 # CTS build rules
 BUILD_COMPATIBILITY_SUITE := cts/build/compatibility_test_suite.mk
 BUILD_CTS_EXECUTABLE := cts/build/test_executable.mk
