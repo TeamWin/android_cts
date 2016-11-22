@@ -26,7 +26,6 @@ import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 
@@ -321,7 +320,6 @@ public class ResultReporterTest extends TestCase {
 
     public void testCopyFormattingFiles() throws Exception {
         File resultDir = new File(mBuildHelper.getResultsDir(), RESULT_DIR);
-        CLog.e("%s", resultDir);
         resultDir.mkdirs();
         ResultReporter.copyFormattingFiles(resultDir);
         for (String filename : FORMATTING_FILES) {
