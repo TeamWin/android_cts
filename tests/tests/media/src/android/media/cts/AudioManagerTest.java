@@ -468,7 +468,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
             int[] streams = {AudioManager.STREAM_ALARM,
                     AudioManager.STREAM_MUSIC,
                     AudioManager.STREAM_VOICE_CALL,
-                    AudioManager.STREAM_RING};
+                    AudioManager.STREAM_RING,
+                    AudioManager.STREAM_ACCESSIBILITY};
 
             mAudioManager.adjustVolume(ADJUST_RAISE, 0);
             mAudioManager.adjustSuggestedStreamVolume(
