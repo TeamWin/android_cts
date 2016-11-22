@@ -1440,6 +1440,12 @@
     <string name="nls_clear_all">Check that service can clear all notifications.</string>
     <string name="nls_service_stopped">Service should stop once disabled.</string>
     <string name="nls_note_missed">Check that notification was not received.</string>
+    <string name="nls_snooze">Check the service can be snoozed.</string>
+    <string name="nls_unsnooze">Check the service can be unsnoozed.</string>
+    <string name="nls_hints">Check that the listener can set hints.</string>
+    <string name="nls_snooze_one">Check that service can snooze a notification.</string>
+    <string name="nls_snooze_one_time">Check that service can snooze a notification for a given time.</string>
+    <string name="nls_unsnooze_one">Check that service can unsnooze a notification.</string>
     <string name="nas_note_missed_enqueued">Check that notification was not enqueued.</string>
     <string name="cp_test">Condition Provider test</string>
     <string name="cp_service_name">Condition Provider for CTS Verifier</string>

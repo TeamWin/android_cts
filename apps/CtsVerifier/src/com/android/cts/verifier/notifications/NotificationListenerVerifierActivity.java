@@ -79,6 +79,13 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new DismissOneTest());
         tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
+        tests.add(new SnoozeNotificationTest());
+        tests.add(new UnsnoozeNotificationTest());
+        tests.add(new SnoozeNotificationForTimeTest());
+        tests.add(new EnableHintsTest());
+        tests.add(new SnoozeTest());
+        tests.add(new UnsnoozeTest());
+        tests.add(new EnableHintsTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotReceivedTest());
@@ -350,7 +357,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
-
                                 }
                                 status = pass ? PASS : FAIL;
                                 next();
@@ -427,6 +433,12 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
 
         @Override
+        void setUp(){
+            MockListener.setHints(mContext, MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
+            delay();
+        }
+
+        @Override
         void test() {
             String listeners = Secure.getString(getContentResolver(),
                     ENABLED_NOTIFICATION_LISTENERS);
@@ -461,7 +473,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                                 logFail();
                                 status = FAIL;
                             } else {
-                                status = PASS;
+                                if (mNm.getEffectsSuppressor() == null) {
+                                    status = PASS;
+                                } else {
+                                    status = FAIL;
+                                }
                             }
                             next();
                         }
@@ -506,6 +522,364 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         }
                     });
             delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            MockListener.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class SnoozeTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_snooze);
+
+        }
+
+        @Override
+        void setUp() {
+            status = READY;
+            MockListener.setHints(mContext, MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockListener.snooze(mContext);
+                status = RETEST;
+            } else {
+                MockListener.probeListenerStatus(mContext,
+                        new MockListener.StatusCatcher() {
+                            @Override
+                            public void accept(int result) {
+                                if (result == Activity.RESULT_OK) {
+                                    logFail();
+                                    status = FAIL;
+                                } else {
+                                    if (mNm.getEffectsSuppressor() == null) {
+                                        status = PASS;
+                                    } else {
+                                        logFail();
+                                        status = RETEST;
+                                        delay();
+                                    }
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            delay();
+        }
+    }
+
+    private class UnsnoozeTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_unsnooze);
+
+        }
+
+        @Override
+        void setUp() {
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockListener.requestRebind(MockListener.COMPONENT_NAME);
+                status = RETEST;
+            } else {
+                MockListener.probeListenerStatus(mContext,
+                        new MockListener.StatusCatcher() {
+                            @Override
+                            public void accept(int result) {
+                                if (result == Activity.RESULT_OK) {
+                                    status = PASS;
+                                    next();
+                                } else {
+                                    logFail();
+                                    status = RETEST;
+                                    delay();
+                                }
+                            }
+                        });
+            }
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            delay();
+        }
+    }
+
+    private class EnableHintsTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_hints);
+
+        }
+
+        @Override
+        void setUp() {
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockListener.setHints(mContext, MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
+                status = RETEST;
+            } else {
+                MockListener.probeListenerHints(mContext,
+                        new MockListener.IntegerResultCatcher() {
+                            @Override
+                            public void accept(int result) {
+                                if (result == MockListener.HINT_HOST_DISABLE_CALL_EFFECTS) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            delay();
+        }
+    }
+
+    private class SnoozeNotificationTest extends InteractiveTestCase {
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_snooze_one);
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockListener.snoozeOne(mContext, mTag1);
+                status = RETEST;
+            } else {
+                MockListener.probeListenerRemoved(mContext,
+                        new MockListener.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() != 0
+                                        && result.contains(mTag1)
+                                        && !result.contains(mTag2)
+                                        && !result.contains(mTag3)) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancel(mTag1, mId1);
+            mNm.cancel(mTag2, mId2);
+            mNm.cancel(mTag2, mId3);
+            MockListener.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class UnsnoozeNotificationTest extends InteractiveTestCase {
+        final static int READY_TO_SNOOZE = 0;
+        final static int SNOOZED = 1;
+        final static int READY_TO_UNSNOOZE = 2;
+        final static int UNSNOOZED = 3;
+        int state = -1;
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_unsnooze_one);
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            status = RETEST;
+
+            if (state == READY_TO_SNOOZE) {
+                MockListener.snoozeOne(mContext, mTag1);
+                state = SNOOZED;
+            } else if (state == SNOOZED) {
+                MockListener.probeListenerRemovedWithReason(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = true;
+                                for (String payloadData : result) {
+                                    JSONObject payload = null;
+                                    try {
+                                        payload = new JSONObject(payloadData);
+                                        pass &= checkEquals(mTag1,
+                                                payload.getString(JSON_TAG),
+                                                "data dismissal test: notification tag (%s, %s)");
+                                        pass &= checkEquals(MockListener.REASON_SNOOZED,
+                                                payload.getInt(JSON_TAG),
+                                                "data dismissal test: reason (%d, %d)");
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                if (!pass) {
+                                    logFail();
+                                    status = FAIL;
+                                    next();
+                                    return;
+                                } else {
+                                    state = READY_TO_UNSNOOZE;
+                                }
+                            }
+                        });
+            } else if (state == READY_TO_UNSNOOZE) {
+                MockListener.unsnoozeOne(mContext, mTag1);
+                state = UNSNOOZED;
+            } else {
+                MockListener.probeListenerPosted(mContext,
+                        new MockListener.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() != 0
+                                        && result.contains(mTag1)) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            MockListener.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class SnoozeNotificationForTimeTest extends InteractiveTestCase {
+        final static int READY_TO_SNOOZE = 0;
+        final static int SNOOZED = 1;
+        final static int READY_TO_CHECK_FOR_UNSNOOZE = 2;
+        int state = -1;
+        long snoozeTime = 3000;
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_snooze_one_time);
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            state = READY_TO_SNOOZE;
+            delay();
+        }
+
+        @Override
+        void test() {
+            status = RETEST;
+            if (state == READY_TO_SNOOZE) {
+                MockListener.snoozeOneUntil(mContext, mTag1,
+                        System.currentTimeMillis() + snoozeTime);
+                state = SNOOZED;
+            } else if (state == SNOOZED){
+                MockListener.probeListenerRemovedWithReason(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = true;
+                                for (String payloadData : result) {
+                                    JSONObject payload = null;
+                                    try {
+                                        payload = new JSONObject(payloadData);
+                                        pass &= checkEquals(mTag1,
+                                                payload.getString(JSON_TAG),
+                                                "data dismissal test: notification tag (%s, %s)");
+                                        pass &= checkEquals(MockListener.REASON_SNOOZED,
+                                                payload.getInt(JSON_TAG),
+                                                "data dismissal test: reason (%d, %d)");
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                if (!pass) {
+                                    logFail();
+                                    status = FAIL;
+                                    next();
+                                    return;
+                                } else {
+                                    state = READY_TO_CHECK_FOR_UNSNOOZE;
+                                }
+                            }
+                        });
+            } else {
+                MockListener.probeListenerPosted(mContext,
+                        new MockListener.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() != 0
+                                        && result.contains(mTag1)) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();
         }
 
         @Override

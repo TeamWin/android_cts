@@ -17,6 +17,7 @@ package com.android.cts.verifier.notifications;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -38,6 +39,9 @@ import java.util.Set;
 public class MockListener extends NotificationListenerService {
     static final String TAG = "MockListener";
 
+    public static final ComponentName COMPONENT_NAME =
+            new ComponentName("com.android.cts.verifier", MockListener.class.getName());
+
     static final String SERVICE_BASE = "android.service.notification.cts.";
     static final String SERVICE_CHECK = SERVICE_BASE + "SERVICE_CHECK";
     static final String SERVICE_POSTED = SERVICE_BASE + "SERVICE_POSTED";
@@ -47,13 +51,20 @@ public class MockListener extends NotificationListenerService {
     static final String SERVICE_RESET = SERVICE_BASE + "SERVICE_RESET";
     static final String SERVICE_CLEAR_ONE = SERVICE_BASE + "SERVICE_CLEAR_ONE";
     static final String SERVICE_CLEAR_ALL = SERVICE_BASE + "SERVICE_CLEAR_ALL";
-    public static final String SERVICE_ORDER = SERVICE_BASE + "SERVICE_ORDER";
-    public static final String SERVICE_DND = SERVICE_BASE + "SERVICE_DND";
+    static final String SERVICE_SNOOZE = SERVICE_BASE + "SERVICE_SNOOZE";
+    static final String SERVICE_HINTS = SERVICE_BASE + "SERVICE_HINTS";
+    static final String SERVICE_PROBE_HINTS = SERVICE_BASE + "SERVICE_PROBE_HINTS";
+    static final String SERVICE_ORDER = SERVICE_BASE + "SERVICE_ORDER";
+    static final String SERVICE_DND = SERVICE_BASE + "SERVICE_DND";
+    static final String SERVICE_SNOOZE_ONE = SERVICE_BASE + "SERVICE_SNOOZE_ONE";
+    static final String SERVICE_UNSNOOZE_ONE = SERVICE_BASE + "SERVICE_UNSNOOZE_ONE";
+    static final String SERVICE_SNOOZE_UNTIL = SERVICE_BASE + "SERVICE_SNOOZE_UNTIL";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
     static final String EXTRA_INT = "INT";
     static final String EXTRA_TAG = "TAG";
     static final String EXTRA_CODE = "CODE";
+    static final String EXTRA_LONG = "LONG";
 
     static final int RESULT_NO_SERVER = Activity.RESULT_FIRST_USER + 1;
 
@@ -67,6 +78,7 @@ public class MockListener extends NotificationListenerService {
     public static final String JSON_AMBIENT = "ambient";
     public static final String JSON_MATCHES_ZEN_FILTER = "matches_zen_filter";
     public static final String JSON_REASON = "reason";
+    public static final String JSON_HINTS = "hints";
 
     private ArrayList<String> mPosted = new ArrayList<String>();
     private ArrayMap<String, JSONObject> mNotifications = new ArrayMap<>();
@@ -92,31 +104,24 @@ public class MockListener extends NotificationListenerService {
         mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
+                final String action = intent.getAction();
+                final Bundle bundle = new Bundle();
+                Log.d(TAG, action);
                 if (SERVICE_CHECK.equals(action)) {
-                    Log.d(TAG, "SERVICE_CHECK");
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_POSTED.equals(action)) {
-                    Log.d(TAG, "SERVICE_POSTED");
-                    Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mPosted);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_DND.equals(action)) {
-                    Log.d(TAG, "SERVICE_DND");
-                    Bundle bundle = new Bundle();
                     bundle.putInt(EXTRA_INT, mDND);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_ORDER.equals(action)) {
-                    Log.d(TAG, "SERVICE_ORDER");
-                    Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mOrder);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_PAYLOADS.equals(action)) {
-                    Log.d(TAG, "SERVICE_PAYLOADS");
-                    Bundle bundle = new Bundle();
                     ArrayList<String> payloadData = new ArrayList<>(mNotifications.size());
                     for (JSONObject payload: mNotifications.values()) {
                         payloadData.add(payload.toString());
@@ -125,14 +130,10 @@ public class MockListener extends NotificationListenerService {
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_REMOVED.equals(action)) {
-                    Log.d(TAG, "SERVICE_REMOVED");
-                    Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mRemoved);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_REMOVED_REASON.equals(action)) {
-                    Log.d(TAG, "SERVICE_REMOVED_REASON");
-                    Bundle bundle = new Bundle();
                     ArrayList<String> payloadData = new ArrayList<>(mRemovedReason.size());
                     for (JSONObject payload: mRemovedReason.values()) {
                         payloadData.add(payload.toString());
@@ -141,7 +142,6 @@ public class MockListener extends NotificationListenerService {
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_CLEAR_ONE.equals(action)) {
-                    Log.d(TAG, "SERVICE_CLEAR_ONE");
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
                     if (key != null) {
@@ -150,11 +150,30 @@ public class MockListener extends NotificationListenerService {
                         Log.w(TAG, "Notification does not exist: " + tag);
                     }
                 } else if (SERVICE_CLEAR_ALL.equals(action)) {
-                    Log.d(TAG, "SERVICE_CLEAR_ALL");
                     MockListener.this.cancelAllNotifications();
                 } else if (SERVICE_RESET.equals(action)) {
-                    Log.d(TAG, "SERVICE_RESET");
                     resetData();
+                } else if (SERVICE_SNOOZE.equals(action)) {
+                    MockListener.this.requestUnbind();
+                } else if (SERVICE_HINTS.equals(action)) {
+                    MockListener.this.requestListenerHints(intent.getIntExtra(EXTRA_CODE, 0));
+                } else if (SERVICE_PROBE_HINTS.equals(action)) {
+                    bundle.putInt(EXTRA_INT, MockListener.this.getCurrentListenerHints());
+                    setResultExtras(bundle);
+                    setResultCode(Activity.RESULT_OK);
+                } else if (SERVICE_SNOOZE_ONE.equals(action)) {
+                    String tag = intent.getStringExtra(EXTRA_TAG);
+                    String key = mNotificationKeys.get(tag);
+                    MockListener.this.snoozeNotification(key);
+                } else if (SERVICE_UNSNOOZE_ONE.equals(action)) {
+                    String tag = intent.getStringExtra(EXTRA_TAG);
+                    String key = mNotificationKeys.get(tag);
+                    MockListener.this.unsnoozeNotification(key);
+                } else if (SERVICE_SNOOZE_UNTIL.equals(action)) {
+                    String tag = intent.getStringExtra(EXTRA_TAG);
+                    String key = mNotificationKeys.get(tag);
+                    MockListener.this.snoozeNotification(key,
+                            intent.getLongExtra(EXTRA_LONG, (long) 0));
                 } else {
                     Log.w(TAG, "unknown action");
                     setResultCode(Activity.RESULT_CANCELED);
@@ -172,6 +191,12 @@ public class MockListener extends NotificationListenerService {
         filter.addAction(SERVICE_CLEAR_ONE);
         filter.addAction(SERVICE_CLEAR_ALL);
         filter.addAction(SERVICE_RESET);
+        filter.addAction(SERVICE_SNOOZE);
+        filter.addAction(SERVICE_HINTS);
+        filter.addAction(SERVICE_PROBE_HINTS);
+        filter.addAction(SERVICE_SNOOZE_ONE);
+        filter.addAction(SERVICE_UNSNOOZE_ONE);
+        filter.addAction(SERVICE_SNOOZE_UNTIL);
         registerReceiver(mReceiver, filter);
     }
 
@@ -202,6 +227,7 @@ public class MockListener extends NotificationListenerService {
         mNotifications.clear();
         mRemoved.clear();
         mOrder.clear();
+        mRemovedReason.clear();
     }
 
     @Override
@@ -307,8 +333,39 @@ public class MockListener extends NotificationListenerService {
         requestStringListResult(context, SERVICE_REMOVED_REASON, catcher);
     }
 
+    public static void probeListenerHints(Context context, IntegerResultCatcher catcher) {
+        requestIntegerResult(context, SERVICE_PROBE_HINTS, catcher);
+    }
+
+    public static void setHints(Context context, int hints) {
+        Intent broadcast = new Intent(SERVICE_HINTS);
+        broadcast.putExtra(EXTRA_CODE, hints);
+        context.sendBroadcast(broadcast);
+    }
+
+    public static void snooze(Context context) {
+        sendCommand(context, SERVICE_SNOOZE, null, 0);
+    }
+
     public static void clearOne(Context context, String tag, int code) {
         sendCommand(context, SERVICE_CLEAR_ONE, tag, code);
+    }
+
+    public static void snoozeOne(Context context, String tag) {
+        sendCommand(context, SERVICE_SNOOZE_ONE, tag, 0);
+    }
+
+    public static void unsnoozeOne(Context context, String tag) {
+        sendCommand(context, SERVICE_UNSNOOZE_ONE, tag, 0);
+    }
+
+    public static void snoozeOneUntil(Context context, String tag, long until) {
+        Intent broadcast = new Intent(SERVICE_SNOOZE_UNTIL);
+        if (tag != null) {
+            broadcast.putExtra(EXTRA_TAG, tag);
+            broadcast.putExtra(EXTRA_LONG, until);
+        }
+        context.sendBroadcast(broadcast);
     }
 
     public static void clearAll(Context context) {
