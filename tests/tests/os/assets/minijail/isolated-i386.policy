@@ -39,10 +39,9 @@ lstat: return EPERM
 mkdir: return EPERM
 mknod: return EPERM
 
-# mmap2: TODO(rsesek): Restrict arg3 (flags) after http://b/31997910 is fixed.
-mmap2: 1
-# mmap: TODO(rsesek): Restrict arg3 (flags) after http://b/31997910 is fixed.
-mmap: 1
+# mmap2: flags in {MAP_SHARED|MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK|MAP_NORESERVE|MAP_FIXED|MAP_DENYWRITE}
+mmap2: arg3 in 0x24833
+mmap: arg3 in 0x24833
 
 _newselect: 1
 oldlstat: return EPERM
