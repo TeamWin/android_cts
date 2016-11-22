@@ -77,9 +77,8 @@ mkdirat: return EPERM
 mknodat: return EPERM
 mlock: 1
 
-# mprotect: TODO(rsesek): Restrict arg2 (prot) to ~(PROT_READ | PROT_WRITE | PROT_EXEC)
-#                         after http://b/31997910 is fixed.
-mprotect: 1
+# mprotect: prot in {PROT_READ|PROT_WRITE|PROT_EXEC}
+mprotect: arg2 in 0x7
 
 mremap: 1
 msync: 1
