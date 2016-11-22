@@ -151,9 +151,7 @@ public class ResultHandlerTest extends TestCase {
 
     @Override
     public void tearDown() throws Exception {
-        if (resultsDir != null) {
-            FileUtil.recursiveDelete(resultsDir);
-        }
+        FileUtil.recursiveDelete(resultsDir);
     }
 
     public void testSerialization() throws Exception {
@@ -253,6 +251,7 @@ public class ResultHandlerTest extends TestCase {
             if (writer != null) {
                 writer.close();
             }
+            FileUtil.recursiveDelete(resultsDir);
         }
     }
 
