@@ -30,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.RippleDrawable;
 import android.test.AndroidTestCase;
+import android.util.DisplayMetrics;
 import android.util.Xml;
 
 import java.io.IOException;
@@ -57,14 +58,19 @@ public class RippleDrawableTest extends AndroidTestCase {
         final Resources res = getContext().getResources();
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            testPreloadDensityInner(res, densityDpi);
+            testPreloadDensityInner(res);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void testPreloadDensityInner(Resources res, int densityDpi)
+    private void testPreloadDensityInner(Resources res)
             throws XmlPullParserException, IOException {
+        // Set density to a fixed value so that we're not affected by the
+        // device's native density.
+        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
                 res, R.drawable.rippledrawable_radius);

@@ -33,6 +33,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer.DrawableContainerState;
 import android.graphics.drawable.StateListDrawable;
 import android.test.InstrumentationTestCase;
+import android.util.DisplayMetrics;
 import android.util.StateSet;
 import android.util.Xml;
 
@@ -156,14 +157,19 @@ public class AnimatedStateListDrawableTest extends InstrumentationTestCase {
         final Resources res = mResources;
         final int densityDpi = res.getConfiguration().densityDpi;
         try {
-            runPreloadDensityTestForDrawableInner(res, densityDpi, drawableResId, isConstantSize);
+            runPreloadDensityTestForDrawableInner(res, drawableResId, isConstantSize);
         } finally {
             DrawableTestUtils.setResourcesDensity(res, densityDpi);
         }
     }
 
-    private void runPreloadDensityTestForDrawableInner(Resources res, int densityDpi,
-            int drawableResId, boolean isConstantSize) throws XmlPullParserException, IOException {
+    private void runPreloadDensityTestForDrawableInner(Resources res, int drawableResId,
+            boolean isConstantSize) throws XmlPullParserException, IOException {
+        // Set density to a fixed value so that we're not affected by the
+        // device's native density.
+        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
+        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+
         // Capture initial state at default density.
         final XmlResourceParser parser = getResourceParser(drawableResId);
         final AnimatedStateListDrawable asld = new AnimatedStateListDrawable();
