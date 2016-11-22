@@ -57,6 +57,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected static final int FLAG_PRIMARY = 0x00000001;
     protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
+    protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
 
     protected static interface Settings {
         public static final String GLOBAL_NAMESPACE = "global";
@@ -192,6 +193,16 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     protected ArrayList<Integer> listUsers() throws DeviceNotAvailableException {
         return getDevice().listUsers();
+    }
+
+    protected int getFirstManagedProfileUserId() throws DeviceNotAvailableException {
+        for (int userId : listUsers()) {
+            if ((getUserFlags(userId) & FLAG_MANAGED_PROFILE) != 0) {
+                return userId;
+            }
+        }
+        fail("Managed profile not found");
+        return 0;
     }
 
     protected void stopUser(int userId) throws Exception  {
