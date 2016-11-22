@@ -16,8 +16,10 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.app.Activity;
-import android.support.test.InstrumentationRegistry;
+import android.cts.util.WidgetTestUtils;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -28,12 +30,11 @@ import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TextView;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertEquals;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -85,9 +86,9 @@ public class PointerIconTest {
         final TextView tabIndicator = new TextView(mActivity);
         tabIndicator.setText(label);
         tabIndicator.setPointerIcon(pointerIcon);
-        return tabHost.newTabSpec(label).
-                setIndicator(tabIndicator).
-                setContent(tag -> new View(mActivity));
+        return tabHost.newTabSpec(label)
+                .setIndicator(tabIndicator)
+                .setContent(tag -> new View(mActivity));
     }
 
     @UiThreadTest
@@ -109,17 +110,20 @@ public class PointerIconTest {
     }
 
     @Test
-    public void testTabWidget() {
+    public void testTabWidget() throws Throwable {
         final TabHost tabHost = (TabHost) mActivity.findViewById(android.R.id.tabhost);
 
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
-            tabHost.setup();
-            tabHost.addTab(createTabSpec(tabHost, "Tab 0", null));
-            tabHost.addTab(createTabSpec(tabHost, "Tab 1", mHandIcon));
-            tabHost.addTab(createTabSpec(tabHost, "Tab 2", mHelpIcon));
-        });
+        WidgetTestUtils.runOnMainAndLayoutSync(
+                mActivityRule,
+                () -> {
+                    tabHost.setup();
+                    tabHost.addTab(createTabSpec(tabHost, "Tab 0", null));
+                    tabHost.addTab(createTabSpec(tabHost, "Tab 1", mHandIcon));
+                    tabHost.addTab(createTabSpec(tabHost, "Tab 2", mHelpIcon));
+                },
+                false /* force layout */);
 
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             final TabWidget tabWidget = tabHost.getTabWidget();
 
             tabWidget.setEnabled(false);
