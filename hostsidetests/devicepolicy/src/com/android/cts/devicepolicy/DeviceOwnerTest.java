@@ -324,6 +324,12 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
             executeDeviceOwnerTest("LockTaskTest");
+        } catch (AssertionError ex) {
+            // STOPSHIP(b/32771855), remove this once we fixed the bug.
+            executeShellCommand("dumpsys activity activities");
+            executeShellCommand("dumpsys window -a");
+            executeShellCommand("dumpsys activity service com.android.systemui");
+            throw ex;
         } finally {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
         }
