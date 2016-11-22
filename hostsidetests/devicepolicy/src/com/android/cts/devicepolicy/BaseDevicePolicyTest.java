@@ -148,7 +148,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         executeShellCommand("am force-stop --user " + userId + " " + packageName);
     }
 
-    private void executeShellCommand(final String command) throws Exception {
+    protected void executeShellCommand(final String command) throws Exception {
         CLog.d("Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.d("Output for command " + command + ": " + commandOutput);
