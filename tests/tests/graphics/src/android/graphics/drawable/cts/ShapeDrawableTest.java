@@ -262,7 +262,7 @@ public class ShapeDrawableTest {
 
     // Since Mockito can't mock or spy on protected methods, we have a custom extension
     // of StateListDrawable to track calls to protected inflateTag method.
-    private class MockShapeDrawable extends ShapeDrawable {
+    public class MockShapeDrawable extends ShapeDrawable {
         public boolean inflateTagCalled;
         public boolean extendedAttrsSet;
 
