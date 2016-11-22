@@ -61,6 +61,7 @@ public class DisplayTest extends InstrumentationTestCase {
             (float)(SECONDARY_DISPLAY_DPI + 1) / DisplayMetrics.DENSITY_DEFAULT;
     // Matches com.android.internal.R.string.display_manager_overlay_display_name.
     private static final String OVERLAY_DISPLAY_NAME_PREFIX = "Overlay #";
+    private static final String OVERLAY_DISPLAY_TYPE = "type OVERLAY";
 
     private DisplayManager mDisplayManager;
     private WindowManager mWindowManager;
@@ -115,15 +116,15 @@ public class DisplayTest extends InstrumentationTestCase {
         }
     }
 
-    private boolean isSecondarySize(Display display) {
-        final Point p = new Point();
-        display.getSize(p);
-        return p.x == SECONDARY_DISPLAY_WIDTH && p.y == SECONDARY_DISPLAY_HEIGHT;
+    /** Check if the display is an overlay display, created by this test. */
+    private boolean isSecondaryDisplay(Display display) {
+        return display.toString().contains(OVERLAY_DISPLAY_TYPE);
     }
 
+    /** Get the overlay display, created by this test. */
     private Display getSecondaryDisplay(Display[] displays) {
         for (Display display : displays) {
-            if (isSecondarySize(display)) {
+            if (isSecondaryDisplay(display)) {
                 return display;
             }
         }
@@ -143,7 +144,7 @@ public class DisplayTest extends InstrumentationTestCase {
             if (display.getDisplayId() == Display.DEFAULT_DISPLAY) {
                 hasDefaultDisplay = true;
             }
-            if (isSecondarySize(display)) {
+            if (isSecondaryDisplay(display)) {
                 hasSecondaryDisplay = true;
             }
         }
