@@ -2472,7 +2472,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="password_quality_complex">Complex</string>
     <string name="set_permitted_accessibility_services">Set permitted accessibility services</string>
     <string name="permitted_accessibility_services_set_step">
-        Disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
+        Check that \'Dummy Accessibility service\' is not enabled in Settings and disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
         the switch below.
     </string>
     <string name="set_permitted_accessibility_services_action">
@@ -2483,7 +2483,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="set_permitted_input_methods">Set permitted input methods</string>
     <string name="permitted_input_methods_set_step">
-        Disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
+        Check that \'Dummy Input method\' is not enabled in Settings and disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
         Enabling \'Dummy Input Method\' in the list of accessibility services
