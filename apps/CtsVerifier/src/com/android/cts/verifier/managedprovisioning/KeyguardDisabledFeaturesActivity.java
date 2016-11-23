@@ -21,6 +21,8 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -31,6 +33,8 @@ import android.widget.Toast;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
+
+import java.util.List;
 
 public class KeyguardDisabledFeaturesActivity extends DialogTestListActivity {
 
@@ -131,9 +135,18 @@ public class KeyguardDisabledFeaturesActivity extends DialogTestListActivity {
 
     @Override
     protected void setupTests(ArrayTestListAdapter adapter) {
-        setupDisableTrustAgentsTest(adapter);
+        if (hasTrustAgents()) {
+            setupDisableTrustAgentsTest(adapter);
+        }
         setupDisableUnredactedWorkNotification(adapter);
         setupFingerprintTests(adapter);
+    }
+
+    private boolean hasTrustAgents() {
+        PackageManager packageManager = getPackageManager();
+        Intent intent = new Intent("android.service.trust.TrustAgentService");
+        List<ResolveInfo> resolveInfos = packageManager.queryIntentServices(intent, 0);
+        return resolveInfos.size() > 0;
     }
 
     @Override
