@@ -2762,7 +2762,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_headset_yes">Yes</string>
     <string name="audio_general_deficiency_found">WARNING: Some results show potential deficiencies on the system.
     Please consider addressing them for a future release.</string>
-    <string name="audio_general_test_passed">Test Successful</string>
+    <string name="audio_general_test_passed">Test Result: Successful</string>
     <string name="audio_general_test_failed">Test Result: Not Optimal</string>
     <string name="audio_general_default_false_string">false</string>
     <string name="audio_general_default_true_string">true</string>
@@ -2856,17 +2856,39 @@ You should be prompted to select credentials; choose the ones you just installed
      <!-- Audio Frequency Unprocessed Test -->
     <string name="audio_frequency_unprocessed_test">Audio Frequency Unprocessed Test</string>
     <string name="audio_frequency_unprocessed_info">
-   This test requires an external broadband noise source (or click/impulse).
-   Please be prepared to activate the noise source when asked to.
-   The system will measure frequency response of the built in microphone using the UNPROCESSED
-   audio source.
+    This test requires an external USB reference microphone, external speakers and a Sound Pressure Level meter.
+    You can play the test signals from the device under test or from a secondary device.
+    Follow the instructions on the screen to measure the frequency response for the built in microphone
+    using UNPROCESSED audio source.
+    If the Audio Frequency Unprocessed feature is defined in this system, success in all tests is mandatory to pass.
+    If the feature is not defined, measurements are still needed, but success in all of them is not mandatory to pass.
        </string>
-    <string name="audio_frequency_unprocessed_defined">Audio Frequency Unprocessed feature is defined. Test is mandatory</string>
-    <string name="audio_frequency_unprocessed_not_defined">Audio Frequency Unprocessed feature is NOT defined. Test is optional</string>
-     <string name="audio_frequency_unprocessed_instructions2">
-          Once you press the [TEST] button, you have 5 seconds to play a broadband sound (click or white noise).
-    </string>
-    <string name="audio_frequency_unprocessed_test1_btn">Test 1</string>
-    <string name="audio_frequency_unprocessed_results_text">Results...</string>
+    <string name="audio_frequency_unprocessed_defined">Audio Frequency Unprocessed feature is defined. Success in all tests is mandatory to pass</string>
+    <string name="audio_frequency_unprocessed_not_defined">Audio Frequency Unprocessed feature is NOT defined. Success in all test is NOT mandatory to pass</string>
+
+    <string name="unprocessed_play">Play</string>
+    <string name="unprocessed_stop">Stop</string>
+
+    <string name="unprocessed_test_tone_instructions">TEST TONE: Press [PLAY] to play tone at 1 Khz. Measure sound SPL to be 94 dB
+    right next to microphone under test. Press [TEST]</string>
+    <string name="unprocessed_test_tone_btn">Test</string>
+    <string name="unprocessed_test_tone_result">Results...</string>
+
+    <string name="unprocessed_test_noise_instructions">TEST NOISE: Position speakers 40 cms from device under test.
+    Press [PLAY] to play broadband white noise. Press [TEST]</string>
+    <string name="unprocessed_test_noise_btn">Test</string>
+    <string name="unprocessed_test_noise_result">Results...</string>
+
+    <string name="unprocessed_test_usb_background_instructions">TEST USB BACKGROUND: Connect USB microphone and position it right next to microphone under test.
+    No source of noise should be active during this test. Press [TEST]</string>
+    <string name="unprocessed_test_usb_background_btn">Test</string>
+    <string name="unprocessed_test_usb_background_result">Results...</string>
+
+    <string name="unprocessed_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test. 
+    Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
+    <string name="unprocessed_test_usb_noise_btn">Test</string>
+    <string name="unprocessed_test_usb_noise_result">Results...</string>
+
+    <string name="unprocessed_test_global_result">Global Results...</string>
 
 </resources>
