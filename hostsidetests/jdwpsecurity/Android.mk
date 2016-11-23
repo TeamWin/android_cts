@@ -25,8 +25,6 @@ LOCAL_MODULE := CtsJdwpSecurityHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 

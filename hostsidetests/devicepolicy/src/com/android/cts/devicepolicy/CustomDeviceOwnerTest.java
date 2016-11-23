@@ -16,8 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.BaseDevicePolicyTest.Settings;
-import com.android.cts.migration.MigrationHelper;
 
 import java.io.File;
 import java.lang.Exception;
@@ -135,7 +135,8 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        final File apk = MigrationHelper.getTestFile(mCtsBuild, TEST_APP_APK);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final File apk = buildHelper.getTestFile(TEST_APP_APK);
         try {
             // Install the test and prepare the test apk.
             installAppAsUser(PACKAGE_INSTALLER_APK, mPrimaryUserId);

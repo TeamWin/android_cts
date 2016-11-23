@@ -16,7 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.ddmlib.testrunner.TestResult;
@@ -136,9 +136,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void installAppAsUser(String appFileName, boolean grantPermissions, int userId)
             throws FileNotFoundException, DeviceNotAvailableException {
         CLog.d("Installing app " + appFileName + " for user " + userId);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         String result = getDevice().installPackageForUser(
-                MigrationHelper.getTestFile(mCtsBuild, appFileName), true, grantPermissions,
-                userId, "-t");
+                buildHelper.getTestFile(appFileName), true, grantPermissions, userId, "-t");
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
     }

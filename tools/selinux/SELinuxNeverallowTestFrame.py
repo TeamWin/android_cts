@@ -18,7 +18,7 @@ src_header = """/*
 
 package android.cts.security;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -63,7 +63,8 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        sepolicyAnalyze = MigrationHelper.getTestFile(mBuild, "sepolicy-analyze");
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
+        sepolicyAnalyze = buildHelper.getTestFile("sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
 
         /* obtain sepolicy file from running device */

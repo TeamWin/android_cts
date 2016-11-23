@@ -24,8 +24,6 @@ LOCAL_MODULE := CtsUiHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
 $(COMPATIBILITY_TESTCASES_OUT_cts)/CtsUiHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts)/com.replica.replicaisland.apk

@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -66,7 +66,8 @@ public class ExternalStorageHostTest extends DeviceTestCase
     }
 
     private File getTestAppFile(String fileName) throws FileNotFoundException {
-        return MigrationHelper.getTestFile(mCtsBuild, fileName);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        return buildHelper.getTestFile(fileName);
     }
 
     @Override

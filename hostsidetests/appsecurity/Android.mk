@@ -23,8 +23,6 @@ LOCAL_MODULE := CtsAppSecurityHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
 LOCAL_JAVA_RESOURCE_DIRS := res
 
 LOCAL_CTS_TEST_PACKAGE := android.appsecurity

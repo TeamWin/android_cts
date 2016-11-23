@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -68,8 +68,7 @@ abstract  class DocumentsTestCase extends DeviceTestCase implements IAbiReceiver
 
     protected void reinstallClientPackage() throws Exception {
         getDevice().uninstallPackage(CLIENT_PKG);
-
-        assertNull(getDevice().installPackage(
-                MigrationHelper.getTestFile(mCtsBuild, CLIENT_APK), false));
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        assertNull(getDevice().installPackage(buildHelper.getTestFile(CLIENT_APK), false));
     }
 }

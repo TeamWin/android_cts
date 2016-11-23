@@ -208,6 +208,19 @@ public class CompatibilityBuildHelper {
     }
 
     /**
+     * @return a {@link File} representing the test file in the test modules directory.
+     * @throws FileNotFoundException if the test file cannot be found
+     */
+    public File getTestFile(String filename) throws FileNotFoundException {
+        File testFile = new File(getTestsDir(), filename);
+        if (!testFile.exists()) {
+            throw new FileNotFoundException(String.format(
+                    "Compatibility test file %s does not exist", filename));
+        }
+        return testFile;
+    }
+
+    /**
      * @return a {@link File} in the resultDir for logging invocation failures
      */
     public File getInvocationFailureFile() throws FileNotFoundException {

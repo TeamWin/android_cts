@@ -23,8 +23,6 @@ LOCAL_MODULE := CtsDumpsysHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
 LOCAL_CTS_TEST_PACKAGE := android.dumpsys
 
 # tag this module as a cts test artifact
