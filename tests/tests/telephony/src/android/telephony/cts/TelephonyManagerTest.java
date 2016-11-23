@@ -16,6 +16,13 @@
 
 package android.telephony.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,20 +33,28 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Looper;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
-import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 import android.util.Log;
+
 import com.android.internal.telephony.PhoneConstants;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.regex.Pattern;
 
-public class TelephonyManagerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
     private boolean mOnCellLocationChangedCalled = false;
     private ServiceState mServiceState;
@@ -47,25 +62,24 @@ public class TelephonyManagerTest extends AndroidTestCase {
     private static final int TOLERANCE = 1000;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
-    private static final String TAG = "android.telephony.cts.TelephonyManagerTest";
+    private static final String TAG = "TelephonyManagerTest";
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mListener != null) {
             // unregister the listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         }
-        super.tearDown();
     }
 
+    @Test
     public void testListen() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -131,6 +145,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
      * it's no need to get details of these information, just make sure they are in right
      * condition(>0 or not null).
      */
+    @Test
     public void testTelephonyManager() {
         assertTrue(mTelephonyManager.getNetworkType() >= TelephonyManager.NETWORK_TYPE_UNKNOWN);
         assertTrue(mTelephonyManager.getPhoneType() >= TelephonyManager.PHONE_TYPE_NONE);
@@ -145,8 +160,8 @@ public class TelephonyManagerTest extends AndroidTestCase {
             assertFalse(mTelephonyManager.getMmsUAProfUrl().isEmpty());
         }
 
-        // The following methods may return null. Simply call them to make sure they do not
-        // throw any exceptions.
+        // The following methods may return any value depending on the state of the device. Simply
+        // call them to make sure they do not throw any exceptions.
         mTelephonyManager.getVoiceMailNumber();
         mTelephonyManager.getSimOperatorName();
         mTelephonyManager.getNetworkCountryIso();
@@ -165,6 +180,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         mTelephonyManager.getDeviceId(mTelephonyManager.getDefaultSim());
         mTelephonyManager.getDeviceSoftwareVersion();
         mTelephonyManager.getPhoneCount();
+        mTelephonyManager.getDataEnabled();
 
         TelecomManager telecomManager = (TelecomManager) getContext()
             .getSystemService(Context.TELECOM_SERVICE);
@@ -174,6 +190,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
     }
 
+    @Test
     public void testCreateForPhoneAccountHandle(){
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle handle =
@@ -182,6 +199,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         assertEquals(mTelephonyManager.getSubscriberId(), telephonyManager.getSubscriberId());
     }
 
+    @Test
     public void testCreateForPhoneAccountHandle_InvalidHandle(){
         PhoneAccountHandle handle =
                 new PhoneAccountHandle(new ComponentName("com.example.foo", "bar"), "baz");
@@ -191,6 +209,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
     /**
      * Tests that the phone count returned is valid.
      */
+    @Test
     public void testGetPhoneCount() {
         int phoneCount = mTelephonyManager.getPhoneCount();
         int phoneType = mTelephonyManager.getPhoneType();
@@ -212,6 +231,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
      * GSM, a valid MEID or ESN if CDMA, or a valid MAC address if
      * only a WiFi device.
      */
+    @Test
     public void testGetDeviceId() {
         String deviceId = mTelephonyManager.getDeviceId();
         verifyDeviceId(deviceId);
@@ -222,6 +242,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
      * GSM, a valid MEID or ESN if CDMA, or a valid MAC address if
      * only a WiFi device.
      */
+    @Test
     public void testGetDeviceIdForSlotId() {
         String deviceId = mTelephonyManager.getDeviceId(mTelephonyManager.getDefaultSim());
         verifyDeviceId(deviceId);
@@ -391,6 +412,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
 
     private static final String ISO_COUNTRY_CODE_PATTERN = "[a-z]{2}";
 
+    @Test
     public void testGetNetworkCountryIso() {
         PackageManager packageManager = getContext().getPackageManager();
         String countryCode = mTelephonyManager.getNetworkCountryIso();
@@ -403,6 +425,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetSimCountryIso() {
         PackageManager packageManager = getContext().getPackageManager();
         String countryCode = mTelephonyManager.getSimCountryIso();
@@ -415,6 +438,7 @@ public class TelephonyManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetServiceState() throws InterruptedException {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
             Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
@@ -444,5 +468,9 @@ public class TelephonyManagerTest extends AndroidTestCase {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
+    }
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getContext();
     }
 }
