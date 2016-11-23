@@ -103,6 +103,21 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
     }
 
     /**
+     * Test: The Device Owner should be able to set and retrieve the name of the organization
+     * managing the device.
+     */
+    public void testDeviceOwnerOrganizationName() throws Exception {
+        mDevicePolicyManager.setOrganizationName(getWho(), null);
+        assertNull(mDevicePolicyManager.getDeviceOwnerOrganizationName());
+
+        mDevicePolicyManager.setOrganizationName(getWho(), "organization");
+        assertEquals("organization", mDevicePolicyManager.getDeviceOwnerOrganizationName());
+
+        mDevicePolicyManager.setOrganizationName(getWho(), null);
+        assertNull(mDevicePolicyManager.getDeviceOwnerOrganizationName());
+    }
+
+    /**
      * Helper that allows the host-side test harness to disable network logging after running the
      * other tests in this file.
      */
