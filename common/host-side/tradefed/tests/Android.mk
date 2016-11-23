@@ -34,6 +34,7 @@ include $(BUILD_COMPATIBILITY_SUITE)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_JAVA_RESOURCE_DIRS := res
 
 LOCAL_MODULE := compatibility-tradefed-tests
 
