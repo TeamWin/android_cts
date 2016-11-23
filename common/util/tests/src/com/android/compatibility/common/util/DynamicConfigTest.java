@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.tradefed.util.FileUtil;
+
 import junit.framework.TestCase;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -81,24 +83,28 @@ public class DynamicConfigTest extends TestCase {
     public void testCorrectConfig() throws Exception {
         DynamicConfig config = new DynamicConfig();
         File file = createFileFromStr(correctConfig);
-        config.initializeConfig(file);
-
-        assertEquals("Wrong Config", config.getValue("test-config-1"), "test config 1");
-        assertEquals("Wrong Config", config.getValue("test-config-2"), "testconfig2");
-        assertEquals("Wrong Config List", config.getValues("config-list").get(0), "config0");
-        assertEquals("Wrong Config List", config.getValues("config-list").get(2), "config2");
-        assertEquals("Wrong Config List", config.getValues("config-list-2").get(2), "C");
+        try {
+            config.initializeConfig(file);
+            assertEquals("Wrong Config", config.getValue("test-config-1"), "test config 1");
+            assertEquals("Wrong Config", config.getValue("test-config-2"), "testconfig2");
+            assertEquals("Wrong Config List", config.getValues("config-list").get(0), "config0");
+            assertEquals("Wrong Config List", config.getValues("config-list").get(2), "config2");
+            assertEquals("Wrong Config List", config.getValues("config-list-2").get(2), "C");
+        } finally {
+            FileUtil.deleteFile(file);
+        }
     }
 
     public void testConfigWithWrongNodeName() throws Exception {
         DynamicConfig config = new DynamicConfig();
         File file = createFileFromStr(configWrongNodeName);
-
         try {
             config.initializeConfig(file);
             fail("Cannot detect error when config file has wrong node name");
         } catch (XmlPullParserException e) {
             //expected
+        } finally {
+            FileUtil.deleteFile(file);
         }
     }
 
@@ -107,6 +113,7 @@ public class DynamicConfigTest extends TestCase {
         FileOutputStream stream = new FileOutputStream(file);
         stream.write(configStr.getBytes());
         stream.flush();
+        stream.close();
         return file;
     }
 }

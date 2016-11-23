@@ -105,6 +105,7 @@ public class ChecksumReporterTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         mReporter = null;
+        FileUtil.recursiveDelete(mRoot);
     }
 
     public void testStoreAndRetrieveTestResults() {
