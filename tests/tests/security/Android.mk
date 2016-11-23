@@ -26,35 +26,13 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctstestserver ctstestrunner ctsdeviceutil compati
 LOCAL_JAVA_LIBRARIES := android.test.runner org.apache.http.legacy
 
 LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_compat_libc++ \
-		libnativehelper \
-		libbinder \
-		libutils \
-		libmedia \
-		libselinux \
-		libcutils \
-		libcrypto \
-		libc++ \
-		libbacktrace \
-		libui \
-		libsonivox \
-		libexpat \
-		libcamera_client \
-		libgui \
-		libaudioutils \
-		libaudiohal \
-		libnbaio \
-		libpcre2 \
-		libpackagelistparser \
-		libpowermanager \
-		libbase \
-		libunwind \
-		libhardware \
-		libsync \
-		libcamera_metadata \
-		libspeexresampler \
-		liblzma \
-		libstagefright_foundation \
-		libeffects
+                      libnativehelper \
+                      libcutils \
+                      libcrypto \
+                      libselinux \
+                      libc++ \
+                      libpcre2 \
+                      libpackagelistparser
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)\
                    src/android/security/cts/activity/ISecureRandomService.aidl\

@@ -31,39 +31,16 @@ LOCAL_SRC_FILES := \
 		android_security_cts_MMapExecutableTest.cpp \
 		android_security_cts_EncryptionTest.cpp \
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
-										$(TOP)/frameworks/native/include/media/openmax
-
-LOCAL_SHARED_LIBRARIES := libnativehelper \
+LOCAL_SHARED_LIBRARIES := \
+		libnativehelper \
 		liblog \
-		libutils \
-		libmedia \
-		libselinux \
-		libdl \
 		libcutils \
 		libcrypto \
+		libselinux \
 		libc++ \
-		libbacktrace \
-		libui \
-		libsonivox \
-		libexpat \
-		libcamera_client \
-		libgui \
-		libaudioutils \
-		libaudiohal \
-		libnbaio \
 		libpcre2 \
 		libpackagelistparser \
-		libpowermanager \
-		libbase \
-		libunwind \
-		libhardware \
-		libsync \
-		libcamera_metadata \
-		libspeexresampler \
-		liblzma \
-		libstagefright_foundation \
-		libeffects
+
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
