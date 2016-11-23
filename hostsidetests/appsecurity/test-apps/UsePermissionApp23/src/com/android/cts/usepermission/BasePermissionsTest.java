@@ -312,6 +312,7 @@ public abstract class BasePermissionsTest {
                 waitForIdle();
 
                 if (wasGranted && legacyApp) {
+                    scrollToBottomIfWatch();
                     String packageName = getInstrumentation().getContext().getPackageManager()
                             .getPermissionControllerPackageName();
                     String resIdName = "com.android.packageinstaller"
@@ -321,7 +322,7 @@ public abstract class BasePermissionsTest {
                     final int confirmResId = resources.getIdentifier(resIdName, null, null);
                     String confirmTitle = resources.getString(confirmResId);
                     UiObject denyAnyway = getUiDevice().findObject(new UiSelector()
-                            .text(confirmTitle.toUpperCase()));
+                            .textStartsWith(confirmTitle));
                     denyAnyway.click();
 
                     waitForIdle();
@@ -432,6 +433,7 @@ public abstract class BasePermissionsTest {
                 (AccessibilityEvent event) -> event.getEventType()
                         == AccessibilityEvent.TYPE_VIEW_SCROLLED,
                 GLOBAL_TIMEOUT_MILLIS);
+        node.refresh();
         waitForIdle();
     }
 

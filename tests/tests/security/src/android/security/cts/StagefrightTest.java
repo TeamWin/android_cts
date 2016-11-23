@@ -62,6 +62,14 @@ public class StagefrightTest extends InstrumentationTestCase {
     public StagefrightTest() {
     }
 
+    public void testStagefright_bug_31647370() throws Exception {
+        doStagefrightTest(R.raw.bug_31647370);
+    }
+
+    public void testStagefright_bug_32577290() throws Exception {
+        doStagefrightTest(R.raw.bug_32577290);
+    }
+
     public void testStagefright_cve_2015_1538_1() throws Exception {
         doStagefrightTest(R.raw.cve_2015_1538_1);
     }
@@ -134,6 +142,10 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_3869);
     }
 
+    public void testStagefright_bug_32322258() throws Exception {
+        doStagefrightTest(R.raw.bug_32322258);
+    }
+
     public void testStagefright_cve_2015_3873_b_23248776() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3873_b_23248776);
     }
@@ -164,6 +176,14 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     public void testStagefright_cve_2016_3755() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3755);
+    }
+
+    public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
+    }
+
+    public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
@@ -361,7 +381,13 @@ public class StagefrightTest extends InstrumentationTestCase {
         for (int t = 0; t < numtracks; t++) {
             // find all the available decoders for this format
             ArrayList<String> matchingCodecs = new ArrayList<String>();
-            MediaFormat format = ex.getTrackFormat(t);
+            MediaFormat format = null;
+            try {
+                format = ex.getTrackFormat(t);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "could not get track format for track " + t);
+                continue;
+            }
             String mime = format.getString(MediaFormat.KEY_MIME);
             for (MediaCodecInfo info: codecList.getCodecInfos()) {
                 if (info.isEncoder()) {

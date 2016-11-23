@@ -1282,14 +1282,15 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                                          duration, expectedDurationMs));
             }
 
-            // TODO: Don't skip this for video snapshot
-            if (!mStaticInfo.isHardwareLevelLegacy()) {
-                assertTrue(String.format(
-                        "Camera %s: Video duration doesn't match: recorded %fms, expected %fms.",
-                        mCamera.getId(), duration, expectedDurationMs),
-                        Math.abs(duration - expectedDurationMs) <
-                        DURATION_MARGIN * expectedDurationMs);
-            }
+            // Do rest of validation only for better-than-LEGACY devices
+            if (mStaticInfo.isHardwareLevelLegacy()) return;
+
+            // TODO: Don't skip this one for video snapshot on LEGACY
+            assertTrue(String.format(
+                    "Camera %s: Video duration doesn't match: recorded %fms, expected %fms.",
+                    mCamera.getId(), duration, expectedDurationMs),
+                    Math.abs(duration - expectedDurationMs) <
+                    DURATION_MARGIN * expectedDurationMs);
 
             // Check for framedrop
             long lastSampleUs = 0;

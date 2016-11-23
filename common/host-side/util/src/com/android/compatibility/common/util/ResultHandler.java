@@ -15,6 +15,10 @@
  */
 package com.android.compatibility.common.util;
 
+import com.android.compatibility.common.util.ChecksumReporter.ChecksumValidationException;
+
+import com.google.common.base.Strings;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -28,6 +32,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -98,12 +105,17 @@ public class ResultHandler {
      * @param resultsDir
      */
     public static List<IInvocationResult> getResults(File resultsDir) {
+        return getResults(resultsDir, false);
+    }
+
+    /**
+     * @param resultsDir
+     * @param useChecksum
+     */
+    public static List<IInvocationResult> getResults(
+            File resultsDir, Boolean useChecksum) {
         List<IInvocationResult> results = new ArrayList<>();
-        File[] files = resultsDir.listFiles();
-        if (files == null || files.length == 0) {
-            // No results, just return the empty list
-            return results;
-        }
+        List<File> files = getResultDirectories(resultsDir);;
         for (File resultDir : files) {
             if (!resultDir.isDirectory()) {
                 continue;
@@ -113,7 +125,20 @@ public class ResultHandler {
                 if (!resultFile.exists()) {
                     continue;
                 }
+                Boolean invocationUseChecksum = useChecksum;
                 IInvocationResult invocation = new InvocationResult();
+                invocation.setRetryDirectory(resultDir);
+                ChecksumReporter checksumReporter = null;
+                if (invocationUseChecksum) {
+                    try {
+                        checksumReporter = ChecksumReporter.load(resultDir);
+                        invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithChecksum);
+                    } catch (ChecksumValidationException e) {
+                        // Unable to read checksum form previous execution
+                        invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithoutChecksum);
+                        invocationUseChecksum = false;
+                    }
+                }
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 XmlPullParser parser = factory.newPullParser();
                 parser.setInput(new FileReader(resultFile));
@@ -155,6 +180,8 @@ public class ResultHandler {
                     int notExecuted =
                             Integer.parseInt(parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
                     module.setNotExecuted(notExecuted);
+                    int runtime = Integer.parseInt(parser.getAttributeValue(NS, RUNTIME_ATTR));
+                    module.addRuntime(runtime);
                     while (parser.nextTag() == XmlPullParser.START_TAG) {
                         parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
                         String caseName = parser.getAttributeValue(NS, NAME_ATTR);
@@ -190,10 +217,22 @@ public class ResultHandler {
                                 }
                             }
                             parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
+                            Boolean checksumMismatch = invocationUseChecksum
+                                    && !checksumReporter.containsTestResult(
+                                    test, module, invocation.getBuildFingerprint());
+                            if (checksumMismatch) {
+                                test.removeResult();
+                            }
                         }
                         parser.require(XmlPullParser.END_TAG, NS, CASE_TAG);
                     }
                     parser.require(XmlPullParser.END_TAG, NS, MODULE_TAG);
+                    Boolean checksumMismatch = invocationUseChecksum
+                            && !checksumReporter.containsModuleResult(
+                            module, invocation.getBuildFingerprint());
+                    if (checksumMismatch) {
+                        module.setDone(false);
+                    }
                 }
                 parser.require(XmlPullParser.END_TAG, NS, RESULT_TAG);
                 results.add(invocation);
@@ -292,6 +331,10 @@ public class ResultHandler {
         serializer.startTag(NS, BUILD_TAG);
         for (Entry<String, String> entry : result.getInvocationInfo().entrySet()) {
             serializer.attribute(NS, entry.getKey(), entry.getValue());
+            if (Strings.isNullOrEmpty(result.getBuildFingerprint()) &&
+                    entry.getKey().equals(BUILD_FINGERPRINT)) {
+                result.setBuildFingerprint(entry.getValue());
+            }
         }
         serializer.endTag(NS, BUILD_TAG);
 
@@ -366,7 +409,38 @@ public class ResultHandler {
             serializer.endTag(NS, MODULE_TAG);
         }
         serializer.endDocument();
+        createChecksum(resultDir, result);
         return resultFile;
+    }
+
+    private static void createChecksum(File resultDir, IInvocationResult invocationResult) {
+        RetryChecksumStatus retryStatus = invocationResult.getRetryChecksumStatus();
+        switch (retryStatus) {
+            case NotRetry: case RetryWithChecksum:
+                // Do not disrupt the process if there is a problem generating checksum.
+                ChecksumReporter.tryCreateChecksum(resultDir, invocationResult);
+                break;
+            case RetryWithoutChecksum:
+                // If the previous run has an invalid checksum file,
+                // copy it into current results folder for future troubleshooting
+                File retryDirectory = invocationResult.getRetryDirectory();
+                Path retryChecksum = FileSystems.getDefault().getPath(
+                        retryDirectory.getAbsolutePath(), ChecksumReporter.NAME);
+                if (!retryChecksum.toFile().exists()) {
+                    // if no checksum file, check for a copy from a previous retry
+                    retryChecksum = FileSystems.getDefault().getPath(
+                            retryDirectory.getAbsolutePath(), ChecksumReporter.PREV_NAME);
+                }
+
+                if (retryChecksum.toFile().exists()) {
+                    File checksumCopy = new File(resultDir, ChecksumReporter.PREV_NAME);
+                    try (FileOutputStream stream = new FileOutputStream(checksumCopy)) {
+                        Files.copy(retryChecksum, stream);
+                    } catch (IOException e) {
+                        // Do not disrupt the process if there is a problem copying checksum
+                    }
+                }
+        }
     }
 
     /**
@@ -374,16 +448,51 @@ public class ResultHandler {
      */
     public static IInvocationResult findResult(File resultsDir, Integer sessionId)
             throws FileNotFoundException {
+        return findResult(resultsDir, sessionId, true);
+    }
+
+    /**
+     * Find the IInvocationResult for the given sessionId.
+     */
+    private static IInvocationResult findResult(
+            File resultsDir, Integer sessionId, Boolean useChecksum) throws FileNotFoundException {
         if (sessionId < 0) {
             throw new IllegalArgumentException(
                 String.format("Invalid session id [%d] ", sessionId));
         }
 
-        List<IInvocationResult> results = getResults(resultsDir);
+        List<IInvocationResult> results = getResults(resultsDir, useChecksum);
         if (results == null || sessionId >= results.size()) {
             throw new RuntimeException(String.format("Could not find session [%d]", sessionId));
         }
         return results.get(sessionId);
+    }
+
+    /**
+     * Get a list of child directories that contain test invocation results
+     * @param resultsDir the root test result directory
+     * @return
+     */
+    public static List<File> getResultDirectories(File resultsDir) {
+        List<File> directoryList = new ArrayList<>();
+        File[] files = resultsDir.listFiles();
+        if (files == null || files.length == 0) {
+            // No results, just return the empty list
+            return directoryList;
+        }
+        for (File resultDir : files) {
+            if (!resultDir.isDirectory()) {
+                continue;
+            }
+            // Only include if it contain results file
+            File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
+            if (!resultFile.exists()) {
+                continue;
+            }
+            directoryList.add(resultDir);
+        }
+        Collections.sort(directoryList, (d1, d2) -> d1.getName().compareTo(d2.getName()));
+        return directoryList;
     }
 
     /**

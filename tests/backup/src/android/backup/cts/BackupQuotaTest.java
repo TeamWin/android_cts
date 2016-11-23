@@ -46,14 +46,18 @@ public class BackupQuotaTest extends InstrumentationTestCase {
 
     private static final int SMALL_LOGCAT_DELAY = 1000;
 
+    private boolean localTransportIsPresent;
     private boolean wasBackupEnabled;
     private String oldTransport;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        localTransportIsPresent = hasBackupTransport(LOCAL_TRANSPORT);
+        if (!localTransportIsPresent) {
+            return;
+        }
         // Enable backup and select local backup transport
-        assertTrue("LocalTransport should be available.", hasBackupTransport(LOCAL_TRANSPORT));
         wasBackupEnabled = enableBackup(true);
         oldTransport = setBackupTransport(LOCAL_TRANSPORT);
     }
@@ -61,12 +65,17 @@ public class BackupQuotaTest extends InstrumentationTestCase {
     @Override
     protected void tearDown() throws Exception {
         // Return old transport
-        setBackupTransport(oldTransport);
-        enableBackup(wasBackupEnabled);
+        if (localTransportIsPresent) {
+            setBackupTransport(oldTransport);
+            enableBackup(wasBackupEnabled);
+        }
         super.tearDown();
     }
 
     public void testQuotaExceeded() throws Exception {
+        if (!localTransportIsPresent) {
+            return;
+        }
         exec("logcat --clear");
         exec("setprop log.tag." + APP_LOG_TAG +" VERBOSE");
         // Launch test app and create file exceeding limit for local transport
@@ -147,10 +156,6 @@ public class BackupQuotaTest extends InstrumentationTestCase {
                 out.append(str);
             }
             return out.toString();
-        } finally {
-            if (br != null) {
-                closeQuietly(br);
-            }
         }
     }
 
@@ -158,7 +163,7 @@ public class BackupQuotaTest extends InstrumentationTestCase {
                                                                String command) throws Exception {
         final ParcelFileDescriptor pfd =
                 instrumentation.getUiAutomation().executeShellCommand(command);
-        return new FileInputStream(pfd.getFileDescriptor());
+        return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
     }
 
     private static void closeQuietly(AutoCloseable closeable) {

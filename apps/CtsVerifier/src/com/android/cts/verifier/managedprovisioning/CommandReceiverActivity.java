@@ -97,8 +97,10 @@ public class CommandReceiverActivity extends Activity {
                     }
                 } break;
                 case COMMAND_DISALLOW_KEYGUARD_UNREDACTED_NOTIFICATIONS: {
-                    mDpm.setKeyguardDisabledFeatures(mAdmin,
-                            DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS);
+                    boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
+                    mDpm.setKeyguardDisabledFeatures(mAdmin, enforced
+                            ? DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS
+                            : 0);
                 } break;
                 case COMMAND_SET_AUTO_TIME_REQUIRED: {
                     mDpm.setAutoTimeRequired(mAdmin,

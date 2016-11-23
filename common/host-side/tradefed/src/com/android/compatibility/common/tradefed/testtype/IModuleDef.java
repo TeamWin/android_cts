@@ -65,7 +65,8 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     void setPreparerWhitelist(Set<String> preparerWhitelist);
 
     /**
-     * Runs the module's precondition checks and setup tasks.
+     * Push any necessary dynamic configuration, then run the module's precondition checks
+     * and setup tasks.
      * @return whether preparation succeeded.
      */
     boolean prepare(boolean skipPrep) throws DeviceNotAvailableException;

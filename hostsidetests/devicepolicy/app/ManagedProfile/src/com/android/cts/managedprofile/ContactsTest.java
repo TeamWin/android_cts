@@ -82,6 +82,10 @@ public class ContactsTest extends AndroidTestCase {
     private static final String PRIMARY_DIRECTORY_CONTACT_NAME = "PrimaryDirectoryContact";
     private static final String MANAGED_DIRECTORY_CONTACT_NAME = "ManagedDirectoryContact";
 
+    // Directory Authority
+    private static final String DIRECTORY_PROVIDER_AUTHORITY = "com.android.cts.contact.directory.provider";
+
+
     // Retry directory query so we can make sure directory info in cp2 is updated
     private static final int MAX_RETRY_DIRECTORY_QUERY = 10;
     private static final int RETRY_DIRECTORY_QUERY_INTERVAL = 1000; // 1s
@@ -975,13 +979,15 @@ public class ContactsTest extends AndroidTestCase {
     private long getRemoteDirectoryIdInternal() {
         final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
                 new String[]{
-                        Directory._ID
+                        Directory._ID, Directory.DIRECTORY_AUTHORITY
                 }, null, null, null);
         try {
             while (cursor.moveToNext()) {
                 final long directoryId = cursor.getLong(0);
+                final String directoryAuthority = cursor.getString(1);
                 if (!Directory.isEnterpriseDirectoryId(directoryId)
-                        && Directory.isRemoteDirectoryId(directoryId)) {
+                        && Directory.isRemoteDirectoryId(directoryId)
+                        && DIRECTORY_PROVIDER_AUTHORITY.equals(directoryAuthority)) {
                     return directoryId;
                 }
             }
@@ -1002,13 +1008,15 @@ public class ContactsTest extends AndroidTestCase {
         assertFalse(isManagedProfile());
         final Cursor cursor = mResolver.query(Directory.ENTERPRISE_CONTENT_URI,
                 new String[] {
-                    Directory._ID
+                    Directory._ID, Directory.DIRECTORY_AUTHORITY
                 }, null, null, null);
         try {
             while (cursor.moveToNext()) {
                 final long directoryId = cursor.getLong(0);
+                final String directoryAuthority = cursor.getString(1);
                 if (Directory.isEnterpriseDirectoryId(directoryId)
-                        && Directory.isRemoteDirectoryId(directoryId)) {
+                        && Directory.isRemoteDirectoryId(directoryId)
+                        && DIRECTORY_PROVIDER_AUTHORITY.equals(directoryAuthority)) {
                     return directoryId;
                 }
             }

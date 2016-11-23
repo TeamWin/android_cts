@@ -98,9 +98,9 @@ public class SubPlanCreatorTest extends TestCase {
         ArgsOptionParser optionParser = new ArgsOptionParser(mSubPlanCreator);
         optionParser.parse(Arrays.asList(
             "-n", SP_NAME,
-            "-s", SP_SESSION,
-            "-r", SP_RESULT_TYPE_FAILED,
-            "-r", SP_RESULT_TYPE_NOT_EXECUTED));
+            "--session", SP_SESSION,
+            "--result-type", SP_RESULT_TYPE_FAILED,
+            "--result-type", SP_RESULT_TYPE_NOT_EXECUTED));
     }
 
     @Override

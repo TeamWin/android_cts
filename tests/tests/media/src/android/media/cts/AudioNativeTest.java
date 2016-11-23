@@ -24,7 +24,6 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 
 public class AudioNativeTest extends CtsAndroidTestCase {
-    // Assume stereo here until b/23899814 is fixed.
     public static final int MAX_CHANNEL_COUNT = 2;
     public static final int MAX_INDEX_MASK = (1 << MAX_CHANNEL_COUNT) - 1;
 
@@ -215,11 +214,7 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         }
         AudioTrackNative track = new AudioTrackNative();
 
-        // TODO: when b/23899814 is fixed, use AudioManager.getDevices() to enumerate
-        // actual devices and their channel counts instead of assuming stereo.
-        //
         int maxOutputChannels = 2;
-
         int validIndexMask = (1 << maxOutputChannels) - 1;
 
         for (int mask = 0; mask <= MAX_INDEX_MASK; ++mask) {
@@ -241,14 +236,20 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         if (!hasMicrophone()) {
             return;
         }
+
+        AudioManager audioManager =
+                (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         AudioRecordNative recorder = new AudioRecordNative();
 
-        // TODO: when b/23899814 is fixed, use AudioManager.getDevices() to enumerate
-        // actual devices and their channel counts instead of assuming stereo.
-        //
-        int maxInputChannels = 2;
+        int maxInputChannels = 0;
+        for (AudioDeviceInfo deviceInfo :
+                audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)) {
+            for (int channels : deviceInfo.getChannelCounts()) {
+                maxInputChannels = Math.max(channels, maxInputChannels);
+            }
+        }
 
-        int validIndexMask = (1 << maxInputChannels) -1;
+        int validIndexMask = (1 << maxInputChannels) - 1;
 
         for (int mask = 0; mask <= MAX_INDEX_MASK; ++mask) {
             int channelCount = Long.bitCount(mask);
