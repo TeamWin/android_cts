@@ -919,16 +919,6 @@
         </activity>
 
 
-        <activity android:name=".suid.SuidFilesActivity"
-                android:label="@string/suid_files"
-                android:configChanges="keyboardHidden|orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_security" />
-        </activity>
-
         <activity android:name=".security.FingerprintBoundKeysTest"
                 android:label="@string/sec_fingerprint_bound_key_test"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
@@ -1054,6 +1044,17 @@
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
             <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
         </activity>
+
+        <!--  activity android:name=".location.GnssStatusTestsActivity"
+            android:label="@string/location_gnss_status_test"
+            android:screenOrientation="locked">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
+            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
+        </activity -->
 
         <activity android:name=".location.LocationListenerActivity"
                 android:label="@string/location_listener_activity"
@@ -2548,7 +2549,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".tv.MockTvInputSetupActivity">

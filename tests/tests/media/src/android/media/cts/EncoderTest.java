@@ -161,7 +161,7 @@ public class EncoderTest extends AndroidTestCase {
         try {
             pool.shutdown();
             assertTrue("timed out waiting for encoder threads",
-                    pool.awaitTermination(5, TimeUnit.MINUTES));
+                    pool.awaitTermination(10, TimeUnit.MINUTES));
         } catch (InterruptedException e) {
             fail("interrupted while waiting for encoder threads");
         }

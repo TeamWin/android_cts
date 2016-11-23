@@ -71,9 +71,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         launchActivityToSide();
-        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME});
-
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
@@ -83,6 +83,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         final String[] waitForFirstVisible = new String[] {TEST_ACTIVITY_NAME};
         final String[] waitForSecondVisible = new String[] {NO_RELAUNCH_ACTIVITY_NAME};
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
 
         // Launch activity to side.
         launchActivityToSide();
@@ -115,7 +116,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     public void testLaunchToSideMultiple() throws Exception {
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
+        final String[] waitForActivitiesVisible =
+            new String[] {TEST_ACTIVITY_NAME, LAUNCHING_ACTIVITY};
 
         // Launch activity to side.
         launchActivityToSide();
@@ -154,11 +157,16 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private void launchTargetToSide(String targetActivityName,
                                     boolean taskCountMustIncrement) throws Exception {
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        final String[] waitForActivitiesVisible = new String[] {targetActivityName};
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
+
+        final String[] waitForActivitiesVisible =
+            new String[] {targetActivityName, LAUNCHING_ACTIVITY};
 
         // Launch activity to side with data.
         launchActivityToSide(true, false, targetActivityName);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.assertContainsStack(
+                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         int taskNumberInitial = mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID)
                 .getTasks().size();
         mAmWmState.assertNotNull("Launched to side activity must be in fullscreen stack.",
@@ -204,7 +212,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     public void testLaunchToSideMultipleWithFlag() throws Exception {
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        final String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
+        final String[] waitForActivitiesVisible =
+            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
 
         // Launch activity to side.
         launchActivityToSide();
@@ -236,15 +246,17 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         launchActivityToSide();
-        final String[] waitForActivitiesVisible = new String[] {LAUNCHING_ACTIVITY};
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
         // Rotate device single steps (90°) 0-1-2-3.
         // Each time we compute the state we implicitly assert valid bounds.
+        String[] waitForActivitiesVisible =
+            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
         setDeviceRotation(0);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
         setDeviceRotation(1);
@@ -274,13 +286,16 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         launchActivityToSide();
-        final String[] waitForActivitiesVisible = new String[] {LAUNCHING_ACTIVITY};
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.assertSanity();
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
 
+        String[] waitForActivitiesVisible =
+            new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
         lockDevice();
         setDeviceRotation(0);
         unlockDevice();
@@ -309,7 +324,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         }
 
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] {DOCKED_ACTIVITY_NAME});
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME, DOCKED_ACTIVITY_NAME},
                 false /* compareTaskAndStackBounds */);
@@ -328,13 +345,14 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
             return;
         }
-
+        final String[] waitTestActivityName = new String[] {TEST_ACTIVITY_NAME};
         executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
-        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.computeState(mDevice, waitTestActivityName);
         final Rectangle fullScreenBounds =
                 mAmWmState.getWmState().getStack(FULLSCREEN_WORKSPACE_STACK_ID).getBounds();
 
         moveActivityToDockStack(TEST_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, waitTestActivityName);
         launchActivityInStack(NO_RELAUNCH_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
 
         mAmWmState.computeState(mDevice,
@@ -346,15 +364,15 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         Rectangle newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
         resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
+        mAmWmState.computeState(mDevice,
+                new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
 
         // We resize twice to make sure we cross an orientation change threshold for both
         // activities.
         newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, false);
         resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
-
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
-
         assertActivityLifecycle(TEST_ACTIVITY_NAME, true);
         assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false);
     }

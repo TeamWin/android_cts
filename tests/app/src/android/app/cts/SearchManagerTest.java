@@ -16,11 +16,11 @@
 
 package android.app.cts;
 
+import android.app.SearchManager;
 import android.app.stubs.CTSActivityTestCaseBase;
 import android.app.stubs.SearchManagerStubActivity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 
 public class SearchManagerTest extends CTSActivityTestCaseBase {
 
@@ -33,7 +33,7 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testStopSearch() throws InterruptedException {
-        if (isTelevision() || isWatch()) {
+        if (!hasGlobalSearchActivity()) {
             return;
         }
         SearchManagerStubActivity.setCTSResult(this);
@@ -42,7 +42,7 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testSetOnDismissListener() throws InterruptedException {
-        if (isTelevision() || isWatch()) {
+        if (!hasGlobalSearchActivity()) {
             return;
         }
         SearchManagerStubActivity.setCTSResult(this);
@@ -51,7 +51,7 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
     }
 
     public void testSetOnCancelListener() throws InterruptedException {
-        if (isTelevision() || isWatch()) {
+        if (!hasGlobalSearchActivity()) {
             return;
         }
         SearchManagerStubActivity.setCTSResult(this);
@@ -59,16 +59,18 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
         waitForResult();
     }
 
-    private boolean isTelevision() {
+    private boolean hasGlobalSearchActivity() {
         Context context = getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
-    }
-
-    private boolean isWatch() {
-        Context context = getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        SearchManager searchManager =
+                (SearchManager) context.getSystemService(Context.SEARCH_SERVICE);
+        if (searchManager == null) {
+            return false;
+        }
+        try {
+            return searchManager.getGlobalSearchActivity() != null;
+        } catch (NullPointerException e) {
+            // Means there is no internal search service.
+            return false;
+        }
     }
 }

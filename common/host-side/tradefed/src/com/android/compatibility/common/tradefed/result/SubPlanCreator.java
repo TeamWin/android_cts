@@ -69,11 +69,11 @@ public class SubPlanCreator {
             importance=Importance.IF_UNSET)
     private String mSubPlanName = null;
 
-    @Option (name = "session", shortName = 's', description = "the session id to derive from",
+    @Option (name = "session", description = "the session id to derive from",
             importance=Importance.IF_UNSET)
     private Integer mSessionId = null;
 
-    @Option (name = "result-type", shortName = 'r',
+    @Option (name = "result-type",
             description = "the result type to include. One of passed, failed, not_executed."
             + " Option may be repeated",
             importance=Importance.IF_UNSET)

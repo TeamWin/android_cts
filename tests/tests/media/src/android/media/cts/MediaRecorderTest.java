@@ -934,12 +934,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         boolean success = false;
         Surface surface = null;
         int noOfFailure = 0;
-        final float frameRate = getMaxFrameRateForCodec(MediaRecorder.VideoEncoder.H264);
 
         if (!hasH264()) {
             MediaUtils.skipTest("no codecs");
             return true;
         }
+
+        final float frameRate = getMaxFrameRateForCodec(MediaRecorder.VideoEncoder.H264);
 
         try {
             if (persistent) {

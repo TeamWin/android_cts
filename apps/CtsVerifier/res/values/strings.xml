@@ -42,6 +42,9 @@
     <string name="test_category_tv">TV</string>
     <string name="test_category_other">Other</string>
     <string name="clear">Clear</string>
+    <string name="test_results_clear_title">Remove all test results?</string>
+    <string name="test_results_clear_yes">Yes</string>
+    <string name="test_results_clear_cancel">Cancel</string>
     <string name="test_results_cleared">Test results cleared.</string>
     <string name="view">View</string>
     <string name="test_results_error">Couldn\'t create test results report.</string>
@@ -569,6 +572,7 @@
     <string name="location_gnss_reg_test">GNSS Measurement Registration Test</string>
     <string name="location_gnss_value_test">GNSS Measurement Values Test</string>
     <string name="location_gnss_nav_msg_test">GNSS Navigation Message Test</string>
+    <string name="location_gnss_status_test">GNSS Status Test</string>
     <string name="location_gnss_test_info">This test verifies basic GNSS behavior.
         Make sure the device has line of sight to GNSS satellites
         (for example, stationary on a windowsill.  If needed, try again, outside, also with the
@@ -944,15 +948,6 @@
     <string name="sample_framework_test">Sample Framework Test</string>
     <string name="sample_test">Sample Test</string>
     <string name="sample_test_info">This test verifies that bluetooth sharing is working properly.\nThe test assumes the Device Under Test has bluetooth enabled and is already paired with a second device, also with bluetooth enabled.\nStart this test by clicking share, choose bluetooth from the options, and then select a device to share with.\nNote: This is a sample test, used to demonstrate how to write CTS Verifier tests, so just click pass.</string>
-
-    <!-- Strings for SuidFilesActivity -->
-    <string name="suid_files">SUID File Scanner</string>
-    <string name="suid_files_info">This test will attempt to find unauthorized SUID binaries, but it is not comprehensive due to permission restrictions.\n\nAuthorized SUID binaries will appear green, while unauthorized SUID binaries will appear red.\n\nPress OK to start the scan...</string>
-    <string name="scanning_directory">Scanning directory...</string>
-    <string name="file_status">User: %1$s\nGroup: %2$s\nPermissions: %3$s\nPath: %4$s</string>
-    <string name="no_file_status">Could not stat file...</string>
-    <string name="congratulations">Congratulations!</string>
-    <string name="no_suid_files">No unauthorized suid files detected!</string>
 
     <!-- Strings for Camera Orientation -->
     <string name="camera_orientation">Camera Orientation</string>
@@ -2322,9 +2317,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_usb_file_transfer_test">Disallow USB file transfer</string>
     <string name="device_owner_disallow_usb_file_transfer_test_info">
             Please press below button to set the \"disallow USB file transfer\" restriction.\n
-            Next, connect your device to your desktop computer through USB, open the USB notification from the status bar
-            and check that the \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and triggers a support message when trying to select them.\n
-            Also, check that if you can download files from your phone to the desktop computer. The test is successful if the files from your phone are not and cannot be downloaded through USB.\n
+            If a USB notification appears, open the notification and check that the
+            \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and trigger a
+            support message when trying to select them.\n
+            Check if you can mount the device as a USB drive on your desktop computer. The test is
+            successful if you cannot mount the device, and files from your phone cannot be
+            downloaded through USB.\n
             Please mark the test accordingly.
     </string>
     <string name="device_owner_set_user_icon">Setting the user icon</string>
@@ -2424,10 +2422,6 @@ You should be prompted to select credentials; choose the ones you just installed
         This was expected.\n
         Mark this test as passed.\n
     </string>
-    <string name="device_owner_vpn_connection_canceled">
-        Cannot establish a VPN connection.\n
-        Connection canceled by user.\n
-    </string>
     <string name="device_owner_vpn_test">Check VPN</string>
     <string name="device_owner_vpn_info_default">Vpn test message</string>
 
@@ -2441,7 +2435,8 @@ You should be prompted to select credentials; choose the ones you just installed
         - You cannot edit, add or remove any existing VPNs.\n
         - Trying to perform any of the above actions will trigger a support message.\n\n
         2. Press Check VPN to check programmatic Vpn test.\n
-        - Check Vpn setup\n\n
+        - Check Vpn setup is not allowed\n
+        - If prompted to allow a VPN connection, press OK.\n\n
         Use the Back button to return to this page.
     </string>
     <string name="device_owner_user_vpn_restriction_set">Set VPN restriction</string>
@@ -2641,7 +2636,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="password_quality_complex">Complex</string>
     <string name="set_permitted_accessibility_services">Set permitted accessibility services</string>
     <string name="permitted_accessibility_services_set_step">
-        Disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
+        Check that \'Dummy Accessibility service\' is not enabled in Settings and disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
         the switch below.
     </string>
     <string name="set_permitted_accessibility_services_action">
@@ -2652,7 +2647,7 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="set_permitted_input_methods">Set permitted input methods</string>
     <string name="permitted_input_methods_set_step">
-        Disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
+        Check that \'Dummy Input method\' is not enabled in Settings and disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
         Enabling \'Dummy Input Method\' in the list of accessibility services
