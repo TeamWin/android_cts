@@ -222,6 +222,11 @@ public class BitmapTest {
         Bitmap.createBitmap(mBitmap, 10, 10, 50, 95, null, false);
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testCreateMutableBitmapWithHardwareConfig() {
+        Bitmap.createBitmap(100, 100, Config.HARDWARE);
+    }
+
     @Test
     public void testCreateBitmap3() {
         // special case: output bitmap is equal to the input bitmap
