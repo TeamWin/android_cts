@@ -48,3 +48,34 @@ LOCAL_JAVA_LIBRARIES += android.test.runner
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
+
+# platform version check (b/32056228)
+# ============================================================
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := cts-platform-version-check
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+cts_platform_version_path := cts/tests/tests/os/assets/platform_versions.txt
+cts_platform_version_string := $(shell cat $(cts_platform_version_path))
+
+include $(BUILD_SYSTEM)/base_rules.mk
+
+$(LOCAL_BUILT_MODULE) : $(cts_platform_version_path) build/core/version_defaults.mk
+	$(hide) if [ -z "$(findstring $(PLATFORM_VERSION),$(cts_platform_version_string))" ]; then \
+		echo "============================================================" 1>&2; \
+		echo "Could not find version \"$(PLATFORM_VERSION)\" in CTS platform version file:" 1>&2; \
+		echo "" 1>&2; \
+		echo "	$(cts_platform_version_path)" 1>&2; \
+		echo "" 1>&2; \
+		echo "Most likely PLATFORM_VERSION in build/core/version_defaults.mk" 1>&2; \
+		echo "has changed and a new version must be added to this CTS file." 1>&2; \
+		echo "============================================================" 1>&2; \
+		exit 1; \
+	fi
+	@mkdir -p $(dir $@)
+	echo $(cts_platform_version_string) > $@
