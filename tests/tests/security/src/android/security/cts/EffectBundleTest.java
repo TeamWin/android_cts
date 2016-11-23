@@ -22,6 +22,8 @@ import android.media.MediaPlayer;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -104,7 +106,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
                     Log.w(TAG,"Problem creating reply string.");
                 }
             } else {
-                for (int i = 0; i< reply.length; i++) {
+                for (int i = 0; i < reply.length; i++) {
                     assertEquals(String.format("getParam should not change reply at byte %d", i),
                             testValue, reply[i]);
                 }
@@ -134,6 +136,70 @@ public class EffectBundleTest extends InstrumentationTestCase {
                 fail("setParam PARAM_BAND_LEVEL did not complete successfully");
             }
         }
+    }
+
+    //testing security bug: 32705438
+    public void testEqualizer_getParamFreqRangeCommand_short() throws Exception {
+        assertTrue("testEqualizer_getParamFreqRangeCommand_short did not complete successfully",
+                eqGetParamFreqRangeCommand(MEDIA_SHORT));
+    }
+
+    //testing security bug: 32703959
+    public void testEqualizer_getParamFreqRangeCommand_long() throws Exception {
+        assertTrue("testEqualizer_getParamFreqRangeCommand_long did not complete successfully",
+                eqGetParamFreqRangeCommand(MEDIA_LONG));
+    }
+
+    private boolean eqGetParamFreqRangeCommand(int media) {
+        MediaPlayer mp = null;
+        Equalizer eq = null;
+        boolean status = false;
+        try {
+            mp = MediaPlayer.create(getInstrumentation().getContext(), getMediaId(media));
+            eq = new Equalizer(0 /*priority*/, mp.getAudioSessionId());
+
+            short band = 2;
+            int intSize = 4; //bytes
+
+            //baseline
+            int cmdCode = 8; // EFFECT_CMD_GET_PARAM
+            byte command[] = concatArrays(/*status*/ intToByteArray(0),
+                    /*psize*/ intToByteArray(2 * intSize),
+                    /*vsize*/ intToByteArray(2 * intSize),
+                    /*data[0]*/ intToByteArray(Equalizer.PARAM_BAND_FREQ_RANGE),
+                    /*data[1]*/ intToByteArray((int) band));
+
+            byte reply[] = new byte[command.length];
+
+            AudioEffect af = eq;
+            Object o = AudioEffect.class.getDeclaredMethod("command", int.class, byte[].class,
+                    byte[].class).invoke(af, cmdCode, command, reply);
+
+            int methodStatus = AudioEffect.ERROR;
+            if (o != null) {
+                methodStatus = Integer.valueOf(o.toString()).intValue();
+            }
+
+            assertTrue("Command expected to fail", methodStatus <= 0);
+            int sum = 0;
+            for (int i = 0; i < reply.length; i++) {
+                sum += Math.abs(reply[i]);
+            }
+
+            assertEquals("reply expected to be all zeros", sum, 0);
+            status = true;
+        } catch (Exception e) {
+            Log.w(TAG,"Problem testing eqGetParamFreqRangeCommand");
+            status = false;
+        } finally {
+            if (eq != null) {
+                eq.release();
+            }
+            if (mp != null) {
+                mp.release();
+            }
+        }
+        return status;
     }
 
     private boolean eqGetParam(int media, int command, int band, byte[] reply) {
@@ -241,5 +307,35 @@ public class EffectBundleTest extends InstrumentationTestCase {
             case MEDIA_LONG:
                 return R.raw.onekhzsine_90sec;
         }
+    }
+
+    private static byte[] intToByteArray(int value) {
+        ByteBuffer converter = ByteBuffer.allocate(4);
+        converter.order(ByteOrder.nativeOrder());
+        converter.putInt(value);
+        return converter.array();
+    }
+
+    private static byte[] shortToByteArray(short value) {
+        ByteBuffer converter = ByteBuffer.allocate(2);
+        converter.order(ByteOrder.nativeOrder());
+        short sValue = (short) value;
+        converter.putShort(sValue);
+        return converter.array();
+    }
+
+    private static  byte[] concatArrays(byte[]... arrays) {
+        int len = 0;
+        for (byte[] a : arrays) {
+            len += a.length;
+        }
+        byte[] b = new byte[len];
+
+        int offs = 0;
+        for (byte[] a : arrays) {
+            System.arraycopy(a, 0, b, offs, a.length);
+            offs += a.length;
+        }
+        return b;
     }
 }
