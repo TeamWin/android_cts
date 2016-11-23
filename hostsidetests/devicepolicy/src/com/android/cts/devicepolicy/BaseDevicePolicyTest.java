@@ -566,17 +566,25 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
     }
 
-    protected void enableComponent(int userId, String componentName)
+    /**
+     * Runs pm enable command to enable a package or component. Returns the command result.
+     */
+    protected String enableComponentOrPackage(int userId, String packageOrComponent)
             throws DeviceNotAvailableException {
-        String command = "pm enable --user " + userId + " " + componentName;
-        CLog.d("Output for command " + command + ": "
-                + getDevice().executeShellCommand(command));
+        String command = "pm enable --user " + userId + " " + packageOrComponent;
+        String result = getDevice().executeShellCommand(command);
+        CLog.d("Output for command " + command + ": " + result);
+        return result;
     }
 
-    protected void disableComponent(int userId, String componentName)
+    /**
+     * Runs pm disable command to disable a package or component. Returns the command result.
+     */
+    protected String disableComponentOrPackage(int userId, String packageOrComponent)
             throws DeviceNotAvailableException {
-        String command = "pm disable --user " + userId + " " + componentName;
-        CLog.d("Output for command " + command + ": "
-                + getDevice().executeShellCommand(command));
+        String command = "pm disable --user " + userId + " " + packageOrComponent;
+        String result = getDevice().executeShellCommand(command);
+        CLog.d("Output for command " + command + ": " + result);
+        return result;
     }
 }
