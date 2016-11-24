@@ -16,8 +16,12 @@
 
 package com.android.cts.comp;
 
+import android.os.UserHandle;
+
 import com.android.cts.comp.bindservice.BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite;
 import com.android.cts.comp.bindservice.BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite;
+
+import java.util.List;
 
 /**
  * Testing various scenarios when a profile owner from the managed profile tries to bind a service
@@ -27,14 +31,30 @@ public class ManagedProfileBindDeviceAdminServiceTest extends BaseManagedProfile
 
     public void testBindDeviceAdminServiceForUser_corpOwnedManagedProfile() throws Exception {
         assertEquals(AdminReceiver.COMP_DPC_PACKAGE_NAME, mContext.getPackageName());
+
+        // COMP mode - Managed Profile PO should be allowed to bind to the DO.
+        List<UserHandle> allowedTargetUsers = mDevicePolicyManager.getBindDeviceAdminTargetUsers(
+                AdminReceiver.getComponentName(mContext));
+        assertEquals(1, allowedTargetUsers.size());
+        UserHandle primaryProfileUserHandle = allowedTargetUsers.get(0);
+        assertTrue(mOtherProfiles.contains(primaryProfileUserHandle));
+
         new BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite(
-                mContext, mPrimaryUserHandle).execute();
+                mContext, primaryProfileUserHandle).execute();
     }
 
     public void testBindDeviceAdminServiceForUser_byodPlusDeviceOwner() throws Exception {
         assertEquals(AdminReceiver.COMP_DPC_2_PACKAGE_NAME, mContext.getPackageName());
-        new BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite(
-                mContext, mPrimaryUserHandle, AdminReceiver.COMP_DPC_PACKAGE_NAME)
-                .execute();
+
+        // DO+BYOD mode - the DO and the PO should not be allowed to bind to each other.
+        List<UserHandle> allowedTargetUsers = mDevicePolicyManager.getBindDeviceAdminTargetUsers(
+                AdminReceiver.getComponentName(mContext));
+        assertEquals(0, allowedTargetUsers.size());
+
+        for (UserHandle userHandle : mOtherProfiles) {
+            new BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite(
+                    mContext, userHandle, AdminReceiver.COMP_DPC_PACKAGE_NAME)
+                    .execute();
+        }
     }
 }
