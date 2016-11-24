@@ -612,6 +612,31 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testCannotEnableOrDisableDeviceOwnerOrProfileOwner() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Try to disable a component in device owner/ profile owner.
+        String result = disableComponentOrPackage(
+                mUserId, DEVICE_ADMIN_PKG + "/.SetPolicyActivity");
+        assertTrue("Should throw SecurityException",
+                result.contains("java.lang.SecurityException"));
+        // Try to disable the device owner/ profile owner package.
+        result = disableComponentOrPackage(mUserId, DEVICE_ADMIN_PKG);
+        assertTrue("Should throw SecurityException",
+                result.contains("java.lang.SecurityException"));
+        // Try to enable a component in device owner/ profile owner.
+        result = enableComponentOrPackage(
+                mUserId, DEVICE_ADMIN_PKG + "/.SetPolicyActivity");
+        assertTrue("Should throw SecurityException",
+                result.contains("java.lang.SecurityException"));
+        // Try to enable the device owner/ profile owner package.
+        result = enableComponentOrPackage(mUserId, DEVICE_ADMIN_PKG);
+        assertTrue("Should throw SecurityException",
+                result.contains("java.lang.SecurityException"));
+
+    }
+
     protected void executeDeviceTestClass(String className) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }

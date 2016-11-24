@@ -260,20 +260,20 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // allow_parent_profile_app_linking is not set, try different enabled state combinations.
         // We should not have app link handler in parent user no matter whether it is enabled.
 
-        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testReceivedByBrowserActivityInManaged");
 
-        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testReceivedByBrowserActivityInManaged");
 
-        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testTwoReceivers");
 
-        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testTwoReceivers");
 
         // We now set allow_parent_profile_app_linking, and hence we should have the app handler
@@ -281,20 +281,20 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         changeUserRestrictionForUser("allow_parent_profile_app_linking", ADD_RESTRICTION_COMMAND,
                 mProfileUserId);
 
-        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testReceivedByBrowserActivityInManaged");
 
-        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        disableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testTwoReceivers");
 
-        disableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testTwoReceivers");
 
-        enableComponent(mParentUserId, APP_HANDLER_COMPONENT);
-        enableComponent(mProfileUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
+        enableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
         assertAppLinkResult("testThreeReceivers");
     }
 
