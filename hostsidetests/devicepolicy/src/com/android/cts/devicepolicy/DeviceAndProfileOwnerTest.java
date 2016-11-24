@@ -597,7 +597,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+        // Outside of the primary user, setting DISALLOW_REMOVE_USER would not work.
+        if (!mHasFeature || !canCreateAdditionalUsers(1) || mUserId != getPrimaryUser()) {
             return;
         }
         final int userId = createUser();
