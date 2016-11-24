@@ -6273,6 +6273,21 @@ public class TextViewTest {
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
     }
 
+    @Test
+    public void testAutoSizeXY_obtainStyledAttributes() {
+        DisplayMetrics metrics = mActivity.getResources().getDisplayMetrics();
+        TextView autoSizeTextViewXY = (TextView) mActivity.findViewById(R.id.textview_autosize_xy);
+
+        // The size has been set to 50dp in the layout but this being an AUTO_SIZE_TYPE_XY TextView,
+        // the size is considered max size thus the value returned by getSize() in this case should
+        // be lower than the one set (given that there is not much available space and the font size
+        // is very high). In theory the values could be equal for a different TextView
+        // configuration.
+        final float sizeSetInPixels = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 50f, metrics);
+        assertTrue(autoSizeTextViewXY.getTextSize() < sizeSetInPixels);
+    }
+
     /**
      * Removes all existing views from the layout and adds a basic TextView (for exercising the
      * ClickableSpan onClick() behavior) in order to prevent scrolling. Adds a ClickableSpan to the

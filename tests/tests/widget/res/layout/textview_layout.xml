@@ -277,6 +277,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
+            <TextView
+                    android:id="@+id/textview_autosize_xy"
+                    android:layout_width="100dp"
+                    android:layout_height="200dp"
+                    android:text="@string/long_text"
+                    android:autoSizeText="xy"
+                    android:textSize="50dp"
+                    android:autoSizeStepGranularity="2dp" />
+
         </LinearLayout>
 
 </ScrollView>
