@@ -41,6 +41,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_JAVA_LIBRARIES := easymock
 
-LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-mock-tradefed junit compatibility-host-util
+LOCAL_JAVA_LIBRARIES := tradefed-prebuilt compatibility-mock-tradefed junit-host compatibility-host-util
 
 include $(BUILD_HOST_JAVA_LIBRARY)
