@@ -41,6 +41,11 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     final static String EXTRA_USER_HANDLE = "com.android.cts.deviceowner.extra.USER_HANDLE";
 
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
+
+        public static ComponentName getComponentName(Context context) {
+            return new ComponentName(context, BasicAdminReceiver.class);
+        }
+
         @Override
         public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
                 String suggestedAlias) {

@@ -41,6 +41,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             DEVICE_OWNER_PKG + ".BaseDeviceOwnerTest$BasicAdminReceiver";
+    private static final String DEVICE_OWNER_COMPONENT = DEVICE_OWNER_PKG + "/"
+            + ADMIN_RECEIVER_TEST_CLASS;
 
     /** The ephemeral users are implemented and supported on the device. */
     private boolean mHasEphemeralUserFeature;
@@ -56,10 +58,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         super.setUp();
         if (mHasFeature) {
             installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
-            if (!setDeviceOwner(
-                    DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId,
+            if (!setDeviceOwner(DEVICE_OWNER_COMPONENT, mPrimaryUserId,
                     /*expectFailure*/ false)) {
-                removeAdmin(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId);
+                removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
                 fail("Failed to set device owner");
             }
         }
@@ -72,7 +73,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     protected void tearDown() throws Exception {
         if (mHasFeature) {
             assertTrue("Failed to remove device owner.",
-                    removeAdmin(DEVICE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId));
+                    removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId));
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
             removeTestUsers();
@@ -452,6 +453,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("BluetoothRestrictionTest");
+    }
+
+    public void testDeviceOwnerProvisioning() throws Exception {
+        executeDeviceTestMethod(".DeviceOwnerProvisioningTest", "testProvisionDeviceOwner");
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {

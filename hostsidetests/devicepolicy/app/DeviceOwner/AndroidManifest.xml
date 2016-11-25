@@ -67,6 +67,8 @@
             android:name="com.android.cts.deviceowner.LockTaskTest$IntentReceivingActivity"
             android:taskAffinity="com.android.cts.deviceowner.LockTaskTest.IntentReceivingActivity"
             />
+
+        <activity android:name=".provisioning.StartProvisioningActivity"></activity>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
