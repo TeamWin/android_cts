@@ -118,6 +118,13 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
     }
 
     /**
+     * Test: When a Device Owner is set, isDeviceManaged() should return true.
+     */
+    public void testIsDeviceManaged() throws Exception {
+        assertTrue(mDevicePolicyManager.isDeviceManaged());
+    }
+
+    /**
      * Helper that allows the host-side test harness to disable network logging after running the
      * other tests in this file.
      */
