@@ -23,9 +23,10 @@ import android.view.ViewGroup.LayoutParams;
 
 
 /**
- * An activity that exercises SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.
+ * An activity that exercises SYSTEM_UI_FLAG_LIGHT_STATUS_BAR and
+ * SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.
  */
-public class LightStatusBarActivity extends Activity {
+public class LightBarActivity extends Activity {
 
     private View mContent;
 
@@ -39,17 +40,29 @@ public class LightStatusBarActivity extends Activity {
     }
 
     public void setLightStatusBar(boolean lightStatusBar) {
+        setLightBar(lightStatusBar, View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+    }
+
+    public void setLightNavigationBar(boolean lightNavigationBar) {
+        setLightBar(lightNavigationBar, View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+    }
+
+    private void setLightBar(boolean light, int systemUiFlag) {
         int vis = getWindow().getDecorView().getSystemUiVisibility();
-        if (lightStatusBar) {
-            vis |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        if (light) {
+            vis |= systemUiFlag;
         } else {
-            vis &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            vis &= ~systemUiFlag;
         }
         getWindow().getDecorView().setSystemUiVisibility(vis);
     }
 
     public int getTop() {
         return mContent.getLocationOnScreen()[1];
+    }
+
+    public int getBottom() {
+        return mContent.getLocationOnScreen()[1] + mContent.getHeight();
     }
 
     public int getWidth() {
