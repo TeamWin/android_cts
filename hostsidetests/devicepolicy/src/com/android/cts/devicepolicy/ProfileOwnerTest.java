@@ -36,9 +36,13 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
 
         if (mHasFeature) {
             installAppAsUser(PROFILE_OWNER_APK, mUserId);
-            assertTrue("Failed to set profile owner",
-                    setProfileOwner(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
-                             /* expectFailure */ false));
+            if (!setProfileOwner(
+                    PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
+                    /* expectFailure */ false)) {
+                removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
+                getDevice().uninstallPackage(PROFILE_OWNER_PKG);
+                fail("Failed to set profile owner");
+            }
         }
     }
 
