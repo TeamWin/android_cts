@@ -19,7 +19,9 @@ import android.media.cts.R;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.cts.util.MediaUtils;
 import android.graphics.Bitmap;
+import android.media.MediaFormat;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.View;
@@ -164,17 +166,23 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private void runH264DecodeAccuracyTest(
             VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
-        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertestgolden);
+        if (MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertestgolden);
+        }
     }
 
     private void runVP9DecodeAccuracyTest(
             VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
-        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.vp9decodertestgolden);
+        if (MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+            runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.vp9decodertestgolden);
+        }
     }
 
     private void runH264DecodeCroppedTest(
             VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
-        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertest520x360golden);
+        if (MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertest520x360golden);
+        }
     }
 
     private void runDecodeAccuracyTest(
