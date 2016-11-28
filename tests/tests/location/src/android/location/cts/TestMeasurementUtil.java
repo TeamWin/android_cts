@@ -65,15 +65,12 @@ public final class TestMeasurementUtil {
                                                     String testTag,
                                                     int minHardwareYear,
                                                     boolean isCtsVerifier) {
-       // TODO(sumitk): Enable this check once api 24 for N is avaiable.
-       /*
        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             Log.i(TAG, "This test is designed to work on N or newer. " +
                     "Test is being skipped because the platform version is being run in " +
                     Build.VERSION.SDK_INT);
             return false;
         }
-        */
 
         // If device does not have a GPS, skip the test.
         PackageManager pm = testLocationManager.getContext().getPackageManager();
