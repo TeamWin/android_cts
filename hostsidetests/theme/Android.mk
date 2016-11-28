@@ -27,8 +27,6 @@ LOCAL_MODULE := CtsThemeHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
 LOCAL_CTS_TEST_PACKAGE := android.host.theme
 
 LOCAL_SDK_VERSION := current

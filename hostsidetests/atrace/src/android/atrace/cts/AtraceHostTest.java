@@ -16,7 +16,7 @@
 
 package android.atrace.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
@@ -201,7 +201,8 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
             getDevice().uninstallPackage(TEST_PKG);
 
             // install the test app
-            File testAppFile = MigrationHelper.getTestFile(mCtsBuild, TEST_APK);
+            CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+            File testAppFile = buildHelper.getTestFile(TEST_APK);
             String installResult = getDevice().installPackage(testAppFile, false);
             assertNull(
                     String.format("failed to install atrace test app. Reason: %s", installResult),

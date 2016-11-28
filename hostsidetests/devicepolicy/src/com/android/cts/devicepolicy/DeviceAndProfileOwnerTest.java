@@ -18,7 +18,7 @@ package com.android.cts.devicepolicy;
 
 import android.platform.test.annotations.RequiresDevice;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -503,7 +503,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final String PACKAGE_VERIFIER_ENABLE_SETTING = "package_verifier_enable";
         final String SECURE_SETTING_CATEGORY = "secure";
         final String GLOBAL_SETTING_CATEGORY = "global";
-        final File apk = MigrationHelper.getTestFile(mCtsBuild, TEST_APP_APK);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final File apk = buildHelper.getTestFile(TEST_APP_APK);
         String unknownSourceSetting = null;
         String packageVerifierEnableSetting = null;
         String packageVerifierUserConsentSetting = null;

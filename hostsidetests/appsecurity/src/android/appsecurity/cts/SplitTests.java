@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -334,7 +334,8 @@ public class SplitTests extends DeviceTestCase implements IAbiReceiver, IBuildRe
         }
 
         T addApk(String apk) throws FileNotFoundException {
-            mApks.add(MigrationHelper.getTestFile(mBuild, apk));
+            CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
+            mApks.add(buildHelper.getTestFile(apk));
             return (T) this;
         }
 

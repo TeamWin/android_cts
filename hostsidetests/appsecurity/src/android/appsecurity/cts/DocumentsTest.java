@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 
 /**
  * Set of tests that verify behavior of
@@ -31,9 +31,8 @@ public class DocumentsTest extends DocumentsTestCase {
         super.setUp();
 
         getDevice().uninstallPackage(PROVIDER_PKG);
-
-        assertNull(getDevice().installPackage(
-                MigrationHelper.getTestFile(mCtsBuild, PROVIDER_APK), false));
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        assertNull(getDevice().installPackage(buildHelper.getTestFile(PROVIDER_APK), false));
     }
 
     @Override

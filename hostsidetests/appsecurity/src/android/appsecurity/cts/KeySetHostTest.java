@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
@@ -101,7 +101,8 @@ public class KeySetHostTest extends DeviceTestCase implements IBuildReceiver {
     private static final String LOG_TAG = "AppsecurityHostTests";
 
     private File getTestAppFile(String fileName) throws FileNotFoundException {
-        return MigrationHelper.getTestFile(mCtsBuild, fileName);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        return buildHelper.getTestFile(fileName);
     }
 
     /**

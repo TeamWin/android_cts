@@ -30,8 +30,6 @@ LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
-
 LOCAL_CTS_TEST_PACKAGE := android.host.security
 
 selinux_general_seapp_contexts := $(call intermediates-dir-for,ETC,general_seapp_contexts)/general_seapp_contexts

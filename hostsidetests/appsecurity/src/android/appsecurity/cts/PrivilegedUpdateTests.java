@@ -16,7 +16,7 @@
 
 package android.appsecurity.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -47,7 +47,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
             + " com.android.cts.priv.ctsshim";
 
     private IAbi mAbi;
-    private IBuildInfo mCtsBuild;
+    private CompatibilityBuildHelper mBuildHelper;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -56,7 +56,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
-        mCtsBuild = buildInfo;
+        mBuildHelper = new CompatibilityBuildHelper(buildInfo);
     }
 
     @Override
@@ -64,13 +64,12 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         super.setUp();
 
         assertNotNull(mAbi);
-        assertNotNull(mCtsBuild);
+        assertNotNull(mBuildHelper);
 
         getDevice().uninstallPackage(SHIM_PKG);
         getDevice().uninstallPackage(TEST_PKG);
 
-        assertNull(getDevice().installPackage(
-                MigrationHelper.getTestFile(mCtsBuild, TEST_APK), false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(TEST_APK), false));
         getDevice().executeShellCommand("pm enable " + SHIM_PKG);
     }
 
@@ -86,7 +85,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
     public void testPrivilegedAppUpgradeRestricted() throws Exception {
         getDevice().uninstallPackage(SHIM_PKG);
         assertEquals(RESTRICTED_UPGRADE_FAILURE, getDevice().installPackage(
-                MigrationHelper.getTestFile(mCtsBuild, SHIM_UPDATE_FAIL_APK), true));
+                mBuildHelper.getTestFile(SHIM_UPDATE_FAIL_APK), true));
     }
 
     public void testSystemAppPriorities() throws Exception {
@@ -102,7 +101,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         
         try {
             assertNull(getDevice().installPackage(
-                    MigrationHelper.getTestFile(mCtsBuild, SHIM_UPDATE_APK), true));
+                    mBuildHelper.getTestFile(SHIM_UPDATE_APK), true));
             runDeviceTests(TEST_PKG, ".PrivilegedUpdateTest", "testPrivilegedAppUpgradePriorities");
         } finally {
             getDevice().uninstallPackage(SHIM_PKG);
@@ -121,7 +120,7 @@ public class PrivilegedUpdateTests extends DeviceTestCase implements IAbiReceive
         runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testPrivAppAndEnabled");
         try {
             assertNull(getDevice().installPackage(
-                    MigrationHelper.getTestFile(mCtsBuild, SHIM_UPDATE_APK), true));
+                    mBuildHelper.getTestFile(SHIM_UPDATE_APK), true));
             getDevice().executeShellCommand("pm disable-user " + SHIM_PKG);
             runDeviceTests(TEST_PKG, ".PrivilegedAppDisableTest", "testUpdatedPrivAppAndDisabled");
             getDevice().executeShellCommand("pm enable " + SHIM_PKG);

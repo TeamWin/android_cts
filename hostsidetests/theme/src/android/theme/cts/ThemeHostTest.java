@@ -16,7 +16,7 @@
 
 package android.theme.cts;
 
-import com.android.cts.migration.MigrationHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
@@ -116,7 +116,8 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         mHardwareType = mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim();
 
         // Get the APK from the build.
-        final File app = MigrationHelper.getTestFile(mBuildInfo, String.format("%s.apk", APK_NAME));
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        final File app = buildHelper.getTestFile(String.format("%s.apk", APK_NAME));
         final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
         mDevice.installPackage(app, true, true, options);
 
