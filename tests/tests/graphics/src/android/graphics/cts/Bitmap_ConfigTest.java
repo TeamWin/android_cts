@@ -42,12 +42,11 @@ public class Bitmap_ConfigTest {
     public void testValues(){
         Config[] config = Config.values();
 
-        assertTrue(config.length >= 5);
+        assertTrue(config.length >= 4);
         assertEquals(Config.ALPHA_8, config[0]);
         assertEquals(Config.RGB_565, config[1]);
         assertEquals(Config.ARGB_4444, config[2]);
         assertEquals(Config.ARGB_8888, config[3]);
-        assertEquals(Config.HARDWARE, config[4]);
 
         //Config is used as a argument here for all the methods that use it
         assertNotNull(Bitmap.createBitmap(10, 24, Config.ALPHA_8));
