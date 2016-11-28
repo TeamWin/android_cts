@@ -5699,6 +5699,18 @@ public class TextViewTest {
         assertEquals(Layout.HYPHENATION_FREQUENCY_FULL, tv.getHyphenationFrequency());
     }
 
+    @UiThreadTest
+    @Test
+    public void testSetGetJustify() {
+        TextView tv = new TextView(mActivity);
+
+        assertFalse(tv.getJustify());
+        tv.setJustify(true);
+        assertTrue(tv.getJustify());
+        tv.setJustify(false);
+        assertFalse(tv.getJustify());
+    }
+
     @Test
     public void testSetAndGetCustomSelectionActionModeCallback() throws Throwable {
         final String text = "abcde";
