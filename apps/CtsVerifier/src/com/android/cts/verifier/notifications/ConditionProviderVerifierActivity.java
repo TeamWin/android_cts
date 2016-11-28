@@ -447,6 +447,11 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
                                 // Now that it's subscribed, remove the rule and verify that it
                                 // unsubscribes.
                                 mNm.removeAutomaticZenRule(id);
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    logFail("unexpected InterruptedException");
+                                }
                                 MockConditionProvider.probeSubscribe(mContext,
                                         new MockConditionProvider.ParcelableListResultCatcher() {
                                             @Override
