@@ -46,5 +46,14 @@
             android:maxLines="3"
             android:textColor="#FF0000"
             android:text="@string/edit_text" />
+
+        <EditText
+            android:id="@+id/edittext_autosize"
+            android:layout_width="300dp"
+            android:layout_height="400dp"
+            android:text="@string/long_text"
+            android:autoSizeText="xy"
+            android:textSize="50dp"
+            android:autoSizeStepGranularity="2dp" />
     </LinearLayout>
 </ScrollView>

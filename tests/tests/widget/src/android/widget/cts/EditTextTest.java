@@ -32,6 +32,8 @@ import android.text.TextUtils;
 import android.text.method.ArrowKeyMovementMethod;
 import android.text.method.MovementMethod;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.util.Xml;
 import android.widget.EditText;
 import android.widget.TextView.BufferType;
@@ -222,6 +224,18 @@ public class EditTextTest {
         MockEditText mockEditText = new MockEditText(mActivity, mAttributeSet);
 
         assertTrue(mockEditText.getDefaultEditable());
+    }
+
+    @Test
+    public void testAutoSizeNotSupported() {
+        DisplayMetrics metrics = mActivity.getResources().getDisplayMetrics();
+        EditText autoSizeEditText = (EditText) mActivity.findViewById(R.id.edittext_autosize);
+
+        // If auto-size would work then the text size would be less then 50dp (the value set in the
+        // layout file).
+        final float sizeSetInPixels = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 50f, metrics);
+        assertEquals(sizeSetInPixels, autoSizeEditText.getTextSize(), 0f);
     }
 
     @Test
