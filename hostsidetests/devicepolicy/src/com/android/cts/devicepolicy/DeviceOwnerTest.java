@@ -61,6 +61,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             if (!setDeviceOwner(DEVICE_OWNER_COMPONENT, mPrimaryUserId,
                     /*expectFailure*/ false)) {
                 removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
+                getDevice().uninstallPackage(DEVICE_OWNER_PKG);
                 fail("Failed to set device owner");
             }
         }
