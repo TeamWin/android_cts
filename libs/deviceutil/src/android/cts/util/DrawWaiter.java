@@ -58,7 +58,7 @@ public class DrawWaiter {
             new ViewTreeObserver.OnDrawListener() {
                 public void onDraw() {
                     final ViewTreeObserver.OnDrawListener listener = this;
-                    finalView.post(new Runnable() {
+                    finalView.getHandler().postAtFrontOfQueue(new Runnable() {
                             @Override
                             public void run() {
                                 observer.removeOnDrawListener(listener);
