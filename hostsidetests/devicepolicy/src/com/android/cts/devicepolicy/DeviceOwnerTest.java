@@ -406,6 +406,19 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testIsProvisioningAllowedTrueForManagedProfileAction");
     }
 
+    public void testAdminActionBookkeeping() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            executeDeviceOwnerTest("AdminActionBookkeepingTest");
+        } finally {
+            // Always attempt to disable network logging to bring the device to initial state.
+            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testDisablingNetworkLogging");
+        }
+    }
+
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {
             return;
