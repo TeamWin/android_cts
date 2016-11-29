@@ -55,21 +55,6 @@ public final class TestMeasurementUtil {
             " listener has failed, this indicates a platform bug. Please report the issue with" +
             " a full bugreport.";
 
-    // The valid Gnss navigation message type as listed in
-    // android/hardware/libhardware/include/hardware/gps.h
-    public static final Set<Integer> GNSS_NAVIGATION_MESSAGE_TYPE =
-        new HashSet<Integer>(Arrays.asList(
-            0x0101,
-            0x0102,
-            0x0103,
-            0x0104,
-            0x0301,
-            0x0501,
-            0x0502,
-            0x0601,
-            0x0602
-        ));
-
     private static final int YEAR_2016 = 2016;
 
     // The valid Gnss navigation message type as listed in
