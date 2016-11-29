@@ -72,7 +72,6 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_SRC_FILES := \
     $(call java-files-in, src/com/android/cts/verifier) \
     $(call java-files-in, src/com/android/cts/verifier/backup) \
-    $(call all-java-files-under, src/android) \
     $(call all-Iaidl-files-under, src)
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4 \

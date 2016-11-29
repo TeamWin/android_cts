@@ -17,8 +17,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    $(call all-java-files-under, src) \
-    $(call all-java-files-under, ../commonutil/src)
+    $(call all-java-files-under, src)
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 
