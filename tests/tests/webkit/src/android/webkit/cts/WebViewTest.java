@@ -2574,6 +2574,35 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    @UiThreadTest
+    public void testGetWebViewClient() throws Exception {
+        // getWebViewClient should return a default WebViewClient if it hasn't been set yet
+        WebView webView = new WebView(getActivity());
+        WebViewClient client = webView.getWebViewClient();
+        assertNotNull(client);
+        assertTrue(client instanceof WebViewClient);
+
+        // getWebViewClient should return the client after it has been set
+        WebViewClient client2 = new WebViewClient();
+        assertNotSame(client, client2);
+        webView.setWebViewClient(client2);
+        assertSame(client2, webView.getWebViewClient());
+    }
+
+    @UiThreadTest
+    public void testGetWebChromeClient() throws Exception {
+        // getWebChromeClient should return null if the client hasn't been set yet
+        WebView webView = new WebView(getActivity());
+        WebChromeClient client = webView.getWebChromeClient();
+        assertNull(client);
+
+        // getWebChromeClient should return the client after it has been set
+        WebChromeClient client2 = new WebChromeClient();
+        assertNotSame(client, client2);
+        webView.setWebChromeClient(client2);
+        assertSame(client2, webView.getWebChromeClient());
+    }
+
     private void savePrintedPage(final PrintDocumentAdapter adapter,
             final ParcelFileDescriptor descriptor, final FutureTask<Boolean> result) {
         adapter.onWrite(new PageRange[] {PageRange.ALL_PAGES}, descriptor,
