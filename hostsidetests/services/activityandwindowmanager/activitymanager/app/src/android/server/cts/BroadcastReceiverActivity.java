@@ -19,6 +19,7 @@ package android.server.cts;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -63,6 +64,10 @@ public class BroadcastReceiverActivity extends Activity {
             }
             if (extras.getBoolean("dismissKeyguard")) {
                 getWindow().addFlags(FLAG_DISMISS_KEYGUARD);
+            }
+            if (extras.getBoolean("dismissKeyguardMethod")) {
+                getSystemService(KeyguardManager.class).dismissKeyguard(
+                        BroadcastReceiverActivity.this, new KeyguardDismissLoggerCallback(), null);
             }
         }
     }

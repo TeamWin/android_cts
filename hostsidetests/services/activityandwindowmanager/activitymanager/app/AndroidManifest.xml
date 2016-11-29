@@ -166,6 +166,9 @@
         <activity android:name=".TurnScreenOnActivity"
                   android:exported="true"
         />
+        <activity android:name=".TurnScreenOnDismissKeyguardActivity"
+            android:exported="true"
+        />
         <activity android:name=".SingleTaskActivity"
             android:exported="true"
             android:launchMode="singleTask"
@@ -223,6 +226,9 @@
         />
         <activity android:name=".DismissKeyguardActivity"
                   android:exported="true"
+        />
+        <activity android:name=".DismissKeyguardMethodActivity"
+            android:exported="true"
         />
         <activity android:name=".WallpaperActivity"
             android:exported="true"

@@ -78,6 +78,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     static final String AM_MOVE_TASK = "am stack move-task ";
 
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
+    private static final String INPUT_KEYEVENT_BACK = "input keyevent 4";
 
     private static final String LOCK_CREDENTIAL = "1234";
 
@@ -302,6 +303,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void pressHomeButton() throws DeviceNotAvailableException {
         executeShellCommand(INPUT_KEYEVENT_HOME);
+    }
+
+    protected void pressBackButton() throws DeviceNotAvailableException {
+        executeShellCommand(INPUT_KEYEVENT_BACK);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
