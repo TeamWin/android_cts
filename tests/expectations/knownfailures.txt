@@ -1,19 +1,5 @@
 [
 {
-  description: "test fails on some devices (Hammerhead)",
-  names: [
-    "android.host.multiuser.CreateUsersPermissionTest#testCantSetUserRestriction"
-  ],
-  bug: 32410284
-},
-{
-  description: "test fails on some devices (Hammerhead)",
-  names: [
-    "android.cts.security.SELinuxHostTest#testAospPropertyContexts"
-  ],
-  bug: 32411021
-},
-{
   description: "Disable ListeningPortsTest",
   names: [
     "android.security.cts.ListeningPortsTest"
