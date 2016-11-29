@@ -25,6 +25,7 @@ import android.content.res.XmlResourceParser;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -215,5 +216,45 @@ public class ViewGroup_MarginLayoutParamsTest {
         assertEquals(20, mMarginLayoutParams.rightMargin);
 
         assertEquals(true, mMarginLayoutParams.isMarginRelative());
+    }
+
+    @Test
+    public void testVerticalHorizontalMargins() {
+        LayoutInflater inflater = LayoutInflater.from(mContext);
+
+        LinearLayout viewGroup = (LinearLayout)
+                inflater.inflate(R.layout.viewgroup_margin_layout_verticalhorizontal, null);
+        int measureSpec = View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY);
+        viewGroup.measure(measureSpec, measureSpec);
+        viewGroup.layout(0, 0, 1000, 1000);
+
+        View view1 = viewGroup.findViewById(R.id.view1);
+        View view2 = viewGroup.findViewById(R.id.view2);
+        View view3 = viewGroup.findViewById(R.id.view3);
+        View view4 = viewGroup.findViewById(R.id.view4);
+        View view5 = viewGroup.findViewById(R.id.view5);
+        View view6 = viewGroup.findViewById(R.id.view6);
+
+        int defaultWidth = view1.getWidth();
+        int defaultHeight = view1.getHeight();
+        int marginPixels = (int) (mContext.getResources().getDisplayMetrics().density * 10 + .5f);
+
+        assertEquals("Width value", defaultWidth, view1.getWidth());
+        assertEquals("Height value", defaultHeight, view1.getHeight());
+
+        assertEquals("Width value", defaultWidth - 2 * marginPixels, view2.getWidth());
+        assertEquals("Height value", defaultHeight, view2.getHeight());
+
+        assertEquals("Width value", defaultWidth, view3.getWidth());
+        assertEquals("Height value", defaultHeight - 2 * marginPixels, view3.getHeight());
+
+        assertEquals("Width value", defaultWidth - 2 * marginPixels, view4.getWidth());
+        assertEquals("Height value", defaultHeight - 2 * marginPixels, view4.getHeight());
+
+        assertEquals("Width value", defaultWidth - 2 * marginPixels, view5.getWidth());
+        assertEquals("Height value", defaultHeight - 2 * marginPixels, view5.getHeight());
+
+        assertEquals("Width value", defaultWidth - 2 * marginPixels, view6.getWidth());
+        assertEquals("Height value", defaultHeight - 2 * marginPixels, view6.getHeight());
     }
 }
