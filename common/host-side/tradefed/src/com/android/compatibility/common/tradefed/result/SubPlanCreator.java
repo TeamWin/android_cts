@@ -57,12 +57,20 @@ public class SubPlanCreator {
     public static final String FAILED = "failed";
     public static final String NOT_EXECUTED = "not_executed";
     // static mapping of result types to TestStatuses
-    private static final Map<String, TestStatus> mStatusMap;
+    private static final Map<String, TestStatus> STATUS_MAP;
     static {
         Map<String, TestStatus> statusMap = new HashMap<String, TestStatus>();
         statusMap.put(PASSED, TestStatus.PASS);
         statusMap.put(FAILED, TestStatus.FAIL);
-        mStatusMap = Collections.unmodifiableMap(statusMap);
+        STATUS_MAP = Collections.unmodifiableMap(statusMap);
+    }
+
+    // TODO(aaronholden): remove this temporary workaround for b/33090757
+    private static final Set<String> MULTITEST_MODULES;
+    static {
+        Set<String> multiTestModuleSet = new HashSet<String>();
+        multiTestModuleSet.add("CtsDeqpTestCases");
+        MULTITEST_MODULES = Collections.unmodifiableSet(multiTestModuleSet);
     }
 
     @Option (name = "name", shortName = 'n', description = "the name of the subplan to create",
@@ -219,9 +227,21 @@ public class SubPlanCreator {
                 }
             } else {
                 // module should not run, exclude entire module
-                TestFilter moduleExclude =
-                        new TestFilter(module.getAbi(), module.getName(), null /*test*/);
-                subPlan.addExcludeFilter(moduleExclude.toString());
+                // TODO(aaronholden): remove this special case from SubPlanCreator, and filter
+                // individual tests only when the module should run. Tracked by b/33211104
+                if (MULTITEST_MODULES.contains(module.getName())) {
+                    for (ICaseResult caseResult : module.getResults()) {
+                        for (ITestResult testResult : caseResult.getResults()) {
+                            TestFilter testExclude = new TestFilter(module.getAbi(),
+                                    module.getName(), testResult.getFullName());
+                            subPlan.addExcludeFilter(testExclude.toString());
+                        }
+                    }
+                } else {
+                    TestFilter moduleExclude =
+                            new TestFilter(module.getAbi(), module.getName(), null /*test*/);
+                    subPlan.addExcludeFilter(moduleExclude.toString());
+                }
             }
         }
         return subPlan;
@@ -280,7 +300,7 @@ public class SubPlanCreator {
         for (String resultType : mResultTypes) {
             // no test status exists for not-executed tests
             if (resultType != NOT_EXECUTED) {
-                statusesToRun.add(mStatusMap.get(resultType));
+                statusesToRun.add(STATUS_MAP.get(resultType));
             }
         }
         return statusesToRun;
