@@ -61,6 +61,10 @@ public class OpenGLES20ActivityOne extends Activity {
         return ((RendererBase)mRenderer).mError;
     }
 
+    public String glGetInfoLog() {
+        return ((RendererBase)mRenderer).mInfoLog;
+    }
+
     public boolean waitForFrameDrawn() {
         boolean result = false;
         try {
