@@ -30,6 +30,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -387,6 +388,37 @@ public class AccessibilityEndToEndTest extends
             assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
         } finally {
             notificationManager.deleteNotificationChannel(channel.getId());
+        }
+    }
+
+    @MediumTest
+    public void testInterrupt_notifiesService() {
+        getInstrumentation()
+                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
+                this, InstrumentedAccessibilityService.class);
+        try {
+            assertFalse(service.wasOnInterruptCalled());
+
+            getActivity().runOnUiThread(() -> {
+                AccessibilityManager accessibilityManager = (AccessibilityManager) getActivity()
+                        .getSystemService(Service.ACCESSIBILITY_SERVICE);
+                accessibilityManager.interrupt();
+            });
+
+            Object waitObject = service.getInterruptWaitObject();
+            synchronized (waitObject) {
+                if (!service.wasOnInterruptCalled()) {
+                    try {
+                        waitObject.wait(TIMEOUT_ASYNC_PROCESSING);
+                    } catch (InterruptedException e) {
+                        // Do nothing
+                    }
+                }
+            }
+            assertTrue(service.wasOnInterruptCalled());
+        } finally {
+            service.disableSelfAndRemove();
         }
     }
 

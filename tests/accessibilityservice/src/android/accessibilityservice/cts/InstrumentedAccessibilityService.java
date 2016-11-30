@@ -30,6 +30,9 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
             sInstances = new HashMap<>();
 
     private final Handler mHandler = new Handler();
+    final Object mInterruptWaitObject = new Object();
+    public boolean mOnInterruptCalled;
+
 
     @Override
     protected void onServiceConnected() {
@@ -53,7 +56,10 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
 
     @Override
     public void onInterrupt() {
-        // Stub method.
+        synchronized (mInterruptWaitObject) {
+            mOnInterruptCalled = true;
+            mInterruptWaitObject.notifyAll();
+        }
     }
 
     public void disableSelfAndRemove() {
@@ -68,6 +74,16 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         final SyncRunnable sr = new SyncRunnable(runner, TIMEOUT_SERVICE_PERFORM_SYNC);
         mHandler.post(sr);
         assertTrue("Timed out waiting for runOnServiceSync()", sr.waitForComplete());
+    }
+
+    public boolean wasOnInterruptCalled() {
+        synchronized (mInterruptWaitObject) {
+            return mOnInterruptCalled;
+        }
+    }
+
+    public Object getInterruptWaitObject() {
+        return mInterruptWaitObject;
     }
 
     private static final class SyncRunnable implements Runnable {

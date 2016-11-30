@@ -173,7 +173,7 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
     }
 
     public void testInterrupt() throws Exception {
-        // The APIs are heavily tested in the android.accessibiliyservice package.
+        // The APIs are heavily tested in the android.accessibilityservice package.
         // This just makes sure the call does not throw an exception.
         waitForAccessibilityEnabled();
         mAccessibilityManager.interrupt();
