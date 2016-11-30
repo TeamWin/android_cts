@@ -30,6 +30,8 @@ import android.util.Log;
 
 import android.app.stubs.R;
 
+import java.util.Arrays;
+
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
@@ -54,7 +56,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testCreateChannel() {
         NotificationChannel channel =
                 new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setVibration(true);
+        channel.enableVibration(true);
+        channel.setVibrationPattern(new long[] {5, 8, 2, 1});
         channel.setSound(new Uri.Builder().scheme("test").build());
         channel.setLights(true);
         channel.setBypassDnd(true);
@@ -249,5 +252,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.getLockscreenVisibility(), actual.getLockscreenVisibility());
         assertEquals(expected.getSound(), actual.getSound());
         assertEquals(expected.canBypassDnd(), actual.canBypassDnd());
+        assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
     }
 }
