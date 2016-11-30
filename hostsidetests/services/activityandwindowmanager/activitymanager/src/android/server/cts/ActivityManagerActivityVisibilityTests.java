@@ -66,6 +66,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     public void testVisibleBehindOtherActivity_OverHome() throws Exception {
         executeShellCommand(getAmStartCmdOverHome(VISIBLE_BEHIND_ACTIVITY));
+        mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY);
         executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
 
         mAmWmState.computeState(mDevice,
@@ -80,6 +81,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         }
 
         executeShellCommand(getAmStartCmdOverHome(PIP_ON_PIP_ACTIVITY));
+        mAmWmState.waitForValidState(mDevice, PIP_ON_PIP_ACTIVITY);
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
         executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);

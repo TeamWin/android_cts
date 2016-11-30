@@ -216,11 +216,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
+
+        mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
     protected void launchActivityOnDisplay(String targetActivityName, int displayId)
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, displayId));
+
+        mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
     protected void launchActivityFromLaunching(boolean toSide, boolean randomData,
@@ -261,6 +265,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             commandBuilder.append(" --ei display_id ").append(displayId);
         }
         executeShellCommand(commandBuilder.toString());
+
+        mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
     protected void launchActivityInStack(String activityName, int stackId) throws Exception {

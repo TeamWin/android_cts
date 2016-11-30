@@ -63,7 +63,8 @@ public class ActivityAndWindowManagersState extends Assert {
      * @param device test device.
      * @param waitForActivitiesVisible array of activity names to wait for.
      */
-    public void computeState(ITestDevice device, String[] waitForActivitiesVisible) throws Exception {
+    public void computeState(ITestDevice device, String[] waitForActivitiesVisible)
+            throws Exception {
         computeState(device, waitForActivitiesVisible, true);
     }
 
@@ -121,6 +122,18 @@ public class ActivityAndWindowManagersState extends Assert {
                 break;
             }
         } while (retriesLeft-- > 0);
+    }
+
+    /**
+     * Wait for the activity to appear and for valid state in AM and WM.
+     *
+     * @param device test device.
+     * @param waitForActivityVisible name of activity to wait for.
+     */
+    void waitForValidState(ITestDevice device, String waitForActivityVisible)
+            throws Exception {
+        waitForValidState(device, new String[]{waitForActivityVisible}, null /* stackIds */,
+                false /* compareTaskAndStackBounds */);
     }
 
     /**

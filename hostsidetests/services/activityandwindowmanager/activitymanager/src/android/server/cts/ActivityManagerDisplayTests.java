@@ -215,8 +215,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.waitForValidState(mDevice, new String[] {TEST_ACTIVITY_NAME},
-                null /* stackIds */, false /* compareTaskAndStackBounds */);
+        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
