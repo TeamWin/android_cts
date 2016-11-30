@@ -92,6 +92,7 @@ include $(BUILD_MULTI_PREBUILT)
 
 notification-bot := $(call intermediates-dir-for,APPS,NotificationBot)/package.apk
 permission-app := $(call intermediates-dir-for,APPS,CtsPermissionApp)/package.apk
+usb-companion := $(call intermediates-dir-for,APPS,CtsVerifierUSBCompanion)/package.apk
 
 # Builds and launches CTS Verifier on a device.
 .PHONY: cts-verifier
@@ -130,20 +131,15 @@ verifier-zip := $(cts-dir)/$(verifier-zip-name)
 #	$(hide) $(ACP) -fp cts/apps/CtsVerifier/assets/scripts/execute_power_tests.py $@
 
 cts : $(verifier-zip)
-ifeq ($(HOST_OS),linux)
-$(verifier-zip) : $(HOST_OUT)/bin/cts-usb-accessory
-endif
 $(verifier-zip) : $(HOST_OUT)/CameraITS
 $(verifier-zip) : $(notification-bot)
 $(verifier-zip) : $(permission-app)
+$(verifier-zip) : $(usb-companion)
 $(verifier-zip) : $(call intermediates-dir-for,APPS,CtsVerifier)/package.apk | $(ACP)
 		$(hide) mkdir -p $(verifier-dir)
 		$(hide) $(ACP) -fp $< $(verifier-dir)/CtsVerifier.apk
 		$(ACP) -fp $(notification-bot) $(verifier-dir)/NotificationBot.apk
 		$(ACP) -fp $(permission-app) $(verifier-dir)/CtsPermissionApp.apk
-ifeq ($(HOST_OS),linux)
-		$(hide) $(ACP) -fp $(HOST_OUT)/bin/cts-usb-accessory $(verifier-dir)/cts-usb-accessory
-endif
 		$(hide) $(ACP) -fpr $(HOST_OUT)/CameraITS $(verifier-dir)
 		$(hide) cd $(cts-dir) && zip -rq $(verifier-dir-name) $(verifier-dir-name)
 

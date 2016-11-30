@@ -16,10 +16,10 @@
 
 package com.android.cts.verifierusbcompanion;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -31,6 +31,7 @@ import android.widget.TextView;
 public class Main extends Activity implements TestCompanion.TestObserver {
     private TextView mStatusMessage;
     private Button mDeviceTestButton;
+    private Button mAccessoryTestButton;
     private Button mAbortButton;
     private TestCompanion mCurrentTest;
 
@@ -44,11 +45,13 @@ public class Main extends Activity implements TestCompanion.TestObserver {
 
         mStatusMessage = (TextView) findViewById(R.id.status_message);
         mDeviceTestButton = (Button) findViewById(R.id.deviceTest);
+        mAccessoryTestButton = (Button) findViewById(R.id.accessoryTest);
         mAbortButton = (Button) findViewById(R.id.abort);
 
         mStatusMessage.setText(getString(R.string.status_no_test));
 
         mDeviceTestButton.setOnClickListener(view -> runDeviceTest());
+        mAccessoryTestButton.setOnClickListener(view -> runAccessoryTest());
         mAbortButton.setOnClickListener(view -> abortCurrentTest());
     }
 
@@ -60,10 +63,17 @@ public class Main extends Activity implements TestCompanion.TestObserver {
     }
 
     /**
-     * Abort the {@link DeviceTestCompanion}
+     * Run the {@link DeviceTestCompanion}
      */
     private void runDeviceTest() {
         runTestCompanion(new DeviceTestCompanion(this, this));
+    }
+
+    /**
+     * Run the {@link AccessoryTestCompanion}
+     */
+    private void runAccessoryTest() {
+        runTestCompanion(new AccessoryTestCompanion(this, this));
     }
 
     /**
@@ -73,6 +83,7 @@ public class Main extends Activity implements TestCompanion.TestObserver {
     private void runTestCompanion(@NonNull TestCompanion test) {
         mAbortButton.setVisibility(View.VISIBLE);
         mDeviceTestButton.setVisibility(View.GONE);
+        mAccessoryTestButton.setVisibility(View.GONE);
 
         mCurrentTest = test;
         test.start();
@@ -84,6 +95,7 @@ public class Main extends Activity implements TestCompanion.TestObserver {
     private void resetUI() {
         mAbortButton.setVisibility(View.GONE);
         mDeviceTestButton.setVisibility(View.VISIBLE);
+        mAccessoryTestButton.setVisibility(View.VISIBLE);
     }
 
     @Override
