@@ -1103,7 +1103,7 @@
         \n\n4. Confirm access to the USB device on this device.
         \n\n5. Confirm access to the USB accessory on the helper device.
         \n\n6. Confirm access to the USB device on this device again.
-        \n\n7. Test will run and complete automatically in a less than 30 seconds.
+        \n\n7. Test will run and complete automatically in less than 30 seconds.
         \n\n8. Cancel all further dialogs on the helper device.
     </string>
     <string name="usb_device_test_step1">
@@ -1235,15 +1235,15 @@
     <string name="p2p_go_neg_requester_info">
         Go to the Wi-Fi settings and forget all remembered networks.  Then
         start the \"GO Negotiation Responder Test\" on the other device.
-        Then run each test individually by clicking on it\'s name.</string>
+        Then run each test individually by clicking on its name.</string>
     <string name="p2p_join_go_info">
         Go to the Wi-Fi settings and forget all remembered networks.  Then
         start the \"Group Owner Test\" on the other device.
-        Then run each test individually by clicking on it\'s name.</string>
+        Then run each test individually by clicking on its name.</string>
     <string name="p2p_service_discovery_requester_info">
         Go to the Wi-Fi settings and forget all remembered networks.  Then
         start the \"Service Discovery Responder Test\" on the other device.
-        Then run each test individually by clicking on it\'s name.</string>
+        Then run each test individually by clicking on its name.</string>
 
     <string name="p2p_not_enabled">Wi-Fi is not enabled</string>
     <string name="p2p_not_enabled_message">These tests require Wi-Fi to be enabled.
@@ -1627,7 +1627,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_capture_media_error">Error while capturing media from managed profile.</string>
     <string name="provisioning_byod_capture_image_error">Error while capturing image from managed profile.</string>
 
-    <string name="provisioning_byod_auth_bound_key">Autentication-boud keys</string>
+    <string name="provisioning_byod_auth_bound_key">Authentication-bound keys</string>
     <string name="provisioning_byod_auth_bound_key_info">
         This test verifies keystore cryptographic keys can be bound to device credentials.
         These keys should only be available if there was a recent enough authentication.
@@ -1644,7 +1644,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_auth_bound_key_set_up">Set up</string>
     <string name="provisioning_byod_lockscreen_bound_key">Lockscreen-bound key test</string>
     <string name="provisioning_byod_fingerprint_bound_key">Fingerprint-bound key test</string>
-    <string name="provisioning_byod_vpn">Vpn test</string>
+    <string name="provisioning_byod_vpn">VPN test</string>
     <string name="provisioning_byod_select_work_challenge">Select work lock test</string>
     <string name="provisioning_byod_select_work_challenge_description">
         This test verifies that a work lock can be chosen.\n
@@ -2170,9 +2170,9 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
 
     <string name="provisioning_byod_turn_off_work">Turn off work mode</string>
-    <string name="provisioning_byod_turn_off_work_info">This test verifes device behaviours when turning off work mode.</string>
+    <string name="provisioning_byod_turn_off_work_info">This test verifies device behaviors when turning off work mode.</string>
     <string name="provisioning_byod_turn_off_work_instructions">
-        This test verifies the device behaviour when work profile is turned off.\n
+        This test verifies the device behavior when work profile is turned off.\n
         Please exercise the following tests in sequence.\n
         The button below can be used to open the Settings page where you can toggle work mode.
     </string>
@@ -2352,8 +2352,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_profile_owner_permission_lockdown_test">Permissions lockdown</string>
     <string name="device_profile_owner_permission_lockdown_test_instructions">
             Select each of the three grant states for the permission shown below in turn.\n
-            Now open application settings, select Permissions, and verify if the following behaviour is observed.\n
-            <b>Allow:</b> Permission is granted to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
+            Now open application settings, select Permissions, and verify if the following behavior is observed.\n
+            <b>Grant:</b> Permission is granted to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
             <b>Let user decide:</b> Permission state can be changed through the settings UI.\n
             <b>Deny:</b> Permission is denied to the app and cannot be changed through the settings UI. Trying to change it triggers a support message.\n
             Please mark the test accordingly.
@@ -2455,7 +2455,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_settings_go">Go</string>
 
     <string name="device_owner_vpn_connection">
-        Vpn connection has been established.\n
+        VPN connection has been established.\n
         This is not as expected.\n
         Mark this test as failed.\n
     </string>
@@ -2470,19 +2470,19 @@ You should be prompted to select credentials; choose the ones you just installed
         Mark this test as passed.\n
     </string>
     <string name="device_owner_vpn_test">Check VPN</string>
-    <string name="device_owner_vpn_info_default">Vpn test message</string>
+    <string name="device_owner_vpn_info_default">VPN test message</string>
 
     <string name="device_owner_disallow_config_vpn">Disallow configuring VPN</string>
     <string name="device_owner_disallow_config_vpn_info">
         Please press the Set VPN restriction button to set the VPN restriction.
         Perform tests in order. Mark test as passed if both test cases pass\n\n
-        1. Press Go to open the Vpn settings page.\n
+        1. Press Go to open the VPN settings page.\n
         Confirm that:\n
         - You cannot add a new VPN network.\n
         - You cannot edit, add or remove any existing VPNs.\n
         - Trying to perform any of the above actions will trigger a support message.\n\n
-        2. Press Check VPN to check programmatic Vpn test.\n
-        - Check Vpn setup is not allowed\n
+        2. Press Check VPN to check programmatic VPN test.\n
+        - Check VPN setup is not allowed\n
         - If prompted to allow a VPN connection, press OK.\n\n
         Use the Back button to return to this page.
     </string>
@@ -2697,7 +2697,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Check that \'Dummy Input method\' is not enabled in Settings and disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
-        Enabling \'Dummy Input Method\' in the list of accessibility services
+        Enabling \'Dummy Input method\' in the list of accessibility services
     </string>
     <string name="set_permitted_input_methods_widget_label">
         Allow only system input methods:
@@ -2708,7 +2708,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="js_idle_test">Idle Mode Constraints</string>
     <string name="js_start_test_text">Start test</string>
-    <string name="js_idle_instructions">Verify the behaviour of the JobScheduler API for when the device is in idle mode. Simply follow the on-screen instructions.</string>
+    <string name="js_idle_instructions">Verify the behavior of the JobScheduler API for when the device is in idle mode. Simply follow the on-screen instructions.</string>
     <string name="js_idle_description_1">Turn the screen off and then back on in order to begin.</string>
     <string name="js_idle_continue_instruction">
         Switch off screen and wait for it to turn on to continue.
@@ -2717,16 +2717,16 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="js_idle_item_idle_on">Idle job does execute when device is forced into idle.</string>
 
     <string name="js_charging_test">Charging Constraints</string>
-    <string name="js_charging_instructions">Verify the behaviour of the JobScheduler API for when the device is on power and unplugged from power. Simply follow the on-screen instructions.</string>
+    <string name="js_charging_instructions">Verify the behavior of the JobScheduler API for when the device is on power and unplugged from power. Simply follow the on-screen instructions.</string>
     <string name="js_charging_description_1">Plug in the charger if it isn\'t already plugged in.</string>
     <string name="js_charging_off_test">Device not charging will not execute a job with a charging constraint.</string>
     <string name="js_charging_on_test">Device when charging will execute a job with a charging constraint.</string>
     <string name="js_charging_description_2">After the above test has passed, remove the charger to continue. If the above failed, you can simply fail this test.</string>
-    <string name="js_charging_description_3">Device is plugged in. Please wait while it get\s into stable charging state.</string>
+    <string name="js_charging_description_3">Device is plugged in. Please wait while it gets into stable charging state.</string>
     <string name="js_charging_description_4">There seems to be a problem with your charger. Pleasy try again.</string>
 
     <string name="js_connectivity_test">Connectivity Constraints</string>
-    <string name="js_connectivity_instructions">Verify the behaviour of the JobScheduler API for when the device has no access to data connectivity. Simply follow the on-screen instructions.</string>
+    <string name="js_connectivity_instructions">Verify the behavior of the JobScheduler API for when the device has no access to data connectivity. Simply follow the on-screen instructions.</string>
     <string name="js_connectivity_description_1">Disable WiFi and Cellular data to begin.</string>
     <string name="js_unmetered_connectivity_test">Device with no connectivity will not execute a job with an unmetered connectivity constraint.</string>
     <string name="js_any_connectivity_test">Device with no connectivity will not execute a job with an unmetered connectivity constraint.</string>
@@ -3113,9 +3113,9 @@ You should be prompted to select credentials; choose the ones you just installed
         turquoise action button at each one. You need to reach each waypoint in 20 seconds. While
         you are on your way to the waypoints, the camera preview will rotate. You will need to
         rotate the device to match the rotation of the camera preview. A box will be shown to help
-        you. It shows the device\'s current rotation and will change colour based on whether you are
+        you. It shows the device\'s current rotation and will change color based on whether you are
         close enough to the required rotation. Red if you are failing, green if you are passing.
-        When you have reached the next waypoint, the device can be returned to it\'s original
+        When you have reached the next waypoint, the device can be returned to its original
         rotation.
     </string>
     <string name="last">Go back to the first waypoint</string>
@@ -3131,7 +3131,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="results">Results</string>
     <string name="overall_instructions">These tests are designed to verify the correctness and
         accuracy of a 6DoF enabled device. There will be 3 phases to these tests, each testing a
-        different part of 6DOF functionality.
+        different part of 6DoF functionality.
     </string>
     <string name="phase1_description">This first test will test the accuracy of the device. It will
         ask you to mark out 4 waypoints and then return to the original waypoint to complete the
@@ -3143,10 +3143,10 @@ You should be prompted to select credentials; choose the ones you just installed
         same 4 waypoints as before, you will need to do a lap, reaching each waypoint in the
         allotted time.\nWhile you are on your way to the waypoints, the camera preview will rotate.
         You will need to rotate the device to match the rotation of the camera preview. A box will
-        be shown to help you. It shows the device\'s current rotation and will change colour based
+        be shown to help you. It shows the device\'s current rotation and will change color based
         on whether you are close enough to the required rotation. Red if you are failing, green if
         you are passing. When you have reached the next waypoint, the device can be returned to
-        it\'s original rotation.
+        its original rotation.
     </string>
     <string name="phase3_description">Now we will test the AR capability of the device. Again, you
         will need to do a lap of the waypoints, but this time between each waypoint the device will
