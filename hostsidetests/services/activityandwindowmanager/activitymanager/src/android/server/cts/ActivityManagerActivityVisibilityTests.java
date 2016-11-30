@@ -34,7 +34,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
-        executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
+        launchActivity(VISIBLE_BEHIND_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY,
                 FULLSCREEN_WORKSPACE_STACK_ID);
 
@@ -55,8 +55,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testVisibleBehindOtherActivity_NotOverHome() throws Exception {
-        executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
-        executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        launchActivity(VISIBLE_BEHIND_ACTIVITY);
+        launchActivity(TRANSLUCENT_ACTIVITY);
 
         mAmWmState.computeState(mDevice,
                 new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
@@ -96,7 +96,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      */
     public void testTranslucentActivityOnTopOfHome() throws Exception {
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        launchActivity(TRANSLUCENT_ACTIVITY);
 
         mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
         mAmWmState.assertFrontStack(
@@ -115,9 +115,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         }
 
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        launchActivity(TEST_ACTIVITY_NAME);
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
+        launchActivity(TRANSLUCENT_ACTIVITY);
         executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 
         mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
@@ -145,7 +145,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     public void testTurnScreenOnActivity() throws Exception {
         sleepDevice();
-        executeShellCommand(getAmStartCmd(TURN_SCREEN_ON_ACTIVITY_NAME));
+        launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] { TURN_SCREEN_ON_ACTIVITY_NAME });
         mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY_NAME, true);
     }
@@ -153,8 +153,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testFinishActivityInNonFocusedStack() throws Exception {
         // Launch two activities in docked stack.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        launchActivity(false /* toSide */, false /* randomData */, false /* multipleTaskFlag */,
-                BROADCAST_RECEIVER_ACTIVITY);
+        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
+                false /* multipleTaskFlag */, BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] { BROADCAST_RECEIVER_ACTIVITY });
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.

@@ -23,8 +23,9 @@ package android.server.cts;
 public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     public void testAnimationBackground_duringAnimation() throws Exception {
-        executeShellCommand(getAmStartCmd(LAUNCHING_ACTIVITY));
-        launchActivity(false, false, false, "AnimationTestActivity");
+        launchActivity(LAUNCHING_ACTIVITY);
+        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
+                false /* multipleTask */, "AnimationTestActivity");
 
         // Make sure we are in the middle of the animation.
         Thread.sleep(250);
@@ -35,8 +36,9 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
     }
 
     public void testAnimationBackground_gone() throws Exception {
-        executeShellCommand(getAmStartCmd(LAUNCHING_ACTIVITY));
-        launchActivity(false, false, false, "AnimationTestActivity");
+        launchActivity(LAUNCHING_ACTIVITY);
+        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
+                false /* multipleTask */, "AnimationTestActivity");
         mAmWmState.computeState(mDevice, new String[] { "AnimationTestActivity "});
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
                 .getStack(FULLSCREEN_WORKSPACE_STACK_ID)

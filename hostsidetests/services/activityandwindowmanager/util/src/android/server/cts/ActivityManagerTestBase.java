@@ -213,9 +213,20 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mDevice.executeShellCommand(command, outputReceiver);
     }
 
-    protected void launchActivity(boolean toSide, boolean randomData, boolean multipleTask,
-            String targetActivityName) throws Exception {
-        launchActivity(toSide, randomData, multipleTask, targetActivityName, INVALID_DISPLAY_ID);
+    protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
+            throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
+    }
+
+    protected void launchActivityOnDisplay(String targetActivityName, int displayId)
+            throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, displayId));
+    }
+
+    protected void launchActivityFromLaunching(boolean toSide, boolean randomData,
+            boolean multipleTask, String targetActivityName) throws Exception {
+        launchActivityFromLaunching(toSide, randomData, multipleTask, targetActivityName,
+                INVALID_DISPLAY_ID);
     }
 
     /**
@@ -230,8 +241,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
      * @param displayId Display id where target activity should be launched.
      * @throws Exception
      */
-    protected void launchActivity(boolean toSide, boolean randomData, boolean multipleTask,
-            String targetActivityName, int displayId) throws Exception {
+    protected void launchActivityFromLaunching(boolean toSide, boolean randomData,
+            boolean multipleTask, String targetActivityName, int displayId) throws Exception {
         StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(LAUNCHING_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
         if (toSide) {
@@ -259,7 +270,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName));
+        launchActivity(activityName);
         moveActivityToDockStack(activityName);
 
         mAmWmState.waitForValidState(mDevice, activityName, DOCKED_STACK_ID);
@@ -268,7 +279,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
             String targetActivity) throws Exception {
         final String activityToLaunch = targetActivity != null ? targetActivity : "TestActivity";
-        launchActivity(true /* toSide */, randomData, multipleTaskFlag, activityToLaunch);
+        launchActivityFromLaunching(true /* toSide */, randomData, multipleTaskFlag,
+                activityToLaunch);
 
         mAmWmState.waitForValidState(mDevice, activityToLaunch, FULLSCREEN_WORKSPACE_STACK_ID);
     }
