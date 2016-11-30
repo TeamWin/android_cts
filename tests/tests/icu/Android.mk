@@ -41,23 +41,3 @@ LOCAL_PACKAGE_NAME := CtsIcuTestCases
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
-
-# build cts-icu-tools tool
-# ============================================================
-include $(CLEAR_VARS)
-
-# Don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := $(call all-java-files-under, tools)
-LOCAL_JAVA_RESOURCE_DIRS := resources
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-	descGen \
-	jsr305lib
-
-LOCAL_JAVA_LIBRARIES := tradefed
-
-LOCAL_MODULE := cts-icu-tools
-
-include $(BUILD_HOST_JAVA_LIBRARY)
