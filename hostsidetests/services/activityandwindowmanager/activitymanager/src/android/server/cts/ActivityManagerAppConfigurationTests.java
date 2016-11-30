@@ -87,8 +87,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // support rotation.
         launchActivityToSide(false /* randomData */, false /* multipleTask */, TEST_ACTIVITY_NAME);
         // Launch target activity in docked stack.
-        launchActivity(false /* toSide */, false /* randomData */, false /* multipleTask */,
-                RESIZEABLE_ACTIVITY_NAME);
+        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
+                false /* multipleTask */, RESIZEABLE_ACTIVITY_NAME);
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
 

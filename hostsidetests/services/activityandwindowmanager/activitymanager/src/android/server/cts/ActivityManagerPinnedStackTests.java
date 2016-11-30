@@ -69,7 +69,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testNonTappablePipActivity() throws Exception {
         // Launch the tap-to-finish activity at a specific place
-        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY));
+        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
@@ -87,7 +87,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testPinnedStackDefaultBounds() throws Exception {
         // Launch a PIP activity
-        executeShellCommand(getAmStartCmd(PIP_ACTIVITY, EXTRA_AUTO_ENTER_PIP, "true"));
+        launchActivity(PIP_ACTIVITY, EXTRA_AUTO_ENTER_PIP, "true");
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
@@ -110,7 +110,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testPinnedStackMovementBounds() throws Exception {
         // Launch a PIP activity
-        executeShellCommand(getAmStartCmd(PIP_ACTIVITY, EXTRA_AUTO_ENTER_PIP, "true"));
+        launchActivity(PIP_ACTIVITY, EXTRA_AUTO_ENTER_PIP, "true");
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
@@ -135,7 +135,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         final WindowManagerState wmState = mAmWmState.getWmState();
 
         // Launch an activity into the pinned stack
-        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY));
+        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
 
         // Get the display dimensions
         WindowManagerState.WindowState windowState = getWindowState(PIP_ACTIVITY);
@@ -156,7 +156,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testPinnedStackInBoundsAfterRotation() throws Exception {
         // Launch an activity into the pinned stack
-        executeShellCommand(getAmStartCmd(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY));
+        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
 
         // Ensure that the PIP stack is fully visible in each orientation
         setDeviceRotation(ROTATION_0);
@@ -172,7 +172,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testPinnedStackOffsetForIME() throws Exception {
         // Launch an activity which shows an IME
-        executeShellCommand(getAmStartCmd(LAUNCH_IME_WITH_PIP_ACTIVITY));
+        launchActivity(LAUNCH_IME_WITH_PIP_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
@@ -187,9 +187,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testEnterPipAspectRatio() throws Exception {
-        executeShellCommand(getAmStartCmd(PIP_ACTIVITY,
+        launchActivity(PIP_ACTIVITY,
                 EXTRA_AUTO_ENTER_PIP, "true",
-                EXTRA_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO)));
+                EXTRA_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
         mAmWmState.computeState(mDevice, new String[]{PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
@@ -202,9 +202,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testResizePipAspectRatio() throws Exception {
-        executeShellCommand(getAmStartCmd(PIP_ACTIVITY,
+        launchActivity(PIP_ACTIVITY,
                 EXTRA_AUTO_ENTER_PIP, "true",
-                EXTRA_RESIZE_TO_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO)));
+                EXTRA_RESIZE_TO_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
         mAmWmState.computeState(mDevice, new String[]{PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
@@ -224,9 +224,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testEnterPipExtremeAspectRatios() throws Exception {
         // Assert that we could not create a pinned stack with an extreme aspect ratio
-        executeShellCommand(getAmStartCmd(PIP_ACTIVITY,
+        launchActivity(PIP_ACTIVITY,
                 EXTRA_AUTO_ENTER_PIP, "true",
-                EXTRA_ASPECT_RATIO, Float.toString(EXTREME_ASPECT_RATIO)));
+                EXTRA_ASPECT_RATIO, Float.toString(EXTREME_ASPECT_RATIO));
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
@@ -235,10 +235,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testResizePipExtremeAspectRatios() throws Exception {
         // Try to resize the a normal pinned stack to an extreme aspect ratio and ensure that
         // fails (the aspect ratio remains the same)
-        executeShellCommand(getAmStartCmd(PIP_ACTIVITY,
+        launchActivity(PIP_ACTIVITY,
                 EXTRA_AUTO_ENTER_PIP, "true",
                 EXTRA_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO),
-                EXTRA_RESIZE_TO_ASPECT_RATIO, Float.toString(EXTREME_ASPECT_RATIO)));
+                EXTRA_RESIZE_TO_ASPECT_RATIO, Float.toString(EXTREME_ASPECT_RATIO));
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);

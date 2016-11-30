@@ -58,7 +58,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     private void testRotation(
             String activityName, int rotationStep, int numRelaunch, int numConfigChange)
                     throws Exception {
-        executeShellCommand(getAmStartCmd(activityName));
+        launchActivity(activityName);
 
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
@@ -78,7 +78,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private void testChangeFontScale(
             String activityName, boolean relaunch) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName));
+        launchActivity(activityName);
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
         mAmWmState.assertContainsStack(

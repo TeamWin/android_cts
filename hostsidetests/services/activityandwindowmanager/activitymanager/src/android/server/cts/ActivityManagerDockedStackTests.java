@@ -35,7 +35,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final int STACK_SIZE = 300;
 
     public void testStackList() throws Exception {
-        executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
         mAmWmState.assertContainsStack(
@@ -318,7 +318,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
         final String[] waitTestActivityName = new String[] {TEST_ACTIVITY_NAME};
-        executeShellCommand(getAmStartCmd(TEST_ACTIVITY_NAME));
+        launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, waitTestActivityName);
         final Rectangle fullScreenBounds =
                 mAmWmState.getWmState().getStack(FULLSCREEN_WORKSPACE_STACK_ID).getBounds();

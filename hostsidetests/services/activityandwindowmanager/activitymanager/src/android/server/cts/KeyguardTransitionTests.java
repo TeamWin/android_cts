@@ -32,7 +32,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("TestActivity"));
+        launchActivity("TestActivity");
         gotoKeyguard();
         unlockDevice();
         mAmWmState.computeState(mDevice, new String[] { "TestActivity"} );
@@ -44,7 +44,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("WallpaperActivity"));
+        launchActivity("WallpaperActivity");
         gotoKeyguard();
         unlockDevice();
         mAmWmState.computeState(mDevice, new String[] { "WallpaperActivity"} );
@@ -57,7 +57,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             return;
         }
         gotoKeyguard();
-        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        launchActivity("ShowWhenLockedActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity"} );
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
                 mAmWmState.getWmState().getLastTransition());
@@ -67,9 +67,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        launchActivity("ShowWhenLockedActivity");
         gotoKeyguard();
-        executeShellCommand(getAmStartCmd("TestActivity"));
+        launchActivity("TestActivity");
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         mAmWmState.computeState(mDevice, null);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
@@ -80,9 +80,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        launchActivity("ShowWhenLockedActivity");
         gotoKeyguard();
-        executeShellCommand(getAmStartCmd("ShowWhenLockedWithDialogActivity"));
+        launchActivity("ShowWhenLockedWithDialogActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedWithDialogActivity" });
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
                 mAmWmState.getWmState().getLastTransition());

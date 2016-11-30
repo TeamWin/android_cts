@@ -28,7 +28,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("TestActivity"));
+        launchActivity("TestActivity");
         mAmWmState.computeState(mDevice, new String[] { "TestActivity"});
         mAmWmState.assertVisibility("TestActivity", true);
         gotoKeyguard();
@@ -42,7 +42,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        launchActivity("ShowWhenLockedActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity"});
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         gotoKeyguard();
@@ -61,7 +61,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedWithDialogActivity"));
+        launchActivity("ShowWhenLockedWithDialogActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedWithDialogActivity"});
         mAmWmState.assertVisibility("ShowWhenLockedWithDialogActivity", true);
         gotoKeyguard();
@@ -81,8 +81,8 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
-        executeShellCommand(getAmStartCmd("ShowWhenLockedTranslucentActivity"));
+        launchActivity("ShowWhenLockedActivity");
+        launchActivity("ShowWhenLockedTranslucentActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity",
                 "ShowWhenLockedTranslucentActivity"});
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
@@ -103,7 +103,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedTranslucentActivity"));
+        launchActivity("ShowWhenLockedTranslucentActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedTranslucentActivity"});
         mAmWmState.assertVisibility("ShowWhenLockedTranslucentActivity", true);
         gotoKeyguard();
@@ -122,8 +122,8 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("TestActivity"));
-        executeShellCommand(getAmStartCmd("ShowWhenLockedTranslucentActivity"));
+        launchActivity("TestActivity");
+        launchActivity("ShowWhenLockedTranslucentActivity");
         mAmWmState.computeState(mDevice, new String[] { "TestActivity",
                 "ShowWhenLockedTranslucentActivity"});
         mAmWmState.assertVisibility("TestActivity", true);
@@ -141,7 +141,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("ShowWhenLockedDialogActivity"));
+        launchActivity("ShowWhenLockedDialogActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedDialogActivity"});
         mAmWmState.assertVisibility("ShowWhenLockedDialogActivity", true);
         gotoKeyguard();
@@ -163,7 +163,7 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        executeShellCommand(getAmStartCmd("DismissKeyguardActivity"));
+        launchActivity("DismissKeyguardActivity");
         mAmWmState.waitForKeyguardGone(mDevice);
         mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardActivity"});
         mAmWmState.assertVisibility("DismissKeyguardActivity", true);
@@ -178,7 +178,7 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        executeShellCommand(getAmStartCmd("DismissKeyguardMethodActivity"));
+        launchActivity("DismissKeyguardMethodActivity");
         mAmWmState.waitForKeyguardGone(mDevice);
         mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardMethodActivity"});
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
@@ -194,8 +194,8 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        executeShellCommand(getAmStartCmd("BroadcastReceiverActivity"));
-        executeShellCommand(getAmStartCmd("TestActivity"));
+        launchActivity("BroadcastReceiverActivity");
+        launchActivity("TestActivity");
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguardMethod true");
         assertOnDismissErrorInLogcat();
     }
@@ -208,7 +208,7 @@ public class KeyguardTests extends KeyguardTestBase {
         sleepDevice();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        executeShellCommand(getAmStartCmd("TurnScreenOnDismissKeyguardActivity"));
+        launchActivity("TurnScreenOnDismissKeyguardActivity");
         mAmWmState.waitForKeyguardGone(mDevice);
         mAmWmState.computeState(mDevice, new String[] { "TurnScreenOnDismissKeyguardActivity"});
         mAmWmState.assertVisibility("TurnScreenOnDismissKeyguardActivity", true);
@@ -224,7 +224,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        executeShellCommand(getAmStartCmd("DismissKeyguardActivity"));
+        launchActivity("DismissKeyguardActivity");
         for (int i = 0; i < 3; i++) {
             gotoKeyguard();
             mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardActivity"});
@@ -237,7 +237,7 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
-        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        launchActivity("ShowWhenLockedActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
@@ -253,7 +253,7 @@ public class KeyguardTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
-        executeShellCommand(getAmStartCmd("KeyguardLockActivity"));
+        launchActivity("KeyguardLockActivity");
         mAmWmState.computeState(mDevice, new String[] { "KeyguardLockActivity" });
         mAmWmState.assertVisibility("KeyguardLockActivity", true);
         executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
