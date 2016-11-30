@@ -29,12 +29,14 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_USB_FILE_TRANSFER,
             UserManager.DISALLOW_CONFIG_CREDENTIALS,
             UserManager.DISALLOW_REMOVE_USER,
+            UserManager.DISALLOW_REMOVE_MANAGED_PROFILE,
             // UserManager.DISALLOW_DEBUGGING_FEATURES, // Need for CTS
             UserManager.DISALLOW_CONFIG_VPN,
             UserManager.DISALLOW_CONFIG_TETHERING,
             UserManager.DISALLOW_NETWORK_RESET,
             UserManager.DISALLOW_FACTORY_RESET,
             UserManager.DISALLOW_ADD_USER,
+            UserManager.DISALLOW_ADD_MANAGED_PROFILE,
             // UserManager.ENSURE_VERIFY_APPS, // Has unrecoverable side effects.
             UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
             UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
@@ -59,6 +61,10 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             // DO can set all public restrictions.
     };
 
+    public static final String[] DEFAULT_ENABLED = new String[] {
+            UserManager.DISALLOW_ADD_MANAGED_PROFILE
+    };
+
     @Override
     protected String[] getAllowedRestrictions() {
         return ALLOWED;
@@ -68,5 +74,8 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
     protected String[] getDisallowedRestrictions() {
         return DISALLOWED;
     }
+
+    @Override
+    protected String[] getDefaultEnabledRestrictions() { return DEFAULT_ENABLED; }
 }
 

@@ -35,12 +35,14 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_USB_FILE_TRANSFER,
             UserManager.DISALLOW_CONFIG_CREDENTIALS,
             UserManager.DISALLOW_REMOVE_USER,
+            UserManager.DISALLOW_REMOVE_MANAGED_PROFILE,
             UserManager.DISALLOW_DEBUGGING_FEATURES,
             UserManager.DISALLOW_CONFIG_VPN,
             UserManager.DISALLOW_CONFIG_TETHERING,
             UserManager.DISALLOW_NETWORK_RESET,
             UserManager.DISALLOW_FACTORY_RESET,
             UserManager.DISALLOW_ADD_USER,
+            UserManager.DISALLOW_ADD_MANAGED_PROFILE,
             UserManager.ENSURE_VERIFY_APPS,
             UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
             UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
@@ -140,6 +142,12 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
         assertOwnerRestriction(restriction, false);
     }
 
+    protected void assertClearDefaultRestrictions() {
+        for (String restriction : getDefaultEnabledRestrictions()) {
+            assertClearUserRestriction(restriction);
+        }
+    }
+
     /**
      * Test that the given restriction *cannot* be set (or clear).
      */
@@ -181,10 +189,30 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
     /** For {@link #testSetAllRestrictions} */
     protected abstract String[] getDisallowedRestrictions();
 
+    /** For {@link #testDefaultRestrictions()} */
+    protected abstract String[] getDefaultEnabledRestrictions();
+
+    /**
+     * Test restrictions that should be enabled by default
+     */
+    public void testDefaultRestrictions() {
+        for (String restriction : getDefaultEnabledRestrictions()) {
+            assertOwnerRestriction(restriction, true);
+        }
+
+        Set<String> offByDefaultRestrictions = new HashSet<>(Arrays.asList(ALL_USER_RESTRICTIONS));
+        offByDefaultRestrictions.removeAll(
+                new HashSet<>(Arrays.asList(getDefaultEnabledRestrictions())));
+        for (String restriction : offByDefaultRestrictions) {
+            assertOwnerRestriction(restriction, false);
+        }
+    }
+
     /**
      * Set only one restriction, and make sure only that's set, and then clear it.
      */
     public void testSetAllRestrictionsIndividually() {
+        assertClearDefaultRestrictions();
         for (String r : getAllowedRestrictions()) {
             // Set it.
             assertSetClearUserRestriction(r);
@@ -200,6 +228,7 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
      * Make sure all allowed restrictions can be set, and the others can't.
      */
     public void testSetAllRestrictions() {
+        assertClearDefaultRestrictions();
         for (String r : getAllowedRestrictions()) {
             assertSetClearUserRestriction(r);
         }
