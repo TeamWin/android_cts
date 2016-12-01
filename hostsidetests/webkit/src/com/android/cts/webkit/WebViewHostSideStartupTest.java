@@ -49,6 +49,11 @@ public class WebViewHostSideStartupTest extends DeviceTestCase {
                     "testGetCurrentWebViewPackage"));
     }
 
+    public void testStrictMode() throws DeviceNotAvailableException {
+        assertTrue(runDeviceTest(DEVICE_WEBVIEW_STARTUP_PKG, DEVICE_WEBVIEW_STARTUP_TEST_CLASS,
+                    "testStrictModeNotViolatedOnStartup"));
+    }
+
     private boolean runDeviceTest(String packageName, String testClassName,
             String testMethodName) throws DeviceNotAvailableException {
         testClassName = packageName + "." + testClassName;
@@ -64,4 +69,3 @@ public class WebViewHostSideStartupTest extends DeviceTestCase {
         return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
     }
 }
-
