@@ -182,7 +182,7 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
 
         // Also make sure the rounded value is used in 'where' too.
         assertEquals("Query should match", 1, DataUtil.queryById(mResolver, dataId, projection,
-                Data.TIMES_USED + "=" + expectedValue, null).length);
+                "ifnull(" + Data.TIMES_USED + ",0)=" + expectedValue, null).length);
     }
 
     private void deleteDataUsage() {
