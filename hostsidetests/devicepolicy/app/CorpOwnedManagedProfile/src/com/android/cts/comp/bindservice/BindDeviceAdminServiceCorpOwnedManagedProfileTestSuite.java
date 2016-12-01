@@ -37,6 +37,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -72,11 +73,36 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     }
 
     public void execute() throws Exception {
+        checkCannotBind_implicitIntent();
+        checkCannotBind_notResolvableIntent();
         checkCannotBind_exportedCrossUserService();
         checkCannotBind_nonManagingPackage();
         checkCannotBind_sameUser();
         checkCrossProfileCall_echo();
         checkCrossProfileCall_getUserHandle();
+    }
+
+    /**
+     * If the intent is implicit, expected to throw {@link IllegalArgumentException}.
+     */
+    private void checkCannotBind_implicitIntent() throws Exception {
+        try {
+            final Intent implicitIntent = new Intent(Intent.ACTION_VIEW);
+            bind(implicitIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
+            fail("IllegalArgumentException should be thrown");
+        } catch (IllegalArgumentException ex) {
+            MoreAsserts.assertContainsRegex("Service intent must be explicit", ex.getMessage());
+        }
+    }
+
+    /**
+     * If the intent is not resolvable, it should return {@code {@code null}}.
+     */
+    private void checkCannotBind_notResolvableIntent() throws Exception {
+        final Intent notResolvableIntent = new Intent();
+        notResolvableIntent.setClassName(mContext, "NotExistService");
+        Log.d(TAG, "checkCannotBind_notResolvableIntent: ");
+        assertFalse(bind(notResolvableIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle));
     }
 
     /**
@@ -88,7 +114,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
             bind(serviceIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
             fail("SecurityException should be thrown");
         } catch (SecurityException ex) {
-            MoreAsserts.assertContainsRegex("Invalid intent", ex.getMessage());
+            MoreAsserts.assertContainsRegex("must be unexported", ex.getMessage());
         }
     }
 
@@ -102,7 +128,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
             bind(serviceIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
             fail("SecurityException should be thrown");
         } catch (SecurityException ex) {
-            MoreAsserts.assertContainsRegex("Invalid intent", ex.getMessage());
+            MoreAsserts.assertContainsRegex("Only allow to bind service", ex.getMessage());
         }
     }
 
