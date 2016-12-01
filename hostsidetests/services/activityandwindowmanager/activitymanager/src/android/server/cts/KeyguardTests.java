@@ -215,6 +215,26 @@ public class KeyguardTests extends KeyguardTestBase {
         assertShowingAndNotOccluded();
     }
 
+    public void testUnoccludeRotationChange() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertShowingAndNotOccluded();
+        executeShellCommand(getAmStartCmd("ShowWhenLockedActivity"));
+        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
+        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        setDeviceRotation(1);
+        pressHomeButton();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        mAmWmState.waitForDisplayUnfrozen(mDevice);
+        mAmWmState.assertSanity();
+        mAmWmState.assertHomeActivityVisible(false);
+        assertShowingAndNotOccluded();
+        mAmWmState.assertVisibility("ShowWhenLockedActivity", false);
+    }
+
     private void assertWallpaperShowing() {
         WindowState wallpaper =
                 mAmWmState.getWmState().findFirstWindowWithType(WindowState.TYPE_WALLPAPER);

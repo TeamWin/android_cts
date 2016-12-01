@@ -267,6 +267,14 @@ class ActivityManagerState {
         return homeActivity != null && homeActivity.visible;
     }
 
+    String getHomeActivityName() {
+        Activity activity = getHomeActivity();
+        if (activity == null) {
+            return null;
+        }
+        return activity.name;
+    }
+
     private Activity getHomeActivity() {
         for (ActivityStack stack : mStacks) {
             if (stack.mStackId != HOME_STACK_ID) {

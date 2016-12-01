@@ -23,6 +23,7 @@ import static android.server.cts.StateLogger.logE;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -93,6 +94,9 @@ public class WindowManagerState {
     private static final Pattern sDisplayIdPattern =
             Pattern.compile("Display: mDisplayId=(\\d+)");
 
+    private static final Pattern sDisplayFrozenPattern =
+            Pattern.compile("mDisplayFrozen=([a-z]*) .*");
+
     private static final Pattern[] sExtractStackExitPatterns = {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
             sDebuggerWindowPattern, sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
@@ -117,6 +121,7 @@ public class WindowManagerState {
     private final Rectangle mPinnedStackMovementBounds = new Rectangle();
     private final LinkedList<String> mSysDump = new LinkedList();
     private int mRotation;
+    private boolean mDisplayFrozen;
 
     void computeState(ITestDevice device) throws DeviceNotAvailableException {
         // It is possible the system is in the middle of transition to the right state when we get
@@ -307,6 +312,13 @@ public class WindowManagerState {
                 mRotation = Integer.parseInt(matcher.group(1));
                 continue;
             }
+
+            matcher = sDisplayFrozenPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                mDisplayFrozen = Boolean.parseBoolean(matcher.group(1));
+                continue;
+            }
         }
     }
 
@@ -440,6 +452,10 @@ public class WindowManagerState {
             }
         }
         return null;
+    }
+
+    public boolean isDisplayFrozen() {
+        return mDisplayFrozen;
     }
 
     private void reset() {

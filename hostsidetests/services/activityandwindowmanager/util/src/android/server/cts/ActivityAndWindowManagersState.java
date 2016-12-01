@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /** Combined state of the activity manager and window manager. */
 public class ActivityAndWindowManagersState extends Assert {
@@ -186,6 +187,11 @@ public class ActivityAndWindowManagersState extends Assert {
     void waitForRotation(ITestDevice device, int rotation) throws Exception {
         waitForWithWmState(device, state -> state.getRotation() == rotation,
                 "***Waiting for Rotation: " + rotation);
+    }
+
+    void waitForDisplayUnfrozen(ITestDevice device) throws Exception {
+        waitForWithWmState(device, state -> !state.isDisplayFrozen(),
+                "***Waiting for Display unfrozen");
     }
 
     void waitForWithAmState(ITestDevice device, Predicate<ActivityManagerState> waitCondition,
@@ -413,7 +419,11 @@ public class ActivityAndWindowManagersState extends Assert {
                 ActivityManagerTestBase.getActivityComponentName(activityName);
         final String windowName =
                 ActivityManagerTestBase.getWindowName(activityName);
+        assertVisibility(activityComponentName, windowName, visible);
+    }
 
+    private void assertVisibility(String activityComponentName, String windowName,
+            boolean visible) {
         final boolean activityVisible = mAmState.isActivityVisible(activityComponentName);
         final boolean windowVisible = mWmState.isWindowVisible(windowName);
 
@@ -428,13 +438,13 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     void assertHomeActivityVisible(boolean visible) {
-        final boolean activityVisible = mAmState.isHomeActivityVisible();
+        String name = mAmState.getHomeActivityName();
+        assertNotNull(name);
+        assertVisibility(name, getWindowNameForActivityName(name), visible);
+    }
 
-        if (visible) {
-            assertTrue("Home activity must be visible.", activityVisible);
-        } else {
-            assertFalse("Home activity must NOT be visible.", activityVisible);
-        }
+    private String getWindowNameForActivityName(String activityName) {
+        return activityName.replaceAll("(.*)\\/\\.", "$1/$1.");
     }
 
     boolean taskListsInAmAndWmAreEqual() {
