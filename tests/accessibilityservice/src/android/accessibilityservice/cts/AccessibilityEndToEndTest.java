@@ -334,7 +334,7 @@ public class AccessibilityEndToEndTest extends
             channel.enableVibration(true);
             channel.setLights(true);
             channel.setBypassDnd(true);
-            notificationManager.createNotificationChannel(channel);
+            notificationManager.createNotificationChannel(channel, (createdChannel) -> {}, null);
             NotificationChannel created =
                     notificationManager.getNotificationChannel(channel.getId());
             final int notificationId = 1;

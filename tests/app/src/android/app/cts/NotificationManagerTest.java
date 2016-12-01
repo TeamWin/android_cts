@@ -20,6 +20,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -27,8 +28,7 @@ import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import android.app.stubs.R;
+import java.util.concurrent.CountDownLatch;
 
 import java.util.Arrays;
 
@@ -53,8 +53,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.cancelAll();
     }
 
-    public void testCreateChannel() {
-        NotificationChannel channel =
+    public void testCreateChannel() throws InterruptedException {
+        final NotificationChannel channel =
                 new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.enableVibration(true);
         channel.setVibrationPattern(new long[] {5, 8, 2, 1});
@@ -63,10 +63,16 @@ public class NotificationManagerTest extends AndroidTestCase {
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
         try {
-            mNotificationManager.createNotificationChannel(channel);
-            NotificationChannel created =
-                    mNotificationManager.getNotificationChannel(channel.getId());
-            compareChannels(channel, created);
+            final CountDownLatch latch = new CountDownLatch(1);
+            mNotificationManager.createNotificationChannel(
+                    channel,
+                    (createdChannel) -> {
+                        compareChannels(channel, createdChannel);
+                        latch.countDown();
+                    },
+                    null);
+            // Verify that the Listener was executed.
+            latch.await();
         } finally {
             mNotificationManager.deleteNotificationChannel(channel.getId());
         }
@@ -76,10 +82,11 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationChannel channel =
                 new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_DEFAULT);
         try {
-            mNotificationManager.createNotificationChannel(channel);
+            mNotificationManager.createNotificationChannel(channel, (createdChannel) -> {}, null);
             compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
             try {
-                mNotificationManager.createNotificationChannel(channel);
+                mNotificationManager.createNotificationChannel(channel, (createdChannel) -> {},
+                        null);
                 fail("Created channel with duplicate id");
             } catch (IllegalArgumentException e) {
                 // success
@@ -93,7 +100,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationChannel channel =
                 new NotificationChannel("id2", "name", NotificationManager.IMPORTANCE_UNSPECIFIED);
         try {
-            mNotificationManager.createNotificationChannel(channel);
+            mNotificationManager.createNotificationChannel(channel, (createdChannel) -> {}, null);
         } catch (IllegalArgumentException e) {
             //success
         }
@@ -102,7 +109,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testDeleteChannel() {
         NotificationChannel channel =
                 new NotificationChannel("id", "name", NotificationManager.IMPORTANCE_LOW);
-        mNotificationManager.createNotificationChannel(channel);
+        mNotificationManager.createNotificationChannel(channel, (createdChannel) -> {}, null);
         compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
         mNotificationManager.deleteNotificationChannel(channel.getId());
         assertNull(mNotificationManager.getNotificationChannel(channel.getId()));
@@ -127,10 +134,10 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationChannel channel4 =
                 new NotificationChannel("id4", "name4", NotificationManager.IMPORTANCE_MIN);
         try {
-            mNotificationManager.createNotificationChannel(channel1);
-            mNotificationManager.createNotificationChannel(channel2);
-            mNotificationManager.createNotificationChannel(channel3);
-            mNotificationManager.createNotificationChannel(channel4);
+            mNotificationManager.createNotificationChannel(channel1, (createdChannel) -> {}, null);
+            mNotificationManager.createNotificationChannel(channel2, (createdChannel) -> {}, null);
+            mNotificationManager.createNotificationChannel(channel3, (createdChannel) -> {}, null);
+            mNotificationManager.createNotificationChannel(channel4, (createdChannel) -> {}, null);
 
             compareChannels(channel2,
                     mNotificationManager.getNotificationChannel(channel2.getId()));
@@ -220,7 +227,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
-        // notification is a bit asynchronous so it may take a few ms to appear in getActiveNotifications()
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
         // we will check for it for up to 200ms before giving up
         boolean found = false;
         for (int tries=3; tries-->0;) {
@@ -244,6 +252,14 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private void compareChannels(NotificationChannel expected, NotificationChannel actual) {
+        if (actual == null) {
+            fail("actual channel is null");
+            return;
+        }
+        if (expected == null) {
+            fail("expected channel is null");
+            return;
+        }
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getName(), actual.getName());
         assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
