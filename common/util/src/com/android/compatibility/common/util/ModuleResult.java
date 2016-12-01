@@ -94,8 +94,7 @@ public class ModuleResult implements IModuleResult {
      */
     @Override
     public String getName() {
-        // TODO: switch to using AbiUtils#parseTestName when available
-        return parseId(mId)[1];
+        return AbiUtils.parseTestName(mId);
     }
 
     /**
@@ -103,21 +102,7 @@ public class ModuleResult implements IModuleResult {
      */
     @Override
     public String getAbi() {
-        // TODO: switch to using AbiUtils#parseAbi when available
-        return parseId(mId)[0];
-    }
-
-    /**
-     * Parses a unique id into the ABI and name.
-     * @param id The id to parse.
-     * @return a string array containing the ABI and name.
-     */
-    private static String[] parseId(String id) {
-        // TODO: remove this when AbiUtils is available for getName and getAbi
-        if (id == null || !id.contains(" ")) {
-            return new String[] {"", ""};
-        }
-        return id.split(" ");
+        return AbiUtils.parseAbi(mId);
     }
 
     /**
