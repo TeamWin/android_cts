@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Process;
+import android.os.UserHandle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.test.AndroidTestCase;
 
 /**
@@ -34,6 +36,10 @@ import android.test.AndroidTestCase;
  */
 public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
+    final static String ACTION_USER_ADDED = "com.android.cts.deviceowner.action.USER_ADDED";
+    final static String ACTION_USER_REMOVED = "com.android.cts.deviceowner.action.USER_REMOVED";
+    final static String EXTRA_USER_HANDLE = "com.android.cts.deviceowner.extra.USER_HANDLE";
+
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
         @Override
         public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
@@ -42,6 +48,23 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
                 return null;
             }
             return uri.getQueryParameter("alias");
+        }
+
+        @Override
+        public void onUserAdded(Context context, Intent intent, UserHandle userHandle) {
+            sendUserAddedOrRemovedBroadcast(context, ACTION_USER_ADDED, userHandle);
+        }
+
+        @Override
+        public void onUserRemoved(Context context, Intent intent, UserHandle userHandle) {
+            sendUserAddedOrRemovedBroadcast(context, ACTION_USER_REMOVED, userHandle);
+        }
+
+        private void sendUserAddedOrRemovedBroadcast(Context context, String action,
+                UserHandle userHandle) {
+            Intent intent = new Intent(action);
+            intent.putExtra(EXTRA_USER_HANDLE, userHandle);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         }
     }
 

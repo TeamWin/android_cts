@@ -279,6 +279,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testUserAddedOrRemovedBroadcasts() throws Exception {
+        if (mHasFeature && canCreateAdditionalUsers(1)) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testUserAddedOrRemovedBroadcasts");
+        }
+    }
+
     public void testSecurityLoggingWithTwoUsers() throws Exception {
         if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
             return;
