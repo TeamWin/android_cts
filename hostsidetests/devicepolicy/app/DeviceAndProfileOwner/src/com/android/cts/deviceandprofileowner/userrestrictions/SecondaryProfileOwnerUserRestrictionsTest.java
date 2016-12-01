@@ -57,8 +57,7 @@ public class SecondaryProfileOwnerUserRestrictionsTest extends BaseUserRestricti
             UserManager.DISALLOW_FUN,
             UserManager.DISALLOW_SAFE_BOOT,
             UserManager.DISALLOW_CREATE_WINDOWS,
-            UserManager.DISALLOW_DATA_ROAMING,
-            UserManager.DISALLOW_BLUETOOTH
+            UserManager.DISALLOW_DATA_ROAMING
     };
 
     @Override
