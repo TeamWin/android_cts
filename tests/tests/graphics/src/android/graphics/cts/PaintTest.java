@@ -900,6 +900,21 @@ public class PaintTest {
     }
 
     @Test
+    public void testSetGetFontVariationSettings() {
+        Paint p = new Paint();
+
+        // The default variation settings should be null.
+        assertNull(p.getFontVariationSettings());
+
+        final String settings = "'wdth' 1.0";
+        p.setFontVariationSettings(settings);
+        assertEquals(settings, p.getFontVariationSettings());
+
+        p.setFontVariationSettings("");
+        assertNull(p.getFontVariationSettings());
+    }
+
+    @Test
     public void testGetTextBounds() {
         Paint p = new Paint();
         p.setTextSize(10);
