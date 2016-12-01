@@ -1291,7 +1291,8 @@ public class StaticLayoutTest {
         final SpannableString spannable = new SpannableString(text);
         spannable.setSpan(new Object(), 0, text.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
         final Layout layout = StaticLayout.Builder.obtain(spannable, 0, spannable.length(),
-                mDefaultPaint, Integer.MAX_VALUE - 1).setMaxLines(2).build();
+                mDefaultPaint, Integer.MAX_VALUE - 1).setMaxLines(2)
+                .setEllipsize(TruncateAt.END).build();
         layout.getPrimaryHorizontal(layout.getText().length());
     }
 
@@ -1299,7 +1300,8 @@ public class StaticLayoutTest {
     public void testGetPrimary_shouldFail_whenOffsetIsOutOfBounds_withString() {
         final String text = "1\n2\n3";
         final Layout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
-                mDefaultPaint, Integer.MAX_VALUE - 1).setMaxLines(2).build();
+                mDefaultPaint, Integer.MAX_VALUE - 1).setMaxLines(2)
+                .setEllipsize(TruncateAt.END).build();
         layout.getPrimaryHorizontal(layout.getText().length());
     }
 
