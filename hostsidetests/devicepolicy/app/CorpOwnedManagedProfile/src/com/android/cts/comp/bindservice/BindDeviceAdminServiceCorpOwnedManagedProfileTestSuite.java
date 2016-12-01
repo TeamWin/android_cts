@@ -101,7 +101,6 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     private void checkCannotBind_notResolvableIntent() throws Exception {
         final Intent notResolvableIntent = new Intent();
         notResolvableIntent.setClassName(mContext, "NotExistService");
-        Log.d(TAG, "checkCannotBind_notResolvableIntent: ");
         assertFalse(bind(notResolvableIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle));
     }
 
