@@ -20,13 +20,39 @@ import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
+import android.opengl.EGLExt;
+import android.opengl.EGLSurface;
 import android.opengl.GLES20;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utilities to test EGL APIs.
  */
 final class Egl14Utils {
     private Egl14Utils() {
+    }
+
+    static int getMajorVersion() {
+        // Section 6.1.5 of the OpenGL ES specification indicates the GL version
+        // string strictly follows this format:
+        //
+        // OpenGL<space>ES<space><version number><space><vendor-specific information>
+        //
+        // In addition section 6.1.5 describes the version number thusly:
+        //
+        // "The version number is either of the form major number.minor number or
+        // major number.minor number.release number, where the numbers all have one
+        // or more digits. The release number and vendor specific information are
+        // optional."
+        String version = GLES20.glGetString(GLES20.GL_VERSION);
+        Pattern pattern = Pattern.compile("OpenGL ES ([0-9]+)\\.([0-9]+)");
+        Matcher matcher = pattern.matcher(version);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
+        }
+        return 2;
     }
 
     /**
@@ -48,12 +74,19 @@ final class Egl14Utils {
     }
 
     /**
-     * Returns a new GL context for the specified {@code eglDisplay}.
+     * Returns a new GL ES 2.0 context for the specified {@code eglDisplay}.
      */
     static EGLContext createEglContext(EGLDisplay eglDisplay) {
-        int[] contextAttributes = { EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
-        return EGL14.eglCreateContext(eglDisplay,
-                getEglConfig(eglDisplay), EGL14.EGL_NO_CONTEXT, contextAttributes, 0);
+        return createEglContext(eglDisplay, getEglConfig(eglDisplay, 2), 2);
+    }
+
+    /**
+     * Returns a new GL ES context for the specified display, config and version.
+     */
+    static EGLContext createEglContext(EGLDisplay eglDisplay, EGLConfig eglConfig, int version) {
+        int[] contextAttributes = { EGL14.EGL_CONTEXT_CLIENT_VERSION, version, EGL14.EGL_NONE };
+        return EGL14.eglCreateContext(eglDisplay, eglConfig,
+                EGL14.EGL_NO_CONTEXT, contextAttributes, 0);
     }
 
     /**
@@ -93,9 +126,12 @@ final class Egl14Utils {
         }
     }
 
-    private static EGLConfig getEglConfig(EGLDisplay eglDisplay) {
+    static EGLConfig getEglConfig(EGLDisplay eglDisplay, int version) {
         // Get an EGLConfig.
-        final int EGL_OPENGL_ES2_BIT = 4;
+        int renderableType = EGL14.EGL_OPENGL_ES2_BIT;
+        if (version == 3) {
+            renderableType = EGLExt.EGL_OPENGL_ES3_BIT_KHR;
+        }
         final int RED_SIZE = 8;
         final int GREEN_SIZE = 8;
         final int BLUE_SIZE = 8;
@@ -103,7 +139,7 @@ final class Egl14Utils {
         final int DEPTH_SIZE = 0;
         final int STENCIL_SIZE = 0;
         final int[] DEFAULT_CONFIGURATION = new int[] {
-                EGL14.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_RENDERABLE_TYPE, renderableType,
                 EGL14.EGL_RED_SIZE, RED_SIZE,
                 EGL14.EGL_GREEN_SIZE, GREEN_SIZE,
                 EGL14.EGL_BLUE_SIZE, BLUE_SIZE,
