@@ -82,6 +82,8 @@ public class WindowManagerState {
             "movementBounds=\\[(\\d+),(\\d+)\\]\\[(\\d+),(\\d+)\\]");
     private static final Pattern sRotationPattern = Pattern.compile(
             "mRotation=(\\d).*");
+    private static final Pattern sLastOrientationPattern = Pattern.compile(
+            ".*mLastOrientation=(\\d)");
 
     private static final Pattern sLastAppTransitionPattern =
             Pattern.compile("mLastUsedAppTransition=(.+)");
@@ -121,6 +123,7 @@ public class WindowManagerState {
     private final Rectangle mPinnedStackMovementBounds = new Rectangle();
     private final LinkedList<String> mSysDump = new LinkedList();
     private int mRotation;
+    private int mLastOrientation;
     private boolean mDisplayFrozen;
 
     void computeState(ITestDevice device) throws DeviceNotAvailableException {
@@ -313,6 +316,13 @@ public class WindowManagerState {
                 continue;
             }
 
+            matcher = sLastOrientationPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                mLastOrientation = Integer.parseInt(matcher.group(1));
+                continue;
+            }
+
             matcher = sDisplayFrozenPattern.matcher(line);
             if (matcher.matches()) {
                 log(line);
@@ -385,6 +395,10 @@ public class WindowManagerState {
 
     public int getRotation() {
         return mRotation;
+    }
+
+    int getLastOrientation() {
+        return mLastOrientation;
     }
 
     boolean containsStack(int stackId) {
