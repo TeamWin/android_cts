@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,30 @@
 
 package android.sample.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IDeviceTest;
+
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import java.util.Scanner;
 
 /**
  * Test to check the APK logs to Logcat.
  *
- * When this test builds, it also builds {@link android.sample.app.SampleDeviceActivity} into an APK
- * which it then installed at runtime and started. The activity simply prints a message to Logcat
- * and then gets uninstalled.
+ * When this test builds, it also builds {@link android.sample.app.SampleDeviceActivity} into an
+ * APK which it then installed at runtime and started. The activity simply prints a message to
+ * Logcat and then gets uninstalled.
+ *
+ * Instead of extending DeviceTestCase, this JUnit4 test extends IDeviceTest and is run with
+ * tradefed's DeviceJUnit4ClassRunner
  */
-public class SampleHostTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class SampleHostJUnit4Test implements IDeviceTest {
 
     /**
      * The package name of the APK.
@@ -56,13 +67,27 @@ public class SampleHostTest extends DeviceTestCase {
      */
     private static final String TEST_STRING = "SampleTestString";
 
+    private ITestDevice mDevice;
+
+    @Override
+    public void setDevice(ITestDevice device) {
+        mDevice = device;
+    }
+
+    @Override
+    public ITestDevice getDevice() {
+        return mDevice;
+    }
+
     /**
      * Tests the string was successfully logged to Logcat from the activity.
      *
      * @throws Exception
      */
+    @Test
     public void testLogcat() throws Exception {
         ITestDevice device = getDevice();
+        assertNotNull("Device not set", device);
         // Clear activity
         device.executeShellCommand(CLEAR_COMMAND);
         // Clear logcat.
