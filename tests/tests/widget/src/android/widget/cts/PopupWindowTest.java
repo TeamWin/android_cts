@@ -28,12 +28,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import android.app.Activity;
-import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -848,7 +846,20 @@ public class PopupWindowTest {
     }
 
     @Test
-    public void testEnterExitTransition() throws Throwable {
+    public void testEnterExitTransitionAsDropDown() throws Throwable {
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        verifyEnterExitTransition(
+                () -> mPopupWindow.showAsDropDown(anchorView, 0, 0));
+    }
+
+    @Test
+    public void testEnterExitTransitionAtLocation() throws Throwable {
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        verifyEnterExitTransition(
+                () -> mPopupWindow.showAtLocation(anchorView, Gravity.BOTTOM, 0, 0));
+    }
+
+    private void verifyEnterExitTransition(Runnable showRunnable) throws Throwable {
         TransitionListener enterListener = mock(TransitionListener.class);
         Transition enterTransition = new BaseTransition();
         enterTransition.addListener(enterListener);
@@ -863,12 +874,8 @@ public class PopupWindowTest {
         mPopupWindow.setEnterTransition(enterTransition);
         mPopupWindow.setExitTransition(exitTransition);
         mPopupWindow.setOnDismissListener(dismissListener);
-        verify(enterListener, never()).onTransitionStart(any(Transition.class));
-        verify(exitListener, never()).onTransitionStart(any(Transition.class));
-        verify(dismissListener, never()).onDismiss();
 
-        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
-        mActivityRule.runOnUiThread(() -> mPopupWindow.showAsDropDown(anchorView, 0, 0));
+        mActivityRule.runOnUiThread(showRunnable);
         mInstrumentation.waitForIdleSync();
         verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, never()).onTransitionStart(any(Transition.class));
