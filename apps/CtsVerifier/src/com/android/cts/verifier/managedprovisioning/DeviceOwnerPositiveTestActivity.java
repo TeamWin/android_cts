@@ -70,6 +70,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_DATA_ROAMING_ID = "DISALLOW_DATA_ROAMING";
     private static final String DISALLOW_FACTORY_RESET_ID = "DISALLOW_FACTORY_RESET";
     private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
+    private static final String ENTERPRISE_PRIVACY_TEST_ID = "ENTERPRISE_PRIVACY";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -296,6 +297,15 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         adapter.add(createTestItem(this, POLICY_TRANSPARENCY_TEST_ID,
                 R.string.device_profile_owner_policy_transparency_test,
                 policyTransparencyTestIntent));
+
+        // Enterprise Privacy
+        final Intent enterprisePolicyTestIntent = new Intent(this,
+                EnterprisePrivacyTestListActivity.class);
+        enterprisePolicyTestIntent.putExtra(
+                EnterprisePrivacyTestListActivity.EXTRA_TEST_ID, ENTERPRISE_PRIVACY_TEST_ID);
+        adapter.add(createTestItem(this, ENTERPRISE_PRIVACY_TEST_ID,
+                R.string.enterprise_privacy_test,
+                enterprisePolicyTestIntent));
 
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,

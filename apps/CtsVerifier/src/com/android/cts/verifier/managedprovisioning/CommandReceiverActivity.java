@@ -29,6 +29,7 @@ import android.util.Log;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.managedprovisioning.Utils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +61,9 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_REMOVE_DEVICE_OWNER = "remove-device-owner";
     public static final String COMMAND_REQUEST_BUGREPORT = "request-bugreport";
     public static final String COMMAND_SET_USER_ICON = "set-user-icon";
+    public static final String COMMAND_RETRIEVE_NETWORK_LOGS = "retrieve-network-logs";
+    public static final String COMMAND_RETRIEVE_SECURITY_LOGS = "retrieve-security-logs";
+    public static final String COMMAND_SET_ORGANIZATION_NAME = "set-organization-name";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -71,6 +75,9 @@ public class CommandReceiverActivity extends Activity {
             "com.android.cts.verifier.managedprovisioning.extra.ENFORCED";
     public static final String EXTRA_VALUE =
             "com.android.cts.verifier.managedprovisioning.extra.VALUE";
+    public static final String EXTRA_ORGANIZATION_NAME =
+            "com.android.cts.verifier.managedprovisioning.extra.ORGANIZATION_NAME";
+
 
     private ComponentName mAdmin;
     private DevicePolicyManager mDpm;
@@ -180,6 +187,35 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.setUserIcon(mAdmin, BitmapFactory.decodeResource(getResources(),
                             com.android.cts.verifier.R.drawable.icon));
                 } break;
+                case COMMAND_RETRIEVE_NETWORK_LOGS: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    // STOPSHIP(b/33068581): Network logging will be un-hidden for O. Remove
+                    // reflection when the un-hiding happens.
+                    final Method setNetworkLoggingEnabledMethod =
+                            DevicePolicyManager.class.getDeclaredMethod(
+                                    "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
+                    final Method retrieveNetworkLogsMethod =
+                            DevicePolicyManager.class.getDeclaredMethod(
+                                    "retrieveNetworkLogs", ComponentName.class, long.class);
+                    setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, true);
+                    retrieveNetworkLogsMethod.invoke(mDpm, mAdmin, 0 /* batchToken */);
+                    setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, false);
+                } break;
+                case COMMAND_RETRIEVE_SECURITY_LOGS: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.retrieveSecurityLogs(mAdmin);
+                } break;
+                case COMMAND_SET_ORGANIZATION_NAME: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setOrganizationName(mAdmin,
+                            intent.getStringExtra(EXTRA_ORGANIZATION_NAME));
+                } break;
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
@@ -188,7 +224,7 @@ public class CommandReceiverActivity extends Activity {
         }
     }
 
-    private void clearAllPolicies() {
+    private void clearAllPolicies() throws Exception {
         clearProfileOwnerRelatedPolicies();
 
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_ADD_USER);
@@ -212,6 +248,12 @@ public class CommandReceiverActivity extends Activity {
         mDpm.setKeyguardDisabled(mAdmin, false);
         mDpm.setAutoTimeRequired(mAdmin, false);
         mDpm.setStatusBarDisabled(mAdmin, false);
+        // STOPSHIP(b/33068581): Network logging will be un-hidden for O. Remove reflection when the
+        // un-hiding happens.
+        final Method setNetworkLoggingEnabledMethod = DevicePolicyManager.class.getDeclaredMethod(
+                "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
+        setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, false);
+        mDpm.setOrganizationName(mAdmin, null);
     }
 
     private void clearProfileOwnerRelatedPolicies() {

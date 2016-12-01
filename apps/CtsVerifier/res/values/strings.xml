@@ -2243,14 +2243,32 @@ You should be prompted to select credentials; choose the ones you just installed
         2. Lock and unlock the screen to verify that the personal side password was set correctly.\n
     </string>
 
-    <!-- Strings for DeviceOwnerProvisioningTest -->
-    <string name="provisioning_device_owner">Device Owner Provisioning</string>
-    <string name="device_owner_provisioning_tests">Device Owner provisioning tests</string>
-    <string name="device_owner_provisioning_tests_info">The device owner provisioning tests verify that setting up a corporate owned device can only be done on a factory reset device.</string>
-    <string name="device_owner_provisioning_category">Device Owner Provisioning</string>
-    <string name="device_owner_negative_test">Device owner negative test</string>
-    <string name="device_owner_negative_test_info">Please click the "Start provisioning" button, and when you see a warning dialog telling the device is already set up, select "pass". Otherwise, select "fail".</string>
+    <!-- Strings for DeviceOwnerNegativeTestActivity -->
+    <string name="negative_device_owner">No Device Owner Tests</string>
+    <string name="device_owner_negative_category">No Device Owner Tests</string>
+    <string name="device_owner_provisioning_negative">Device owner provisioning</string>
+    <string name="device_owner_provisioning_negative_info">The device owner provisioning test verifies that setting up a corporate owned device can only be done on a factory reset device.\n\nPlease click the "Start provisioning" button, and when you see a warning dialog telling the device is already set up, select "pass". Otherwise, select "fail".</string>
     <string name="start_device_owner_provisioning_button">Start provisioning</string>
+    <string name="enterprise_privacy_quick_settings_negative">Quick settings disclosure</string>
+    <string name="enterprise_privacy_quick_settings_negative_info">
+        Please do the following:\n
+        1) Open and fully expand Quick Settings.\n
+        2) Verify that at the bottom of Quick Settings, you are not told the device is managed.\n
+        3) Close Quick Settings.
+    </string>
+    <string name="enterprise_privacy_keyguard_negative">Keyguard disclosure</string>
+    <string name="enterprise_privacy_keyguard_negative_info">
+        Please do the following:\n
+        1) Press the Go button to open Settings.\n
+        2) Navigate to \"Security\" &gt; \"Screen lock\" and select the first screen lock type that is not \"None\".\n
+        3) Use the Back button to return to this page.\n
+        4) Lock the device.\n
+        5) Verify that on the lock screen, you are not told the device is managed.\n
+        6) Unlock the device.\n
+        7) Repeat steps (1) through (6) for each screen lock type other than \"None\".
+    </string>
+
+    <!-- Strings for DeviceOwnerPositiveTestActivity -->
     <string name="positive_device_owner">Device Owner Tests</string>
     <string name="device_owner_positive_tests">Device Owner positive tests</string>
     <string name="device_owner_positive_tests_instructions">
@@ -2701,6 +2719,90 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="set_permitted_input_methods_widget_label">
         Allow only system input methods:
+    </string>
+
+    <!-- Strings used for enterprise privacy tests -->
+    <string name="enterprise_privacy_test">Privacy info test</string>
+    <string name="enterprise_privacy_page">Privacy info page</string>
+    <string name="enterprise_privacy_page_info">
+        Please press the Go button to open Settings. Verify that:\n
+        1) There is an entry for device privacy.\n
+        2) Tapping that entry opens a screen in which you are told your organization can:\n
+        3) Change settings on this device.\n
+        4) See data associated with your work account.\n
+        5) See the list of all apps on your device.\n
+        6) See usage of each app on your device.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="enterprise_privacy_open_settings">Open Settings</string>
+    <string name="enterprise_privacy_network_logging">Retrieve traffic logs</string>
+    <string name="enterprise_privacy_network_logging_info">
+        Please do the following:\n
+        1) Press the Retrieve Traffic Logs button and record the time at which you did this.\n
+        2) Wait one minute.\n
+        3) Press the Open Settings button.\n
+        4) In the screen that opens, verify that you are told traffic logs were last retrieved at the time you pressed the Retrieve Traffic Logs button in step (1).\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="enterprise_privacy_retrieve_network_logs">Retrieve Traffic Logs</string>
+    <string name="enterprise_privacy_bug_report">Request bug report</string>
+    <string name="enterprise_privacy_bug_report_info">
+        Please do the following:\n
+        1) Press the Request Bug Report button and record the time at which you did this.\n
+        2) Wait one minute.\n
+        3) Press the Open Settings button.\n
+        4) In the screen that opens, verify that you are told a bug report was last requested at the time you pressed the Request Bug Report button in step (1).\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="enterprise_privacy_request_bug_report">Request Bug Report</string>
+    <string name="enterprise_privacy_security_logging">Retrieve security logs</string>
+    <string name="enterprise_privacy_security_logging_info">
+        Please do the following:\n
+        1) Press the Retrieve Security Logs button and record the time at which you did this.\n
+        2) Wait one minute.\n
+        3) Press the Open Settings button.\n
+        4) In the screen that opens, verify that you are told security logs were last retrieved at the time you pressed the Retrieve Security Logs button in step (1).\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="enterprise_privacy_retrieve_security_logs">Retrieve Security Logs</string>
+    <string name="enterprise_privacy_clear_organization">Clear Org</string>
+    <string name="enterprise_privacy_set_organization">Set Org</string>
+    <string name="enterprise_privacy_quick_settings">Quick settings disclosure</string>
+    <string name="enterprise_privacy_quick_settings_info">
+        Please do the following:\n
+        1) Press the Clear Org button.\n
+        2) Open and fully expand Quick Settings.\n
+        3) Verify that at the bottom of Quick Settings, you are told the device is managed.\n
+        4) Close Quick Settings.\n
+        5) Press the Set Org button.\n
+        6) Open and fully expand Quick Settings.\n
+        7) Verify that at the bottom of Quick Settings, you are told the device is managed by \"Foo, Inc.\".\n
+        8) Tap on the information.\n
+        9) Verify that a dialog informing you about device monitoring opens.\n
+        10) Tap the \"Learn more\" link.\n
+        11) Verify that a screen informing you what your managing organization can do is shown.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="enterprise_privacy_keyguard">Keyguard disclosure</string>
+    <string name="enterprise_privacy_keyguard_info">
+        Please do the following:\n
+        1) Press the Open Settings button to open Settings.\n
+        2) Navigate to \"Security\" &gt; \"Screen lock\" and select the first screen lock type that is not \"None\".\n
+        3) Use the Back button to return to this page.\n
+        4) Press the Clear Org button.\n
+        5) Lock the device.\n
+        6) Verify that on the lock screen, you are told the device is managed.\n
+        7) Unlock the device.\n
+        8) Press the Set Org button.\n
+        9) Lock the device.\n
+        10) Verify that on the lock screen, you are told the device is managed by \"Foo, Inc.\".\n
+        11) Unlock the device.\n
+        12) Repeat steps (1) through (11) for each screen lock type other than \"None\".
     </string>
 
     <!-- Strings for JobScheduler Tests -->
