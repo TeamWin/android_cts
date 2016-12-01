@@ -3361,6 +3361,22 @@ public class TextViewTest {
                 "\"smcp\" on", mTextView.getFontFeatureSettings());
     }
 
+    @UiThreadTest
+    @Test
+    public void testSetGetFontVariationSettings() {
+        mTextView = new TextView(mActivity);
+
+        // The default font variation settings should be null.
+        assertNull(mTextView.getFontVariationSettings());
+
+        final String setting = "'wdth' 2.0";
+        mTextView.setFontVariationSettings(setting);
+        assertEquals(setting, mTextView.getFontVariationSettings());
+
+        mTextView.setFontVariationSettings("");
+        assertNull(mTextView.getFontVariationSettings());
+    }
+
     @Test
     public void testGetOffsetForPositionSingleLineLtr() throws Throwable {
         // asserts getOffsetPosition returns correct values for a single line LTR text
