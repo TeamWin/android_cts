@@ -15,6 +15,7 @@
  */
 package android.graphics.cts;
 
+import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
 
 import android.support.test.filters.SmallTest;
@@ -721,6 +722,35 @@ public class ColorSpaceTest {
                         float[] r = cs.fromLinear(cs.toLinear(source[0], source[1], source[2]));
                         assertArrayEquals(source, r, 1e-3f);
                 });
+    }
+
+    @Test
+    public void testRendererSize() {
+        Bitmap b = ColorSpace.createRenderer()
+                .size(0)
+                .render();
+        assertEquals(128, b.getWidth());
+        assertEquals(128, b.getHeight());
+
+        b = ColorSpace.createRenderer()
+                .size(768)
+                .render();
+        assertEquals(768, b.getWidth());
+        assertEquals(768, b.getHeight());
+    }
+
+    @Test
+    public void testRenderer() {
+        Bitmap b = ColorSpace.createRenderer()
+                .size(1024)
+                .clip(true)
+                .showWhitePoint(false)
+                .add(ColorSpace.get(ColorSpace.Named.SRGB), 0xffffffff)
+                .add(ColorSpace.get(ColorSpace.Named.DCI_P3), 0xffffffff)
+                .add(ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB), 0.1f, 0.5f, 0.1f, 0xff000000)
+                .add(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), 0.1f, 0.5f, 0.1f, 0xff000000)
+                .render();
+        assertNotNull(b);
     }
 
     @SuppressWarnings("SameParameterValue")
