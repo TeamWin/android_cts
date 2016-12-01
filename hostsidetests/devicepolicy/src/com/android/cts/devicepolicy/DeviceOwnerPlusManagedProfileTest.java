@@ -24,6 +24,8 @@ package com.android.cts.devicepolicy;
 public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
     private static final String DEVICE_OWNER_BIND_DEVICE_ADMIN_SERVICE_TEST =
             "com.android.cts.comp.DeviceOwnerBindDeviceAdminServiceTest";
+    private static final String DEVICE_OWNER_PROVISIONING_TEST =
+            "com.android.cts.comp.provisioning.ManagedProfileProvisioningTest";
     private static final String MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST =
             "com.android.cts.comp.ManagedProfileBindDeviceAdminServiceTest";
 
@@ -61,22 +63,20 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         setupManagedProfile(COMP_DPC_APK, COMP_DPC_ADMIN);
-        // Installing a non managing app (neither device owner nor profile owner).
-        installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
-        installAppAsUser(COMP_DPC_APK2, mProfileUserId);
+        verifyBindDeviceAdminServiceAsUser();
+    }
 
-        // Testing device owner -> profile owner.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_OWNER_BIND_DEVICE_ADMIN_SERVICE_TEST,
-                "testBindDeviceAdminServiceForUser_corpOwnedManagedProfile",
-                mPrimaryUserId);
-        // Testing profile owner -> device owner.
-        runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST,
-                "testBindDeviceAdminServiceForUser_corpOwnedManagedProfile",
-                mProfileUserId);
+    /**
+     * Same as {@link #testBindDeviceAdminServiceAsUser_corpOwnedManagedProfile} except
+     * creating managed profile through ManagedProvisioning like normal flow
+     */
+    public void testBindDeviceAdminServiceAsUser_corpOwnedManagedProfileWithManagedProvisioning()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        provisionCorpOwnedManagedProfile();
+        verifyBindDeviceAdminServiceAsUser();
     }
 
     /**
@@ -101,11 +101,41 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    private void verifyBindDeviceAdminServiceAsUser() throws Exception {
+        // Installing a non managing app (neither device owner nor profile owner).
+        installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
+        installAppAsUser(COMP_DPC_APK2, mProfileUserId);
+
+        // Testing device owner -> profile owner.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_OWNER_BIND_DEVICE_ADMIN_SERVICE_TEST,
+                "testBindDeviceAdminServiceForUser_corpOwnedManagedProfile",
+                mPrimaryUserId);
+        // Testing profile owner -> device owner.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST,
+                "testBindDeviceAdminServiceForUser_corpOwnedManagedProfile",
+                mProfileUserId);
+    }
+
     protected void setupManagedProfile(String apkName, String adminReceiverClassName)
             throws Exception {
         mProfileUserId = createManagedProfile(mPrimaryUserId);
         installAppAsUser(apkName, mProfileUserId);
         setProfileOwnerOrFail(adminReceiverClassName, mProfileUserId);
         startUser(mProfileUserId);
+    }
+
+
+    protected void provisionCorpOwnedManagedProfile()
+            throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_OWNER_PROVISIONING_TEST,
+                "testProvisioningCorpOwnedManagedProfile",
+                mPrimaryUserId);
+        mProfileUserId = getFirstManagedProfileUserId();
     }
 }

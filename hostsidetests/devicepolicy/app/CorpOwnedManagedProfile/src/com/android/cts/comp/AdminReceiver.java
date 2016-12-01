@@ -19,13 +19,25 @@ package com.android.cts.comp;
 import android.app.admin.DeviceAdminReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 
 public class AdminReceiver extends DeviceAdminReceiver {
+    private static final String TAG = "AdminReceiver";
     // These two apps are built with this source.
     public static final String COMP_DPC_PACKAGE_NAME = "com.android.cts.comp";
     public static final String COMP_DPC_2_PACKAGE_NAME = "com.android.cts.comp2";
 
     public static ComponentName getComponentName(Context context) {
         return new ComponentName(context, AdminReceiver.class);
+    }
+
+    @Override
+    public void onProfileProvisioningComplete(Context context, Intent intent) {
+        super.onProfileProvisioningComplete(context, intent);
+        Log.i(TAG, "onProfileProvisioningComplete");
+        // Enabled profile
+        getManager(context).setProfileName(getComponentName(context), "Corp owned Managed Profile");
+        getManager(context).setProfileEnabled(getComponentName(context));
     }
 }
