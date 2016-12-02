@@ -252,7 +252,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
                     "Launcher_manifest_2",
                     0,
                     list()))
-                    .haveIds("ms21", "ms22", "s1", "s5")
+                    .haveIds("ms21", "ms22", "s5")
                     .areAllNotWithKeyFieldsOnly();
 
             // With ids
