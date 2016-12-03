@@ -658,7 +658,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* Devices always have healthd */
     @CddTest(requirement="9.7")
     public void testHealthdDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:healthd:s0", "/sbin/healthd");
+        assertDomainOne("u:r:healthd:s0", "/system/bin/healthd");
     }
 
     /* Servicemanager is always there */
