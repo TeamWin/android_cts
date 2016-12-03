@@ -176,9 +176,9 @@ public class ColorSpaceTest {
         m2 = cs.getMinValue(1);
         m3 = cs.getMinValue(2);
 
-        assertEquals(0.0f, m1, 1e-9f);
-        assertEquals(0.0f, m2, 1e-9f);
-        assertEquals(0.0f, m3, 1e-9f);
+        assertEquals(-2.0f, m1, 1e-9f);
+        assertEquals(-2.0f, m2, 1e-9f);
+        assertEquals(-2.0f, m3, 1e-9f);
 
         m1 = cs.getMaxValue(0);
         m2 = cs.getMaxValue(1);
