@@ -37,6 +37,7 @@ import static junit.framework.Assert.fail;
 public class EglSurfacesTest {
     @Test
     public void testCreatePixmapSurface() {
+        // NOTE: This test must use EGL10, which is why we don't reuse GlTestBase
         EGL10 egl = (EGL10) EGLContext.getEGL();
         EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
 

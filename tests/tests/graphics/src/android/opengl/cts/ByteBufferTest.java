@@ -16,20 +16,25 @@
 
 package android.opengl.cts;
 
-import android.opengl.EGLConfig;
-import android.opengl.EGLContext;
-import android.opengl.EGLDisplay;
-import android.opengl.EGLSurface;
 import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.BlockJUnit4ClassRunner;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-import static android.opengl.EGL14.*;
-import static android.opengl.GLES30.*;
+import static android.opengl.GLES30.GL_BUFFER_MAP_POINTER;
+import static android.opengl.GLES30.GL_DYNAMIC_READ;
+import static android.opengl.GLES30.GL_MAP_READ_BIT;
+import static android.opengl.GLES30.GL_UNIFORM_BUFFER;
+import static android.opengl.GLES30.glBindBuffer;
+import static android.opengl.GLES30.glBufferData;
+import static android.opengl.GLES30.glDeleteBuffers;
+import static android.opengl.GLES30.glGenBuffers;
+import static android.opengl.GLES30.glGetBufferPointerv;
+import static android.opengl.GLES30.glMapBufferRange;
+import static android.opengl.GLES30.glUnmapBuffer;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -37,22 +42,10 @@ import static org.junit.Assert.assertTrue;
  * Tests for functions that return a ByteBuffer.
  */
 @SmallTest
-@RunWith(AndroidJUnit4.class)
-public class ByteBufferTest {
+@RunWith(BlockJUnit4ClassRunner.class) // DO NOT USE AndroidJUnit4, it messes up threading
+public class ByteBufferTest extends GlTestBase {
     @Test
     public void testMapBufferRange() {
-        EGLDisplay eglDisplay = Egl14Utils.createEglDisplay();
-        // Requesting OpenGL ES 2.0 context will return an ES 3.0 context on capable devices
-        EGLConfig eglConfig = Egl14Utils.getEglConfig(eglDisplay, 2);
-        EGLContext eglContext = Egl14Utils.createEglContext(eglDisplay, eglConfig, 2);
-        EGLSurface eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, new int[] {
-                EGL_WIDTH, 1,
-                EGL_HEIGHT, 1,
-                EGL_NONE
-        }, 0);
-        eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
-
-        android.util.Log.d("View", "" + Egl14Utils.getMajorVersion());
         // Always pass on ES 2.0
         if (Egl14Utils.getMajorVersion() >= 3) {
             int[] buffer = new int[1];
@@ -74,10 +67,5 @@ public class ByteBufferTest {
             glBindBuffer(GL_UNIFORM_BUFFER, 0);
             glDeleteBuffers(1, buffer, 0);
         }
-
-        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        eglDestroySurface(eglDisplay, eglSurface);
-        Egl14Utils.destroyEglContext(eglDisplay, eglContext);
-        Egl14Utils.releaseAndTerminate(eglDisplay);
     }
 }

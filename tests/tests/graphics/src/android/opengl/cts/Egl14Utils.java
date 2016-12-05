@@ -107,8 +107,6 @@ final class Egl14Utils {
         if (error != EGL14.EGL_SUCCESS) {
             throw new RuntimeException("error destroying context: " + error);
         }
-
-        releaseAndTerminate(eglDisplay);
     }
 
     static void releaseAndTerminate(EGLDisplay eglDisplay) {
