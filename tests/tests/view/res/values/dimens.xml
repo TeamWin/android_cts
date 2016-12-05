@@ -27,4 +27,7 @@ limitations under the License.
     <dimen name="insetAll">9dp</dimen>
     <dimen name="insetHorizontal">10dp</dimen>
     <dimen name="insetVertical">11dp</dimen>
+    <dimen name="hover_target_margin">4dp</dimen>
+    <dimen name="hover_target_size">8dp</dimen>
+    <dimen name="hover_target_size_double">16dp</dimen>
 </resources>
