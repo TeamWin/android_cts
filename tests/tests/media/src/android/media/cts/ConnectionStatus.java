@@ -20,8 +20,6 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -32,19 +30,17 @@ import java.util.ArrayList;
 
 /**
  * A class that implements IConnectionStatus interface
- * to report and test Wifi connection.
+ * to report and test connection status.
  */
-public class WifiStatus implements IConnectionStatus {
+public class ConnectionStatus implements IConnectionStatus {
 
-    private static final String TAG = "WifiStatus";
+    private static final String TAG = "ConnectionStatus";
 
     private ConnectivityManager mConnectivityManager;
-    private WifiManager mWifiManager;
 
-    public WifiStatus(Context context) {
+    public ConnectionStatus(Context context) {
         mConnectivityManager =
                 (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        mWifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
     }
 
     public String getNotConnectedReason() {
@@ -52,7 +48,7 @@ public class WifiStatus implements IConnectionStatus {
         if (networkInfo != null) {
             return networkInfo.getReason();
         } else {
-            return "Cannot get network info";
+            return "Network info is not available.";
         }
     }
 
@@ -64,22 +60,6 @@ public class WifiStatus implements IConnectionStatus {
     public boolean isConnected() {
         NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
         return (networkInfo != null) && networkInfo.isConnected();
-    }
-
-    public boolean isEnabled() {
-        return mWifiManager.isWifiEnabled();
-    }
-
-    public void printConnectionInfo() {
-        WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
-        if (wifiInfo == null) {
-          throw new Error("Fail to get Wifi connection info");
-        }
-
-        Log.d(TAG, "ssid=" + wifiInfo.getSSID());
-        Log.d(TAG, "frequency=" + wifiInfo.getFrequency() + " " + WifiInfo.FREQUENCY_UNITS);
-        Log.d(TAG, "rssi=" + wifiInfo.getRssi() + " dBm");
-        Log.d(TAG, "link speed=" + wifiInfo.getLinkSpeed() + " " + WifiInfo.LINK_SPEED_UNITS);
     }
 
     /**
@@ -152,14 +132,6 @@ public class WifiStatus implements IConnectionStatus {
     }
 
     public void testConnection(Uri uri) {
-        final String GOOG = "www.google.com";
-
-        if (pingTest(GOOG)) {
-            Log.d(TAG, "Successfully pinged " + GOOG);
-        } else {
-            Log.e(TAG, "Failed to ping " + GOOG);
-        }
-
         if (pingTest(uri.getHost())) {
             Log.d(TAG, "Successfully pinged " + uri.getHost());
         } else {
