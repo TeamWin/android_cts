@@ -690,19 +690,18 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     public void testAccountRenameAndGetPreviousName()
             throws OperationCanceledException, AuthenticatorException, IOException {
         // Add a first account
-        boolean result = am.addAccountExplicitly(ACCOUNT,
-                                ACCOUNT_PASSWORD,
-                                USERDATA_BUNDLE);
+
+        boolean result = am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, USERDATA_BUNDLE);
+
         assertTrue(result);
 
-        // Prior to a renmae, the previous name should be null.
+        // Prior to a rename, the previous name should be null.
         String nullName = am.getPreviousName(ACCOUNT);
         assertNull(nullName);
 
         final int expectedAccountsCount = getAccountsCount();
 
         Account renamedAccount = renameAccount(am, ACCOUNT, ACCOUNT_NEW_NAME);
-
         /*
          *  Make sure that the resultant renamed account has the correct name
          *  and is associated with the correct account type.
@@ -725,9 +724,10 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
         assertEquals(ACCOUNT.name, am.getPreviousName(renamedAccount));
 
-       // Need to clean up
+        // Need to clean up
         assertTrue(removeAccount(am, renamedAccount, mActivity, null /* callback */).getBoolean(
                 AccountManager.KEY_BOOLEAN_RESULT));
+
     }
 
     /**
@@ -978,34 +978,10 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
     /*
      * Test registration of visibility and then test subsequent visibility checks:
-     * Test removeVisibility, makeVisible, isVisible. Note that if no mappings
-     * exist, defaults to visible due to nature of addAccountExplicitly currently!
      */
-    public void testRegisterVisibility() throws IOException,
-            AuthenticatorException, OperationCanceledException {
-        int uid1 = 12345;
-        int uid2 = 54321;
-        /* notable case, notice that a is visible even though it hasn't been added to a white list,
-        this is because there is no whitelist created and the assumption for no whitelist
-        is visibility.*/
-        assertTrue(am.isAccountVisible(ACCOUNT, uid1));
-        assertTrue(am.makeAccountVisible(ACCOUNT, uid2));
-        assertFalse(am.makeAccountVisible(ACCOUNT, uid2));
-        /* now that there is a whitelist for the account a, uid1 registers as false,
-        whitelist is created through addAccountExplicitlyWithUid */
-        assertFalse(am.isAccountVisible(ACCOUNT, uid1));
-        assertTrue(am.makeAccountVisible(ACCOUNT, uid1));
-        assertTrue(am.isAccountVisible(ACCOUNT, uid1));
-        assertTrue(am.removeAccountVisibility(ACCOUNT, uid2));
-        assertFalse(am.isAccountVisible(ACCOUNT, uid2));
-        assertTrue(am.removeAccountVisibility(ACCOUNT, uid1));
-        /* notice how even though account has a white list of size 0, white list functionality
-        NOT removed, this functionality is only removed through a call to "addAccountsExplicitly",
-        which allows account to be accessed by ALL uids, so removes white listed settings. */
-        assertFalse(am.removeAccountVisibility(ACCOUNT, uid2));
-        assertFalse(am.removeAccountVisibility(ACCOUNT, uid2));
-
-        //clears whitelist by adding account explicitly and then removing account
+    public void testRegisterVisibility()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        // TODO test visibility
         am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
 
         removeAccount(am, ACCOUNT, mActivity, null /* callback */);
@@ -1014,24 +990,11 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
 
     /*
-     * Test Positive Case for adding accounts explicitly with UID
+     * Test Case for adding accounts explicitly with visibility
      */
-    public void testAddAccountExplicitlyWithUid() throws OperationCanceledException,
-            AuthenticatorException, IOException{
-        boolean result = am.addAccountExplicitly(
-                ACCOUNT,
-                ACCOUNT_PASSWORD,
-                USERDATA_BUNDLE,
-                new int[] {Binder.getCallingUid()});
-        assertTrue(result);
-        Account[] accounts = am.getAccounts();
-        assertTrue(accounts.length == 1);
-        assertTrue(accounts[0].equals(ACCOUNT));
-        /* note that the authenticator and this class have same signature
-        as well as it is in white list */
-        assertTrue(am.isAccountVisible(ACCOUNT, Binder.getCallingUid()));
-        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */).getBoolean(
-                AccountManager.KEY_BOOLEAN_RESULT));
+    public void testAddAccountExplicitlyWithVisibility()
+            throws OperationCanceledException, AuthenticatorException, IOException {
+        // TODO update tests
     }
 
     private static class BlockingGetAuthTokenFetcher implements TokenFetcher {
