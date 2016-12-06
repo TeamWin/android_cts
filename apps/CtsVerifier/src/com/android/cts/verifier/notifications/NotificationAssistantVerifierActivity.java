@@ -17,32 +17,36 @@
 package com.android.cts.verifier.notifications;
 
 import static android.service.notification.NotificationListenerService.REASON_LISTENER_CANCEL;
-import static com.android.cts.verifier.notifications.MockAssistant.JSON_FLAGS;
-import static com.android.cts.verifier.notifications.MockAssistant.JSON_ICON;
-import static com.android.cts.verifier.notifications.MockAssistant.JSON_ID;
-import static com.android.cts.verifier.notifications.MockAssistant.JSON_PACKAGE;
-import static com.android.cts.verifier.notifications.MockAssistant.JSON_TAG;
-import static com.android.cts.verifier.notifications.MockAssistant.JSON_WHEN;
+
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_CHANNEL;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_FLAGS;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_ICON;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_ID;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_PACKAGE;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_PEOPLE;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_REASON;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_SNOOZE_CRITERIA;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_TAG;
+import static com.android.cts.verifier.notifications.MockAssistant.KEY_WHEN;
 import static com.android.cts.verifier.notifications.MockAssistant.StatusCatcher;
 import static com.android.cts.verifier.notifications.MockAssistant.StringListResultCatcher;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
-import android.service.notification.NotificationListenerService;
-import android.util.Log;
+import android.service.notification.Adjustment;
+import android.service.notification.SnoozeCriterion;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
 import com.android.cts.verifier.R;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -89,14 +93,16 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
     @Override
     protected List<InteractiveTestCase> createTestItems() {
-        List<InteractiveTestCase> tests = new ArrayList<>(9);
+        List<InteractiveTestCase> tests = new ArrayList<>();
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationEnqueuedTest());
         tests.add(new NotificationReceivedTest());
         tests.add(new DataIntactTest());
         tests.add(new DismissOneTest());
+        tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
+        tests.add(new AdjustNotificationTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotEnqueuedTest());
@@ -106,6 +112,11 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
     @SuppressLint("NewApi")
     private void sendNotifications() {
+        sendNotifications(null);
+    }
+
+    @SuppressLint("NewApi")
+    private void sendNotifications(NotificationChannel channel) {
         mTag1 = UUID.randomUUID().toString();
         mTag2 = UUID.randomUUID().toString();
         mTag3 = UUID.randomUUID().toString();
@@ -134,6 +145,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                 .setWhen(mWhen1)
                 .setDeleteIntent(makeIntent(1, mTag1))
                 .setOnlyAlertOnce(true)
+                .setChannel(channel == null ? NotificationChannel.DEFAULT_CHANNEL_ID
+                        : channel.getId())
                 .build();
         mNm.notify(mTag1, mId1, n1);
         mFlag1 = Notification.FLAG_ONLY_ALERT_ONCE;
@@ -146,6 +159,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                 .setWhen(mWhen2)
                 .setDeleteIntent(makeIntent(2, mTag2))
                 .setAutoCancel(true)
+                .setChannel(channel == null ? NotificationChannel.DEFAULT_CHANNEL_ID
+                        : channel.getId())
                 .build();
         mNm.notify(mTag2, mId2, n2);
         mFlag2 = Notification.FLAG_AUTO_CANCEL;
@@ -159,6 +174,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                 .setDeleteIntent(makeIntent(3, mTag3))
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(true)
+                .setChannel(channel == null ? NotificationChannel.DEFAULT_CHANNEL_ID
+                        : channel.getId())
                 .build();
         mNm.notify(mTag3, mId3, n3);
         mFlag3 = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_AUTO_CANCEL;
@@ -311,59 +328,54 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void test() {
             MockAssistant.probeListenerPayloads(mContext,
-                    new StringListResultCatcher() {
+                    new MockAssistant.BundleListResultCatcher() {
                         @Override
-                        public void accept(List<String> result) {
+                        public void accept(ArrayList<Parcelable> result) {
                             Set<String> found = new HashSet<String>();
                             if (result == null || result.size() == 0) {
                                 status = FAIL;
                                 return;
                             }
                             boolean pass = true;
-                            for (String payloadData : result) {
-                                try {
-                                    JSONObject payload = new JSONObject(payloadData);
-                                    pass &= checkEquals(mPackageString,
-                                            payload.getString(JSON_PACKAGE),
-                                            "data integrity test: notification package (%s, %s)");
-                                    String tag = payload.getString(JSON_TAG);
-                                    if (mTag1.equals(tag)) {
-                                        found.add(mTag1);
-                                        pass &= checkEquals(mIcon1, payload.getInt(JSON_ICON),
-                                                "data integrity test: notification icon (%d, %d)");
-                                        pass &= checkFlagSet(mFlag1, payload.getInt(JSON_FLAGS),
-                                                "data integrity test: notification flags (%d, %d)");
-                                        pass &= checkEquals(mId1, payload.getInt(JSON_ID),
-                                                "data integrity test: notification ID (%d, %d)");
-                                        pass &= checkEquals(mWhen1, payload.getLong(JSON_WHEN),
-                                                "data integrity test: notification when (%d, %d)");
-                                    } else if (mTag2.equals(tag)) {
-                                        found.add(mTag2);
-                                        pass &= checkEquals(mIcon2, payload.getInt(JSON_ICON),
-                                                "data integrity test: notification icon (%d, %d)");
-                                        pass &= checkFlagSet(mFlag2, payload.getInt(JSON_FLAGS),
-                                                "data integrity test: notification flags (%d, %d)");
-                                        pass &= checkEquals(mId2, payload.getInt(JSON_ID),
-                                                "data integrity test: notification ID (%d, %d)");
-                                        pass &= checkEquals(mWhen2, payload.getLong(JSON_WHEN),
-                                                "data integrity test: notification when (%d, %d)");
-                                    } else if (mTag3.equals(tag)) {
-                                        found.add(mTag3);
-                                        pass &= checkEquals(mIcon3, payload.getInt(JSON_ICON),
-                                                "data integrity test: notification icon (%d, %d)");
-                                        pass &= checkFlagSet(mFlag3, payload.getInt(JSON_FLAGS),
-                                                "data integrity test: notification flags (%d, %d)");
-                                        pass &= checkEquals(mId3, payload.getInt(JSON_ID),
-                                                "data integrity test: notification ID (%d, %d)");
-                                        pass &= checkEquals(mWhen3, payload.getLong(JSON_WHEN),
-                                                "data integrity test: notification when (%d, %d)");
-                                    } else {
-                                        pass = false;
-                                        logFail("unexpected notification tag: " + tag);
-                                    }
-                                } catch (JSONException e) {
+                            for (Parcelable payloadData : result) {
+                                Bundle payload = (Bundle) payloadData;
+                                pass &= checkEquals(mPackageString,
+                                        payload.getString(KEY_PACKAGE),
+                                        "data integrity test: notification package (%s, %s)");
+                                String tag = payload.getString(KEY_TAG);
+                                if (mTag1.equals(tag)) {
+                                    found.add(mTag1);
+                                    pass &= checkEquals(mIcon1, payload.getInt(KEY_ICON),
+                                            "data integrity test: notification icon (%d, %d)");
+                                    pass &= checkFlagSet(mFlag1, payload.getInt(KEY_FLAGS),
+                                            "data integrity test: notification flags (%d, %d)");
+                                    pass &= checkEquals(mId1, payload.getInt(KEY_ID),
+                                            "data integrity test: notification ID (%d, %d)");
+                                    pass &= checkEquals(mWhen1, payload.getLong(KEY_WHEN),
+                                            "data integrity test: notification when (%d, %d)");
+                                } else if (mTag2.equals(tag)) {
+                                    found.add(mTag2);
+                                    pass &= checkEquals(mIcon2, payload.getInt(KEY_ICON),
+                                            "data integrity test: notification icon (%d, %d)");
+                                    pass &= checkFlagSet(mFlag2, payload.getInt(KEY_FLAGS),
+                                            "data integrity test: notification flags (%d, %d)");
+                                    pass &= checkEquals(mId2, payload.getInt(KEY_ID),
+                                            "data integrity test: notification ID (%d, %d)");
+                                    pass &= checkEquals(mWhen2, payload.getLong(KEY_WHEN),
+                                            "data integrity test: notification when (%d, %d)");
+                                } else if (mTag3.equals(tag)) {
+                                    found.add(mTag3);
+                                    pass &= checkEquals(mIcon3, payload.getInt(KEY_ICON),
+                                            "data integrity test: notification icon (%d, %d)");
+                                    pass &= checkFlagSet(mFlag3, payload.getInt(KEY_FLAGS),
+                                            "data integrity test: notification flags (%d, %d)");
+                                    pass &= checkEquals(mId3, payload.getInt(KEY_ID),
+                                            "data integrity test: notification ID (%d, %d)");
+                                    pass &= checkEquals(mWhen3, payload.getLong(KEY_WHEN),
+                                            "data integrity test: notification when (%d, %d)");
+                                } else {
                                     pass = false;
-                                    Log.e(TAG, "failed to unpack data from MockAssistant", e);
+                                    logFail("unexpected notification tag: " + tag);
                                 }
                             }
 
@@ -378,6 +390,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             mNm.cancelAll();
+            sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
         }
@@ -425,6 +438,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             mNm.cancelAll();
+            sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
         }
@@ -446,32 +460,26 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void test() {
             if (status == READY) {
-                MockAssistant.clearOne(mContext, mTag1, mId1);
+                MockAssistant.clearOne(mContext, mTag2, mId2);
                 status = RETEST;
             } else {
                 MockAssistant.probeListenerRemovedWithReason(mContext,
-                        new StringListResultCatcher() {
+                        new MockAssistant.BundleListResultCatcher() {
                             @Override
-                            public void accept(List<String> result) {
+                            public void accept(ArrayList<Parcelable> result) {
                                 if (result == null || result.size() == 0) {
                                     status = FAIL;
                                     return;
                                 }
                                 boolean pass = true;
-                                for (String payloadData : result) {
-                                    JSONObject payload = null;
-                                    try {
-                                        payload = new JSONObject(payloadData);
-                                        pass &= checkEquals(mTag1,
-                                                payload.getString(JSON_TAG),
-                                                "data dismissal test: notification tag (%s, %s)");
-                                        pass &= checkEquals(REASON_LISTENER_CANCEL,
-                                                payload.getInt(JSON_TAG),
-                                                "data dismissal test: reason (%d, %d)");
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-
+                                for (Parcelable payloadData : result) {
+                                    Bundle payload = (Bundle) payloadData;
+                                    pass &= checkEquals(mTag2,
+                                            payload.getString(KEY_TAG),
+                                            "data dismissal test: notification tag (%s, %s)");
+                                    pass &= checkEquals(REASON_LISTENER_CANCEL,
+                                            payload.getInt(KEY_REASON),
+                                            "data dismissal test: reason (%d, %d)");
                                 }
                                 status = pass ? PASS : FAIL;
                                 next();
@@ -484,6 +492,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             mNm.cancelAll();
+            sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
         }
@@ -531,6 +540,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             mNm.cancelAll();
+            sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
         }
@@ -632,6 +642,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             mNm.cancelAll();
+            sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
         }
@@ -672,6 +683,142 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             mNm.cancelAll();
+            sleep(1000);
+            MockAssistant.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class AdjustNotificationTest extends InteractiveTestCase {
+        private Bundle bundle1 = new Bundle();
+        private Bundle bundle2 = new Bundle();
+        private Bundle bundle3 = new Bundle();
+        private SnoozeCriterion snooze1 = new SnoozeCriterion("id1", "1", "2");
+        private SnoozeCriterion snooze2 = new SnoozeCriterion("id2", "2", "3");
+        private String people1 = "people1";
+        private String people2 = "people2";
+        private ArrayList<String> people;
+        private ArrayList<SnoozeCriterion> snooze;
+        private NotificationChannel originalChannel = new NotificationChannel("new", "new",
+                NotificationManager.IMPORTANCE_LOW);
+        private NotificationChannel newChannel = new NotificationChannel("new", "new",
+                NotificationManager.IMPORTANCE_LOW);
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_adjustment_payload_intact);
+        }
+
+        @Override
+        void setUp() {
+            try {
+                mNm.createNotificationChannel(newChannel, (createdChannel) -> {}, null);
+                mNm.createNotificationChannel(originalChannel, (createdChannel) -> {}, null);
+            } catch (Exception e) {
+
+            }
+            sendNotifications(originalChannel);
+            status = READY;
+            bundle1.putString(Adjustment.KEY_CHANNEL_ID, newChannel.getId());
+            people = new ArrayList<>();
+            people.add(people1);
+            people.add(people2);
+            bundle2.putStringArrayList(Adjustment.KEY_PEOPLE, people);
+            snooze = new ArrayList<>();
+            snooze.add(snooze1);
+            snooze.add(snooze2);
+            bundle3.putParcelableArrayList(Adjustment.KEY_SNOOZE_CRITERIA, snooze);
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockAssistant.applyAdjustment(mContext, mTag1, bundle1);
+                MockAssistant.applyAdjustment(mContext, mTag2, bundle2);
+                MockAssistant.applyAdjustment(mContext, mTag3, bundle3);
+                status = RETEST;
+            } else {
+                MockAssistant.probeListenerPayloads(mContext,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                Set<String> found = new HashSet<>();
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = true;
+                                for (Parcelable payloadData : result) {
+                                    Bundle payload = (Bundle) payloadData;
+                                    pass &= checkEquals(mPackageString,
+                                            payload.getString(KEY_PACKAGE),
+                                            "data integrity test: notification package (%s, %s)");
+
+                                    String tag = payload.getString(KEY_TAG);
+                                    if (mTag1.equals(tag)) {
+                                        found.add(mTag1);
+                                        pass &= checkEquals(newChannel,
+                                                payload.getParcelable(KEY_CHANNEL),
+                                                "data integrity test: notification channel ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getStringArray(KEY_PEOPLE),
+                                                "data integrity test, notification people ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getParcelableArray(KEY_SNOOZE_CRITERIA),
+                                                "data integrity test, notification snooze ("
+                                                        + "%s, %s)");
+                                    } else if (mTag2.equals(tag)) {
+                                        found.add(mTag2);
+                                        pass &= checkEquals(originalChannel,
+                                                payload.getParcelable(KEY_CHANNEL),
+                                                "data integrity test: notification channel ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(people.toArray(new String[]{}),
+                                                payload.getStringArray(KEY_PEOPLE),
+                                                "data integrity test, notification people ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getParcelableArray(KEY_SNOOZE_CRITERIA),
+                                                "data integrity test, notification snooze ("
+                                                        + "%s, %s)");
+                                    } else if (mTag3.equals(tag)) {
+                                        found.add(mTag3);
+                                        pass &= checkEquals(originalChannel,
+                                                payload.getParcelable(KEY_CHANNEL),
+                                                "data integrity test: notification channel ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getStringArray(KEY_PEOPLE),
+                                                "data integrity test, notification people ("
+                                                        + "%s, %s)");;
+                                        pass &= checkEquals(snooze.toArray(new SnoozeCriterion[]{}),
+                                                payload.getParcelableArray(KEY_SNOOZE_CRITERIA),
+                                                "data integrity test, notification snooze ("
+                                                        + "%s, %s)");
+                                    } else {
+                                        pass = false;
+                                        logFail("unexpected notification tag: " + tag);
+                                    }
+                                }
+
+                                pass &= found.size() == 3;
+                                status = pass ? PASS : FAIL;
+                                next();
+                            }
+                        });
+            }
+            delay(6000);  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            mNm.deleteNotificationChannel(originalChannel.getId());
+            mNm.deleteNotificationChannel(newChannel.getId());
+            sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
         }

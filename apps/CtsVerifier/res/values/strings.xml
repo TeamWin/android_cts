@@ -1448,6 +1448,7 @@
     <string name="nas_note_enqueued_received">Check that notification was enqueued.</string>
     <string name="nls_note_received">Check that notification was received.</string>
     <string name="nls_payload_intact">Check that notification payload was intact.</string>
+    <string name="nas_adjustment_payload_intact">Check that the Assistant can adjust notifications.</string>
     <string name="nls_clear_one">Check that service can clear a notification.</string>
     <string name="nls_clear_one_reason">Check that service can clear a notification and receive the correct reason for dismissal.</string>
     <string name="nls_clear_all">Check that service can clear all notifications.</string>
