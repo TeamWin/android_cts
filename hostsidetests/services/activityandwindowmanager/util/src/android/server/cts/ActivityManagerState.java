@@ -40,6 +40,11 @@ import static android.server.cts.StateLogger.logE;
 class ActivityManagerState {
     public static final int DUMP_MODE_ACTIVITIES = 0;
 
+    public static final String STATE_RESUMED = "RESUMED";
+    public static final String STATE_PAUSED = "PAUSED";
+    public static final String STATE_STOPPED = "STOPPED";
+    public static final String STATE_DESTROYED = "DESTROYED";
+
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
 
     // Copied from ActivityRecord.java
@@ -244,6 +249,20 @@ class ActivityManagerState {
                        return activity.visible;
                    }
                }
+            }
+        }
+        return false;
+    }
+
+    boolean hasActivityState(String activityName, String activityState) {
+        String fullName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)) {
+                        return activity.state.equals(activityState);
+                    }
+                }
             }
         }
         return false;
@@ -528,6 +547,7 @@ class ActivityManagerState {
     }
 
     static class Activity {
+        private static final Pattern STATE_PATTERN = Pattern.compile("state=(\\S+).*");
         private static final Pattern VISIBILITY_PATTERN = Pattern.compile("keysPaused=(\\S+) "
                 + "inHistory=(\\S+) visible=(\\S+) sleeping=(\\S+) idle=(\\S+) "
                 + "mStartingWindowState=(\\S+)");
@@ -537,6 +557,7 @@ class ActivityManagerState {
                 "app=ProcessRecord\\{(\\S+) (\\d+):(\\S+)/(.+)\\}");
 
         String name;
+        String state;
         boolean visible;
         boolean frontOfTask;
         int procId = -1;
@@ -575,6 +596,14 @@ class ActivityManagerState {
                     final String visibleString = matcher.group(3);
                     visible = Boolean.valueOf(visibleString);
                     log(visibleString);
+                    continue;
+                }
+
+                matcher = STATE_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    state = matcher.group(1);
+                    log(state);
                     continue;
                 }
 

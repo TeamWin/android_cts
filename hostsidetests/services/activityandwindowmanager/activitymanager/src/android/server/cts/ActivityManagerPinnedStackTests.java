@@ -16,6 +16,8 @@
 
 package android.server.cts;
 
+import static android.server.cts.ActivityManagerState.STATE_STOPPED;
+
 import java.awt.Rectangle;
 import java.lang.Exception;
 import java.lang.String;
@@ -33,6 +35,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             "LaunchIntoPinnedStackPipActivity";
     private static final String LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY = "LaunchTapToFinishPipActivity";
     private static final String LAUNCH_IME_WITH_PIP_ACTIVITY = "LaunchImeWithPipActivity";
+    private static final String PIP_ON_STOP_ACTIVITY = "PipOnStopActivity";
 
     private static final String EXTRA_AUTO_ENTER_PIP = "auto_enter_pip";
     private static final String EXTRA_ASPECT_RATIO = "aspect_ratio";
@@ -246,6 +249,19 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
         assertTrue(floatEquals((float) pinnedStackBounds.width / pinnedStackBounds.height,
                 VALID_ASPECT_RATIO));
+    }
+
+    public void testDisallowPipLaunchFromStoppedActivity() throws Exception {
+        // Launch the bottom pip activity
+        launchActivity(PIP_ON_STOP_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+
+        // Wait for the bottom pip activity to be stopped
+        mAmWmState.waitForActivityState(mDevice, PIP_ON_STOP_ACTIVITY, STATE_STOPPED);
+
+        // Assert that there is no pinned stack (that enterPictureInPicture() failed)
+        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
     }
 
     /**

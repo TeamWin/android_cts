@@ -114,6 +114,13 @@
             android:exported="true"
             android:windowSoftInputMode="stateAlwaysVisible"
         />
+        <activity android:name=".PipOnStopActivity"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+            android:exported="true"
+            android:taskAffinity="nobody.but.PipOnStopActivity"
+        />
         <activity android:name=".FreeformActivity"
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.FreeformActivity"
