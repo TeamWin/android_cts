@@ -44,6 +44,8 @@ public class PipActivity extends Activity {
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     // Finishes the activity at the end of onCreate (after EXTRA_START_ACTIVITY is handled)
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
+    // Calls enterPictureInPicture() again after onPictureInPictureModeChanged(false) is called
+    private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
 
     private Handler mHandler = new Handler();
 
@@ -108,6 +110,20 @@ public class PipActivity extends Activity {
         // Finish self if requested
         if (getIntent().hasExtra(EXTRA_FINISH_SELF_ON_RESUME)) {
             finish();
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+
+        if (!isInPictureInPictureMode && getIntent().hasExtra(EXTRA_REENTER_PIP_ON_EXIT)) {
+            // This call to re-enter PIP can happen too quickly (host side tests can have difficulty
+            // checking that the stacks ever changed). Therefor, we need to delay here slightly to
+            // allow the tests to verify that the stacks have changed before re-entering.
+            mHandler.postDelayed(() -> {
+                enterPictureInPictureMode();
+            }, 1000);
         }
     }
 

@@ -16,6 +16,7 @@
 
 package android.server.cts;
 
+import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 import android.server.cts.ActivityManagerState.ActivityStack;
 
@@ -43,10 +44,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
-    private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     private static final String EXTRA_ENTER_PIP_ON_MOVE_TO_BG = "enter_pip_on_move_to_bg";
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
+    private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
 
     private static final int ROTATION_0 = 0;
     private static final int ROTATION_90 = 1;
@@ -83,13 +84,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
-        Rectangle pinnedStackBounds =
-                mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
+
         // Tap the screen at a known location in the pinned stack bounds, and ensure that it is
         // not passed down to the top task
-        int tapX = pinnedStackBounds.x + pinnedStackBounds.width - 100;
-        int tapY = pinnedStackBounds.y + pinnedStackBounds.height - 100;
-        executeShellCommand(String.format("input tap %d %d", tapX, tapY));
+        tapToFinishPip();
         mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
         mAmWmState.assertVisibility(PIP_ACTIVITY, true);
@@ -262,7 +260,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testDisallowPipLaunchFromStoppedActivity() throws Exception {
         // Launch the bottom pip activity
         launchActivity(PIP_ON_STOP_ACTIVITY);
-        mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
+        mAmWmState.computeState(mDevice, new String[] {PIP_ON_STOP_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
 
         // Wait for the bottom pip activity to be stopped
@@ -388,6 +386,59 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY)));
     }
 
+    public void testPipUnPipOverHome() throws Exception {
+        // Go home
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+            return amState.getFocusedStackId() == HOME_STACK_ID;
+        }, "Waiting for home stack to be focused");
+        // Launch an auto pip activity
+        executeShellCommand(getAmStartCmd(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_REENTER_PIP_ON_EXIT, "true"));
+        mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+
+        // Tap the screen at a known location in the pinned stack bounds to trigger the activity
+        // to exit and re-enter pip
+        tapToFinishPip();
+        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+            return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
+        }, "Waiting for PIP to exit to fullscreen");
+        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+            return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == PINNED_STACK_ID;
+        }, "Waiting to re-enter PIP");
+        mAmWmState.assertFocusedStack("Expected home stack focused", HOME_STACK_ID);
+    }
+
+    public void testPipUnPipOverApp() throws Exception {
+        // Launch a test activity so that we're not over home
+        executeShellCommand(getAmStartCmd(TEST_ACTIVITY));
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+
+        // Launch an auto pip activity
+        executeShellCommand(getAmStartCmd(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_REENTER_PIP_ON_EXIT, "true"));
+        mAmWmState.computeState(mDevice, new String[] {PIP_ACTIVITY},
+                false /* compareTaskAndStackBounds */);
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+
+        // Tap the screen at a known location in the pinned stack bounds to trigger the activity
+        // to exit and re-enter pip
+        tapToFinishPip();
+        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+            return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
+        }, "Waiting for PIP to exit to fullscreen");
+        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+            return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == PINNED_STACK_ID;
+        }, "Waiting to re-enter PIP");
+        mAmWmState.assertFocusedStack("Expected fullscreen stack focused",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+    }
+
     /**
      * Asserts that the pinned stack bounds does not intersect with the IME bounds.
      */
@@ -440,6 +491,17 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private boolean floatEquals(float f1, float f2) {
         return Math.abs(f1 - f2) < FLOAT_COMPARE_EPSILON;
+    }
+
+    /**
+     * Triggers a tap over the pinned stack bounds to trigger the PIP to close.
+     */
+    private void tapToFinishPip() throws Exception {
+        Rectangle pinnedStackBounds =
+                mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
+        int tapX = pinnedStackBounds.x + pinnedStackBounds.width - 100;
+        int tapY = pinnedStackBounds.y + pinnedStackBounds.height - 100;
+        executeShellCommand(String.format("input tap %d %d", tapX, tapY));
     }
 
     private void pinnedStackTester(String startActivityCmd, String topActivityName,
