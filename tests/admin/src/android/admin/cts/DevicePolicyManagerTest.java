@@ -174,6 +174,44 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetNetworkLoggingEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetNetworkLoggingEnabled_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.setNetworkLoggingEnabled(mComponent, true);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testIsNetworkLoggingEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testIsNetworkLoggingEnabled_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.isNetworkLoggingEnabled(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testRetrieveNetworkLogs_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testRetrieveNetworkLogs_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.retrieveNetworkLogs(mComponent, /* batchToken */ 0);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
     public void testRemoveUser_failIfNotDeviceOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testRemoveUser_failIfNotDeviceOwner");

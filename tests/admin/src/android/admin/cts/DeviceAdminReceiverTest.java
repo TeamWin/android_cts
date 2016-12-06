@@ -29,6 +29,8 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
     private static final String TAG = DeviceAdminReceiverTest.class.getSimpleName();
     private static final String DISABLE_WARNING = "Disable Warning";
     private static final String BUGREPORT_HASH = "f4k3h45h";
+    private static final long NETWORK_LOGS_TOKEN = 0L;
+    private static final int NETWORK_LOGS_COUNT = 0;
 
     private static final String ACTION_BUGREPORT_SHARING_DECLINED =
             "android.app.action.BUGREPORT_SHARING_DECLINED";
@@ -41,6 +43,13 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
             "android.app.extra.BUGREPORT_FAILURE_REASON";
     private static final String EXTRA_BUGREPORT_HASH = "android.app.extra.BUGREPORT_HASH";
 
+    private static final String ACTION_NETWORK_LOGS_AVAILABLE
+            = "android.app.action.NETWORK_LOGS_AVAILABLE";
+    private static final String EXTRA_NETWORK_LOGS_TOKEN =
+            "android.app.extra.EXTRA_NETWORK_LOGS_TOKEN";
+    private static final String EXTRA_NETWORK_LOGS_COUNT =
+            "android.app.extra.EXTRA_NETWORK_LOGS_COUNT";
+
     private static final int PASSWORD_CHANGED = 0x1;
     private static final int PASSWORD_FAILED = 0x2;
     private static final int PASSWORD_SUCCEEDED = 0x4;
@@ -51,6 +60,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
     private static final int BUGREPORT_FAILED = 0x80;
     private static final int BUGREPORT_SHARED = 0x100;
     private static final int SECURITY_LOGS_AVAILABLE = 0x200;
+    private static final int NETWORK_LOGS_AVAILABLE = 0x400;
 
     private TestReceiver mReceiver;
     private boolean mDeviceAdmin;
@@ -112,6 +122,15 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
         mReceiver.reset();
         mReceiver.onReceive(mContext, new Intent(ACTION_SECURITY_LOGS_AVAILABLE));
         assertTrue(mReceiver.hasFlags(SECURITY_LOGS_AVAILABLE));
+
+        mReceiver.reset();
+        Intent networkLogsAvailableIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
+        networkLogsAvailableIntent.putExtra(EXTRA_NETWORK_LOGS_TOKEN, NETWORK_LOGS_TOKEN);
+        networkLogsAvailableIntent.putExtra(EXTRA_NETWORK_LOGS_COUNT, NETWORK_LOGS_COUNT);
+        mReceiver.onReceive(mContext, networkLogsAvailableIntent);
+        assertTrue(mReceiver.hasFlags(NETWORK_LOGS_AVAILABLE));
+        assertEquals(NETWORK_LOGS_TOKEN, mReceiver.getNetworkLogsToken());
+        assertEquals(NETWORK_LOGS_COUNT, mReceiver.getNetworkLogsCount());
     }
 
     private class TestReceiver extends DeviceAdminReceiver {
@@ -119,10 +138,14 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
         private int mFlags = 0;
         private int bugreportFailureCode = -1;
         private String bugreportHash;
+        private long networkLogsToken = -1L;
+        private int networkLogsCount = -1;
 
         void reset() {
             mFlags = 0;
             bugreportFailureCode = -1;
+            networkLogsToken = -1L;
+            networkLogsCount = -1;
             bugreportHash = null;
         }
 
@@ -136,6 +159,14 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
 
         String getBugreportHash() {
             return bugreportHash;
+        }
+
+        long getNetworkLogsToken() {
+            return networkLogsToken;
+        }
+
+        int getNetworkLogsCount() {
+            return networkLogsCount;
         }
 
         @Override
@@ -198,6 +229,15 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
         public void onSecurityLogsAvailable(Context context, Intent intent) {
             super.onSecurityLogsAvailable(context, intent);
             mFlags |= SECURITY_LOGS_AVAILABLE;
+        }
+
+        @Override
+        public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
+                int networkLogsCount) {
+            super.onNetworkLogsAvailable(context, intent, batchToken, networkLogsCount);
+            mFlags |= NETWORK_LOGS_AVAILABLE;
+            this.networkLogsToken = batchToken;
+            this.networkLogsCount = networkLogsCount;
         }
     }
 }
