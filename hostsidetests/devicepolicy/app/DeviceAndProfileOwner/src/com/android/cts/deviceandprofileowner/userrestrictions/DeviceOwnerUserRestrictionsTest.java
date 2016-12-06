@@ -51,7 +51,8 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_SAFE_BOOT,
             UserManager.ALLOW_PARENT_PROFILE_APP_LINKING,
             // UserManager.DISALLOW_DATA_ROAMING, // Has unrecoverable side effects.
-            UserManager.DISALLOW_SET_USER_ICON
+            UserManager.DISALLOW_SET_USER_ICON,
+            UserManager.DISALLOW_BLUETOOTH
     };
 
     public static final String[] DISALLOWED = new String[] {
