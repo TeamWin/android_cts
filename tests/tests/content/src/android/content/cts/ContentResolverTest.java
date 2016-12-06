@@ -16,14 +16,12 @@
 
 package android.content.cts;
 
-import android.content.cts.R;
-
-
 import android.accounts.Account;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.cts.R;
 import android.content.res.AssetFileDescriptor;
 import android.cts.util.PollingCheck;
 import android.database.ContentObserver;
@@ -55,8 +53,6 @@ public class ContentResolverTest extends AndroidTestCase {
     private static final Uri TABLE1_CROSS_URI =
             Uri.parse("content://" + AUTHORITY + "/testtable1/cross");
     private static final Uri TABLE2_URI = Uri.parse("content://" + AUTHORITY + "/testtable2/");
-    private static final Uri SELF_URI = Uri.parse("content://" + AUTHORITY + "/self/");
-    private static final Uri CRASH_URI = Uri.parse("content://" + AUTHORITY + "/crash/");
 
     private static final Uri LEVEL1_URI = Uri.parse("content://" + AUTHORITY + "/level/");
     private static final Uri LEVEL2_URI = Uri.parse("content://" + AUTHORITY + "/level/child");
@@ -215,7 +211,7 @@ public class ContentResolverTest extends AndroidTestCase {
         // Verify we can still access it.
         String type1 = mContentResolver.getType(REMOTE_TABLE1_URI);
         assertTrue(type1.startsWith(ContentResolver.CURSOR_DIR_BASE_TYPE, 0));
-        
+
         // Get an unstable refrence on the remote content provider.
         ContentProviderClient uClient = mContentResolver.acquireUnstableContentProviderClient(
                 REMOTE_AUTHORITY);
@@ -305,7 +301,7 @@ public class ContentResolverTest extends AndroidTestCase {
     }
 
     public void testQuery() {
-        mCursor = mContentResolver.query(TABLE1_URI, null, null, null, null);
+        mCursor = mContentResolver.query(TABLE1_URI, null, null, null);
 
         assertNotNull(mCursor);
         assertEquals(3, mCursor.getCount());
@@ -321,9 +317,14 @@ public class ContentResolverTest extends AndroidTestCase {
         assertEquals(KEY2, mCursor.getString(mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME)));
         assertEquals(VALUE2, mCursor.getInt(mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME)));
         mCursor.close();
+    }
 
-        String selection = COLUMN_ID_NAME + "=1";
-        mCursor = mContentResolver.query(TABLE1_URI, null, selection, null, null);
+    public void testQuery_WithSelectionArgs() {
+        Bundle queryArgs = new Bundle();
+        queryArgs.putString(ContentResolver.QUERY_ARG_SELECTION, COLUMN_ID_NAME + "=?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SELECTION_ARGS, new String[] {"1"});
+
+        mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
         assertNotNull(mCursor);
         assertEquals(1, mCursor.getCount());
         assertEquals(3, mCursor.getColumnCount());
@@ -334,8 +335,9 @@ public class ContentResolverTest extends AndroidTestCase {
         assertEquals(VALUE1, mCursor.getInt(mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME)));
         mCursor.close();
 
-        selection = COLUMN_KEY_NAME + "=\"" + KEY3 + "\"";
-        mCursor = mContentResolver.query(TABLE1_URI, null, selection, null, null);
+        queryArgs.putString(ContentResolver.QUERY_ARG_SELECTION, COLUMN_KEY_NAME + "=?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SELECTION_ARGS, new String[] {KEY3});
+        mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
         assertNotNull(mCursor);
         assertEquals(1, mCursor.getCount());
         assertEquals(3, mCursor.getColumnCount());
@@ -345,7 +347,9 @@ public class ContentResolverTest extends AndroidTestCase {
         assertEquals(KEY3, mCursor.getString(mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME)));
         assertEquals(VALUE3, mCursor.getInt(mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME)));
         mCursor.close();
+    }
 
+    public void testQuery_NullUriThrows() {
         try {
             mContentResolver.query(null, null, null, null, null);
             fail("did not throw NullPointerException when uri is null.");
@@ -567,7 +571,7 @@ public class ContentResolverTest extends AndroidTestCase {
                 }
             }
         }
-        
+
     }
 
     public void testCrashingOpenAssetFileDescriptor() throws IOException {
