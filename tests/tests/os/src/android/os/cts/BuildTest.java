@@ -19,6 +19,7 @@ package android.os.cts;
 
 import android.os.Build;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RestrictedBuildTest;
 
 import dalvik.system.VMRuntime;
 
@@ -232,6 +233,7 @@ public class BuildTest extends TestCase {
      * Note: This test will fail on userdebug / eng devices, but should pass
      * on production (user) builds.
      */
+    @RestrictedBuildTest
     public void testIsSecureUserBuild() throws IOException {
         assertEquals("Must be a user build", "user", Build.TYPE);
         assertProperty("Must be a non-debuggable build", RO_DEBUGGABLE, "0");
