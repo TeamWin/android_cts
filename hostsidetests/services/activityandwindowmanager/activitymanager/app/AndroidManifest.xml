@@ -241,6 +241,16 @@
             android:exported="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
         />
+        <activity android:name=".PortraitOrientationActivity"
+                  android:exported="true"
+                  android:screenOrientation="portrait"
+                  android:documentLaunchMode="always"
+        />
+        <activity android:name=".LandscapeOrientationActivity"
+                  android:exported="true"
+                  android:screenOrientation="landscape"
+                  android:documentLaunchMode="always"
+        />
     </application>
 </manifest>
 

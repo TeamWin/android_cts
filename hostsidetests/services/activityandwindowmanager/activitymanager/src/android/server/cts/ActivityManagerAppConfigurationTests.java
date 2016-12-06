@@ -26,6 +26,8 @@ import java.util.List;
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
+    private static final String PORTRAIT_ACTIVITY_NAME = "PortraitOrientationActivity";
+    private static final String LANDSCAPE_ACTIVITY_NAME = "LandscapeOrientationActivity";
 
     /**
      * Tests that the WindowManager#getDefaultDisplay() and the Configuration of the Activity
@@ -187,6 +189,66 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     public void testSameConfigurationSplitFullSplitNoRelaunch() throws Exception {
         moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY_NAME);
+    }
+
+    /**
+     * Test that device handles consequent requested orientations and displays the activities.
+     */
+    public void testFullscreenAppOrientationRequests() throws Exception {
+        launchActivity(PORTRAIT_ACTIVITY_NAME);
+        mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
+        assertEquals("Fullscreen app requested portrait orientation",
+                1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
+
+        launchActivity(LANDSCAPE_ACTIVITY_NAME);
+        mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
+        assertEquals("Fullscreen app requested landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+
+        launchActivity(PORTRAIT_ACTIVITY_NAME);
+        mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
+        assertEquals("Fullscreen app requested portrait orientation",
+                1 /* portrait */, mAmWmState.getWmState().getLastOrientation());
+    }
+
+    /**
+     * Test that device doesn't change device orientation by app request while in multi-window.
+     */
+    public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
+        requestOrientationInSplitScreen(1 /* portrait */, LANDSCAPE_ACTIVITY_NAME);
+    }
+
+    /**
+     * Test that device doesn't change device orientation by app request while in multi-window.
+     */
+    public void testSplitscreenLandscapeAppOrientationRequests() throws Exception {
+        requestOrientationInSplitScreen(0 /* landscape */, PORTRAIT_ACTIVITY_NAME);
+    }
+
+    /**
+     * Rotate the device and launch specified activity in split-screen, checking if orientation
+     * didn't change.
+     */
+    private void requestOrientationInSplitScreen(int orientation, String activity)
+            throws Exception {
+        // Set initial orientation.
+        setDeviceRotation(orientation);
+
+        // Launch activities that request orientations and check that device doesn't rotate.
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+
+        launchActivityToSide(false /* randomData */, true /* multipleTaskFlag */, activity);
+        mAmWmState.computeState(mDevice, new String[] {activity});
+        mAmWmState.assertVisibility(activity, true /* visible */);
+        assertEquals("Split-screen apps shouldn't influence device orientation",
+                orientation, mAmWmState.getWmState().getRotation());
+
+        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
+                true /* multipleTask */, activity);
+        mAmWmState.computeState(mDevice, new String[] {activity});
+        mAmWmState.assertVisibility(activity, true /* visible */);
+        assertEquals("Split-screen apps shouldn't influence device orientation",
+                orientation, mAmWmState.getWmState().getRotation());
     }
 
     /**
