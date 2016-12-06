@@ -324,6 +324,27 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testNetworkLoggingWithTwoUsers() throws Exception {
+        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
+            return;
+        }
+        int userId = -1;
+        try {
+            userId = createUser();
+            executeDeviceTestMethod(".NetworkLoggingTest",
+                    "testSetNetworkLoggingEnabledNotPossibleIfMoreThanOneUserPresent");
+            executeDeviceTestMethod(".NetworkLoggingTest",
+                    "testRetrievingNetworkLogsNotPossibleIfMoreThanOneUserPresent");
+        } finally {
+            removeUser(userId);
+        }
+    }
+
+    public void testNetworkLoggingWithSingleUser() throws Exception {
+        executeDeviceTestMethod(".NetworkLoggingTest", "testEnablingAndDisablingNetworkLogging");
+        executeDeviceTestMethod(".NetworkLoggingTest", "testProvidingWrongBatchTokenReturnsNull");
+    }
+
     public void testLockTask() throws Exception {
         if (!mHasFeature) {
             return;
