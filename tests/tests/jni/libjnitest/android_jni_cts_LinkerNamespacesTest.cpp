@@ -70,6 +70,10 @@ static bool is_directory(const std::string& path) {
   return false;
 }
 
+static bool is_libdl(const std::string& path) {
+  return kSystemLibraryPath + "/libdl.so" == path;
+}
+
 static bool already_loaded(const std::string& library, const std::string& err) {
   if (err.find("dlopen failed: library \"" + library + "\"") != 0 ||
       err.find("is not accessible for the namespace \"classloader-namespace\"") == std::string::npos) {
@@ -82,6 +86,14 @@ static bool check_lib(const std::string& path,
                       const std::string& library_path,
                       const std::unordered_set<std::string>& libraries,
                       std::vector<std::string>* errors) {
+  if (is_libdl(path)) {
+    // TODO (dimitry): we skip check for libdl.so because
+    // 1. Linker will fail to check accessibility because it imposes as libdl.so (see http://b/27106625)
+    // 2. It is impractical to dlopen libdl.so because this library already depends
+    //    on it in order to have dlopen()
+    return true;
+  }
+
   std::unique_ptr<void, int (*)(void*)> handle(dlopen(path.c_str(), RTLD_NOW), dlclose);
 
   // The current restrictions on public libraries:
