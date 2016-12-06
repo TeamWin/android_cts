@@ -2142,7 +2142,7 @@
                  android:process=":projectionservice" />
 
         <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity"
-                android:label="@string/provisioning_device_owner">
+                android:label="@string/negative_device_owner">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -2152,6 +2152,14 @@
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity$TrampolineActivity" />
+
+        <activity android:name=".managedprovisioning.EnterprisePrivacyInfoOnlyTestActivity"
+                android:label="@string/enterprise_privacy_test">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_ENTERPRISE_PRIVACY_INFO_ONLY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity"
                 android:label="@string/positive_device_owner">
@@ -2244,6 +2252,14 @@
         <activity android:name=".managedprovisioning.PolicyTransparencyTestActivity">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.SHOW_POLICY_TRANSPARENCY_TEST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".managedprovisioning.EnterprisePrivacyTestListActivity"
+                android:label="@string/enterprise_privacy_test">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_ENTERPRISE_PRIVACY" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
