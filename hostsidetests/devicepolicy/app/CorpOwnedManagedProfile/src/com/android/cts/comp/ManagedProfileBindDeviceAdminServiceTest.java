@@ -18,7 +18,7 @@ package com.android.cts.comp;
 
 import android.os.UserHandle;
 
-import com.android.cts.comp.bindservice.BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite;
+import com.android.cts.comp.bindservice.BindDeviceAdminServiceFailsTestSuite;
 import com.android.cts.comp.bindservice.BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite;
 
 import java.util.List;
@@ -43,8 +43,7 @@ public class ManagedProfileBindDeviceAdminServiceTest extends BaseManagedProfile
                 mContext, primaryProfileUserHandle).execute();
     }
 
-    public void testBindDeviceAdminServiceForUser_byodPlusDeviceOwner() throws Exception {
-        assertEquals(AdminReceiver.COMP_DPC_2_PACKAGE_NAME, mContext.getPackageName());
+    public void testBindDeviceAdminServiceForUser_shouldFail() throws Exception {
 
         // DO+BYOD mode - the DO and the PO should not be allowed to bind to each other.
         List<UserHandle> allowedTargetUsers = mDevicePolicyManager.getBindDeviceAdminTargetUsers(
@@ -52,9 +51,10 @@ public class ManagedProfileBindDeviceAdminServiceTest extends BaseManagedProfile
         assertEquals(0, allowedTargetUsers.size());
 
         for (UserHandle userHandle : mOtherProfiles) {
-            new BindDeviceAdminServiceByodPlusDeviceOwnerTestSuite(
-                    mContext, userHandle, AdminReceiver.COMP_DPC_PACKAGE_NAME)
-                    .execute();
+            BindDeviceAdminServiceFailsTestSuite suite
+                    = new BindDeviceAdminServiceFailsTestSuite(mContext, userHandle);
+            suite.checkCannotBind(AdminReceiver.COMP_DPC_PACKAGE_NAME);
+            suite.checkCannotBind(AdminReceiver.COMP_DPC_2_PACKAGE_NAME);
         }
     }
 }
