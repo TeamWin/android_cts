@@ -18,6 +18,7 @@ src_header = """/*
 
 package android.cts.security;
 
+import android.platform.test.annotations.RestrictedBuildTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
@@ -78,6 +79,7 @@ src_footer = """}
 """
 
 src_method = """
+    @RestrictedBuildTest
     public void testNeverallowRules() throws Exception {
         String neverallowRule = "$NEVERALLOW_RULE_HERE$";
 
