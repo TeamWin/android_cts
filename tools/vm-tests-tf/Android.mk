@@ -24,7 +24,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src/dot)
 LOCAL_MODULE := cts-tf-dalvik-lib
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := junit-targetdex
+LOCAL_JAVA_LIBRARIES := junit
 
 include $(BUILD_JAVA_LIBRARY)
 
