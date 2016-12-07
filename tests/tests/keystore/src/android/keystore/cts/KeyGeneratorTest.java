@@ -276,7 +276,7 @@ public class KeyGeneratorTest extends TestCase {
                         SecretKey key = keyGenerator.generateKey();
                         assertEquals(i, TestUtils.getKeyInfo(key).getKeySize());
                         assertEquals((i + 7) / 8, rng.getOutputSizeBytes());
-                    } else {
+                    } else if (i >= 64) {
                         try {
                             keyGenerator.init(spec, rng);
                             fail();
