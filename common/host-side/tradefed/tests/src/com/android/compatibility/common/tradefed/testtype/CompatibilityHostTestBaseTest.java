@@ -47,7 +47,6 @@ import java.util.Collections;
  */
 public class CompatibilityHostTestBaseTest extends TestCase {
 
-    private static final String DEVICE_TEST_APP = "FooTestCases.apk";
     private static final String DEVICE_TEST_PKG = "com.android.foo";
 
     @RunWith(DeviceJUnit4ClassRunner.class)
@@ -72,7 +71,7 @@ public class CompatibilityHostTestBaseTest extends TestCase {
         EasyMock.expect(device.runInstrumentationTests((RemoteAndroidTestRunner)
                 EasyMock.anyObject(), (CollectingTestListener) EasyMock.anyObject())).andReturn(
                 true).once();
-        listener.testEnded(testRunDeviceTests, Collections.EMPTY_MAP);
+        listener.testEnded(testRunDeviceTests, Collections.emptyMap());
         EasyMock.replay(listener, device);
 
         JUnitCore runnerCore = new JUnitCore();
