@@ -139,7 +139,7 @@ public class CollectorUtil {
      * Helper function to reformat JSON string.
      *
      * @param jsonString
-     * @return
+     * @return the reformatted JSON string.
      */
     public static String reformatJsonString(String jsonString) {
         StringBuilder newJsonBuilder = new StringBuilder();

@@ -15,16 +15,19 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.util.LinearPartition;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IConfigurationFactory;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.testtype.IShardableTest;
+import com.android.tradefed.testtype.IStrictShardableTest;
 import com.android.tradefed.testtype.ITestFileFilterReceiver;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.util.AbiUtils;
@@ -45,8 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Retrieves Compatibility test module definitions from the repository.
@@ -58,16 +59,14 @@ public class ModuleRepo implements IModuleRepo {
     static {
         ENDING_MODULES.put("CtsMonkeyTestCases", 1);
     }
-    private static final long SMALL_TEST = TimeUnit.MINUTES.toMillis(2); // Small tests < 2mins
-    private static final long MEDIUM_TEST = TimeUnit.MINUTES.toMillis(10); // Medium tests < 10mins
+    // Synchronization objects for Token Modules.
+    private static int mInitCount = 0;
+    private static Set<IModuleDef> mTokenModuleScheduled;
+    private static Object lock = new Object();
 
-    private int mShards;
-    private int mModulesPerShard;
-    private int mSmallModulesPerShard;
-    private int mMediumModulesPerShard;
-    private int mLargeModulesPerShard;
-    private int mModuleCount = 0;
-    private Set<String> mSerials = new HashSet<>();
+    private int mTotalShards;
+    private Integer mShardIndex;
+
     private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
     private Map<String, Map<String, List<String>>> mTestArgs = new HashMap<>();
     private Map<String, Map<String, List<String>>> mModuleArgs = new HashMap<>();
@@ -77,41 +76,23 @@ public class ModuleRepo implements IModuleRepo {
     private IConfigurationFactory mConfigFactory = ConfigurationFactory.getInstance();
 
     private volatile boolean mInitialized = false;
-    // Whether the modules in this repo are ready to run on their assigned devices.
-    // True until explicitly set false in setPrepared().
-    private volatile boolean mPrepared = true;
-    private CountDownLatch mPreparedLatch;
 
-    // Holds all the small tests waiting to be run.
-    private List<IModuleDef> mSmallModules = new ArrayList<>();
-    // Holds all the medium tests waiting to be run.
-    private List<IModuleDef> mMediumModules = new ArrayList<>();
-    // Holds all the large tests waiting to be run.
-    private List<IModuleDef> mLargeModules = new ArrayList<>();
     // Holds all the tests with tokens waiting to be run. Meaning the DUT must have a specific token.
     private List<IModuleDef> mTokenModules = new ArrayList<>();
+    private List<IModuleDef> mNonTokenModules = new ArrayList<>();
 
     /**
      * {@inheritDoc}
      */
     @Override
     public int getNumberOfShards() {
-        return mShards;
+        return mTotalShards;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the device tokens of this module repo. Exposed for testing.
      */
-    @Override
-    public int getModulesPerShard() {
-        return mModulesPerShard;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Map<String, Set<String>> getDeviceTokens() {
+    protected Map<String, Set<String>> getDeviceTokens() {
         return mDeviceTokens;
     }
 
@@ -139,32 +120,8 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public Set<String> getSerials() {
-        return mSerials;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<IModuleDef> getSmallModules() {
-        return mSmallModules;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<IModuleDef> getMediumModules() {
-        return mMediumModules;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<IModuleDef> getLargeModules() {
-        return mLargeModules;
+    public List<IModuleDef> getNonTokenModules() {
+        return mNonTokenModules;
     }
 
     /**
@@ -181,41 +138,13 @@ public class ModuleRepo implements IModuleRepo {
     @Override
     public String[] getModuleIds() {
         Set<String> moduleIdSet = new HashSet<>();
-        for (IModuleDef moduleDef : mSmallModules) {
-            moduleIdSet.add(moduleDef.getId());
-        }
-        for (IModuleDef moduleDef : mMediumModules) {
-            moduleIdSet.add(moduleDef.getId());
-        }
-        for (IModuleDef moduleDef : mLargeModules) {
+        for (IModuleDef moduleDef : mNonTokenModules) {
             moduleIdSet.add(moduleDef.getId());
         }
         for (IModuleDef moduleDef : mTokenModules) {
             moduleIdSet.add(moduleDef.getId());
         }
         return moduleIdSet.toArray(new String[moduleIdSet.size()]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isPrepared(long timeout, TimeUnit unit) {
-        // returns true only if CountDownLatch reaches zero && no shards have setPrepared to false
-        try {
-            return (mPreparedLatch.await(timeout, unit)) ? mPrepared : false;
-        } catch (InterruptedException e) {
-            return false;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setPrepared(boolean isPrepared) {
-        mPrepared &= isPrepared;
-        mPreparedLatch.countDown();
     }
 
     /**
@@ -230,16 +159,23 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public void initialize(int shards, File testsDir, Set<IAbi> abis, List<String> deviceTokens,
-            List<String> testArgs, List<String> moduleArgs, Set<String> includeFilters,
-            Set<String> excludeFilters) {
+    public void initialize(int totalShards, Integer shardIndex, File testsDir, Set<IAbi> abis,
+            List<String> deviceTokens, List<String> testArgs, List<String> moduleArgs,
+            Set<String> includeFilters, Set<String> excludeFilters, IBuildInfo buildInfo) {
         CLog.d("Initializing ModuleRepo\nShards:%d\nTests Dir:%s\nABIs:%s\nDevice Tokens:%s\n" +
                 "Test Args:%s\nModule Args:%s\nIncludes:%s\nExcludes:%s",
-                shards, testsDir.getAbsolutePath(), abis, deviceTokens, testArgs, moduleArgs,
+                totalShards, testsDir.getAbsolutePath(), abis, deviceTokens, testArgs, moduleArgs,
                 includeFilters, excludeFilters);
         mInitialized = true;
-        mShards = shards;
-        mPreparedLatch = new CountDownLatch(shards);
+        mTotalShards = totalShards;
+        mShardIndex = shardIndex;
+        synchronized (lock) {
+            mInitCount++;
+            if (mTokenModuleScheduled == null) {
+                mTokenModuleScheduled = new HashSet<>();
+            }
+        }
+
         for (String line : deviceTokens) {
             String[] parts = line.split(":");
             if (parts.length == 2) {
@@ -318,8 +254,8 @@ public class ModuleRepo implements IModuleRepo {
                         addFiltersToTest(test, abi, name);
                     }
                     List<IRemoteTest> shardedTests = tests;
-                    if (mShards > 1) {
-                         shardedTests = splitShardableTests(tests);
+                    if (mTotalShards > 1) {
+                         shardedTests = splitShardableTests(tests, buildInfo);
                     }
                     for (IRemoteTest test : shardedTests) {
                         addModuleDef(name, abi, test, pathArg);
@@ -330,20 +266,18 @@ public class ModuleRepo implements IModuleRepo {
                         configFile.getName()), e);
             }
         }
-        mModulesPerShard = mModuleCount / shards;
-        if (mModuleCount % shards != 0) {
-            mModulesPerShard++; // Round up
-        }
-        mSmallModulesPerShard = mSmallModules.size() / shards;
-        mMediumModulesPerShard = mMediumModules.size() / shards;
-        mLargeModulesPerShard = mLargeModules.size() / shards;
     }
 
-    private static List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests) {
+    private List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests, IBuildInfo buildInfo) {
         ArrayList<IRemoteTest> shardedList = new ArrayList<>(tests.size());
         for (IRemoteTest test : tests) {
-            if (test instanceof IShardableTest) {
-                shardedList.addAll(((IShardableTest)test).split());
+            if (test instanceof IBuildReceiver) {
+                ((IBuildReceiver)test).setBuild(buildInfo);
+            }
+
+            if (mShardIndex != null && test instanceof IStrictShardableTest) {
+                shardedList.add(((IStrictShardableTest)test).getTestShard(mTotalShards,
+                        mShardIndex));
             } else {
                 shardedList.add(test);
             }
@@ -351,7 +285,7 @@ public class ModuleRepo implements IModuleRepo {
         return shardedList;
     }
 
-    private static void addFilters(Set<String> stringFilters,
+    private void addFilters(Set<String> stringFilters,
             Map<String, List<TestFilter>> filters, Set<IAbi> abis) {
         for (String filterString : stringFilters) {
             TestFilter filter = TestFilter.createFrom(filterString);
@@ -366,12 +300,12 @@ public class ModuleRepo implements IModuleRepo {
         }
     }
 
-    private static void addFilter(String abi, TestFilter filter,
+    private void addFilter(String abi, TestFilter filter,
             Map<String, List<TestFilter>> filters) {
         getFilter(filters, AbiUtils.createId(abi, filter.getName())).add(filter);
     }
 
-    private static List<TestFilter> getFilter(Map<String, List<TestFilter>> filters, String id) {
+    private List<TestFilter> getFilter(Map<String, List<TestFilter>> filters, String id) {
         List<TestFilter> fs = filters.get(id);
         if (fs == null) {
             fs = new ArrayList<>();
@@ -391,14 +325,9 @@ public class ModuleRepo implements IModuleRepo {
         Set<String> tokens = moduleDef.getTokens();
         if (tokens != null && !tokens.isEmpty()) {
             mTokenModules.add(moduleDef);
-        } else if (moduleDef.getRuntimeHint() < SMALL_TEST) {
-            mSmallModules.add(moduleDef);
-        } else if (moduleDef.getRuntimeHint() < MEDIUM_TEST) {
-            mMediumModules.add(moduleDef);
         } else {
-            mLargeModules.add(moduleDef);
+            mNonTokenModules.add(moduleDef);
         }
-        mModuleCount++;
     }
 
     private void addFiltersToTest(IRemoteTest test, IAbi abi, String name) {
@@ -509,88 +438,49 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public synchronized List<IModuleDef> getModules(String serial) {
-        List<IModuleDef> modules = new ArrayList<>(mModulesPerShard);
-        Set<String> tokens = mDeviceTokens.get(serial);
-        getModulesWithTokens(tokens, modules);
-        getModules(modules);
-        mSerials.add(serial);
-        if (mSerials.size() == mShards) {
-            for (IModuleDef def : mTokenModules) {
-                CLog.logAndDisplay(LogLevel.WARN,
-                        String.format("No devices found with %s, running %s on %s",
-                                def.getTokens(), def.getId(), serial));
-                modules.add(def);
-            }
-            // Add left over modules
-            modules.addAll(mLargeModules);
-            modules.addAll(mMediumModules);
-            modules.addAll(mSmallModules);
-        }
+    public List<IModuleDef> getModules(String serial, int shardIndex) {
+        Collections.sort(mNonTokenModules, new ExecutionOrderComparator());
+        List<IModuleDef> modules = getShard(mNonTokenModules, shardIndex, mTotalShards);
+
         long estimatedTime = 0;
         for (IModuleDef def : modules) {
             estimatedTime += def.getRuntimeHint();
         }
+
+        // FIXME: Token Modules are the only last part that is not deterministic.
+        synchronized (lock) {
+            // Get tokens from the device
+            Set<String> tokens = mDeviceTokens.get(serial);
+            if (tokens != null && !tokens.isEmpty()) {
+                // if it matches any of the token modules, add them
+                for (IModuleDef def : mTokenModules) {
+                    if (!mTokenModuleScheduled.contains(def)) {
+                        modules.add(def);
+                        CLog.e("Adding %s to scheduled token", def);
+                        mTokenModuleScheduled.add(def);
+                    }
+                }
+            }
+            if (mInitCount == mTotalShards && mTokenModuleScheduled.size() != mTokenModules.size()) {
+                mTokenModules.removeAll(mTokenModuleScheduled);
+                CLog.e("Could not find any token for %s. Adding to last shard.", mTokenModules);
+                modules.addAll(mTokenModules);
+            }
+        }
         Collections.sort(modules, new ExecutionOrderComparator());
         CLog.logAndDisplay(LogLevel.INFO, String.format(
-                "%s running %s modules, expected to complete in %s",
-                serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime)));
+                "%s running %s modules, expected to complete in %s: %s",
+                serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime), modules));
         return modules;
     }
 
     /**
-     * Iterates through the remaining tests that require tokens and if the device has all the
-     * required tokens it will queue that module to run on that device, else the module gets put
-     * back into the list.
+     * Helper to linearly split the list into shards with balanced runtimeHint.
+     * Exposed for testing.
      */
-    private void getModulesWithTokens(Set<String> tokens, List<IModuleDef> modules) {
-        if (tokens != null) {
-            List<IModuleDef> copy = mTokenModules;
-            mTokenModules = new ArrayList<>();
-            for (IModuleDef module : copy) {
-                // If a device has all the tokens required by the module then it can run it.
-                if (tokens.containsAll(module.getTokens())) {
-                    modules.add(module);
-                } else {
-                    mTokenModules.add(module);
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds count modules that do not require tokens, to run on a device.
-     */
-    private void getModules(List<IModuleDef> modules) {
-        // Take the normal share of modules unless the device already has token modules.
-        takeModule(mSmallModules, modules, mSmallModulesPerShard - modules.size());
-        takeModule(mMediumModules, modules, mMediumModulesPerShard);
-        takeModule(mLargeModules, modules, mLargeModulesPerShard);
-        // If one bucket runs out, take from any of the others.
-        boolean success = true;
-        while (success && modules.size() < mModulesPerShard) {
-            // Take modules from the buckets until it has enough, or there are no more modules.
-            success = takeModule(mSmallModules, modules, 1)
-                    || takeModule(mMediumModules, modules, 1)
-                    || takeModule(mLargeModules, modules, 1);
-        }
-    }
-
-    /**
-     * Takes count modules from the first list and move it to the second.
-     */
-    private static boolean takeModule(
-            List<IModuleDef> source, List<IModuleDef> destination, int count) {
-        if (source.isEmpty()) {
-            return false;
-        }
-        if (count > source.size()) {
-            count = source.size();
-        }
-        for (int i = 0; i < count; i++) {
-            destination.add(source.remove(source.size() - 1));// Take from the end of the arraylist.
-        }
-        return true;
+    protected List<IModuleDef> getShard(List<IModuleDef> fullList, int shardIndex, int totalShard) {
+        List<List<IModuleDef>> res = LinearPartition.split(fullList, totalShard);
+        return res.get(shardIndex);
     }
 
     /**
@@ -636,8 +526,10 @@ public class ModuleRepo implements IModuleRepo {
         }
     }
 
+    /**
+     * Sort by name and use runtimeHint for separation, shortest test first.
+     */
     private static class ExecutionOrderComparator implements Comparator<IModuleDef> {
-
         @Override
         public int compare(IModuleDef def1, IModuleDef def2) {
             int value1 = 0;
@@ -649,9 +541,21 @@ public class ModuleRepo implements IModuleRepo {
                 value2 = ENDING_MODULES.get(def2.getName());
             }
             if (value1 == 0 && value2 == 0) {
-                return (int) Math.signum(def2.getRuntimeHint() - def1.getRuntimeHint());
+                int time = (int) Math.signum(def1.getRuntimeHint() - def2.getRuntimeHint());
+                if (time == 0) {
+                    return def1.getName().compareTo(def2.getName());
+                }
+                return time;
             }
             return (int) Math.signum(value1 - value2);
         }
+    }
+
+    /**
+     * Reset some module repo variable. Exposed for testing.
+     */
+    protected void resetModuleRepo() {
+        mInitCount = 0;
+        mTokenModuleScheduled = null;
     }
 }

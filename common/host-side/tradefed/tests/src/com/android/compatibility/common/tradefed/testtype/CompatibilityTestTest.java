@@ -23,10 +23,10 @@ import com.android.tradefed.util.AbiUtils;
 
 import junit.framework.TestCase;
 
-import org.easymock.EasyMock;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import org.easymock.EasyMock;
 
 /**
  * Test class for {@link CompatibilityTest}
@@ -163,5 +163,21 @@ public class CompatibilityTestTest extends TestCase {
             assertTrue(expectedAbis.contains(abi.getName()));
         }
         EasyMock.verify(mMockDevice);
+    }
+
+    /**
+     * Test {@link CompatibilityTest#split()} when a shard number is specified.
+     */
+    public void testSplit() throws Exception {
+        OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("shards", "4");
+        assertEquals(4, mTest.split().size());
+    }
+
+    /**
+     * Test {@link CompatibilityTest#split()} when no shard number is specified.
+     */
+    public void testSplit_notShardable() throws Exception {
+        assertNull(mTest.split());
     }
 }
