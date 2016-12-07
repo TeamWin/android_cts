@@ -27,6 +27,7 @@ import com.android.compatibility.common.tradefed.targetprep.PropertyCheckTest;
 import com.android.compatibility.common.tradefed.targetprep.SettingsPreparerTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBaseTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
+import com.android.compatibility.common.tradefed.testtype.JarHostTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
@@ -70,6 +71,7 @@ public class UnitTests extends TestSuite {
         // testtype
         addTestSuite(CompatibilityHostTestBaseTest.class);
         addTestSuite(CompatibilityTestTest.class);
+        addTestSuite(JarHostTestTest.class);
         addTestSuite(ModuleDefTest.class);
         addTestSuite(ModuleRepoTest.class);
         addTestSuite(SubPlanTest.class);

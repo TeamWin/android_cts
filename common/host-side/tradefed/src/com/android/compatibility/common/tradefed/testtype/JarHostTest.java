@@ -16,8 +16,10 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
+import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -25,6 +27,9 @@ import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
+import com.android.tradefed.util.StreamUtil;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import junit.framework.Test;
 
@@ -68,9 +73,28 @@ public class JarHostTest extends HostTest implements IRuntimeHintProvider {
      * {@inheritDoc}
      */
     @Override
+    protected HostTest createHostTest(Class<?> classObj) {
+        JarHostTest test = new JarHostTest();
+        OptionCopier.copyOptionsNoThrow(this, test);
+        test.setClassName(classObj.getName());
+        return test;
+    }
+
+    /**
+     * Create a {@link CompatibilityBuildHelper} from the build info provided.
+     */
+    @VisibleForTesting
+    CompatibilityBuildHelper createBuildHelper(IBuildInfo info) {
+        return new CompatibilityBuildHelper(info);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     protected List<Class<?>> getClasses() throws IllegalArgumentException  {
         List<Class<?>> classes = super.getClasses();
-        CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
+        CompatibilityBuildHelper helper = createBuildHelper(getBuild());
         for (String jarName : mJars) {
             JarFile jarFile = null;
             try {
@@ -108,15 +132,10 @@ public class JarHostTest extends HostTest implements IRuntimeHintProvider {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                CLog.e(e);
+                throw new RuntimeException(e);
             } finally {
-                if (jarFile != null) {
-                    try {
-                        jarFile.close();
-                    } catch (IOException e) {
-                        // Ignored
-                    }
-                }
+                StreamUtil.close(jarFile);
             }
         }
         return classes;
@@ -166,5 +185,4 @@ public class JarHostTest extends HostTest implements IRuntimeHintProvider {
             CLog.d("HostTestListener.testRunEnded(%d, %s)", elapsedTime, metrics.toString());
         }
     }
-
 }
