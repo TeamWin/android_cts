@@ -34,6 +34,7 @@ import android.cts.util.transition.TrackingVisibility;
 import android.os.Bundle;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.transition.Fade;
 import android.transition.Transition.TransitionListener;
 import android.view.View;
 
@@ -220,6 +221,42 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, mActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
 
         TargetActivity.sLastCreated = null;
+    }
+
+    // When an exit transition takes longer than it takes the activity to cover it (and onStop
+    // is called), the exiting views should become visible.
+    @Test
+    public void earlyExitStop() throws Throwable {
+        enterScene(R.layout.scene1);
+        final View hello = mActivity.findViewById(R.id.hello);
+        final View red = mActivity.findViewById(R.id.redSquare);
+        final View green = mActivity.findViewById(R.id.greenSquare);
+        mInstrumentation.runOnMainSync(() -> {
+            Fade fade = new Fade();
+            fade.setDuration(10000);
+            fade.addListener(mExitListener);
+            mActivity.getWindow().setExitTransition(fade);
+            Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity).toBundle();
+            Intent intent = new Intent(mActivity, TargetActivity.class);
+            intent.putExtra(TargetActivity.EXTRA_LAYOUT_ID, R.layout.scene4);
+            mActivity.startActivity(intent, options);
+        });
+
+        TargetActivity targetActivity = waitForTargetActivity();
+        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
+        verify(mExitListener, within(3000)).onTransitionEnd(any());
+
+        mInstrumentation.runOnMainSync(() -> {
+            // Verify that the exited views have an alpha of 1 and are visible
+            assertEquals(1.0f, hello.getAlpha(), 0.01f);
+            assertEquals(1.0f, red.getAlpha(), 0.01f);
+            assertEquals(1.0f, green.getAlpha(), 0.01f);
+
+            assertEquals(View.VISIBLE, hello.getVisibility());
+            assertEquals(View.VISIBLE, red.getVisibility());
+            assertEquals(View.VISIBLE, green.getVisibility());
+            targetActivity.finish();
+        });
     }
 
     private TargetActivity waitForTargetActivity() {
