@@ -302,7 +302,7 @@ public class ModuleRepoTest extends TestCase {
                 shardableCount++;
             }
         }
-        assertEquals("Shards wrong", 3, shardableCount);
+        assertEquals("Shards wrong", 9, shardableCount);
     }
 
     public void testGetModuleIds() {

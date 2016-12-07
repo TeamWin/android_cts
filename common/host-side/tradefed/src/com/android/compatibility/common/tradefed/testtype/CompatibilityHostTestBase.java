@@ -16,7 +16,6 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -41,15 +40,14 @@ import com.android.tradefed.util.AbiUtils;
 
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.runners.JUnit4;
+import org.junit.internal.AssumptionViolatedException;
 
-import java.io.FileNotFoundException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 
 /**
  * Compatibility host test base class for JUnit4 tests. Enables host-side tests written in JUnit4
@@ -107,7 +105,7 @@ public class CompatibilityHostTestBase implements IAbiReceiver, IBuildReceiver, 
 
     /**
      * Set the runner name
-     * @param name of the device test runner
+     * @param runner of the device test runner
      */
     protected void setRunner(String runner) {
         mRunner = runner;
@@ -132,7 +130,7 @@ public class CompatibilityHostTestBase implements IAbiReceiver, IBuildReceiver, 
     protected void installPackage(String fileName, String... options)
             throws FileNotFoundException, DeviceNotAvailableException {
 
-        final List<String> optList = new ArrayList(Arrays.asList(options));
+        final List<String> optList = new ArrayList<>(Arrays.asList(options));
         optList.add(AbiUtils.createAbiFlag(mAbi.getName()));
         options = optList.toArray(new String[optList.size()]);
 

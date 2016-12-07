@@ -274,10 +274,10 @@ public class ModuleRepo implements IModuleRepo {
             if (test instanceof IBuildReceiver) {
                 ((IBuildReceiver)test).setBuild(buildInfo);
             }
-
             if (mShardIndex != null && test instanceof IStrictShardableTest) {
-                shardedList.add(((IStrictShardableTest)test).getTestShard(mTotalShards,
-                        mShardIndex));
+                for (int i = 0; i < mTotalShards; i++) {
+                    shardedList.add(((IStrictShardableTest)test).getTestShard(mTotalShards, i));
+                }
             } else {
                 shardedList.add(test);
             }
