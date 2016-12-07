@@ -13,10 +13,12 @@
 # limitations under the License.
 
 #
-# Builds a host library and defines a rule to generate the associated test
-# package XML needed by CTS.
+# Builds a Java library.
 #
+
 # Disable by default so "m cts" will work in emulator builds
 LOCAL_DEX_PREOPT := false
 LOCAL_STATIC_JAVA_LIBRARIES += platform-test-annotations
+
 include $(BUILD_JAVA_LIBRARY)
+

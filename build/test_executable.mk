@@ -15,9 +15,9 @@
 #
 # Builds an executable:
 #
-# * Replace "include $(BUILD_EXECUTABLE)"
-#   with "include $(BUILD_CTS_EXECUTABLE)"
+# Replace "include $(BUILD_EXECUTABLE)" with "include $(BUILD_CTS_EXECUTABLE)"
 #
 
 LOCAL_CXX_STL := libc++
 include $(BUILD_EXECUTABLE)
+
