@@ -69,8 +69,8 @@ public class ModuleRepo implements IModuleRepo {
     private int mModuleCount = 0;
     private Set<String> mSerials = new HashSet<>();
     private Map<String, Set<String>> mDeviceTokens = new HashMap<>();
-    private Map<String, Map<String, String>> mTestArgs = new HashMap<>();
-    private Map<String, Map<String, String>> mModuleArgs = new HashMap<>();
+    private Map<String, Map<String, List<String>>> mTestArgs = new HashMap<>();
+    private Map<String, Map<String, List<String>>> mModuleArgs = new HashMap<>();
     private boolean mIncludeAll;
     private Map<String, List<TestFilter>> mIncludeFilters = new HashMap<>();
     private Map<String, List<TestFilter>> mExcludeFilters = new HashMap<>();
@@ -285,7 +285,7 @@ public class ModuleRepo implements IModuleRepo {
                         continue;
                     }
                     {
-                        Map<String, String> args = new HashMap<>();
+                        Map<String, List<String>> args = new HashMap<>();
                         if (mModuleArgs.containsKey(name)) {
                             args.putAll(mModuleArgs.get(name));
                         }
@@ -293,21 +293,26 @@ public class ModuleRepo implements IModuleRepo {
                             args.putAll(mModuleArgs.get(id));
                         }
                         if (args != null && args.size() > 0) {
-                            for (Entry<String, String> entry : args.entrySet()) {
-                                config.injectOptionValue(entry.getKey(), entry.getValue());
+                            for (Entry<String, List<String>> entry : args.entrySet()) {
+                                for (String value : entry.getValue()) {
+                                    // Collection-type options can be injected with multiple values
+                                    config.injectOptionValue(entry.getKey(), value);
+                                }
                             }
                         }
                     }
                     List<IRemoteTest> tests = config.getTests();
                     for (IRemoteTest test : tests) {
                         String className = test.getClass().getName();
-                        Map<String, String> args = new HashMap<>();
+                        Map<String, List<String>> args = new HashMap<>();
                         if (mTestArgs.containsKey(className)) {
                             args.putAll(mTestArgs.get(className));
                         }
                         if (args != null && args.size() > 0) {
-                            for (Entry<String, String> entry : args.entrySet()) {
-                                config.injectOptionValue(entry.getKey(), entry.getValue());
+                            for (Entry<String, List<String>> entry : args.entrySet()) {
+                                for (String value : entry.getValue()) {
+                                    config.injectOptionValue(entry.getKey(), value);
+                                }
                             }
                         }
                         addFiltersToTest(test, abi, name);
@@ -610,18 +615,24 @@ public class ModuleRepo implements IModuleRepo {
         return modules;
     }
 
-    private static void putArgs(List<String> args, Map<String, Map<String, String>> argsMap) {
+    private static void putArgs(List<String> args,
+            Map<String, Map<String, List<String>>> argsMap) {
         for (String arg : args) {
             String[] parts = arg.split(":");
             String target = parts[0];
             String key = parts[1];
             String value = parts[2];
-            Map<String, String> map = argsMap.get(target);
+            Map<String, List<String>> map = argsMap.get(target);
             if (map == null) {
                 map = new HashMap<>();
                 argsMap.put(target, map);
             }
-            map.put(key, value);
+            List<String> valueList = map.get(key);
+            if (valueList == null) {
+                valueList = new ArrayList<>();
+                map.put(key, valueList);
+            }
+            valueList.add(value);
         }
     }
 
