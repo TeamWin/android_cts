@@ -17,6 +17,8 @@ package android.cts.util;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.drm.DrmConvertedStatus;
+import android.drm.DrmManagerClient;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
@@ -42,6 +44,8 @@ import java.util.Map;
 import static junit.framework.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 public class MediaUtils {
     private static final String TAG = "MediaUtils";
@@ -874,6 +878,134 @@ public class MediaUtils {
         private double[] mSortedData;
         private boolean mSorted = false;
     }
+
+    /**
+     * Convert a forward lock .dm message stream to a .fl file
+     * @param context Context to use
+     * @param dmStream The .dm message
+     * @param flFile The output file to be written
+     * @return success
+     */
+    public static boolean convertDmToFl(
+            Context context,
+            InputStream dmStream,
+            RandomAccessFile flFile) {
+        final String MIMETYPE_DRM_MESSAGE = "application/vnd.oma.drm.message";
+        byte[] dmData = new byte[10000];
+        int totalRead = 0;
+        int numRead;
+        while (true) {
+            try {
+                numRead = dmStream.read(dmData, totalRead, dmData.length - totalRead);
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to read from input file");
+                return false;
+            }
+            if (numRead == -1) {
+                break;
+            }
+            totalRead += numRead;
+            if (totalRead == dmData.length) {
+                // grow array
+                dmData = Arrays.copyOf(dmData, dmData.length + 10000);
+            }
+        }
+        byte[] fileData = Arrays.copyOf(dmData, totalRead);
+
+        DrmManagerClient drmClient = null;
+        try {
+            drmClient = new DrmManagerClient(context);
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, "DrmManagerClient instance could not be created, context is Illegal.");
+            return false;
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "DrmManagerClient didn't initialize properly.");
+            return false;
+        }
+
+        try {
+            int convertSessionId = -1;
+            try {
+                convertSessionId = drmClient.openConvertSession(MIMETYPE_DRM_MESSAGE);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Conversion of Mimetype: " + MIMETYPE_DRM_MESSAGE
+                        + " is not supported.", e);
+                return false;
+            } catch (IllegalStateException e) {
+                Log.w(TAG, "Could not access Open DrmFramework.", e);
+                return false;
+            }
+
+            if (convertSessionId < 0) {
+                Log.w(TAG, "Failed to open session.");
+                return false;
+            }
+
+            DrmConvertedStatus convertedStatus = null;
+            try {
+                convertedStatus = drmClient.convertData(convertSessionId, fileData);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Buffer with data to convert is illegal. Convertsession: "
+                        + convertSessionId, e);
+                return false;
+            } catch (IllegalStateException e) {
+                Log.w(TAG, "Could not convert data. Convertsession: " + convertSessionId, e);
+                return false;
+            }
+
+            if (convertedStatus == null ||
+                    convertedStatus.statusCode != DrmConvertedStatus.STATUS_OK ||
+                    convertedStatus.convertedData == null) {
+                Log.w(TAG, "Error in converting data. Convertsession: " + convertSessionId);
+                try {
+                    DrmConvertedStatus result = drmClient.closeConvertSession(convertSessionId);
+                    if (result.statusCode != DrmConvertedStatus.STATUS_OK) {
+                        Log.w(TAG, "Conversion failed with status: " + result.statusCode);
+                        return false;
+                    }
+                } catch (IllegalStateException e) {
+                    Log.w(TAG, "Could not close session. Convertsession: " +
+                           convertSessionId, e);
+                }
+                return false;
+            }
+
+            try {
+                flFile.write(convertedStatus.convertedData, 0, convertedStatus.convertedData.length);
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to write to output file: " + e);
+                return false;
+            }
+
+            try {
+                convertedStatus = drmClient.closeConvertSession(convertSessionId);
+            } catch (IllegalStateException e) {
+                Log.w(TAG, "Could not close convertsession. Convertsession: " +
+                        convertSessionId, e);
+                return false;
+            }
+
+            if (convertedStatus == null ||
+                    convertedStatus.statusCode != DrmConvertedStatus.STATUS_OK ||
+                    convertedStatus.convertedData == null) {
+                Log.w(TAG, "Error in closing session. Convertsession: " + convertSessionId);
+                return false;
+            }
+
+            try {
+                flFile.seek(convertedStatus.offset);
+                flFile.write(convertedStatus.convertedData);
+            } catch (IOException e) {
+                Log.w(TAG, "Could not update file.", e);
+                return false;
+            }
+
+            return true;
+        } finally {
+            drmClient.close();
+        }
+    }
+
 
     /*
      *  -------------------------------------- END --------------------------------------
