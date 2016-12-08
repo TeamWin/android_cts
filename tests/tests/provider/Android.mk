@@ -31,7 +31,7 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil ctstestrunner ub-uiautomator
+    compatibility-device-util ctstestrunner ub-uiautomator
 
 LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libnativehelper_compat_libc++
 

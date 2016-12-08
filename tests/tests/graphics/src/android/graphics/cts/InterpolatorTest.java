@@ -22,12 +22,13 @@ import static org.junit.Assert.fail;
 
 import junit.framework.TestCase;
 
-import android.cts.util.CtsArrayUtils;
 import android.graphics.Interpolator;
 import android.graphics.Interpolator.Result;
 import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

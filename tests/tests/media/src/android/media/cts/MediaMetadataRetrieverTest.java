@@ -20,7 +20,6 @@ import android.media.cts.R;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.MediaUtils;
 import android.media.MediaDataSource;
 import android.media.MediaMetadataRetriever;
 import android.graphics.Bitmap;
@@ -28,6 +27,8 @@ import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import static android.media.MediaMetadataRetriever.OPTION_CLOSEST;
 import static android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC;

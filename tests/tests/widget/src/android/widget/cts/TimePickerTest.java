@@ -29,8 +29,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.CtsTouchUtils;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
@@ -41,6 +39,9 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TimePicker;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

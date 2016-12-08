@@ -16,8 +16,6 @@
 
 package android.webkit.cts;
 
-import android.cts.util.NullWebViewUtils;
-import android.cts.util.PollingCheck;
 import android.test.ActivityInstrumentationTestCase2;
 
 import android.webkit.JavascriptInterface;
@@ -28,6 +26,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
+
+import com.android.compatibility.common.util.NullWebViewUtils;
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;

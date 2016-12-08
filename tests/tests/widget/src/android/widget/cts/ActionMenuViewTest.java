@@ -25,7 +25,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.test.InstrumentationRegistry;
@@ -36,6 +35,8 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.Menu;
 import android.widget.ActionMenuView;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

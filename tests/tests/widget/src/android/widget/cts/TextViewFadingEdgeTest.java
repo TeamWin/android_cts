@@ -30,13 +30,14 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.PollingCheck;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

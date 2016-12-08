@@ -30,7 +30,6 @@ import android.app.Activity;
 import android.app.ActivityGroup;
 import android.app.Instrumentation;
 import android.content.Intent;
-import android.cts.util.WidgetTestUtils;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
@@ -42,6 +41,8 @@ import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TabHost.TabSpec;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

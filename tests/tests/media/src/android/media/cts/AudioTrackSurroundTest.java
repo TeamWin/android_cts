@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
@@ -30,6 +29,8 @@ import android.media.AudioManager;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.util.Log;
+
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;

@@ -15,6 +15,8 @@
  */
 package android.app.cts;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -40,7 +42,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
-import android.cts.util.SystemUtil;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;

@@ -22,8 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.PollingCheck;
 import android.graphics.PixelFormat;
 import android.graphics.Region;
 import android.support.test.InstrumentationRegistry;
@@ -35,6 +33,9 @@ import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.cts.SurfaceViewCtsActivity.MockSurfaceView;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

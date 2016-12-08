@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,15 +41,12 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.CtsTouchUtils;
-import android.cts.util.PollingCheck;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.support.test.annotation.UiThreadTest;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.filters.SmallTest;
@@ -73,6 +70,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.cts.util.TestUtils;
 import android.widget.cts.util.TestUtilsMatchers;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;

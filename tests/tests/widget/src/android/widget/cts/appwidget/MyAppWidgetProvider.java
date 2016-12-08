@@ -21,13 +21,14 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.cts.util.PollingCheck;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.cts.R;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.concurrent.CountDownLatch;
 

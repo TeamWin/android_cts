@@ -17,11 +17,11 @@
 package android.dram.cts;
 
 import android.content.Context;
-import android.cts.util.CtsAndroidTestCase;
 import android.graphics.Point;
 import android.util.Log;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;

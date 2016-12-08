@@ -26,7 +26,6 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil \
     compatibility-device-util \
     ctstestrunner \
     mockito-target-minus-junit4 \

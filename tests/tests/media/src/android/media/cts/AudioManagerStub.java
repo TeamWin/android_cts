@@ -19,13 +19,14 @@ package android.media.cts;
 import android.media.cts.R;
 
 import android.app.Activity;
-import android.cts.util.CTSResult;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.AudioSystem;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+
+import com.android.compatibility.common.util.CTSResult;
 
 public class AudioManagerStub extends Activity {
     private final int MP3_TO_PLAY = R.raw.testmp3;

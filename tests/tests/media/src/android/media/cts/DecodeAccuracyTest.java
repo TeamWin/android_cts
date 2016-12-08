@@ -19,12 +19,13 @@ import android.media.cts.R;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.cts.util.MediaUtils;
 import android.graphics.Bitmap;
 import android.media.MediaFormat;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.View;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
 import org.junit.Before;

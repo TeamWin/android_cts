@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.CtsTouchUtils;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -41,6 +40,8 @@ import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.After;
 import org.junit.Before;

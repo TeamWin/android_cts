@@ -16,7 +16,7 @@
 
 package com.android.cts.documentclient;
 
-import static android.cts.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

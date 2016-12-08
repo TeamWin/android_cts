@@ -15,7 +15,6 @@
  */
 package android.media.cts;
 
-import android.cts.util.MediaUtils;
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
@@ -27,6 +26,7 @@ import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;

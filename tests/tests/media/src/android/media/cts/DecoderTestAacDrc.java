@@ -21,7 +21,6 @@ import android.media.cts.R;
 import android.app.Instrumentation;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.CtsAndroidTestCase;
 import android.media.cts.DecoderTest.AudioParameter;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -30,6 +29,8 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import static org.junit.Assert.*;
 import org.junit.Before;

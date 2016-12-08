@@ -17,7 +17,6 @@
 package android.media.cts;
 
 import android.content.pm.PackageManager;
-import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -27,6 +26,8 @@ import android.media.MediaRecorder;
 import android.os.Looper;
 import android.os.Parcel;
 import android.util.Log;
+
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import java.util.ArrayList;
 import java.util.Iterator;

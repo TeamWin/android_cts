@@ -20,13 +20,14 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import android.content.cts.R;
 

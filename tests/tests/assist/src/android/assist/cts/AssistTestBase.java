@@ -16,6 +16,8 @@
 
 package android.assist.cts;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import android.assist.cts.TestStartActivity;
 import android.assist.common.Utils;
 
@@ -31,7 +33,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
-import android.cts.util.SystemUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;

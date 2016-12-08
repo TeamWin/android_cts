@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.MediaUtils;
 import android.graphics.ImageFormat;
 import android.media.cts.CodecUtils;
 import android.media.Image;
@@ -39,6 +38,7 @@ import android.net.Uri;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 

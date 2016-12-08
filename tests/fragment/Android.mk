@@ -32,7 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-test \
     mockito-target-minus-junit4 \
     android-common \
-    ctsdeviceutil \
+    compatibility-device-util \
     ctstestrunner \
     platform-test-annotations
 #LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util android-support-test

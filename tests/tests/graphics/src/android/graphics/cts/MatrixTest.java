@@ -21,13 +21,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.cts.util.CtsArrayUtils;
 import android.graphics.Camera;
 import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Before;
 import org.junit.Test;

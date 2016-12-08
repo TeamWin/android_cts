@@ -20,7 +20,6 @@ import android.media.cts.R;
 
 import android.media.cts.CodecUtils;
 
-import android.cts.util.MediaUtils;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
@@ -39,6 +38,8 @@ import android.util.Pair;
 import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
 import java.io.IOException;

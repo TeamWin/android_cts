@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import android.annotation.NonNull;
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.WidgetTestUtils;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -43,6 +42,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

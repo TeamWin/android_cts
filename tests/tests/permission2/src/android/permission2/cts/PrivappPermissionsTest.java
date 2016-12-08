@@ -16,10 +16,11 @@
 
 package android.permission2.cts;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.cts.util.SystemUtil;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;

@@ -17,11 +17,11 @@
 package android.mediastress.cts;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaUtils;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
-import android.cts.util.MediaUtils;
 import android.media.MediaFormat;
 import android.media.MediaRecorder.AudioEncoder;
 import android.media.MediaRecorder.VideoEncoder;

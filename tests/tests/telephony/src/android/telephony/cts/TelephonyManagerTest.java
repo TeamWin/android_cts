@@ -27,7 +27,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.cts.util.TestThread;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -44,6 +43,7 @@ import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.android.compatibility.common.util.TestThread;
 import com.android.internal.telephony.PhoneConstants;
 
 import org.junit.After;

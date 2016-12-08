@@ -48,10 +48,6 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.CtsTouchUtils;
-import android.cts.util.PollingCheck;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -142,6 +138,11 @@ import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

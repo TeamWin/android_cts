@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -37,6 +36,8 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

@@ -21,8 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.PollingCheck;
-import android.cts.util.WidgetTestUtils;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -34,6 +32,9 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.FrameMetrics;
 import android.view.Window;
 import android.widget.ScrollView;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

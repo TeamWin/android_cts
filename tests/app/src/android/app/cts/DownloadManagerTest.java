@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.cts.util.PollingCheck;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
@@ -35,6 +34,7 @@ import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.File;
 import java.util.Arrays;

@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -31,7 +31,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.MediaUtils;
 import android.media.MediaPlayer;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -43,6 +42,8 @@ import android.util.Log;
 import android.view.View.MeasureSpec;
 import android.widget.MediaController;
 import android.widget.VideoView;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

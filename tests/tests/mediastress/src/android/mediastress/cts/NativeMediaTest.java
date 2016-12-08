@@ -17,13 +17,14 @@ package android.mediastress.cts;
 
 import android.app.Instrumentation;
 import android.content.Intent;
-import android.cts.util.MediaUtils;
 import android.media.MediaFormat;
 import android.media.MediaRecorder.AudioEncoder;
 import android.media.MediaRecorder.VideoEncoder;
 import android.os.Environment;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import junit.framework.Assert;
 

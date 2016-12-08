@@ -19,7 +19,6 @@ package android.media.tv.cts;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.PollingCheck;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -28,6 +27,8 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.ArrayMap;
 
 import android.tv.cts.R;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.ArrayList;
 import java.util.List;

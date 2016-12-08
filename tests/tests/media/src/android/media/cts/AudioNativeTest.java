@@ -19,9 +19,10 @@ package android.media.cts;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 public class AudioNativeTest extends CtsAndroidTestCase {
     public static final int MAX_CHANNEL_COUNT = 2;

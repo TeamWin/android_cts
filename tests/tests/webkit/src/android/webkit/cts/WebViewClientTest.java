@@ -16,9 +16,6 @@
 
 package android.webkit.cts;
 
-import android.cts.util.EvaluateJsResultPollingCheck;
-import android.cts.util.NullWebViewUtils;
-import android.cts.util.PollingCheck;
 import android.graphics.Bitmap;
 import android.os.Message;
 import android.test.ActivityInstrumentationTestCase2;
@@ -35,6 +32,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.util.Pair;
+
+import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
+import com.android.compatibility.common.util.NullWebViewUtils;
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;

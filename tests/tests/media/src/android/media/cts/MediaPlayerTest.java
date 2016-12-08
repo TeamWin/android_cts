@@ -20,7 +20,6 @@ import android.media.cts.R;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.cts.util.MediaUtils;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.AudioManager;
@@ -48,6 +47,8 @@ import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.BufferedReader;
 import java.io.File;

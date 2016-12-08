@@ -35,9 +35,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.CtsTouchUtils;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -60,6 +57,10 @@ import android.widget.ListPopupWindow;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.After;
 import org.junit.Before;

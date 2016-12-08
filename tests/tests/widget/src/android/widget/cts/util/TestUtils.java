@@ -16,13 +16,14 @@
 
 package android.widget.cts.util;
 
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.argThat;
+
 import android.annotation.ColorInt;
 import android.annotation.DrawableRes;
 import android.annotation.NonNull;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.cts.util.WidgetTestUtils;
-import android.cts.util.Within;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -35,18 +36,16 @@ import android.view.View;
 import android.view.ViewParent;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 import junit.framework.Assert;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-import org.mockito.verification.VerificationMode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.argThat;
 
 public class TestUtils {
     /**

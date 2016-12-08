@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.PollingCheck;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -39,6 +38,8 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

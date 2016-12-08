@@ -19,7 +19,6 @@ package android.provider.cts;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.cts.util.FileUtils;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.Contacts;
@@ -27,6 +26,8 @@ import android.provider.cts.ContactsContract_TestDataBuilder.TestContact;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestData;
 import android.provider.cts.ContactsContract_TestDataBuilder.TestRawContact;
 import android.test.InstrumentationTestCase;
+
+import com.android.compatibility.common.util.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

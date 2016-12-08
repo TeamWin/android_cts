@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.cts.util.CtsKeyEventUtil;
 import android.os.SystemClock;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -33,6 +32,8 @@ import android.text.method.BaseKeyListener;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

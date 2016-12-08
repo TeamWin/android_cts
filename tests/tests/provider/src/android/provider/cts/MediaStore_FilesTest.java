@@ -22,7 +22,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.cts.util.FileCopyHelper;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
@@ -32,6 +31,8 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.FileCopyHelper;
 
 import java.io.File;
 import java.io.FileNotFoundException;

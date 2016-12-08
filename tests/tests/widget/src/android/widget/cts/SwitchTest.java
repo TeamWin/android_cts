@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.res.ColorStateList;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
@@ -39,6 +38,8 @@ import android.view.ContextThemeWrapper;
 import android.view.ViewGroup;
 import android.widget.Switch;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

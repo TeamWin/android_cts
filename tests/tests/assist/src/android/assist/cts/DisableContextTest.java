@@ -16,6 +16,8 @@
 
 package android.assist.cts;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import android.assist.common.Utils;
 
 import android.app.Activity;
@@ -26,7 +28,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.cts.util.SystemUtil;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;

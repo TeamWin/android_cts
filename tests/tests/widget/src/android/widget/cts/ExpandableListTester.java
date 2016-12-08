@@ -17,15 +17,14 @@
 package android.widget.cts;
 
 import android.app.Instrumentation;
-import android.cts.util.CtsKeyEventUtil;
 import android.support.test.InstrumentationRegistry;
-import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
-import android.widget.cts.util.ExpandableListScenario;
 import android.widget.cts.util.ListUtil;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 
 import junit.framework.Assert;
 

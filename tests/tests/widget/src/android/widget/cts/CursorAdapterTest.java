@@ -26,8 +26,6 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.res.Resources.Theme;
-import android.cts.util.PollingCheck;
-import android.cts.util.TestThread;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.DataSetObserver;
@@ -44,6 +42,9 @@ import android.widget.CursorAdapter;
 import android.widget.Filter;
 import android.widget.FilterQueryProvider;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;

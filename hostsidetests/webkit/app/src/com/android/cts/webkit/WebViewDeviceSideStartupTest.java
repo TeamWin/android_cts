@@ -18,7 +18,6 @@ package com.android.cts.webkit;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.cts.util.NullWebViewUtils;
 import android.os.StrictMode;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -29,6 +28,8 @@ import android.webkit.WebView;
 import android.webkit.cts.CtsTestServer;
 import android.webkit.cts.WebViewOnUiThread;
 import android.webkit.WebView;
+
+import com.android.compatibility.common.util.NullWebViewUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

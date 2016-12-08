@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.cts.util.PollingCheck;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
@@ -36,6 +35,8 @@ import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.Before;

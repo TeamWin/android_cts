@@ -16,7 +16,7 @@
 
 package android.animation.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

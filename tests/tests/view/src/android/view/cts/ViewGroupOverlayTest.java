@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.CtsTouchUtils;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -42,6 +41,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroupOverlay;
 import android.view.cts.util.DrawingUtils;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

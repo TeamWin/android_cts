@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.cts.util.WidgetTestUtils.sameCharSequence;
+import static com.android.compatibility.common.util.WidgetTestUtils.sameCharSequence;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,8 +30,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.PollingCheck;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
@@ -45,6 +43,9 @@ import android.view.KeyCharacterMap;
 import android.widget.DialerFilter;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

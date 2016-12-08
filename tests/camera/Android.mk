@@ -23,7 +23,7 @@ LOCAL_MODULE_TAGS := tests
 # Include both the 32 and 64 bit versions
 LOCAL_MULTILIB := both
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil \
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 	ctstestrunner \
 	mockito-target-minus-junit4 \
 	android-ex-camera2

@@ -21,8 +21,6 @@ import android.provider.cts.R;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.cts.util.FileCopyHelper;
-import android.cts.util.MediaUtils;
 import android.database.Cursor;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -33,6 +31,9 @@ import android.provider.MediaStore.Video.Thumbnails;
 import android.provider.MediaStore.Video.VideoColumns;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.FileCopyHelper;
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
 import java.io.IOException;

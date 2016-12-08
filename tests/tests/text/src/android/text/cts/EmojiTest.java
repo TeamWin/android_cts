@@ -21,7 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.cts.util.NullWebViewUtils;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -38,6 +37,8 @@ import android.view.View;
 import android.webkit.cts.WebViewOnUiThread;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.NullWebViewUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

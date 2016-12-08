@@ -24,12 +24,13 @@ import android.app.stubs.MockAlarmReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.cts.util.PollingCheck;
 import android.os.Build;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.Log;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 public class AlarmManagerTest extends AndroidTestCase {
     public static final String MOCKACTION = "android.app.AlarmManagerTest.TEST_ALARMRECEIVER";

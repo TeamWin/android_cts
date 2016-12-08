@@ -16,7 +16,7 @@
 
 package android.view.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyBoolean;
@@ -28,8 +28,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.CtsTouchUtils;
-import android.cts.util.PollingCheck;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
@@ -41,6 +39,9 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

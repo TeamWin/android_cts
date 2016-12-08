@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import android.content.Context;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -32,6 +31,8 @@ import android.support.test.runner.AndroidJUnit4;
 import android.text.cts.R;
 import android.text.style.DynamicDrawableSpan;
 import android.text.style.ImageSpan;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Test;

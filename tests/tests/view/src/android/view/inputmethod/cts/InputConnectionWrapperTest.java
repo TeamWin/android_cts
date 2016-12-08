@@ -16,7 +16,7 @@
 
 package android.view.inputmethod.cts;
 
-import static android.cts.util.WidgetTestUtils.sameCharSequence;
+import static com.android.compatibility.common.util.WidgetTestUtils.sameCharSequence;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;

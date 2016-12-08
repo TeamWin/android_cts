@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
-import android.cts.util.NullWebViewUtils;
 import android.os.Parcel;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -29,6 +28,8 @@ import android.view.InflateException;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RemoteViews;
+
+import com.android.compatibility.common.util.NullWebViewUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

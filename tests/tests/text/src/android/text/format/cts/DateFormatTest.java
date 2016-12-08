@@ -24,13 +24,14 @@ import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.content.Context;
-import android.cts.util.SystemUtil;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateFormat;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;

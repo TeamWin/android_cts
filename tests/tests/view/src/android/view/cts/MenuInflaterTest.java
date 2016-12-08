@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.res.Resources;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -35,6 +34,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.SubMenu;
 import android.widget.PopupMenu;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

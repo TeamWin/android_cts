@@ -35,9 +35,6 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.PollingCheck;
-import android.cts.util.WidgetTestUtils;
 import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 import android.graphics.Rect;
@@ -63,6 +60,10 @@ import android.widget.Filterable;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

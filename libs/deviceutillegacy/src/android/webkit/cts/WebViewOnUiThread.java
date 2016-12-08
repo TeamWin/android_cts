@@ -16,8 +16,9 @@
 
 package android.webkit.cts;
 
-import android.cts.util.PollingCheck;
-import android.cts.util.TestThread;
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.TestThread;
+
 import android.graphics.Bitmap;
 import android.graphics.Picture;
 import android.graphics.Rect;

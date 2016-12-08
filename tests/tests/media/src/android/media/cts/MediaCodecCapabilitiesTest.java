@@ -16,7 +16,6 @@
 package android.media.cts;
 
 import android.content.pm.PackageManager;
-import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.AudioCapabilities;
@@ -37,6 +36,7 @@ import android.os.Build;
 import android.util.Log;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.util.HashSet;

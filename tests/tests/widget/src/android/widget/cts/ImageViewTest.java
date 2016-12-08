@@ -36,7 +36,6 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -59,6 +58,8 @@ import android.util.Xml;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

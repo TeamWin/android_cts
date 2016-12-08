@@ -16,8 +16,9 @@
 
 package android.security.cts;
 
-import android.cts.util.FileUtils;
 import android.platform.test.annotations.RestrictedBuildTest;
+
+import com.android.compatibility.common.util.FileUtils;
 
 import junit.framework.TestCase;
 

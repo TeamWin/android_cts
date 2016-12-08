@@ -16,11 +16,11 @@
 
 package android.drm.cts;
 
+import com.android.compatibility.common.util.MediaUtils;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
-import android.cts.util.MediaUtils;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import java.io.IOException;

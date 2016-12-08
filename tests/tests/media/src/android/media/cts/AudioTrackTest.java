@@ -19,7 +19,6 @@ package android.media.cts;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -28,6 +27,7 @@ import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;

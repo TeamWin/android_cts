@@ -32,8 +32,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import static android.cts.util.FakeKeys.FAKE_DSA_1;
-import static android.cts.util.FakeKeys.FAKE_RSA_1;
+import static com.android.compatibility.common.util.FakeKeys.FAKE_DSA_1;
+import static com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
 
 public class CaCertManagementTest extends BaseDeviceAdminTest {
     private final ComponentName mAdmin = ADMIN_RECEIVER_COMPONENT;

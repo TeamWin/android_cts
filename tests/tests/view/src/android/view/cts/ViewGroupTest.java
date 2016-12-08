@@ -32,7 +32,6 @@ import static org.mockito.Mockito.verify;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.XmlResourceParser;
-import android.cts.util.CTSResult;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -71,6 +70,8 @@ import android.view.animation.RotateAnimation;
 import android.view.animation.Transformation;
 import android.view.cts.util.XmlUtils;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.CTSResult;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -34,7 +34,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import android.content.Context;
-import android.cts.util.WidgetTestUtils;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.test.filters.SmallTest;
@@ -53,6 +52,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

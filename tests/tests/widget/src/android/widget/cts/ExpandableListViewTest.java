@@ -33,7 +33,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.PollingCheck;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
@@ -54,6 +53,8 @@ import android.widget.ExpandableListView;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.cts.util.ExpandableListScenario;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

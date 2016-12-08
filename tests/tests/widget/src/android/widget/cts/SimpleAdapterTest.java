@@ -33,7 +33,6 @@ import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.content.res.Resources.Theme;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.test.InstrumentationRegistry;
@@ -47,6 +46,8 @@ import android.widget.LinearLayout;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.TwoLineListItem;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Test;

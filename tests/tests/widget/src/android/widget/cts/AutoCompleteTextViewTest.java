@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.cts.util.WidgetTestUtils.sameCharSequence;
+import static com.android.compatibility.common.util.WidgetTestUtils.sameCharSequence;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -43,7 +43,6 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.cts.util.PollingCheck;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -68,6 +67,8 @@ import android.widget.AutoCompleteTextView.Validator;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

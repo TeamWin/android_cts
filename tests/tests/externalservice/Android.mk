@@ -25,7 +25,7 @@ LOCAL_DEX_PREOPT := false
 
 LOCAL_PROGUARD_ENABLED := disabled
 
-LOCAL_STATIC_JAVA_LIBRARIES := CtsExternalServiceCommon ctsdeviceutil ctstestrunner
+LOCAL_STATIC_JAVA_LIBRARIES := CtsExternalServiceCommon compatibility-device-util ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

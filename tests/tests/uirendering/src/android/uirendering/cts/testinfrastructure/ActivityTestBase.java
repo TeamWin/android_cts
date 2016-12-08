@@ -15,10 +15,11 @@
  */
 package android.uirendering.cts.testinfrastructure;
 
+import com.android.compatibility.common.util.SynchronousPixelCopy;
+
 import android.annotation.Nullable;
 import android.app.Instrumentation;
 import android.content.Intent;
-import android.cts.util.SynchronousPixelCopy;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Point;

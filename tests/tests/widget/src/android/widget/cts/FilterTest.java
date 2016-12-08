@@ -16,7 +16,7 @@
 
 package android.widget.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -25,14 +25,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
-import android.cts.util.PollingCheck;
-import android.cts.util.TestThread;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.widget.Filter;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.TestThread;
 
 import org.junit.Before;
 import org.junit.Rule;
