@@ -475,16 +475,11 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
         boolean enabled = mWifiManager.isWifiEnabled();
         try {
-            // WifiManager is hard-coded to return true,
-            // the case without WiFi is already handled,
-            // so this case MUST have WiFi.
-            if (mWifiManager.setWifiEnabled(true)) {
-                assertAvailable(PackageManager.FEATURE_WIFI);
-            }
+            // assert wifimanager can toggle wifi from current sate
+            assertTrue(mWifiManager.setWifiEnabled(!enabled));
+
         } finally {
-            if (!enabled) {
-                mWifiManager.setWifiEnabled(false);
-            }
+            mWifiManager.setWifiEnabled(enabled);
         }
     }
 
