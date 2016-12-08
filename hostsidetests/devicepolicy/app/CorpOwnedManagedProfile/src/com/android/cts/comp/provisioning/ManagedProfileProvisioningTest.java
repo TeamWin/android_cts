@@ -15,8 +15,12 @@
  */
 package com.android.cts.comp.provisioning;
 
+import com.android.cts.comp.Utils;
+import android.app.admin.DevicePolicyManager;
+import android.content.Context;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import com.android.cts.comp.AdminReceiver;
 
 
 public class ManagedProfileProvisioningTest extends AndroidTestCase {
@@ -30,5 +34,12 @@ public class ManagedProfileProvisioningTest extends AndroidTestCase {
         Log.i(TAG, "Start provisioning");
 
         assertTrue(provisioningManager.waitForProvisioningResult(getContext()));
+    }
+
+    // This is only necessary if the profile is created via managed provisioning flow.
+    public void testEnableProfile() {
+        DevicePolicyManager dpm = (DevicePolicyManager)
+                getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        dpm.setProfileEnabled(AdminReceiver.getComponentName(getContext()));
     }
 }

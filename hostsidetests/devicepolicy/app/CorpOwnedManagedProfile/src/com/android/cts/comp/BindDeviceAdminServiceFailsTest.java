@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.cts.comp;
 
-package com.android.cts.comp.bindservice;
+import static junit.framework.Assert.fail;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -23,17 +24,16 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.UserHandle;
+import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
-
-import com.android.cts.comp.AdminReceiver;
-import com.android.cts.comp.CrossUserService;
-
-import static junit.framework.Assert.fail;
+import java.util.List;
 
 /**
- * Test suite for the case that device owner and profile owner are different packages.
+ * Test class called when binding to a service across users should not work for some reason.
  */
-public class BindDeviceAdminServiceFailsTestSuite {
+public class BindDeviceAdminServiceFailsTest extends AndroidTestCase {
+
+    private DevicePolicyManager mDpm;
 
     private static final ServiceConnection EMPTY_SERVICE_CONNECTION = new ServiceConnection() {
         @Override
@@ -43,28 +43,29 @@ public class BindDeviceAdminServiceFailsTestSuite {
         public void onServiceDisconnected(ComponentName name) {}
     };
 
-    private final Context mContext;
-    private final DevicePolicyManager mDpm;
-    private final UserHandle mTargetUserHandle;
-
-    /**
-     * @param context
-     * @param targetUserHandle      Which user are we talking to.
-     * @param dpcPackageInOtherSide The dpc package installed in other side, it must not be this
-     *                              package.
-     */
-    public BindDeviceAdminServiceFailsTestSuite(
-            Context context, UserHandle targetUserHandle) {
-        mContext = context;
-        mDpm = mContext.getSystemService(DevicePolicyManager.class);
-        mTargetUserHandle = targetUserHandle;
+    @Override
+    public void setUp() {
+        mDpm = (DevicePolicyManager)
+                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
     }
 
-    public void checkCannotBind(String targetPackageName) {
+    public void testNoBindDeviceAdminTargetUsers() {
+        List<UserHandle> allowedTargetUsers = mDpm.getBindDeviceAdminTargetUsers(
+                AdminReceiver.getComponentName(mContext));
+        assertEquals(0, allowedTargetUsers.size());
+    }
+
+    public void testCannotBind() throws Exception {
+        UserHandle otherProfile = Utils.getOtherProfile(mContext);
+        checkCannotBind(AdminReceiver.COMP_DPC_PACKAGE_NAME, otherProfile);
+        checkCannotBind(AdminReceiver.COMP_DPC_2_PACKAGE_NAME, otherProfile);
+    }
+
+    private void checkCannotBind(String targetPackageName, UserHandle otherProfile) {
         try {
             final Intent serviceIntent = new Intent();
             serviceIntent.setClassName(targetPackageName, CrossUserService.class.getName());
-            bind(serviceIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
+            bind(serviceIntent, EMPTY_SERVICE_CONNECTION, otherProfile);
             fail("SecurityException should be thrown");
         } catch (SecurityException ex) {
             MoreAsserts.assertContainsRegex(

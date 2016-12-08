@@ -38,6 +38,5 @@ public class AdminReceiver extends DeviceAdminReceiver {
         Log.i(TAG, "onProfileProvisioningComplete");
         // Enabled profile
         getManager(context).setProfileName(getComponentName(context), "Corp owned Managed Profile");
-        getManager(context).setProfileEnabled(getComponentName(context));
     }
 }

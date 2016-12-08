@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,53 @@ package com.android.cts.comp;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.os.Process;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.test.AndroidTestCase;
 
 import java.util.List;
 
-/**
- * Base class for profile-owner based tests.
- * <p>
- * This class handles making sure that the test is the profile owner and that it has an active admin
- * registered, so that all tests may assume these are done.
- */
-public class BaseManagedProfileCompTest extends AndroidTestCase {
+public class ManagementTest extends AndroidTestCase {
 
-    protected DevicePolicyManager mDevicePolicyManager;
-    protected List<UserHandle> mOtherProfiles;
+    private DevicePolicyManager mDevicePolicyManager;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        assertManagedProfile();
-
-        mOtherProfiles = mContext.getSystemService(UserManager.class)
-                .getUserProfiles();
-        mOtherProfiles.remove(Process.myUserHandle());
-        assertTrue(mOtherProfiles.size() > 0);  // The primary profile should be there.
     }
 
-    private void assertManagedProfile() {
+    public void testIsManagedProfile() {
         assertNotNull(mDevicePolicyManager);
         assertTrue(mDevicePolicyManager.isAdminActive(
                 AdminReceiver.getComponentName(getContext())));
         assertTrue(mDevicePolicyManager.isProfileOwnerApp(getContext().getPackageName()));
         assertTrue(mDevicePolicyManager.isManagedProfile(
                 AdminReceiver.getComponentName(getContext())));
+    }
+
+    public void testIsDeviceOwner() {
+        assertNotNull(mDevicePolicyManager);
+        assertTrue(mDevicePolicyManager.isAdminActive(
+                AdminReceiver.getComponentName(getContext())));
+        assertTrue(mDevicePolicyManager.isDeviceOwnerApp(getContext().getPackageName()));
+        assertFalse(mDevicePolicyManager.isManagedProfile(
+                AdminReceiver.getComponentName(getContext())));
+    }
+
+    /**
+     * Assumes that the managed profile is enabled.
+     * Otherwise, {@link Utils#getOtherProfile()} won't work.
+     */
+    public void testOtherProfilesEqualsBindTargetUsers() {
+        UserHandle otherProfile = Utils.getOtherProfile(mContext);
+
+        DevicePolicyManager dpm = (DevicePolicyManager)
+                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        List<UserHandle> allowedTargetUsers = dpm.getBindDeviceAdminTargetUsers(
+                AdminReceiver.getComponentName(mContext));
+
+        assertEquals(1, allowedTargetUsers.size());
+        assertEquals(otherProfile, allowedTargetUsers.get(0));
     }
 }
