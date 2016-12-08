@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.result.SubPlanCreator;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
 import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
@@ -50,7 +51,6 @@ import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.testtype.IResumableTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.IStrictShardableTest;
 import com.android.tradefed.util.AbiFormatter;
@@ -74,13 +74,15 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Test for running Compatibility Suites
  */
 @OptionClass(alias = "compatibility")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver,
-        IResumableTest, IStrictShardableTest {
+        IStrictShardableTest {
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     public static final String SUBPLAN_OPTION = "subplan";
@@ -98,6 +100,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String PRIMARY_ABI_RUN = "primary-abi-only";
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
+
+    // Constants for checking invocation or preconditions preparation failure
+    private static final int NUM_PREP_ATTEMPTS = 10;
+    private static final int MINUTES_PER_PREP_ATTEMPT = 2;
 
     @Option(name = SUBPLAN_OPTION,
             description = "the subplan to run",
@@ -258,10 +264,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private ITestDevice mDevice;
     private CompatibilityBuildHelper mBuildHelper;
 
-    // Shard retry parameters
-    private static final int MAX_RETRY_COUNT = 1;
-    private boolean mShouldRetry = false;
-    private int mRetry = 0;
+    // variables used for local sharding scenario
+    private static CountDownLatch sPreparedLatch;
+    private boolean mIsLocalSharding = false;
 
     /**
      * Create a new {@link CompatibilityTest} that will run the default list of
@@ -314,27 +319,27 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
-        mShouldRetry = false;
         try {
             // FIXME: Each shard will do a full initialization which is not optimal. Need a way
             // to be more specific on what to initialize.
-            if (!mModuleRepo.isInitialized()) {
-                setupFilters();
-                // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
-                // throw a {@link FileNotFoundException}
-                mModuleRepo.initialize(mTotalShards, mShardIndex, mBuildHelper.getTestsDir(),
-                        getAbis(), mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
-                        mExcludeFilters, mBuildHelper.getBuildInfo());
+            List<IModuleDef> modules;
+            synchronized (mModuleRepo) {
+                if (!mModuleRepo.isInitialized()) {
+                    setupFilters();
+                    // Initialize the repository, {@link CompatibilityBuildHelper#getTestsDir} can
+                    // throw a {@link FileNotFoundException}
+                    mModuleRepo.initialize(mTotalShards, mShardIndex, mBuildHelper.getTestsDir(),
+                            getAbis(), mDeviceTokens, mTestArgs, mModuleArgs, mIncludeFilters,
+                            mExcludeFilters, mBuildHelper.getBuildInfo());
 
-                // Add the entire list of modules to the CompatibilityBuildHelper for reporting
-                mBuildHelper.setModuleIds(mModuleRepo.getModuleIds());
-            } else {
-                CLog.d("ModuleRepo already initialized.");
+                    // Add the entire list of modules to the CompatibilityBuildHelper for reporting
+                    mBuildHelper.setModuleIds(mModuleRepo.getModuleIds());
+                } else {
+                    CLog.d("ModuleRepo already initialized.");
+                }
+                // Get the tests to run in this shard
+                modules = mModuleRepo.getModules(getDevice().getSerialNumber(), mShardIndex);
             }
-
-            // Get the tests to run in this shard
-            List<IModuleDef> modules = mModuleRepo.getModules(getDevice().getSerialNumber(),
-                    mShardIndex);
 
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
                     mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure, mMaxLogcatBytes);
@@ -372,21 +377,28 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 module.setPreparerWhitelist(mPreparerWhitelist);
                 isPrepared &= (module.prepare(mSkipPreconditions));
             }
-            mShouldRetry = false;
             if (!isPrepared) {
-                // TODO: integrate a special exception to avoid making the device unavailable.
-                if (mRetry == MAX_RETRY_COUNT) {
-                    mShouldRetry = false;
-                    CLog.logAndDisplay(LogLevel.ERROR,
-                            "Incorrect preparation detected, exiting test run from %s",
-                            getDevice().getSerialNumber());
-                    return;
+                throw new RuntimeException(String.format("Failed preconditions on %s",
+                        mDevice.getSerialNumber()));
+            }
+            if (mIsLocalSharding) {
+                try {
+                    sPreparedLatch.countDown();
+                    int attempt = 1;
+                    while(!sPreparedLatch.await(MINUTES_PER_PREP_ATTEMPT, TimeUnit.MINUTES)) {
+                        if (attempt > NUM_PREP_ATTEMPTS ||
+                                InvocationFailureHandler.hasFailed(mBuildHelper)) {
+                            CLog.logAndDisplay(LogLevel.ERROR,
+                                    "Incorrect preparation detected, exiting test run from %s",
+                                    mDevice.getSerialNumber());
+                            return;
+                        }
+                        CLog.logAndDisplay(LogLevel.WARN, "waiting on preconditions");
+                        attempt++;
+                    }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-                // If preconditions fail we reschedule the shard.
-                mShouldRetry = true;
-                mRetry++;
-                throw new DeviceNotAvailableException("Device failed preconditions",
-                        getDevice().getSerialNumber());
             }
             // Run the tests
             for (int i = 0; i < moduleCount; i++) {
@@ -727,10 +739,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         if (mShards <= 1) {
             return null;
         }
+        mIsLocalSharding = true;
         List<IRemoteTest> shardQueue = new LinkedList<>();
         for (int i = 0; i < mShards; i++) {
-            shardQueue.add(getTestShard(mShards, i));
+            CompatibilityTest test = (CompatibilityTest) getTestShard(mShards, i);
+            test.mIsLocalSharding = true;
+            shardQueue.add(test);
         }
+        sPreparedLatch = new CountDownLatch(shardQueue.size());
         return shardQueue;
     }
 
@@ -739,19 +755,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     @Override
     public IRemoteTest getTestShard(int shardCount, int shardIndex) {
-        CompatibilityTest test = new CompatibilityTest(shardCount, new ModuleRepo(), shardIndex);
+        CompatibilityTest test = new CompatibilityTest(shardCount, mModuleRepo, shardIndex);
         OptionCopier.copyOptionsNoThrow(this, test);
         // Set the shard count because the copy option on the previous line
         // copies over the mShard value
         test.mShards = 0;
         return test;
-    }
-
-    /**
-     * In some case we do want to reschedule the configuration.
-     */
-    @Override
-    public boolean isResumable() {
-        return mShouldRetry;
     }
 }

@@ -303,7 +303,7 @@ public class ModuleDef implements IModuleDef {
             OptionSetter setter = new OptionSetter(target);
             setter.setOptionValue(option, value);
         } catch (ConfigurationException e) {
-            e.printStackTrace();
+            CLog.e(e);
         }
     }
 }
