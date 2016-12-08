@@ -15,8 +15,6 @@
  */
 package com.android.compatibility.common.util;
 
-import com.android.tradefed.util.AbiUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -96,7 +94,8 @@ public class ModuleResult implements IModuleResult {
      */
     @Override
     public String getName() {
-        return AbiUtils.parseTestName(mId);
+        // TODO: switch to using AbiUtils#parseTestName when available
+        return parseId(mId)[1];
     }
 
     /**
@@ -104,7 +103,21 @@ public class ModuleResult implements IModuleResult {
      */
     @Override
     public String getAbi() {
-        return AbiUtils.parseAbi(mId);
+        // TODO: switch to using AbiUtils#parseAbi when available
+        return parseId(mId)[0];
+    }
+
+    /**
+     * Parses a unique id into the ABI and name.
+     * @param id The id to parse.
+     * @return a string array containing the ABI and name.
+     */
+    private static String[] parseId(String id) {
+        // TODO: remove this when AbiUtils is available for getName and getAbi
+        if (id == null || !id.contains(" ")) {
+            return new String[] {"", ""};
+        }
+        return id.split(" ");
     }
 
     /**

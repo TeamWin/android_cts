@@ -19,6 +19,7 @@ package com.android.compatibility.common.tradefed.targetprep;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtil;
+import com.android.compatibility.common.util.DevicePropertyInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -40,30 +41,29 @@ import java.util.Map.Entry;
  */
 public class DeviceInfoCollector extends ApkInstrumentationPreparer {
 
-    private static final Map<String, String> BUILD_KEYS = new HashMap<>();
-    static {
-        BUILD_KEYS.put("cts:build_id", "ro.build.id");
-        BUILD_KEYS.put("cts:build_product", "ro.product.name");
-        BUILD_KEYS.put("cts:build_device", "ro.product.device");
-        BUILD_KEYS.put("cts:build_board", "ro.product.board");
-        BUILD_KEYS.put("cts:build_manufacturer", "ro.product.manufacturer");
-        BUILD_KEYS.put("cts:build_brand", "ro.product.brand");
-        BUILD_KEYS.put("cts:build_model", "ro.product.model");
-        BUILD_KEYS.put("cts:build_type", "ro.build.type");
-        BUILD_KEYS.put("cts:build_tags", "ro.build.tags");
-        BUILD_KEYS.put("cts:build_fingerprint", "ro.build.fingerprint");
-        BUILD_KEYS.put("cts:build_abi", "ro.product.cpu.abi");
-        BUILD_KEYS.put("cts:build_abi2", "ro.product.cpu.abi2");
-        BUILD_KEYS.put("cts:build_abis", "ro.product.cpu.abilist");
-        BUILD_KEYS.put("cts:build_abis_32", "ro.product.cpu.abilist32");
-        BUILD_KEYS.put("cts:build_abis_64", "ro.product.cpu.abilist64");
-        BUILD_KEYS.put("cts:build_serial", "ro.serialno");
-        BUILD_KEYS.put("cts:build_version_release", "ro.build.version.release");
-        BUILD_KEYS.put("cts:build_version_sdk", "ro.build.version.sdk");
-        BUILD_KEYS.put("cts:build_version_base_os", "ro.build.version.base_os");
-        BUILD_KEYS.put("cts:build_version_security_patch", "ro.build.version.security_patch");
-        BUILD_KEYS.put("cts:build_reference_fingerprint", "ro.build.reference.fingerprint");
-    }
+    private static final String ABI = "ro.product.cpu.abi";
+    private static final String ABI2 = "ro.product.cpu.abi2";
+    private static final String ABIS = "ro.product.cpu.abilist";
+    private static final String ABIS_32 = "ro.product.cpu.abilist32";
+    private static final String ABIS_64 = "ro.product.cpu.abilist64";
+    private static final String BOARD = "ro.product.board";
+    private static final String BRAND = "ro.product.brand";
+    private static final String DEVICE = "ro.product.device";
+    private static final String FINGERPRINT = "ro.build.fingerprint";
+    private static final String ID = "ro.build.id";
+    private static final String MANUFACTURER = "ro.product.manufacturer";
+    private static final String MODEL = "ro.product.model";
+    private static final String PRODUCT = "ro.product.name";
+    private static final String REFERENCE_FINGERPRINT = "ro.build.reference.fingerprint";
+    private static final String SERIAL = "ro.serialno";
+    private static final String TAGS = "ro.build.tags";
+    private static final String TYPE = "ro.build.type";
+    private static final String VERSION_BASE_OS = "ro.build.version.base_os";
+    private static final String VERSION_RELEASE = "ro.build.version.release";
+    private static final String VERSION_SDK = "ro.build.version.sdk";
+    private static final String VERSION_SECURITY_PATCH = "ro.build.version.security_patch";
+
+    private static final String PREFIX_TAG = "cts:build_";
 
     @Option(name = CompatibilityTest.SKIP_DEVICE_INFO_OPTION,
             shortName = 'd',
@@ -92,7 +92,14 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
-        for (Entry<String, String> entry : BUILD_KEYS.entrySet()) {
+        DevicePropertyInfo devicePropertyInfo = new DevicePropertyInfo(ABI, ABI2, ABIS, ABIS_32,
+                ABIS_64, BOARD, BRAND, DEVICE, FINGERPRINT, ID, MANUFACTURER, MODEL, PRODUCT,
+                REFERENCE_FINGERPRINT, SERIAL, TAGS, TYPE, VERSION_BASE_OS, VERSION_RELEASE,
+                VERSION_SDK, VERSION_SECURITY_PATCH);
+
+        // add device properties to the result with a prefix tag for each key
+        for (Entry<String, String> entry :
+                devicePropertyInfo.getPropertytMapWithPrefix(PREFIX_TAG).entrySet()) {
             buildInfo.addBuildAttribute(entry.getKey(),
                     ArrayUtil.join(",", device.getProperty(entry.getValue())));
         }
@@ -112,7 +119,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
             return;
         }
         if (mHostDir != null && mHostDir.isDirectory() &&
-                    mResultDir != null && mResultDir.isDirectory()) {
+                mResultDir != null && mResultDir.isDirectory()) {
             CollectorUtil.pullFromHost(mHostDir, mResultDir);
         }
     }

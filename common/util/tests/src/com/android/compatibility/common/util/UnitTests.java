@@ -32,6 +32,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(MetricsXmlSerializerTest.class);
         addTestSuite(MultipartFormTest.class);
         addTestSuite(ReportLogTest.class);
+        addTestSuite(ResultHandlerTest.class);
         addTestSuite(StatTest.class);
         addTestSuite(TestResultTest.class);
     }
