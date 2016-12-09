@@ -399,7 +399,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mCredSettingsVisibleTest);
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
-        adapter.add(mWiFiDataUsageSettingsVisibleTest);
         adapter.add(mCellularDataUsageSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
 
@@ -419,6 +418,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mOrganizationInfoTest);
         adapter.add(mParentProfilePassword);
         adapter.add(mPolicyTransparencyTest);
+
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            adapter.add(mWiFiDataUsageSettingsVisibleTest);
+        }
 
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
             adapter.add(mDisallowAppsControlTest);
