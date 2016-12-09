@@ -1449,6 +1449,9 @@
     <string name="nls_note_received">Check that notification was received.</string>
     <string name="nls_payload_intact">Check that notification payload was intact.</string>
     <string name="nas_adjustment_payload_intact">Check that the Assistant can adjust notifications.</string>
+    <string name="nas_create_channel">Check that the Assistant can create a Notification Channel for another app.</string>
+    <string name="nas_update_channel">Check that the Assistant can update a Notification Channel for another app.</string>
+    <string name="nas_delete_channel">Check that the Assistant can delete a Notification Channel for another app.</string>
     <string name="nls_clear_one">Check that service can clear a notification.</string>
     <string name="nls_clear_one_reason">Check that service can clear a notification and receive the correct reason for dismissal.</string>
     <string name="nls_clear_all">Check that service can clear all notifications.</string>
