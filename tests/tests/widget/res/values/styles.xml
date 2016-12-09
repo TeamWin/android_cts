@@ -207,4 +207,9 @@
     </style>
 
     <style name="ToolbarPopupTheme_Test" parent="@android:style/ThemeOverlay.Material.Light" />
+
+    <style name="Theme.PopupWindowCtsActivity" parent="@android:style/Theme.Holo">
+        <!-- Force swipe-to-dismiss to false. -->
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
 </resources>
