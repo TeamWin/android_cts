@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,8 +39,10 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class InteractiveVerifierActivity extends PassFailButtons.Activity
@@ -307,6 +310,14 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         delay(3000);
     }
 
+    protected void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Wait for some time.
      */
@@ -344,6 +355,22 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         PendingIntent pi = PendingIntent.getService(mContext, code, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
         return pi;
+    }
+
+    protected boolean checkEquals(Object[] expected, Object[] actual, String message) {
+        if (Arrays.equals(expected, actual)) {
+            return true;
+        }
+        logWithStack(String.format(message, expected, actual));
+        return false;
+    }
+
+    protected boolean checkEquals(Parcelable expected, Parcelable actual, String message) {
+        if (Objects.equals(expected, actual)) {
+            return true;
+        }
+        logWithStack(String.format(message, expected, actual));
+        return false;
     }
 
     protected boolean checkEquals(long expected, long actual, String message) {
