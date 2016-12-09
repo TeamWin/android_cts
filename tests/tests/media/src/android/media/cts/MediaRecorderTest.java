@@ -425,8 +425,9 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testRecordAudioFromAudioSourceUnprocessed() throws Exception {
-        if (!hasMicrophone()) {
-            return; // skip
+        if (!hasMicrophone() || !hasAmrNb()) {
+            MediaUtils.skipTest("no audio codecs or microphone");
+            return;
         }
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.UNPROCESSED);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
