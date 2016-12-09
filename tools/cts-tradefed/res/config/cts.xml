@@ -20,6 +20,7 @@
     <include name="cts-known-failures" />
 
     <option name="plan" value="cts" />
+    <option name="test-tag" value="cts" />
 
     <option name="enable-root" value="false" />
 

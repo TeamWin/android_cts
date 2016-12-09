@@ -20,6 +20,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
 
@@ -96,7 +97,7 @@ public class SettingsPreparer extends PreconditionPreparer {
             String currentSettingValue = device.executeShellCommand(shellCmdGet).trim();
             // only change unexpected setting value
             if (!mExpectedSettingValues.contains(currentSettingValue)) {
-                logInfo("Changing value for %s from %s to %s",
+                CLog.d("Changing value for %s from %s to %s",
                         mSettingName, currentSettingValue, mSetValue);
                 device.executeShellCommand(shellCmdPut);
             }
@@ -105,7 +106,7 @@ public class SettingsPreparer extends PreconditionPreparer {
 
         /* Case 2: Only set-value given */
         if (mSetValue != null) {
-            logInfo("Setting %s to value %s", mSettingName, mSetValue);
+            CLog.d("Setting %s to value %s", mSettingName, mSetValue);
             device.executeShellCommand(shellCmdPut);
             return;
         }

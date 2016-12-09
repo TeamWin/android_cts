@@ -187,7 +187,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * Create directory structure where results and logs will be written.
      */
     private void initializeResultDirectories() {
-        info("Initializing result directory");
+        debug("Initializing result directory");
 
         try {
             // Initialize the result directory. Either a new directory or reusing
@@ -213,7 +213,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mResultDir.getAbsolutePath());
         }
 
-        info("Results Directory: " + mResultDir.getAbsolutePath());
+        debug("Results Directory: " + mResultDir.getAbsolutePath());
 
         mUploader = new ResultUploader(mResultServer, mBuildHelper.getSuiteName());
         try {
@@ -223,7 +223,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             e.printStackTrace();
         }
         if (mLogDir != null && mLogDir.mkdirs()) {
-            info("Created log dir %s", mLogDir.getAbsolutePath());
+            debug("Created log dir %s", mLogDir.getAbsolutePath());
         }
         if (mLogDir == null || !mLogDir.exists()) {
             throw new IllegalArgumentException(String.format("Could not create log dir %s",
@@ -446,13 +446,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         String moduleProgress = String.format("%d of %d",
                 mResult.getModuleCompleteCount(), mResult.getModules().size());
 
-        info("Invocation finished in %s. PASSED: %d, FAILED: %d, NOT EXECUTED: %d, MODULES: %s",
-                TimeUtil.formatElapsedTime(elapsedTime),
-                mResult.countResults(TestStatus.PASS),
-                mResult.countResults(TestStatus.FAIL),
-                mResult.getNotExecuted(),
-                moduleProgress);
-
         long startTime = mResult.getStartTime();
         try {
             // Zip the full test results directory.
@@ -466,7 +459,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mBuildHelper.getCommandLineArgs());
             info("Test Result: %s", resultFile.getCanonicalPath());
             File zippedResults = zipResults(mResultDir);
-            info("Full Result: %s", zippedResults.getCanonicalPath());
+            debug("Full Result: %s", zippedResults.getCanonicalPath());
 
             saveLog(resultFile, zippedResults);
 
@@ -476,6 +469,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             CLog.e("[%s] Exception while saving result XML.", mDeviceSerial);
             CLog.e(e);
         }
+        // print the run results last.
+        info("Invocation finished in %s. PASSED: %d, FAILED: %d, NOT EXECUTED: %d, MODULES: %s",
+                TimeUtil.formatElapsedTime(elapsedTime),
+                mResult.countResults(TestStatus.PASS),
+                mResult.countResults(TestStatus.FAIL),
+                mResult.getNotExecuted(),
+                moduleProgress);
     }
 
     /**
@@ -501,7 +501,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         try {
             LogFileSaver saver = new LogFileSaver(mLogDir);
             File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
-            info("Saved logs for %s in %s", name, logFile.getAbsolutePath());
+            debug("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
             warn("Failed to write log for %s", name);
             e.printStackTrace();
@@ -600,7 +600,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private void uploadResult(File resultFile) {
         if (mResultServer != null && !mResultServer.trim().isEmpty() && !mDisableResultPosting) {
             try {
-                info("Result Server: %d", mUploader.uploadResult(resultFile, mReferenceUrl));
+                debug("Result Server: %d", mUploader.uploadResult(resultFile, mReferenceUrl));
             } catch (IOException ioe) {
                 CLog.e("[%s] IOException while uploading result.", mDeviceSerial);
                 CLog.e(ioe);
@@ -675,6 +675,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     private static void info(String format, Object... args) {
         log(LogLevel.INFO, format, args);
+    }
+
+    /**
+     *  Log debug to the console.
+     */
+    private static void debug(String format, Object... args) {
+        CLog.d(format, args);
     }
 
     /**

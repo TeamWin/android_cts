@@ -23,6 +23,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
@@ -68,7 +69,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         }
         try {
             if (instrument(device, buildInfo)) {
-                logInfo("Target preparation successful");
+                CLog.d("Target preparation successful");
             } else {
                 throw new TargetSetupError("Not all target preparation steps completed",
                         device.getDeviceDescriptor());
@@ -115,7 +116,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
             device.uninstallPackage(mPackageName);
         }
 
-        logInfo("Instrumenting package %s:", mPackageName);
+        logInfo("Instrumenting package: %s", mPackageName);
         AndroidJUnitTest instrTest = new AndroidJUnitTest();
         instrTest.setDevice(device);
         instrTest.setInstallFile(apkFile);

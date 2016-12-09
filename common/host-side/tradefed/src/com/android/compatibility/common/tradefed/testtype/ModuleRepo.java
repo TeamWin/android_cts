@@ -468,9 +468,8 @@ public class ModuleRepo implements IModuleRepo {
             }
         }
         Collections.sort(modules, new ExecutionOrderComparator());
-        CLog.logAndDisplay(LogLevel.INFO, String.format(
-                "%s running %s modules, expected to complete in %s: %s",
-                serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime), modules));
+        CLog.d("%s running %s modules, expected to complete in %s: %s", serial, modules.size(),
+                TimeUtil.formatElapsedTime(estimatedTime), modules);
         return modules;
     }
 
