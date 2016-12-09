@@ -23,21 +23,26 @@ import android.graphics.Color;
 import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
  * Test for light status bar.
+ *
+ * mmma cts/tests/tests/systemui
+ * cts-tradefed run commandAndExit cts-dev --module CtsSystemUiTestCases --test android.systemui.cts.LightBarTests --disable-reboot --skip-device-info --skip-all-system-status-check --skip-preconditions
  */
-public class LightStatusBarTests extends ActivityInstrumentationTestCase2<LightStatusBarActivity> {
+public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActivity> {
 
     public static final String TAG = "LightStatusBarTests";
 
     public static final String DUMP_PATH = "/sdcard/lightstatustest.png";
 
-    public LightStatusBarTests() {
-        super(LightStatusBarActivity.class);
+    public LightBarTests() {
+        super(LightBarActivity.class);
     }
 
     @Override
@@ -63,30 +68,66 @@ public class LightStatusBarTests extends ActivityInstrumentationTestCase2<LightS
             return;
         }
 
-        requestLightStatusBar(Color.RED /* background */);
+        requestLightBars(Color.RED /* background */);
         Thread.sleep(1000);
 
         Bitmap bitmap = takeStatusBarScreenshot();
-        Stats s = evaluateLightStatusBarBitmap(bitmap, Color.RED /* background */);
-        boolean success = false;
+        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
+        assertLightStats(bitmap, s);
+    }
 
+    public void testLightNavigationBar() throws Throwable {
+        PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            // No navigation bar on TVs and watches.
+            return;
+        }
+
+        if (!ActivityManager.isHighEndGfx()) {
+            // non-highEndGfx devices don't do colored system bars.
+            return;
+        }
+
+        if (!hasVirtualNavigationBar()) {
+            // No virtual navigation bar, so no effect.
+            return;
+        }
+
+        requestLightBars(Color.RED /* background */);
+        Thread.sleep(1000);
+
+        Bitmap bitmap = takeNavigationBarScreenshot();
+        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
+        assertLightStats(bitmap, s);
+    }
+
+    private boolean hasVirtualNavigationBar() {
+        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+        boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
+        return !hasBackKey || !hasHomeKey;
+    }
+
+    private void assertLightStats(Bitmap bitmap, Stats s) {
+        boolean success = false;
         try {
             assertMoreThan("Not enough background pixels", 0.3f,
                     (float) s.backgroundPixels / s.totalPixels(),
-                    "Is the status bar background showing correctly (solid red)?");
+                    "Is the bar background showing correctly (solid red)?");
 
             assertMoreThan("Not enough pixels colored as in the spec", 0.1f,
                     (float) s.iconPixels / s.foregroundPixels(),
-                    "Are the status bar icons colored according to the spec "
+                    "Are the bar icons colored according to the spec "
                             + "(60% black and 24% black)?");
 
             assertLessThan("Too many lighter pixels lighter than the background", 0.05f,
                     (float) s.sameHueLightPixels / s.foregroundPixels(),
-                    "Are the status bar icons dark?");
+                    "Are the bar icons dark?");
 
             assertLessThan("Too many pixels with a changed hue", 0.05f,
                     (float) s.unexpectedHuePixels / s.foregroundPixels(),
-                    "Are the status bar icons color-free?");
+                    "Are the bar icons color-free?");
 
             success = true;
         } finally {
@@ -111,14 +152,13 @@ public class LightStatusBarTests extends ActivityInstrumentationTestCase2<LightS
         }
     }
 
-    private void requestLightStatusBar(final int background) throws Throwable {
-        final LightStatusBarActivity activity = getActivity();
-        runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                activity.getWindow().setStatusBarColor(background);
-                activity.setLightStatusBar(true);
-            }
+    private void requestLightBars(final int background) throws Throwable {
+        final LightBarActivity activity = getActivity();
+        runTestOnUiThread(() -> {
+            activity.getWindow().setStatusBarColor(background);
+            activity.getWindow().setNavigationBarColor(background);
+            activity.setLightStatusBar(true);
+            activity.setLightNavigationBar(true);
         });
     }
 
@@ -147,7 +187,7 @@ public class LightStatusBarTests extends ActivityInstrumentationTestCase2<LightS
         }
     }
 
-    private Stats evaluateLightStatusBarBitmap(Bitmap bitmap, int background) {
+    private Stats evaluateLightBarBitmap(Bitmap bitmap, int background) {
         int iconColor = 0x99000000;
         int iconPartialColor = 0x3d000000;
 
@@ -231,5 +271,11 @@ public class LightStatusBarTests extends ActivityInstrumentationTestCase2<LightS
         Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
         return Bitmap.createBitmap(fullBitmap, 0, 0,
                 getActivity().getWidth(), getActivity().getTop());
+    }
+
+    private Bitmap takeNavigationBarScreenshot() {
+        Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
+        return Bitmap.createBitmap(fullBitmap, 0, getActivity().getBottom(),
+                getActivity().getWidth(), fullBitmap.getHeight() - getActivity().getBottom());
     }
 }
