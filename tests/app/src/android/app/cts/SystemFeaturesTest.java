@@ -478,7 +478,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
-    public void testWifiFeature() throws Exception {
+  public void testWifiFeature() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // no WiFi, skip the test
             return;
