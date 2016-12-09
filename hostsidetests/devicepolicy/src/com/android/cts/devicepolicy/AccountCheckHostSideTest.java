@@ -179,53 +179,54 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
             assertTestOnlyNotInstallable();
             assertNonTestOnlyNotInstallable();
 
-            // Incompatible, type B.
-            removeAllAccounts();
-            runTest("testAddIncompatibleB");
-
-            assertTestOnlyNotInstallable();
-            assertNonTestOnlyNotInstallable();
-
-            // Incompatible, type C.
-            removeAllAccounts();
-            runTest("testAddIncompatibleC");
-
-            assertTestOnlyNotInstallable();
-            assertNonTestOnlyNotInstallable();
-
-            // Compatible.
-            removeAllAccounts();
-            runTest("testAddCompatible");
-
-            assertTestOnlyInstallable(); // Now test-only owner can be accepted.
-            assertNonTestOnlyNotInstallable();
-
-            // 2 compatible accounts.
-            removeAllAccounts();
-            runTest("testAddCompatible");
-            runTest("testAddCompatible");
-
-            assertTestOnlyInstallable(); // Now test-only owner can be accepted.
-
-            assertNonTestOnlyNotInstallable();
-
-            // 2 compatible accounts + 1 incompatible.
-            removeAllAccounts();
-            runTest("testAddIncompatibleA");
-            runTest("testAddCompatible");
-            runTest("testAddCompatible");
-
-            assertTestOnlyNotInstallable();
-            assertNonTestOnlyNotInstallable();
-
-            // 2 compatible accounts + 1 incompatible, different order.
-            removeAllAccounts();
-            runTest("testAddCompatible");
-            runTest("testAddCompatible");
-            runTest("testAddIncompatibleB");
-
-            assertTestOnlyNotInstallable();
-            assertNonTestOnlyNotInstallable();
+            // The following tests use non-public strings, so disabled until they go public.
+//            // Incompatible, type B.
+//            removeAllAccounts();
+//            runTest("testAddIncompatibleB");
+//
+//            assertTestOnlyNotInstallable();
+//            assertNonTestOnlyNotInstallable();
+//
+//            // Incompatible, type C.
+//            removeAllAccounts();
+//            runTest("testAddIncompatibleC");
+//
+//            assertTestOnlyNotInstallable();
+//            assertNonTestOnlyNotInstallable();
+//
+//            // Compatible.
+//            removeAllAccounts();
+//            runTest("testAddCompatible");
+//
+//            assertTestOnlyInstallable(); // Now test-only owner can be accepted.
+//            assertNonTestOnlyNotInstallable();
+//
+//            // 2 compatible accounts.
+//            removeAllAccounts();
+//            runTest("testAddCompatible");
+//            runTest("testAddCompatible");
+//
+//            assertTestOnlyInstallable(); // Now test-only owner can be accepted.
+//
+//            assertNonTestOnlyNotInstallable();
+//
+//            // 2 compatible accounts + 1 incompatible.
+//            removeAllAccounts();
+//            runTest("testAddIncompatibleA");
+//            runTest("testAddCompatible");
+//            runTest("testAddCompatible");
+//
+//            assertTestOnlyNotInstallable();
+//            assertNonTestOnlyNotInstallable();
+//
+//            // 2 compatible accounts + 1 incompatible, different order.
+//            removeAllAccounts();
+//            runTest("testAddCompatible");
+//            runTest("testAddCompatible");
+//            runTest("testAddIncompatibleB");
+//
+//            assertTestOnlyNotInstallable();
+//            assertNonTestOnlyNotInstallable();
         } catch (Throwable th) {
             CLog.w("Tests failed; current accounts are:");
             CLog.w(getDevice().executeShellCommand("dumpsys account"));
