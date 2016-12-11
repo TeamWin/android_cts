@@ -29,6 +29,13 @@ LOCAL_STATIC_LIBRARIES += \
     libz \
     libutils \
     libgtest \
+    libLLVMObject \
+    libLLVMBitReader \
+    libLLVMMC \
+    libLLVMMCParser \
+    libLLVMCore \
+    libLLVMSupport \
+
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
