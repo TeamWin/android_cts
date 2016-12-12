@@ -28,6 +28,7 @@ import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.cts.R;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,9 +37,12 @@ import java.util.List;
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityNodeInfo} class that are marshalled. */
-    private static final int NUM_MARSHALLED_PROPERTIES = 32;
+    private static final int NUM_MARSHALLED_PROPERTIES = 33;
 
-    /** The number of properties that are purposely not marshalled */
+    /**
+     * The number of properties that are purposely not marshalled
+     * mOriginalText - Used when resolving clickable spans; intentionally not parceled
+     */
     private static final int NUM_NONMARSHALLED_PROPERTIES = 1;
 
     @SmallTest
@@ -227,6 +231,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setLabelFor(new View(getContext()));
         info.setViewIdResourceName("foo.bar:id/baz");
         info.setDrawingOrder(5);
+        info.setAvailableExtraData(
+                Arrays.asList(AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
     }
 
     /**
@@ -296,6 +302,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 receivedInfo.getViewIdResourceName());
         assertEquals("drawing order has incorrect value", expectedInfo.getDrawingOrder(),
                 receivedInfo.getDrawingOrder());
+        assertEquals("Extra data flags have incorrect value", expectedInfo.getAvailableExtraData(),
+                receivedInfo.getAvailableExtraData());
     }
 
     /**
@@ -333,5 +341,6 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 info.getMovementGranularities());
         assertNull("viewId not properly recycled", info.getViewIdResourceName());
         assertEquals(0, info.getDrawingOrder());
+        assertTrue(info.getAvailableExtraData().isEmpty());
     }
 }

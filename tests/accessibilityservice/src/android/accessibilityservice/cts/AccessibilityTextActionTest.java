@@ -15,7 +15,10 @@
 package android.accessibilityservice.cts;
 
 import android.app.UiAutomation;
+import android.graphics.RectF;
 import android.os.Bundle;
+import android.os.Debug;
+import android.os.Parcelable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -28,7 +31,13 @@ import android.widget.TextView;
 
 import android.accessibilityservice.cts.R;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
+
+import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH;
+import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX;
+import static android.view.accessibility.AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY;
 
 /**
  * Test cases for actions taken on text views.
@@ -172,6 +181,91 @@ public class AccessibilityTextActionTest extends
         assertOnClickCalled();
     }
 
+
+    public void testTextLocations_textViewShouldProvideWhenRequested() {
+        final TextView textView = (TextView) getActivity().findViewById(R.id.text);
+        makeTextViewVisibleAndSetText(textView, getString(R.string.a_b));
+
+        final AccessibilityNodeInfo text = mUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(getString(R.string.a_b)).get(0);
+        List<String> textAvailableExtraData = text.getAvailableExtraData();
+        assertTrue("Text view should offer text location to accessibility",
+                textAvailableExtraData.contains(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
+        assertNull("Text locations should not be populated by default",
+                text.getExtras().get(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
+        Bundle getTextArgs = new Bundle();
+        getTextArgs.putInt(EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX, 0);
+        getTextArgs.putInt(EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH,
+                text.getText().length());
+        assertTrue("Refresh failed", text.refreshWithExtraData(
+                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
+        final Parcelable[] parcelables = text.getExtras()
+                .getParcelableArray(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+        final RectF[] locations = Arrays.copyOf(parcelables, parcelables.length, RectF[].class);
+        assertEquals(text.getText().length(), locations.length);
+        // The text should all be on one line, running left to right
+        for (int i = 0; i < locations.length; i++) {
+            assertEquals(locations[0].top, locations[i].top);
+            assertEquals(locations[0].bottom, locations[i].bottom);
+            assertTrue(locations[i].right > locations[i].left);
+            if (i > 0) {
+                assertTrue(locations[i].left > locations[i-1].left);
+            }
+        }
+    }
+
+    public void testTextLocations_textOutsideOfViewBounds_locationsShouldBeNull() {
+        final EditText editText = (EditText) getActivity().findViewById(R.id.edit);
+        makeTextViewVisibleAndSetText(editText, getString(R.string.android_wiki));
+
+        final AccessibilityNodeInfo text = mUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(getString(R.string.android_wiki)).get(0);
+        List<String> textAvailableExtraData = text.getAvailableExtraData();
+        assertTrue("Text view should offer text location to accessibility",
+                textAvailableExtraData.contains(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY));
+        Bundle getTextArgs = new Bundle();
+        getTextArgs.putInt(EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX, 0);
+        getTextArgs.putInt(EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH,
+                text.getText().length());
+        assertTrue("Refresh failed", text.refreshWithExtraData(
+                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
+        Parcelable[] parcelables = text.getExtras()
+                .getParcelableArray(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+        final RectF[] locationsBeforeScroll = Arrays.copyOf(
+                parcelables, parcelables.length, RectF[].class);
+        assertEquals(text.getText().length(), locationsBeforeScroll.length);
+        // The first character should be visible immediately
+        assertFalse(locationsBeforeScroll[0].isEmpty());
+        // Some of the characters should be off the screen, and thus have empty rects. Find the
+        // break point
+        int firstNullRectIndex = -1;
+        for (int i = 1; i < locationsBeforeScroll.length; i++) {
+            boolean isNull = locationsBeforeScroll[i] == null;
+            if (firstNullRectIndex < 0) {
+                if (isNull) {
+                    firstNullRectIndex = i;
+                }
+            } else {
+                assertTrue(isNull);
+            }
+        }
+
+        // Scroll down one line
+        final float oneLineDownY = locationsBeforeScroll[0].bottom;
+        getInstrumentation().runOnMainSync(() -> editText.scrollTo(0, (int) oneLineDownY + 1));
+
+        assertTrue("Refresh failed", text.refreshWithExtraData(
+                AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
+        parcelables = text.getExtras()
+                .getParcelableArray(EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY);
+        final RectF[] locationsAfterScroll = Arrays.copyOf(
+                parcelables, parcelables.length, RectF[].class);
+        // Now the first character should be off the screen
+        assertNull(locationsAfterScroll[0]);
+        // The first character that was off the screen should now be on it
+        assertNotNull(locationsAfterScroll[firstNullRectIndex]);
+    }
+
     private void onClickCallback() {
         synchronized (mClickableSpanCallbackLock) {
             mClickableSpanCalled.set(true);
@@ -204,12 +298,9 @@ public class AccessibilityTextActionTest extends
     }
 
     private void makeTextViewVisibleAndSetText(final TextView textView, final CharSequence text) {
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                textView.setVisibility(View.VISIBLE);
-                textView.setText(text);
-            }
+        getInstrumentation().runOnMainSync(() -> {
+            textView.setVisibility(View.VISIBLE);
+            textView.setText(text);
         });
     }
 }
