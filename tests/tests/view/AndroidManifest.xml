@@ -148,7 +148,8 @@
 
         <activity android:name="android.view.cts.PixelCopyViewProducerActivity"
                 android:label="PixelCopyViewProducerActivity"
-                android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+                android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+                android:configChanges="orientation|screenSize" />
 
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
             android:label="FocusFinderCtsActivity">
