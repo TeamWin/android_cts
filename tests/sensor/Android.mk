@@ -23,7 +23,7 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
 
 LOCAL_JAVA_LIBRARIES := platform-test-annotations
 

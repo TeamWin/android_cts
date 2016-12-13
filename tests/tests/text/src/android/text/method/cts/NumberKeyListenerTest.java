@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.cts.util.CtsKeyEventUtil;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Selection;
@@ -32,6 +31,8 @@ import android.text.Spanned;
 import android.text.method.NumberKeyListener;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

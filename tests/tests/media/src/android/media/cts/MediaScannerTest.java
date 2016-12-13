@@ -26,8 +26,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.AssetFileDescriptor;
-import android.cts.util.FileCopyHelper;
-import android.cts.util.PollingCheck;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaScannerConnection;
@@ -43,6 +41,9 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.FileCopyHelper;
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.File;
 import java.io.IOException;

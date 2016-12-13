@@ -17,7 +17,6 @@
 package android.filesystem.cts;
 
 import android.content.Context;
-import android.cts.util.SystemUtil;
 import android.util.Log;
 
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -27,6 +26,7 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.compatibility.common.util.Stat;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.BufferedReader;
 import java.io.File;

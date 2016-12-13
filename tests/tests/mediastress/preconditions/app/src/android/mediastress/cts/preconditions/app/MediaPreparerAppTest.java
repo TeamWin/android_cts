@@ -16,9 +16,9 @@
 package android.mediastress.cts.preconditions.app;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaUtils;
 
 import android.app.Instrumentation;
-import android.cts.util.MediaUtils;
 import android.media.MediaFormat;
 import android.os.Bundle;
 import android.support.test.InstrumentationRegistry;

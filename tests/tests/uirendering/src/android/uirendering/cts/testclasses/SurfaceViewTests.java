@@ -15,8 +15,9 @@
  */
 package android.uirendering.cts.testclasses;
 
+import com.android.compatibility.common.util.SynchronousPixelCopy;
+
 import android.animation.ObjectAnimator;
-import android.cts.util.SynchronousPixelCopy;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;

@@ -28,8 +28,6 @@ import static org.mockito.Mockito.when;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.CtsTouchUtils;
-import android.cts.util.PollingCheck;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.provider.BaseColumns;
@@ -42,6 +40,9 @@ import android.text.TextUtils;
 import android.widget.CursorAdapter;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

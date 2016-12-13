@@ -19,7 +19,6 @@ package android.widget.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
-import android.cts.util.WidgetTestUtils;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -30,6 +29,8 @@ import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

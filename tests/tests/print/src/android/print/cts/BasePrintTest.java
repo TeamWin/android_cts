@@ -17,6 +17,7 @@
 package android.print.cts;
 
 import static android.print.cts.Utils.getPrintManager;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -32,7 +33,6 @@ import android.app.Instrumentation;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.cts.util.SystemUtil;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -61,6 +61,8 @@ import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;

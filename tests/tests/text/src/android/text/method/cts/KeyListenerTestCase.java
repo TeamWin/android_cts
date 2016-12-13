@@ -17,13 +17,14 @@
 package android.text.method.cts;
 
 import android.app.Instrumentation;
-import android.cts.util.PollingCheck;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.text.cts.R;
 import android.text.method.KeyListener;
 import android.view.KeyEvent;
 import android.widget.EditText;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

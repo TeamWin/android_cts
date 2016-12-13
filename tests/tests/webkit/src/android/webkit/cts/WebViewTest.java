@@ -19,9 +19,6 @@ package android.webkit.cts;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.cts.util.EvaluateJsResultPollingCheck;
-import android.cts.util.NullWebViewUtils;
-import android.cts.util.PollingCheck;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -71,6 +68,10 @@ import android.webkit.WebViewDatabase;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
 import android.widget.LinearLayout;
+
+import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
+import com.android.compatibility.common.util.NullWebViewUtils;
+import com.android.compatibility.common.util.PollingCheck;
 
 import junit.framework.Assert;
 

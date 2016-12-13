@@ -30,7 +30,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
-    ctsdeviceutil \
+    compatibility-device-util \
     ctstestrunner \
     mockito-target-minus-junit4 \
     platform-test-annotations \

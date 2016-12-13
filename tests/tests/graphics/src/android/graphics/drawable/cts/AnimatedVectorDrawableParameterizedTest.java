@@ -16,9 +16,10 @@
 
 package android.graphics.drawable.cts;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import android.app.Activity;
 import android.content.res.Resources;
-import android.cts.util.SystemUtil;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;

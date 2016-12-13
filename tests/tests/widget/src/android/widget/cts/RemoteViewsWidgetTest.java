@@ -35,8 +35,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.cts.util.PollingCheck;
-import android.cts.util.SystemUtil;
 import android.os.Bundle;
 import android.os.Process;
 import android.support.test.InstrumentationRegistry;
@@ -53,6 +51,9 @@ import android.widget.RemoteViewsService;
 import android.widget.StackView;
 import android.widget.cts.appwidget.MyAppWidgetProvider;
 import android.widget.cts.appwidget.MyAppWidgetService;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;

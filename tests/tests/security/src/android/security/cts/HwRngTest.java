@@ -16,7 +16,7 @@
 
 package android.security.cts;
 
-import android.cts.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;

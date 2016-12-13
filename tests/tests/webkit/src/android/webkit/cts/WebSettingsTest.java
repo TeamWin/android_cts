@@ -16,8 +16,6 @@
 package android.webkit.cts;
 
 import android.content.Context;
-import android.cts.util.NullWebViewUtils;
-import android.cts.util.PollingCheck;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
@@ -33,6 +31,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
+
+import com.android.compatibility.common.util.NullWebViewUtils;
+import com.android.compatibility.common.util.PollingCheck;
+
 import java.io.FileOutputStream;
 import java.util.Locale;
 import java.util.regex.Matcher;

@@ -28,7 +28,7 @@ LOCAL_JAVA_LIBRARIES := bouncycastle
 LOCAL_STATIC_JAVA_LIBRARIES := \
         android-support-test \
         core-tests-support \
-        ctsdeviceutil \
+        compatibility-device-util \
         ctstestrunner \
         guava
 

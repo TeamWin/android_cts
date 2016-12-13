@@ -16,11 +16,12 @@
 package android.media.cts;
 
 import android.content.ComponentName;
-import android.cts.util.PollingCheck;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.os.Bundle;
 import android.test.InstrumentationTestCase;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.ArrayList;
 import java.util.List;

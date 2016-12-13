@@ -28,7 +28,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.annotation.ColorInt;
 import android.app.Instrumentation;
-import android.cts.util.CtsTouchUtils;
 import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
@@ -39,6 +38,8 @@ import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.ScrollView;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

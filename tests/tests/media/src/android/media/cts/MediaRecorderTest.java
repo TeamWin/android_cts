@@ -16,7 +16,6 @@
 package android.media.cts;
 
 import android.content.pm.PackageManager;
-import android.cts.util.MediaUtils;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -40,6 +39,8 @@ import android.test.UiThreadTest;
 import android.view.Surface;
 
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
 import java.io.FileDescriptor;

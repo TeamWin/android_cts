@@ -15,7 +15,7 @@
  */
 package android.transition.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.Instrumentation;
-import android.cts.util.WidgetTestUtils;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.transition.Scene;
@@ -36,6 +35,8 @@ import android.transition.Visibility;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

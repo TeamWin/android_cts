@@ -21,8 +21,6 @@ import android.media.cts.R;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.MediaPerfUtils;
-import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
@@ -32,6 +30,8 @@ import android.util.Pair;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.MediaPerfUtils;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 

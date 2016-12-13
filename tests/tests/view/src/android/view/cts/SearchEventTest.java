@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
 import android.content.Context;
-import android.cts.util.PollingCheck;
 import android.hardware.input.InputManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -30,6 +29,8 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.SearchEvent;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

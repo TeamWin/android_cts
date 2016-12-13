@@ -23,13 +23,14 @@ import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.os.Environment;
 import android.os.Parcel;
-import android.cts.util.FileUtils;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.test.AndroidTestCase;
 import android.test.ComparisonFailure;
 import android.util.Log;
+
+import com.android.compatibility.common.util.FileUtils;
 
 import libcore.io.Streams;
 

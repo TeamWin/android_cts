@@ -32,8 +32,6 @@ import android.app.Instrumentation;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.Resources.Theme;
-import android.cts.util.CtsTouchUtils;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.test.InstrumentationRegistry;
@@ -48,6 +46,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.cts.util.TestUtils;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

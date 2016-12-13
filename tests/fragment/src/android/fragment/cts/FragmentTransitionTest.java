@@ -23,13 +23,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
+import com.android.compatibility.common.util.transition.TargetTracking;
+import com.android.compatibility.common.util.transition.TrackingTransition;
+
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.Instrumentation;
 import android.app.SharedElementCallback;
-import android.cts.util.transition.TargetTracking;
-import android.cts.util.transition.TrackingTransition;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.test.InstrumentationRegistry;

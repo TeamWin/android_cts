@@ -19,7 +19,6 @@ package android.widget.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
-import android.cts.util.WidgetTestUtils;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -27,6 +26,8 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import android.widget.AbsListView;
 import android.widget.AbsListView.LayoutParams;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Test;

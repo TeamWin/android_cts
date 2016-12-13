@@ -27,8 +27,8 @@ LOCAL_COMPATIBILITY_SUITE := cts
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    compatibility-device-util \
     ctstestrunner \
-    ctsdeviceutil \
     mockito-target-minus-junit4 \
     android-support-test
 

@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import android.cts.util.ReadElf;
+import com.android.compatibility.common.util.ReadElf;
 
 /**
  * Verify that ASLR is properly enabled on Android Compatible devices.

@@ -16,8 +16,9 @@
 
 package android.os.cts;
 
-import android.cts.util.ReadElf;
 import android.util.ArraySet;
+
+import com.android.compatibility.common.util.ReadElf;
 
 import java.io.File;
 import java.util.Arrays;

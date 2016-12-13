@@ -17,10 +17,11 @@
 package android.view.cts;
 
 import android.app.Activity;
-import android.cts.util.CTSResult;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
+
+import com.android.compatibility.common.util.CTSResult;
 
 public class ViewGroupCtsActivity extends Activity {
     public static final String ACTION_INVALIDATE_CHILD = "invalidateChild";

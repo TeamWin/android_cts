@@ -24,13 +24,14 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.cts.util.WidgetTestUtils;
 import android.graphics.Canvas;
 import android.graphics.Movie;
 import android.graphics.Paint;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -17,10 +17,11 @@
 package android.webkit.cts;
 
 import android.app.Activity;
-import android.cts.util.NullWebViewUtils;
 import android.os.Bundle;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
+
+import com.android.compatibility.common.util.NullWebViewUtils;
 
 public class CookieSyncManagerCtsActivity extends Activity {
     private WebView mWebView;

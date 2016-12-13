@@ -17,13 +17,14 @@
 package android.view.animation.cts;
 
 import android.app.Instrumentation;
-import android.cts.util.PollingCheck;
 import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.LayoutAnimationController;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 /**
  * The utility methods for animation test.

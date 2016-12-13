@@ -19,10 +19,11 @@ import static org.mockito.Mockito.mock;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.cts.util.transition.TrackingTransition;
-import android.cts.util.transition.TrackingVisibility;
 import android.os.Bundle;
 import android.transition.Transition.TransitionListener;
+
+import com.android.compatibility.common.util.transition.TrackingTransition;
+import com.android.compatibility.common.util.transition.TrackingVisibility;
 
 public class TargetActivity extends Activity {
     public static final String EXTRA_LAYOUT_ID = "layoutId";

@@ -27,7 +27,6 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
-import android.cts.util.PollingCheck;
 import android.graphics.cts.ImageViewCtsActivity;
 import android.graphics.cts.R;
 import android.graphics.drawable.AnimationDrawable;
@@ -39,6 +38,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Xml;
 import android.widget.ImageView;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

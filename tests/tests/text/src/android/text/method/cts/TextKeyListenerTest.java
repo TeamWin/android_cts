@@ -30,7 +30,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import android.cts.util.CtsKeyEventUtil;
 import android.os.SystemClock;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -45,6 +44,8 @@ import android.text.method.TextKeyListener.Capitalize;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.widget.TextView.BufferType;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

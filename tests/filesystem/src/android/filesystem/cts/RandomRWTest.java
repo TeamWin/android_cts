@@ -16,9 +16,10 @@
 
 package android.filesystem.cts;
 
-import android.cts.util.CtsAndroidTestCase;
 import android.os.Environment;
+
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
 
 public class RandomRWTest extends CtsAndroidTestCase {

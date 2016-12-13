@@ -15,7 +15,7 @@
  */
 package android.fragment.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -23,8 +23,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
-import android.cts.util.transition.TrackingTransition;
-import android.cts.util.transition.TrackingVisibility;
+import com.android.compatibility.common.util.transition.TrackingTransition;
+import com.android.compatibility.common.util.transition.TrackingVisibility;
+
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.transition.Transition;

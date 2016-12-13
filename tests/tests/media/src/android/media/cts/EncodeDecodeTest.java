@@ -16,7 +16,6 @@
 
 package android.media.cts;
 
-import android.cts.util.MediaUtils;
 import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
@@ -28,6 +27,8 @@ import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

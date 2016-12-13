@@ -14,7 +14,6 @@ package android.hardware.camera2.cts;
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
 
-import android.cts.util.MediaUtils;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCaptureSession;
@@ -43,6 +42,7 @@ import android.util.Log;
 import android.util.Range;
 import android.view.Surface;
 
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import junit.framework.AssertionFailedError;

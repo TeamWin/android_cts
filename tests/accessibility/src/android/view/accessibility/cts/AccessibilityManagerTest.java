@@ -19,12 +19,13 @@ package android.view.accessibility.cts;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
 import android.content.pm.ServiceInfo;
-import android.cts.util.PollingCheck;
 import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.List;
 

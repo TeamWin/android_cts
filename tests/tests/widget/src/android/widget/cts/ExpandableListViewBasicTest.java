@@ -21,8 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
-import android.cts.util.CtsKeyEventUtil;
-import android.cts.util.PollingCheck;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -34,6 +32,9 @@ import android.widget.ExpandableListView;
 import android.widget.cts.util.ExpandableListScenario;
 import android.widget.cts.util.ExpandableListScenario.MyGroup;
 import android.widget.cts.util.ListUtil;
+
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;

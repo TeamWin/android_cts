@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.cts.util.CtsTouchUtils;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
@@ -34,6 +33,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
 import android.widget.RadioButton;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.Before;
 import org.junit.Rule;

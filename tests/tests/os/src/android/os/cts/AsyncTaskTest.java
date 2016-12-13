@@ -17,10 +17,10 @@
 package android.os.cts;
 
 import android.support.annotation.NonNull;
-
-import android.cts.util.PollingCheck;
 import android.os.AsyncTask;
 import android.test.InstrumentationTestCase;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;

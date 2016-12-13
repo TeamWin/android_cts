@@ -27,7 +27,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.cts.util.IBinderParcelable;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -37,6 +36,8 @@ import android.service.notification.StatusBarNotification;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 import android.app.stubs.R;
+
+import com.android.compatibility.common.util.IBinderParcelable;
 
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";

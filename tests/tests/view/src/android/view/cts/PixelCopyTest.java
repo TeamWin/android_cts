@@ -24,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.app.Instrumentation;
-import android.cts.util.SynchronousPixelCopy;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
@@ -42,6 +41,8 @@ import android.view.PixelCopy;
 import android.view.Surface;
 import android.view.View;
 import android.view.Window;
+
+import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import org.junit.Before;
 import org.junit.Rule;

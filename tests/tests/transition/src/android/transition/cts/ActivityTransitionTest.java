@@ -15,7 +15,7 @@
  */
 package android.transition.cts;
 
-import static android.cts.util.CtsMockitoUtils.within;
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
 import static junit.framework.Assert.fail;
 
@@ -27,16 +27,17 @@ import static org.mockito.Mockito.verify;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.cts.util.PollingCheck;
-import android.cts.util.transition.TargetTracking;
-import android.cts.util.transition.TrackingTransition;
-import android.cts.util.transition.TrackingVisibility;
 import android.os.Bundle;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.Fade;
 import android.transition.Transition.TransitionListener;
 import android.view.View;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.transition.TargetTracking;
+import com.android.compatibility.common.util.transition.TrackingTransition;
+import com.android.compatibility.common.util.transition.TrackingVisibility;
 
 import org.junit.After;
 import org.junit.Test;

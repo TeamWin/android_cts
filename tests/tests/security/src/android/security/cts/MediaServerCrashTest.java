@@ -17,7 +17,6 @@
 package android.security.cts;
 
 import android.content.res.AssetFileDescriptor;
-import android.cts.util.MediaUtils;
 import android.drm.DrmConvertedStatus;
 import android.drm.DrmManagerClient;
 import android.media.MediaPlayer;
@@ -26,6 +25,8 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
 import java.io.FileInputStream;

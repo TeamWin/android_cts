@@ -23,7 +23,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.cts.R;
 import android.content.res.AssetFileDescriptor;
-import android.cts.util.PollingCheck;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
@@ -35,6 +34,8 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

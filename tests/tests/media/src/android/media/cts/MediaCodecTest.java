@@ -19,7 +19,6 @@ package android.media.cts;
 import android.media.cts.R;
 
 import android.content.res.AssetFileDescriptor;
-import android.cts.util.MediaUtils;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
@@ -39,6 +38,8 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

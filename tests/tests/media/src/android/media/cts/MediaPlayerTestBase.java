@@ -19,9 +19,10 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
-import android.cts.util.MediaUtils;
 import android.media.MediaPlayer;
 import android.test.ActivityInstrumentationTestCase2;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.util.logging.Logger;

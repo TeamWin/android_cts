@@ -20,11 +20,12 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.cts.util.IBinderParcelable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.app.stubs.R;
+
+import com.android.compatibility.common.util.IBinderParcelable;
 
 public class LocalForegroundService extends LocalService {
 
