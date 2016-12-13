@@ -60,8 +60,8 @@ public class SampleRootTestCase extends SecurityTestCase {
     /**
      * Sample of running an apk
      */
-    public void testHelperApk() throws Exception {
+  /*    public void testHelperApk() throws Exception {
         String installResult = AdbUtils.installApk("/crash_mod.apk", getDevice());
         assertNull("failed to install apk", installResult);
-    }
+        }*/
 }
