@@ -46,6 +46,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Unit Tests for {@link ModuleRepo}
+ */
 public class ModuleRepoTest extends TestCase {
 
     private static final String TOKEN =
@@ -113,7 +116,6 @@ public class ModuleRepoTest extends TestCase {
     }
     private ModuleRepo mRepo;
     private File mTestsDir;
-    private File mRoot = null;
     private IBuildInfo mMockBuildInfo;
 
     @Override
@@ -124,7 +126,7 @@ public class ModuleRepoTest extends TestCase {
     }
 
     private File setUpConfigs() throws IOException {
-        File testsDir = FileUtil.createNamedTempDir("testcases");
+        File testsDir = FileUtil.createTempDir("testcases");
         createConfig(testsDir, MODULE_NAME_A, null);
         createConfig(testsDir, MODULE_NAME_B, null);
         createConfig(testsDir, MODULE_NAME_C, FOOBAR_TOKEN);
@@ -138,6 +140,9 @@ public class ModuleRepoTest extends TestCase {
     private void createConfig(File testsDir, String name, String token, String moduleClass)
             throws IOException {
         File config = new File(testsDir, String.format(FILENAME, name));
+        if (!config.createNewFile()) {
+            throw new IOException(String.format("Failed to create '%s'", config.getAbsolutePath()));
+        }
         String preparer = "";
         if (token != null) {
             preparer = String.format(TOKEN, token);
@@ -147,13 +152,8 @@ public class ModuleRepoTest extends TestCase {
 
     @Override
     public void tearDown() throws Exception {
-        tearDownConfigs(mTestsDir);
-        FileUtil.recursiveDelete(mRoot);
+        FileUtil.recursiveDelete(mTestsDir);
         mRepo.resetModuleRepo();
-    }
-
-    private void tearDownConfigs(File testsDir) {
-        FileUtil.recursiveDelete(testsDir);
     }
 
     public void testInitialization() throws Exception {
@@ -281,9 +281,9 @@ public class ModuleRepoTest extends TestCase {
     }
 
     public void testSplit() throws Exception {
-        createConfig(mTestsDir, "sharder_1", null, SHARDABLE_TEST_STUB);
-        createConfig(mTestsDir, "sharder_2", null, SHARDABLE_TEST_STUB);
-        createConfig(mTestsDir, "sharder_3", null, SHARDABLE_TEST_STUB);
+        createConfig(mTestsDir, "sharded_1", null, SHARDABLE_TEST_STUB);
+        createConfig(mTestsDir, "sharded_2", null, SHARDABLE_TEST_STUB);
+        createConfig(mTestsDir, "sharded_3", null, SHARDABLE_TEST_STUB);
         Set<IAbi> abis = new HashSet<>();
         abis.add(new Abi(ABI_64, "64"));
         ArrayList<String> emptyList = new ArrayList<>();
