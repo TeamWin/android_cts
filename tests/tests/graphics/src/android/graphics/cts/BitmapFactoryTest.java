@@ -716,6 +716,16 @@ public class BitmapFactoryTest {
                 new ByteArrayInputStream(new byte[20]), new Rect(), options);
     }
 
+    @Test
+    public void testDecodeHardwareBitmap() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.HARDWARE;
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
+        assertNotNull(hardwareBitmap);
+        // Test that checks that correct bitmap was obtained is in uirendering/HardwareBitmapTests
+        assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
+    }
+
     private void decodeConfigs(int id, int width, int height, boolean hasAlpha, boolean isGray,
             boolean hasColorTable) {
         Options opts = new BitmapFactory.Options();
