@@ -16,6 +16,7 @@
 package com.android.cts.verifier.notifications;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -51,12 +52,18 @@ public class MockAssistant extends NotificationAssistantService {
     public static final String SERVICE_ORDER = SERVICE_BASE + "SERVICE_ORDER";
     public static final String SERVICE_DND = SERVICE_BASE + "SERVICE_DND";
     public static final String SERVICE_ADJUSTMENT = SERVICE_BASE + "SERVICE_ADJUSTMENT";
+    public static final String SERVICE_CREATE_CHANNEL = SERVICE_BASE + "CREATE_CHANNEL";
+    public static final String SERVICE_UPDATE_CHANNEL = SERVICE_BASE + "UPDATE_CHANNEL";
+    public static final String SERVICE_DELETE_CHANNEL = SERVICE_BASE + "DELETE_CHANNEL";
+    public static final String SERVICE_CHECK_CHANNELS = SERVICE_BASE + "CHECK_CHANNELS";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
     static final String EXTRA_INT = "INT";
     static final String EXTRA_TAG = "TAG";
     static final String EXTRA_CODE = "CODE";
     static final String EXTRA_BUNDLE = "BUNDLE";
+    static final String EXTRA_PKG = "PKG";
+    static final String EXTRA_CHANNEL = "CHANNEL";
 
     static final int RESULT_NO_SERVER = Activity.RESULT_FIRST_USER + 1;
 
@@ -177,6 +184,31 @@ public class MockAssistant extends NotificationAssistantService {
                     Adjustment adjustment = new Adjustment(context.getPackageName(),
                             key, signals, "", 0);
                     MockAssistant.this.adjustNotification(adjustment);
+                } else if (SERVICE_CHECK_CHANNELS.equals(action)) {
+                    String pkg = intent.getStringExtra(EXTRA_PKG);
+                    Bundle bundle = new Bundle();
+                    List<NotificationChannel> channels =
+                            MockAssistant.this.getNotificationChannels(pkg);
+                    bundle.putParcelableArrayList(EXTRA_PAYLOAD,
+                            new ArrayList<NotificationChannel>(channels));
+                    setResultExtras(bundle);
+                    setResultCode(Activity.RESULT_OK);
+                } else if (SERVICE_CREATE_CHANNEL.equals(action)) {
+                    String pkg = intent.getStringExtra(EXTRA_PKG);
+                    NotificationChannel channel = intent.getParcelableExtra(EXTRA_CHANNEL);
+                    try {
+                        MockAssistant.this.createNotificationChannel(pkg, channel);
+                    } catch (Exception e) {
+                        Log.e(TAG, "creation failed", e);
+                    }
+                } else if (SERVICE_UPDATE_CHANNEL.equals(action)) {
+                    String pkg = intent.getStringExtra(EXTRA_PKG);
+                    NotificationChannel channel = intent.getParcelableExtra(EXTRA_CHANNEL);
+                    MockAssistant.this.updateNotificationChannel(pkg, channel);
+                } else if (SERVICE_DELETE_CHANNEL.equals(action)) {
+                    String pkg = intent.getStringExtra(EXTRA_PKG);
+                    String id = intent.getStringExtra(EXTRA_TAG);
+                    MockAssistant.this.deleteNotificationChannel(pkg, id);
                 } else {
                     Log.w(TAG, "unknown action");
                     setResultCode(Activity.RESULT_CANCELED);
@@ -196,6 +228,10 @@ public class MockAssistant extends NotificationAssistantService {
         filter.addAction(SERVICE_CLEAR_ALL);
         filter.addAction(SERVICE_RESET);
         filter.addAction(SERVICE_ADJUSTMENT);
+        filter.addAction(SERVICE_CHECK_CHANNELS);
+        filter.addAction(SERVICE_CREATE_CHANNEL);
+        filter.addAction(SERVICE_DELETE_CHANNEL);
+        filter.addAction(SERVICE_UPDATE_CHANNEL);
         registerReceiver(mReceiver, filter);
     }
 
@@ -349,12 +385,39 @@ public class MockAssistant extends NotificationAssistantService {
         requestBundleListResult(context, SERVICE_REMOVED_REASON, catcher);
     }
 
+    public static void probeChannels(Context context, String pkg, BundleListResultCatcher catcher) {
+        Intent broadcast = new Intent(SERVICE_CHECK_CHANNELS);
+        broadcast.putExtra(EXTRA_PKG, pkg);
+        context.sendOrderedBroadcast(broadcast, null, catcher, null, RESULT_NO_SERVER, null, null);
+    }
+
     public static void clearOne(Context context, String tag, int code) {
         sendCommand(context, SERVICE_CLEAR_ONE, tag, code);
     }
 
     public static void clearAll(Context context) {
         sendCommand(context, SERVICE_CLEAR_ALL, null, 0);
+    }
+
+    public static void createChannel(Context context, String pkg, NotificationChannel channel) {
+        Intent broadcast = new Intent(SERVICE_CREATE_CHANNEL);
+        broadcast.putExtra(EXTRA_PKG, pkg);
+        broadcast.putExtra(EXTRA_CHANNEL, channel);
+        context.sendBroadcast(broadcast);
+    }
+
+    public static void updateChannel(Context context, String pkg, NotificationChannel channel) {
+        Intent broadcast = new Intent(SERVICE_UPDATE_CHANNEL);
+        broadcast.putExtra(EXTRA_PKG, pkg);
+        broadcast.putExtra(EXTRA_CHANNEL, channel);
+        context.sendBroadcast(broadcast);
+    }
+
+    public static void deleteChannel(Context context, String pkg, String id) {
+        Intent broadcast = new Intent(SERVICE_DELETE_CHANNEL);
+        broadcast.putExtra(EXTRA_PKG, pkg);
+        broadcast.putExtra(EXTRA_TAG, id);
+        context.sendBroadcast(broadcast);
     }
 
     public static void applyAdjustment(Context context, String tag, Bundle signals) {

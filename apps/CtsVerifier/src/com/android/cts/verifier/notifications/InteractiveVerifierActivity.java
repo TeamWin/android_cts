@@ -357,6 +357,14 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         return pi;
     }
 
+    protected boolean checkEquals(long[] expected, long[] actual, String message) {
+        if (Arrays.equals(expected, actual)) {
+            return true;
+        }
+        logWithStack(String.format(message, expected, actual));
+        return false;
+    }
+
     protected boolean checkEquals(Object[] expected, Object[] actual, String message) {
         if (Arrays.equals(expected, actual)) {
             return true;
@@ -373,6 +381,14 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         return false;
     }
 
+    protected boolean checkEquals(boolean expected, boolean actual, String message) {
+        if (expected == actual) {
+            return true;
+        }
+        logWithStack(String.format(message, expected, actual));
+        return false;
+    }
+
     protected boolean checkEquals(long expected, long actual, String message) {
         if (expected == actual) {
             return true;
@@ -381,7 +397,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         return false;
     }
 
-    protected boolean checkEquals(String expected, String actual, String message) {
+    protected boolean checkEquals(CharSequence expected, CharSequence actual, String message) {
         if (expected.equals(actual)) {
             return true;
         }

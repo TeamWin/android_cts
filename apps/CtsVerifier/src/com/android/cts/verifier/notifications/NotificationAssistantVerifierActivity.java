@@ -37,6 +37,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.Settings;
@@ -49,6 +50,7 @@ import android.view.ViewGroup;
 import com.android.cts.verifier.R;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,6 +64,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             "com.android.cts.verifier.notifications.MockAssistant";
     private static final String ENABLED_NOTIFICATION_ASSISTANT_SETTING =
             "enabled_notification_assistant";
+    private static final String OTHER_PKG = "android";
 
     private String mTag1;
     private String mTag2;
@@ -103,6 +106,9 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
         tests.add(new AdjustNotificationTest());
+        tests.add(new CreateChannelTest());
+        tests.add(new UpdateChannelTest());
+        tests.add(new DeleteChannelTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotEnqueuedTest());
@@ -822,6 +828,224 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             MockAssistant.resetListenerData(mContext);
             delay();
         }
+    }
+
+    private class CreateChannelTest extends InteractiveTestCase {
+        private NotificationChannel channel = new NotificationChannel("channelForOtherPkg", "new",
+                NotificationManager.IMPORTANCE_LOW);
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_create_channel);
+        }
+
+        @Override
+        void setUp() {
+            MockAssistant.createChannel(mContext, OTHER_PKG, channel);
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            MockAssistant.probeChannels(mContext, OTHER_PKG,
+                    new MockAssistant.BundleListResultCatcher() {
+                        @Override
+                        public void accept(ArrayList<Parcelable> result) {
+                            if (result == null || result.size() == 0) {
+                                logFail(result == null ? "no results"
+                                        : String.format("%d results returned", result.size()));
+                                status = FAIL;
+                                return;
+                            }
+                            boolean pass = false;
+                            for (Parcelable payloadData : result) {
+                                NotificationChannel payload = (NotificationChannel) payloadData;
+                                pass |= compareChannels(payload, channel);
+                            }
+                            status = pass ? PASS : FAIL;
+                            next();
+                        }
+                    });
+
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            MockAssistant.deleteChannel(
+                    mContext, OTHER_PKG, channel.getId());
+            delay();
+        }
+    }
+
+    private class DeleteChannelTest extends InteractiveTestCase {
+        private NotificationChannel channel = new NotificationChannel("1channelForOtherPkg", "new",
+                NotificationManager.IMPORTANCE_LOW);
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_delete_channel);
+        }
+
+        @Override
+        void setUp() {
+            MockAssistant.createChannel(mContext, OTHER_PKG, channel);
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockAssistant.probeChannels(mContext, OTHER_PKG,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = false;
+                                for (Parcelable payloadData : result) {
+                                    NotificationChannel payload = (NotificationChannel) payloadData;
+                                    pass |= compareChannels(channel, payload);
+                                }
+                                if (pass) {
+                                    MockAssistant.deleteChannel(
+                                            mContext, OTHER_PKG, channel.getId());
+                                    status = RETEST;
+                                }
+                            }
+                        });
+            } else if (status == RETEST) {
+                MockAssistant.probeChannels(mContext, OTHER_PKG,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                if (result == null || result.size() <= 1) {
+                                    status = PASS;
+                                } else {
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            MockAssistant.deleteChannel(
+                    mContext, OTHER_PKG, channel.getId());
+            delay();
+        }
+    }
+
+    private class UpdateChannelTest extends InteractiveTestCase {
+        private String id = "channelToUpdate";
+        private NotificationChannel channel = new NotificationChannel(id, "new",
+                NotificationManager.IMPORTANCE_LOW);
+        private NotificationChannel updatedChannel = new NotificationChannel(id, "new",
+                NotificationManager.IMPORTANCE_MIN);
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_update_channel);
+        }
+
+        @Override
+        void setUp() {
+            updatedChannel.setVibrationPattern(new long[] {467, 2478, 24738});
+            updatedChannel.setSound(new Uri.Builder().appendPath("sound").build());
+            updatedChannel.setLights(true);
+            updatedChannel.enableVibration(true);
+            updatedChannel.setBypassDnd(true);
+            updatedChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            MockAssistant.createChannel(mContext, OTHER_PKG, channel);
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockAssistant.probeChannels(mContext, OTHER_PKG,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    next();
+                                    return;
+                                }
+                                boolean pass = false;
+                                for (Parcelable payloadData : result) {
+                                    NotificationChannel payload = (NotificationChannel) payloadData;
+                                    pass |= compareChannels(channel, payload);
+                                }
+                                if (pass) {
+                                    MockAssistant.updateChannel(
+                                            mContext, OTHER_PKG, updatedChannel);
+                                    status = RETEST;
+                                } else {
+                                    status = FAIL;
+                                    next();
+                                }
+                            }
+                        });
+            } else if (status == RETEST) {
+                MockAssistant.probeChannels(mContext, OTHER_PKG,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    next();
+                                    return;
+                                }
+                                boolean pass = false;
+                                for (Parcelable payloadData : result) {
+                                    NotificationChannel payload = (NotificationChannel) payloadData;
+                                    pass |= compareChannels(updatedChannel, payload);
+                                }
+                                status = pass ? PASS : FAIL;
+                                next();
+                            }
+                        });
+            }
+
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            MockAssistant.deleteChannel(
+                    mContext, OTHER_PKG, channel.getId());
+            delay();
+        }
+    }
+
+    private boolean compareChannels(NotificationChannel expected, NotificationChannel actual) {
+        boolean pass = true;
+        String msg = "Channel mismatch (%s, %s)";
+        if (actual == null || expected == null) {
+            logWithStack(String.format("Channel mismatch (%s, %s)", expected, actual));
+            return false;
+        }
+        pass &= checkEquals(expected.getId(), actual.getId(), msg);
+        pass &= checkEquals(expected.getName(), actual.getName(), msg);
+        pass &= checkEquals(expected.shouldVibrate(), actual.shouldVibrate(), msg);
+        pass &= checkEquals(expected.shouldShowLights(), actual.shouldShowLights(), msg);
+        pass &= checkEquals(expected.getImportance(), actual.getImportance(), msg);
+        pass &= checkEquals(
+                expected.getLockscreenVisibility(), actual.getLockscreenVisibility(), msg);
+        pass &= checkEquals(expected.getSound(), actual.getSound(), msg);
+        pass &= checkEquals(expected.canBypassDnd(), actual.canBypassDnd(), msg);
+        pass &= checkEquals(expected.getVibrationPattern(), actual.getVibrationPattern(), msg);
+        return pass;
     }
 
     protected View createSettingsItem(ViewGroup parent, int messageId) {
