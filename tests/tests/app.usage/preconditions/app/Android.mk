@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,24 +16,26 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsUsageStatsTestCases
-
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-
-# and when built explicitly put it in the data partition
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+# When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_DEX_PREOPT := false
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test
-
-LOCAL_HOST_SHARED_LIBRARIES := compatibility-device-appusage-preconditions
+LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-# Tag this module as a cts test artifact
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test ctstestrunner \
+                                compatibility-device-util \
+                                compatibility-device-preconditions
+
+# tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
+LOCAL_PACKAGE_NAME := CtsAppUsagePreparerApp
+
+LOCAL_SDK_VERSION := current
+
 include $(BUILD_CTS_PACKAGE)
-include $(call all-makefiles-under,$(LOCAL_PATH))
