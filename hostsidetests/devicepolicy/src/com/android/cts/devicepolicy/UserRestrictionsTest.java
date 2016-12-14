@@ -76,6 +76,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         mRemoveOwnerInTearDown = true;
 
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+                "testDefaultRestrictions", mDeviceOwnerUserId);
+        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
     }
 
@@ -95,6 +97,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         mRemoveOwnerInTearDown = true;
 
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
+                "testDefaultRestrictions", mDeviceOwnerUserId);
+        runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
     }
 
@@ -109,6 +113,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                         secondaryUserId, /* expectFailure */ false));
 
+        runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
+                "testDefaultRestrictions", secondaryUserId);
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", secondaryUserId);
     }
