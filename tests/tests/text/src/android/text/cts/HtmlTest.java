@@ -230,6 +230,22 @@ public class HtmlTest {
     }
 
     @Test
+    public void testBidi() {
+        SpannableString s = new SpannableString("LTR Text");
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">LTR Text</p>"));
+
+        s = new SpannableString("\u0622"); // U+06222 ARABIC LETTER ALEF WITH MADDA ABOVE
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"rtl\">&#1570;</p>"));
+
+        // Paragraphs with no strong characters should become LTR.
+        s = new SpannableString("===");
+        assertThat(Html.toHtml(s), matchesIgnoringTrailingWhitespace(
+                "<p dir=\"ltr\">===</p>"));
+    }
+
+    @Test
     public void testParagraphStyles() {
         SpannableString s = new SpannableString("Hello world");
         s.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
