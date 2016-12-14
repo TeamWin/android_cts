@@ -33,7 +33,6 @@ import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.PathEffect;
-import android.graphics.Rasterizer;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
@@ -188,7 +187,6 @@ public class PaintTest {
         ColorFilter c = new ColorFilter();
         MaskFilter m  = new MaskFilter();
         PathEffect e  = new PathEffect();
-        Rasterizer r  = new Rasterizer();
         Shader s      = new Shader();
         Typeface t    = Typeface.DEFAULT;
         Xfermode x = new Xfermode();
@@ -196,7 +194,6 @@ public class PaintTest {
         p.setColorFilter(c);
         p.setMaskFilter(m);
         p.setPathEffect(e);
-        p.setRasterizer(r);
         p.setShader(s);
         p.setTypeface(t);
         p.setXfermode(x);
@@ -204,7 +201,6 @@ public class PaintTest {
         assertEquals(c, p2.getColorFilter());
         assertEquals(m, p2.getMaskFilter());
         assertEquals(e, p2.getPathEffect());
-        assertEquals(r, p2.getRasterizer());
         assertEquals(s, p2.getShader());
         assertEquals(t, p2.getTypeface());
         assertEquals(x, p2.getXfermode());
@@ -213,7 +209,6 @@ public class PaintTest {
         assertEquals(c, p2.getColorFilter());
         assertEquals(m, p2.getMaskFilter());
         assertEquals(e, p2.getPathEffect());
-        assertEquals(r, p2.getRasterizer());
         assertEquals(s, p2.getShader());
         assertEquals(t, p2.getTypeface());
         assertEquals(x, p2.getXfermode());
@@ -221,7 +216,6 @@ public class PaintTest {
         p.setColorFilter(null);
         p.setMaskFilter(null);
         p.setPathEffect(null);
-        p.setRasterizer(null);
         p.setShader(null);
         p.setTypeface(null);
         p.setXfermode(null);
@@ -229,7 +223,6 @@ public class PaintTest {
         assertNull(p2.getColorFilter());
         assertNull(p2.getMaskFilter());
         assertNull(p2.getPathEffect());
-        assertNull(p2.getRasterizer());
         assertNull(p2.getShader());
         assertNull(p2.getTypeface());
         assertNull(p2.getXfermode());
@@ -238,7 +231,6 @@ public class PaintTest {
         assertNull(p2.getColorFilter());
         assertNull(p2.getMaskFilter());
         assertNull(p2.getPathEffect());
-        assertNull(p2.getRasterizer());
         assertNull(p2.getShader());
         assertNull(p2.getTypeface());
         assertNull(p2.getXfermode());
@@ -477,18 +469,6 @@ public class PaintTest {
 
         assertNull(p.setColorFilter(null));
         assertNull(p.getColorFilter());
-    }
-
-    @Test
-    public void testAccessRasterizer() {
-        Paint p = new Paint();
-        Rasterizer r = new Rasterizer();
-
-        assertEquals(r, p.setRasterizer(r));
-        assertEquals(r, p.getRasterizer());
-
-        assertNull(p.setRasterizer(null));
-        assertNull(p.getRasterizer());
     }
 
     @Test
@@ -955,7 +935,6 @@ public class PaintTest {
         ColorFilter c = new ColorFilter();
         MaskFilter m  = new MaskFilter();
         PathEffect e  = new PathEffect();
-        Rasterizer r  = new Rasterizer();
         Shader s      = new Shader();
         Typeface t    = Typeface.DEFAULT;
         Xfermode x = new Xfermode();
@@ -963,7 +942,6 @@ public class PaintTest {
         p.setColorFilter(c);
         p.setMaskFilter(m);
         p.setPathEffect(e);
-        p.setRasterizer(r);
         p.setShader(s);
         p.setTypeface(t);
         p.setXfermode(x);
@@ -971,7 +949,6 @@ public class PaintTest {
         assertEquals(c, p.getColorFilter());
         assertEquals(m, p.getMaskFilter());
         assertEquals(e, p.getPathEffect());
-        assertEquals(r, p.getRasterizer());
         assertEquals(s, p.getShader());
         assertEquals(t, p.getTypeface());
         assertEquals(x, p.getXfermode());
@@ -982,7 +959,6 @@ public class PaintTest {
         assertEquals(null, p.getColorFilter());
         assertEquals(null, p.getMaskFilter());
         assertEquals(null, p.getPathEffect());
-        assertEquals(null, p.getRasterizer());
         assertEquals(null, p.getShader());
         assertEquals(null, p.getTypeface());
         assertEquals(null, p.getXfermode());
