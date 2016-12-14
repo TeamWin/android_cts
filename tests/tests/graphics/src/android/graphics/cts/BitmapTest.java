@@ -403,6 +403,14 @@ public class BitmapTest {
         assertEquals(Bitmap.Config.RGB_565, bm2.getConfig());
         // Attempting to create a 4444 bitmap actually creates an 8888 bitmap.
         assertEquals(Bitmap.Config.ARGB_8888, bm3.getConfig());
+
+        // Can't call Bitmap.createBitmap with Bitmap.Config.HARDWARE,
+        // because createBitmap creates mutable bitmap and hardware bitmaps are always immutable,
+        // so such call will throw an exception.
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.HARDWARE;
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
+        assertEquals(Bitmap.Config.HARDWARE, hardwareBitmap.getConfig());
     }
 
     @Test
