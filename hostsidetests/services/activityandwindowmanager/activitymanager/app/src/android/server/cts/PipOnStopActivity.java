@@ -28,6 +28,8 @@ public class PipOnStopActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.tap_to_finish_pip_layout);
     }
 
     @Override
