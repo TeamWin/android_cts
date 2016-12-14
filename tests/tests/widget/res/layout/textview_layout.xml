@@ -283,8 +283,8 @@
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
                 android:autoSizeText="xy"
-                android:textSize="50dp"
                 android:autoSizeMinTextSize="2px"
+                android:autoSizeMaxTextSize="50dp"
                 android:autoSizeStepGranularity="1dp" />
 
         </LinearLayout>
