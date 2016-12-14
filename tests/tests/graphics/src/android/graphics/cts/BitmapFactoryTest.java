@@ -674,6 +674,48 @@ public class BitmapFactoryTest {
         decodeConfigs(R.drawable.grayscale_png, 128, 128, false, true, false);
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testMutableHardwareInDecodeResource() {
+        Options options = new Options();
+        options.inMutable = true;
+        options.inPreferredConfig = Config.HARDWARE;
+        BitmapFactory.decodeResource(mRes, R.drawable.alpha, options);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testMutableHardwareInDecodeByteArray() {
+        Options options = new Options();
+        options.inMutable = true;
+        options.inPreferredConfig = Config.HARDWARE;
+        BitmapFactory.decodeByteArray(new byte[100], 1, 20, options);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testMutableHardwareInDecodeFile() {
+        Options options = new Options();
+        options.inMutable = true;
+        options.inPreferredConfig = Config.HARDWARE;
+        BitmapFactory.decodeFile("barely/care.jpg", options);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testMutableHardwareInDecodeFileDescriptor() {
+        Options options = new Options();
+        options.inMutable = true;
+        options.inPreferredConfig = Config.HARDWARE;
+        BitmapFactory.decodeFileDescriptor(null, new Rect(), options);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testMutableHardwareInDecodeResourceStream() {
+        Options options = new Options();
+        options.inMutable = true;
+        options.inPreferredConfig = Config.HARDWARE;
+        TypedValue value = new TypedValue();
+        BitmapFactory.decodeResourceStream(mRes, value,
+                new ByteArrayInputStream(new byte[20]), new Rect(), options);
+    }
+
     private void decodeConfigs(int id, int width, int height, boolean hasAlpha, boolean isGray,
             boolean hasColorTable) {
         Options opts = new BitmapFactory.Options();
