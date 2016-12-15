@@ -96,6 +96,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mDevice = getDevice();
+
+        if (!supportsMultiWindowMode()) {
+            return;
+        }
+
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
         cleanupState();
@@ -104,6 +109,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+
+        if (!supportsMultiWindowMode()) {
+            return;
+        }
+
         mDevice.executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
         mDevice.executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
     }
@@ -299,6 +309,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private void doTestDragAndDrop(String sourceMode, String targetMode, String expectedDropResult)
             throws Exception {
+        if (!supportsMultiWindowMode()) {
+            return;
+        }
 
         launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
         launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
@@ -314,8 +327,11 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         assertResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
     }
 
-
     private void assertResult(String resultKey, String expectedResult) {
+        if (!supportsMultiWindowMode()) {
+            return;
+        }
+
         if (expectedResult == null) {
             if (mResults.containsKey(resultKey)) {
                 fail("Unexpected " + resultKey + "=" + mResults.get(resultKey));
