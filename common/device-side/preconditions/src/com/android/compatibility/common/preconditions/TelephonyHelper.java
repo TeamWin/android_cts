@@ -33,4 +33,14 @@ public class TelephonyHelper {
 
         return TextUtils.isEmpty(telephony.getLine1Number());
     }
+
+    /*
+     * This helper returns false if the device doesn't cellular data connection.
+     */
+    public static boolean hasCellcularData(Context context) {
+        TelephonyManager telephony =
+                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+
+        return telephony.getDataState() == TelephonyManager.DATA_CONNECTED;
+    }
 }
