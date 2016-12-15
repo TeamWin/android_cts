@@ -18,6 +18,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -394,6 +395,18 @@ public class BitmapRegionDecoderTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testDecodeHardwareBitmap() throws IOException {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.HARDWARE;
+        InputStream is = obtainInputStream(RES_IDS[0]);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
+        Bitmap hardwareBitmap = decoder.decodeRegion(new Rect(0, 0, 10, 10), options);
+        assertNotNull(hardwareBitmap);
+        // Test that checks that correct bitmap was obtained is in uirendering/HardwareBitmapTests
+        assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
     }
 
     private void compareRegionByRegion(BitmapRegionDecoder decoder,
