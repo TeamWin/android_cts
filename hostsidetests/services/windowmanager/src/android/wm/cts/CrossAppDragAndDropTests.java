@@ -107,7 +107,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         super.setUp();
 
         mDevice = getDevice();
-        if (!supportsDragAndDrop()) {
+        if (!supportsDragAndDrop() || !supportsMultiWindowMode()) {
             return;
         }
 
@@ -119,7 +119,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        if (!supportsDragAndDrop()) {
+        if (!supportsDragAndDrop() || !supportsMultiWindowMode()) {
             return;
         }
 
@@ -346,7 +346,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private boolean doTestDragAndDrop(String sourceMode, String targetMode,
             String expectedDropResult)
             throws Exception {
-        if (!supportsDragAndDrop()) {
+        if (!supportsDragAndDrop() || !supportsMultiWindowMode()) {
             return false;
         }
 
@@ -377,7 +377,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     }
 
     private void assertResult(String resultKey, String expectedResult) throws Exception {
-        if (!supportsDragAndDrop()) {
+        if (!supportsDragAndDrop() || !supportsMultiWindowMode()) {
             return;
         }
 
