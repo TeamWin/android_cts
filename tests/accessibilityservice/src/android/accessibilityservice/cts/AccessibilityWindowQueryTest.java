@@ -27,6 +27,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Gravity;
@@ -553,6 +554,13 @@ public class AccessibilityWindowQueryTest
         if (getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             // Android TV doesn't support the divider window
+            return;
+        }
+        // Get com.android.internal.R.bool.config_supportsMultiWindow
+        if (!getInstrumentation().getContext().getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_supportsMultiWindow", "bool",
+                        "android"))) {
+            // Check if multiWindow is supported.
             return;
         }
         setAccessInteractiveWindowsFlag();
