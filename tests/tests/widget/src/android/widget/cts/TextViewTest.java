@@ -6332,8 +6332,8 @@ public class TextViewTest {
         }
 
         private void calculatePositions() {
-            int xStart = (int) mParent.getLayout().getPrimaryHorizontal(mStartCharPos, true);
-            int xEnd = (int) mParent.getLayout().getPrimaryHorizontal(mEndCharPos, true);
+            int xStart = (int) mParent.getLayout().getPrimaryHorizontal(mStartCharPos, true, true);
+            int xEnd = (int) mParent.getLayout().getPrimaryHorizontal(mEndCharPos, true, true);
             int line = mParent.getLayout().getLineForOffset(mEndCharPos);
             int yTop = mParent.getLayout().getLineTop(line);
             int yBottom = mParent.getLayout().getLineBottom(line);
