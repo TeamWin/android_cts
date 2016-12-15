@@ -57,6 +57,8 @@ public class BitmapTest {
     private static final int PREMUL_ROUNDED_COLOR = Color.argb(2, 255, 255, 255);
     private static final int PREMUL_STORED_COLOR = Color.argb(2, 2, 2, 2);
 
+    private static final BitmapFactory.Options HARDWARE_OPTIONS = createHardwareBitmapOptions();
+
     private Resources mRes;
     private Bitmap mBitmap;
     private BitmapFactory.Options mOptions;
@@ -412,9 +414,8 @@ public class BitmapTest {
         // Can't call Bitmap.createBitmap with Bitmap.Config.HARDWARE,
         // because createBitmap creates mutable bitmap and hardware bitmaps are always immutable,
         // so such call will throw an exception.
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.HARDWARE;
-        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                HARDWARE_OPTIONS);
         assertEquals(Bitmap.Config.HARDWARE, hardwareBitmap.getConfig());
     }
 
@@ -1047,6 +1048,18 @@ public class BitmapTest {
         assertEquals(scaledWidth, ret.getScaledWidth(mCanvas));
     }
 
+    @Test
+    public void testHardwareSameAs() {
+        Bitmap bitmap1 = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        Bitmap bitmap2 = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        Bitmap bitmap3 = BitmapFactory.decodeResource(mRes, R.drawable.robot);
+        Bitmap bitmap4 = BitmapFactory.decodeResource(mRes, R.drawable.start, HARDWARE_OPTIONS);
+        assertTrue(bitmap1.sameAs(bitmap2));
+        assertTrue(bitmap2.sameAs(bitmap1));
+        assertFalse(bitmap1.sameAs(bitmap3));
+        assertFalse(bitmap1.sameAs(bitmap4));
+    }
+
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;
@@ -1064,5 +1077,11 @@ public class BitmapTest {
         }
 
         return colors;
+    }
+
+    private static BitmapFactory.Options createHardwareBitmapOptions() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Config.HARDWARE;
+        return options;
     }
 }
