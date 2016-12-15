@@ -140,8 +140,8 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     private String getReportName() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss", Locale.ENGLISH);
         String date = dateFormat.format(new Date());
-        String[] nameDetails = {date, Build.MANUFACTURER, Build.PRODUCT, Build.DEVICE, Build.ID};
-        return String.join("-", nameDetails);
+        return String.format( "%s-%s-%s-%s-%s",
+                date, Build.MANUFACTURER, Build.PRODUCT, Build.DEVICE, Build.ID);
     }
 
     @Override
