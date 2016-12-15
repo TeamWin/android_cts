@@ -25,6 +25,7 @@ import java.awt.Rectangle;
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
+    private static final String FINISHABLE_ACTIVITY_NAME = "FinishableActivity";
     private static final String NON_RESIZEABLE_ACTIVITY_NAME = "NonResizeableActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
@@ -298,6 +299,17 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
     }
 
+    public void testFinishDockActivityWhileMinimized() throws Exception {
+        assertDockNotMinimized();
+        launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
+        assertDockMinimized();
+
+        runCommandAndPrintOutput("am broadcast -a 'android.server.cts.FinishableActivity.finish'");
+        waitForDockNotMinimized();
+        mAmWmState.assertVisibility(FINISHABLE_ACTIVITY_NAME, false);
+        assertDockNotMinimized();
+    }
+
     public void testResizeDockedStack() throws Exception {
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {DOCKED_ACTIVITY_NAME});
@@ -374,5 +386,29 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         final int recentsStackIndex = mAmWmState.getStackPosition(RECENTS_STACK_ID);
         assertTrue("Recents stack should be on top of home stack",
                 recentsStackIndex < homeStackIndex);
+    }
+
+    private void launchActivityInDockStackAndMinimize(String activityName) throws Exception {
+        launchActivityInDockStack(activityName);
+        pressHomeButton();
+        waitForDockMinimized();
+    }
+
+    private void assertDockMinimized() {
+        assertTrue(mAmWmState.getWmState().isDockedStackMinimized());
+    }
+
+    private void assertDockNotMinimized() {
+        assertFalse(mAmWmState.getWmState().isDockedStackMinimized());
+    }
+
+    private void waitForDockMinimized() throws Exception {
+        mAmWmState.waitForWithWmState(mDevice, state -> state.isDockedStackMinimized(),
+                "***Waiting for Dock stack to be minimized");
+    }
+
+    private void waitForDockNotMinimized() throws Exception {
+        mAmWmState.waitForWithWmState(mDevice, state -> !state.isDockedStackMinimized(),
+                "***Waiting for Dock stack to not be minimized");
     }
 }

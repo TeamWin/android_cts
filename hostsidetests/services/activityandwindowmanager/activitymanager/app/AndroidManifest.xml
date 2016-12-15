@@ -275,6 +275,9 @@
                   android:exported="true"
                   android:launchMode="singleInstance"
         />
+        <activity android:name=".FinishableActivity"
+                  android:exported="true"
+        />
         <receiver
             android:name=".LaunchBroadcastReceiver"
             android:enabled="true"
