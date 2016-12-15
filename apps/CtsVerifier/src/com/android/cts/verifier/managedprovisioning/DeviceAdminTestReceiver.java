@@ -106,6 +106,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             filter.addAction(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST);
             filter.addAction(ByodHelperActivity.ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES);
             filter.addAction(VpnTestActivity.ACTION_VPN);
+            filter.addAction(RecentsRedactionActivity.ACTION_RECENTS);
             filter.addAction(ByodHelperActivity.ACTION_TEST_SELECT_WORK_CHALLENGE);
             filter.addAction(ByodHelperActivity.ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS);
             filter.addAction(ByodHelperActivity.ACTION_SET_ORGANIZATION_INFO);
