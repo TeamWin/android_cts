@@ -61,6 +61,8 @@ public class AndroidTestsForMapsInJavaUtil extends TestsForMapsInJavaUtil {
         TestSuite suite = new TestSuite("java.util Maps: " + mapsToTest);
         switch (mapsToTest) {
             case OTHER:
+                suite.addTest(testsForCheckedMap());
+                suite.addTest(testsForCheckedSortedMap());
                 suite.addTest(testsForEmptyMap());
                 suite.addTest(testsForSingletonMap());
                 suite.addTest(testsForHashMap());
