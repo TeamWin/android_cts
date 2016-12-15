@@ -87,7 +87,8 @@ JARS="tradefed
   cts-tradefed
   cts-tradefed-tests
   compatibility-common-util-tests
-  compatibility-tradefed-tests"
+  compatibility-tradefed-tests
+  host-libprotobuf-java-full"
 
 for JAR in $JARS; do
     checkFile ${JAR_DIR}/${JAR}.jar
