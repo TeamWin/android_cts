@@ -28,6 +28,8 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             "com.android.cts.comp.provisioning.ManagedProfileProvisioningTest";
     private static final String MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST =
             "com.android.cts.comp.ManagedProfileBindDeviceAdminServiceTest";
+    private static final String AFFILIATION_TEST =
+            "com.android.cts.comp.provisioning.AffiliationTest";
 
     private int mProfileUserId;
 
@@ -63,6 +65,7 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         setupManagedProfile(COMP_DPC_APK, COMP_DPC_ADMIN);
+        setSameAffiliationId();
         verifyBindDeviceAdminServiceAsUser();
     }
 
@@ -76,7 +79,36 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         provisionCorpOwnedManagedProfile();
+        setSameAffiliationId();
         verifyBindDeviceAdminServiceAsUser();
+    }
+
+    /**
+     * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}) but are not
+     * affiliated.
+     */
+    public void testBindDeviceAdminServiceAsUser_NotAffiliated() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_ADMIN);
+        setDifferentAffiliationId();
+
+        installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
+        installAppAsUser(COMP_DPC_APK2, mProfileUserId);
+
+        // Testing device owner -> profile owner.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_OWNER_BIND_DEVICE_ADMIN_SERVICE_TEST,
+                "testBindDeviceAdminServiceForUser_shouldFail",
+                mPrimaryUserId);
+        // Testing profile owner -> device owner.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST,
+                "testBindDeviceAdminServiceForUser_shouldFail",
+                mProfileUserId);
     }
 
     /**
@@ -91,13 +123,13 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_OWNER_BIND_DEVICE_ADMIN_SERVICE_TEST,
-                "testBindDeviceAdminServiceForUser_byodPlusDeviceOwner",
+                "testBindDeviceAdminServiceForUser_shouldFail",
                 mPrimaryUserId);
         // Testing profile owner -> device owner.
         runDeviceTestsAsUser(
                 COMP_DPC_PKG2,
                 MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST,
-                "testBindDeviceAdminServiceForUser_byodPlusDeviceOwner",
+                "testBindDeviceAdminServiceForUser_shouldFail",
                 mProfileUserId);
     }
 
@@ -117,6 +149,32 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 MANAGED_PROFILE_BIND_DEVICE_ADMIN_SERVICE_TEST,
                 "testBindDeviceAdminServiceForUser_corpOwnedManagedProfile",
+                mProfileUserId);
+    }
+
+    private void setSameAffiliationId() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                AFFILIATION_TEST,
+                "testSetAffiliationId1",
+                mPrimaryUserId);
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                AFFILIATION_TEST,
+                "testSetAffiliationId1",
+                mProfileUserId);
+    }
+
+    private void setDifferentAffiliationId() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                AFFILIATION_TEST,
+                "testSetAffiliationId1",
+                mPrimaryUserId);
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                AFFILIATION_TEST,
+                "testSetAffiliationId2",
                 mProfileUserId);
     }
 
