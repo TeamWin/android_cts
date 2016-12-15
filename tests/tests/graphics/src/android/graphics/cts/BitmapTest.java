@@ -989,10 +989,21 @@ public class BitmapTest {
         }
 
         // normal case
+        p = Parcel.obtain();
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         mBitmap.writeToParcel(p, 0);
         p.setDataPosition(0);
-        mBitmap.equals(Bitmap.CREATOR.createFromParcel(p));
+        assertTrue(mBitmap.sameAs(Bitmap.CREATOR.createFromParcel(p)));
+    }
+
+    @Test
+    public void testWriteHwBitmapToParcel() {
+        mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        Parcel p = Parcel.obtain();
+        mBitmap.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        Bitmap expectedBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot);
+        assertTrue(expectedBitmap.sameAs(Bitmap.CREATOR.createFromParcel(p)));
     }
 
     @Test
