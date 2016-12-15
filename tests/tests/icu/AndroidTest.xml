@@ -22,8 +22,6 @@
         <!-- override AJUR -->
         <option name="runner" value="com.android.cts.core.runner.CoreTestRunner" />
         <option name="package" value="android.icu.cts" />
-        <option name="instrumentation-arg" key="core-root-classes"
-                value="android.icu.cts.coverage.TestAll,android.icu.dev.test.TestAll" />
         <option name="core-expectation" value="/android/icu/cts/expectations/icu-known-failures.txt" />
         <option name="runtime-hint" value="18m30s" />
     </test>
