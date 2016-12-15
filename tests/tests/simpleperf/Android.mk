@@ -50,3 +50,6 @@ LOCAL_CTS_TEST_PACKAGE := android.simpleperf
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 include $(LLVM_DEVICE_BUILD_MK)
 include $(BUILD_CTS_EXECUTABLE)
+
+# Build the test APKs using their own makefiles
+include $(call all-makefiles-under,$(LOCAL_PATH))
