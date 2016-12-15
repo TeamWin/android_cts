@@ -37,9 +37,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(VISIBLE_BEHIND_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY,
                 FULLSCREEN_WORKSPACE_STACK_ID);
-
-        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
-        mAmWmState.waitForHomeActivityVisible(mDevice);
+        launchHomeActivity();
 
         /* TODO: Find a proper way to wait until launcher activity
          * becomes fully visible. It appears that both VisibleBehindActivity
@@ -97,7 +95,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      * fullscreen stack over the home activity.
      */
     public void testTranslucentActivityOnTopOfHome() throws Exception {
-        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        launchHomeActivity();
         launchActivity(TRANSLUCENT_ACTIVITY);
 
         mAmWmState.computeState(mDevice, new String[]{TRANSLUCENT_ACTIVITY});
@@ -116,9 +114,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             return;
         }
 
-        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        launchHomeActivity();
         launchActivity(TEST_ACTIVITY_NAME);
-        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        launchHomeActivity();
         launchActivity(TRANSLUCENT_ACTIVITY);
         executeShellCommand(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND);
 

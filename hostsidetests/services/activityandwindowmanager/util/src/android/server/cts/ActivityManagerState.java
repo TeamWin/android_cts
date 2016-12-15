@@ -43,7 +43,6 @@ class ActivityManagerState {
     public static final String STATE_RESUMED = "RESUMED";
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
-    public static final String STATE_DESTROYED = "DESTROYED";
 
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
 
@@ -404,6 +403,30 @@ class ActivityManagerState {
                     continue;
                 }
             }
+        }
+
+        /**
+         * @return the bottom task in the stack.
+         */
+        ActivityTask getBottomTask() {
+            if (!mTasks.isEmpty()) {
+                // NOTE: Unlike the ActivityManager internals, we dump the state from top to bottom,
+                //       so the indices are inverted
+                return mTasks.get(mTasks.size() - 1);
+            }
+            return null;
+        }
+
+        /**
+         * @return the top task in the stack.
+         */
+        ActivityTask getTopTask() {
+            if (!mTasks.isEmpty()) {
+                // NOTE: Unlike the ActivityManager internals, we dump the state from top to bottom,
+                //       so the indices are inverted
+                return mTasks.get(0);
+            }
+            return null;
         }
 
         List<ActivityTask> getTasks() {
