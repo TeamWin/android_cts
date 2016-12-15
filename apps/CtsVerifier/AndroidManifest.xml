@@ -2805,6 +2805,9 @@
                 <action android:name="android.intent.action.DIAL" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
         </activity>
 
         <receiver android:name=".voicemail.VoicemailBroadcastReceiver">
@@ -2812,6 +2815,31 @@
                 <action android:name="android.telephony.action.SHOW_VOICEMAIL_NOTIFICATION" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".voicemail.VisualVoicemailServiceActivity"
+            android:label="@string/visual_voicemail_service_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
+
+        <service
+            android:name=".voicemail.CtsVisualVoicemailService"
+            android:permission="android.permission.BIND_VISUAL_VOICEMAIL_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.VisualVoicemailService"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

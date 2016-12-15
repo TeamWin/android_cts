@@ -3218,17 +3218,31 @@ You should be prompted to select credentials; choose the ones you just installed
         <item>@string/phase3_description</item>
     </string-array>
 
-    <!-- Strings for voicemail broadcast test -->
-    <string name="voicemail_broadcast_test">Voicemail Broadcast Test</string>
-    <string name="voicemail_broadcast_instructions">This test verifies that the default dialer can intercept the voicemail notification. The test must be conducted on a SIM with visual voicemail disabled</string>
-    <string name="voicemail_set_default_dialer_description">Before the test, the CTS verifier should be set to the default dialer</string>
-    <string name="voicemail_set_default_dialer_button">Set CTS verifier as default dialer"</string>
-    <string name="voicemail_leave_voicemail">Send a voicemail to the device, CTS verifier should receive a voicemail notification broadcast</string>
-    <string name="voicemail_broadcast_received">Voicemail broadcast Received</string>
+    <!-- Strings for setting and restoring default dialer for voicemail tests -->
     <string name="voicemail_restore_default_dialer_description">(Optional) restore the default dialer setting</string>
     <string name="voicemail_restore_default_dialer_no_default_description">(Optional) restore the default dialer by going to settings-> apps -> cogwheel -> Phone app</string>
     <string name="voicemail_restore_default_dialer_button">Restore the default dialer"</string>
     <string name="voicemail_default_dialer_already_set">Default dialer already set</string>
     <string name="voicemail_default_dialer_already_restored">Default dialer already restored</string>
+    <string name="voicemail_set_default_dialer_description">Before the test, the CTS verifier should be set to the default dialer</string>
+    <string name="voicemail_set_default_dialer_button">Set CTS verifier as default dialer"</string>
+
+    <!-- Strings for voicemail broadcast test -->
+    <string name="voicemail_broadcast_test">Voicemail Broadcast Test</string>
+    <string name="voicemail_broadcast_instructions">This test verifies that the default dialer can intercept the voicemail notification. The test must be conducted on a SIM with visual voicemail disabled</string>
+    <string name="voicemail_leave_voicemail">Send a voicemail to the device, CTS verifier should receive a voicemail notification broadcast</string>
+    <string name="voicemail_broadcast_received">Voicemail broadcast Received</string>
+
+    <!-- Strings for VisualVoicemailService test -->
+    <string name="visual_voicemail_service_test">VisualVoicemailService Test</string>
+    <string name="visual_voicemail_service_instructions">This test verifies that the VisualVoicemailService can receive SIM inserted and removed events</string>
+    <string name="visual_voicemail_service_remove_sim_before_test">Removed the SIM before starting the test. This test only applies to devices with hotswap-able SIM</string>
+    <string name="visual_voicemail_service_remove_sim_ok">Ok</string>
+    <string name="visual_voicemail_service_remove_sim_not_applicable">Not applicable</string>
+    <string name="visual_voicemail_service_insert_sim">Insert SIM</string>
+    <string name="visual_voicemail_service_insert_sim_received">Service connection event received</string>
+    <string name="visual_voicemail_service_remove_sim">Remove SIM</string>
+    <string name="visual_voicemail_service_remove_sim_received">SIM removal event received</string>
+
 
 </resources>
