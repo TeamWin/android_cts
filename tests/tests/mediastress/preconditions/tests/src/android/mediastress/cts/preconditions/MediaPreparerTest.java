@@ -77,8 +77,8 @@ public class MediaPreparerTest extends TestCase {
                     resolution.toString());
             String fullFile = String.format("%s%s", mMediaPreparer.mBaseDeviceFullDir,
                     resolution.toString());
-            EasyMock.expect(mMockDevice.doesFileExist(shortFile)).andReturn(true).once();
-            EasyMock.expect(mMockDevice.doesFileExist(fullFile)).andReturn(true).once();
+            EasyMock.expect(mMockDevice.doesFileExist(shortFile)).andReturn(true).anyTimes();
+            EasyMock.expect(mMockDevice.doesFileExist(fullFile)).andReturn(true).anyTimes();
         }
         EasyMock.replay(mMockDevice);
         assertTrue(mMediaPreparer.mediaFilesExistOnDevice(mMockDevice));
