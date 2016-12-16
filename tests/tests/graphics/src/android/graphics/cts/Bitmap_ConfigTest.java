@@ -36,23 +36,26 @@ public class Bitmap_ConfigTest {
         assertEquals(Config.RGB_565, Config.valueOf("RGB_565"));
         assertEquals(Config.ARGB_4444, Config.valueOf("ARGB_4444"));
         assertEquals(Config.ARGB_8888, Config.valueOf("ARGB_8888"));
+        assertEquals(Config.RGBA_F16, Config.valueOf("RGBA_F16"));
     }
 
     @Test
     public void testValues(){
         Config[] config = Config.values();
 
-        assertTrue(config.length >= 5);
+        assertTrue(config.length >= 6);
         assertEquals(Config.ALPHA_8, config[0]);
         assertEquals(Config.RGB_565, config[1]);
         assertEquals(Config.ARGB_4444, config[2]);
         assertEquals(Config.ARGB_8888, config[3]);
-        assertEquals(Config.HARDWARE, config[4]);
+        assertEquals(Config.RGBA_F16, config[4]);
+        assertEquals(Config.HARDWARE, config[5]);
 
-        //Config is used as a argument here for all the methods that use it
+        // Config is used as a argument here for all the methods that use it
         assertNotNull(Bitmap.createBitmap(10, 24, Config.ALPHA_8));
         assertNotNull(Bitmap.createBitmap(10, 24, Config.ARGB_4444));
         assertNotNull(Bitmap.createBitmap(10, 24, Config.ARGB_8888));
         assertNotNull(Bitmap.createBitmap(10, 24, Config.RGB_565));
+        assertNotNull(Bitmap.createBitmap(10, 24, Config.RGBA_F16));
     }
 }
