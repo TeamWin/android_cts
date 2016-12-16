@@ -17,7 +17,9 @@
 package android.util.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.os.Process;
 import android.support.test.filters.SmallTest;
@@ -67,7 +69,8 @@ public class EventLogTest {
     }
 
     @Test
-    public void testWriteEventWithOversizeValue() throws Exception {
+    public void testWriteEventWithOversizeValueLimitElision() throws Exception {
+        // make sure big events are postsed and only elided to no less than about 4K.
         StringBuilder longString = new StringBuilder();
         for (int i = 0; i < 1000; i++) longString.append("xyzzy");
 
@@ -86,46 +89,77 @@ public class EventLogTest {
         List<Event> events = getEventsAfterMarker(markerData, ANSWER_TAG);
         assertEquals(7, events.size());
 
-        // subtract: log header, type byte, final newline
-        final int max = 4096 - 20 - 4 - 1 - 8;
+        final int big = 4000; // expect at least this many bytes to get through.
 
         // subtract: string header (type + length)
         String val0 = (String) events.get(0).getData();
-        assertEquals(max - 5, val0.length());
+        assertNull("getData on object 0 raised a WTF", events.get(0).getLastError());
+        assertTrue("big string 0 seems short", big < val0.length());
 
         // subtract: array header, "hi" header, "hi", string header
         Object[] arr1 = (Object[]) events.get(1).getData();
+        assertNull("getData on object 1 raised a WTF", events.get(1).getLastError());
         assertEquals(2, arr1.length);
         assertEquals("hi", arr1[0]);
-        assertEquals(max - 2 - 5 - 2 - 5, ((String) arr1[1]).length());
+        assertTrue("big string 1 seems short", big < ((String) arr1[1]).length());
 
         // subtract: array header, int (type + value), string header
         Object[] arr2 = (Object[]) events.get(2).getData();
+        assertNull("getData on object 2 raised a WTF", events.get(2).getLastError());
         assertEquals(2, arr2.length);
         assertEquals(12345, arr2[0]);
-        assertEquals(max - 2 - 5 - 5, ((String) arr2[1]).length());
+        assertTrue("big string 2 seems short", big < ((String) arr2[1]).length());
 
         // subtract: array header, long, string header
         Object[] arr3 = (Object[]) events.get(3).getData();
+        assertNull("getData on object 3 raised a WTF", events.get(3).getLastError());
         assertEquals(2, arr3.length);
         assertEquals(12345L, arr3[0]);
-        assertEquals(max - 2 - 9 - 5, ((String) arr3[1]).length());
+        assertTrue("big string 3 seems short", big < ((String) arr3[1]).length());
 
         // subtract: array header, float, string header
         Object[] arr4 = (Object[]) events.get(4).getData();
+        assertNull("getData on object 4 raised a WTF", events.get(4).getLastError());
         assertEquals(2, arr4.length);
         assertEquals(42.4242f, arr4[0]);
-        assertEquals(max - 2 - 5 - 5, ((String) arr4[1]).length());
+        assertTrue("big string 4 seems short", big < ((String) arr4[1]).length());
 
         // subtract: array header, string header (second string is dropped entirely)
-        Object[] arr5 = (Object[]) events.get(5).getData();
-        assertEquals(1, arr5.length);
-        assertEquals(max - 2 - 5, ((String) arr5[0]).length());
+        String string5 = (String) events.get(5).getData();
+        assertNull("getData on object 5 raised a WTF", events.get(5).getLastError());
+        assertTrue("big string 5 seems short", big < string5.length());
 
         Object[] arr6 = (Object[]) events.get(6).getData();
+        assertNull("getData on object 6 raised a WTF", events.get(6).getLastError());
         assertEquals(255, arr6.length);
         assertEquals(12345, arr6[0]);
         assertEquals(12345, arr6[arr6.length - 1]);
+    }
+
+    @Test
+    public void testOversizeStringMayBeTruncated() throws Exception {
+        // make sure big events elide from the end, not the  from the front or middle.
+        StringBuilder longBuilder = new StringBuilder();
+
+        // build a long string where the prefix is never repeated
+        for (int step = 1; step < 256; step += 2) { // all odds are relatively prime to 256
+            for (int i = 0; i < 255; i++) {
+                longBuilder.append(String.valueOf((char) (((step * i) % 256) + 1))); // never emit 0
+            }
+        }
+        String longString = longBuilder.toString(); // 32K
+
+        Long markerData = System.currentTimeMillis();
+        EventLog.writeEvent(ANSWER_TAG, markerData);
+        EventLog.writeEvent(ANSWER_TAG, longString);
+
+        List<Event> events = getEventsAfterMarker(markerData, ANSWER_TAG);
+        assertEquals(1, events.size());
+
+        // subtract: string header (type + length)
+        String out = (String) events.get(0).getData();
+        assertNull("getData on big string raised a WTF", events.get(0).getLastError());
+        assertEquals("output is not a prefix of the input", 0, longString.indexOf(out), 0);
     }
 
     @Test
@@ -143,6 +177,18 @@ public class EventLogTest {
         assertEquals(2, arr.length);
         assertEquals(12345, arr[0]);
         assertEquals("NULL", arr[1]);
+    }
+
+    @Test
+    public void testReadDataWhenNone() throws Exception {
+        Long markerData = System.currentTimeMillis();
+        EventLog.writeEvent(ANSWER_TAG, markerData);
+        EventLog.writeEvent(ANSWER_TAG);
+
+        List<EventLog.Event> events = getEventsAfterMarker(markerData, ANSWER_TAG);
+        assertEquals(1, events.size());
+        assertEquals("getData on empty data did not return null", null, events.get(0).getData());
+        assertNull("getData on object 0 raised a WTF", events.get(0).getLastError());
     }
 
     @Test
