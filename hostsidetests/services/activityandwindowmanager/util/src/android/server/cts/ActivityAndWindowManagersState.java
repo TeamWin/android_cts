@@ -192,6 +192,12 @@ public class ActivityAndWindowManagersState extends Assert {
                 "***Waiting for Keyguard showing...");
     }
 
+    void waitForKeyguardShowingAndOccluded(ITestDevice device) throws Exception {
+        waitForWithAmState(device, state -> state.getKeyguardControllerState().keyguardShowing
+                        && state.getKeyguardControllerState().keyguardOccluded,
+                "***Waiting for Keyguard showing and occluded...");
+    }
+
     void waitForKeyguardGone(ITestDevice device) throws Exception {
         waitForWithAmState(device, state -> !state.getKeyguardControllerState().keyguardShowing,
                 "***Waiting for Keyguard gone...");

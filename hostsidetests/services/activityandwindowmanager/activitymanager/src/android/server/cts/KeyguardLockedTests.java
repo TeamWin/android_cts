@@ -22,6 +22,11 @@ package android.server.cts;
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
 
+    private static final String PIP_ACTIVITY = "PipActivity";
+    private static final String PIP_ACTIVITY_ACTION_ENTER_PIP =
+            "android.server.cts.PipActivity.enter_pip";
+    private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -115,5 +120,30 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         unlockDeviceWithCredential();
+    }
+
+    public void testEnterPipOverKeyguard() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
+
+        // Go to the keyguard
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+
+        // Enter PiP on an activity on top of the keyguard, and ensure that it prompts the user for
+        // their credentials and does not enter picture-in-picture yet
+        launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.waitForKeyguardShowingAndOccluded(mDevice);
+        assertShowingAndOccluded();
+        mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
+
+        // Enter the credentials and ensure that the activity actually entered picture-in-picture
+        enterAndConfirmLockCredential();
+        mAmWmState.waitForKeyguardGone(mDevice);
+        assertKeyguardGone();
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
     }
 }
