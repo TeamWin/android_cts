@@ -154,6 +154,10 @@ public class TelephonyManagerTest {
         assertTrue(mTelephonyManager.getDataState() >= TelephonyManager.DATA_DISCONNECTED);
         assertTrue(mTelephonyManager.getCallState() >= TelephonyManager.CALL_STATE_IDLE);
 
+        for (int i = 0; i < mTelephonyManager.getPhoneCount(); ++i) {
+            assertTrue(mTelephonyManager.getSimState(i) >= TelephonyManager.SIM_STATE_UNKNOWN);
+        }
+
         // Make sure devices without MMS service won't fail on this
         if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE) {
             assertFalse(mTelephonyManager.getMmsUserAgent().isEmpty());
