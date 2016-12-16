@@ -92,6 +92,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mConfirmWorkCredentials;
     private DialogTestListItem mParentProfilePassword;
     private TestListItem mVpnTest;
+    private TestListItem mRecentsTest;
     private TestListItem mDisallowAppsControlTest;
     private TestListItem mOrganizationInfoTest;
     private TestListItem mPolicyTransparencyTest;
@@ -362,6 +363,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_confirm_work_credentials_description,
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
 
+        mRecentsTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_recents,
+                RecentsRedactionActivity.class.getName(),
+                new Intent(RecentsRedactionActivity.ACTION_RECENTS),
+                null);
+
         mOrganizationInfoTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_organization_info,
                 OrganizationInfoTestActivity.class.getName(),
@@ -415,6 +422,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mTurnOffWorkFeaturesTest);
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
+        adapter.add(mRecentsTest);
         adapter.add(mOrganizationInfoTest);
         adapter.add(mParentProfilePassword);
         adapter.add(mPolicyTransparencyTest);
@@ -645,6 +653,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             PermissionLockdownTestActivity.ACTIVITY_ALIAS,
             AuthenticationBoundKeyTestActivity.class.getName(),
             VpnTestActivity.class.getName(),
+            RecentsRedactionActivity.class.getName(),
             CommandReceiverActivity.class.getName(),
             SetSupportMessageActivity.class.getName()
         };

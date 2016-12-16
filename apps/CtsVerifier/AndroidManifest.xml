@@ -1763,6 +1763,14 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi.direct" />
         </activity>
 
+        <activity android:name=".managedprovisioning.RecentsRedactionActivity"
+                android:label="@string/provisioning_byod_recents" >
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.RECENTS" />
+                <category android:name="android.intent.category.DEFAULT"></category>
+            </intent-filter>
+        </activity>
+
         <activity android:name=".notifications.NotificationListenerVerifierActivity"
                 android:label="@string/nls_test">
             <intent-filter>

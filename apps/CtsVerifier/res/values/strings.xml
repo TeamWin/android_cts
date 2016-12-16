@@ -1672,6 +1672,45 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_confirm_work_credentials_header">
         CtsVerifier
     </string>
+
+    <string name="provisioning_byod_recents">Recents redaction test</string>
+    <string name="provisioning_byod_recents_info">
+        This test verifies that if a work profile is locked with a separate password, Recents views
+        for applications in the work profile are redacted.
+    </string>
+    <string name="provisioning_byod_recents_instructions">
+        This test verifies that if a work profile is locked with a separate password, Recents views
+        for applications in the work profile are redacted.\n
+        Some devices may not lock as soon as the screen is turned off by default. On such devices,
+        use the button below when requested to lock the work profile.
+    </string>
+    <string name="provisioning_byod_recents_lock_now">Lock now</string>
+
+    <string name="provisioning_byod_recents_verify_redacted">
+        Verify recents are redacted when locked.
+    </string>
+    <string name="provisioning_byod_recents_verify_redacted_instruction">
+        1) Follow the instructions on-screen to set a work password.\n
+        2) Turn the screen off and on again, or use the "lock now" button, to lock the work profile.\n
+        3) Open Recents.\n
+        4) Confirm that this "CTS Verifier" activity is shown in Recents.\n
+        5) Confirm that the contents of the activity <b>are</b> hidden.\n
+        6) Return to this page and pass the test.
+    </string>
+    <string name="provisioning_byod_recents_verify_not_redacted">
+        Verify recents are not redacted when unlocked.
+    </string>
+    <string name="provisioning_byod_recents_verify_not_redacted_instruction">
+        1) Follow the instructions on-screen to remove the work password.\n
+        2) Open Recents.\n
+        3) Confirm that this "CTS Verifier" activity is shown in Recents.\n
+        4) Confirm that the contents of the activity <b>are not</b> hidden.\n
+        5) Return to this page and pass the test.
+    </string>
+    <string name="provisioning_byod_recents_remove_password">
+        The work profile still has a separate password. Please remove this before continuing.
+    </string>
+
     <!-- Strings for DeskClock -->
     <string name="deskclock_tests">Alarms and Timers Tests</string>
     <string name="deskclock_tests_info">
