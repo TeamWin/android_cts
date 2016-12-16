@@ -102,7 +102,13 @@ public class MediaPreparer extends PreconditionPreparer {
     /* Key to retrieve resolution string in metrics upon MediaPreparerListener.testEnded() */
     private static final String RESOLUTION_STRING_KEY = "resolution";
 
-    protected static final Resolution DEFAULT_MAX_RESOLUTION = new Resolution(1920, 1080);
+    /*
+     * In the case of MediaPreparer error, the default maximum resolution to push to the device.
+     * Pushing higher resolutions may lead to insufficient storage for installing test APKs.
+     * TODO(aaronholden): When the new detection of max resolution is proven stable, throw
+     * a TargetSetupError when detection results in error
+     */
+    protected static final Resolution DEFAULT_MAX_RESOLUTION = new Resolution(480, 360);
 
     protected static final Resolution[] RESOLUTIONS = {
             new Resolution(176, 144),
