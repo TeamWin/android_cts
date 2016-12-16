@@ -35,14 +35,17 @@ import java.util.List;
  */
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
-    /** The number of properties of the {@link AccessibilityNodeInfo} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 31;
+    /** The number of properties of the {@link AccessibilityNodeInfo} class that are marshalled. */
+    private static final int NUM_MARSHALLED_PROPERTIES = 31;
+
+    /** The number of properties that are purposely not marshalled */
+    private static final int NUM_NONMARSHALLED_PROPERTIES = 1;
 
     @SmallTest
     public void testMarshaling() throws Exception {
         // no new fields, so we are testing marshaling of all such
         AccessibilityRecordTest.assertNoNewNonStaticFieldsAdded(AccessibilityNodeInfo.class,
-                NON_STATIC_FIELD_COUNT);
+                NUM_MARSHALLED_PROPERTIES + NUM_NONMARSHALLED_PROPERTIES);
 
         // fully populate the node info to marshal
         AccessibilityNodeInfo sentInfo = AccessibilityNodeInfo.obtain(new View(getContext()));
