@@ -275,6 +275,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
             case FAIL:
                 Log.i(TAG, "FAIL: " + mCurrentTest.getClass().getSimpleName());
+                mCurrentTest.tearDown();
                 mCurrentTest = null;
                 break;
 

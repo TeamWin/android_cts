@@ -44,13 +44,13 @@ import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.service.notification.Adjustment;
 import android.service.notification.SnoozeCriterion;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.android.cts.verifier.R;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +64,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             "com.android.cts.verifier.notifications.MockAssistant";
     private static final String ENABLED_NOTIFICATION_ASSISTANT_SETTING =
             "enabled_notification_assistant";
+    private static final String THIS_PKG = "com.android.cts.verifier";
     private static final String OTHER_PKG = "android";
 
     private String mTag1;
@@ -109,6 +110,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         tests.add(new CreateChannelTest());
         tests.add(new UpdateChannelTest());
         tests.add(new DeleteChannelTest());
+        tests.add(new UpdateLiveChannelTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotEnqueuedTest());
@@ -705,7 +707,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         private String people2 = "people2";
         private ArrayList<String> people;
         private ArrayList<SnoozeCriterion> snooze;
-        private NotificationChannel originalChannel = new NotificationChannel("new", "new",
+        private NotificationChannel originalChannel = new NotificationChannel("original", "new",
                 NotificationManager.IMPORTANCE_LOW);
         private NotificationChannel newChannel = new NotificationChannel("new", "new",
                 NotificationManager.IMPORTANCE_LOW);
@@ -719,9 +721,13 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         void setUp() {
             try {
                 mNm.createNotificationChannel(newChannel, (createdChannel) -> {}, null);
+            } catch (Exception e) {
+                Log.e(TAG, "failed to create channel", e);
+            }
+            try {
                 mNm.createNotificationChannel(originalChannel, (createdChannel) -> {}, null);
             } catch (Exception e) {
-
+                Log.e(TAG, "failed to create channel", e);
             }
             sendNotifications(originalChannel);
             status = READY;
@@ -764,8 +770,9 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                     String tag = payload.getString(KEY_TAG);
                                     if (mTag1.equals(tag)) {
                                         found.add(mTag1);
-                                        pass &= checkEquals(newChannel,
-                                                payload.getParcelable(KEY_CHANNEL),
+                                        pass &= checkEquals(newChannel.getId(),
+                                                ((NotificationChannel) payload.getParcelable(
+                                                        KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
                                                         + "%s, %s)");
                                         pass &= checkEquals(null,
@@ -778,8 +785,9 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                                         + "%s, %s)");
                                     } else if (mTag2.equals(tag)) {
                                         found.add(mTag2);
-                                        pass &= checkEquals(originalChannel,
-                                                payload.getParcelable(KEY_CHANNEL),
+                                        pass &= checkEquals(originalChannel.getId(),
+                                                ((NotificationChannel) payload.getParcelable(
+                                                        KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
                                                         + "%s, %s)");
                                         pass &= checkEquals(people.toArray(new String[]{}),
@@ -792,8 +800,9 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                                         + "%s, %s)");
                                     } else if (mTag3.equals(tag)) {
                                         found.add(mTag3);
-                                        pass &= checkEquals(originalChannel,
-                                                payload.getParcelable(KEY_CHANNEL),
+                                        pass &= checkEquals(originalChannel.getId(),
+                                                ((NotificationChannel) payload.getParcelable(
+                                                        KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
                                                         + "%s, %s)");
                                         pass &= checkEquals(null,
@@ -1028,6 +1037,67 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         }
     }
 
+    private class UpdateLiveChannelTest extends InteractiveTestCase {
+        private String id = "channelToBlock-" + System.currentTimeMillis();
+        private NotificationChannel channel = new NotificationChannel(id, "new",
+                NotificationManager.IMPORTANCE_LOW);
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_block_channel);
+        }
+
+        @Override
+        void setUp() {
+            MockAssistant.createChannel(mContext, THIS_PKG, channel);
+            sendNotifications(channel);
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockAssistant.probeListenerPosted(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() > 0 && result.contains(mTag1)) {
+                                    channel.setAllowed(false);
+                                    MockAssistant.updateChannel(mContext, THIS_PKG, channel);
+                                    status = RETEST;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            } else if (status == RETEST) {
+                MockAssistant.probeListenerRemoved(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() == 3) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            MockAssistant.deleteChannel(mContext, THIS_PKG, channel.getId());
+            delay();
+        }
+    }
+
     private boolean compareChannels(NotificationChannel expected, NotificationChannel actual) {
         boolean pass = true;
         String msg = "Channel mismatch (%s, %s)";
@@ -1037,6 +1107,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         }
         pass &= checkEquals(expected.getId(), actual.getId(), msg);
         pass &= checkEquals(expected.getName(), actual.getName(), msg);
+        pass &= checkEquals(expected.isAllowed(), actual.isAllowed(), msg);
+        pass &= checkEquals(expected.canShowBadge(), actual.canShowBadge(), msg);
         pass &= checkEquals(expected.shouldVibrate(), actual.shouldVibrate(), msg);
         pass &= checkEquals(expected.shouldShowLights(), actual.shouldShowLights(), msg);
         pass &= checkEquals(expected.getImportance(), actual.getImportance(), msg);
