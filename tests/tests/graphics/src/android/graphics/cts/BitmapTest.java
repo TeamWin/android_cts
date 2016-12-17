@@ -1049,7 +1049,85 @@ public class BitmapTest {
     }
 
     @Test
-    public void testHardwareSameAs() {
+    public void testSameAs_simpleSuccess() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        Bitmap bitmap2 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+        assertTrue(bitmap1.sameAs(bitmap2));
+        assertTrue(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_simpleFail() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        Bitmap bitmap2 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+        bitmap2.setPixel(20, 10, Color.WHITE);
+        assertFalse(bitmap1.sameAs(bitmap2));
+        assertFalse(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_reconfigure() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        Bitmap bitmap2 = Bitmap.createBitmap(150, 150, Config.ARGB_8888);
+        bitmap2.reconfigure(100, 100, Config.ARGB_8888); // now same size, so should be same
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+        assertTrue(bitmap1.sameAs(bitmap2));
+        assertTrue(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_config() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 200, Config.RGB_565);
+        Bitmap bitmap2 = Bitmap.createBitmap(100, 200, Config.ARGB_8888);
+
+        // both bitmaps can represent black perfectly
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+
+        // but not same due to config
+        assertFalse(bitmap1.sameAs(bitmap2));
+        assertFalse(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_width() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        Bitmap bitmap2 = Bitmap.createBitmap(101, 100, Config.ARGB_8888);
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+        assertFalse(bitmap1.sameAs(bitmap2));
+        assertFalse(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_height() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        Bitmap bitmap2 = Bitmap.createBitmap(102, 100, Config.ARGB_8888);
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+        assertFalse(bitmap1.sameAs(bitmap2));
+        assertFalse(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_opaque() {
+        Bitmap bitmap1 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        Bitmap bitmap2 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        bitmap1.eraseColor(Color.BLACK);
+        bitmap2.eraseColor(Color.BLACK);
+        bitmap1.setHasAlpha(true);
+        bitmap2.setHasAlpha(false);
+        assertFalse(bitmap1.sameAs(bitmap2));
+        assertFalse(bitmap2.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAs_hardware() {
         Bitmap bitmap1 = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
         Bitmap bitmap2 = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
         Bitmap bitmap3 = BitmapFactory.decodeResource(mRes, R.drawable.robot);
