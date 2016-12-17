@@ -23,7 +23,6 @@ import static android.server.cts.StateLogger.logE;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.awt.*;
 import java.util.ArrayList;

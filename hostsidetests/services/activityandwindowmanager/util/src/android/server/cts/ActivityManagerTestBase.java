@@ -57,6 +57,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     /** ID of stack that always on top (always visible) when it exist. */
     public static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
 
+    protected static final int[] ALL_STACK_IDS_BUT_HOME = {
+            FULLSCREEN_WORKSPACE_STACK_ID, FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID,
+            PINNED_STACK_ID
+    };
+
+    protected static final int[] ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN = {
+            FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID, PINNED_STACK_ID
+    };
+
     private static final String TASK_ID_PREFIX = "taskId";
 
     private static final String AM_STACK_LIST = "am stack list";
@@ -175,9 +184,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mDevice = getDevice();
         wakeUpAndUnlockDevice();
         // Remove special stacks.
-        executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
-        executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
-        executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
+        removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
         // Store rotation settings.
         mInitialAccelerometerRotation = getAccelerometerRotation();
         mUserRotation = getUserRotation();
@@ -194,10 +201,17 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             setUserRotation(mUserRotation);
             setFontScale(mFontScale);
             // Remove special stacks.
-            executeShellCommand(AM_REMOVE_STACK + PINNED_STACK_ID);
-            executeShellCommand(AM_REMOVE_STACK + DOCKED_STACK_ID);
-            executeShellCommand(AM_REMOVE_STACK + FREEFORM_WORKSPACE_STACK_ID);
+            removeStacks(ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN);
             wakeUpAndUnlockDevice();
+        } catch (DeviceNotAvailableException e) {
+        }
+    }
+
+    protected void removeStacks(int... stackIds) {
+        try {
+            for (Integer stackId : stackIds) {
+                executeShellCommand(AM_REMOVE_STACK + stackId);
+            }
         } catch (DeviceNotAvailableException e) {
         }
     }
@@ -218,6 +232,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
 
         mAmWmState.waitForValidState(mDevice, targetActivityName);
+    }
+
+    protected void launchHomeActivity()
+            throws Exception {
+        executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
+        mAmWmState.waitForHomeActivityVisible(mDevice);
     }
 
     protected void launchActivityOnDisplay(String targetActivityName, int displayId)

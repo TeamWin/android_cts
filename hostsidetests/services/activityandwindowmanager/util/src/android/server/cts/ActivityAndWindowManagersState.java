@@ -213,6 +213,11 @@ public class ActivityAndWindowManagersState extends Assert {
                 "***Waiting for Activity State: " + activityState);
     }
 
+    void waitForFocusedStack(ITestDevice device, int stackId) throws Exception {
+        waitForWithAmState(device, state -> state.getFocusedStackId() == stackId,
+                "***Waiting for focused stack...");
+    }
+
     void waitForWithAmState(ITestDevice device, Predicate<ActivityManagerState> waitCondition,
             String message) throws Exception{
         waitFor(device, (amState, wmState) -> waitCondition.test(amState), message);
