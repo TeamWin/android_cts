@@ -111,6 +111,9 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
     /**
      * If device doesn't have native FBE, verify normal lifecycle.
+     * Note: This test will have a false-negative on the emulator because of the
+     * tradefed and ddmlib incorrectly special-case handling the emulator which
+     * is fixed in http://r.android.com/315302
      */
     public void testDirectBootNone() throws Exception {
         if (!isSupportedDevice()) {
