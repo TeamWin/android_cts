@@ -26,7 +26,7 @@ public abstract class PathMotionTest {
         PathMeasure pathMeasure = new PathMeasure(path, false);
 
         float expectedLength = expectedMeasure.getLength();
-        assertEquals(expectedLength, pathMeasure.getLength(), 0.01f);
+        assertEquals("Lengths differ", expectedLength, pathMeasure.getLength(), 0.01f);
 
         float minLength = Math.min(expectedLength, pathMeasure.getLength());
 
@@ -39,8 +39,8 @@ public abstract class PathMotionTest {
             float expectedY = pos[1];
 
             pathMeasure.getPosTan(along, pos, null);
-            assertEquals(expectedX, pos[0], 0.01f);
-            assertEquals(expectedY, pos[1], 0.01f);
+            assertEquals("Failed at " + increment, expectedX, pos[0], 0.01f);
+            assertEquals("Failed at " + increment, expectedY, pos[1], 0.01f);
         }
     }
 }
