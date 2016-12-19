@@ -16,10 +16,13 @@
 
 package com.android.cts.documentclient;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
@@ -524,4 +527,54 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         assertTrue(findDocument("FILE1").exists());
     }
+
+    public void testCreateWebLink() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        // Pick a virtual file from the local root.
+        mDevice.waitForIdle();
+        findRoot("CtsLocal").click();
+
+        mDevice.waitForIdle();
+        findDocument("WEB_LINKABLE_FILE").click();
+
+        // Confirm that the returned file is actually the selected one.
+        final Result result = mActivity.getResult();
+        final Uri uri = result.data.getData();
+        assertEquals("doc:web-linkable-file", DocumentsContract.getDocumentId(uri));
+
+        final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+        final String streamTypes[] = resolver.getStreamTypes(uri, "*/*");
+        assertEquals(1, streamTypes.length);
+        assertEquals("text/plain", streamTypes[0]);
+
+        Bundle bundle = new Bundle();
+        bundle.putString(Intent.EXTRA_EMAIL, "x@x.com");
+        final IntentSender intentSender = DocumentsContract.createWebLinkIntent(resolver,
+                uri, bundle);
+
+        final int WEB_LINK_REQUEST_CODE = 1;
+        mActivity.startIntentSenderForResult(intentSender, WEB_LINK_REQUEST_CODE,
+                null, 0, 0, 0);
+        mDevice.waitForIdle();
+
+        // Confirm the permissions dialog. The dialog is provided by the stub
+        // provider.
+        UiObject okButton = new UiObject(new UiSelector().text("OK").clickable(true));
+        assertNotNull(okButton);
+        assertTrue(okButton.waitForExists(TIMEOUT));
+        okButton.click();
+
+        final Result webLinkResult = mActivity.getResult();
+        assertEquals(WEB_LINK_REQUEST_CODE, webLinkResult.requestCode);
+        assertEquals(Activity.RESULT_OK, webLinkResult.resultCode);
+
+        final Uri webLinkUri = webLinkResult.data.getData();
+        assertEquals("http://www.foobar.com/shared/SW33TCH3RR13S", webLinkUri.toString());
+    }
+
 }

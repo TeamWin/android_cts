@@ -16,6 +16,9 @@
 
 package com.android.cts.documentprovider;
 
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -45,6 +48,8 @@ import java.util.Map;
 
 public class MyDocumentsProvider extends DocumentsProvider {
     private static final String TAG = "TestDocumentsProvider";
+
+    private static final int WEB_LINK_REQUEST_CODE = 321;
 
     private static final String[] DEFAULT_ROOT_PROJECTION = new String[] {
             Root.COLUMN_ROOT_ID, Root.COLUMN_FLAGS, Root.COLUMN_ICON, Root.COLUMN_TITLE,
@@ -139,6 +144,15 @@ public class MyDocumentsProvider extends DocumentsProvider {
             virtualFile.contents = "Converted contents.".getBytes();
             mLocalRoot.children.add(virtualFile);
             mCreateRoot.children.add(virtualFile);
+        }
+
+        {
+            Doc webLinkableFile = buildDoc("doc:web-linkable-file", "WEB_LINKABLE_FILE",
+                    "application/icecream", new String[] { "text/plain" });
+            webLinkableFile.flags = Document.FLAG_VIRTUAL_DOCUMENT | Document.FLAG_WEB_LINKABLE;
+            webLinkableFile.contents = "Fake contents.".getBytes();
+            mLocalRoot.children.add(webLinkableFile);
+            mCreateRoot.children.add(webLinkableFile);
         }
 
         Doc dir1 = buildDoc("doc:dir1", "DIR1", Document.MIME_TYPE_DIR, null);
@@ -426,6 +440,29 @@ public class MyDocumentsProvider extends DocumentsProvider {
         }
 
         throw new UnsupportedOperationException("Unsupported MIME type filter for tests.");
+    }
+
+    @Override
+    public IntentSender createWebLinkIntent(String documentId, Bundle options)
+            throws FileNotFoundException {
+        final Doc doc = mDocs.get(documentId);
+        if (doc == null) {
+            throw new FileNotFoundException();
+        }
+        if ((doc.flags & Document.FLAG_WEB_LINKABLE) == 0) {
+            throw new IllegalArgumentException("The file is not web linkable");
+        }
+
+        final Intent intent = new Intent(getContext(), WebLinkActivity.class);
+        intent.putExtra(WebLinkActivity.EXTRA_DOCUMENT_ID, documentId);
+        if (options != null) {
+            intent.putExtras(options);
+        }
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(
+                getContext(), WEB_LINK_REQUEST_CODE, intent,
+                PendingIntent.FLAG_ONE_SHOT);
+        return pendingIntent.getIntentSender();
     }
 
     private static byte[] readFullyNoClose(InputStream in) throws IOException {
