@@ -22,6 +22,7 @@ import com.google.common.io.Files;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,7 +50,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * </ul>
  */
 public class AdbRootDependentCompilationTest extends DeviceTestCase {
-    private static final String TAG = AdbRootDependentCompilationTest.class.getSimpleName();
     private static final String APPLICATION_PACKAGE = "android.cts.compilation";
 
     enum ProfileLocation {
@@ -90,7 +90,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         mIsRoot = (!buildType.equals("user"));
         mNewlyObtainedRoot = (mIsRoot && !wasRoot);
         if (mNewlyObtainedRoot) {
-            mDevice.executeAdbCommand("root");
+            mDevice.enableAdbRoot();
         }
 
         apkFile = File.createTempFile("CtsCompilationApp", ".apk");
@@ -112,10 +112,10 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     @Override
     protected void tearDown() throws Exception {
         if (mNewlyObtainedRoot) {
-            mDevice.executeAdbCommand("unroot");
+            mDevice.disableAdbRoot();
         }
-        apkFile.delete();
-        localProfileFile.delete();
+        FileUtil.deleteFile(apkFile);
+        FileUtil.deleteFile(localProfileFile);
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
         super.tearDown();
     }
@@ -190,7 +190,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
             executeAdbCommand("pull", clientPath, copyOnHost.getPath());
             return Files.toByteArray(copyOnHost);
         } finally {
-            boolean successIgnored = copyOnHost.delete();
+            FileUtil.deleteFile(copyOnHost);
         }
     }
 
