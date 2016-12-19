@@ -16,6 +16,10 @@
 
 package com.android.cts.ephemeralapp1;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -24,15 +28,23 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
-public class ClientTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ClientTest {
     /** Action to start normal test activities */
     private static final String ACTION_START_NORMAL_ACTIVITY =
             "com.android.cts.ephemeraltest.START_NORMAL";
@@ -51,45 +63,46 @@ public class ClientTest extends InstrumentationTestCase {
     private BroadcastReceiver mReceiver;
     private final SynchronousQueue<BroadcastResult> mResultQueue = new SynchronousQueue<>();
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         final IntentFilter filter =
                 new IntentFilter("com.android.cts.ephemeraltest.START_ACTIVITY");
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mReceiver = new ActivityBroadcastReceiver(mResultQueue);
-        getInstrumentation().getContext().registerReceiver(mReceiver, filter);
+        InstrumentationRegistry.getContext().registerReceiver(mReceiver, filter);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        getInstrumentation().getContext().unregisterReceiver(mReceiver);
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
+        InstrumentationRegistry.getContext().unregisterReceiver(mReceiver);
     }
 
+    @Test
     public void testQuery() throws Exception {
         final Intent queryIntent = new Intent(ACTION_QUERY_ACTIVITY);
-        final List<ResolveInfo> resolveInfo = getInstrumentation().getContext().getPackageManager()
-                .queryIntentActivities(queryIntent, 0 /*flags*/);
+        final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                .getContext().getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
         if (resolveInfo == null || resolveInfo.size() == 0) {
             fail("didn't resolve any intents");
         }
-        assertEquals(dumpResolvedIntents(resolveInfo), 2, resolveInfo.size());
-        assertEquals("com.android.cts.ephemeralapp1",
-                resolveInfo.get(0).activityInfo.packageName);
-        assertEquals("com.android.cts.ephemeralapp1.EphemeralActivity",
-                resolveInfo.get(0).activityInfo.name);
-        assertEquals("com.android.cts.normalapp",
-                resolveInfo.get(1).activityInfo.packageName);
-        assertEquals("com.android.cts.normalapp.ExposedActivity",
-                resolveInfo.get(1).activityInfo.name);
+        assertThat(2, is(resolveInfo.size()));
+        assertThat("com.android.cts.ephemeralapp1",
+                is(resolveInfo.get(0).activityInfo.packageName));
+        assertThat("com.android.cts.ephemeralapp1.EphemeralActivity",
+                is(resolveInfo.get(0).activityInfo.name));
+        assertThat("com.android.cts.normalapp",
+                is(resolveInfo.get(1).activityInfo.packageName));
+        assertThat("com.android.cts.normalapp.ExposedActivity",
+                is(resolveInfo.get(1).activityInfo.name));
     }
 
+    @Test
     public void testStartNormal() throws Exception {
         // start the normal activity
         try {
             final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
-            getInstrumentation().getContext().startActivity(startNormalIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startNormalIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
             fail();
         } catch (ActivityNotFoundException expected) {
@@ -99,7 +112,8 @@ public class ClientTest extends InstrumentationTestCase {
         try {
             final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
             startNormalIntent.setPackage("com.android.cts.normalapp");
-            getInstrumentation().getContext().startActivity(startNormalIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startNormalIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
             fail();
         } catch (ActivityNotFoundException expected) {
@@ -110,7 +124,8 @@ public class ClientTest extends InstrumentationTestCase {
             final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
             startNormalIntent.setComponent(new ComponentName(
                     "com.android.cts.normalapp", "com.android.cts.normalapp.NormalActivity"));
-            getInstrumentation().getContext().startActivity(startNormalIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startNormalIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
             fail();
         } catch (ActivityNotFoundException expected) {
@@ -122,31 +137,34 @@ public class ClientTest extends InstrumentationTestCase {
 //            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW);
 //            startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
 //            startViewIntent.setData(Uri.parse("https://cts.google.com/normal"));
-//            getInstrumentation().getContext().startActivity(startViewIntent, null /*options*/);
+//            InstrumentationRegistry.getContext().startActivity(startViewIntent, null /*options*/);
 //            final BroadcastResult testResult = getResult();
-//            assertEquals("com.android.cts.normalapp", testResult.packageName);
-//            assertEquals("NormalActivity", testResult.activityName);
+//            assertThat("com.android.cts.normalapp", is(testResult.packageName));
+//            assertThat("NormalActivity", is(testResult.activityName));
 //        }
     }
 
+    @Test
     public void testStartExposed() throws Exception {
         // start the exposed activity
         {
             final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED_ACTIVITY);
-            getInstrumentation().getContext().startActivity(startExposedIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startExposedIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertEquals("com.android.cts.normalapp", testResult.packageName);
-            assertEquals("ExposedActivity", testResult.activityName);
+            assertThat("com.android.cts.normalapp", is(testResult.packageName));
+            assertThat("ExposedActivity", is(testResult.activityName));
         }
 
         // start the exposed activity; directed package
         {
             final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED_ACTIVITY);
             startExposedIntent.setPackage("com.android.cts.normalapp");
-            getInstrumentation().getContext().startActivity(startExposedIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startExposedIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertEquals("com.android.cts.normalapp", testResult.packageName);
-            assertEquals("ExposedActivity", testResult.activityName);
+            assertThat("com.android.cts.normalapp", is(testResult.packageName));
+            assertThat("ExposedActivity", is(testResult.activityName));
         }
 
         // start the exposed activity; directed component
@@ -154,31 +172,35 @@ public class ClientTest extends InstrumentationTestCase {
             final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED_ACTIVITY);
             startExposedIntent.setComponent(new ComponentName(
                     "com.android.cts.normalapp", "com.android.cts.normalapp.ExposedActivity"));
-            getInstrumentation().getContext().startActivity(startExposedIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startExposedIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertEquals("com.android.cts.normalapp", testResult.packageName);
-            assertEquals("ExposedActivity", testResult.activityName);
+            assertThat("com.android.cts.normalapp", is(testResult.packageName));
+            assertThat("ExposedActivity", is(testResult.activityName));
         }
     }
 
+    @Test
     public void testStartEphemeral() throws Exception {
         // start the ephemeral activity
         {
             final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
-            getInstrumentation().getContext().startActivity(startEphemeralIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertEquals("com.android.cts.ephemeralapp1", testResult.packageName);
-            assertEquals("EphemeralActivity", testResult.activityName);
+            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
+            assertThat("EphemeralActivity", is(testResult.activityName));
         }
 
         // start the ephemeral activity; directed package
         {
             final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
             startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
-            getInstrumentation().getContext().startActivity(startEphemeralIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertEquals("com.android.cts.ephemeralapp1", testResult.packageName);
-            assertEquals("EphemeralActivity", testResult.activityName);
+            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
+            assertThat("EphemeralActivity", is(testResult.activityName));
         }
 
         // start the ephemeral activity; directed component
@@ -187,10 +209,11 @@ public class ClientTest extends InstrumentationTestCase {
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity"));
-            getInstrumentation().getContext().startActivity(startEphemeralIntent, null /*options*/);
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertEquals("com.android.cts.ephemeralapp1", testResult.packageName);
-            assertEquals("EphemeralActivity", testResult.activityName);
+            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
+            assertThat("EphemeralActivity", is(testResult.activityName));
         }
     }
 
@@ -205,18 +228,6 @@ public class ClientTest extends InstrumentationTestCase {
             throw new IllegalStateException("Activity didn't receive a Result in 5 seconds");
         }
         return result;
-    }
-
-    private String dumpResolvedIntents(List<ResolveInfo> resolveInfo) {
-        final StringBuffer sb = new StringBuffer();
-        if (resolveInfo == null || resolveInfo.size() == 0) {
-            sb.append("No intents");
-        } else {
-            for (int i = resolveInfo.size() - 1; i >= 0; --i) {
-                sb.append("[" + i + "] " + resolveInfo.get(i).toString() + "\n");
-            }
-        }
-        return sb.toString();
     }
 
     private static class BroadcastResult {
