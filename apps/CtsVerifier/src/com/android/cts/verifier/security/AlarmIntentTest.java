@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -46,7 +47,9 @@ public class AlarmIntentTest extends PassFailButtons.Activity {
         setAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ImageView view1 = (ImageView) findViewById(R.id.img1);
                 setAlarm();
+                view1.setImageResource(R.drawable.fs_good);
             }
         });
 
@@ -54,7 +57,11 @@ public class AlarmIntentTest extends PassFailButtons.Activity {
         cancelAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ImageView view2 = (ImageView) findViewById(R.id.img2);
+                ImageView view3 = (ImageView) findViewById(R.id.img3);
                 cancelAlarm();
+                view2.setImageResource(R.drawable.fs_good);
+                view3.setImageResource(R.drawable.fs_good);
             }
         });
     }
