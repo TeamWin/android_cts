@@ -29,7 +29,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:host="cts.google.com" />
-                <data android:path="other" />
+                <data android:path="/other" />
             </intent-filter>
             <intent-filter android:priority="0">
                 <action android:name="com.android.cts.ephemeraltest.QUERY" />

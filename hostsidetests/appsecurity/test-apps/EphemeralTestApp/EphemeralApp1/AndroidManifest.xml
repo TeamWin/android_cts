@@ -29,7 +29,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:host="cts.google.com" />
-                <data android:path="ephemeral" />
+                <data android:path="/ephemeral" />
             </intent-filter>
             <!-- TEST: ephemeral apps can see this activity using query methods -->
             <!-- TEST: normal apps can't see this activity using query methods -->
