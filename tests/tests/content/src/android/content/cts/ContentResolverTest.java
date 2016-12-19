@@ -322,8 +322,8 @@ public class ContentResolverTest extends AndroidTestCase {
 
     public void testQuery_WithSelectionArgs() {
         Bundle queryArgs = new Bundle();
-        queryArgs.putString(ContentResolver.QUERY_ARG_SELECTION, COLUMN_ID_NAME + "=?");
-        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SELECTION_ARGS, new String[] {"1"});
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, COLUMN_ID_NAME + "=?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, new String[] {"1"});
 
         mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
         assertNotNull(mCursor);
@@ -336,8 +336,8 @@ public class ContentResolverTest extends AndroidTestCase {
         assertEquals(VALUE1, mCursor.getInt(mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME)));
         mCursor.close();
 
-        queryArgs.putString(ContentResolver.QUERY_ARG_SELECTION, COLUMN_KEY_NAME + "=?");
-        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SELECTION_ARGS, new String[] {KEY3});
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, COLUMN_KEY_NAME + "=?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, new String[] {KEY3});
         mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
         assertNotNull(mCursor);
         assertEquals(1, mCursor.getCount());
