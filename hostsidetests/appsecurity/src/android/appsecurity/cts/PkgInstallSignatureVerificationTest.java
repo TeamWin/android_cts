@@ -464,6 +464,19 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "v2-only-with-rsa-pkcs1-sha256-1024.apk", "signatures do not match");
     }
 
+    public void testInstallMaxSizedZipEocdComment() throws Exception {
+        // Obtained by modifying apksigner to produce a max-sized (0xffff bytes long) ZIP End of
+        // Central Directory comment, and signing the original.apk using the modified apksigner.
+        assertInstallSucceeds("v1-only-max-sized-eocd-comment.apk");
+        assertInstallSucceeds("v2-only-max-sized-eocd-comment.apk");
+    }
+
+    public void testInstallEmpty() throws Exception {
+        assertInstallFailsWithError("empty-unsigned.apk", "Unknown failure");
+        assertInstallFailsWithError("v1-only-empty.apk", "Unknown failure");
+        assertInstallFailsWithError("v2-only-empty.apk", "Unknown failure");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
