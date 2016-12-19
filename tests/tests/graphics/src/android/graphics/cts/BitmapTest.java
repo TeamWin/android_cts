@@ -110,6 +110,12 @@ public class BitmapTest {
         WidgetTestUtils.assertEquals(mBitmap, bitmap);
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testCopyMutableHwBitmap() {
+        mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        mBitmap.copy(Config.HARDWARE, true);
+    }
+
     @Test(expected=RuntimeException.class)
     public void testCopyPixelsToBufferUnsupportedBufferClass() {
         final int pixSize = mBitmap.getRowBytes() * mBitmap.getHeight();
