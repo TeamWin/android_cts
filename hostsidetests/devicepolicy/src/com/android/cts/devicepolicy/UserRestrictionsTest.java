@@ -26,6 +26,17 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     private static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
 
+    private static final String GLOBAL_RESTRICTIONS_TEST_CLASS =
+            "userrestrictions.ProfileGlobalRestrictionsTest";
+    private static final String SET_GLOBAL_RESTRICTIONS_TEST =
+            "testSetProfileGlobalRestrictions";
+    private static final String CLEAR_GLOBAL_RESTRICTIONS_TEST =
+            "testClearProfileGlobalRestrictions";
+    private static final String ENSURE_GLOBAL_RESTRICTIONS_TEST =
+            "testProfileGlobalRestrictionsEnforced";
+    private static final String ENSURE_NO_GLOBAL_RESTRICTIONS_TEST =
+            "testProfileGlobalRestrictionsNotEnforced";
+
     private boolean mRemoveOwnerInTearDown;
     private int mDeviceOwnerUserId;
 
@@ -69,11 +80,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
-        assertTrue("Failed to set device owner",
-                setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId, /*expectFailure*/ false));
-        mRemoveOwnerInTearDown = true;
+        setDo();
 
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
                 "testDefaultRestrictions", mDeviceOwnerUserId);
@@ -90,11 +97,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
-        assertTrue("Failed to set profile owner",
-                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId, /* expectFailure */ false));
-        mRemoveOwnerInTearDown = true;
+        setPoAsUser(mDeviceOwnerUserId);
 
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testDefaultRestrictions", mDeviceOwnerUserId);
@@ -107,11 +110,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
             return;
         }
         final int secondaryUserId = createUser();
-
-        installAppAsUser(DEVICE_ADMIN_APK, secondaryUserId);
-        assertTrue("Failed to set profile owner",
-                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        secondaryUserId, /* expectFailure */ false));
+        setPoAsUser(secondaryUserId);
 
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testDefaultRestrictions", secondaryUserId);
@@ -126,20 +125,11 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
         }
-        // Set DO
-        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
-        assertTrue("Failed to set device owner",
-                setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId, /*expectFailure*/ false));
-        mRemoveOwnerInTearDown = true;
+        setDo();
 
         // Create another user and set PO.
         final int secondaryUserId = createUser();
-
-        installAppAsUser(DEVICE_ADMIN_APK, secondaryUserId);
-        assertTrue("Failed to set profile owner",
-                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        secondaryUserId, /* expectFailure */ false));
+        setPoAsUser(secondaryUserId);
 
         // Let DO set all restrictions.
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
@@ -177,20 +167,12 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
             // Can't set PO on user-0 in this mode.
             return;
         }
-        // Set DO on user 0
-        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
-        assertTrue("Failed to set profile owner",
-                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        mDeviceOwnerUserId, /* expectFailure */ false));
-        mRemoveOwnerInTearDown = true;
+        // Set PO on user 0
+        setPoAsUser(mDeviceOwnerUserId);
 
         // Create another user and set PO.
         final int secondaryUserId = createUser();
-
-        installAppAsUser(DEVICE_ADMIN_APK, secondaryUserId);
-        assertTrue("Failed to set profile owner",
-                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                        secondaryUserId, /* expectFailure */ false));
+        setPoAsUser(secondaryUserId);
 
         // Let user-0 PO sets all restrictions.
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
@@ -199,5 +181,101 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         // Secondary users shouldn't see any of them.
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testDefaultRestrictionsOnly", secondaryUserId);
+    }
+
+    /**
+     * DO sets profile global restrictions (only ENSURE_VERIFY_APPS), should affect all
+     * users (not a particularly special case but to be sure).
+     */
+    public void testUserRestrictions_profileGlobalRestrictionsAsDo() throws Exception {
+        if (!mHasFeature || !mSupportsMultiUser) {
+            return;
+        }
+        setDo();
+
+        // Create another user with PO.
+        final int secondaryUserId = createUser();
+        setPoAsUser(secondaryUserId);
+
+        final int[] usersToCheck = {mDeviceOwnerUserId, secondaryUserId};
+
+        // Do sets the restriction.
+        setAndCheckProfileGlobalRestriction(mDeviceOwnerUserId, usersToCheck);
+    }
+
+    /**
+     * Managed profile owner sets profile global restrictions (only ENSURE_VERIFY_APPS), should
+     * affect all users.
+     */
+    public void testUserRestrictions_ProfileGlobalRestrictionsAsPo() throws Exception {
+        if (!mHasFeature || !mSupportsMultiUser) {
+            return;
+        }
+        // Set PO on user 0
+        setPoAsUser(mDeviceOwnerUserId);
+
+        // Create another user with PO.
+        final int secondaryUserId = createManagedProfile(mDeviceOwnerUserId /* parentUserId */);
+        setPoAsUser(secondaryUserId);
+
+        final int[] usersToCheck = {mDeviceOwnerUserId, secondaryUserId};
+
+        // Check the case when primary user's PO sets the restriction.
+        setAndCheckProfileGlobalRestriction(mDeviceOwnerUserId, usersToCheck);
+
+        // Check the case when managed profile owner sets the restriction.
+        setAndCheckProfileGlobalRestriction(secondaryUserId, usersToCheck);
+    }
+
+    /** Installs admin package and makes it a profile owner for a given user. */
+    private void setPoAsUser(int userId) throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, userId);
+        assertTrue("Failed to set profile owner",
+                setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                        userId, /* expectFailure */ false));
+        // If PO is not in primary user, it will be removed with the user.
+        if (userId == mDeviceOwnerUserId) {
+            mRemoveOwnerInTearDown = true;
+        }
+    }
+
+    /** Installs admin package and makes it a device owner. */
+    private void setDo() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
+        assertTrue("Failed to set device owner",
+                setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                        mDeviceOwnerUserId, /*expectFailure*/ false));
+        mRemoveOwnerInTearDown = true;
+    }
+
+    /**
+     * Sets user restriction and checks that it applies to all users.
+     * @param enforcingUserId user who should set/clear the restriction, should be either
+     *        primary or secondary user id and should have device or profile owner active.
+     * @param usersToCheck users that should have this restriction enforced.
+     */
+    private void setAndCheckProfileGlobalRestriction(int enforcingUserId, int usersToCheck[])
+            throws Exception {
+        // Always try to clear the restriction to avoid undesirable side effects.
+        try {
+            // Set the restriction.
+            runGlobalRestrictionsTest(SET_GLOBAL_RESTRICTIONS_TEST, enforcingUserId);
+            // Check that the restriction is in power.
+            for (int userId : usersToCheck) {
+                runGlobalRestrictionsTest(ENSURE_GLOBAL_RESTRICTIONS_TEST, userId);
+            }
+        } finally {
+            // Clear the restriction.
+            runGlobalRestrictionsTest(CLEAR_GLOBAL_RESTRICTIONS_TEST, enforcingUserId);
+            // Check that the restriction is not in power anymore.
+            for (int userId : usersToCheck) {
+                runGlobalRestrictionsTest(ENSURE_NO_GLOBAL_RESTRICTIONS_TEST, userId);
+            }
+        }
+    }
+
+    /** Convenience method to run global user restrictions tests. */
+    private void runGlobalRestrictionsTest(String testMethodName, int userId) throws Exception {
+        runTests(GLOBAL_RESTRICTIONS_TEST_CLASS, testMethodName, userId);
     }
 }
