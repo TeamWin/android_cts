@@ -14,9 +14,6 @@
      limitations under the License.
 -->
 <configuration description="Configuration for app.usage Tests">
-    <target_preparer class="android.app.usage.cts.preconditions.AppUsagePreparer" />
-        <option name="apk" value="CtsAppUsagePreparerApp.apk"/>
-        <option name="package" value="android.app.usage.cts.preconditions.app"/>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsUsageStatsTestCases.apk" />
