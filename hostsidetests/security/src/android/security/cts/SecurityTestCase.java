@@ -16,20 +16,10 @@
 
 package android.security.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
-
-import android.platform.test.annotations.RootPermissionTest;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Scanner;
 
 public class SecurityTestCase extends DeviceTestCase {
 
@@ -49,18 +39,10 @@ public class SecurityTestCase extends DeviceTestCase {
     }
 
     /**
-     * Takes a device and runs a root command.  There is a more robust version implemented by
-     * NativeDevice, but due to some other changes it isnt trivially acessible, but I can get
-     * that implementation fairly easy if we think it is a better idea.
+     * Use {@link NativeDevice#enableAdbRoot()} internally.
      */
     public void enableAdbRoot(ITestDevice mDevice) throws DeviceNotAvailableException {
-        boolean isUserDebug =
-            "userdebug".equals(mDevice.executeShellCommand("getprop ro.build.type").trim());
-        if (!isUserDebug) {
-            //TODO(badash@): This would Noop once cl: ag/1594311 is in
-            return;
-        }
-        mDevice.executeAdbCommand("root");
+        mDevice.enableAdbRoot();
     }
 
     /**
@@ -75,6 +57,6 @@ public class SecurityTestCase extends DeviceTestCase {
                 Integer.parseInt(getDevice().executeShellCommand("cut -f1 -d. /proc/uptime").trim())
                     - kernelStartTime < 2));
         //TODO(badash@): add ability to catch runtime restart
-        getDevice().executeAdbCommand("unroot");
+        getDevice().disableAdbRoot();
     }
 }
