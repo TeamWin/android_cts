@@ -1155,6 +1155,18 @@ public class BitmapTest {
         assertFalse(bitmap1.sameAs(bitmap4));
     }
 
+    @Test(expected=IllegalStateException.class)
+    public void testHardwareGetPixel() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.getPixel(0, 0);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testHardwareGetPixels() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.getPixels(new int[5], 0, 5, 0, 0, 5, 1);
+    }
+
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;
