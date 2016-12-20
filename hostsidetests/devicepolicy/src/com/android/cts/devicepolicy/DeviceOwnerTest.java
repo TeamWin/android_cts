@@ -345,6 +345,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void testNetworkLoggingWithSingleUser() throws Exception {
         executeDeviceTestMethod(".NetworkLoggingTest", "testEnablingAndDisablingNetworkLogging");
         executeDeviceTestMethod(".NetworkLoggingTest", "testProvidingWrongBatchTokenReturnsNull");
+        executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval");
     }
 
     public void testLockTask() throws Exception {

@@ -39,6 +39,10 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     final static String ACTION_USER_ADDED = "com.android.cts.deviceowner.action.USER_ADDED";
     final static String ACTION_USER_REMOVED = "com.android.cts.deviceowner.action.USER_REMOVED";
     final static String EXTRA_USER_HANDLE = "com.android.cts.deviceowner.extra.USER_HANDLE";
+    final static String ACTION_NETWORK_LOGS_AVAILABLE =
+            "com.android.cts.deviceowner.action.ACTION_NETWORK_LOGS_AVAILABLE";
+    final static String EXTRA_NETWORK_LOGS_BATCH_TOKEN =
+            "com.android.cts.deviceowner.extra.NETWORK_LOGS_BATCH_TOKEN";
 
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
 
@@ -63,6 +67,15 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         @Override
         public void onUserRemoved(Context context, Intent intent, UserHandle userHandle) {
             sendUserAddedOrRemovedBroadcast(context, ACTION_USER_REMOVED, userHandle);
+        }
+
+        @Override
+        public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
+                int networkLogsCount) {
+            // send the broadcast, the rest of the test happens in NetworkLoggingTest
+            Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
+            batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(batchIntent);
         }
 
         private void sendUserAddedOrRemovedBroadcast(Context context, String action,
