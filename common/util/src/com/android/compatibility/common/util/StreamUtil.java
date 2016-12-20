@@ -20,11 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+
 public class StreamUtil {
 
     // 16K buffer size
     private static final int BUFFER_SIZE = 16 * 1024;
-
     /**
      * Copies contents of origStream to destStream.
      * <p/>
