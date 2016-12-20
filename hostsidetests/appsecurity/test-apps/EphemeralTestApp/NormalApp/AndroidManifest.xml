@@ -23,15 +23,6 @@
         <activity
             android:name=".NormalActivity"
             android:theme="@android:style/Theme.NoDisplay">
-            <!-- TEST: ephemeral app can start w/o knowing about this activity -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" />
-                <data android:host="cts.google.com" />
-                <data android:path="normal" />
-            </intent-filter>
             <!-- TEST: ephemeral apps can't see this activity using query methods -->
             <intent-filter android:priority="-20">
                 <action android:name="com.android.cts.ephemeraltest.QUERY" />
@@ -41,6 +32,19 @@
             <intent-filter>
                 <action android:name="com.android.cts.ephemeraltest.START_NORMAL" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".NormalWebActivity"
+            android:theme="@android:style/Theme.NoDisplay">
+            <!-- TEST: implicitly exposes this activity to ephemeral apps -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="cts.google.com" />
+                <data android:path="/normal" />
             </intent-filter>
         </activity>
         <activity

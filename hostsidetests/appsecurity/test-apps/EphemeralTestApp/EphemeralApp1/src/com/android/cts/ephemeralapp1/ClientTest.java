@@ -140,7 +140,7 @@ public class ClientTest {
 //            InstrumentationRegistry.getContext().startActivity(startViewIntent, null /*options*/);
 //            final BroadcastResult testResult = getResult();
 //            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-//            assertThat("NormalActivity", is(testResult.activityName));
+//            assertThat("NormalWebActivity", is(testResult.activityName));
 //        }
     }
 
