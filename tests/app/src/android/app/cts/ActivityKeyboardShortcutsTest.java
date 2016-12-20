@@ -16,7 +16,6 @@
 
 package android.app.cts;
 
-import android.app.Activity;
 import android.app.stubs.KeyboardShortcutsActivity;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
@@ -33,7 +32,7 @@ import java.util.List;
 public class ActivityKeyboardShortcutsTest
         extends ActivityInstrumentationTestCase2<KeyboardShortcutsActivity> {
 
-    private Activity mActivity;
+    private KeyboardShortcutsActivity mActivity;
     private Menu mMenu;
 
     public ActivityKeyboardShortcutsTest() {
@@ -45,6 +44,20 @@ public class ActivityKeyboardShortcutsTest
         super.setUp();
         mActivity = getActivity();
         mMenu = new PopupMenu(mActivity, null).getMenu();
+    }
+
+    public void testRequestShowKeyboardShortcuts() throws InterruptedException {
+        // GIVEN an activity with open options menu
+        mActivity.openOptionsMenu();
+        mActivity.waitForMenuToBeOpen();
+
+        // WHEN keyboard shortcuts are requested
+        mActivity.requestShowKeyboardShortcuts();
+        mActivity.waitForKeyboardShortcutsToBeRequested();
+
+        // THEN the activity's onProvideKeyboardShortcuts should be
+        // triggered to get app specific shortcuts
+        assertTrue(mActivity.onProvideKeyboardShortcutsCalled());
     }
 
     public void testOnProvideKeyboardShortcuts() {
