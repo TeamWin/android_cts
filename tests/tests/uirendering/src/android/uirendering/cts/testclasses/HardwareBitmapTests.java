@@ -16,10 +16,13 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.content.res.Resources;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.NinePatchDrawable;
 import android.uirendering.cts.R;
 
 import android.graphics.Bitmap;
@@ -29,8 +32,10 @@ import android.uirendering.cts.bitmapcomparers.ExactComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.util.DisplayMetrics;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,13 +44,27 @@ import java.io.InputStream;
 @MediumTest
 public class HardwareBitmapTests extends ActivityTestBase {
 
+    private Resources mRes;
+
+    private static final BitmapFactory.Options HARDWARE_OPTIONS = createHardwareOptions();
+
+    private static BitmapFactory.Options createHardwareOptions() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.HARDWARE;
+        return options;
+    }
+
+    @Before
+    public void setup() {
+        mRes = getActivity().getResources();
+    }
+
     @Test
     public void testDecodeResource() {
         createTest().addCanvasClient((canvas, width, height) -> {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.HARDWARE;
-            Bitmap hardwareBitmap = BitmapFactory.decodeResource(
-                    getActivity().getResources(), R.drawable.robot, options);
+            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
                 R.drawable.golden_robot, new ExactComparer()));
@@ -53,12 +72,11 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testBitmapRegionDecode() throws IOException {
-        InputStream inputStream = getActivity().getResources().openRawResource(R.drawable.robot);
+        InputStream inputStream = mRes.openRawResource(R.drawable.robot);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(inputStream, false);
         createTest().addCanvasClient((canvas, width, height) -> {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.HARDWARE;
-            Bitmap hardwareBitmap = decoder.decodeRegion(new Rect(10, 15, 34, 39), options);
+            Bitmap hardwareBitmap = decoder.decodeRegion(new Rect(10, 15, 34, 39),
+                    HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
                 R.drawable.golden_headless_robot, new ExactComparer()));
@@ -94,6 +112,32 @@ public class HardwareBitmapTests extends ActivityTestBase {
     @Test
     public void testBitmapConfigFromHardwareToARGB8888() {
         testBitmapCopy(R.drawable.robot, Bitmap.Config.HARDWARE, Bitmap.Config.ARGB_8888);
+    }
+
+    @Test
+    public void testSetDensity() {
+        createTest().addCanvasClient((canvas, width, height) -> {
+            Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot);
+            bitmap.setDensity(DisplayMetrics.DENSITY_LOW);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+        }, true).addCanvasClient((canvas, width, height) -> {
+            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                    HARDWARE_OPTIONS);
+            hardwareBitmap.setDensity(DisplayMetrics.DENSITY_LOW);
+            canvas.drawBitmap(hardwareBitmap, 0, 0, null);
+        }, true).runWithComparer(new ExactComparer());
+    }
+
+    @Test
+    public void testNinePatch() {
+        createTest().addCanvasClient((canvas, width, height) -> {
+            InputStream is = mRes.openRawResource(R.drawable.blue_padded_square);
+            NinePatchDrawable ninePatch = (NinePatchDrawable) Drawable.createFromResourceStream(
+                    mRes, null, is, null, HARDWARE_OPTIONS);
+            ninePatch.setBounds(0, 0, width, height);
+            ninePatch.draw(canvas);
+        }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_hardwaretest_ninepatch, new ExactComparer()));
     }
 
     private void testBitmapCopy(int id, Bitmap.Config from, Bitmap.Config to) {
