@@ -31,7 +31,7 @@ public class TelephonyHelper {
         TelephonyManager telephony =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
-        return TextUtils.isEmpty(telephony.getLine1Number());
+        return !TextUtils.isEmpty(telephony.getLine1Number());
     }
 
     /*
