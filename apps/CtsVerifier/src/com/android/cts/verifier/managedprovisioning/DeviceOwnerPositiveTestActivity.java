@@ -71,6 +71,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_FACTORY_RESET_ID = "DISALLOW_FACTORY_RESET";
     private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
     private static final String ENTERPRISE_PRIVACY_TEST_ID = "ENTERPRISE_PRIVACY";
+    private static final String NETWORK_LOGGING_UI_TEST_ID = "NETWORK_LOGGING_UI";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -307,6 +308,18 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 R.string.enterprise_privacy_test,
                 enterprisePolicyTestIntent));
 
+        // Network logging UI
+        adapter.add(createInteractiveTestItem(this, NETWORK_LOGGING_UI_TEST_ID,
+                R.string.device_owner_network_logging_ui,
+                R.string.device_owner_network_logging_ui_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.device_owner_enable_network_logging_button,
+                                createEnableNetworkLoggingIntent()),
+                        new ButtonInfo(
+                                R.string.device_owner_disable_network_logging_button,
+                                createDisableNetworkLoggingIntent())}));
+
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
@@ -347,5 +360,17 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_SET_USER_ICON);
+    }
+
+    private Intent createEnableNetworkLoggingIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_ENABLE_NETWORK_LOGGING);
+    }
+
+    private Intent createDisableNetworkLoggingIntent() {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_DISABLE_NETWORK_LOGGING);
     }
 }

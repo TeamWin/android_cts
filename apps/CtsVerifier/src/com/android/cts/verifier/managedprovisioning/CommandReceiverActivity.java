@@ -64,6 +64,8 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_RETRIEVE_NETWORK_LOGS = "retrieve-network-logs";
     public static final String COMMAND_RETRIEVE_SECURITY_LOGS = "retrieve-security-logs";
     public static final String COMMAND_SET_ORGANIZATION_NAME = "set-organization-name";
+    public static final String COMMAND_ENABLE_NETWORK_LOGGING = "enable-network-logging";
+    public static final String COMMAND_DISABLE_NETWORK_LOGGING = "disable-network-logging";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -215,6 +217,18 @@ public class CommandReceiverActivity extends Activity {
                     }
                     mDpm.setOrganizationName(mAdmin,
                             intent.getStringExtra(EXTRA_ORGANIZATION_NAME));
+                } break;
+                case COMMAND_ENABLE_NETWORK_LOGGING: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setNetworkLoggingEnabled(mAdmin, true);
+                } break;
+                case COMMAND_DISABLE_NETWORK_LOGGING: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setNetworkLoggingEnabled(mAdmin, false);
                 } break;
             }
         } catch (Exception e) {
