@@ -254,7 +254,7 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
          * 5% error margin for shader and 10% error margin for dhrystone.
          */
         assertFalse("Results in the mode are not sustainable",
-                    (resDhry > 10) ||
+                    (resDhry > 15) ||
                     (resApp > 5));
     }
 }
