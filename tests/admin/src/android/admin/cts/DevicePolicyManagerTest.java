@@ -196,7 +196,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             mDevicePolicyManager.isNetworkLoggingEnabled(mComponent);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
-            assertDeviceOwnerMessage(e.getMessage());
+            assertDeviceOwnerOrManageUsersMessage(e.getMessage());
         }
     }
 
@@ -721,6 +721,13 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     private void assertDeviceOwnerMessage(String message) {
         assertTrue("message is: "+ message, message.contains("does not own the device")
                 || message.contains("can only be called by the device owner"));
+    }
+
+    private void assertDeviceOwnerOrManageUsersMessage(String message) {
+        assertTrue("message is: "+ message, message.contains("does not own the device")
+                || message.contains("can only be called by the device owner")
+                || (message.startsWith("Neither user ") && message.endsWith(
+                        " nor current process has android.permission.MANAGE_USERS.")));
     }
 
     private void assertProfileOwnerMessage(String message) {
