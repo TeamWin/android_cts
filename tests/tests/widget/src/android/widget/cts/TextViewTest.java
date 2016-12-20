@@ -5803,6 +5803,16 @@ public class TextViewTest {
         // TODO(Bug: 22033189): Tests the set callback is actually used.
     }
 
+    @UiThreadTest
+    @Test
+    public void testRespectsViewFocusability() {
+        TextView v = (TextView) mActivity.findViewById(R.id.textview_singleLine);
+        assertFalse(v.isFocusable());
+        // TextView used to set focusable to true or false verbatim which would break the following.
+        v.setClickable(true);
+        assertTrue(v.isFocusable());
+    }
+
     @Test
     public void testTextShadows() throws Throwable {
         final TextView textViewWithConfiguredShadow =

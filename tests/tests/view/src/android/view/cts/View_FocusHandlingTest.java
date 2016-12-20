@@ -29,6 +29,7 @@ import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
+import android.view.ViewGroup;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -213,5 +214,44 @@ public class View_FocusHandlingTest {
         assertNull(v2.findFocus());
         assertNull(v3.findFocus());
         assertNull(v4.findFocus());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testFocusAuto() {
+        Activity activity = mActivityRule.getActivity();
+
+        activity.getLayoutInflater().inflate(R.layout.focus_handling_auto_layout,
+                (ViewGroup) activity.findViewById(R.id.auto_test_area));
+
+        View def = activity.findViewById(R.id.focusabledefault);
+        View auto = activity.findViewById(R.id.focusableauto);
+        View click = activity.findViewById(R.id.onlyclickable);
+        View clickNotFocus = activity.findViewById(R.id.clickablenotfocusable);
+
+        assertEquals(View.FOCUSABLE_AUTO, auto.getFocusable());
+        assertFalse(auto.isFocusable());
+        assertFalse(def.isFocusable());
+        assertTrue(click.isFocusable());
+        assertFalse(clickNotFocus.isFocusable());
+
+        View test = new View(activity);
+        assertFalse(test.isFocusable());
+        test.setClickable(true);
+        assertTrue(test.isFocusable());
+        test.setFocusable(View.NOT_FOCUSABLE);
+        assertFalse(test.isFocusable());
+        test.setFocusable(View.FOCUSABLE_AUTO);
+        assertTrue(test.isFocusable());
+        test.setClickable(false);
+        assertFalse(test.isFocusable());
+
+        // Make sure setFocusable(boolean) unsets FOCUSABLE_AUTO.
+        auto.setFocusable(true);
+        assertSame(View.FOCUSABLE, auto.getFocusable());
+        auto.setFocusable(View.FOCUSABLE_AUTO);
+        assertSame(View.FOCUSABLE_AUTO, auto.getFocusable());
+        auto.setFocusable(false);
+        assertSame(View.NOT_FOCUSABLE, auto.getFocusable());
     }
 }
