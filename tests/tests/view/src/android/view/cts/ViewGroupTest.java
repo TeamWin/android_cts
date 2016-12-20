@@ -903,11 +903,11 @@ public class ViewGroupTest implements CTSResult {
     @LargeTest
     @Test
     public void testInvalidateChild() {
-        ViewGroupCtsActivity.setResult(this);
+        ViewGroupInvalidateChildCtsActivity.setResult(this);
 
         Context context = InstrumentationRegistry.getTargetContext();
-        Intent intent = new Intent(context, ViewGroupCtsActivity.class);
-        intent.setAction(ViewGroupCtsActivity.ACTION_INVALIDATE_CHILD);
+        Intent intent = new Intent(context, ViewGroupInvalidateChildCtsActivity.class);
+        intent.setAction(ViewGroupInvalidateChildCtsActivity.ACTION_INVALIDATE_CHILD);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
 

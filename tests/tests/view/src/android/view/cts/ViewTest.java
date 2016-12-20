@@ -2531,7 +2531,7 @@ public class ViewTest {
         final int childWidth = 100;
         final int childHeight = 200;
         final int parentHeight = 400;
-        final MockLinearLayout parent = new MockLinearLayout(mActivity);
+        final LinearLayout parent = new LinearLayout(mActivity);
         ViewGroup.LayoutParams parentParams = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, parentHeight);
         parent.setLayoutParams(parentParams);

@@ -19,11 +19,10 @@ package android.view.cts;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.widget.TextView;
 
 import com.android.compatibility.common.util.CTSResult;
 
-public class ViewGroupCtsActivity extends Activity {
+public class ViewGroupInvalidateChildCtsActivity extends Activity {
     public static final String ACTION_INVALIDATE_CHILD = "invalidateChild";
 
     private final Handler mHandler = new Handler();
@@ -37,8 +36,6 @@ public class ViewGroupCtsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(android.view.cts.R.layout.viewgrouptest_stub);
-        TextView textView = (TextView) findViewById(android.view.cts.R.id.viewgrouptest_stub);
-        textView.setText("test");
     }
 
     @Override
