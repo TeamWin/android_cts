@@ -58,6 +58,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private boolean mUseFixedVolume;
     private boolean mIsTelevision;
     private Context mContext;
+    private final static int ASYNC_TIMING_TOLERANCE_MS = 50;
 
     @Override
     protected void setUp() throws Exception {
@@ -472,8 +473,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     AudioManager.STREAM_ACCESSIBILITY};
 
             mAudioManager.adjustVolume(ADJUST_RAISE, 0);
+            // adjusting volume is aynchronous, wait before other volume checks
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             mAudioManager.adjustSuggestedStreamVolume(
                     ADJUST_LOWER, USE_DEFAULT_STREAM_TYPE, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             int maxMusicVolume = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
 
             for (int i = 0; i < streams.length; i++) {
@@ -517,6 +521,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
                 volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(streams[i]));
                 mAudioManager.adjustSuggestedStreamVolume(ADJUST_LOWER, streams[i], 0);
+                Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
                 assertEquals(maxVolume - volumeDelta, mAudioManager.getStreamVolume(streams[i]));
 
                 // volume lower
@@ -559,6 +564,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
             // adjust volume
             mAudioManager.adjustVolume(ADJUST_RAISE, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
 
             MediaPlayer mp = MediaPlayer.create(mContext, MP3_TO_PLAY);
             assertNotNull(mp);
@@ -571,6 +577,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             // adjust volume as ADJUST_SAME
             for (int k = 0; k < maxMusicVolume; k++) {
                 mAudioManager.adjustVolume(ADJUST_SAME, 0);
+                Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
                 assertEquals(maxMusicVolume, mAudioManager.getStreamVolume(STREAM_MUSIC));
             }
 
@@ -578,6 +585,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mAudioManager.setStreamVolume(STREAM_MUSIC, 0, 0);
             volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
             mAudioManager.adjustVolume(ADJUST_RAISE, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             assertEquals(Math.min(volumeDelta, maxMusicVolume),
                     mAudioManager.getStreamVolume(STREAM_MUSIC));
 
@@ -586,6 +594,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             maxMusicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
             volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
             mAudioManager.adjustVolume(ADJUST_LOWER, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             assertEquals(Math.max(0, maxMusicVolume - volumeDelta),
                     mAudioManager.getStreamVolume(STREAM_MUSIC));
 
