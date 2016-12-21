@@ -280,7 +280,7 @@ public abstract class BasePermissionsTest {
         Assert.assertNotNull("Permissions label should be present", permLabelView);
 
         AccessibilityNodeInfo permItemView = findCollectionItem(permLabelView);
-        Assert.assertNotNull("Permissions item should be present", permLabelView);
+        Assert.assertNotNull("Permissions item should be present", permItemView);
 
         click(permItemView);
 
