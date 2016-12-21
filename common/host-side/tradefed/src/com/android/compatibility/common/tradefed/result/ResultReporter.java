@@ -75,11 +75,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private static final String RESULT_KEY = "COMPATIBILITY_TEST_RESULT";
     private static final String CTS_PREFIX = "cts:";
     private static final String BUILD_INFO = CTS_PREFIX + "build_";
-    private static final String[] RESULT_RESOURCES = {
-        "compatibility_result.css",
-        "compatibility_result.xsd",
-        "compatibility_result.xsl",
-        "logo.png"};
 
     @Option(name = CompatibilityTest.RETRY_OPTION,
             shortName = 'r',
@@ -614,7 +609,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * @param resultsDir
      */
     static void copyFormattingFiles(File resultsDir) {
-        for (String resultFileName : RESULT_RESOURCES) {
+        for (String resultFileName : ResultHandler.RESULT_RESOURCES) {
             InputStream configStream = ResultHandler.class.getResourceAsStream(
                     String.format("/report/%s", resultFileName));
             if (configStream != null) {

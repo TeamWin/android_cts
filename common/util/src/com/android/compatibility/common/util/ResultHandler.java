@@ -54,6 +54,13 @@ public class ResultHandler {
     private static final String RESULT_FILE_VERSION = "5.0";
     public static final String TEST_RESULT_FILE_NAME = "test_result.xml";
 
+    public static final String[] RESULT_RESOURCES = {
+        "compatibility_result.css",
+        "compatibility_result.xsd",
+        "compatibility_result.xsl",
+        "logo.png"
+    };
+
     // XML constants
     private static final String ABI_ATTR = "abi";
     private static final String BUGREPORT_TAG = "BugReport";
@@ -172,8 +179,7 @@ public class ResultHandler {
                     parser.require(XmlPullParser.START_TAG, NS, MODULE_TAG);
                     String name = parser.getAttributeValue(NS, NAME_ATTR);
                     String abi = parser.getAttributeValue(NS, ABI_ATTR);
-                    // TODO: use AbiUtils#createId when available for use
-                    String moduleId = String.format("%s %s", abi, name);
+                    String moduleId = AbiUtils.createId(abi, name);
                     boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
                     IModuleResult module = invocation.getOrCreateModule(moduleId);
                     module.setDone(done);
