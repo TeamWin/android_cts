@@ -138,8 +138,6 @@
 
     <!-- b/25850508 -->
     <option name="compatibility:exclude-filter" value="CtsMediaStressTestCases android.mediastress.cts.preconditions.MediaPreparerTest#testCopyMediaFiles" />
-    <option name="compatibility:exclude-filter" value="CtsMediaStressTestCases android.mediastress.cts.preconditions.MediaPreparerTest#testGetMaxVideoPlaybackResolutionFound" />
-    <option name="compatibility:exclude-filter" value="CtsMediaStressTestCases android.mediastress.cts.preconditions.MediaPreparerTest#testGetMaxVideoPlaybackResolutionNotFound" />
     <option name="compatibility:exclude-filter" value="CtsMediaStressTestCases android.mediastress.cts.preconditions.MediaPreparerTest#testMediaFilesExistOnDeviceFalse" />
     <option name="compatibility:exclude-filter" value="CtsMediaStressTestCases android.mediastress.cts.preconditions.MediaPreparerTest#testMediaFilesExistOnDeviceTrue" />
     <option name="compatibility:exclude-filter" value="CtsMediaStressTestCases android.mediastress.cts.preconditions.MediaPreparerTest#testSetMountPoint" />

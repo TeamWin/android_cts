@@ -154,12 +154,11 @@ public class MediaUtils {
     public static void skipTest(String tag, String reason) {
         Log.i(tag, "SKIPPING " + getTestName() + "(): " + reason);
         DeviceReportLog log = new DeviceReportLog("CtsMediaSkippedTests", "test_skipped");
-        log.addValue("reason", reason, ResultType.NEUTRAL, ResultUnit.NONE);
-        log.addValue(
-                "test", getTestNameWithClass(), ResultType.NEUTRAL, ResultUnit.NONE);
-        // TODO: replace with submit() when it is added to DeviceReportLog
         try {
-            log.submit(null);
+            log.addValue("reason", reason, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.addValue(
+                    "test", getTestNameWithClass(), ResultType.NEUTRAL, ResultUnit.NONE);
+            log.submit();
         } catch (NullPointerException e) { }
     }
 
