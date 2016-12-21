@@ -506,7 +506,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             String command = "rm " + TEST_APP_LOCATION + apk.getName();
             getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);
-            getDevice().uninstallPackage(PACKAGE_INSTALLER_APK);
+            getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
             if (unknownSourceSetting != null) {
                 putSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, unknownSourceSetting,
                         mUserId);
