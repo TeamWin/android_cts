@@ -36,7 +36,7 @@ import java.util.List;
 public class AccessibilityNodeInfoTest extends AndroidTestCase {
 
     /** The number of properties of the {@link AccessibilityNodeInfo} class that are marshalled. */
-    private static final int NUM_MARSHALLED_PROPERTIES = 31;
+    private static final int NUM_MARSHALLED_PROPERTIES = 32;
 
     /** The number of properties that are purposely not marshalled */
     private static final int NUM_NONMARSHALLED_PROPERTIES = 1;
@@ -204,6 +204,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setContentDescription("content description");
         info.setPackageName("foo.bar.baz");
         info.setText("text");
+        info.setHintText("hint");
         info.setCheckable(true);
         info.setChecked(true);
         info.setClickable(true);
@@ -250,6 +251,8 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertEquals("packageName has incorrect value", expectedInfo.getPackageName(),
                 receivedInfo.getPackageName());
         assertEquals("text has incorrect value", expectedInfo.getText(), receivedInfo.getText());
+        assertEquals("Hint text has incorrect value",
+                expectedInfo.getHintText(), receivedInfo.getHintText());
         assertSame("checkable has incorrect value", expectedInfo.isCheckable(),
                 receivedInfo.isCheckable());
         assertSame("checked has incorrect value", expectedInfo.isChecked(),
@@ -310,6 +313,7 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertNull("contentDescription not properly recycled", info.getContentDescription());
         assertNull("packageName not properly recycled", info.getPackageName());
         assertNull("text not properly recycled", info.getText());
+        assertNull("Hint text not properly recycled", info.getHintText());
         assertFalse("checkable not properly recycled", info.isCheckable());
         assertFalse("checked not properly recycled", info.isChecked());
         assertFalse("clickable not properly recycled", info.isClickable());
