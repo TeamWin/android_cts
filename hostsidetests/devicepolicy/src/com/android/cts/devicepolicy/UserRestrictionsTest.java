@@ -52,6 +52,7 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
             // DO/PO might have set DISALLOW_REMOVE_USER, so it needs to be done after removing
             // them.
             removeTestUsers();
+            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
         }
         super.tearDown();
     }
