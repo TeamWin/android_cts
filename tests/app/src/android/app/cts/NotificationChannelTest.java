@@ -44,8 +44,11 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(false, channel.canBypassDnd());
         assertEquals(false, channel.shouldShowLights());
         assertEquals(false, channel.shouldVibrate());
+        assertEquals(null, channel.getVibrationPattern());
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.getImportance());
         assertEquals(null, channel.getSound());
+        assertTrue(channel.isAllowed());
+        assertFalse(channel.canShowBadge());
     }
 
     public void testWriteToParcel() {
@@ -83,6 +86,8 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertNull(channel.getVibrationPattern());
         channel.setVibrationPattern(pattern);
         assertEquals(pattern, channel.getVibrationPattern());
+        channel.enableVibration(true);
+        assertTrue(channel.shouldVibrate());
     }
 
     public void testRingtone() {
@@ -92,5 +97,19 @@ public class NotificationChannelTest extends AndroidTestCase {
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setSound(expected);
         assertEquals(expected, channel.getSound());
+    }
+
+    public void testAllowed() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setAllowed(false);
+        assertFalse(channel.isAllowed());
+    }
+
+    public void testShowBadge() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setShowBadge(true);
+        assertTrue(channel.canShowBadge());
     }
 }
