@@ -216,7 +216,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         checkSeapp.setExecutable(true);
 
         /* retrieve the AOSP seapp_neverallows file from jar */
-        seappNeverAllowFile = copyResourceToTempFile("/general_seapp_neverallows");
+        seappNeverAllowFile = copyResourceToTempFile("/plat_seapp_neverallows");
 
         /* run checkseapp on seapp_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkSeapp.getAbsolutePath(),
@@ -272,7 +272,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         mDevice.pullFile("/seapp_contexts", deviceSeappFile);
 
         /* retrieve the AOSP seapp_contexts file from jar */
-        aospSeappFile = copyResourceToTempFile("/general_seapp_contexts");
+        aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
 
         assertFileStartsWith(aospSeappFile, deviceSeappFile);
     }
