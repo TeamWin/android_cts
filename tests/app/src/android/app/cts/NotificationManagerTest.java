@@ -227,25 +227,12 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 200ms before giving up
         boolean found = false;
-        for (int tries=3; tries-->0;) {
-            // Need reset flag.
-            found = false;
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            for (StatusBarNotification sbn : sbns) {
-                if (sbn.getId() == id) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found == shouldExist) break;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
+        final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+        for (StatusBarNotification sbn : sbns) {
+            if (sbn.getId() == id) {
+                found = true;
+                break;
             }
         }
         return found == shouldExist;
