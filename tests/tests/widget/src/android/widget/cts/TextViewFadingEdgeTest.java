@@ -34,6 +34,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.TypedValue;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -58,8 +59,10 @@ public class TextViewFadingEdgeTest {
     private static final String LONG_LTR_STRING = "start start1 middle middle1 end end1";
     private static final String SHORT_RTL_STRING = "ت";
     private static final String SHORT_LTR_STRING = "s";
-    public static final int ANY_PADDING = 15;
-    public static final int ANY_FADE_LENGTH = 60;
+    public static final int ANY_PADDING = 20;
+    public static final int ANY_FADE_LENGTH = 20;
+    public static final int TEXT_SIZE = 20;
+    public static final int WIDTH = 100;
 
     private static final TestCase[] TEST_DATA = {
             // no fade - fading disabled
@@ -156,10 +159,10 @@ public class TextViewFadingEdgeTest {
             int gravity, int textAlignment, boolean scrollToMiddle) throws Throwable {
         final MockTextView textView = new MockTextView(mActivity);
         textView.setSingleLine(true);
-        textView.setTextSize(30);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, TEXT_SIZE);
         textView.setPadding(ANY_PADDING, ANY_PADDING, ANY_PADDING, ANY_PADDING);
         textView.setFadingEdgeLength(ANY_FADE_LENGTH);
-        textView.setLayoutParams(new ViewGroup.LayoutParams(300,
+        textView.setLayoutParams(new ViewGroup.LayoutParams(WIDTH,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         textView.setHorizontalFadingEdgeEnabled(horizontalFadingEnabled);
         textView.setText(text);
