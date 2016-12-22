@@ -30,7 +30,13 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
             mUserId = mPrimaryUserId;
 
             installAppAsUser(DEVICE_ADMIN_APK, mUserId);
-            setProfileOwnerOrFail(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
+            if (!setProfileOwner(
+                    DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
+                    /*expectFailure*/ false)) {
+                removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
+                getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+                fail("Failed to set profile owner");
+            }
         }
     }
 
