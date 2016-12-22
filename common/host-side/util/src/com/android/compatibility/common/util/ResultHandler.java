@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -44,6 +45,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
 /**
  * Handles conversion of results to/from files.
  */
@@ -54,6 +61,8 @@ public class ResultHandler {
     private static final String NS = null;
     private static final String RESULT_FILE_VERSION = "5.0";
     /* package */ static final String TEST_RESULT_FILE_NAME = "test_result.xml";
+    private static final String FAILURE_REPORT_NAME = "test_result_failures.html";
+    private static final String FAILURE_XSL_FILE_NAME = "compatibility_failures.xsl";
 
     // XML constants
     private static final String ABI_ATTR = "abi";
@@ -115,7 +124,7 @@ public class ResultHandler {
     public static List<IInvocationResult> getResults(
             File resultsDir, Boolean useChecksum) {
         List<IInvocationResult> results = new ArrayList<>();
-        List<File> files = getResultDirectories(resultsDir);;
+        List<File> files = getResultDirectories(resultsDir);
         for (File resultDir : files) {
             if (!resultDir.isDirectory()) {
                 continue;
@@ -270,7 +279,7 @@ public class ResultHandler {
             String suiteBuild, IInvocationResult result, File resultDir,
             long startTime, long endTime, String referenceUrl, String logUrl,
             String commandLineArgs)
-                    throws IOException, XmlPullParserException {
+            throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
         int notExecuted = result.getNotExecuted();
@@ -321,7 +330,8 @@ public class ResultHandler {
         String hostName = "";
         try {
             hostName = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException ignored) {}
+        } catch (UnknownHostException ignored) {
+        }
         serializer.attribute(NS, HOST_NAME_ATTR, hostName);
         serializer.attribute(NS, OS_NAME_ATTR, System.getProperty("os.name"));
         serializer.attribute(NS, OS_VERSION_ATTR, System.getProperty("os.version"));
@@ -359,6 +369,8 @@ public class ResultHandler {
             serializer.attribute(NS, RUNTIME_ATTR, String.valueOf(module.getRuntime()));
             serializer.attribute(NS, DONE_ATTR, Boolean.toString(module.isDone()));
             serializer.attribute(NS, NOT_EXECUTED_ATTR, Integer.toString(module.getNotExecuted()));
+            serializer.attribute(NS, PASS_ATTR,
+                    Integer.toString(module.countResults(TestStatus.PASS)));
             for (ICaseResult cr : module.getResults()) {
                 serializer.startTag(NS, CASE_TAG);
                 serializer.attribute(NS, NAME_ATTR, cr.getName());
@@ -413,6 +425,19 @@ public class ResultHandler {
         serializer.endDocument();
         createChecksum(resultDir, result);
         return resultFile;
+    }
+
+    public static File createFailureReport(File inputXml) {
+        File failureReport = new File(inputXml.getParentFile(), FAILURE_REPORT_NAME);
+        try (InputStream xslStream = ResultHandler.class.getResourceAsStream(
+                String.format("/report/%s", FAILURE_XSL_FILE_NAME));
+             OutputStream outputStream = new FileOutputStream(failureReport)) {
+
+            Transformer transformer = TransformerFactory.newInstance().newTransformer(
+                    new StreamSource(xslStream));
+            transformer.transform(new StreamSource(inputXml), new StreamResult(outputStream));
+        } catch (IOException | TransformerException ignored) { }
+        return failureReport;
     }
 
     private static void createChecksum(File resultDir, IInvocationResult invocationResult) {
