@@ -41,6 +41,8 @@ import android.test.ActivityInstrumentationTestCase2;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -103,6 +105,10 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     public static final Account CUSTOM_TOKEN_ACCOUNT =
             new Account(ACCOUNT_NAME,ACCOUNT_TYPE_CUSTOM);
 
+    // Installed packages to test visibility API.
+    public static final String PACKAGE_NAME_1 = "android.accounts.cts";
+    public static final String PACKAGE_NAME_2 = "android.accounts.cts.unaffiliated";
+
     public static final Bundle SESSION_BUNDLE = new Bundle();
     public static final String SESSION_DATA_NAME_1 = "session.data.name.1";
     public static final String SESSION_DATA_VALUE_1 = "session.data.value.1";
@@ -113,7 +119,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     public static final String KEY_MAC = "mac";
 
     private static MockAccountAuthenticator mockAuthenticator;
-    private static final int LATCH_TIMEOUT_MS = 500;
+    private static final int LATCH_TIMEOUT_MS = 1000;
     private static AccountManager am;
 
     public synchronized static MockAccountAuthenticator getMockAuthenticator(Context context) {
@@ -206,7 +212,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
 
         try {
             // Delay further execution until expiring tokens can actually expire.
-            Thread.sleep(mockAuthenticator.getTokenDurationMillis() + 1L);
+            Thread.sleep(mockAuthenticator.getTokenDurationMillis() + 50L);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -977,24 +983,66 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     }
 
     /*
-     * Test registration of visibility and then test subsequent visibility checks:
+     * Test updates to account visibility and then test subsequent visibility checks:
      */
-    public void testRegisterVisibility()
+    public void testSetAccountVisibilityVisibility()
             throws IOException, AuthenticatorException, OperationCanceledException {
-        // TODO test visibility
         am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
 
-        removeAccount(am, ACCOUNT, mActivity, null /* callback */);
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_NOT_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_2, AccountManager.VISIBILITY_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_2),
+                AccountManager.VISIBILITY_VISIBLE);
 
     }
 
-
-    /*
-     * Test Case for adding accounts explicitly with visibility
+    /**
+     * Test addAccountExplicitly(), setAccountVisibility() , getAccountVisibility(), and
+     * removeAccount().
      */
     public void testAddAccountExplicitlyWithVisibility()
-            throws OperationCanceledException, AuthenticatorException, IOException {
-        // TODO update tests
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        Map<String, Integer> visibility = new HashMap<>();
+        visibility.put(PACKAGE_NAME_1, AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+        visibility.put(PACKAGE_NAME_2, AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+
+        final int expectedAccountsCount = getAccountsCount();
+
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */, visibility);
+
+        // Assert that we have one more account
+        Account[] accounts = am.getAccounts();
+        assertNotNull(accounts);
+        assertEquals(1 + expectedAccountsCount, accounts.length);
+        assertTrue(isAccountPresent(am.getAccounts(), ACCOUNT));
+
+        // Visibility values were stored.
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_2),
+                AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */)
+                .getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
+
+        // Visibility values were removed
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_UNDEFINED);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_2),
+                AccountManager.VISIBILITY_UNDEFINED);
+
+        // and verify that we go back to the initial state
+        accounts = am.getAccounts();
+        assertNotNull(accounts);
+        assertEquals(expectedAccountsCount, accounts.length);
     }
 
     private static class BlockingGetAuthTokenFetcher implements TokenFetcher {
@@ -2069,7 +2117,7 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         StrictMode.ThreadPolicy oldPolicy = StrictMode.getThreadPolicy();
         try {
             StrictMode.setThreadPolicy(
-                new StrictMode.ThreadPolicy.Builder().detectDiskReads().penaltyDeath().build());
+                    new StrictMode.ThreadPolicy.Builder().detectDiskReads().penaltyDeath().build());
             Account[] accounts = am.getAccounts();
             assertNotNull(accounts);
             assertTrue(accounts.length > 0);
