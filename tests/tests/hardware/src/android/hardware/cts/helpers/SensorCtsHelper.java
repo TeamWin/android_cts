@@ -141,6 +141,14 @@ public class SensorCtsHelper {
     }
 
     /**
+     * If value lies outside the boundary limit, then return the nearer bound value.
+     * Otherwise, return the value unchanged.
+     */
+    public static <TValue extends Number> double clamp(TValue val, TValue min, TValue max) {
+        return Math.min(max.doubleValue(), Math.max(min.doubleValue(), val.doubleValue()));
+    }
+
+    /**
      * @return The magnitude (norm) represented by the given array of values.
      */
     public static double getMagnitude(float[] values) {
