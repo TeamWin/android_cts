@@ -19,19 +19,35 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
     <ScrollView
         android:id="@+id/ca_notify_test_scroller"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
+        android:fillViewport="true"
         android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/ca_notify_test_items"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:orientation="vertical">
+
+            <TextView
+                    android:id="@+id/test_instructions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dip"
+                    android:textSize="18dip"/>
+
+            <ListView android:id="@id/android:list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            <TextView android:id="@id/android:empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+        </LinearLayout>
     </ScrollView>
 
     <include
