@@ -366,12 +366,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* obtain service_contexts file from running device */
         deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
         deviceSvcFile.deleteOnExit();
-        mDevice.pullFile("/service_contexts", deviceSvcFile);
+        mDevice.pullFile("/plat_service_contexts", deviceSvcFile);
 
         /* retrieve the AOSP service_contexts file from jar */
-        aospSvcFile = copyResourceToTempFile("/general_service_contexts");
+        aospSvcFile = copyResourceToTempFile("/plat_service_contexts");
 
-        assertFileStartsWith(aospSvcFile, deviceSvcFile);
+        assertFileEquals(aospSvcFile, deviceSvcFile);
     }
 
     /**
