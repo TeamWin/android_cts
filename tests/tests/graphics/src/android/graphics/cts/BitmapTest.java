@@ -1167,6 +1167,16 @@ public class BitmapTest {
         bitmap.getPixels(new int[5], 0, 5, 0, 0, 5, 1);
     }
 
+    @Test
+    public void testGetConfigOnRecycled() {
+        Bitmap bitmap1 = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap1.recycle();
+        assertEquals(Config.HARDWARE, bitmap1.getConfig());
+        Bitmap bitmap2 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        bitmap2.recycle();
+        assertEquals(Config.ARGB_8888, bitmap2.getConfig());
+    }
+
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;
