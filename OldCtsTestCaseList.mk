@@ -15,9 +15,11 @@
 cts_security_apps_list := \
     CtsAppAccessData \
     CtsAppWithData \
+    CtsDeclareNonRuntimePermissions \
     CtsDocumentProvider \
     CtsDocumentClient \
     CtsEncryptionApp \
+    CtsEscalateToRuntimePermissions \
     CtsExternalStorageApp \
     CtsInstrumentationAppDiffCert \
     CtsNetSecPolicyUsesCleartextTrafficFalse \
