@@ -30,9 +30,15 @@ import com.android.tradefed.testtype.IBuildReceiver;
  */
 public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
     private static final String PKG = "com.android.cts.usepermission";
+    private static final String ESCALATE_PERMISSION_PKG = "com.android.cts.escalate.permission";
 
     private static final String APK = "CtsUsePermissionApp.apk";
     private static final String APK_COMPAT = "CtsUsePermissionAppCompat.apk";
+
+    private static final String APK_DECLARE_NON_RUNTIME_PERMISSIONS =
+            "CtsDeclareNonRuntimePermissions.apk";
+    private static final String APK_ESCLATE_TO_RUNTIME_PERMISSIONS =
+            "CtsEscalateToRuntimePermissions.apk";
 
     private IAbi mAbi;
     private CtsBuildHelper mCtsBuild;
@@ -55,6 +61,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNotNull(mCtsBuild);
 
         getDevice().uninstallPackage(PKG);
+        getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
     }
 
     @Override
@@ -62,6 +69,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         super.tearDown();
 
         getDevice().uninstallPackage(PKG);
+        getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
     }
 
     public void testFail() throws Exception {
@@ -121,6 +129,16 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         setAppOps(PKG, "android:read_external_storage", "deny");
         setAppOps(PKG, "android:write_external_storage", "deny");
         runDeviceTests(PKG, ".UsePermissionCompatTest", "testCompatRevoked");
+    }
+
+    public void testNoPermissionEscalation() throws Exception {
+        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(
+                APK_DECLARE_NON_RUNTIME_PERMISSIONS), false, false));
+        assertNull(getDevice().installPackage(mCtsBuild.getTestApp(
+                APK_ESCLATE_TO_RUNTIME_PERMISSIONS), true, false));
+        runDeviceTests(ESCALATE_PERMISSION_PKG,
+                "com.android.cts.escalatepermission.PermissionEscalationTest",
+                "testCannotEscalateNonRuntimePermissionsToRuntime");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
