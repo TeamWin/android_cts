@@ -1235,6 +1235,19 @@ public class BitmapTest {
         hwBitmap.copyPixelsFromBuffer(intBuf1);
     }
 
+    @Test
+    public void testHardwareExtractAlpha() {
+        Bitmap bitmap = Bitmap.createBitmap(50, 50, Config.ARGB_8888);
+        bitmap.eraseColor(Color.argb(127, 250, 0, 0));
+        bitmap.setPixel(25, 25, Color.BLUE);
+
+        Bitmap hwBitmap = bitmap.copy(Config.HARDWARE, false);
+        Bitmap alphaBitmap = hwBitmap.extractAlpha();
+        assertEquals(Config.ALPHA_8, alphaBitmap.getConfig());
+        assertEquals(255, Color.alpha(alphaBitmap.getPixel(25, 25)));
+        assertEquals(127, Color.alpha(alphaBitmap.getPixel(40, 40)));
+    }
+
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;
