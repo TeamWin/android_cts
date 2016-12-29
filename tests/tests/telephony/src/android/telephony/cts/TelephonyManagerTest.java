@@ -38,6 +38,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
@@ -46,12 +47,11 @@ import android.util.Log;
 
 import com.android.internal.telephony.PhoneConstants;
 
+import java.util.regex.Pattern;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
@@ -185,6 +185,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.getDeviceSoftwareVersion();
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
+        mTelephonyManager.getNetworkSpecifier();
 
         TelecomManager telecomManager = (TelecomManager) getContext()
             .getSystemService(Context.TELECOM_SERVICE);
@@ -472,6 +473,17 @@ public class TelephonyManagerTest {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
+    }
+
+    @Test
+    public void testGetCarrierConfig() {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+        CarrierConfigManager carrierConfigManager =
+                getContext().getSystemService(CarrierConfigManager.class);
+        assertEquals(mTelephonyManager.getCarrierConfig(), carrierConfigManager.getConfig());
     }
 
     private static Context getContext() {
