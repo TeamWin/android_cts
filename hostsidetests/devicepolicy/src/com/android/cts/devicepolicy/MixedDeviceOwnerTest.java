@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.RequiresDevice;
+
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -55,5 +57,29 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.tearDown();
     }
 
-    // All tests for this class are defined in DeviceAndProfileOwnerTest
+    /**
+     * Require a device for tests that use the network stack. Headless Android setups running in
+     * data centres may need their network rules un-tampered-with in order to keep the ADB / VNC
+     * connection alive.
+     *
+     * This is only a problem on device owner / profile owner running on USER_SYSTEM, because
+     * network rules for this user will affect UID 0.
+     */
+
+    @Override @RequiresDevice
+    public void testAlwaysOnVpn() throws Exception {
+        super.testAlwaysOnVpn();
+    }
+
+    @Override @RequiresDevice
+    public void testAlwaysOnVpnLockDown() throws Exception {
+        super.testAlwaysOnVpnLockDown();
+    }
+
+    @Override @RequiresDevice
+    public void testAlwaysOnVpnPackageUninstalled() throws Exception {
+        super.testAlwaysOnVpnPackageUninstalled();
+    }
+
+    // All other tests for this class are defined in DeviceAndProfileOwnerTest
 }
