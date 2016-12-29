@@ -1219,6 +1219,22 @@ public class BitmapTest {
         bitmap.eraseColor(0);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareCopyPixelsToBuffer() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, HARDWARE_OPTIONS);
+        ByteBuffer byteBuf = ByteBuffer.allocate(bitmap.getRowBytes() * bitmap.getHeight());
+        bitmap.copyPixelsToBuffer(byteBuf);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareCopyPixelsFromBuffer() {
+        IntBuffer intBuf1 = IntBuffer.allocate(mBitmap.getRowBytes() * mBitmap.getHeight());
+        assertEquals(0, intBuf1.position());
+        mBitmap.copyPixelsToBuffer(intBuf1);
+        Bitmap hwBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, HARDWARE_OPTIONS);
+        hwBitmap.copyPixelsFromBuffer(intBuf1);
+    }
+
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;
