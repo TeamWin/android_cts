@@ -30,6 +30,8 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             "com.android.cts.comp.ManagedProfileBindDeviceAdminServiceTest";
     private static final String AFFILIATION_TEST =
             "com.android.cts.comp.provisioning.AffiliationTest";
+    private static final String USER_RESTRICTION_TEST =
+            "com.android.cts.comp.provisioning.UserRestrictionTest";
 
     private int mProfileUserId;
 
@@ -180,20 +182,49 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
 
     protected void setupManagedProfile(String apkName, String adminReceiverClassName)
             throws Exception {
-        mProfileUserId = createManagedProfile(mPrimaryUserId);
-        installAppAsUser(apkName, mProfileUserId);
-        setProfileOwnerOrFail(adminReceiverClassName, mProfileUserId);
-        startUser(mProfileUserId);
+        // Temporary disable the DISALLOW_ADD_MANAGED_PROFILE, so that we can create profile
+        // using adb command.
+        clearDisallowAddManagedProfileRestriction();
+        try {
+            mProfileUserId = createManagedProfile(mPrimaryUserId);
+            installAppAsUser(apkName, mProfileUserId);
+            setProfileOwnerOrFail(adminReceiverClassName, mProfileUserId);
+            startUser(mProfileUserId);
+        } finally {
+            // Adding back DISALLOW_ADD_MANAGED_PROFILE.
+            addDisallowAddManagedProfileRestriction();
+        }
     }
 
-
-    protected void provisionCorpOwnedManagedProfile()
-            throws Exception {
+    protected void provisionCorpOwnedManagedProfile() throws Exception {
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_OWNER_PROVISIONING_TEST,
                 "testProvisioningCorpOwnedManagedProfile",
                 mPrimaryUserId);
         mProfileUserId = getFirstManagedProfileUserId();
+
+    }
+
+    /**
+     * Clear {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
+     */
+    private void clearDisallowAddManagedProfileRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                USER_RESTRICTION_TEST,
+                "testClearDisallowAddManagedProfileRestriction",
+                mPrimaryUserId);
+    }
+
+    /**
+     * Add {@link android.os.UserManager#DISALLOW_ADD_MANAGED_PROFILE}.
+     */
+    private void addDisallowAddManagedProfileRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                USER_RESTRICTION_TEST,
+                "testAddDisallowAddManagedProfileRestriction",
+                mPrimaryUserId);
     }
 }
