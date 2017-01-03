@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import android.platform.test.annotations.RequiresDevice;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -204,6 +206,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState");
     }
 
+    @RequiresDevice
     public void testAlwaysOnVpn() throws Exception {
         if (!mHasFeature) {
             return;
@@ -212,6 +215,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".AlwaysOnVpnTest");
     }
 
+    @RequiresDevice
     public void testAlwaysOnVpnLockDown() throws Exception {
         if (!mHasFeature) {
             return;
@@ -227,6 +231,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @RequiresDevice
     public void testAlwaysOnVpnPackageUninstalled() throws Exception {
         if (!mHasFeature) {
             return;
