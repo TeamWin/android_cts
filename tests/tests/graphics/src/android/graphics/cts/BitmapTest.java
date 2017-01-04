@@ -48,6 +48,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.util.Arrays;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -95,6 +96,16 @@ public class BitmapTest {
     @Test
     public void testCompress() {
         assertTrue(mBitmap.compress(CompressFormat.JPEG, 50, new ByteArrayOutputStream()));
+    }
+
+    @Test
+    public void testCompressHardware() {
+        Bitmap hwBitmap = mBitmap.copy(Config.HARDWARE, false);
+        ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
+        assertTrue(mBitmap.compress(CompressFormat.JPEG, 50, expectedStream));
+        ByteArrayOutputStream actualStream = new ByteArrayOutputStream();
+        assertTrue(hwBitmap.compress(CompressFormat.JPEG, 50, actualStream));
+        assertTrue(Arrays.equals(expectedStream.toByteArray(), actualStream.toByteArray()));
     }
 
     @Test(expected=IllegalStateException.class)
