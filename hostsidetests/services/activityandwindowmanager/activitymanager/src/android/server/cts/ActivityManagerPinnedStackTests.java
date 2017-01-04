@@ -460,6 +460,23 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 PIP_ACTIVITY)));
     }
 
+    public void testPinnedStackAlwaysOnTop() throws Exception {
+        // Launch activity into pinned stack and assert it's on top.
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+        assertPinnedStackIsOnTop();
+
+        // Launch another activity in fullscreen stack and check that pinned stack is still on top.
+        launchActivity(TEST_ACTIVITY);
+        assertPinnedStackExists();
+        assertPinnedStackIsOnTop();
+
+        // Launch home and check that pinned stack is still on top.
+        launchHomeActivity();
+        assertPinnedStackExists();
+        assertPinnedStackIsOnTop();
+    }
+
     /**
      * Asserts that the pinned stack bounds does not intersect with the IME bounds.
      */
@@ -508,6 +525,13 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private void assertPinnedStackDoesNotExist() throws Exception {
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
+    }
+
+    /**
+     * Asserts that the pinned stack is the front stack.
+     */
+    private void assertPinnedStackIsOnTop() throws Exception {
+        mAmWmState.assertFrontStack("Pinned stack must always be on top.", PINNED_STACK_ID);
     }
 
     /**
