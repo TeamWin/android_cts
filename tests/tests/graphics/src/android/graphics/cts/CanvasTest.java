@@ -1003,49 +1003,6 @@ public class CanvasTest {
     }
 
     @Test
-    public void testClipRegion1() {
-        assertFalse(mCanvas.clipRegion(new Region(0, 10, 29, 0)));
-    }
-
-    @Test
-    public void testClipRegion2() {
-        final Region r = new Region(0, 10, 29, 0);
-
-        assertTrue(mCanvas.clipRegion(r, Op.DIFFERENCE));
-        assertFalse(mCanvas.clipRegion(r, Op.INTERSECT));
-        assertFalse(mCanvas.clipRegion(r, Op.REPLACE));
-        assertFalse(mCanvas.clipRegion(r, Op.REVERSE_DIFFERENCE));
-        assertFalse(mCanvas.clipRegion(r, Op.UNION));
-        assertFalse(mCanvas.clipRegion(r, Op.XOR));
-    }
-
-    @Test
-    public void testClipRegion3() {
-        assertTrue(mCanvas.clipRegion(new Region(0, 0, 10, 10)));
-        final Rect clip = mCanvas.getClipBounds();
-        assertEquals(0, clip.left);
-        assertEquals(0, clip.top);
-        assertEquals(10, clip.right);
-        assertEquals(10, clip.bottom);
-    }
-
-    @Test
-    public void testClipRegion4() {
-        mCanvas.translate(10, 10);
-        mCanvas.scale(2, 2);
-
-        final Matrix beforeMatrix = mCanvas.getMatrix();
-        assertTrue(mCanvas.clipRegion(new Region(0, 0, 10, 10)));
-        assertEquals(beforeMatrix, mCanvas.getMatrix());
-
-        Rect clip = mCanvas.getClipBounds();
-        assertEquals(-5, clip.left);
-        assertEquals(-5, clip.top);
-        assertEquals(0, clip.right);
-        assertEquals(0, clip.bottom);
-    }
-
-    @Test
     public void testGetDrawFilter() {
         assertNull(mCanvas.getDrawFilter());
         final DrawFilter dF = new DrawFilter();

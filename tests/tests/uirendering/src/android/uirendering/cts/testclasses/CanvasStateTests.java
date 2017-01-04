@@ -56,36 +56,6 @@ public class CanvasStateTests extends ActivityTestBase {
     }
 
     @Test
-    public void testClipRegionReturnValues() {
-        createTest()
-                .addCanvasClient((canvas, width, height) -> {
-                    canvas.save();
-                    RectF clipRectF = new RectF(0, 0, 20, 20);
-
-                    assertFalse(canvas.quickReject(0, 0, 20, 20, Canvas.EdgeType.BW));
-                    if (!canvas.isHardwareAccelerated()) {
-                        // SW canvas may not be in View space, so we offset the clipping region
-                        // so it will operate within the canvas client's window.
-                        // (Currently, this isn't necessary, since SW layer size == draw area)
-                        canvas.getMatrix().mapRect(clipRectF);
-                    }
-
-                    Region rectRegion = new Region();
-                    rectRegion.set((int) clipRectF.left, (int) clipRectF.top,
-                            (int) clipRectF.right, (int) clipRectF.bottom);
-
-                    boolean isNonEmpty = canvas.clipRegion(rectRegion);
-                    assertTrue("clip state should be non empty", isNonEmpty);
-
-                    // Note: we don't test that non-intersecting clip regions empty the clip,
-                    // For region clipping, the impl is allowed to return true conservatively
-                    // in many cases.
-                    canvas.restore();
-                })
-                .runWithoutVerification();
-    }
-
-    @Test
     public void testClipPathReturnValues() {
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
