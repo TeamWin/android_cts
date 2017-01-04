@@ -92,6 +92,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String PRECONDITION_ARG_OPTION = "precondition-arg";
     public static final String MODULE_ARG_OPTION = "module-arg";
     public static final String TEST_ARG_OPTION = "test-arg";
+    public static final char TEST_OPTION_SHORT_NAME = 't';
     public static final String RETRY_OPTION = "retry";
     public static final String RETRY_TYPE_OPTION = "retry-type";
     public static final String ABI_OPTION = "abi";
@@ -129,7 +130,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private String mModuleName = null;
 
     @Option(name = TEST_OPTION,
-            shortName = 't',
+            shortName = TEST_OPTION_SHORT_NAME,
             description = "the test run.",
             importance = Importance.IF_UNSET)
     private String mTestName = null;

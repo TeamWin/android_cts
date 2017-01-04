@@ -71,6 +71,10 @@ public class CompatibilityBuildHelper {
         }
     }
 
+    public String getRecentCommandLineArgs() {
+        return mBuildInfo.getBuildAttributes().get(COMMAND_LINE_ARGS);
+    }
+
     public String getSuiteBuild() {
         return mBuildInfo.getBuildAttributes().get(SUITE_BUILD);
     }
