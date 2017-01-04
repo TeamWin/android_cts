@@ -1167,6 +1167,87 @@ public class BitmapTest {
         bitmap.getPixels(new int[5], 0, 5, 0, 0, 5, 1);
     }
 
+    @Test
+    public void testGetConfigOnRecycled() {
+        Bitmap bitmap1 = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap1.recycle();
+        assertEquals(Config.HARDWARE, bitmap1.getConfig());
+        Bitmap bitmap2 = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        bitmap2.recycle();
+        assertEquals(Config.ARGB_8888, bitmap2.getConfig());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareSetWidth() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.setWidth(30);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareSetHeight() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.setHeight(30);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareSetConfig() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.setConfig(Config.ARGB_8888);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareReconfigure() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.reconfigure(30, 30, Config.ARGB_8888);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareSetPixels() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.setPixels(new int[10], 0, 1, 0, 0, 1, 1);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareSetPixel() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.setPixel(1, 1, 0);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareEraseColor() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
+        bitmap.eraseColor(0);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareCopyPixelsToBuffer() {
+        Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, HARDWARE_OPTIONS);
+        ByteBuffer byteBuf = ByteBuffer.allocate(bitmap.getRowBytes() * bitmap.getHeight());
+        bitmap.copyPixelsToBuffer(byteBuf);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHardwareCopyPixelsFromBuffer() {
+        IntBuffer intBuf1 = IntBuffer.allocate(mBitmap.getRowBytes() * mBitmap.getHeight());
+        assertEquals(0, intBuf1.position());
+        mBitmap.copyPixelsToBuffer(intBuf1);
+        Bitmap hwBitmap = BitmapFactory.decodeResource(mRes, R.drawable.start, HARDWARE_OPTIONS);
+        hwBitmap.copyPixelsFromBuffer(intBuf1);
+    }
+
+    @Test
+    public void testHardwareExtractAlpha() {
+        Bitmap bitmap = Bitmap.createBitmap(50, 50, Config.ARGB_8888);
+        bitmap.eraseColor(Color.argb(127, 250, 0, 0));
+        bitmap.setPixel(25, 25, Color.BLUE);
+
+        Bitmap hwBitmap = bitmap.copy(Config.HARDWARE, false);
+        Bitmap alphaBitmap = hwBitmap.extractAlpha();
+        assertEquals(Config.ALPHA_8, alphaBitmap.getConfig());
+        assertEquals(255, Color.alpha(alphaBitmap.getPixel(25, 25)));
+        assertEquals(127, Color.alpha(alphaBitmap.getPixel(40, 40)));
+    }
+
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
             return size;

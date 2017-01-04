@@ -16,9 +16,14 @@
 
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import android.content.res.Resources;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -34,7 +39,6 @@ import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.util.DisplayMetrics;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,9 +66,8 @@ public class HardwareBitmapTests extends ActivityTestBase {
     @Test
     public void testDecodeResource() {
         createTest().addCanvasClient((canvas, width, height) -> {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.HARDWARE;
-            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, options);
+            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                    HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
                 R.drawable.golden_robot, new ExactComparer()));
@@ -96,7 +99,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
     public void testBitmapConfigFromA8() {
         Bitmap b = Bitmap.createBitmap(32, 32, Bitmap.Config.ALPHA_8);
         // we do not support conversion from A8
-        Assert.assertNull(b.copy(Bitmap.Config.HARDWARE, false));
+        assertNull(b.copy(Bitmap.Config.HARDWARE, false));
     }
 
     @Test
@@ -140,12 +143,60 @@ public class HardwareBitmapTests extends ActivityTestBase {
                 R.drawable.golden_hardwaretest_ninepatch, new ExactComparer()));
     }
 
+    @Test
+    public void testCreateIdentityBitmap() {
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                HARDWARE_OPTIONS);
+        Bitmap newBitmap = Bitmap.createBitmap(hardwareBitmap);
+        assertEquals(hardwareBitmap, newBitmap);
+    }
+
+    @Test
+    public void testCreateScaledBitmap() {
+        createTest().addCanvasClient((canvas, width, height) -> {
+            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                    HARDWARE_OPTIONS);
+            Bitmap scaled = Bitmap.createScaledBitmap(hardwareBitmap, 24, 24, false);
+            assertEquals(Bitmap.Config.HARDWARE, scaled.getConfig());
+            canvas.drawBitmap(scaled, 0, 0, null);
+        }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_hardwaretest_create_scaled, new MSSIMComparer(0.9)));
+    }
+
+    @Test
+    public void testCreateSubsetBitmap() {
+        createTest().addCanvasClient((canvas, width, height) -> {
+            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                    HARDWARE_OPTIONS);
+            Matrix matrix = new Matrix();
+            matrix.setRotate(90);
+            Bitmap cropped = Bitmap.createBitmap(hardwareBitmap, 7, 7, 30, 30);
+            assertEquals(Bitmap.Config.HARDWARE, cropped.getConfig());
+            canvas.drawBitmap(cropped, 0, 0, null);
+        }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_hardwaretest_create_subset, new MSSIMComparer(0.9)));
+    }
+
+    @Test
+    public void testCreateTransformedBitmap() {
+        createTest().addCanvasClient((canvas, width, height) -> {
+            Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                    HARDWARE_OPTIONS);
+            Matrix matrix = new Matrix();
+            matrix.setRotate(90);
+            Bitmap transformed = Bitmap.createBitmap(hardwareBitmap, 7, 7, 30, 30, matrix, false);
+            assertEquals(Bitmap.Config.HARDWARE, transformed.getConfig());
+            canvas.drawBitmap(transformed, 0, 0, null);
+        }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_hardwaretest_create_transformed, new MSSIMComparer(0.9)));
+    }
+
     private void testBitmapCopy(int id, Bitmap.Config from, Bitmap.Config to) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         options.inPreferredConfig = from;
         Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(), id, options);
-        Assert.assertEquals(from, bitmap.getConfig());
+        assertEquals(from, bitmap.getConfig());
 
         createTest().addCanvasClient((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
@@ -153,8 +204,8 @@ public class HardwareBitmapTests extends ActivityTestBase {
         }, true).addCanvasClient((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             Bitmap copy = bitmap.copy(to, false);
-            Assert.assertNotNull(copy);
-            Assert.assertEquals(to, copy.getConfig());
+            assertNotNull(copy);
+            assertEquals(to, copy.getConfig());
             canvas.drawBitmap(copy, 0, 0, null);
         }, true).runWithComparer(new MSSIMComparer(0.99));
     }
