@@ -25,6 +25,7 @@ import android.media.AudioPlaybackConfiguration;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +47,55 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         if (mMp != null) {
             mMp.stop();
             mMp.release();
+        }
+    }
+
+    public void testGetterMediaPlayer() throws Exception {
+        if (!isValidPlatform("testGetterMediaPlayer")) return;
+
+        AudioManager am = new AudioManager(getContext());
+        assertNotNull("Could not create AudioManager", am);
+
+        final AudioAttributes aa = (new AudioAttributes.Builder())
+                .setUsage(AudioAttributes.USAGE_ASSISTANT)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build();
+
+        List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
+        assertEquals("no player, list of configs should be empty", 0 /*expected*/,
+                configs.size());
+
+        mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
+                aa, am.generateAudioSessionId());
+        configs = am.getActivePlaybackConfigurations();
+        assertEquals("inactive MediaPlayer, list of configs should be empty", 0 /*expected*/,
+                configs.size());
+
+        mMp.start();
+        Thread.sleep(2*TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
+        configs = am.getActivePlaybackConfigurations();
+        assertEquals("active MediaPlayer, list of configs should have one entry", 1 /*expected*/,
+                configs.size());
+        AudioPlaybackConfiguration config = configs.get(0);
+        assertEquals("One active MediaPlayer, wrong usage", aa.getUsage() /*expected*/,
+                config.getAudioAttributes().getUsage());
+        assertEquals("One active MediaPlayer, wrong content type", aa.getContentType() /*expected*/,
+                config.getAudioAttributes().getContentType());
+
+        // verify "privileged" fields aren't available through reflection
+        final Class<?> confClass = config.getClass();
+        final Method getClientUidMethod = confClass.getDeclaredMethod("getClientUid");
+        final Method getClientPidMethod = confClass.getDeclaredMethod("getClientPid");
+        final Method getPlayerTypeMethod = confClass.getDeclaredMethod("getPlayerType");
+        try {
+            Integer uid = (Integer) getClientUidMethod.invoke(config, null);
+            assertEquals("uid isn't protected", -1 /*expected*/, uid.intValue());
+            Integer pid = (Integer) getClientPidMethod.invoke(config, null);
+            assertEquals("pid isn't protected", -1 /*expected*/, pid.intValue());
+            Integer type = (Integer) getPlayerTypeMethod.invoke(config, null);
+            assertEquals("player type isn't protected", -1 /*expected*/, type.intValue());
+        } catch (Exception e) {
+            fail("Exception thrown during reflection on config privileged fields"+ e);
         }
     }
 
