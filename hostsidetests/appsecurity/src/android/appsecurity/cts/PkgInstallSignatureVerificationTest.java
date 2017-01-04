@@ -471,6 +471,14 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v2-only-max-sized-eocd-comment.apk");
     }
 
+    public void testInstallEphemeralRequiresV2Signature() throws Exception {
+        String expectedNoSigError = "No APK Signature Scheme v2 signature in ephemeral package";
+        assertInstallEphemeralFailsWithError("unsigned-ephemeral.apk", expectedNoSigError);
+        assertInstallEphemeralFailsWithError("v1-only-ephemeral.apk", expectedNoSigError);
+        assertInstallEphemeralSucceeds("v2-only-ephemeral.apk");
+        assertInstallEphemeralSucceeds("v1-v2-ephemeral.apk"); // signed with both schemes
+    }
+
     public void testInstallEmpty() throws Exception {
         assertInstallFailsWithError("empty-unsigned.apk", "Unknown failure");
         assertInstallFailsWithError("v1-only-empty.apk", "Unknown failure");
@@ -479,6 +487,13 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
+        if (installResult != null) {
+            fail("Failed to install " + apkFilenameInResources + ": " + installResult);
+        }
+    }
+
+    private void assertInstallEphemeralSucceeds(String apkFilenameInResources) throws Exception {
+        String installResult = installEphemeralPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
             fail("Failed to install " + apkFilenameInResources + ": " + installResult);
         }
@@ -515,6 +530,19 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 installResult);
     }
 
+    private void assertInstallEphemeralFailsWithError(
+            String apkFilenameInResources, String errorSubstring) throws Exception {
+        String installResult = installEphemeralPackageFromResource(apkFilenameInResources);
+        if (installResult == null) {
+            fail("Install of " + apkFilenameInResources + " succeeded but was expected to fail"
+                    + " with \"" + errorSubstring + "\"");
+        }
+        assertContains(
+                "Install failure message of " + apkFilenameInResources,
+                errorSubstring,
+                installResult);
+    }
+
     private void assertInstallFails(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult == null) {
@@ -533,7 +561,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         }
     }
 
-    private String installPackageFromResource(String apkFilenameInResources)
+    private String installPackageFromResource(String apkFilenameInResources, boolean ephemeral)
             throws IOException, DeviceNotAvailableException {
         // ITestDevice.installPackage API requires the APK to be install to be a File. We thus
         // copy the requested resource into a temporary file, attempt to install it, and delete the
@@ -553,10 +581,24 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                     out.write(buf, 0, chunkSize);
                 }
             }
-            return mDevice.installPackage(apkFile, true);
+            if (ephemeral) {
+                return mDevice.installPackage(apkFile, true, "--ephemeral");
+            } else {
+                return mDevice.installPackage(apkFile, true);
+            }
         } finally {
             apkFile.delete();
         }
+    }
+
+    private String installPackageFromResource(String apkFilenameInResources)
+            throws IOException, DeviceNotAvailableException {
+        return installPackageFromResource(apkFilenameInResources, false);
+    }
+
+    private String installEphemeralPackageFromResource(String apkFilenameInResources)
+            throws IOException, DeviceNotAvailableException {
+        return installPackageFromResource(apkFilenameInResources, true);
     }
 
     private String uninstallPackage() throws DeviceNotAvailableException {
