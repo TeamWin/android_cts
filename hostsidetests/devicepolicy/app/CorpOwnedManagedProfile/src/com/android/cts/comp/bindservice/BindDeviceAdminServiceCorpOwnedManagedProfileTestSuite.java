@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.IInterface;
+import android.os.Looper;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
@@ -55,6 +57,8 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
         @Override
         public void onServiceDisconnected(ComponentName name) {}
     };
+
+    private static final IInterface NOT_IN_MAIN_THREAD_POISON_PILL = () -> null;
 
     private final Context mContext;
     private static final String NON_MANAGING_PACKAGE = AdminReceiver.COMP_DPC_2_PACKAGE_NAME;
@@ -170,12 +174,18 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     private <T> void assertCrossProfileCall(
             T expected, CrossUserCallable<T> callable, UserHandle targetUserHandle)
             throws Exception {
-        final LinkedBlockingQueue<ICrossUserService> queue
-                = new LinkedBlockingQueue<ICrossUserService>();
+        final LinkedBlockingQueue<IInterface> queue = new LinkedBlockingQueue<>();
         final ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                Log.d(TAG, "onServiceConnected is called");
+                Log.d(TAG, "onServiceConnected is called in " + Thread.currentThread().getName());
+                // Ensure onServiceConnected is running in main thread.
+                if (Looper.myLooper() != Looper.getMainLooper()) {
+                    // Not running in main thread, failed the test.
+                    Log.e(TAG, "onServiceConnected is not running in main thread!");
+                    queue.add(NOT_IN_MAIN_THREAD_POISON_PILL);
+                    return;
+                }
                 queue.add(ICrossUserService.Stub.asInterface(service));
             }
 
@@ -186,10 +196,14 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
         };
         final Intent serviceIntent = new Intent(mContext, CrossUserService.class);
         assertTrue(bind(serviceIntent, serviceConnection, targetUserHandle));
-        ICrossUserService service = queue.poll(5, TimeUnit.SECONDS);
+        IInterface service = queue.poll(5, TimeUnit.SECONDS);
         assertNotNull("binding to the target service timed out", service);
         try {
-            assertEquals(expected, callable.call(service));
+            if (NOT_IN_MAIN_THREAD_POISON_PILL.equals(service)) {
+                fail("onServiceConnected should be called in main thread");
+            }
+            ICrossUserService crossUserService = (ICrossUserService) service;
+            assertEquals(expected, callable.call(crossUserService));
         } finally {
             mContext.unbindService(serviceConnection);
         }
