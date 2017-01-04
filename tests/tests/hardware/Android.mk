@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,29 +14,34 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-# CtsHardwareTestCases package
-
 include $(CLEAR_VARS)
 
+# don't include this package in any target
 LOCAL_MODULE_TAGS := tests
-
+# and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctstestrunner \
-    mockito-target-minus-junit4 \
-    android-ex-camera2
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
-
-LOCAL_PACKAGE_NAME := CtsHardwareTestCases
-
-LOCAL_SDK_VERSION := current
+LOCAL_MULTILIB := both
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    compatibility-device-util \
+    ctstestrunner \
+    mockito-target-minus-junit4 \
+    platform-test-annotations \
+    ub-uiautomator
+
+LOCAL_JNI_SHARED_LIBRARIES := libctshardware_jni libnativehelper_compat_libc++
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_PACKAGE_NAME := CtsHardwareTestCases
+
 include $(BUILD_CTS_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
