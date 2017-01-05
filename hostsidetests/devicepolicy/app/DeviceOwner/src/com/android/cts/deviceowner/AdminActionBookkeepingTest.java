@@ -22,12 +22,22 @@ import java.lang.reflect.Method;
 
 public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
 
+    @Override
+    protected void tearDown() throws Exception {
+        mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), false);
+        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), false);
+
+        super.tearDown();
+    }
+
     /**
      * Test: Retrieving security logs should update the corresponding timestamp.
      */
     public void testRetrieveSecurityLogs() throws Exception {
         Thread.sleep(1);
         final long previousTimestamp = mDevicePolicyManager.getLastSecurityLogRetrievalTime();
+
+        mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), true);
 
         long timeBefore = System.currentTimeMillis();
         mDevicePolicyManager.retrieveSecurityLogs(getWho());
@@ -82,11 +92,7 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         Thread.sleep(1);
         final long previousTimestamp = mDevicePolicyManager.getLastSecurityLogRetrievalTime();
 
-        // STOPSHIP(b/33068581): Network logging will be un-hidden for O. Remove reflection when the
-        // un-hiding happens.
-        final Method setNetworkLoggingEnabledMethod = DevicePolicyManager.class.getDeclaredMethod(
-                "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
-        setNetworkLoggingEnabledMethod.invoke(mDevicePolicyManager, getWho(), true);
+        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
 
         long timeBefore = System.currentTimeMillis();
         final Method retrieveNetworkLogsMethod = DevicePolicyManager.class.getDeclaredMethod(
@@ -98,8 +104,6 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         assertTrue(newTimestamp > previousTimestamp);
         assertTrue(newTimestamp >= timeBefore);
         assertTrue(newTimestamp <= timeAfter);
-
-        setNetworkLoggingEnabledMethod.invoke(mDevicePolicyManager, getWho(), false);
     }
 
     /**
@@ -122,17 +126,5 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      */
     public void testIsDeviceManaged() throws Exception {
         assertTrue(mDevicePolicyManager.isDeviceManaged());
-    }
-
-    /**
-     * Helper that allows the host-side test harness to disable network logging after running the
-     * other tests in this file.
-     */
-    public void testDisablingNetworkLogging() throws Exception {
-        // STOPSHIP(b/33068581): Network logging will be un-hidden for O. Remove reflection when the
-        // un-hiding happens.
-        final Method setNetworkLoggingEnabledMethod = DevicePolicyManager.class.getDeclaredMethod(
-                "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
-        setNetworkLoggingEnabledMethod.invoke(mDevicePolicyManager, getWho(), false);
     }
 }

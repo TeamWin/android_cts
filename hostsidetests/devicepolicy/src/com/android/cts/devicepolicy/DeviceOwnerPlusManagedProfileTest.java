@@ -28,6 +28,8 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             "com.android.cts.comp.provisioning.ManagedProfileProvisioningTest";
     private static final String BIND_DEVICE_ADMIN_SERVICE_FAILS_TEST =
             "com.android.cts.comp.BindDeviceAdminServiceFailsTest";
+    private static final String DEVICE_WIDE_LOGGING_TEST =
+            "com.android.cts.comp.DeviceWideLoggingFeaturesTest";
     private static final String AFFILIATION_TEST =
             "com.android.cts.comp.provisioning.AffiliationTest";
     private static final String USER_RESTRICTION_TEST =
@@ -210,6 +212,76 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
         }
         // by default, disallow add managed profile users restriction is set.
         assertCannotCreateManagedProfile(mPrimaryUserId);
+    }
+
+    public void testNetworkAndSecurityLoggingAvailableIfAffiliated() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_WIDE_LOGGING_TEST,
+                "testEnablingNetworkAndSecurityLogging",
+                mPrimaryUserId);
+        try {
+            // No affiliation ids have been set, the features shouldn't be available.
+            runDeviceTestsAsUser(
+                    COMP_DPC_PKG,
+                    DEVICE_WIDE_LOGGING_TEST,
+                    "testRetrievingLogsThrowsSecurityException",
+                    mPrimaryUserId);
+
+            setSameAffiliationId();
+            runDeviceTestsAsUser(
+                    COMP_DPC_PKG,
+                    DEVICE_WIDE_LOGGING_TEST,
+                    "testRetrievingLogsDoesNotThrowException",
+                    mPrimaryUserId);
+
+            setDifferentAffiliationId();
+            runDeviceTestsAsUser(
+                    COMP_DPC_PKG,
+                    DEVICE_WIDE_LOGGING_TEST,
+                    "testRetrievingLogsThrowsSecurityException",
+                    mPrimaryUserId);
+        } finally {
+            runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_WIDE_LOGGING_TEST,
+                "testDisablingNetworkAndSecurityLogging",
+                mPrimaryUserId);
+        }
+    }
+
+    public void testRequestBugreportAvailableIfAffiliated() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+
+        // No affiliation ids have been set, the feature shouldn't be available.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_WIDE_LOGGING_TEST,
+                "testRequestBugreportThrowsSecurityException",
+                mPrimaryUserId);
+
+        setSameAffiliationId();
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_WIDE_LOGGING_TEST,
+                "testRequestBugreportDoesNotThrowException",
+                mPrimaryUserId);
+
+        setDifferentAffiliationId();
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_WIDE_LOGGING_TEST,
+                "testRequestBugreportThrowsSecurityException",
+                mPrimaryUserId);
     }
 
     private void verifyBindDeviceAdminServiceAsUser() throws Exception {

@@ -40,8 +40,6 @@ import java.util.concurrent.TimeUnit;
 public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 
     private static final String TAG = "NetworkLoggingTest";
-    private static final String MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED =
-            "There should only be one user, managed by Device Owner";
     private static final int FAKE_BATCH_TOKEN = -666; // real batch tokens are always non-negative
     private static final int FULL_LOG_BATCH_SIZE = 1200;
     private static final String CTS_APP_PACKAGE_NAME = "com.android.cts.deviceowner";
@@ -86,39 +84,26 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
     private long mCurrentBatchToken;
     private volatile boolean mGenerateNetworkTraffic;
 
-    /**
-     * Test: setting network logging can only be done if there's one user on the device.
-     */
-    public void testSetNetworkLoggingEnabledNotPossibleIfMoreThanOneUserPresent() {
-        try {
-            mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
-        }
+    @Override
+    protected void tearDown() throws Exception {
+        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), false);
+        assertFalse(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
+
+        super.tearDown();
     }
 
     /**
-     * Test: retrieving network logs can only be done if there's one user on the device.
+     * Test: retrieving network logs can only be done if there's one user on the device or all
+     * secondary users / profiles are affiliated.
      */
-    public void testRetrievingNetworkLogsNotPossibleIfMoreThanOneUserPresent() {
+    public void testRetrievingNetworkLogsThrowsSecurityException() {
+        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
+        assertTrue(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
         try {
             mDevicePolicyManager.retrieveNetworkLogs(getWho(), FAKE_BATCH_TOKEN);
             fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
+        } catch (SecurityException expected) {
         }
-    }
-
-    /**
-     * Test: Test enabling and disabling of network logging.
-     */
-    public void testEnablingAndDisablingNetworkLogging() {
-        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
-        assertTrue(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
-        // TODO: here test that facts about logging are shown in the UI
-        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), false);
-        assertFalse(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
     }
 
     /**
@@ -126,6 +111,8 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
      * be returned.
      */
     public void testProvidingWrongBatchTokenReturnsNull() {
+        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
+        assertTrue(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
         assertNull(mDevicePolicyManager.retrieveNetworkLogs(getWho(), FAKE_BATCH_TOKEN));
     }
 
@@ -153,6 +140,8 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
         assertTrue(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
 
+        // TODO: here test that facts about logging are shown in the UI
+
         // visit websites in a loop to generate enough network traffic
         int iterationsDone = 0;
         while (mGenerateNetworkTraffic && iterationsDone < MAX_VISITING_WEBPAGES_ITERATIONS) {
@@ -179,10 +168,6 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             return;
         }
         verifyNetworkLogs(networkEvents, iterationsDone);
-
-        // disable network logging (only after the logs are retrieved and verified)
-        mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), false);
-        assertFalse(mDevicePolicyManager.isNetworkLoggingEnabled(getWho()));
     }
 
     private void verifyNetworkLogs(List<NetworkEvent> networkEvents, int iterationsDone) {

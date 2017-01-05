@@ -103,14 +103,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testRemoteBugreportWithTwoUsers() throws Exception {
-        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
-        int userId = -1;
+        final int userId = createUser();
         try {
-            userId = createUser();
             executeDeviceTestMethod(".RemoteBugreportTest",
-                    "testRequestBugreportNotStartedIfMoreThanOneUserPresent");
+                    "testRequestBugreportThrowsSecurityException");
         } finally {
             removeUser(userId);
         }
@@ -289,20 +288,22 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testSecurityLoggingWithTwoUsers() throws Exception {
-        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
-        int userId = -1;
+
+        final int userId = createUser();
         try {
-            userId = createUser();
+            // The feature can be enabled, but in a "paused" state. Attempting to retrieve logs
+            // should throw security exception.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
             executeDeviceTestMethod(".SecurityLoggingTest",
-                    "testSetSecurityLoggingEnabledNotPossibleIfMoreThanOneUserPresent");
+                    "testRetrievingSecurityLogsThrowsSecurityException");
             executeDeviceTestMethod(".SecurityLoggingTest",
-                    "testRetrievingSecurityLogsNotPossibleIfMoreThanOneUserPresent");
-            executeDeviceTestMethod(".SecurityLoggingTest",
-                    "testRetrievingPreviousSecurityLogsNotPossibleIfMoreThanOneUserPresent");
+                    "testRetrievingPreviousSecurityLogsThrowsSecurityException");
         } finally {
             removeUser(userId);
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
         }
     }
 
@@ -327,23 +328,26 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testNetworkLoggingWithTwoUsers() throws Exception {
-        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
-        int userId = -1;
+
+        final int userId = createUser();
         try {
-            userId = createUser();
+            // The feature can be enabled, but in a "paused" state. Attempting to retrieve logs
+            // should throw security exception.
             executeDeviceTestMethod(".NetworkLoggingTest",
-                    "testSetNetworkLoggingEnabledNotPossibleIfMoreThanOneUserPresent");
-            executeDeviceTestMethod(".NetworkLoggingTest",
-                    "testRetrievingNetworkLogsNotPossibleIfMoreThanOneUserPresent");
+                    "testRetrievingNetworkLogsThrowsSecurityException");
         } finally {
             removeUser(userId);
         }
     }
 
     public void testNetworkLoggingWithSingleUser() throws Exception {
-        executeDeviceTestMethod(".NetworkLoggingTest", "testEnablingAndDisablingNetworkLogging");
+        if (!mHasFeature) {
+            return;
+        }
+
         executeDeviceTestMethod(".NetworkLoggingTest", "testProvidingWrongBatchTokenReturnsNull");
         executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval");
     }
@@ -442,12 +446,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        try {
-            executeDeviceOwnerTest("AdminActionBookkeepingTest");
-        } finally {
-            // Always attempt to disable network logging to bring the device to initial state.
-            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testDisablingNetworkLogging");
-        }
+        executeDeviceOwnerTest("AdminActionBookkeepingTest");
     }
 
     public void testBluetoothRestriction() throws Exception {
@@ -473,6 +472,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void executeDeviceTestMethod(String className, String testName) throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
                 /* deviceOwnerUserId */ mPrimaryUserId);
     }

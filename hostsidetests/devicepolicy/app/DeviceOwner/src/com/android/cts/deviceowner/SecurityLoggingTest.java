@@ -25,42 +25,27 @@ import java.util.concurrent.TimeUnit;
 
 public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
-    private static final String MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED =
-            "There should only be one user, managed by Device Owner";
-
     /**
-     * Test: setting security logging can only be done if there's one user on the device.
+     * Test: retrieving security logs can only be done if there's one user on the device or all
+     * secondary users / profiles are affiliated.
      */
-    public void testSetSecurityLoggingEnabledNotPossibleIfMoreThanOneUserPresent() {
-        try {
-            mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), true);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
-        }
-    }
-
-    /**
-     * Test: retrieving security logs can only be done if there's one user on the device.
-     */
-    public void testRetrievingSecurityLogsNotPossibleIfMoreThanOneUserPresent() {
+    public void testRetrievingSecurityLogsThrowsSecurityException() {
         try {
             mDevicePolicyManager.retrieveSecurityLogs(getWho());
             fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
+        } catch (SecurityException expected) {
         }
     }
 
     /**
-     * Test: retrieving previous security logs can only be done if there's one user on the device.
+     * Test: retrieving previous security logs can only be done if there's one user on the device or
+     * all secondary users / profiles are affiliated.
      */
-    public void testRetrievingPreviousSecurityLogsNotPossibleIfMoreThanOneUserPresent() {
+    public void testRetrievingPreviousSecurityLogsThrowsSecurityException() {
         try {
             mDevicePolicyManager.retrievePreRebootSecurityLogs(getWho());
             fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertEquals(e.getMessage(), MESSAGE_ONLY_ONE_MANAGED_USER_ALLOWED);
+        } catch (SecurityException expected) {
         }
     }
 
