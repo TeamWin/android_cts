@@ -40,6 +40,7 @@ import android.telephony.VisualVoicemailSms;
 import android.telephony.VisualVoicemailSmsFilterSettings;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -52,6 +53,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class VisualVoicemailServiceTest extends InstrumentationTestCase {
+
+    private static final String TAG = "VvmServiceTest";
 
     private static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
 
@@ -75,7 +78,6 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
-
         if (hasTelephony(mContext)) {
             mPreviousDefaultDialer = getDefaultDialer(getInstrumentation());
             setDefaultDialer(getInstrumentation(), PACKAGE);
@@ -102,6 +104,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testFilter() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSms result = getSmsFromText("//CTSVVM",
                 "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
 
@@ -117,6 +123,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testFilter_TrailingSemiColon() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSms result = getSmsFromText("//CTSVVM",
                 "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1;");
 
@@ -132,6 +142,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testFilter_EmptyPrefix() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSms result = getSmsFromText("//CTSVVM",
                 "//CTSVVM::st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
 
@@ -147,52 +161,92 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testFilter_EmptyField() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSms result = getSmsFromText("//CTSVVM",
                 "//CTSVVM:STATUS:");
         assertTrue(result.getFields().isEmpty());
     }
 
     public void testFilterFail_NotVvm() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "helloworld");
     }
 
     public void testFilterFail_PrefixMismatch() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//FOOVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
     }
 
     public void testFilterFail_MissingFirstColon() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//CTSVVMSTATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
     }
 
     public void testFilterFail_MissingSecondColon() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//CTSVVM:STATUSst=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1");
     }
 
     public void testFilterFail_MessageEndAfterClientPrefix() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//CTSVVM:");
     }
 
     public void testFilterFail_MessageEndAfterPrefix() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//CTSVVM:STATUS");
     }
 
     public void testFilterFail_InvalidKeyValuePair() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//CTSVVM:STATUS:key");
     }
 
     public void testFilterFail_InvalidMissingKey() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         assertVisualVoicemailSmsNotReceived("//CTSVVM",
                 "//CTSVVM:STATUS:=value");
     }
 
     public void testFilter_MissingValue() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSms result = getSmsFromText("//CTSVVM",
                 "//CTSVVM:STATUS:key=");
         assertEquals("STATUS", result.getPrefix());
