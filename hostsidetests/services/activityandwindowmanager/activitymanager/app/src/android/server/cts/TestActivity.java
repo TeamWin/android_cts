@@ -16,6 +16,10 @@
 
 package android.server.cts;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 
@@ -25,6 +29,18 @@ public class TestActivity extends AbstractLifecycleLogActivity {
 
     // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
+
+    // Finishes the activity
+    private static final String ACTION_FINISH_SELF = "android.server.cts.TestActivity.finish_self";
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && intent.getAction().equals(ACTION_FINISH_SELF)) {
+                finish();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle icicle) {
@@ -40,7 +56,14 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        registerReceiver(mReceiver, new IntentFilter(ACTION_FINISH_SELF));
         dumpDisplaySize(getResources().getConfiguration());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
     }
 
     @Override

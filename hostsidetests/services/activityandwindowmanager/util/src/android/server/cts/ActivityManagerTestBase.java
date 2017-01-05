@@ -63,13 +63,19 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     /** ID of stack that always on top (always visible) when it exist. */
     public static final int PINNED_STACK_ID = DOCKED_STACK_ID + 1;
 
+    /** Recents activity stack ID. */
+    public static final int RECENTS_STACK_ID = PINNED_STACK_ID + 1;
+
+    /** Assistant activity stack ID.  This stack is fullscreen and non-resizeable. */
+    public static final int ASSISTANT_STACK_ID = RECENTS_STACK_ID + 1;
+
     protected static final int[] ALL_STACK_IDS_BUT_HOME = {
             FULLSCREEN_WORKSPACE_STACK_ID, FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID,
-            PINNED_STACK_ID
+            PINNED_STACK_ID, ASSISTANT_STACK_ID
     };
 
     protected static final int[] ALL_STACK_IDS_BUT_HOME_AND_FULLSCREEN = {
-            FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID, PINNED_STACK_ID
+            FREEFORM_WORKSPACE_STACK_ID, DOCKED_STACK_ID, PINNED_STACK_ID, ASSISTANT_STACK_ID
     };
 
     private static final String TASK_ID_PREFIX = "taskId";

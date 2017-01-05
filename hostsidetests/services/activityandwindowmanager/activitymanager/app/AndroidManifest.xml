@@ -21,8 +21,8 @@
 
     <!-- virtual display test permissions -->
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
-
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION" />
 
     <application>
         <activity android:name=".TestActivity"
@@ -283,6 +283,29 @@
                 <action android:name="android.server.cts.LAUNCH_BROADCAST_ACTION"/>
             </intent-filter>
         </receiver>
+
+        <activity android:name=".AssistantActivity"
+            android:exported="true" />
+        <activity android:name=".LaunchAssistantActivityFromSession"
+            android:taskAffinity="nobody.but.LaunchAssistantActivityFromSession"
+            android:exported="true" />
+        <activity android:name=".LaunchAssistantActivityIntoAssistantStack"
+            android:taskAffinity="nobody.but.LaunchAssistantActivityIntoAssistantStack"
+            android:exported="true" />
+
+        <service android:name=".AssistantVoiceInteractionService"
+                 android:permission="android.permission.BIND_VOICE_INTERACTION"
+                 android:exported="true">
+            <meta-data android:name="android.voice_interaction"
+                       android:resource="@xml/interaction_service" />
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+        </service>
+
+        <service android:name=".AssistantVoiceInteractionSessionService"
+                 android:permission="android.permission.BIND_VOICE_INTERACTION"
+                 android:exported="true" />
     </application>
 </manifest>
 
