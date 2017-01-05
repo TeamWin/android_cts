@@ -291,7 +291,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
             throws DeviceNotAvailableException {
         ReportedDisplays ds = getDisplaysStates();
 
-        while (!ds.isValidState(expectedDisplayCount)) {
+        int retriesLeft = 5;
+        while (!ds.isValidState(expectedDisplayCount) && retriesLeft-- > 0) {
             log("***Waiting for the correct number of displays...");
             try {
                 Thread.sleep(1000);
