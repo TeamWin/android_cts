@@ -15,6 +15,7 @@
  */
 package com.android.cts.comp.provisioning;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -82,7 +83,8 @@ class SilentProvisioningTestManager {
         }
 
         private void register() {
-            mContext.registerReceiver(this, new IntentFilter(Intent.ACTION_MANAGED_PROFILE_ADDED));
+            mContext.registerReceiver(this, new IntentFilter(
+                    DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED));
         }
 
         private boolean await() throws InterruptedException {

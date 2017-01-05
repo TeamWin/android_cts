@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-package com.android.cts.comp.bindservice;
+package com.android.cts.comp;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -27,28 +33,37 @@ import android.os.Looper;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.os.UserManager;
+import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.Log;
 
-import com.android.cts.comp.AdminReceiver;
-import com.android.cts.comp.CrossUserService;
-import com.android.cts.comp.ExportedCrossUserService;
-import com.android.cts.comp.ICrossUserService;
-
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-
 /**
- * Test suite for the case where we have the same package for both device owner and profile owner.
+ * Testing various scenarios when a profile owner / device owner tries to bind a service
+ * in the other profile, and everything is setup correctly.
  */
-public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
-    private static final String TAG = "BindServiceTest";
+public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
+
+    private static final String TAG = "BindDeviceAdminServiceGoodSetupTest";
+    private DevicePolicyManager mDpm;
+    private UserHandle mTargetUserHandle;
+    private static final String NON_MANAGING_PACKAGE = AdminReceiver.COMP_DPC_2_PACKAGE_NAME;
+
+    @Override
+    public void setUp() {
+        mDpm = (DevicePolicyManager)
+                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        assertEquals(AdminReceiver.COMP_DPC_PACKAGE_NAME, mContext.getPackageName());
+
+        List<UserHandle> allowedTargetUsers = mDpm.getBindDeviceAdminTargetUsers(
+                AdminReceiver.getComponentName(mContext));
+        assertEquals(1, allowedTargetUsers.size());
+        mTargetUserHandle = allowedTargetUsers.get(0);
+    }
 
     private static final ServiceConnection EMPTY_SERVICE_CONNECTION = new ServiceConnection() {
         @Override
@@ -60,36 +75,10 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
 
     private static final IInterface NOT_IN_MAIN_THREAD_POISON_PILL = () -> null;
 
-    private final Context mContext;
-    private static final String NON_MANAGING_PACKAGE = AdminReceiver.COMP_DPC_2_PACKAGE_NAME;
-    private final UserHandle mTargetUserHandle;
-    private final DevicePolicyManager mDpm;
-
-    /**
-     * @param context
-     * @param targetUserHandle Which user we are talking to.
-     */
-    public BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite(
-            Context context, UserHandle targetUserHandle) {
-        mContext = context;
-        mTargetUserHandle = targetUserHandle;
-        mDpm = mContext.getSystemService(DevicePolicyManager.class);
-    }
-
-    public void execute() throws Exception {
-        checkCannotBind_implicitIntent();
-        checkCannotBind_notResolvableIntent();
-        checkCannotBind_exportedCrossUserService();
-        checkCannotBind_nonManagingPackage();
-        checkCannotBind_sameUser();
-        checkCrossProfileCall_echo();
-        checkCrossProfileCall_getUserHandle();
-    }
-
     /**
      * If the intent is implicit, expected to throw {@link IllegalArgumentException}.
      */
-    private void checkCannotBind_implicitIntent() throws Exception {
+    public void testCannotBind_implicitIntent() throws Exception {
         try {
             final Intent implicitIntent = new Intent(Intent.ACTION_VIEW);
             bind(implicitIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
@@ -100,9 +89,9 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     }
 
     /**
-     * If the intent is not resolvable, it should return {@code {@code null}}.
+     * If the intent is not resolvable, it should return {@code null}.
      */
-    private void checkCannotBind_notResolvableIntent() throws Exception {
+    public void testCannotBind_notResolvableIntent() throws Exception {
         final Intent notResolvableIntent = new Intent();
         notResolvableIntent.setClassName(mContext, "NotExistService");
         assertFalse(bind(notResolvableIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle));
@@ -111,7 +100,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     /**
      * Make sure we cannot bind exported service.
      */
-    private void checkCannotBind_exportedCrossUserService() throws Exception {
+    public void testCannotBind_exportedCrossUserService() throws Exception {
         try {
             final Intent serviceIntent = new Intent(mContext, ExportedCrossUserService.class);
             bind(serviceIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
@@ -124,7 +113,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     /**
      * Talk to a DPC package that is neither device owner nor profile owner.
      */
-    private void checkCannotBind_nonManagingPackage() throws Exception {
+    public void testCheckCannotBind_nonManagingPackage() throws Exception {
         try {
             final Intent serviceIntent = new Intent();
             serviceIntent.setClassName(NON_MANAGING_PACKAGE, CrossUserService.class.getName());
@@ -138,7 +127,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     /**
      * Talk to the same DPC in same user, that is talking to itself.
      */
-    private void checkCannotBind_sameUser() throws Exception {
+    public void testCannotBind_sameUser() throws Exception {
         try {
             final Intent serviceIntent = new Intent(mContext, CrossUserService.class);
             bind(serviceIntent, EMPTY_SERVICE_CONNECTION, Process.myUserHandle());
@@ -151,7 +140,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     /**
      * Send a String to other side and expect the exact same string is echoed back.
      */
-    private void checkCrossProfileCall_echo() throws Exception {
+    public void testCrossProfileCall_echo() throws Exception {
         final String ANSWER = "42";
         assertCrossProfileCall(ANSWER, service -> service.echo(ANSWER), mTargetUserHandle);
     }
@@ -159,7 +148,7 @@ public class BindDeviceAdminServiceCorpOwnedManagedProfileTestSuite {
     /**
      * Make sure we are talking to the target user.
      */
-    private void checkCrossProfileCall_getUserHandle() throws Exception {
+    public void testCrossProfileCall_getUserHandle() throws Exception {
         assertCrossProfileCall(
                 mTargetUserHandle, service -> service.getUserHandle(), mTargetUserHandle);
     }
