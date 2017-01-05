@@ -160,6 +160,36 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    public void testCannotRemoveProfileIfRestrictionSet() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
+        try {
+            runDeviceTestsAsUser(
+                    COMP_DPC_PKG,
+                    USER_RESTRICTION_TEST,
+                    "testAddDisallowRemoveManagedProfileRestriction",
+                    mPrimaryUserId);
+            assertFalse(getDevice().removeUser(mProfileUserId));
+        } finally {
+            runDeviceTestsAsUser(
+                    COMP_DPC_PKG,
+                    USER_RESTRICTION_TEST,
+                    "testClearDisallowRemoveManagedProfileRestriction",
+                    mPrimaryUserId);
+        }
+        assertTrue(getDevice().removeUser(mProfileUserId));
+    }
+
+    public void testCannotAddProfileIfRestrictionSet() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // by default, disallow add managed profile users restriction is set.
+        assertCannotCreateManagedProfile(mPrimaryUserId);
+    }
+
     private void verifyBindDeviceAdminServiceAsUser() throws Exception {
         // Installing a non managing app (neither device owner nor profile owner).
         installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
