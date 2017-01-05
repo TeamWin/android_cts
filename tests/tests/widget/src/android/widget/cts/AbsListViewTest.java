@@ -59,9 +59,13 @@ public class AbsListViewTest extends ActivityInstrumentationTestCase2<ListViewCt
         "This", "is", "short", "!",
     };
     private final String[] mCountryList = new String[] {
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States",
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States",
-        "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
+        "Argentina", "Australia", "Belize", "Botswana", "Brazil", "Cameroon", "China", "Cyprus",
+        "Denmark", "Djibouti", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany",
+        "Ghana", "Haiti", "Honduras", "Iceland", "India", "Indonesia", "Ireland", "Italy",
+        "Japan", "Kiribati", "Laos", "Lesotho", "Liberia", "Malaysia", "Mongolia", "Myanmar",
+        "Nauru", "Norway", "Oman", "Pakistan", "Philippines", "Portugal", "Romania", "Russia",
+        "Rwanda", "Singapore", "Slovakia", "Slovenia", "Somalia", "Swaziland", "Togo", "Tuvalu",
+        "Uganda", "Ukraine", "United States", "Vanuatu", "Venezuela", "Zimbabwe"
     };
 
     private ListView mListView;
