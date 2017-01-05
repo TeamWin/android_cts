@@ -49,9 +49,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     @Override
     protected void tearDown() throws Exception {
-        if (mVirtualDisplayCreated) {
-            executeShellCommand(getDestroyVirtualDisplayCommand());
-        }
+        destroyVirtualDisplay();
         super.tearDown();
     }
 
@@ -231,6 +229,74 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
     }
 
+    /**
+     * Tests launching activities on secondary display and then removing it to see if stack focus
+     * is moved correctly.
+     */
+    public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
+        // Start launching activity.
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                true /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                TEST_ACTIVITY_NAME);
+
+        // Destroy virtual display.
+        destroyVirtualDisplay();
+        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Check if the focus is switched back to primary display.
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
+                VIRTUAL_DISPLAY_ACTIVITY);
+    }
+
+    /**
+     * Tests launching activities on secondary display and then removing it to see if stack focus
+     * is moved correctly.
+     */
+    public void testStackFocusSwitchOnStackEmptied() throws Exception {
+        // Start launching activity.
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                true /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mDisplayId);
+        mAmWmState.waitForValidState(mDevice, BROADCAST_RECEIVER_ACTIVITY);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                BROADCAST_RECEIVER_ACTIVITY);
+
+        // Lock the device, so that activity containers will be detached.
+        sleepDevice();
+
+        // Finish activity on secondary display.
+        executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
+
+        // Unlock and check if the focus is switched back to primary display.
+        wakeUpAndUnlockDevice();
+        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
+                VIRTUAL_DISPLAY_ACTIVITY);
+    }
+
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
     private DisplayState findNewDisplayId(ReportedDisplays oldDisplays,
             ReportedDisplays newDisplays) {
@@ -284,6 +350,16 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         assertNotNull("New virtual display must be created", newDisplay);
 
         return newDisplay;
+    }
+
+    /**
+     * Destroy existing virtual display.
+     */
+    private void destroyVirtualDisplay() throws Exception {
+        if (mVirtualDisplayCreated) {
+            executeShellCommand(getDestroyVirtualDisplayCommand());
+            mVirtualDisplayCreated = false;
+        }
     }
 
     /** Wait for provided number of displays and report their configurations. */

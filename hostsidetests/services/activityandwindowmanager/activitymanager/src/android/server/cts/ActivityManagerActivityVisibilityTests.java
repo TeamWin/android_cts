@@ -31,7 +31,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String TRANSLUCENT_ACTIVITY_NAME = "TranslucentActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String TURN_SCREEN_ON_ACTIVITY_NAME = "TurnScreenOnActivity";
-    private static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
         launchActivity(VISIBLE_BEHIND_ACTIVITY);

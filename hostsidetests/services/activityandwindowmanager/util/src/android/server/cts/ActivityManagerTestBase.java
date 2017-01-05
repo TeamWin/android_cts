@@ -81,6 +81,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
 
     static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
+    static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
 
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
 
