@@ -18,15 +18,22 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.ITestLogger;
+import com.android.tradefed.result.ByteArrayInputStreamSource;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.suite.checker.ISystemStatusChecker;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.util.AbiUtils;
 
 import junit.framework.TestCase;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.easymock.EasyMock;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Test class for {@link CompatibilityTest}
@@ -36,6 +43,7 @@ public class CompatibilityTestTest extends TestCase {
     private static final String FAKE_HOST_ARCH = "arm";
     private CompatibilityTest mTest;
     private ITestDevice mMockDevice;
+    private ITestLogger mMockLogger;
 
     @Override
     public void setUp() throws Exception {
@@ -47,6 +55,7 @@ public class CompatibilityTestTest extends TestCase {
         };
         mMockDevice = EasyMock.createMock(ITestDevice.class);
         mTest.setDevice(mMockDevice);
+        mMockLogger = EasyMock.createMock(ITestLogger.class);
     }
 
     /**
@@ -179,5 +188,83 @@ public class CompatibilityTestTest extends TestCase {
      */
     public void testSplit_notShardable() throws Exception {
         assertNull(mTest.split());
+    }
+
+    /**
+     * Test {@link CompatibilityTest#runPreModuleCheck(String, List, ITestDevice, ITestLogger)}
+     * is successful when no system checker fails.
+     */
+    public void testRunPreModuleCheck() throws Exception {
+        List<ISystemStatusChecker> systemCheckers = new ArrayList<>();
+        // add 2 inop status checkers.
+        systemCheckers.add(new ISystemStatusChecker() {});
+        systemCheckers.add(new ISystemStatusChecker() {});
+        EasyMock.replay(mMockDevice, mMockLogger);
+        mTest.runPreModuleCheck("FAKE_MODULE", systemCheckers, mMockDevice, mMockLogger);
+        EasyMock.verify(mMockDevice, mMockLogger);
+    }
+
+    /**
+     * Test {@link CompatibilityTest#runPreModuleCheck(String, List, ITestDevice, ITestLogger)}
+     * is failing and log the failure.
+     */
+    public void testRunPreModuleCheck_failure() throws Exception {
+        List<ISystemStatusChecker> systemCheckers = new ArrayList<>();
+        // add 2 inop status checkers.
+        systemCheckers.add(new ISystemStatusChecker() {});
+        systemCheckers.add(new ISystemStatusChecker() {
+            @Override
+            public boolean preExecutionCheck(ITestDevice device) {
+                // fails
+                return false;
+            }
+        });
+        InputStreamSource res = new ByteArrayInputStreamSource("fake bugreport".getBytes());
+        EasyMock.expect(mMockDevice.getBugreport()).andReturn(res);
+        mMockLogger.testLog(EasyMock.eq("bugreport-checker-pre-module-FAKE_MODULE"),
+                EasyMock.eq(LogDataType.BUGREPORT),
+                EasyMock.same(res));
+        EasyMock.replay(mMockDevice, mMockLogger);
+        mTest.runPreModuleCheck("FAKE_MODULE", systemCheckers, mMockDevice, mMockLogger);
+        EasyMock.verify(mMockDevice, mMockLogger);
+    }
+
+    /**
+     * Test {@link CompatibilityTest#runPostModuleCheck(String, List, ITestDevice, ITestLogger)}
+     * is successful when no system checker fails.
+     */
+    public void testrunPostModuleCheck() throws Exception {
+        List<ISystemStatusChecker> systemCheckers = new ArrayList<>();
+        // add 2 inop status checkers.
+        systemCheckers.add(new ISystemStatusChecker() {});
+        systemCheckers.add(new ISystemStatusChecker() {});
+        EasyMock.replay(mMockDevice, mMockLogger);
+        mTest.runPostModuleCheck("FAKE_MODULE", systemCheckers, mMockDevice, mMockLogger);
+        EasyMock.verify(mMockDevice, mMockLogger);
+    }
+
+    /**
+     * Test {@link CompatibilityTest#runPreModuleCheck(String, List, ITestDevice, ITestLogger)}
+     * is failing and log the failure.
+     */
+    public void testrunPostModuleCheck_failure() throws Exception {
+        List<ISystemStatusChecker> systemCheckers = new ArrayList<>();
+        // add 2 inop status checkers.
+        systemCheckers.add(new ISystemStatusChecker() {});
+        systemCheckers.add(new ISystemStatusChecker() {
+            @Override
+            public boolean postExecutionCheck(ITestDevice device) {
+                // fails
+                return false;
+            }
+        });
+        InputStreamSource res = new ByteArrayInputStreamSource("fake bugreport".getBytes());
+        EasyMock.expect(mMockDevice.getBugreport()).andReturn(res);
+        mMockLogger.testLog(EasyMock.eq("bugreport-checker-post-module-FAKE_MODULE"),
+                EasyMock.eq(LogDataType.BUGREPORT),
+                EasyMock.same(res));
+        EasyMock.replay(mMockDevice, mMockLogger);
+        mTest.runPostModuleCheck("FAKE_MODULE", systemCheckers, mMockDevice, mMockLogger);
+        EasyMock.verify(mMockDevice, mMockLogger);
     }
 }

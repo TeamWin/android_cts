@@ -13,6 +13,6 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="System status checkers before and after each CTS module execution">
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker" />
+<configuration description="CTS system checker configs">
+    <system_checker class="com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker" />
 </configuration>

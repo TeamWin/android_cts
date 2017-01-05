@@ -49,6 +49,9 @@ public class WifiCheck extends PreconditionPreparer {
         return pmFeatures.contains(WIFI_FEATURE);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void run(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {

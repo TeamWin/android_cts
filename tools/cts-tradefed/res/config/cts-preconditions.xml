@@ -64,5 +64,4 @@
         <option name="dest-dir" value="report-log-files/"/>
         <option name="temp-dir" value="temp-report-logs/"/>
     </target_preparer>
-
 </configuration>
