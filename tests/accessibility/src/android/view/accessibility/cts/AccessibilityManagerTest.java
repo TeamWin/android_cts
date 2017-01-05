@@ -22,12 +22,14 @@ import android.content.pm.ServiceInfo;
 import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Class for testing {@link AccessibilityManager}.
@@ -57,11 +59,8 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
     }
 
     public void testAddAndRemoveAccessibilityStateChangeListener() throws Exception {
-        AccessibilityStateChangeListener listener = new AccessibilityStateChangeListener() {
-            @Override
-            public void onAccessibilityStateChanged(boolean enabled) {
+        AccessibilityStateChangeListener listener = (state) -> {
                 /* do nothing */
-            }
         };
         assertTrue(mAccessibilityManager.addAccessibilityStateChangeListener(listener));
         assertTrue(mAccessibilityManager.removeAccessibilityStateChangeListener(listener));
@@ -69,15 +68,21 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
     }
 
     public void testAddAndRemoveTouchExplorationStateChangeListener() throws Exception {
-        TouchExplorationStateChangeListener listener = new TouchExplorationStateChangeListener() {
-            @Override
-            public void onTouchExplorationStateChanged(boolean enabled) {
-                // Do nothing.
-            }
+        TouchExplorationStateChangeListener listener = (boolean enabled) -> {
+            // Do nothing.
         };
         assertTrue(mAccessibilityManager.addTouchExplorationStateChangeListener(listener));
         assertTrue(mAccessibilityManager.removeTouchExplorationStateChangeListener(listener));
         assertFalse(mAccessibilityManager.removeTouchExplorationStateChangeListener(listener));
+    }
+
+    public void testAddAndRemoveServiceStateChangeListener() throws Exception {
+        AccessibilityServicesStateChangeListener listener = () -> {
+            // Do Nothing
+        };
+        assertTrue(mAccessibilityManager.addAccessibilityServicesStateChangeListener(listener));
+        assertTrue(mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener));
+        assertFalse(mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener));
     }
 
     public void testIsTouchExplorationEnabled() throws Exception {
@@ -181,7 +186,7 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
     }
 
     public void testSendAccessibilityEvent() throws Exception {
-        // The APIs are heavily tested in the android.accessibiliyservice package.
+        // The APIs are heavily tested in the android.accessibilityservice package.
         // This just makes sure the call does not throw an exception.
         waitForAccessibilityEnabled();
         mAccessibilityManager.sendAccessibilityEvent(AccessibilityEvent.obtain(
@@ -192,16 +197,62 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         waitForTouchExplorationEnabled();
     }
 
+    public void testServiceStateChanges_stateChangeListenersCalled() throws Exception {
+        final Object waitObject = new Object();
+        final AtomicBoolean listenerCalled = new AtomicBoolean(false);
+        final SpeakingAccessibilityService service =
+                SpeakingAccessibilityService.sConnectedInstance;
+        final AccessibilityServicesStateChangeListener listener = () -> {
+            synchronized (waitObject) {
+                listenerCalled.set(true);
+                waitObject.notifyAll();
+            }
+        };
+
+        mAccessibilityManager.addAccessibilityServicesStateChangeListener(listener);
+        // Verify called on info change
+        final AccessibilityServiceInfo initialInfo = service.getServiceInfo();
+        AccessibilityServiceInfo tempInfo = service.getServiceInfo();
+        tempInfo.flags ^= AccessibilityServiceInfo.FLAG_ENABLE_ACCESSIBILITY_VOLUME;
+        try {
+            service.setServiceInfo(tempInfo);
+            assertListenerCalled(listenerCalled, waitObject);
+        } finally {
+            service.setServiceInfo(initialInfo);
+        }
+
+        // Verify called on service disabled
+        listenerCalled.set(false);
+        ServiceControlUtils.turnAccessibilityOff(getInstrumentation());
+        assertListenerCalled(listenerCalled, waitObject);
+
+        // Verify called on service enabled
+        listenerCalled.set(false);
+        ServiceControlUtils.enableSpeakingAndVibratingServices(getInstrumentation());
+        assertListenerCalled(listenerCalled, waitObject);
+
+        mAccessibilityManager.removeAccessibilityServicesStateChangeListener(listener);
+
+    }
+
+    private void assertListenerCalled(AtomicBoolean listenerCalled, Object waitObject)
+            throws Exception {
+        long timeoutTime = System.currentTimeMillis() + WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT;
+        synchronized (waitObject) {
+            while (!listenerCalled.get() && (System.currentTimeMillis() < timeoutTime)) {
+                waitObject.wait(timeoutTime - System.currentTimeMillis());
+            }
+        }
+        assertTrue("Timed out waiting for listener called", listenerCalled.get());
+    }
+
     private void waitForAccessibilityEnabled() throws InterruptedException {
         final Object waitObject = new Object();
 
-        AccessibilityStateChangeListener listener = new AccessibilityStateChangeListener() {
-            @Override
-            public void onAccessibilityStateChanged(boolean b) {
-                synchronized (waitObject) {
-                    waitObject.notifyAll();
+        AccessibilityStateChangeListener listener = (boolean b) -> {
+            synchronized (waitObject) {
+                waitObject.notifyAll();
                 }
-            }
         };
         mAccessibilityManager.addAccessibilityStateChangeListener(listener);
         long timeoutTime = System.currentTimeMillis() + WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT;
@@ -218,12 +269,9 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
     private void waitForTouchExplorationEnabled() throws InterruptedException {
         final Object waitObject = new Object();
 
-        TouchExplorationStateChangeListener listener = new TouchExplorationStateChangeListener() {
-            @Override
-            public void onTouchExplorationStateChanged(boolean b) {
-                synchronized (waitObject) {
-                    waitObject.notifyAll();
-                }
+        TouchExplorationStateChangeListener listener = (boolean b) -> {
+            synchronized (waitObject) {
+                waitObject.notifyAll();
             }
         };
         mAccessibilityManager.addTouchExplorationStateChangeListener(listener);
