@@ -335,6 +335,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         t.stopLooper();
+        t.join(); // wait for thread to exit so we're sure the player was released
     }
 
     private void doStagefrightTestMediaCodec(final int rid) throws Exception {
