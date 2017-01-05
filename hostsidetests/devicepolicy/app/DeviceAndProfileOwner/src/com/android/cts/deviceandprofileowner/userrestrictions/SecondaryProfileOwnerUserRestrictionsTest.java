@@ -50,8 +50,6 @@ public class SecondaryProfileOwnerUserRestrictionsTest extends BaseUserRestricti
             UserManager.DISALLOW_NETWORK_RESET,
             UserManager.DISALLOW_FACTORY_RESET,
             UserManager.DISALLOW_ADD_USER,
-            UserManager.DISALLOW_ADD_MANAGED_PROFILE,
-            UserManager.DISALLOW_REMOVE_MANAGED_PROFILE,
             UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
             UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
             UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
