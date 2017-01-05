@@ -539,7 +539,6 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             } else if (mW == 800 && mH == 480) {
                 bitRate = BITRATE_800x480;
             }
-            format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
 
@@ -550,6 +549,10 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
             }
 
             mEncoder = MediaCodec.createByCodecName(codecName);
+            format.setInteger(
+                    MediaFormat.KEY_BIT_RATE,
+                    mEncoder.getCodecInfo().getCapabilitiesForType(MIME_TYPE).getVideoCapabilities()
+                            .getBitrateRange().clamp(bitRate));
             mEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             mEncodingSurface = mEncoder.createInputSurface();
             mEncoder.start();
