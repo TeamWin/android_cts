@@ -34,6 +34,8 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             "com.android.cts.comp.provisioning.UserRestrictionTest";
     private static final String MANAGEMENT_TEST =
             "com.android.cts.comp.ManagementTest";
+    private static final String DEVICE_OWNER_COMP_TEST =
+            "com.android.cts.comp.DeviceOwnerCompTest";
 
     private int mProfileUserId;
 
@@ -203,9 +205,22 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    /**
+     * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
+     */
+    public void testIsProvisioningAllowed_corpOwnedManagedProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                DEVICE_OWNER_COMP_TEST,
+                mPrimaryUserId);
+    }
+
     protected void setupManagedProfile(String apkName, String packageName,
-                    String adminReceiverClassName)
-            throws Exception {
+            String adminReceiverClassName) throws Exception {
         // Temporary disable the DISALLOW_ADD_MANAGED_PROFILE, so that we can create profile
         // using adb command.
         clearDisallowAddManagedProfileRestriction();
