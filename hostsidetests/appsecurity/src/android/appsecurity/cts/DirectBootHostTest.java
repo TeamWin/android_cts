@@ -211,9 +211,14 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
         if (featureList.contains("feature:android.hardware.type.watch\n") ||
                 featureList.contains("feature:android.hardware.type.television\n")) {
             return false;
-        } else {
-            return true;
         }
+        final String passwordActivity =
+            getDevice().executeShellCommand("cmd package resolve-activity --components "
+                + "-a android.app.action.SET_NEW_PASSWORD -c android.intent.category.DEFAULT");
+        if (passwordActivity.equals("No activity found\n")) {
+          return false;
+        }
+        return true;
     }
 
     private void waitForBootCompleted() throws Exception {
