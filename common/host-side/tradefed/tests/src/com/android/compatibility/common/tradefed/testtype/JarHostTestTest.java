@@ -18,13 +18,14 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.testtype.StubTest;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
 
+import org.easymock.EasyMock;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -165,8 +166,9 @@ public class JarHostTestTest extends TestCase {
         assertTrue(shard2 instanceof JarHostTest);
         assertEquals("[android.ui.cts.InstallTimeTest]",
                 ((JarHostTest)shard2).getClassNames().toString());
-        // Not enough class for a real 3rd shard, so it's a stub placeholder instead.
+        // Not enough class for a real 3rd shard, so it's an empty placeholder instead.
         IRemoteTest shard3 = mTest.getTestShard(3, 2);
-        assertTrue(shard3 instanceof StubTest);
+        assertTrue(shard3 instanceof JarHostTest);
+        assertTrue(((JarHostTest)shard3).getClassNames().isEmpty());
     }
 }

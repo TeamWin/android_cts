@@ -76,7 +76,11 @@ public class JarHostTest extends HostTest implements IRuntimeHintProvider {
     protected HostTest createHostTest(Class<?> classObj) {
         JarHostTest test = new JarHostTest();
         OptionCopier.copyOptionsNoThrow(this, test);
-        test.setClassName(classObj.getName());
+        if (classObj != null) {
+            test.setClassName(classObj.getName());
+        } else {
+            test.mJars.clear();
+        }
         return test;
     }
 
