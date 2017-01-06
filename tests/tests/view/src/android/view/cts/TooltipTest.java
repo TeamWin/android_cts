@@ -113,6 +113,10 @@ public class TooltipTest {
         mInstrumentation.waitForIdleSync();
     }
 
+    private void setVisibility(View view, int visibility) throws Throwable {
+        mActivityRule.runOnUiThread(() -> view.setVisibility(visibility));
+    }
+
     private void callPerformLongClick(View view) throws Throwable {
         mActivityRule.runOnUiThread(() -> view.performLongClick(0, 0));
     }
@@ -742,5 +746,28 @@ public class TooltipTest {
         assertFalse(hasTooltip(mTooltipView));
         addView(mTopmostView, mGroupView);
         assertFalse(hasTooltip(mTooltipView));
+    }
+
+    @Test
+    public void testMouseHoverOverlap() throws Throwable {
+        final View parent = mActivity.findViewById(R.id.overlap_group);
+        final View child1 = mActivity.findViewById(R.id.overlap1);
+        final View child2 = mActivity.findViewById(R.id.overlap2);
+        final View child3 = mActivity.findViewById(R.id.overlap3);
+
+        injectLongHoverMove(parent);
+        assertTrue(hasTooltip(child3));
+
+        setVisibility(child3, View.GONE);
+        injectLongHoverMove(parent);
+        assertTrue(hasTooltip(child2));
+
+        setTooltip(child2, null);
+        injectLongHoverMove(parent);
+        assertTrue(hasTooltip(child1));
+
+        setVisibility(child1, View.INVISIBLE);
+        injectLongHoverMove(parent);
+        assertTrue(hasTooltip(parent));
     }
 }
