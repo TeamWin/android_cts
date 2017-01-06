@@ -440,6 +440,39 @@ public class ViewTest {
     }
 
     @Test
+    public void testPointerIconOverlap() throws Throwable {
+        View parent = mActivity.findViewById(R.id.pointer_icon_overlap);
+        View child1 = mActivity.findViewById(R.id.pointer_icon_overlap_child1);
+        View child2 = mActivity.findViewById(R.id.pointer_icon_overlap_child2);
+        View child3 = mActivity.findViewById(R.id.pointer_icon_overlap_child3);
+
+        PointerIcon iconParent = PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_HAND);
+        PointerIcon iconChild1 = PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_HELP);
+        PointerIcon iconChild2 = PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_TEXT);
+        PointerIcon iconChild3 = PointerIcon.getSystemIcon(mActivity, PointerIcon.TYPE_GRAB);
+
+        parent.setPointerIcon(iconParent);
+        child1.setPointerIcon(iconChild1);
+        child2.setPointerIcon(iconChild2);
+        child3.setPointerIcon(iconChild3);
+
+        MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_HOVER_MOVE, 0, 0, 0);
+
+        assertEquals(iconChild3, parent.onResolvePointerIcon(event, 0));
+
+        setVisibilityOnUiThread(child3, View.GONE);
+        assertEquals(iconChild2, parent.onResolvePointerIcon(event, 0));
+
+        child2.setPointerIcon(null);
+        assertEquals(iconChild1, parent.onResolvePointerIcon(event, 0));
+
+        setVisibilityOnUiThread(child1, View.GONE);
+        assertEquals(iconParent, parent.onResolvePointerIcon(event, 0));
+
+        event.recycle();
+    }
+
+    @Test
     public void testCreatePointerIcons() {
         assertSystemPointerIcon(PointerIcon.TYPE_NULL);
         assertSystemPointerIcon(PointerIcon.TYPE_DEFAULT);
