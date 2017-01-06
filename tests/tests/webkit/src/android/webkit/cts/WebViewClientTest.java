@@ -237,6 +237,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             String url = testServer.setResponse(path, page, headers);
             assertFalse(webViewClient.hasOnReceivedLoginRequest());
             mOnUiThread.loadUrlAndWaitForCompletion(url);
+            assertTrue(webViewClient.hasOnReceivedLoginRequest());
             new PollingCheck(TEST_TIMEOUT) {
                 @Override
                 protected boolean check() {
@@ -707,15 +708,6 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
                 WebResourceResponse errorResponse) {
             super.onReceivedHttpError(view, request, errorResponse);
             mOnReceivedHttpError = errorResponse;
-
-        @Override
-        public void onReceivedLoginRequest(WebView view, String realm, String account,
-                String args) {
-            super.onReceivedLoginRequest(view, realm, account, args);
-            mOnReceivedLoginRequest = true;
-            mOnReceivedLoginRealm = realm;
-            mOnReceivedLoginAccount = account;
-            mOnReceivedLoginArgs = args;
         }
 
         @Override
