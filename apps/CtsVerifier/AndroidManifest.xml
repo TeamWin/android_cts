@@ -2091,6 +2091,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
+             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
         </activity>
 
         <service android:name=".tv.MockTvInputService"
