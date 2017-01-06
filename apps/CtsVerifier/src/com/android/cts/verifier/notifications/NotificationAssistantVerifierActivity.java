@@ -1249,7 +1249,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                             @Override
                             public void accept(List<String> result) {
                                 if (result != null && result.size() > 0 && result.contains(mTag1)) {
-                                    channel.setAllowed(false);
+                                    channel.setImportance(NotificationManager.IMPORTANCE_NONE);
                                     MockAssistant.updateChannel(mContext, THIS_PKG, channel);
                                     status = RETEST;
                                 } else {
@@ -1293,7 +1293,6 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         }
         pass &= checkEquals(expected.getId(), actual.getId(), msg);
         pass &= checkEquals(expected.getName(), actual.getName(), msg);
-        pass &= checkEquals(expected.isAllowed(), actual.isAllowed(), msg);
         pass &= checkEquals(expected.canShowBadge(), actual.canShowBadge(), msg);
         pass &= checkEquals(expected.shouldVibrate(), actual.shouldVibrate(), msg);
         pass &= checkEquals(expected.shouldShowLights(), actual.shouldShowLights(), msg);
