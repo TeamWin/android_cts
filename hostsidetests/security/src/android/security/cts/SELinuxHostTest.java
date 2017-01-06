@@ -296,9 +296,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         mDevice.pullFile("/file_contexts.bin", deviceFcFile);
 
         /* retrieve the AOSP file_contexts file from jar */
-        aospFcFile = copyResourceToTempFile("/general_file_contexts.bin");
+        aospFcFile = copyResourceToTempFile("/plat_file_contexts");
 
-        /* run checkfc -c general_file_contexts.bin file_contexts.bin */
+        /* run checkfc -c plat_file_contexts file_contexts.bin */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 "-c", aospFcFile.getAbsolutePath(),
                 deviceFcFile.getAbsolutePath());
