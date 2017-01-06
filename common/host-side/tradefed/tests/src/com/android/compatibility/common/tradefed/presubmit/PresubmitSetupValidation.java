@@ -44,4 +44,14 @@ public class PresubmitSetupValidation extends TestCase {
                     + "CTS unit tests configuration.", e.getMessage()));
         }
     }
+
+    /**
+     * Test to ensure that Zip dependency on the Apache Commons Compress coming from TradeFed is
+     * properly setup. This dependency is required for some utilities of TradeFed to work.
+     */
+    public void testDependencyCommonsCompress() throws Exception {
+        ClassLoader loader = ClassLoader.getSystemClassLoader();
+        // This will throw an exception if dependency isn't met.
+        loader.loadClass("org.apache.commons.compress.archivers.zip.ZipFile");
+    }
 }
