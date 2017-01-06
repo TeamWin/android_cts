@@ -17,6 +17,7 @@ package com.android.cts.verifier.notifications;
 
 import android.app.Activity;
 import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MockAssistant extends NotificationAssistantService {
@@ -56,6 +58,7 @@ public class MockAssistant extends NotificationAssistantService {
     public static final String SERVICE_UPDATE_CHANNEL = SERVICE_BASE + "UPDATE_CHANNEL";
     public static final String SERVICE_DELETE_CHANNEL = SERVICE_BASE + "DELETE_CHANNEL";
     public static final String SERVICE_CHECK_CHANNELS = SERVICE_BASE + "CHECK_CHANNELS";
+    public static final String SERVICE_ADJUST_ENQUEUE = SERVICE_BASE + "ADJUST_ENQUEUE";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
     static final String EXTRA_INT = "INT";
@@ -91,6 +94,7 @@ public class MockAssistant extends NotificationAssistantService {
     private Set<String> mTestPackages = new HashSet<>();
     private BroadcastReceiver mReceiver;
     private int mDND = -1;
+    private boolean adjustEnqueue = false;
 
     @Override
     public void onCreate() {
@@ -109,35 +113,30 @@ public class MockAssistant extends NotificationAssistantService {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
+                Log.d(TAG, action);
                 if (SERVICE_CHECK.equals(action)) {
-                    Log.d(TAG, "SERVICE_CHECK");
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_ENQUEUED.equals(action)) {
-                    Log.d(TAG, "SERVICE_ENQUEUED");
                     Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mEnqueued);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_POSTED.equals(action)) {
-                    Log.d(TAG, "SERVICE_POSTED");
                     Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mPosted);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_DND.equals(action)) {
-                    Log.d(TAG, "SERVICE_DND");
                     Bundle bundle = new Bundle();
                     bundle.putInt(EXTRA_INT, mDND);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_ORDER.equals(action)) {
-                    Log.d(TAG, "SERVICE_ORDER");
                     Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mOrder);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_PAYLOADS.equals(action)) {
-                    Log.d(TAG, "SERVICE_PAYLOADS");
                     Bundle bundle = new Bundle();
                     ArrayList<Bundle> payloadData = new ArrayList<>(mNotifications.size());
                     for (Bundle notiStats : mNotifications.values()) {
@@ -147,13 +146,11 @@ public class MockAssistant extends NotificationAssistantService {
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_REMOVED.equals(action)) {
-                    Log.d(TAG, "SERVICE_REMOVED");
                     Bundle bundle = new Bundle();
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mRemoved);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_REMOVED_REASON.equals(action)) {
-                    Log.d(TAG, "SERVICE_REMOVED_REASON");
                     Bundle bundle = new Bundle();
                     ArrayList<Bundle> payloadData = new ArrayList<>(mRemovedReason.size());
                     for (Bundle notiStats : mRemovedReason.values()) {
@@ -163,7 +160,6 @@ public class MockAssistant extends NotificationAssistantService {
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_CLEAR_ONE.equals(action)) {
-                    Log.d(TAG, "SERVICE_CLEAR_ONE");
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
                     if (key != null) {
@@ -172,10 +168,8 @@ public class MockAssistant extends NotificationAssistantService {
                         Log.w(TAG, "Notification does not exist: " + tag);
                     }
                 } else if (SERVICE_CLEAR_ALL.equals(action)) {
-                    Log.d(TAG, "SERVICE_CLEAR_ALL");
                     MockAssistant.this.cancelAllNotifications();
                 } else if (SERVICE_RESET.equals(action)) {
-                    Log.d(TAG, "SERVICE_RESET");
                     resetData();
                 } else if (SERVICE_ADJUSTMENT.equals(action)) {
                     String tag = intent.getStringExtra(EXTRA_TAG);
@@ -209,6 +203,8 @@ public class MockAssistant extends NotificationAssistantService {
                     String pkg = intent.getStringExtra(EXTRA_PKG);
                     String id = intent.getStringExtra(EXTRA_TAG);
                     MockAssistant.this.deleteNotificationChannel(pkg, id);
+                } else if (SERVICE_ADJUST_ENQUEUE.equals(action)) {
+                    adjustEnqueue = true;
                 } else {
                     Log.w(TAG, "unknown action");
                     setResultCode(Activity.RESULT_CANCELED);
@@ -232,6 +228,7 @@ public class MockAssistant extends NotificationAssistantService {
         filter.addAction(SERVICE_CREATE_CHANNEL);
         filter.addAction(SERVICE_DELETE_CHANNEL);
         filter.addAction(SERVICE_UPDATE_CHANNEL);
+        filter.addAction(SERVICE_ADJUST_ENQUEUE);
         registerReceiver(mReceiver, filter);
     }
 
@@ -294,11 +291,17 @@ public class MockAssistant extends NotificationAssistantService {
     public Adjustment onNotificationEnqueued(StatusBarNotification sbn, int importance,
             boolean user) {
         if (!mTestPackages.contains(sbn.getPackageName())) { return null; }
-        Log.d(TAG, "posted: " + sbn.getTag());
+        Log.d(TAG, "enqueued: " + sbn.getTag());
         mEnqueued.add(sbn.getTag());
-        mNotifications.put(sbn.getKey(), packNotification(sbn));
-        mNotificationKeys.put(sbn.getTag(), sbn.getKey());
 
+        if (adjustEnqueue) {
+            Map<String, Bundle> adjustments =
+                    NotificationAssistantVerifierActivity.getAdjustments();
+            Bundle signals = adjustments.get(sbn.getNotification().getSortKey());
+            Adjustment adjustment = new Adjustment(sbn.getPackageName(),
+                    sbn.getKey(), signals, "", 0);
+            return adjustment;
+        }
         return null;
     }
 
@@ -389,6 +392,10 @@ public class MockAssistant extends NotificationAssistantService {
         Intent broadcast = new Intent(SERVICE_CHECK_CHANNELS);
         broadcast.putExtra(EXTRA_PKG, pkg);
         context.sendOrderedBroadcast(broadcast, null, catcher, null, RESULT_NO_SERVER, null, null);
+    }
+
+    public static void adjustEnqueue(Context context) {
+        sendCommand(context, SERVICE_ADJUST_ENQUEUE, null, 0);
     }
 
     public static void clearOne(Context context, String tag, int code) {

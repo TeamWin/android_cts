@@ -44,6 +44,7 @@ import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.service.notification.Adjustment;
 import android.service.notification.SnoozeCriterion;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +54,7 @@ import com.android.cts.verifier.R;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -106,11 +108,12 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         tests.add(new DismissOneTest());
         tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
-        tests.add(new AdjustNotificationTest());
         tests.add(new CreateChannelTest());
         tests.add(new UpdateChannelTest());
         tests.add(new DeleteChannelTest());
         tests.add(new UpdateLiveChannelTest());
+        tests.add(new AdjustNotificationTest());
+        tests.add(new AdjustEnqueuedNotificationTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotEnqueuedTest());
@@ -146,7 +149,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         mPackageString = "com.android.cts.verifier";
 
         Notification n1 = new Notification.Builder(mContext)
-                .setContentTitle("ClearTest 1")
+                .setContentTitle("One")
+                .setSortKey(Adjustment.KEY_CHANNEL_ID)
                 .setContentText(mTag1.toString())
                 .setPriority(Notification.PRIORITY_LOW)
                 .setSmallIcon(mIcon1)
@@ -160,7 +164,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         mFlag1 = Notification.FLAG_ONLY_ALERT_ONCE;
 
         Notification n2 = new Notification.Builder(mContext)
-                .setContentTitle("ClearTest 2")
+                .setContentTitle("Two")
+                .setSortKey(Adjustment.KEY_PEOPLE)
                 .setContentText(mTag2.toString())
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setSmallIcon(mIcon2)
@@ -174,7 +179,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         mFlag2 = Notification.FLAG_AUTO_CANCEL;
 
         Notification n3 = new Notification.Builder(mContext)
-                .setContentTitle("ClearTest 3")
+                .setContentTitle("Three")
+                .setSortKey(Adjustment.KEY_SNOOZE_CRITERIA)
                 .setContentText(mTag3.toString())
                 .setPriority(Notification.PRIORITY_LOW)
                 .setSmallIcon(mIcon3)
@@ -698,19 +704,13 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     }
 
     private class AdjustNotificationTest extends InteractiveTestCase {
-        private Bundle bundle1 = new Bundle();
-        private Bundle bundle2 = new Bundle();
-        private Bundle bundle3 = new Bundle();
-        private SnoozeCriterion snooze1 = new SnoozeCriterion("id1", "1", "2");
-        private SnoozeCriterion snooze2 = new SnoozeCriterion("id2", "2", "3");
-        private String people1 = "people1";
-        private String people2 = "people2";
         private ArrayList<String> people;
         private ArrayList<SnoozeCriterion> snooze;
         private NotificationChannel originalChannel = new NotificationChannel("original", "new",
                 NotificationManager.IMPORTANCE_LOW);
         private NotificationChannel newChannel = new NotificationChannel("new", "new",
                 NotificationManager.IMPORTANCE_LOW);
+        private Map<String, Bundle> adjustments;
 
         @Override
         View inflate(ViewGroup parent) {
@@ -729,27 +729,38 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
+            adjustments = getAdjustments();
+            snooze = adjustments.get(Adjustment.KEY_SNOOZE_CRITERIA).getParcelableArrayList(
+                    Adjustment.KEY_SNOOZE_CRITERIA);
+            people = adjustments.get(Adjustment.KEY_PEOPLE).getStringArrayList(
+                    Adjustment.KEY_PEOPLE);
             sendNotifications(originalChannel);
             status = READY;
-            bundle1.putString(Adjustment.KEY_CHANNEL_ID, newChannel.getId());
-            people = new ArrayList<>();
-            people.add(people1);
-            people.add(people2);
-            bundle2.putStringArrayList(Adjustment.KEY_PEOPLE, people);
-            snooze = new ArrayList<>();
-            snooze.add(snooze1);
-            snooze.add(snooze2);
-            bundle3.putParcelableArrayList(Adjustment.KEY_SNOOZE_CRITERIA, snooze);
             delay();
         }
 
         @Override
         void test() {
             if (status == READY) {
-                MockAssistant.applyAdjustment(mContext, mTag1, bundle1);
-                MockAssistant.applyAdjustment(mContext, mTag2, bundle2);
-                MockAssistant.applyAdjustment(mContext, mTag3, bundle3);
-                status = RETEST;
+                MockAssistant.probeListenerPosted(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() > 0 && result.contains(mTag1)) {
+                                    MockAssistant.applyAdjustment(mContext, mTag1,
+                                            adjustments.get(Adjustment.KEY_CHANNEL_ID));
+                                    MockAssistant.applyAdjustment(mContext, mTag2,
+                                            adjustments.get(Adjustment.KEY_PEOPLE));
+                                    MockAssistant.applyAdjustment(mContext, mTag3,
+                                            adjustments.get(Adjustment.KEY_SNOOZE_CRITERIA));
+                                    status = RETEST;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                delay(3000);
+                            }
+                        });
             } else {
                 MockAssistant.probeListenerPayloads(mContext,
                         new MockAssistant.BundleListResultCatcher() {
@@ -837,6 +848,177 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             MockAssistant.resetListenerData(mContext);
             delay();
         }
+    }
+
+    private class AdjustEnqueuedNotificationTest extends InteractiveTestCase {
+        private ArrayList<String> people;
+        private ArrayList<SnoozeCriterion> snooze;
+        private NotificationChannel originalChannel = new NotificationChannel("original", "new",
+                NotificationManager.IMPORTANCE_LOW);
+        private NotificationChannel newChannel = new NotificationChannel("new", "new",
+                NotificationManager.IMPORTANCE_LOW);
+        private Map<String, Bundle> adjustments;
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_adjustment_enqueue_payload_intact);
+        }
+
+        @Override
+        void setUp() {
+            MockAssistant.adjustEnqueue(mContext);
+            try {
+                mNm.createNotificationChannel(newChannel, (createdChannel) -> {}, null);
+            } catch (Exception e) {
+                Log.e(TAG, "failed to create channel", e);
+            }
+            try {
+                mNm.createNotificationChannel(originalChannel, (createdChannel) -> {}, null);
+            } catch (Exception e) {
+                Log.e(TAG, "failed to create channel", e);
+            }
+            adjustments = getAdjustments();
+            snooze = adjustments.get(Adjustment.KEY_SNOOZE_CRITERIA).getParcelableArrayList(
+                    Adjustment.KEY_SNOOZE_CRITERIA);
+            people = adjustments.get(Adjustment.KEY_PEOPLE).getStringArrayList(
+                    Adjustment.KEY_PEOPLE);
+            sendNotifications(originalChannel);
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockAssistant.probeListenerEnqueued(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() > 0 && result.contains(mTag1)) {
+                                    status = RETEST;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            } else {
+                MockAssistant.probeListenerPayloads(mContext,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                Set<String> found = new HashSet<>();
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = true;
+                                for (Parcelable payloadData : result) {
+                                    Bundle payload = (Bundle) payloadData;
+                                    pass &= checkEquals(mPackageString,
+                                            payload.getString(KEY_PACKAGE),
+                                            "data integrity test: notification package (%s, %s)");
+
+                                    String tag = payload.getString(KEY_TAG);
+                                    if (mTag1.equals(tag)) {
+                                        found.add(mTag1);
+                                        pass &= checkEquals(newChannel.getId(),
+                                                ((NotificationChannel) payload.getParcelable(
+                                                        KEY_CHANNEL)).getId(),
+                                                "data integrity test: notification channel ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getStringArray(KEY_PEOPLE),
+                                                "data integrity test, notification people ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getParcelableArray(KEY_SNOOZE_CRITERIA),
+                                                "data integrity test, notification snooze ("
+                                                        + "%s, %s)");
+                                    } else if (mTag2.equals(tag)) {
+                                        found.add(mTag2);
+                                        pass &= checkEquals(originalChannel.getId(),
+                                                ((NotificationChannel) payload.getParcelable(
+                                                        KEY_CHANNEL)).getId(),
+                                                "data integrity test: notification channel ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(people.toArray(new String[]{}),
+                                                payload.getStringArray(KEY_PEOPLE),
+                                                "data integrity test, notification people ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getParcelableArray(KEY_SNOOZE_CRITERIA),
+                                                "data integrity test, notification snooze ("
+                                                        + "%s, %s)");
+                                    } else if (mTag3.equals(tag)) {
+                                        found.add(mTag3);
+                                        pass &= checkEquals(originalChannel.getId(),
+                                                ((NotificationChannel) payload.getParcelable(
+                                                        KEY_CHANNEL)).getId(),
+                                                "data integrity test: notification channel ("
+                                                        + "%s, %s)");
+                                        pass &= checkEquals(null,
+                                                payload.getStringArray(KEY_PEOPLE),
+                                                "data integrity test, notification people ("
+                                                        + "%s, %s)");;
+                                        pass &= checkEquals(snooze.toArray(new SnoozeCriterion[]{}),
+                                                payload.getParcelableArray(KEY_SNOOZE_CRITERIA),
+                                                "data integrity test, notification snooze ("
+                                                        + "%s, %s)");
+                                    } else {
+                                        pass = false;
+                                        logFail("unexpected notification tag: " + tag);
+                                    }
+                                }
+
+                                pass &= found.size() == 3;
+                                status = pass ? PASS : FAIL;
+                                next();
+                            }
+                        });
+            }
+            delay(6000);  // in case the catcher never returns
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            mNm.deleteNotificationChannel(originalChannel.getId());
+            mNm.deleteNotificationChannel(newChannel.getId());
+            sleep(1000);
+            MockAssistant.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    public static Map<String, Bundle> getAdjustments() {
+        Map<String, Bundle> adjustments = new ArrayMap<>();
+        Bundle bundle1 = new Bundle();
+        Bundle bundle2 = new Bundle();
+        Bundle bundle3 = new Bundle();
+        SnoozeCriterion snooze1 = new SnoozeCriterion("id1", "1", "2");
+        SnoozeCriterion snooze2 = new SnoozeCriterion("id2", "2", "3");
+        String people1 = "people1";
+        String people2 = "people2";
+        ArrayList<String> people = new ArrayList<>();
+        ArrayList<SnoozeCriterion> snooze = new ArrayList<>();
+        NotificationChannel newChannel = new NotificationChannel("new", "new",
+                NotificationManager.IMPORTANCE_LOW);
+
+        bundle1.putString(Adjustment.KEY_CHANNEL_ID, newChannel.getId());
+        adjustments.put(Adjustment.KEY_CHANNEL_ID, bundle1);
+
+        people.add(people1);
+        people.add(people2);
+        bundle2.putStringArrayList(Adjustment.KEY_PEOPLE, people);
+        adjustments.put(Adjustment.KEY_PEOPLE, bundle2);
+
+        snooze.add(snooze1);
+        snooze.add(snooze2);
+        bundle3.putParcelableArrayList(Adjustment.KEY_SNOOZE_CRITERIA, snooze);
+        adjustments.put(Adjustment.KEY_SNOOZE_CRITERIA, bundle3);
+        return adjustments;
     }
 
     private class CreateChannelTest extends InteractiveTestCase {
@@ -1049,7 +1231,11 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            MockAssistant.createChannel(mContext, THIS_PKG, channel);
+            try {
+                mNm.createNotificationChannel(channel, (createdChannel) -> {}, null);
+            } catch (Exception e) {
+                Log.e(TAG, "failed to create channel", e);
+            }
             sendNotifications(channel);
             status = READY;
             delay();
@@ -1070,7 +1256,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                     logFail();
                                     status = FAIL;
                                 }
-                                next();
+                                delay(3000);
                             }
                         });
             } else if (status == RETEST) {
