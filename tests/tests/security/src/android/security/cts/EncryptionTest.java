@@ -38,36 +38,9 @@ public class EncryptionTest extends AndroidTestCase {
 
     private static final String TAG = "EncryptionTest";
 
-    private static final String crypto = "/proc/crypto";
-
     private static native boolean deviceIsEncrypted();
 
-    private static native boolean cpuHasAes();
-
-    private static native boolean cpuHasNeon();
-
-    private static native boolean neonIsEnabled();
-
     private static native boolean aesIsFast();
-
-    private boolean hasKernelCrypto(String driver) throws Exception {
-        BufferedReader br = new BufferedReader(new FileReader(crypto));
-        Pattern p = Pattern.compile("driver\\s*:\\s*" + driver);
-
-        try {
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (p.matcher(line).matches()) {
-                    Log.i(TAG, crypto + " has " + driver + " (" + line + ")");
-                    return true;
-                }
-            }
-       } finally {
-           br.close();
-       }
-
-       return false;
-    }
 
     private boolean hasLowRAM() {
         ActivityManager activityManager =
@@ -85,29 +58,6 @@ public class EncryptionTest extends AndroidTestCase {
             return false;
         } else {
             return !hasLowRAM();
-        }
-    }
-
-    public void testConfig() throws Exception {
-        if (!isRequired()) {
-            return;
-        }
-
-        if (cpuHasAes()) {
-            // If CPU has AES CE, it must be enabled in kernel
-            assertTrue(crypto + " is missing xts-aes-ce or xts-aes-aesni",
-                hasKernelCrypto("xts-aes-ce") ||
-                hasKernelCrypto("xts-aes-aesni"));
-        } else if (cpuHasNeon()) {
-            // Otherwise, if CPU has NEON, it must be enabled
-            assertTrue(crypto + " is missing xts-aes-neon (or xts-aes-neonbs)",
-                hasKernelCrypto("xts-aes-neon") ||
-                hasKernelCrypto("xts-aes-neonbs") ||
-                hasKernelCrypto("aes-asm")); // Not recommended alone
-        }
-
-        if (cpuHasNeon()) {
-            assertTrue("libcrypto must have NEON", neonIsEnabled());
         }
     }
 
