@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -499,5 +501,29 @@ public class ToolbarTest {
         verify(mockListener, times(1)).onClick(any(View.class));
 
         verifyNoMoreInteractions(mockListener);
+    }
+
+    @Test
+    public void testItemViewAttributes() throws Throwable {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
+                () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+
+        Menu menu = mMainToolbar.getMenu();
+
+        MenuItem menuItem1 = menu.findItem(R.id.action_highlight);
+        assertNotNull(menuItem1.getContentDescription());
+        assertNotNull(menuItem1.getTooltipText());
+
+        View itemView1 = mActivity.findViewById(menuItem1.getItemId());
+        assertEquals(menuItem1.getContentDescription(), itemView1.getContentDescription());
+        assertEquals(menuItem1.getTooltipText(), itemView1.getTooltipText());
+
+        MenuItem menuItem2 = menu.findItem(R.id.action_edit);
+        assertNull(menuItem2.getContentDescription());
+        assertNull(menuItem2.getTooltipText());
+
+        View itemView2 = mActivity.findViewById(menuItem2.getItemId());
+        assertEquals(menuItem2.getTitle(), itemView2.getContentDescription());
+        assertEquals(menuItem2.getTitle(), itemView2.getTooltipText());
     }
 }
