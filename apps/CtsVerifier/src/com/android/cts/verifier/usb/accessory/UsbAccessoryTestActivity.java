@@ -27,6 +27,7 @@ import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -34,6 +35,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -53,6 +56,8 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
         AccessoryAttachmentHandler.AccessoryAttachmentObserver {
     private static final String LOG_TAG = UsbAccessoryTestActivity.class.getSimpleName();
     private static final int MAX_BUFFER_SIZE = 16384;
+
+    private static final int TEST_DATA_SIZE_THRESHOLD = 100 * 1024 * 1024; // 100MB
 
     private TextView mStatus;
     private ProgressBar mProgress;
@@ -186,6 +191,26 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
                     numRead = is.read(bufferMax);
                     assertEquals(MAX_BUFFER_SIZE, numRead);
                     assertArrayEquals(origBufferMax, bufferMax);
+
+                    // Send two transfers in a row
+                    nextTest(is, os, "measure transfer speed");
+
+                    byte[] result = new byte[1];
+                    long bytesSent = 0;
+                    long timeStart = SystemClock.elapsedRealtime();
+                    while (bytesSent < TEST_DATA_SIZE_THRESHOLD) {
+                        os.write(origBufferMax);
+                        bytesSent += MAX_BUFFER_SIZE;
+                    }
+                    numRead = is.read(result);
+                    double speedKBPS = (bytesSent * 8 * 1000. / 1024.)
+                            / (SystemClock.elapsedRealtime() - timeStart);
+                    assertEquals(1, numRead);
+                    assertEquals(1, result[0]);
+                    // We don't mandate min speed for now, let's collect data on what it is.
+                    getReportLog().setSummary(
+                            "Speed", speedKBPS, ResultType.HIGHER_BETTER, ResultUnit.KBPS);
+                    Log.i(LOG_TAG, "Data transfer speed is " + speedKBPS + "KBPS");
 
                     nextTest(is, os, "done");
                 }

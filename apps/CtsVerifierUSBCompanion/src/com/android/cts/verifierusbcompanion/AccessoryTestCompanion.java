@@ -39,6 +39,7 @@ import java.nio.charset.Charset;
  */
 class AccessoryTestCompanion extends TestCompanion {
     private static final int MAX_BUFFER_SIZE = 16384;
+    private static final int TEST_DATA_SIZE_THRESHOLD = 100 * 1024 * 1024; // 100MB
 
     private static final String ACTION_USB_PERMISSION =
             "com.android.cts.verifierusbcompanion.USB_PERMISSION";
@@ -160,6 +161,26 @@ class AccessoryTestCompanion extends TestCompanion {
                         assertEquals(16, numTransferred);
                         numTransferred = connection.bulkTransfer(out, buffer, 16, 16, 0);
                         assertEquals(16, numTransferred);
+                    }
+                    break;
+
+                    case "measure transfer speed": {
+                        byte[] buffer = new byte[MAX_BUFFER_SIZE];
+
+                        long bytesRead = 0;
+                        while (bytesRead < TEST_DATA_SIZE_THRESHOLD) {
+                            int numTransferred = connection.bulkTransfer(
+                                    in, buffer, MAX_BUFFER_SIZE, 0);
+                            bytesRead += numTransferred;
+                        }
+
+                        // If the data length is a multple of the maxpacket size read zero packet.
+                        int numTransferred = connection.bulkTransfer(in, buffer, 1, 0);
+                        assertEquals(0, numTransferred);
+
+                        byte[] confirm = new byte[] {1};
+                        numTransferred = connection.bulkTransfer(out, confirm, 1, 0);
+                        assertEquals(1, numTransferred);
                     }
                     break;
 
