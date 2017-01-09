@@ -48,6 +48,7 @@ class LinkerNamespacesHelper {
         "liblog.so",
         "libmediandk.so",
         "libm.so",
+        "liboboe.so",
         "libOpenMAXAL.so",
         "libOpenSLES.so",
         "libRS.so",
