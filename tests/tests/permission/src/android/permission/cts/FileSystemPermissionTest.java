@@ -175,9 +175,7 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     @MediumTest
     public void testDevPortSane() throws Exception {
         File f = new File("/dev/port");
-        assertFalse(f.canRead());
-        assertFalse(f.canWrite());
-        assertFalse(f.canExecute());
+        assertFalse(f.exists());
     }
 
     @MediumTest
