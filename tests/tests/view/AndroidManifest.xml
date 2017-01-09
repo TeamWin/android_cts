@@ -52,7 +52,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.view.cts.ViewGroupCtsActivity" android:label="ViewGroupCtsActivity">
+        <activity android:name=".ViewGroupInvalidateChildCtsActivity"
+            android:label="ViewGroupCtsActivity"
+            android:hardwareAccelerated="false">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -176,14 +178,6 @@
 
         <activity android:name="android.view.cts.ActionModeCtsActivity"
             android:label="ActionModeCtsActivity">
-        </activity>
-
-        <activity android:name="android.view.cts.ViewGroupCtsActivity"
-                  android:label="WidgetViewGroupCtsActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
         </activity>
 
         <activity android:name="android.view.cts.ViewOverlayCtsActivity"
