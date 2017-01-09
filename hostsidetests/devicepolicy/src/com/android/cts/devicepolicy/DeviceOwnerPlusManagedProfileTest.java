@@ -34,8 +34,6 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
             "com.android.cts.comp.provisioning.UserRestrictionTest";
     private static final String MANAGEMENT_TEST =
             "com.android.cts.comp.ManagementTest";
-    private static final String DEVICE_OWNER_COMP_TEST =
-            "com.android.cts.comp.DeviceOwnerCompTest";
 
     private int mProfileUserId;
 
@@ -168,18 +166,10 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
         }
         setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
         try {
-            runDeviceTestsAsUser(
-                    COMP_DPC_PKG,
-                    USER_RESTRICTION_TEST,
-                    "testAddDisallowRemoveManagedProfileRestriction",
-                    mPrimaryUserId);
+            addDisallowRemoveManagedProfileRestriction();
             assertFalse(getDevice().removeUser(mProfileUserId));
         } finally {
-            runDeviceTestsAsUser(
-                    COMP_DPC_PKG,
-                    USER_RESTRICTION_TEST,
-                    "testClearDisallowRemoveManagedProfileRestriction",
-                    mPrimaryUserId);
+            clearDisallowRemoveManagedProfileRestriction();
         }
         assertTrue(getDevice().removeUser(mProfileUserId));
     }
@@ -238,14 +228,45 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
     /**
      * Both device owner and profile are the same package ({@link #COMP_DPC_PKG}).
      */
-    public void testIsProvisioningAllowed_corpOwnedManagedProfile() throws Exception {
+    public void testIsProvisioningAllowed() throws Exception {
         if (!mHasFeature) {
             return;
         }
+        installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
+        // By default, disallow add managed profile is set, so provisioning a managed profile is
+        // not allowed for DPCs other than the device owner.
+        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG2);
+        // But the device owner can still provision a managed profile because it owns the
+        // restriction.
+        assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
+
         setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+
+        clearDisallowAddManagedProfileRestriction();
+        // We've created a managed profile, but it's still possible to delete it to create a new
+        // one.
+        assertProvisionManagedProfileAllowed(COMP_DPC_PKG2);
+        assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
+
+        addDisallowRemoveManagedProfileRestriction();
+        // Now we can't delete the managed profile any more to create a new one.
+        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG2);
+        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG);
+    }
+
+    private void assertProvisionManagedProfileAllowed(String packageName) throws Exception {
         runDeviceTestsAsUser(
-                COMP_DPC_PKG,
-                DEVICE_OWNER_COMP_TEST,
+                packageName,
+                MANAGEMENT_TEST,
+                "testProvisionManagedProfileAllowed",
+                mPrimaryUserId);
+    }
+
+    private void assertProvisionManagedProfileNotAllowed(String packageName) throws Exception {
+        runDeviceTestsAsUser(
+                packageName,
+                MANAGEMENT_TEST,
+                "testProvisionManagedProfileNotAllowed",
                 mPrimaryUserId);
     }
 
@@ -299,6 +320,28 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 USER_RESTRICTION_TEST,
                 "testAddDisallowAddManagedProfileRestriction",
+                mPrimaryUserId);
+    }
+
+    /**
+     * Clear {@link android.os.UserManager#DISALLOW_REMOVE_MANAGED_PROFILE}.
+     */
+    private void clearDisallowRemoveManagedProfileRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                USER_RESTRICTION_TEST,
+                "testClearDisallowRemoveManagedProfileRestriction",
+                mPrimaryUserId);
+    }
+
+    /**
+     * Add {@link android.os.UserManager#DISALLOW_REMOVE_MANAGED_PROFILE}.
+     */
+    private void addDisallowRemoveManagedProfileRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                USER_RESTRICTION_TEST,
+                "testAddDisallowRemoveManagedProfileRestriction",
                 mPrimaryUserId);
     }
 
