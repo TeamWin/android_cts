@@ -18,6 +18,8 @@ package com.android.cts.deviceowner;
 
 import android.app.admin.DevicePolicyManager;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.os.UserManager;
 
@@ -27,17 +29,22 @@ import android.os.UserManager;
  */
 public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
 
-    private static final int DISABLE_TIMEOUT = 8000;  // ms timeout for BT disable
-    private static final int ENABLE_TIMEOUT = 10000;  // ms timeout for BT enable
-    private static final int POLL_TIME = 400;         // ms to poll BT state
-    private static final int CHECK_WAIT_TIME = 1000;  // ms to wait before enable/disable
+    private static final int DISABLE_TIMEOUT_MS = 8000; // ms timeout for BT disable
+    private static final int ENABLE_TIMEOUT_MS = 10000; // ms timeout for BT enable
+    private static final int POLL_TIME_MS = 400;           // ms to poll BT state
+    private static final int CHECK_WAIT_TIME_MS = 1000;    // ms to wait before enable/disable
+    private static final int COMPONENT_STATE_TIMEOUT_MS = 2000;
+    private static final ComponentName OPP_LAUNCHER_COMPONENT = new ComponentName(
+            "com.android.bluetooth", "com.android.bluetooth.opp.BluetoothOppLauncherActivity");
 
     private BluetoothAdapter mBluetoothAdapter;
+    private PackageManager mPackageManager;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mPackageManager = mContext.getPackageManager();
     }
 
     @Override
@@ -95,12 +102,38 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
         enable();
     }
 
+    /**
+     * Tests that BluetoothOppLauncherActivity gets disabled when Bluetooth is disallowed.
+     *
+     * <p> It also checks the state of the activity is set back to default if Bluetooth is not
+     * disallowed anymore.
+     */
+    public void testOppDisabledWhenRestrictionSet() throws Exception {
+        if (mBluetoothAdapter == null) {
+            return;
+        }
+
+        // Add the user restriction.
+        mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_BLUETOOTH);
+
+        // The BluetoothOppLauncherActivity's component should be disabled.
+        assertComponentStateAfterTimeout(
+                OPP_LAUNCHER_COMPONENT, PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
+
+        // Remove the user restriction.
+        mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_BLUETOOTH);
+
+        // The BluetoothOppLauncherActivity's component should be in the default state.
+        assertComponentStateAfterTimeout(
+                OPP_LAUNCHER_COMPONENT, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
+    }
+
     /** Helper to turn BT off.
      * This method will either fail on an assert, or return with BT turned off.
      * Behavior of getState() and isEnabled() are validated along the way.
      */
     private void disable() {
-        sleep(CHECK_WAIT_TIME);
+        sleep(CHECK_WAIT_TIME_MS);
         if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_OFF) {
             assertFalse(mBluetoothAdapter.isEnabled());
             return;
@@ -118,7 +151,7 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
      */
     private void assertDisabledAfterTimeout() {
         boolean turnOff = false;
-        final long timeout = SystemClock.elapsedRealtime() + DISABLE_TIMEOUT;
+        final long timeout = SystemClock.elapsedRealtime() + DISABLE_TIMEOUT_MS;
         while (SystemClock.elapsedRealtime() < timeout) {
             int state = mBluetoothAdapter.getState();
             switch (state) {
@@ -132,9 +165,24 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
                 }
                 break;
             }
-            sleep(POLL_TIME);
+            sleep(POLL_TIME_MS);
         }
         fail("disable() timeout");
+    }
+
+    private void assertComponentStateAfterTimeout(ComponentName component, int expectedState) {
+        final long timeout = SystemClock.elapsedRealtime() + COMPONENT_STATE_TIMEOUT_MS;
+        int state = -1;
+        while (SystemClock.elapsedRealtime() < timeout) {
+            state = mPackageManager.getComponentEnabledSetting(component);
+            if (expectedState == state) {
+                // Success
+                return;
+            }
+            sleep(POLL_TIME_MS);
+        }
+        fail("The state of " + component + " should have been " + expectedState + ", it but was "
+                + state + " after timeout.");
     }
 
     /** Helper to turn BT on.
@@ -142,7 +190,7 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
      * Behavior of getState() and isEnabled() are validated along the way.
      */
     private void enable() {
-        sleep(CHECK_WAIT_TIME);
+        sleep(CHECK_WAIT_TIME_MS);
         if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
             assertTrue(mBluetoothAdapter.isEnabled());
             return;
@@ -151,16 +199,16 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
         assertEquals(BluetoothAdapter.STATE_OFF, mBluetoothAdapter.getState());
         assertFalse(mBluetoothAdapter.isEnabled());
         mBluetoothAdapter.enable();
-        assertEnabledfterTimeout();
+        assertEnabledAfterTimeout();
     }
 
     /**
      * Helper method which waits for Bluetooth to be enabled. Fails if it doesn't happen in a given
      * time.
      */
-    private void assertEnabledfterTimeout() {
+    private void assertEnabledAfterTimeout() {
         boolean turnOn = false;
-        final long timeout = SystemClock.elapsedRealtime() + DISABLE_TIMEOUT;
+        final long timeout = SystemClock.elapsedRealtime() + ENABLE_TIMEOUT_MS;
         while (SystemClock.elapsedRealtime() < timeout) {
             int state = mBluetoothAdapter.getState();
             switch (state) {
@@ -174,7 +222,7 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
                 }
                 break;
             }
-            sleep(POLL_TIME);
+            sleep(POLL_TIME_MS);
         }
         fail("enable() timeout");
     }
