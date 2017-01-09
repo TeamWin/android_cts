@@ -482,8 +482,7 @@ public class CanvasTest {
 
         CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
-        // test save current clip only, don't know how to get clip saved,
-        // but can make sure Matrix can't be saved in this case
+        // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
@@ -504,7 +503,7 @@ public class CanvasTest {
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values4, 0.0f);
+        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -557,8 +556,7 @@ public class CanvasTest {
 
         CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
-        // test save current clip only, don't know how to get clip saved,
-        // but can make sure Matrix can't be saved in this case
+        // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
@@ -579,7 +577,7 @@ public class CanvasTest {
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values4, 0.0f);
+        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -632,8 +630,7 @@ public class CanvasTest {
 
         CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
-        // test save current clip only, don't know how to get clip saved,
-        // but can make sure Matrix can't be saved in this case
+        // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
@@ -654,7 +651,7 @@ public class CanvasTest {
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values4, 0.0f);
+        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -705,8 +702,7 @@ public class CanvasTest {
 
         CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
-        // test save current clip only, don't know how to get clip saved,
-        // but can make sure Matrix can't be saved in this case
+        // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
@@ -727,7 +723,7 @@ public class CanvasTest {
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values4, 0.0f);
+        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
