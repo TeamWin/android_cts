@@ -33,6 +33,14 @@ public class UserRestrictionTest extends AndroidTestCase {
         setUserRestriction(UserManager.DISALLOW_ADD_MANAGED_PROFILE, false);
     }
 
+    public void testAddDisallowRemoveManagedProfileRestriction() {
+        setUserRestriction(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE, true);
+    }
+
+    public void testClearDisallowRemoveManagedProfileRestriction() {
+        setUserRestriction(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE, false);
+    }
+
     private void setUserRestriction(String restriction, boolean add) {
         DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
         ComponentName admin = AdminReceiver.getComponentName(getContext());

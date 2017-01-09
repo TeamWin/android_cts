@@ -395,18 +395,38 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected int createManagedProfile(int parentUserId) throws DeviceNotAvailableException {
-        String command = "pm create-user --profileOf " + parentUserId + " --managed "
-                + "TestProfile_" + System.currentTimeMillis();
-        CLog.d("Starting command " + command);
-        String commandOutput = getDevice().executeShellCommand(command);
-        CLog.d("Output for command " + command + ": " + commandOutput);
+        String commandOutput = getCreateManagedProfileCommandOutput(parentUserId);
+        return getUserIdFromCreateUserCommandOutput(commandOutput);
+    }
 
+    protected void assertCannotCreateManagedProfile(int parentUserId)
+            throws DeviceNotAvailableException {
+        String commandOutput = getCreateManagedProfileCommandOutput(parentUserId);
+        if (commandOutput.startsWith("Error")) {
+            return;
+        }
+        int userId = getUserIdFromCreateUserCommandOutput(commandOutput);
+        getDevice().removeUser(userId);
+        fail("Expected not to be able to create a managed profile. Output was: " + commandOutput);
+    }
+
+    private int getUserIdFromCreateUserCommandOutput(String commandOutput) {
         // Extract the id of the new user.
         String[] tokens = commandOutput.split("\\s+");
         assertTrue(commandOutput + " expected to have format \"Success: {USER_ID}\"",
                 tokens.length > 0);
         assertEquals(commandOutput, "Success:", tokens[0]);
         return Integer.parseInt(tokens[tokens.length-1]);
+    }
+
+    private String getCreateManagedProfileCommandOutput(int parentUserId)
+            throws DeviceNotAvailableException {
+        String command = "pm create-user --profileOf " + parentUserId + " --managed "
+                + "TestProfile_" + System.currentTimeMillis();
+        CLog.d("Starting command " + command);
+        String commandOutput = getDevice().executeShellCommand(command);
+        CLog.d("Output for command " + command + ": " + commandOutput);
+        return commandOutput;
     }
 
     protected int getPrimaryUser() throws DeviceNotAvailableException {
