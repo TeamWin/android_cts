@@ -66,4 +66,14 @@ public class ManagementTest extends AndroidTestCase {
         assertEquals(1, allowedTargetUsers.size());
         assertEquals(otherProfile, allowedTargetUsers.get(0));
     }
+
+    public void testProvisionManagedProfileAllowed() {
+        assertTrue(mDevicePolicyManager.isProvisioningAllowed(
+                DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE));
+    }
+
+    public void testProvisionManagedProfileNotAllowed() {
+        assertFalse(mDevicePolicyManager.isProvisioningAllowed(
+                DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE));
+    }
 }
