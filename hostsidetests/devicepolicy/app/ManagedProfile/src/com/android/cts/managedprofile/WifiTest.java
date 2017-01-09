@@ -16,6 +16,7 @@
 
 package com.android.cts.managedprofile;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiConfiguration;
@@ -120,6 +121,16 @@ public class WifiTest extends AndroidTestCase {
      */
     public void testWifiNetworkDoesNotExist() throws Exception {
         assertTrue(awaitNetworkState(NETWORK_SSID, /* exists */ false));
+    }
+
+    public void testCannotGetWifiMacAddress() {
+        DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
+        try {
+            dpm.getWifiMacAddress(BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT);
+            fail("Managed Profile owner shouldn't be able to get the MAC address");
+        } catch (SecurityException expected) {
+
+        }
     }
 
     /**

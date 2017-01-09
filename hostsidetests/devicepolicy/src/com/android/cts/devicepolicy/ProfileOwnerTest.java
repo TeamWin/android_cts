@@ -46,6 +46,13 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testWifi() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
+            return;
+        }
+        executeProfileOwnerTest("WifiTest");
+    }
+
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {

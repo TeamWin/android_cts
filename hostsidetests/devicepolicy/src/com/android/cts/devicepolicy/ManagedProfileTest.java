@@ -181,6 +181,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mParentUserId);
     }
 
+    public void testWifiMacAddress() throws Exception {
+        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mProfileUserId);
+    }
+
     public void testCrossProfileIntentFilters() throws Exception {
         if (!mHasFeature) {
             return;
