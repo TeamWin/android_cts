@@ -645,6 +645,16 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         }
 
         @Override
+        public void onReceivedLoginRequest(WebView view, String realm, String account,
+                String args) {
+            super.onReceivedLoginRequest(view, realm, account, args);
+            mOnReceivedLoginRequest = true;
+            mOnReceivedLoginRealm = realm;
+            mOnReceivedLoginAccount = account;
+            mOnReceivedLoginArgs = args;
+        }
+
+        @Override
         public void onFormResubmission(WebView view, Message dontResend, Message resend) {
             mOnFormResubmissionCalled = true;
             dontResend.sendToTarget();
