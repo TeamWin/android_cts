@@ -47,7 +47,6 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(null, channel.getVibrationPattern());
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.getImportance());
         assertEquals(null, channel.getSound());
-        assertTrue(channel.isAllowed());
         assertFalse(channel.canShowBadge());
     }
 
@@ -97,13 +96,6 @@ public class NotificationChannelTest extends AndroidTestCase {
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setSound(expected);
         assertEquals(expected, channel.getSound());
-    }
-
-    public void testAllowed() {
-        NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setAllowed(false);
-        assertFalse(channel.isAllowed());
     }
 
     public void testShowBadge() {
