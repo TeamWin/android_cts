@@ -17,7 +17,9 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -41,12 +43,24 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
     private static final String ENTERPRISE_PRIVACY_BUG_REPORT = "ENTERPRISE_PRIVACY_BUG_REPORT";
     private static final String ENTERPRISE_PRIVACY_SECURITY_LOGGING
             = "ENTERPRISE_PRIVACY_SECURITY_LOGGING";
+    private static final String ENTERPRISE_PRIVACY_ALWAYS_ON_VPN
+            = "ENTERPRISE_PRIVACY_ALWAYS_ON_VPN";
+    private static final String ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN
+            = "ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN";
     private static final String ENTERPRISE_PRIVACY_QUICK_SETTINGS
             = "ENTERPRISE_PRIVACY_QUICK_SETTINGS";
     private static final String ENTERPRISE_PRIVACY_KEYGUARD = "ENTERPRISE_PRIVACY_KEYGUARD";
 
     public static final String EXTRA_TEST_ID =
             "com.android.cts.verifier.managedprovisioning.extra.TEST_ID";
+
+    private void setManagedProfileActivityEnabled(boolean enabled) {
+        getPackageManager().setComponentEnabledSetting(
+                new ComponentName(this, CompHelperActivity.class),
+                enabled ? PackageManager.COMPONENT_ENABLED_STATE_DEFAULT :
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +76,7 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
             }
         });
         setTestListAdapter(adapter);
+        setManagedProfileActivityEnabled(false);
     }
 
     private Intent buildCommandIntent(String command) {
@@ -98,6 +113,32 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 R.string.enterprise_privacy_security_logging_info,
                 R.string.enterprise_privacy_retrieve_security_logs,
                 CommandReceiverActivity.COMMAND_RETRIEVE_SECURITY_LOGS));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ALWAYS_ON_VPN,
+                R.string.enterprise_privacy_always_on_vpn,
+                R.string.enterprise_privacy_always_on_vpn_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_set_always_on_vpn,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_SET_ALWAYS_ON_VPN)),
+                        new ButtonInfo(R.string.enterprise_privacy_finish,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_CLEAR_ALWAYS_ON_VPN))}));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN,
+                R.string.enterprise_privacy_comp_always_on_vpn,
+                R.string.enterprise_privacy_comp_always_on_vpn_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_start,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_CREATE_MANAGED_PROFILE)),
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_set_always_on_vpn,
+                                new Intent(CompHelperActivity.ACTION_SET_ALWAYS_ON_VPN)),
+                        new ButtonInfo(R.string.enterprise_privacy_finish,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_REMOVE_MANAGED_PROFILE))}));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_QUICK_SETTINGS,
                 R.string.enterprise_privacy_quick_settings,
                 R.string.enterprise_privacy_quick_settings_info,
@@ -136,5 +177,7 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
         super.finish();
         startActivity(buildCommandIntent(
                 CommandReceiverActivity.COMMAND_DEVICE_OWNER_CLEAR_POLICIES));
+        startActivity(buildCommandIntent(CommandReceiverActivity.COMMAND_REMOVE_MANAGED_PROFILE));
+        setManagedProfileActivityEnabled(false);
     }
 }
