@@ -58,6 +58,9 @@ public class ActivityKeyboardShortcutsTest
         // THEN the activity's onProvideKeyboardShortcuts should be
         // triggered to get app specific shortcuts
         assertTrue(mActivity.onProvideKeyboardShortcutsCalled());
+
+        // FINALLY close the shortcuts helper
+        mActivity.dismissKeyboardShortcutsHelper();
     }
 
     public void testOnProvideKeyboardShortcuts() {
