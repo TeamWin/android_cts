@@ -37,6 +37,8 @@ public class ColorTest {
     public void testArgb() {
         assertEquals(Color.RED, Color.argb(0xff, 0xff, 0x00, 0x00));
         assertEquals(Color.YELLOW, Color.argb(0xff, 0xff, 0xff, 0x00));
+        assertEquals(Color.RED, Color.argb(1.0f, 1.0f, 0.0f, 0.0f));
+        assertEquals(Color.YELLOW, Color.argb(1.0f, 1.0f, 1.0f, 0.0f));
     }
 
     @Test
@@ -112,6 +114,8 @@ public class ColorTest {
     public void testRgb() {
         assertEquals(Color.RED, Color.rgb(0xff, 0x00, 0x00));
         assertEquals(Color.YELLOW, Color.rgb(0xff, 0xff, 0x00));
+        assertEquals(Color.RED, Color.rgb(1.0f, 0.0f, 0.0f));
+        assertEquals(Color.YELLOW, Color.rgb(1.0f, 1.0f, 0.0f));
     }
 
     @Test(expected=RuntimeException.class)
