@@ -30,6 +30,7 @@ import android.service.notification.SnoozeCriterion;
 import android.service.notification.StatusBarNotification;
 import android.util.ArrayMap;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,8 @@ public class MockAssistant extends NotificationAssistantService {
     public static final String SERVICE_DELETE_CHANNEL = SERVICE_BASE + "DELETE_CHANNEL";
     public static final String SERVICE_CHECK_CHANNELS = SERVICE_BASE + "CHECK_CHANNELS";
     public static final String SERVICE_ADJUST_ENQUEUE = SERVICE_BASE + "ADJUST_ENQUEUE";
+    public static final String SERVICE_SNOOZE_UNTIL_CONTEXT = SERVICE_BASE + "CONTEXT_SNOOZE";
+    public static final String SERVICE_SNOOZED = SERVICE_BASE + "SNOOZED_UNTIL_CONTEXT";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
     static final String EXTRA_INT = "INT";
@@ -90,6 +93,7 @@ public class MockAssistant extends NotificationAssistantService {
     private ArrayMap<String, String> mNotificationKeys = new ArrayMap<>();
     private ArrayList<String> mRemoved = new ArrayList<String>();
     private ArrayMap<String, Bundle> mRemovedReason = new ArrayMap<>();
+    private ArrayMap<String, String> mSnoozedUntilContext = new ArrayMap<>();
     private ArrayList<String> mOrder = new ArrayList<>();
     private Set<String> mTestPackages = new HashSet<>();
     private BroadcastReceiver mReceiver;
@@ -159,6 +163,18 @@ public class MockAssistant extends NotificationAssistantService {
                     bundle.putParcelableArrayList(EXTRA_PAYLOAD, payloadData);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
+                } else if (SERVICE_SNOOZED.equals(action)) {
+                    Bundle bundle = new Bundle();
+                    ArrayList<Bundle> payloadData = new ArrayList<>(mSnoozedUntilContext.size());
+                    for (String tag : mSnoozedUntilContext.keySet()) {
+                        Bundle b = new Bundle();
+                        b.putString(EXTRA_TAG, tag);
+                        b.putString(EXTRA_PAYLOAD, mSnoozedUntilContext.get(tag));
+                        payloadData.add(b);
+                    }
+                    bundle.putParcelableArrayList(EXTRA_PAYLOAD, payloadData);
+                    setResultExtras(bundle);
+                    setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_CLEAR_ONE.equals(action)) {
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
@@ -205,6 +221,11 @@ public class MockAssistant extends NotificationAssistantService {
                     MockAssistant.this.deleteNotificationChannel(pkg, id);
                 } else if (SERVICE_ADJUST_ENQUEUE.equals(action)) {
                     adjustEnqueue = true;
+                } else if (SERVICE_SNOOZE_UNTIL_CONTEXT.equals(action)) {
+                    String tag = intent.getStringExtra(EXTRA_TAG);
+                    String snoozeCriterionId = intent.getStringExtra(EXTRA_PAYLOAD);
+                    MockAssistant.this.snoozeNotification(
+                            mNotificationKeys.get(tag), snoozeCriterionId);
                 } else {
                     Log.w(TAG, "unknown action");
                     setResultCode(Activity.RESULT_CANCELED);
@@ -229,6 +250,8 @@ public class MockAssistant extends NotificationAssistantService {
         filter.addAction(SERVICE_DELETE_CHANNEL);
         filter.addAction(SERVICE_UPDATE_CHANNEL);
         filter.addAction(SERVICE_ADJUST_ENQUEUE);
+        filter.addAction(SERVICE_SNOOZE_UNTIL_CONTEXT);
+        filter.addAction(SERVICE_SNOOZED);
         registerReceiver(mReceiver, filter);
     }
 
@@ -261,6 +284,7 @@ public class MockAssistant extends NotificationAssistantService {
         mRemoved.clear();
         mRemovedReason.clear();
         mOrder.clear();
+        mSnoozedUntilContext.clear();
     }
 
     @Override
@@ -340,6 +364,14 @@ public class MockAssistant extends NotificationAssistantService {
         onNotificationRankingUpdate(rankingMap);
     }
 
+    @Override
+    public void onNotificationSnoozedUntilContext(StatusBarNotification sbn,
+            String snoozeCriteriaId) {
+        if (!mTestPackages.contains(sbn.getPackageName())) { return; }
+        Log.d(TAG, "snooze until criteria " + sbn.getKey());
+        mSnoozedUntilContext.put(sbn.getTag(), snoozeCriteriaId);
+    }
+
     private Bundle packNotification(StatusBarNotification sbn) {
         Bundle notification = new Bundle();
         notification.putString(KEY_TAG, sbn.getTag());
@@ -388,6 +420,11 @@ public class MockAssistant extends NotificationAssistantService {
         requestBundleListResult(context, SERVICE_REMOVED_REASON, catcher);
     }
 
+    public static void probeAssistantSnoozeContext(Context context,
+            BundleListResultCatcher catcher) {
+        requestBundleListResult(context, SERVICE_SNOOZED, catcher);
+    }
+
     public static void probeChannels(Context context, String pkg, BundleListResultCatcher catcher) {
         Intent broadcast = new Intent(SERVICE_CHECK_CHANNELS);
         broadcast.putExtra(EXTRA_PKG, pkg);
@@ -431,6 +468,13 @@ public class MockAssistant extends NotificationAssistantService {
         Intent broadcast = new Intent(SERVICE_ADJUSTMENT);
         broadcast.putExtra(EXTRA_TAG, tag);
         broadcast.putExtra(EXTRA_BUNDLE, signals);
+        context.sendBroadcast(broadcast);
+    }
+
+    public static void snoozeUntilContext(Context context, String tag, String id) {
+        Intent broadcast = new Intent(SERVICE_SNOOZE_UNTIL_CONTEXT);
+        broadcast.putExtra(EXTRA_TAG, tag);
+        broadcast.putExtra(EXTRA_PAYLOAD, id);
         context.sendBroadcast(broadcast);
     }
 
