@@ -16,6 +16,8 @@
 
 package android.uirendering.cts.testclasses;
 
+import static org.junit.Assert.assertEquals;
+
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.ColorInt;
@@ -23,11 +25,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.Region.Op;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
@@ -398,7 +402,7 @@ public class LayerTests extends ActivityTestBase {
                 canvas.restore();
             })
             .runWithVerifier(new SamplePointVerifier(
-                new Point[] {
+                new Point[]{
                     // just outside of rect
                     new Point(9, 9), new Point(70, 10), new Point(10, 70), new Point(70, 70),
                     // red rect outside both layers
@@ -410,12 +414,72 @@ public class LayerTests extends ActivityTestBase {
                     // pink rect overlapping both layers
                     new Point(40, 40), new Point(69, 69),
                 },
-                new int[] {
+                new int[]{
                     Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE,
                     Color.RED, Color.RED,
                     0xffff8080, 0xffff8080,
                     0xffffC0C0, 0xffffC0C0,
                     0xffffE0E0, 0xffffE0E0,
                 }));
+    }
+
+    @Test
+    public void testSaveLayerUnclipped_restoreBehavior() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    //set identity matrix
+                    Matrix identity = new Matrix();
+                    canvas.setMatrix(identity);
+                    final Paint p = new Paint();
+
+                    canvas.saveLayer(0, 0, width, height, p, 0);
+
+                    //change matrix and clip to something different
+                    canvas.clipRect(0, 0, width >> 1, height >> 1, Op.INTERSECT);
+                    Matrix scaledMatrix = new Matrix();
+                    scaledMatrix.setScale(4, 5);
+                    canvas.setMatrix(scaledMatrix);
+                    assertEquals(scaledMatrix, canvas.getMatrix());
+
+                    canvas.drawColor(Color.BLUE);
+                    canvas.restore();
+
+                    //check if identity matrix is restored
+                    assertEquals(identity, canvas.getMatrix());
+
+                    //should draw to the entire canvas, because clip has been removed
+                    canvas.drawColor(Color.RED);
+                })
+                .runWithVerifier(new ColorVerifier(Color.RED));
+    }
+
+    @Test
+    public void testSaveLayerClipped_restoreBehavior() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    //set identity matrix
+                    Matrix identity = new Matrix();
+                    canvas.setMatrix(identity);
+                    final Paint p = new Paint();
+
+                    canvas.saveLayer(0, 0, width, height, p, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
+
+                    //change matrix and clip to something different
+                    canvas.clipRect(0, 0, width >> 1, height >> 1, Op.INTERSECT);
+                    Matrix scaledMatrix = new Matrix();
+                    scaledMatrix.setScale(4, 5);
+                    canvas.setMatrix(scaledMatrix);
+                    assertEquals(scaledMatrix, canvas.getMatrix());
+
+                    canvas.drawColor(Color.BLUE);
+                    canvas.restore();
+
+                    //check if identity matrix is restored
+                    assertEquals(identity, canvas.getMatrix());
+
+                    //should draw to the entire canvas, because clip has been removed
+                    canvas.drawColor(Color.RED);
+                })
+                .runWithVerifier(new ColorVerifier(Color.RED));
     }
 }
