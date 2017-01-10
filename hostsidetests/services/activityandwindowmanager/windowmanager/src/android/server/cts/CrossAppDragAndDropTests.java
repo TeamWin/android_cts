@@ -19,6 +19,7 @@ package android.server.cts;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 import java.util.HashMap;
@@ -231,6 +232,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
         mDevice.executeShellCommand(AM_STACK_LIST, outputReceiver);
         final String output = outputReceiver.getOutput();
+        final StringBuilder builder = new StringBuilder();
+        builder.append("Finding task info for task: ");
+        builder.append(name);
+        builder.append("\nParsing adb shell am output: " );
+        builder.append(output);
+        CLog.i(builder.toString());
         for (String line : output.split("\\n")) {
             final String truncatedLine;
             // Only look for the activity name before the "topActivity" string.
