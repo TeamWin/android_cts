@@ -25,7 +25,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_MULTILIB := both
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctsdeviceutil ctstestrunner guava
+    ctsdeviceutil ctstestrunner guava junit legacy-android-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libctsos_jni libnativehelper_compat_libc++
 
