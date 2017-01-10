@@ -85,15 +85,15 @@ public class ClientTest {
         if (resolveInfo == null || resolveInfo.size() == 0) {
             fail("didn't resolve any intents");
         }
-        assertThat(2, is(resolveInfo.size()));
-        assertThat("com.android.cts.ephemeralapp1",
-                is(resolveInfo.get(0).activityInfo.packageName));
-        assertThat("com.android.cts.ephemeralapp1.EphemeralActivity",
-                is(resolveInfo.get(0).activityInfo.name));
-        assertThat("com.android.cts.normalapp",
-                is(resolveInfo.get(1).activityInfo.packageName));
-        assertThat("com.android.cts.normalapp.ExposedActivity",
-                is(resolveInfo.get(1).activityInfo.name));
+        assertThat(resolveInfo.size(), is(2));
+        assertThat(resolveInfo.get(0).activityInfo.packageName,
+                is("com.android.cts.ephemeralapp1"));
+        assertThat(resolveInfo.get(0).activityInfo.name,
+                is("com.android.cts.ephemeralapp1.EphemeralActivity"));
+        assertThat(resolveInfo.get(1).activityInfo.packageName,
+                is("com.android.cts.normalapp"));
+        assertThat(resolveInfo.get(1).activityInfo.name,
+                is("com.android.cts.normalapp.ExposedActivity"));
     }
 
     @Test
@@ -152,8 +152,10 @@ public class ClientTest {
             InstrumentationRegistry
                     .getContext().startActivity(startExposedIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-            assertThat("ExposedActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.activityName,
+                    is("ExposedActivity"));
         }
 
         // start the exposed activity; directed package
@@ -163,8 +165,10 @@ public class ClientTest {
             InstrumentationRegistry
                     .getContext().startActivity(startExposedIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-            assertThat("ExposedActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.activityName,
+                    is("ExposedActivity"));
         }
 
         // start the exposed activity; directed component
@@ -175,8 +179,10 @@ public class ClientTest {
             InstrumentationRegistry
                     .getContext().startActivity(startExposedIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-            assertThat("ExposedActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.activityName,
+                    is("ExposedActivity"));
         }
     }
 
@@ -188,8 +194,10 @@ public class ClientTest {
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
-            assertThat("EphemeralActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity"));
         }
 
         // start the ephemeral activity; directed package
@@ -199,8 +207,10 @@ public class ClientTest {
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
-            assertThat("EphemeralActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity"));
         }
 
         // start the ephemeral activity; directed component
@@ -212,8 +222,10 @@ public class ClientTest {
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
-            assertThat("EphemeralActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity"));
         }
     }
 
