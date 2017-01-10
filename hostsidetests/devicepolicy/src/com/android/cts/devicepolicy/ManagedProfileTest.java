@@ -24,6 +24,9 @@ import java.lang.System;
 import junit.framework.AssertionFailedError;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -70,7 +73,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String ADD_RESTRICTION_COMMAND = "add-restriction";
 
-    private static final int MANAGED_PROFILE_REMOVED_TIMEOUT_SECONDS = 15;
+    private static final long WAIT_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(15);
+    private static final long WAIT_SAMPLE_INTERVAL_MILLIS = TimeUnit.SECONDS.toMillis(1);
 
     private int mParentUserId;
 
@@ -134,16 +138,39 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".WipeDataTest", mProfileUserId);
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
+        tryWaitForSuccess(() -> !listUsers().contains(mProfileUserId),
+                "The managed profile has not been removed after calling wipeData");
+    }
+
+    public void testLockNowWithKeyEviction() throws Exception {
+        if (!mHasFeature || !mSupportsFbe) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".LockNowTest",
+                "testLockNowWithKeyEviction", mProfileUserId);
+        final String cmd = "dumpsys activity | grep 'User #" + mProfileUserId + ": state='";
+        final Pattern p = Pattern.compile("state=([\\p{Upper}_]+)$");
+        tryWaitForSuccess(() -> {
+            final String activityDump = getDevice().executeShellCommand(cmd);
+            final Matcher m = p.matcher(activityDump);
+            return m.find() && m.group(1).equals("RUNNING_LOCKED");
+        }, "The managed profile has not been locked after calling lockNow(FLAG_SECURE_USER_DATA)");
+    }
+
+    private interface SuccessCondition {
+        boolean check() throws Exception;
+    }
+
+    private void tryWaitForSuccess(SuccessCondition successCondition, String failureMessage)
+            throws Exception {
         long epoch = System.currentTimeMillis();
-        while (System.currentTimeMillis() - epoch <=
-                MANAGED_PROFILE_REMOVED_TIMEOUT_SECONDS * 1000) {
-            Thread.sleep(1000);
-            if (!listUsers().contains(mProfileUserId)) {
-                // The managed profile has been removed: success
+        while (System.currentTimeMillis() - epoch <= WAIT_TIMEOUT_MILLIS) {
+            Thread.sleep(WAIT_SAMPLE_INTERVAL_MILLIS);
+            if (successCondition.check()) {
                 return;
             }
         }
-        fail("The managed profile has not been removed after calling wipeData");
+        fail(failureMessage);
     }
 
     public void testMaxOneManagedProfile() throws Exception {
