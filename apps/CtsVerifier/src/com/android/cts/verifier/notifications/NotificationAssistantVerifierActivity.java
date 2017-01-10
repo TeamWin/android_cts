@@ -720,12 +720,12 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void setUp() {
             try {
-                mNm.createNotificationChannel(newChannel, (createdChannel) -> {}, null);
+                mNm.createNotificationChannel(newChannel);
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
             try {
-                mNm.createNotificationChannel(originalChannel, (createdChannel) -> {}, null);
+                mNm.createNotificationChannel(originalChannel);
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
@@ -868,12 +868,12 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         void setUp() {
             MockAssistant.adjustEnqueue(mContext);
             try {
-                mNm.createNotificationChannel(newChannel, (createdChannel) -> {}, null);
+                mNm.createNotificationChannel(newChannel);
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
             try {
-                mNm.createNotificationChannel(originalChannel, (createdChannel) -> {}, null);
+                mNm.createNotificationChannel(originalChannel);
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
@@ -1232,7 +1232,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void setUp() {
             try {
-                mNm.createNotificationChannel(channel, (createdChannel) -> {}, null);
+                mNm.createNotificationChannel(channel);
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
