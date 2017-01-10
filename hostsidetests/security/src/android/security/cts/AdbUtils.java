@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class AdbUtils {
 
@@ -51,17 +52,25 @@ public class AdbUtils {
      * @param device device to be ran on
      * @return the console output from the binary
      */
-    public static String runPoc(String pathToPoc, ITestDevice device) throws Exception {
-        String fullResourceName = pathToPoc;
-        File pocFile = File.createTempFile("poc", "");
-        try {
-            pocFile = extractResource(fullResourceName, pocFile);
-            device.pushFile(pocFile, "/data/local/tmp/poc");
-            device.executeShellCommand("chmod +x /data/local/tmp/poc");
-            return device.executeShellCommand("/data/local/tmp/poc");
-        } finally {
-            pocFile.delete();
-        }
+    public static String runPoc(String pocName, ITestDevice device) throws Exception {
+        device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+        return device.executeShellCommand("/data/local/tmp/" + pocName);
+    }
+
+    /**
+     * Pushes and runs a binary to the selected device
+     *
+     * @param pathToPoc a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     * @return the console output from the binary
+     */
+    public static String runPoc(String pocName, ITestDevice device, int timeout) throws Exception {
+        device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout, TimeUnit.SECONDS, 0);
+        String output = receiver.getOutput();
+        return output;
     }
 
     /**
