@@ -53,6 +53,13 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         executeProfileOwnerTest("WifiTest");
     }
 
+    public void testManagement() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeProfileOwnerTest("ManagementTest");
+    }
+
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
