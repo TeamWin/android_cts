@@ -37,11 +37,11 @@ public class ArcMotionTest extends PathMotionTest {
         Path path = arcMotion.getPath(0, 100, 100, 0);
         assertPathMatches(expected, path);
 
-        expected = arcWithPoint(100, 0, 0, -100, 100, -100);
+        expected = arcWithPoint(100, 0, 0, -100, 0, 0);
         path = arcMotion.getPath(100, 0, 0, -100);
         assertPathMatches(expected, path);
 
-        expected = arcWithPoint(0, -100, -100, 0, -100, -100);
+        expected = arcWithPoint(0, -100, -100, 0, 0, 0);
         path = arcMotion.getPath(0, -100, -100, 0);
         assertPathMatches(expected, path);
 
@@ -74,29 +74,29 @@ public class ArcMotionTest extends PathMotionTest {
         path = arcMotion.getPath(-160, 0, 0, 120);
         assertPathMatches(expected, path);
 
-        expected = arcWithPoint(0, -120, -160, 0, -125, -120);
+        expected = arcWithPoint(0, -120, -160, 0, -35, 0);
         path = arcMotion.getPath(0, -120, -160, 0);
         assertPathMatches(expected, path);
 
-        expected = arcWithPoint(0, -160, -120, 0, -120, -125);
+        expected = arcWithPoint(0, -160, -120, 0, 0, -35);
         path = arcMotion.getPath(0, -160, -120, 0);
         assertPathMatches(expected, path);
 
-        expected = arcWithPoint(120, 0, 0, -160, 120, -125);
+        expected = arcWithPoint(120, 0, 0, -160, 0, -35);
         path = arcMotion.getPath(120, 0, 0, -160);
         assertPathMatches(expected, path);
 
-        expected = arcWithPoint(160, 0, 0, -120, 125, -120);
+        expected = arcWithPoint(160, 0, 0, -120, 35, 0);
         path = arcMotion.getPath(160, 0, 0, -120);
         assertPathMatches(expected, path);
     }
 
     private static Path arcWithPoint(float startX, float startY, float endX, float endY,
             float eX, float eY) {
-        float c1x = (eX + startX)/2;
-        float c1y = (eY + startY)/2;
-        float c2x = (eX + endX)/2;
-        float c2y = (eY + endY)/2;
+        float c1x = (eX + startX) / 2;
+        float c1y = (eY + startY) / 2;
+        float c2x = (eX + endX) / 2;
+        float c2y = (eY + endY) / 2;
         Path path = new Path();
         path.moveTo(startX, startY);
         path.cubicTo(c1x, c1y, c2x, c2y, endX, endY);
@@ -109,7 +109,7 @@ public class ArcMotionTest extends PathMotionTest {
         arcMotion.setMaximumAngle(45f);
         assertEquals(45f, arcMotion.getMaximumAngle(), 0.0f);
 
-        float ratio = (float) Math.tan(Math.PI/8);
+        float ratio = (float) Math.tan(Math.PI / 8);
         float ex = 50 + (50 * ratio);
         float ey = ex;
 
@@ -122,17 +122,39 @@ public class ArcMotionTest extends PathMotionTest {
     public void testMinimumHorizontalAngle() {
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMinimumHorizontalAngle(45);
-        assertEquals(45f, arcMotion.getMinimumHorizontalAngle(), 0.0f);
+        assertEquals(45, arcMotion.getMinimumHorizontalAngle(), 0.0f);
 
-        float ey = (float)(Math.tan(Math.PI/8) * 50);
-        float ex = 50;
-        Path expected = arcWithPoint(0, 0, 100, 0, ex, ey);
-        Path path = arcMotion.getPath(0, 0, 100, 0);
+        float ex = 37.5f;
+        float ey = (float) (Math.tan(Math.PI / 4) * 50);
+        Path expected = arcWithPoint(0, 0, 100, 50, ex, ey);
+        Path path = arcMotion.getPath(0, 0, 100, 50);
         assertPathMatches(expected, path);
 
         // Pretty much the same, but follows a different path.
-        expected = arcWithPoint(0, 0, 100.001f, 0, ex, ey);
-        path = arcMotion.getPath(0, 0, 100.001f, 0);
+        expected = arcWithPoint(0, 0, 100.001f, 50, ex, ey);
+        path = arcMotion.getPath(0, 0, 100.001f, 50);
+        assertPathMatches(expected, path);
+
+        // Moving in the opposite direction.
+        expected = arcWithPoint(100, 50, 0, 0, ex, ey);
+        path = arcMotion.getPath(100, 50, 0, 0);
+        assertPathMatches(expected, path);
+
+        // With x < y.
+        ex = 0;
+        ey =  (float) (Math.tan(Math.PI / 4) * 62.5f);
+        expected = arcWithPoint(0, 0, 50, 100, ex, ey);
+        path = arcMotion.getPath(0, 0, 50, 100);
+        assertPathMatches(expected, path);
+
+        // Pretty much the same, but follows a different path.
+        expected = arcWithPoint(0, 0, 50, 100.001f, ex, ey);
+        path = arcMotion.getPath(0, 0, 50, 100.001f);
+        assertPathMatches(expected, path);
+
+        // Moving in the opposite direction.
+        expected = arcWithPoint(50, 100, 0, 0, ex, ey);
+        path = arcMotion.getPath(50, 100, 0, 0);
         assertPathMatches(expected, path);
     }
 
@@ -140,18 +162,41 @@ public class ArcMotionTest extends PathMotionTest {
     public void testMinimumVerticalAngle() {
         ArcMotion arcMotion = new ArcMotion();
         arcMotion.setMinimumVerticalAngle(45);
-        assertEquals(45f, arcMotion.getMinimumVerticalAngle(), 0.0f);
+        assertEquals(45, arcMotion.getMinimumVerticalAngle(), 0.0f);
 
-        float ex = (float)(Math.tan(Math.PI/8) * 50);
-        float ey = 50;
-        Path expected = arcWithPoint(0, 0, 0, 100, ex, ey);
-        Path path = arcMotion.getPath(0, 0, 0, 100);
+        float ex = 0;
+        float ey = 62.5f;
+        Path expected = arcWithPoint(0, 0, 50, 100, ex, ey);
+        Path path = arcMotion.getPath(0, 0, 50, 100);
         assertPathMatches(expected, path);
 
         // Pretty much the same, but follows a different path.
-        expected = arcWithPoint(0, 0, 0, 100.001f, ex, ey);
-        path = arcMotion.getPath(0, 0, 0, 100.001f);
+        expected = arcWithPoint(0, 0, 50, 100.001f, ex, ey);
+        path = arcMotion.getPath(0, 0, 50, 100.001f);
         assertPathMatches(expected, path);
+
+        // Moving in opposite direction.
+        expected = arcWithPoint(50, 100, 0, 0, ex, ey);
+        path = arcMotion.getPath(50, 100, 0, 0);
+        assertPathMatches(expected, path);
+
+        // With x > y.
+        ex = (float) (Math.tan(Math.PI / 4) * 37.5f);
+        ey = 50;
+        expected = arcWithPoint(0, 0, 100, 50, ex, ey);
+        path = arcMotion.getPath(0, 0, 100, 50);
+        assertPathMatches(expected, path);
+
+        // Pretty much the same, but follows a different path.
+        expected = arcWithPoint(0, 0, 100.001f, 50, ex, ey);
+        path = arcMotion.getPath(0, 0, 100.001f, 50);
+        assertPathMatches(expected, path);
+
+        // Moving in opposite direction.
+        expected = arcWithPoint(100, 50, 0, 0, ex, ey);
+        path = arcMotion.getPath(100, 50, 0, 0);
+        assertPathMatches(expected, path);
+
     }
 }
 
