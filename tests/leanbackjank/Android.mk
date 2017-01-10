@@ -35,7 +35,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-janktesthelper \
     android-support-v17-leanback \
     android-support-v7-recyclerview \
-    android-support-v4
+    android-support-v4 \
+    legacy-android-test
 
 include $(BUILD_CTS_PACKAGE)
 

@@ -21,7 +21,13 @@ LOCAL_MODULE_TAGS := tests
 # Include both the 32 and 64 bit versions
 LOCAL_MULTILIB := both
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestserver ctstestrunner ctsdeviceutil compatibility-device-util guava
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctstestserver \
+    ctstestrunner \
+    ctsdeviceutil \
+    compatibility-device-util \
+    guava \
+    legacy-android-test
 
 LOCAL_JAVA_LIBRARIES := android.test.runner org.apache.http.legacy
 
