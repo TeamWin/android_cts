@@ -21,14 +21,21 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.view.WindowManager;
 
 public class PipActivity extends Activity {
+
+    // Intent action that this activity dynamically registers to enter picture-in-picture
+    private static final String ACTION_ENTER_PIP = "android.server.cts.PipActivity.enter_pip";
 
     // Calls enterPictureInPicture() on creation
     private static final String EXTRA_ENTER_PIP = "enter_pip";
@@ -46,12 +53,27 @@ public class PipActivity extends Activity {
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     // Calls enterPictureInPicture() again after onPictureInPictureModeChanged(false) is called
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
+    // Shows this activity over the keyguard
+    private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
 
     private Handler mHandler = new Handler();
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && intent.getAction().equals(ACTION_ENTER_PIP)) {
+                enterPictureInPictureMode();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set the window flag to show over the keyguard
+        if (getIntent().hasExtra(EXTRA_SHOW_OVER_KEYGUARD)) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        }
 
         // Enter picture in picture with the given aspect ratio if provided
         if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
@@ -106,11 +128,18 @@ public class PipActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        registerReceiver(mReceiver, new IntentFilter(ACTION_ENTER_PIP));
 
         // Finish self if requested
         if (getIntent().hasExtra(EXTRA_FINISH_SELF_ON_RESUME)) {
             finish();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
     }
 
     @Override
