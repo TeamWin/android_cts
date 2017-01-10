@@ -2850,6 +2850,24 @@ You should be prompted to select credentials; choose the ones you just installed
         12) Repeat steps (1) through (11) for each screen lock type other than \"None\".
     </string>
 
+    <!-- Strings for Network Logging Tests -->
+    <string name="device_owner_network_logging_ui">Network Logging UI</string>
+    <string name="device_owner_network_logging_ui_info">Please do the following:\n
+        1) Open and fully expand Quick Settings.\n
+        2) Check that you are told that your device is managed.\n
+        3) Close Quick Settings.\n
+        4) Enable network logging by tapping on the left button below.\n
+        5) Open Quick Settings again. Check that an icon appeared next to the text about device management.\n
+        6) Verify that a notification including the same icon popped up, informing you that network logging has been enabled.\n
+        7) Tap the notification.\n
+        8) Verify that a dialog about device monitoring opens, and informs you about: the name of the app that manages this device, details about the device owner\'s capabilities, and information that the admin has activated network logging and can see all network traffic.\n
+        9) Close the dialog.\n
+        10) Tap the right button below to disable network logging.\n
+        11) Verify that the notification disappeared.\n
+    </string>
+    <string name="device_owner_enable_network_logging_button">Enable Network Logging</string>
+    <string name="device_owner_disable_network_logging_button">Disable Network Logging</string>
+
     <!-- Strings for JobScheduler Tests -->
     <string name="js_test_description">This test is mostly automated, but requires some user interaction. You can pass this test once the list items below are checked.</string>
 
@@ -3224,7 +3242,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="unprocessed_test_usb_background_btn">Test</string>
     <string name="unprocessed_test_usb_background_result">Results...</string>
 
-    <string name="unprocessed_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test. 
+    <string name="unprocessed_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
     Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
     <string name="unprocessed_test_usb_noise_btn">Test</string>
     <string name="unprocessed_test_usb_noise_result">Results...</string>
