@@ -64,6 +64,17 @@ public class SecurityTestCase extends DeviceTestCase {
     }
 
     /**
+     * Check if a driver is present on a machine
+     */
+    public boolean containsDriver(ITestDevice mDevice, String driver) throws Exception {
+        String result = mDevice.executeShellCommand("ls -Zl " + driver);
+        if(result.contains("No such file or directory")) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Makes sure the phone is online, and the ensure the current boottime is within 2 seconds
      * (due to rounding) of the previous boottime to check if The phone has crashed.
      */
