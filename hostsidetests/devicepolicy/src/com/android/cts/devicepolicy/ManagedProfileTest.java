@@ -73,8 +73,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String ADD_RESTRICTION_COMMAND = "add-restriction";
 
-    private static final long WAIT_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(15);
-    private static final long WAIT_SAMPLE_INTERVAL_MILLIS = TimeUnit.SECONDS.toMillis(1);
+    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(15);
 
     private int mParentUserId;
 
@@ -138,8 +137,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".WipeDataTest", mProfileUserId);
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
-        tryWaitForSuccess(() -> !listUsers().contains(mProfileUserId),
-                "The managed profile has not been removed after calling wipeData");
+        assertUserGetsRemoved(mProfileUserId);
     }
 
     public void testLockNowWithKeyEviction() throws Exception {
@@ -150,27 +148,16 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testLockNowWithKeyEviction", mProfileUserId);
         final String cmd = "dumpsys activity | grep 'User #" + mProfileUserId + ": state='";
         final Pattern p = Pattern.compile("state=([\\p{Upper}_]+)$");
-        tryWaitForSuccess(() -> {
+        SuccessCondition userLocked = () -> {
             final String activityDump = getDevice().executeShellCommand(cmd);
             final Matcher m = p.matcher(activityDump);
             return m.find() && m.group(1).equals("RUNNING_LOCKED");
-        }, "The managed profile has not been locked after calling lockNow(FLAG_SECURE_USER_DATA)");
-    }
-
-    private interface SuccessCondition {
-        boolean check() throws Exception;
-    }
-
-    private void tryWaitForSuccess(SuccessCondition successCondition, String failureMessage)
-            throws Exception {
-        long epoch = System.currentTimeMillis();
-        while (System.currentTimeMillis() - epoch <= WAIT_TIMEOUT_MILLIS) {
-            Thread.sleep(WAIT_SAMPLE_INTERVAL_MILLIS);
-            if (successCondition.check()) {
-                return;
-            }
-        }
-        fail(failureMessage);
+        };
+        tryWaitForSuccess(
+                userLocked,
+                "The managed profile has not been locked after calling "
+                        + "lockNow(FLAG_SECURE_USER_DATA)",
+                TIMEOUT_USER_LOCKED_MILLIS);
     }
 
     public void testMaxOneManagedProfile() throws Exception {

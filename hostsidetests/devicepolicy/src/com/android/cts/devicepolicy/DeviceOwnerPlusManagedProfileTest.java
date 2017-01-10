@@ -270,6 +270,22 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 mPrimaryUserId);
     }
 
+    public void testWipeData() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+        addDisallowRemoveManagedProfileRestriction();
+        // The PO of the managed profile should be allowed to delete the managed profile, even
+        // though the disallow remove profile restriction is set.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testWipeData",
+                mProfileUserId);
+        assertUserGetsRemoved(mProfileUserId);
+    }
+
     protected void setupManagedProfile(String apkName, String packageName,
             String adminReceiverClassName) throws Exception {
         // Temporary disable the DISALLOW_ADD_MANAGED_PROFILE, so that we can create profile

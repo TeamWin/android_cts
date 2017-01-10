@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +53,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected static final int USER_SYSTEM = 0; // From the UserHandle class.
 
     protected static final int USER_OWNER = 0;
+
+    private static final long TIMEOUT_USER_REMOVED_MILLIS = TimeUnit.SECONDS.toMillis(15);
+    private static final long WAIT_SAMPLE_INTERVAL_MILLIS = 200;
 
     // From the UserInfo class
     protected static final int FLAG_PRIMARY = 0x00000001;
@@ -617,5 +621,28 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         String result = getDevice().executeShellCommand(command);
         CLog.d("Output for command " + command + ": " + result);
         return result;
+    }
+
+    protected interface SuccessCondition {
+        boolean check() throws Exception;
+    }
+
+    protected void assertUserGetsRemoved(int userId) throws Exception {
+        tryWaitForSuccess(() -> !listUsers().contains(userId),
+                "The user " + userId + " has not been removed",
+                TIMEOUT_USER_REMOVED_MILLIS
+                );
+    }
+
+    protected void tryWaitForSuccess(SuccessCondition successCondition, String failureMessage,
+            long timeoutMillis) throws Exception {
+        long epoch = System.currentTimeMillis();
+        while (System.currentTimeMillis() - epoch <= timeoutMillis) {
+            Thread.sleep(WAIT_SAMPLE_INTERVAL_MILLIS);
+            if (successCondition.check()) {
+                return;
+            }
+        }
+        fail(failureMessage);
     }
 }
