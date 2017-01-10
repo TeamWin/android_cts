@@ -181,13 +181,6 @@ public class VectorDrawableTest {
 
     private static final int IMAGE_WIDTH = 64;
     private static final int IMAGE_HEIGHT = 64;
-    // A small value is actually making sure that the values are matching
-    // exactly with the golden image.
-    // We can increase the threshold if the Skia is drawing with some variance
-    // on different devices. So far, the tests show they are matching correctly.
-    private static final float PIXEL_ERROR_THRESHOLD = 0.03f;
-    private static final float PIXEL_ERROR_COUNT_THRESHOLD = 0.005f;
-    private static final int PIXEL_ERROR_TOLERANCE = 3;
 
     private static final boolean DBG_DUMP_PNG = false;
 
@@ -276,9 +269,9 @@ public class VectorDrawableTest {
                 // Start to compare
                 Bitmap golden = BitmapFactory.decodeResource(mResources, goldenImages[i]);
                 DrawableTestUtils.compareImages(mResources.getString(resIds[i]), mBitmap, golden,
-                        VectorDrawableTest.PIXEL_ERROR_THRESHOLD,
-                        VectorDrawableTest.PIXEL_ERROR_COUNT_THRESHOLD,
-                        VectorDrawableTest.PIXEL_ERROR_TOLERANCE);
+                        DrawableTestUtils.PIXEL_ERROR_THRESHOLD,
+                        DrawableTestUtils.PIXEL_ERROR_COUNT_THRESHOLD,
+                        DrawableTestUtils.PIXEL_ERROR_TOLERANCE);
 
             }
         }

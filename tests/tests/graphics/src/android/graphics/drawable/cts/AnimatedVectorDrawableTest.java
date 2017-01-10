@@ -16,6 +16,13 @@
 
 package android.graphics.drawable.cts;
 
+import static junit.framework.Assert.fail;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -33,7 +40,6 @@ import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.Xml;
 import android.widget.ImageView;
 
@@ -44,21 +50,9 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import static junit.framework.Assert.fail;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class AnimatedVectorDrawableTest {
-    private static final String LOGTAG = AnimatedVectorDrawableTest.class.getSimpleName();
-
     private static final int IMAGE_WIDTH = 64;
     private static final int IMAGE_HEIGHT = 64;
     private static final long MAX_TIMEOUT_MS = 1000;
@@ -79,44 +73,6 @@ public class AnimatedVectorDrawableTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mResources = mActivity.getResources();
-    }
-
-    // This is only for debugging or golden image (re)generation purpose.
-    private void saveVectorDrawableIntoPNG(Bitmap bitmap, int resId) throws IOException {
-        String originalFilePath = mResources.getString(resId);
-        File originalFile = new File(originalFilePath);
-        String fileFullName = originalFile.getName();
-        String fileTitle = fileFullName.substring(0, fileFullName.lastIndexOf("."));
-        saveVectorDrawableIntoPNG(bitmap, fileTitle);
-    }
-
-    // Save a bitmap to the given name under /sdcard/temp/
-    static void saveVectorDrawableIntoPNG(Bitmap bitmap, String fileFullName)
-            throws IOException {
-        // Save the image to the disk.
-        FileOutputStream out = null;
-        try {
-            String outputFolder = "/sdcard/temp/";
-            File folder = new File(outputFolder);
-            if (!folder.exists()) {
-                folder.mkdir();
-            }
-            String outputFilename = outputFolder + fileFullName + "_golden.png";
-            File outputFile = new File(outputFilename);
-            if (!outputFile.exists()) {
-                outputFile.createNewFile();
-            }
-
-            out = new FileOutputStream(outputFile, false);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-            Log.v(LOGTAG, "Write test No." + outputFilename + " to file successfully.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (out != null) {
-                out.close();
-            }
-        }
     }
 
     @Test
@@ -147,7 +103,7 @@ public class AnimatedVectorDrawableTest {
         assertTrue(earthColor == 0xFF5656EA);
 
         if (DBG_DUMP_PNG) {
-            saveVectorDrawableIntoPNG(bitmap, mResId);
+            DrawableTestUtils.saveVectorDrawableIntoPNG(bitmap, mResId, mResources);
         }
     }
 
