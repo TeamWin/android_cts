@@ -30,7 +30,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     mockito-target-minus-junit4 \
-    android-support-test
+    android-support-test \
+    legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
 

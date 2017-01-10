@@ -25,7 +25,11 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 
 LOCAL_PACKAGE_NAME := CtsAppWidgetTestCases
 
-LOCAL_STATIC_JAVA_LIBRARIES := mockito-target-minus-junit4 ctstestrunner hamcrest
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    mockito-target-minus-junit4 \
+    ctstestrunner \
+    junit \
+    legacy-android-test
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts

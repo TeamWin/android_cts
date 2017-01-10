@@ -30,7 +30,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
         core-tests-support \
         compatibility-device-util \
         ctstestrunner \
-        guava
+        guava \
+        junit \
+        legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

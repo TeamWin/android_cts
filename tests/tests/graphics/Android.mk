@@ -27,7 +27,9 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctstestrunner \
-    android-support-annotations
+    android-support-annotations \
+    junit \
+    legacy-android-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsgraphics_jni
 

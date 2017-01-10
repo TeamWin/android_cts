@@ -34,7 +34,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     mockito-target-minus-junit4 \
     platform-test-annotations \
-    ub-uiautomator
+    ub-uiautomator \
+    legacy-android-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++
 

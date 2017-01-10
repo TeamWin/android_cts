@@ -18,7 +18,9 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-test \
+    legacy-android-test
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts

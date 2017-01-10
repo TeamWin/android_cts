@@ -44,7 +44,14 @@ LOCAL_PROGUARD_ENABLED := disabled
 # include both the 32 and 64 bit versions
 LOCAL_MULTILIB := both
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsmediautil compatibility-device-util ctstestserver ctstestrunner ndkaudio android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctsmediautil \
+    compatibility-device-util \
+    ctstestserver \
+    ctstestrunner \
+    ndkaudio \
+    junit \
+    legacy-android-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni libaudio_jni libnativehelper_compat_libc++ libndkaudioLib
 
