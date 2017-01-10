@@ -26,6 +26,8 @@ import android.media.MediaCodec.CryptoInfo;
 import android.media.MediaCodec.CryptoInfo.Pattern;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaCrypto;
+import android.media.MediaDrm;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaCodecInfo.CodecCapabilities;
@@ -45,6 +47,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1652,5 +1655,54 @@ public class MediaCodecTest extends AndroidTestCase {
             }
         }
         return false;
+    }
+
+    private static final UUID CLEARKEY_SCHEME_UUID =
+            new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
+
+    /**
+     * Tests:
+     * <br> queueSecureInputBuffer() with erroneous input throws CryptoException
+     * <br> getInputBuffer() after the failed queueSecureInputBuffer() succeeds.
+     */
+    public void testCryptoError() throws Exception {
+        MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+        byte[] sessionId = drm.openSession();
+        MediaCrypto crypto = new MediaCrypto(CLEARKEY_SCHEME_UUID, new byte[0]);
+        MediaCodec codec = MediaCodec.createDecoderByType(MIME_TYPE);
+
+        try {
+            crypto.setMediaDrmSession(sessionId);
+
+            MediaCodec.CryptoInfo cryptoInfo = new MediaCodec.CryptoInfo();
+            MediaFormat format = createMediaFormat();
+
+            codec.configure(format, null, crypto, 0);
+            codec.start();
+            int index = codec.dequeueInputBuffer(-1);
+            assertTrue(index >= 0);
+            ByteBuffer buffer = codec.getInputBuffer(index);
+            cryptoInfo.set(
+                    1,
+                    new int[] { 0 },
+                    new int[] { buffer.capacity() },
+                    new byte[16],
+                    new byte[16],
+                    // Trying to decrypt encrypted data in unencrypted mode
+                    MediaCodec.CRYPTO_MODE_UNENCRYPTED);
+            try {
+                codec.queueSecureInputBuffer(index, 0, cryptoInfo, 0, 0);
+                fail("queueSecureInputBuffer should fail when trying to decrypt " +
+                        "encrypted data in unencrypted mode.");
+            } catch (MediaCodec.CryptoException e) {
+                // expected
+            }
+            buffer = codec.getInputBuffer(index);
+            codec.stop();
+        } finally {
+            codec.release();
+            crypto.release();
+            drm.closeSession(sessionId);
+        }
     }
 }
