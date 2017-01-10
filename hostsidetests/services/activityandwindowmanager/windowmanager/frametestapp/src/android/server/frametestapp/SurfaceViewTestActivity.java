@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import android.view.Window;
 import android.view.Gravity;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
@@ -55,6 +56,10 @@ public class SurfaceViewTestActivity extends Activity {
                 doOversizedTest();
                 break;
             }
+            case "AsyncDraw": {
+                doAsyncDrawTest();
+                break;
+            }
             default:
                 break;
         }
@@ -75,5 +80,30 @@ public class SurfaceViewTestActivity extends Activity {
         mSurfaceView = new SurfaceView(this);
         LayoutParams p = new LayoutParams(8000, 8000);
         setContentView(mSurfaceView, p);
+    }
+
+    void doAsyncDrawTest() {
+        mSurfaceView = new SurfaceView(this);
+        SurfaceHolder h = mSurfaceView.getHolder();
+        h.addCallback(new SurfaceHolder.Callback2() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+            }
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format,
+                    int width, int height) {
+            }
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+            }
+            @Override
+            public void surfaceRedrawNeeded(SurfaceHolder holder) {
+            }
+            @Override
+            public void surfaceRedrawNeededAsync(SurfaceHolder holder, Runnable drawingFinished) {
+                drawingFinished.run();
+            }
+        });
+        setContentView(mSurfaceView);
     }
 }

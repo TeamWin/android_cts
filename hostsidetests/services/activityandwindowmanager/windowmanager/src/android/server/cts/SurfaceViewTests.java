@@ -91,4 +91,11 @@ public class SurfaceViewTests extends ParentChildTestBase {
                     assertEquals(expectedCrop, sv.getCrop());
             });
     }
+
+    public void testAsyncDrawNotification() throws Exception {
+        doParentChildTest("AsyncDraw",
+            (WindowState parent, WindowState sv) -> {
+                    assertTrue(sv.isShown());
+            });
+    }
 }
