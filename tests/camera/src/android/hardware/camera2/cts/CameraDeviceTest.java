@@ -1484,6 +1484,10 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     checkMeteringRect(afRegions);
                 }
             }
+            // ZSL must default to OFF
+            if (request.get(CONTROL_ENABLE_ZSL) != null) {
+                mCollector.expectKeyValueEquals(request, CONTROL_ENABLE_ZSL, false);
+            }
         }
 
         // Sensor settings.
