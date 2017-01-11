@@ -15,34 +15,27 @@
  */
 package android.fragment.cts;
 
-import static junit.framework.Assert.*;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.app.Fragment;
 import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
-import android.os.Debug;
 import android.os.Parcelable;
-import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Pair;
 import android.view.View;
-import android.view.ViewGroup;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -298,6 +291,7 @@ public class FragmentAnimatorTest {
         assertPostponed(fragment2, 0);
         assertNotNull(fragment1.getView());
         assertEquals(View.VISIBLE, fragment1.getView().getVisibility());
+        assertTrue(FragmentTestUtil.isVisible(fragment1));
         assertTrue(fragment1.getView().isAttachedToWindow());
 
         fragment2.startPostponedEnterTransition();
@@ -335,7 +329,7 @@ public class FragmentAnimatorTest {
         FragmentTestUtil.popBackStackImmediate(mActivityRule);
 
         assertNotNull(fragment1.getView());
-        assertEquals(View.VISIBLE, fragment1.getView().getVisibility());
+        assertTrue(FragmentTestUtil.isVisible(fragment1));
         assertTrue(fragment1.getView().isAttachedToWindow());
         assertTrue(fragment1.isAdded());
 
@@ -447,7 +441,8 @@ public class FragmentAnimatorTest {
     private void assertPostponed(AnimatorFragment fragment, int expectedAnimators)
             throws InterruptedException {
         assertTrue(fragment.mOnCreateViewCalled);
-        assertEquals(View.INVISIBLE, fragment.getView().getVisibility());
+        assertEquals(View.VISIBLE, fragment.getView().getVisibility());
+        assertFalse(FragmentTestUtil.isVisible(fragment));
         assertEquals(expectedAnimators, fragment.numAnimators);
     }
 
