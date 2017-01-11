@@ -24,6 +24,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class CrossAppDragAndDropTests extends DeviceTestCase {
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
@@ -48,12 +49,16 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String INPUT_MOUSE_SWIPE = "input mouse swipe ";
     private static final String TASK_ID_PREFIX = "taskId";
 
+    // Regex pattern to match adb shell am stack list output of the form:
+    // taskId=<TASK_ID>: <componentName> bounds=[LEFT,TOP][RIGHT,BOTTOM]
+    private static final String TASK_REGEX_PATTERN_STRING =
+            "taskId=[0-9]+: %s bounds=\\[[0-9]+,[0-9]+\\]\\[[0-9]+,[0-9]+\\]";
+
     private static final int SWIPE_DURATION_MS = 500;
 
     private static final String SOURCE_PACKAGE_NAME = "android.wm.cts.dndsourceapp";
     private static final String TARGET_PACKAGE_NAME = "android.wm.cts.dndtargetapp";
     private static final String TARGET_23_PACKAGE_NAME = "android.wm.cts.dndtargetappsdk23";
-
 
     private static final String SOURCE_ACTIVITY_NAME = "DragSource";
     private static final String TARGET_ACTIVITY_NAME = "DropTarget";
@@ -225,8 +230,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         builder.append("\nParsing adb shell am output: " );
         builder.append(output);
         CLog.i(builder.toString());
+        final Pattern pattern = Pattern.compile(String.format(TASK_REGEX_PATTERN_STRING, name));
         for (String line : output.split("\\n")) {
-            if (line.contains(name)) {
+            if (pattern.matcher(line).find()) {
                 return line;
             }
         }
