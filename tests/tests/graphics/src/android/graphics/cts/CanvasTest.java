@@ -24,10 +24,12 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Canvas.EdgeType;
 import android.graphics.Canvas.VertexMode;
 import android.graphics.Color;
+import android.graphics.ComposeShader;
 import android.graphics.DrawFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -35,10 +37,12 @@ import android.graphics.Path;
 import android.graphics.Path.Direction;
 import android.graphics.Picture;
 import android.graphics.PorterDuff.Mode;
+import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Region.Op;
+import android.graphics.Shader;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -1994,6 +1998,38 @@ public class CanvasTest {
         // set Density
         mCanvas.setDensity(DisplayMetrics.DENSITY_HIGH);
         assertEquals(DisplayMetrics.DENSITY_HIGH, mCanvas.getDensity());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDrawHwBitmapInSwCanvas() {
+        Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
+        mCanvas.drawBitmap(hwBitmap, 0, 0, null);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHwBitmapShaderInSwCanvas1() {
+        Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
+        BitmapShader bitmapShader = new BitmapShader(hwBitmap, Shader.TileMode.REPEAT,
+                Shader.TileMode.REPEAT);
+        RadialGradient gradientShader = new RadialGradient(10, 10, 30, Color.BLACK, Color.CYAN,
+                Shader.TileMode.REPEAT);
+        Shader shader = new ComposeShader(gradientShader, bitmapShader, Mode.OVERLAY);
+        Paint p = new Paint();
+        p.setShader(shader);
+        mCanvas.drawRect(0, 0, 10, 10, p);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testHwBitmapShaderInSwCanvas2() {
+        Bitmap hwBitmap = mImmutableBitmap.copy(Config.HARDWARE, false);
+        BitmapShader bitmapShader = new BitmapShader(hwBitmap, Shader.TileMode.REPEAT,
+                Shader.TileMode.REPEAT);
+        RadialGradient gradientShader = new RadialGradient(10, 10, 30, Color.BLACK, Color.CYAN,
+                Shader.TileMode.REPEAT);
+        Shader shader = new ComposeShader(bitmapShader, gradientShader, Mode.OVERLAY);
+        Paint p = new Paint();
+        p.setShader(shader);
+        mCanvas.drawRect(0, 0, 10, 10, p);
     }
 
     private void preCompare() {
