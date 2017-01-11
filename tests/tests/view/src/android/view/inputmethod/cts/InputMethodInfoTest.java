@@ -33,9 +33,11 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
 import android.util.Printer;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodInfo;
@@ -47,7 +49,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -271,6 +276,11 @@ public class InputMethodInfoTest {
             return;
         }
 
+        if (!TextUtils.equals("native", getFbeMode())) {
+            // Skip the test unless the device is in native FBE mode.
+            return;
+        }
+
         final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         final List<InputMethodInfo> imis = imm.getInputMethodList();
         boolean hasEncryptionAwareInputMethod = false;
@@ -289,5 +299,23 @@ public class InputMethodInfoTest {
             }
         }
         assertTrue(hasEncryptionAwareInputMethod);
+    }
+
+    private String getFbeMode() {
+        try (ParcelFileDescriptor.AutoCloseInputStream in =
+                     new ParcelFileDescriptor.AutoCloseInputStream(
+                             InstrumentationRegistry
+                            .getInstrumentation()
+                            .getUiAutomation()
+                            .executeShellCommand("sm get-fbe-mode"))) {
+            try (BufferedReader br =
+                         new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                // Assume that the output of "sm get-fbe-mode" is always one-line.
+                final String line = br.readLine();
+                return line != null ? line.trim() : "";
+            }
+        } catch (IOException e) {
+            return "";
+        }
     }
 }
