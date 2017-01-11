@@ -234,4 +234,90 @@ public class FocusFinderTest {
         nextFocus = mFocusFinder.findNextFocus(mLayout, mTopRight, View.FOCUS_BACKWARD);
         assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
     }
+
+    // Tests for finding new groups don't look at geometrical properties of the views. For them,
+    // only tab order is important, which is mTopLeft, mTopRight, mBottomLeft. mBottomRight isn't
+    // used.
+    private void verifyNextGroup(
+            int groupType, View currentGroup, int direction, View expectedNextGroup) {
+        View actualNextGroup = mFocusFinder.findNextKeyboardNavigationGroup(
+                groupType, mLayout, currentGroup, direction);
+        assertEquals(expectedNextGroup, actualNextGroup);
+    }
+
+    @Test
+    public void testNoGroups() {
+        // No views are marked as groups, so next group is always null.
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mTopRight, View.FOCUS_FORWARD, null);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mTopRight, View.FOCUS_BACKWARD, null);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mTopRight, View.FOCUS_FORWARD, null);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mTopRight, View.FOCUS_BACKWARD, null);
+    }
+
+    @Test
+    public void testFindNextCluster() {
+        // Cluster navigation from all possible starting points in all directions.
+        mTopLeft.setKeyboardNavigationCluster(true);
+        mTopRight.setKeyboardNavigationCluster(true);
+        mBottomLeft.setKeyboardNavigationCluster(true);
+
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_FORWARD, mTopLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mTopRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mBottomLeft, View.FOCUS_FORWARD, mLayout);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mBottomRight, View.FOCUS_FORWARD, mLayout);
+
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_BACKWARD, mBottomLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mTopLeft, View.FOCUS_BACKWARD, mLayout);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mTopRight, View.FOCUS_BACKWARD, mTopLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mBottomLeft, View.FOCUS_BACKWARD,
+                mTopRight);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, mBottomRight, View.FOCUS_BACKWARD, mLayout);
+    }
+
+    @Test
+    public void testFindNextSection() {
+        // Section navigation from all possible starting points in all directions.
+        mTopLeft.setKeyboardNavigationSection(true);
+        mTopRight.setKeyboardNavigationSection(true);
+        mBottomLeft.setKeyboardNavigationSection(true);
+
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_FORWARD, mTopLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mTopRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mBottomLeft, View.FOCUS_FORWARD, mTopLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mBottomRight, View.FOCUS_FORWARD, mTopLeft);
+
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_BACKWARD, mBottomLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mTopLeft, View.FOCUS_BACKWARD, mBottomLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mTopRight, View.FOCUS_BACKWARD, mTopLeft);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mBottomLeft, View.FOCUS_BACKWARD,
+                mTopRight);
+        verifyNextGroup(
+                View.KEYBOARD_NAVIGATION_GROUP_SECTION, mBottomRight, View.FOCUS_BACKWARD,
+                mBottomLeft);
+    }
 }

@@ -134,6 +134,87 @@ public class ViewGroupTest implements CTSResult {
 
     @UiThreadTest
     @Test
+    public void testAddKeyboardNavigationGroups() {
+        View v1 = new MockView(mContext);
+        View v2 = new MockView(mContext);
+        mMockViewGroup.addView(v1);
+        mMockViewGroup.addView(v2);
+
+        // No groups.
+        ArrayList<View> list = new ArrayList<>();
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        assertEquals(0, list.size());
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(0, list.size());
+
+        // Children are a section and a cluster.
+        v1.setKeyboardNavigationCluster(true);
+        v2.setKeyboardNavigationSection(true);
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        assertEquals(1, list.size());
+        assertEquals(v1, list.get(0));
+        list.clear();
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(1, list.size());
+        assertEquals(v2, list.get(0));
+        list.clear();
+
+        // Nested groups. Should ignore children.
+        mMockViewGroup.setKeyboardNavigationCluster(true);
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        assertEquals(1, list.size());
+        assertEquals(mMockViewGroup, list.get(0));
+        list.clear();
+        mMockViewGroup.setKeyboardNavigationCluster(false);
+        mMockViewGroup.setKeyboardNavigationSection(true);
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(1, list.size());
+        assertEquals(mMockViewGroup, list.get(0));
+        list.clear();
+        mMockViewGroup.setKeyboardNavigationSection(false);
+
+        // Blocking descendants from getting focus also blocks group search.
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        assertEquals(0, list.size());
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(0, list.size());
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+
+        // Testing the results ordering.
+        v2.setKeyboardNavigationSection(false);
+        v2.setKeyboardNavigationCluster(true);
+        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        assertEquals(2, list.size());
+        assertEquals(v1, list.get(0));
+        assertEquals(v2, list.get(1));
+        list.clear();
+
+        // 3-level hierarchy.
+        ViewGroup parent = new MockViewGroup(mContext);
+        parent.addView(mMockViewGroup);
+        mMockViewGroup.removeView(v2);
+        v1.setKeyboardNavigationCluster(false);
+        v1.setKeyboardNavigationSection(true);
+        parent.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(1, list.size());
+        assertEquals(v1, list.get(0));
+        list.clear();
+
+        // Searching for sections doesn't enter clusters.
+        mMockViewGroup.setKeyboardNavigationCluster(true);
+        parent.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(0, list.size());
+        mMockViewGroup.setKeyboardNavigationCluster(false);
+
+        // Invisible children get ignored.
+        mMockViewGroup.setVisibility(View.GONE);
+        parent.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        assertEquals(0, list.size());
+    }
+
+    @UiThreadTest
+    @Test
     public void testAddStatesFromChildren() {
         mMockViewGroup.addView(mTextView);
         assertFalse(mMockViewGroup.addStatesFromChildren());
