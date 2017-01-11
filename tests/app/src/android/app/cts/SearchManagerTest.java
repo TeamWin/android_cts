@@ -17,10 +17,12 @@
 package android.app.cts;
 
 import android.app.SearchManager;
+import android.app.UiModeManager;
 import android.app.stubs.CTSActivityTestCaseBase;
 import android.app.stubs.SearchManagerStubActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 
 public class SearchManagerTest extends CTSActivityTestCaseBase {
 
@@ -61,6 +63,10 @@ public class SearchManagerTest extends CTSActivityTestCaseBase {
 
     private boolean hasGlobalSearchActivity() {
         Context context = getInstrumentation().getTargetContext();
+        UiModeManager uiModeManager = context.getSystemService(UiModeManager.class);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            return false;
+        }
         SearchManager searchManager =
                 (SearchManager) context.getSystemService(Context.SEARCH_SERVICE);
         if (searchManager == null) {
