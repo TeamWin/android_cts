@@ -22,6 +22,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.net.ProxyInfo;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -72,6 +73,8 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_REMOVE_MANAGED_PROFILE = "remove-managed-profile";
     public static final String COMMAND_SET_ALWAYS_ON_VPN = "set-always-on-vpn";
     public static final String COMMAND_CLEAR_ALWAYS_ON_VPN = "clear-always-on-vpn";
+    public static final String COMMAND_SET_GLOBAL_HTTP_PROXY = "set-global-http-proxy";
+    public static final String COMMAND_CLEAR_GLOBAL_HTTP_PROXY = "clear-global-http-proxy";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -272,7 +275,21 @@ public class CommandReceiverActivity extends Activity {
                     }
                     mDpm.setAlwaysOnVpnPackage(mAdmin, null /* vpnPackage */,
                             false /* lockdownEnabled */);
+                } break;
+                case COMMAND_SET_GLOBAL_HTTP_PROXY: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setRecommendedGlobalProxy(mAdmin,
+                            ProxyInfo.buildDirectProxy("example.com", 123));
+                } break;
+                case COMMAND_CLEAR_GLOBAL_HTTP_PROXY: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setRecommendedGlobalProxy(mAdmin, null);
                 }
+
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
@@ -311,6 +328,7 @@ public class CommandReceiverActivity extends Activity {
                 "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
         setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, false);
         mDpm.setOrganizationName(mAdmin, null);
+        mDpm.setRecommendedGlobalProxy(mAdmin, null);
     }
 
     private void clearProfileOwnerRelatedPolicies() {

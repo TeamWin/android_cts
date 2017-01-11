@@ -47,6 +47,8 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
             = "ENTERPRISE_PRIVACY_ALWAYS_ON_VPN";
     private static final String ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN
             = "ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN";
+    private static final String ENTERPRISE_PRIVACY_GLOBAL_HTTP_PROXY
+            = "ENTERPRISE_PRIVACY_GLOBAL_HTTP_PROXY";
     private static final String ENTERPRISE_PRIVACY_QUICK_SETTINGS
             = "ENTERPRISE_PRIVACY_QUICK_SETTINGS";
     private static final String ENTERPRISE_PRIVACY_KEYGUARD = "ENTERPRISE_PRIVACY_KEYGUARD";
@@ -139,6 +141,18 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                         new ButtonInfo(R.string.enterprise_privacy_finish,
                                 buildCommandIntent(
                                         CommandReceiverActivity.COMMAND_REMOVE_MANAGED_PROFILE))}));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_GLOBAL_HTTP_PROXY,
+                R.string.enterprise_privacy_global_http_proxy,
+                R.string.enterprise_privacy_global_http_proxy_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_set_proxy,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_SET_GLOBAL_HTTP_PROXY)),
+                        new ButtonInfo(R.string.enterprise_privacy_clear_proxy,
+                                buildCommandIntent(CommandReceiverActivity
+                                        .COMMAND_CLEAR_GLOBAL_HTTP_PROXY))}));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_QUICK_SETTINGS,
                 R.string.enterprise_privacy_quick_settings,
                 R.string.enterprise_privacy_quick_settings_info,
