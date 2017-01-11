@@ -24,8 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     core-tests \
     cts-core-test-runner \
     mockito-target \
-    tzdata_update2-tests \
-    tzdata_update-tests
+    tzdata_update2-tests
 
 # Don't include this package in any target
 LOCAL_MODULE_TAGS := tests
