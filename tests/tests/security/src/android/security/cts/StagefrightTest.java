@@ -43,6 +43,7 @@ import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,6 +61,15 @@ public class StagefrightTest extends InstrumentationTestCase {
     private final long TIMEOUT_NS = 10000000000L;  // 10 seconds.
 
     public StagefrightTest() {
+    }
+
+    /***********************************************************
+     to prevent merge conflicts, add K tests below this comment,
+     before any existing test methods
+     ***********************************************************/
+
+    public void testStagefright_cve_2016_2507() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_2507);
     }
 
     public void testStagefright_bug_31647370() throws Exception {
@@ -118,12 +128,21 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_6598);
     }
 
-    public void testStagefright_bug_32873375() throws Exception {
-        doStagefrightTest(R.raw.bug_32873375);
-    }
-
     public void testStagefright_bug_26366256() throws Exception {
         doStagefrightTest(R.raw.bug_26366256);
+    }
+
+    public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
+    }
+
+    /***********************************************************
+     to prevent merge conflicts, add M tests below this comment,
+     before any existing test methods
+     ***********************************************************/
+
+    public void testStagefright_bug_32873375() throws Exception {
+        doStagefrightTest(R.raw.bug_32873375);
     }
 
     public void testStagefright_bug_25765591() throws Exception {
@@ -188,10 +207,6 @@ public class StagefrightTest extends InstrumentationTestCase {
 
     public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
-    }
-
-    public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
     }
 
     public void testStagefright_bug_27855419_CVE_2016_2463() throws Exception {
@@ -306,7 +321,6 @@ public class StagefrightTest extends InstrumentationTestCase {
 
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
 
-
         LooperThread t = new LooperThread(new Runnable() {
             @Override
             public void run() {
@@ -387,7 +401,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         } catch (IOException e) {
             // ignore
         }
-        MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         int numtracks = ex.getTrackCount();
         String rname = resources.getResourceEntryName(rid);
         Log.i(TAG, "start mediacodec test for: " + rname + ", which has " + numtracks + " tracks");
@@ -402,13 +415,15 @@ public class StagefrightTest extends InstrumentationTestCase {
                 continue;
             }
             String mime = format.getString(MediaFormat.KEY_MIME);
-            for (MediaCodecInfo info: codecList.getCodecInfos()) {
+            int numCodecs = MediaCodecList.getCodecCount();
+            for (int i = 0; i < numCodecs; i++) {
+                MediaCodecInfo info = MediaCodecList.getCodecInfoAt(i);
                 if (info.isEncoder()) {
                     continue;
                 }
                 try {
                     MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
-                    if (caps != null && caps.isFormatSupported(format)) {
+                    if (caps != null) {
                         matchingCodecs.add(info.getName());
                     }
                 } catch (IllegalArgumentException e) {
@@ -429,16 +444,21 @@ public class StagefrightTest extends InstrumentationTestCase {
                 if (mime.startsWith("video/")) {
                     surface = getDummySurface();
                 }
-                codec.configure(format, surface, null, 0);
-                codec.start();
+                try {
+                    codec.configure(format, surface, null, 0);
+                    codec.start();
+                } catch (Exception e) {
+                    Log.i(TAG, "Failed to start/configure:", e);
+                }
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
                 try {
+                    ByteBuffer [] inputBuffers = codec.getInputBuffers();
                     while (true) {
                         int flags = ex.getSampleFlags();
                         long time = ex.getSampleTime();
                         int bufidx = codec.dequeueInputBuffer(5000);
                         if (bufidx >= 0) {
-                            int n = ex.readSampleData(codec.getInputBuffer(bufidx), 0);
+                            int n = ex.readSampleData(inputBuffers[bufidx], 0);
                             if (n < 0) {
                                 flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                                 time = 0;
@@ -459,14 +479,8 @@ public class StagefrightTest extends InstrumentationTestCase {
                             codec.releaseOutputBuffer(status, true);
                         }
                     }
-                } catch (MediaCodec.CodecException ce) {
-                    if (ce.getErrorCode() == MediaCodec.CodecException.ERROR_RECLAIMED) {
-                        // This indicates that the remote service is dead, suggesting a crash.
-                        throw new RuntimeException(ce);
-                    }
-                    // Other errors ignored.
-                } catch (IllegalStateException ise) {
-                    // Other errors ignored.
+                } catch (Exception e) {
+                    // local exceptions ignored, not security issues
                 } finally {
                     codec.release();
                 }
@@ -477,6 +491,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         thr.stopLooper();
-
+        thr.join();
     }
 }
