@@ -440,7 +440,9 @@ public class ModuleRepo implements IModuleRepo {
     public List<IModuleDef> getModules(String serial, int shardIndex) {
         Collections.sort(mNonTokenModules, new ExecutionOrderComparator());
         List<IModuleDef> modules = getShard(mNonTokenModules, shardIndex, mTotalShards);
-
+        if (modules == null) {
+            return new ArrayList<IModuleDef>();
+        }
         long estimatedTime = 0;
         for (IModuleDef def : modules) {
             estimatedTime += def.getRuntimeHint();
@@ -478,6 +480,9 @@ public class ModuleRepo implements IModuleRepo {
      */
     protected List<IModuleDef> getShard(List<IModuleDef> fullList, int shardIndex, int totalShard) {
         List<List<IModuleDef>> res = LinearPartition.split(fullList, totalShard);
+        if (res.isEmpty()) {
+            return null;
+        }
         return res.get(shardIndex);
     }
 

@@ -348,8 +348,13 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
                     mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure, mMaxLogcatBytes);
             int moduleCount = modules.size();
-            CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
-                    (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
+            if (moduleCount == 0) {
+                CLog.logAndDisplay(LogLevel.INFO, "No module to run.");
+                return;
+            } else {
+                CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
+                        (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
+            }
             if (mRebootBeforeTest) {
                 CLog.d("Rebooting device before test starts as requested.");
                 mDevice.reboot();

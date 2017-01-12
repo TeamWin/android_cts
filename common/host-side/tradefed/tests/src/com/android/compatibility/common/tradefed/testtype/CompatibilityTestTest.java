@@ -20,6 +20,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.ITestLogger;
 import com.android.tradefed.result.ByteArrayInputStreamSource;
+import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.suite.checker.ISystemStatusChecker;
@@ -44,6 +45,7 @@ public class CompatibilityTestTest extends TestCase {
     private CompatibilityTest mTest;
     private ITestDevice mMockDevice;
     private ITestLogger mMockLogger;
+    private ITestInvocationListener mMockListener;
 
     @Override
     public void setUp() throws Exception {
@@ -56,6 +58,7 @@ public class CompatibilityTestTest extends TestCase {
         mMockDevice = EasyMock.createMock(ITestDevice.class);
         mTest.setDevice(mMockDevice);
         mMockLogger = EasyMock.createMock(ITestLogger.class);
+        mMockListener = EasyMock.createMock(ITestInvocationListener.class);
     }
 
     /**
@@ -233,7 +236,7 @@ public class CompatibilityTestTest extends TestCase {
      * Test {@link CompatibilityTest#runPostModuleCheck(String, List, ITestDevice, ITestLogger)}
      * is successful when no system checker fails.
      */
-    public void testrunPostModuleCheck() throws Exception {
+    public void testRunPostModuleCheck() throws Exception {
         List<ISystemStatusChecker> systemCheckers = new ArrayList<>();
         // add 2 inop status checkers.
         systemCheckers.add(new ISystemStatusChecker() {});
@@ -247,7 +250,7 @@ public class CompatibilityTestTest extends TestCase {
      * Test {@link CompatibilityTest#runPreModuleCheck(String, List, ITestDevice, ITestLogger)}
      * is failing and log the failure.
      */
-    public void testrunPostModuleCheck_failure() throws Exception {
+    public void testRunPostModuleCheck_failure() throws Exception {
         List<ISystemStatusChecker> systemCheckers = new ArrayList<>();
         // add 2 inop status checkers.
         systemCheckers.add(new ISystemStatusChecker() {});
@@ -266,5 +269,27 @@ public class CompatibilityTestTest extends TestCase {
         EasyMock.replay(mMockDevice, mMockLogger);
         mTest.runPostModuleCheck("FAKE_MODULE", systemCheckers, mMockDevice, mMockLogger);
         EasyMock.verify(mMockDevice, mMockLogger);
+    }
+
+    /**
+     * Test {@link CompatibilityTest#run(ITestInvocationListener)} returns with no further
+     * execution when there is no module to run.
+     */
+    public void testRun_noModules() throws Exception {
+        mTest = new CompatibilityTest(1, new ModuleRepo() {
+            @Override
+            public boolean isInitialized() {
+                return true;
+            }
+            @Override
+            public List<IModuleDef> getModules(String serial, int shardIndex) {
+                return new ArrayList<IModuleDef>();
+            }
+        }, 0);
+        mTest.setDevice(mMockDevice);
+        EasyMock.expect(mMockDevice.getSerialNumber()).andReturn("FAKE_SERIAL");
+        EasyMock.replay(mMockDevice, mMockListener);
+        mTest.run(mMockListener);
+        EasyMock.verify(mMockDevice, mMockListener);
     }
 }
