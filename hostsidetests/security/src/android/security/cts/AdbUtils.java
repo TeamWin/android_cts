@@ -40,8 +40,7 @@ public class AdbUtils {
      * @param device device for the command to be ran on
      * @return the console output from running the command
      */
-    public static String runCommandLine(String command, ITestDevice device) throws Exception
-    {
+    public static String runCommandLine(String command, ITestDevice device) throws Exception {
         return device.executeShellCommand(command);
     }
 
