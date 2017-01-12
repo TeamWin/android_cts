@@ -3095,6 +3095,36 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_routingnotification_trackRoutingMsg">AudioTrack rerouting</string>
     <string name="audio_routingnotification_recordRoutingMsg">AudioRecord rerouting</string>
 
+    <!-- USB Audio Peripheral Tests -->
+    <string name="profileLabel">Profile</string>
+    <string name="connectedPeripheral">Connected Peripheral</string>
+    <string name="audio_uap_attribs_test">USB Audio Peripheral Attributes Test</string>
+    <string name="uapPeripheralProfileStatus">Peripheral Profile Status</string>
+
+    <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
+    <string name="uapPlayTestInstructions">Connect the USB Audio Peripheral and press the PLAY button below.
+        Verify that a tone is correctly played.</string>
+    <string name="audio_uap_play_playBtn">Play</string>
+    <string name="audio_uap_play_stopBtn">Stop</string>
+
+    <string name="audio_uap_record_test">USB Audio Peripheral Record Test</string>
+    <string name="uapRecordTestInstructions">Connect the USB Audio Peripheral and press the RECORD or
+        RECORD LOOPBACK button below. Verify that a tone is correctly played.</string>
+    <string name="audio_uap_record_recordBtn">Record</string>
+    <string name="audio_uap_record_recordLoopbackBtn">Record Loopback</string>
+    <string name="audio_uap_record_stopBtn">Stop</string>
+
+    <string name="audio_uap_buttons_test">USB Audio Peripheral Buttons Test</string>
+    <string name="uapButtonTestInstructions">Connect the USB Audio headset with buttons
+        and press each transport/media button in turn.</string>
+
+    <string name="uapButtonsBtnALbl">Button A - play/pause</string>
+    <string name="uapButtonsBtnBLbl">Button B - volume up (+)</string>
+    <string name="uapButtonsBtnCLbl">Button C - volume down (-)</string>
+    <string name="uapButtonsBtnDLbl">Button D - voice assist</string>
+    <string name="uapButtonsRecognized">Recognized</string>
+    <string name="uapButtonsNotRecognized">Not Recognized</string>
+
     <!-- Audio general text -->
     <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
     <string name="audio_general_headset_no">No</string>

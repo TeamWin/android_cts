@@ -2678,6 +2678,46 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
             </activity>
 
+        <activity android:name=".audio.USBAudioPeripheralAttributesActivity"
+                  android:label="@string/audio_uap_attribs_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
+        </activity>
+
+        <activity android:name=".audio.USBAudioPeripheralPlayActivity"
+                  android:label="@string/audio_uap_play_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
+        </activity>
+
+        <activity android:name=".audio.USBAudioPeripheralRecordActivity"
+                  android:label="@string/audio_uap_record_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
+        </activity>
+
+        <activity android:name=".audio.USBAudioPeripheralButtonsActivity"
+                  android:label="@string/audio_uap_buttons_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
+        </activity>
+
         <activity android:name=".audio.AudioLoopbackActivity"
                   android:label="@string/audio_loopback_test">
             <intent-filter>
