@@ -117,9 +117,10 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
+            <!-- Per CDD 5.1 this is not required for Android Automotive ... and thus a failure would be a false negative and not interpreted as a compatibility violation -->
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
-        </activity>
+       </activity>
 
         <receiver android:name=".admin.TestDeviceAdminReceiver"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
@@ -361,6 +362,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
+            <!-- Per CDD 5.1 this is not required for Android Automotive ... and thus a failure would be a false negative and not interpreted as a compatibility violation -->
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
         </activity>
@@ -1392,6 +1394,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_jobscheduler" />
+            <!-- Per CDD 5.1 this is not required for Android Automotive ... and thus a failure would be a false negative and not interpreted as a compatibility violation -->
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.television" />
             <meta-data android:name="test_excluded_features"
@@ -1456,8 +1459,9 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
+            <!-- Per CDD 5.1 this is not required for Android Automotive ... and thus a failure would be a false negative and not interpreted as a compatibility violation -->
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
         </activity>
 
         <activity android:name=".tv.MockTvInputSettingsActivity">
