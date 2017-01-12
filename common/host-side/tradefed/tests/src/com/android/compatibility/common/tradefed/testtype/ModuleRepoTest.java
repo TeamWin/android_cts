@@ -252,6 +252,20 @@ public class ModuleRepoTest extends TestCase {
         checkArgs(module);
     }
 
+    /**
+     * Test that {@link ModuleRepo#getModules(String, int)} handles well all module being filtered.
+     */
+    public void testFiltering_empty() throws Exception {
+        Set<String> includeFilters = new HashSet<>();
+        Set<String> excludeFilters = new HashSet<>();
+        excludeFilters.add(MODULE_NAME_A);
+        excludeFilters.add(MODULE_NAME_B);
+        mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS,
+                includeFilters, excludeFilters, mMockBuildInfo);
+        List<IModuleDef> modules = mRepo.getModules(SERIAL1, 0);
+        assertEquals("Incorrect number of modules", 0, modules.size());
+    }
+
     public void testParsing() throws Exception {
         mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS, INCLUDES,
                 EXCLUDES, mMockBuildInfo);
