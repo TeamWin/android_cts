@@ -18,6 +18,8 @@ package com.android.cts.verifier.notifications;
 
 import static android.service.notification.NotificationListenerService.REASON_LISTENER_CANCEL;
 
+import static com.android.cts.verifier.notifications.MockAssistant.EXTRA_PAYLOAD;
+import static com.android.cts.verifier.notifications.MockAssistant.EXTRA_TAG;
 import static com.android.cts.verifier.notifications.MockAssistant.KEY_CHANNEL;
 import static com.android.cts.verifier.notifications.MockAssistant.KEY_FLAGS;
 import static com.android.cts.verifier.notifications.MockAssistant.KEY_ICON;
@@ -114,6 +116,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         tests.add(new UpdateLiveChannelTest());
         tests.add(new AdjustNotificationTest());
         tests.add(new AdjustEnqueuedNotificationTest());
+        tests.add(new SnoozeNotificationUntilContextTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotEnqueuedTest());
@@ -1280,6 +1283,97 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             MockAssistant.deleteChannel(mContext, THIS_PKG, channel.getId());
+            delay();
+        }
+    }
+
+    private class SnoozeNotificationUntilContextTest extends InteractiveTestCase {
+        String snoozeContextId1 = "hello1";
+        String snoozeContextId3 = "hello3";
+
+        boolean queryIds = false;
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nas_snooze_context);
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            if (status == READY) {
+                MockAssistant.snoozeUntilContext(mContext, mTag1, snoozeContextId1);
+                MockAssistant.snoozeUntilContext(mContext, mTag3, snoozeContextId3);
+                status = RETEST;
+            } else {
+                if (queryIds) {
+                    MockAssistant.probeAssistantSnoozeContext(mContext,
+                            new MockAssistant.BundleListResultCatcher() {
+                                @Override
+                                public void accept(ArrayList<Parcelable> result) {
+                                    boolean foundOne = false;
+                                    boolean foundTwo = false;
+                                    boolean foundThree = false;
+                                    for (Parcelable payloadData : result) {
+                                        Bundle payload = (Bundle) payloadData;
+                                        String tag = payload.getString(EXTRA_TAG);
+                                        String snoozeCriterionId = payload.getString(EXTRA_PAYLOAD);
+                                        if (mTag1.equals(tag)
+                                                && snoozeContextId1.equals(snoozeCriterionId)) {
+                                            foundOne = true;
+                                        }
+                                        if (mTag2.equals(tag)) {
+                                            foundTwo = true;
+                                        }
+                                        if (mTag3.equals(tag)
+                                                && snoozeContextId3.equals(snoozeCriterionId)) {
+                                            foundThree = true;
+                                        }
+                                    }
+                                    if (foundOne && foundThree && !foundTwo) {
+                                        status = PASS;
+                                    } else {
+                                        logFail();
+                                        status = FAIL;
+                                    }
+                                    delay();
+                                }
+                            });
+                } else {
+                    MockAssistant.probeListenerRemoved(mContext,
+                            new StringListResultCatcher() {
+                                @Override
+                                public void accept(List<String> result) {
+                                    if (result != null && result.size() != 0
+                                            && result.contains(mTag1)
+                                            && !result.contains(mTag2)
+                                            && result.contains(mTag3)) {
+                                        status = RETEST;
+                                        queryIds = true;
+                                    } else {
+                                        logFail();
+                                        status = FAIL;
+                                    }
+                                    delay();
+                                }
+                            });
+                }
+            }
+            delay();
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancel(mTag1, mId1);
+            mNm.cancel(mTag2, mId2);
+            mNm.cancel(mTag2, mId3);
+            MockAssistant.resetListenerData(mContext);
             delay();
         }
     }
