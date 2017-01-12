@@ -93,7 +93,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * This is the base class for print tests.
  */
-abstract class BasePrintTest {
+public abstract class BasePrintTest {
     private final static String LOG_TAG = "BasePrintTest";
 
     static final long OPERATION_TIMEOUT_MILLIS = 60000;
