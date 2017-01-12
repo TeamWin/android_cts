@@ -58,9 +58,7 @@ public class ManagementTest extends AndroidTestCase {
     public void testOtherProfilesEqualsBindTargetUsers() {
         UserHandle otherProfile = Utils.getOtherProfile(mContext);
 
-        DevicePolicyManager dpm = (DevicePolicyManager)
-                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        List<UserHandle> allowedTargetUsers = dpm.getBindDeviceAdminTargetUsers(
+        List<UserHandle> allowedTargetUsers = mDevicePolicyManager.getBindDeviceAdminTargetUsers(
                 AdminReceiver.getComponentName(mContext));
 
         assertEquals(1, allowedTargetUsers.size());
@@ -75,5 +73,9 @@ public class ManagementTest extends AndroidTestCase {
     public void testProvisionManagedProfileNotAllowed() {
         assertFalse(mDevicePolicyManager.isProvisioningAllowed(
                 DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE));
+    }
+
+    public void testWipeData() {
+        mDevicePolicyManager.wipeData(0);
     }
 }
