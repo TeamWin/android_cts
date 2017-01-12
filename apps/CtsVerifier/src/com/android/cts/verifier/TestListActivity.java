@@ -17,7 +17,9 @@
 package com.android.cts.verifier;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -126,8 +128,21 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
     }
 
     private void handleClearItemSelected() {
-        mAdapter.clearTestResults();
-        Toast.makeText(this, R.string.test_results_cleared, Toast.LENGTH_SHORT).show();
+        new AlertDialog.Builder(this)
+            .setMessage(R.string.test_results_clear_title)
+            .setPositiveButton(R.string.test_results_clear_yes,
+                    new DialogInterface.OnClickListener() {
+                       public void onClick(DialogInterface dialog, int id) {
+                            mAdapter.clearTestResults();
+                            Toast.makeText(
+                                TestListActivity.this,
+                                R.string.test_results_cleared,
+                                Toast.LENGTH_SHORT)
+                                    .show();
+                       }
+                   })
+            .setNegativeButton(R.string.test_results_clear_cancel, null)
+            .show();
     }
 
     private void handleViewItemSelected() {

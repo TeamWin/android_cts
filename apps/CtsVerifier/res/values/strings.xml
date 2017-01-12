@@ -41,6 +41,9 @@
     <string name="test_category_tv">TV</string>
     <string name="test_category_other">Other</string>
     <string name="clear">Clear</string>
+    <string name="test_results_clear_title">Remove all test results?</string>
+    <string name="test_results_clear_yes">Yes</string>
+    <string name="test_results_clear_cancel">Cancel</string>
     <string name="test_results_cleared">Test results cleared.</string>
     <string name="view">View</string>
     <string name="test_results_error">Couldn\'t create test results report.</string>
