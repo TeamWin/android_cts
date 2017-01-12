@@ -79,20 +79,43 @@ public class ClientTest {
     @Test
     public void testQuery() throws Exception {
         final Intent queryIntent = new Intent(ACTION_QUERY_ACTIVITY);
-        final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
-                .getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
-        if (resolveInfo == null || resolveInfo.size() == 0) {
-            fail("didn't resolve any intents");
+        // query without flags
+        {
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(0).activityInfo.name,
+                    is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(1).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).activityInfo.name,
+                    is("com.android.cts.normalapp.NormalActivity"));
         }
-        assertThat(2, is(resolveInfo.size()));
-        assertThat("com.android.cts.normalapp",
-                is(resolveInfo.get(0).activityInfo.packageName));
-        assertThat("com.android.cts.normalapp.ExposedActivity",
-                is(resolveInfo.get(0).activityInfo.name));
-        assertThat("com.android.cts.normalapp",
-                is(resolveInfo.get(1).activityInfo.packageName));
-        assertThat("com.android.cts.normalapp.NormalActivity",
-                is(resolveInfo.get(1).activityInfo.name));
+
+        // query asking for ephemeral apps [we should only get normal apps]
+        {
+            final int MATCH_EPHEMERAL = 0x00800000;
+
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(queryIntent, MATCH_EPHEMERAL);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(0).activityInfo.name,
+                    is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(1).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).activityInfo.name,
+                    is("com.android.cts.normalapp.NormalActivity"));
+        }
     }
 
     @Test
@@ -102,8 +125,10 @@ public class ClientTest {
             final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
             InstrumentationRegistry.getContext().startActivity(startNormalIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-            assertThat("NormalActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.activityName,
+                    is("NormalActivity"));
         }
 
         // start the normal activity; directed package
@@ -112,8 +137,10 @@ public class ClientTest {
             startNormalIntent.setPackage("com.android.cts.normalapp");
             InstrumentationRegistry.getContext().startActivity(startNormalIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-            assertThat("NormalActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.activityName,
+                    is("NormalActivity"));
         }
 
         // start the normal activity; directed component
@@ -123,8 +150,10 @@ public class ClientTest {
                     "com.android.cts.normalapp", "com.android.cts.normalapp.NormalActivity"));
             InstrumentationRegistry.getContext().startActivity(startNormalIntent, null /*options*/);
             final BroadcastResult testResult = getResult();
-            assertThat("com.android.cts.normalapp", is(testResult.packageName));
-            assertThat("NormalActivity", is(testResult.activityName));
+            assertThat(testResult.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.activityName,
+                    is("NormalActivity"));
         }
     }
 

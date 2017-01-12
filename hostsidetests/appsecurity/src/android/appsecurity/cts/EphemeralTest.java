@@ -83,7 +83,7 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testQuery");
     }
 
-    public void testNormalStartNorma() throws Exception {
+    public void testNormalStartNormal() throws Exception {
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testStartNormal");
     }
 
