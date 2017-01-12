@@ -34,10 +34,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
@@ -48,8 +46,6 @@ import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runner.notification.RunListener;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
-import vogar.ExpectationStore;
-import vogar.ModeId;
 
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_COUNT;
 import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_DEBUG;
@@ -69,11 +65,9 @@ import static com.android.cts.core.runner.AndroidJUnitRunnerConstants.ARGUMENT_T
  */
 public class CoreTestRunner extends Instrumentation {
 
-    public static final String TAG = "LibcoreTestRunner";
+    static final String TAG = "LibcoreTestRunner";
 
     private static final java.lang.String ARGUMENT_ROOT_CLASSES = "core-root-classes";
-
-    private static final String ARGUMENT_EXPECTATIONS = "core-expectations";
 
     private static final String ARGUMENT_CORE_LISTENER = "core-listener";
 
@@ -89,12 +83,6 @@ public class CoreTestRunner extends Instrumentation {
     private long testTimeout;
 
     /**
-     * The container for any test expectations.
-     */
-    @Nullable
-    private ExpectationStore expectationStore;
-
-    /**
      * The list of tests to run.
      */
     private TestList testList;
@@ -103,6 +91,7 @@ public class CoreTestRunner extends Instrumentation {
      * The list of {@link RunListener} classes to create.
      */
     private List<Class<? extends RunListener>> listenerClasses;
+    private Filter expectationFilter;
 
     @Override
     public void onCreate(final Bundle args) {
@@ -129,15 +118,7 @@ public class CoreTestRunner extends Instrumentation {
         this.logOnly = "true".equalsIgnoreCase(args.getString(ARGUMENT_LOG_ONLY)) || testCountOnly;
         this.testTimeout = parseUnsignedLong(args.getString(ARGUMENT_TIMEOUT), ARGUMENT_TIMEOUT);
 
-        try {
-            // Get the set of resource names containing the expectations.
-            Set<String> expectationResources = new LinkedHashSet<>(
-                    getExpectationResourcePaths(args));
-            expectationStore = ExpectationStore.parseResources(
-                    getClass(), expectationResources, ModeId.DEVICE);
-        } catch (IOException e) {
-            Log.e(TAG, "Could not initialize ExpectationStore: ", e);
-        }
+        expectationFilter = new ExpectationBasedFilter(args);
 
         // The test can be run specifying a list of tests to run, or as cts-tradefed does it,
         // by passing a fileName with a test to run on each line.
@@ -222,11 +203,7 @@ public class CoreTestRunner extends Instrumentation {
         start();
     }
 
-    protected List<String> getExpectationResourcePaths(Bundle args) {
-        return CLASS_LIST_SPLITTER.splitToList(args.getString(ARGUMENT_EXPECTATIONS));
-    }
-
-    protected List<String> getRootClassNames(Bundle args) {
+    private List<String> getRootClassNames(Bundle args) {
         String rootClasses = args.getString(ARGUMENT_ROOT_CLASSES);
         List<String> roots;
         if (rootClasses == null) {
@@ -262,10 +239,8 @@ public class CoreTestRunner extends Instrumentation {
                 Filterable filterable = (Filterable) runner;
 
                 // Filter out all the tests that are expected to fail.
-                Filter filter = new TestFilter(testList, expectationStore);
-
                 try {
-                    filterable.filter(filter);
+                    filterable.filter(expectationFilter);
                 } catch (NoTestsRemainException e) {
                     // Sometimes filtering will remove all tests but we do not care about that.
                 }
