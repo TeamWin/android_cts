@@ -19,6 +19,9 @@ import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.app.Activity;
 import android.app.UiAutomation;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
@@ -29,6 +32,9 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import android.view.inputmethod.InputMethodManager;
 
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -49,6 +55,12 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
      * The timeout since the last accessibility event to consider the device idle.
      */
     private static final long TIMEOUT_ACCESSIBILITY_STATE_IDLE = 500;
+
+    /**
+     * The timeout since {@link InputMethodManager#showSoftInput(View, int, ResultReceiver)}
+     * is called to {@link ResultReceiver#onReceiveResult(int, Bundle)} is called back.
+     */
+    private static final int TIMEOUT_SHOW_SOFTINPUT_RESULT = 2000;
 
     private static final int SHOW_MODE_AUTO = 0;
     private static final int SHOW_MODE_HIDDEN = 1;
@@ -132,7 +144,13 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         // The soft keyboard should be in its default mode.
         assertEquals(SHOW_MODE_AUTO, mKeyboardController.getShowMode());
 
-        forceImeToBeShown();
+        if (!tryShowSoftInput()) {
+            // If the current (default) IME declined to show its window, then there is nothing we
+            // can test here.
+            // TODO: Create a mock IME so that we can test only the framework behavior.
+            return;
+        }
+
         waitForImePresentToBe(true);
         // Request the keyboard be hidden.
         assertTrue(mKeyboardController.setShowMode(SHOW_MODE_HIDDEN));
@@ -201,13 +219,46 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         }
     }
 
-    private void forceImeToBeShown() {
+    /**
+     * Tries to call {@link InputMethodManager#hideSoftInputFromWindow(IBinder, int)} to see if
+     * software keyboard is shown as a result or not.
+     * @return {@code true} if the current input method reported that it is currently shown
+     * @throws Exception when the result is unknown, including the system did not return the result
+     *                   within {@link #TIMEOUT_SHOW_SOFTINPUT_RESULT}
+     */
+    private boolean tryShowSoftInput() throws Exception {
+        final BlockingQueue<Integer> queue = new ArrayBlockingQueue<>(1);
+
         getInstrumentation().runOnMainSync(() -> {
             Activity activity = getActivity();
+            ResultReceiver resultReceiver =
+                    new ResultReceiver(new Handler(activity.getMainLooper())) {
+                            @Override
+                            protected void onReceiveResult(int resultCode, Bundle resultData) {
+                                queue.add(resultCode);
+                            }
+                    };
             View editText = activity.findViewById(R.id.edit_text);
             activity.getSystemService(InputMethodManager.class)
-                    .showSoftInput(editText, InputMethodManager.SHOW_FORCED);
+                    .showSoftInput(editText, InputMethodManager.SHOW_FORCED, resultReceiver);
         });
+
+        Integer result;
+        try {
+            result = queue.poll(TIMEOUT_SHOW_SOFTINPUT_RESULT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new Exception("Failed to get the result of showSoftInput().", e);
+        }
+        if (result == null) {
+            throw new Exception("Failed to get the result of showSoftInput() within timeout.");
+        }
+        switch (result) {
+            case InputMethodManager.RESULT_SHOWN:
+            case InputMethodManager.RESULT_UNCHANGED_SHOWN:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**
