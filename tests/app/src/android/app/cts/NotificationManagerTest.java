@@ -40,6 +40,7 @@ import java.util.Arrays;
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
+    final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
     private NotificationManager mNotificationManager;
     private String mId;
@@ -53,15 +54,25 @@ public class NotificationManagerTest extends AndroidTestCase {
                 Context.NOTIFICATION_SERVICE);
         // clear the deck so that our getActiveNotifications results are predictable
         mNotificationManager.cancelAll();
+        mNotificationManager.createNotificationChannel(new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
         mNotificationManager.cancelAll();
+        List<NotificationChannel> channels = mNotificationManager.getNotificationChannels();
+        // Delete all channels.
+        for (NotificationChannel nc : channels) {
+            if (NotificationChannel.DEFAULT_CHANNEL_ID.equals(nc.getId())) {
+                continue;
+            }
+            mNotificationManager.deleteNotificationChannel(nc.getId());
+        }
     }
 
-    public void testCreateChannel() throws InterruptedException {
+    public void testCreateChannel() throws Exception {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.enableVibration(true);
@@ -70,78 +81,58 @@ public class NotificationManagerTest extends AndroidTestCase {
         channel.setLights(true);
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
-        try {
-            mNotificationManager.createNotificationChannel(channel);
-            final NotificationChannel createdChannel =
-                    mNotificationManager.getNotificationChannel(mId);
-            compareChannels(channel, createdChannel);
-            // Lockscreen Visibility and canBypassDnd no longer settable.
-            assertTrue(createdChannel.getLockscreenVisibility() != Notification.VISIBILITY_SECRET);
-            assertFalse(createdChannel.canBypassDnd());
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
+        mNotificationManager.createNotificationChannel(channel);
+        final NotificationChannel createdChannel =
+                mNotificationManager.getNotificationChannel(mId);
+        compareChannels(channel, createdChannel);
+        // Lockscreen Visibility and canBypassDnd no longer settable.
+        assertTrue(createdChannel.getLockscreenVisibility() != Notification.VISIBILITY_SECRET);
+        assertFalse(createdChannel.canBypassDnd());
     }
 
-    public void testCreateSameChannelDoesNotUpdate() throws InterruptedException {
+    public void testCreateSameChannelDoesNotUpdate() throws Exception {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
-        try {
-            mNotificationManager.createNotificationChannel(channel);
-            final NotificationChannel channelDupe =
-                    new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
-            mNotificationManager.createNotificationChannel(channelDupe);
-            final NotificationChannel createdChannel =
-                    mNotificationManager.getNotificationChannel(mId);
-            compareChannels(channel, createdChannel);
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
+        mNotificationManager.createNotificationChannel(channel);
+        final NotificationChannel channelDupe =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
+        mNotificationManager.createNotificationChannel(channelDupe);
+        final NotificationChannel createdChannel =
+                mNotificationManager.getNotificationChannel(mId);
+        compareChannels(channel, createdChannel);
     }
 
-    public void testCreateChannelAlreadyExistsNoOp() {
+    public void testCreateChannelAlreadyExistsNoOp() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
-        try {
-            mNotificationManager.createNotificationChannel(channel);
-            NotificationChannel channelDupe =
-                    new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
-            mNotificationManager.createNotificationChannel(channelDupe);
-            compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
+        mNotificationManager.createNotificationChannel(channel);
+        NotificationChannel channelDupe =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
+        mNotificationManager.createNotificationChannel(channelDupe);
+        compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
-    public void testCreateChannelWithGroup() {
+    public void testCreateChannelWithGroup() throws Exception {
         NotificationChannelGroup ncg = new NotificationChannelGroup("g", "n");
         mNotificationManager.createNotificationChannelGroup(ncg);
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setGroup(ncg.getId());
-        try {
-            mNotificationManager.createNotificationChannel(channel);
-            compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
+        mNotificationManager.createNotificationChannel(channel);
+        compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
-    public void testCreateChannelWithBadGroup() {
+    public void testCreateChannelWithBadGroup() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setGroup("garbage");
         try {
-            try {
-                mNotificationManager.createNotificationChannel(channel);
-                fail("Created notification with bad group");
-            } catch (IllegalArgumentException e) {}
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
+            mNotificationManager.createNotificationChannel(channel);
+            fail("Created notification with bad group");
+        } catch (IllegalArgumentException e) {}
     }
 
-    public void testCreateChannelInvalidImportance() {
+    public void testCreateChannelInvalidImportance() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_UNSPECIFIED);
         try {
@@ -151,7 +142,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testDeleteChannel() {
+    public void testDeleteChannel() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_LOW);
         mNotificationManager.createNotificationChannel(channel);
@@ -160,7 +151,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertNull(mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
-    public void testCannotDeleteDefaultChannel() {
+    public void testCannotDeleteDefaultChannel() throws Exception {
         try {
             mNotificationManager.deleteNotificationChannel(NotificationChannel.DEFAULT_CHANNEL_ID);
             fail("Deleted default channel");
@@ -169,7 +160,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testGetChannel() {
+    public void testGetChannel() throws Exception {
         NotificationChannel channel1 =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         NotificationChannel channel2 =
@@ -181,29 +172,22 @@ public class NotificationManagerTest extends AndroidTestCase {
         NotificationChannel channel4 =
                 new NotificationChannel(
                         UUID.randomUUID().toString(), "name4", NotificationManager.IMPORTANCE_MIN);
-        try {
-            mNotificationManager.createNotificationChannel(channel1);
-            mNotificationManager.createNotificationChannel(channel2);
-            mNotificationManager.createNotificationChannel(channel3);
-            mNotificationManager.createNotificationChannel(channel4);
+        mNotificationManager.createNotificationChannel(channel1);
+        mNotificationManager.createNotificationChannel(channel2);
+        mNotificationManager.createNotificationChannel(channel3);
+        mNotificationManager.createNotificationChannel(channel4);
 
-            compareChannels(channel2,
-                    mNotificationManager.getNotificationChannel(channel2.getId()));
-            compareChannels(channel3,
-                    mNotificationManager.getNotificationChannel(channel3.getId()));
-            compareChannels(channel1,
-                    mNotificationManager.getNotificationChannel(channel1.getId()));
-            compareChannels(channel4,
-                    mNotificationManager.getNotificationChannel(channel4.getId()));
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel1.getId());
-            mNotificationManager.deleteNotificationChannel(channel2.getId());
-            mNotificationManager.deleteNotificationChannel(channel3.getId());
-            mNotificationManager.deleteNotificationChannel(channel4.getId());
-        }
+        compareChannels(channel2,
+                mNotificationManager.getNotificationChannel(channel2.getId()));
+        compareChannels(channel3,
+                mNotificationManager.getNotificationChannel(channel3.getId()));
+        compareChannels(channel1,
+                mNotificationManager.getNotificationChannel(channel1.getId()));
+        compareChannels(channel4,
+                mNotificationManager.getNotificationChannel(channel4.getId()));
     }
 
-    public void testGetChannels() {
+    public void testGetChannels() throws Exception {
         NotificationChannel channel1 =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         NotificationChannel channel2 =
@@ -221,51 +205,42 @@ public class NotificationManagerTest extends AndroidTestCase {
         channelMap.put(channel2.getId(), channel2);
         channelMap.put(channel3.getId(), channel3);
         channelMap.put(channel4.getId(), channel4);
-        try {
-            mNotificationManager.createNotificationChannel(channel1);
-            mNotificationManager.createNotificationChannel(channel2);
-            mNotificationManager.createNotificationChannel(channel3);
-            mNotificationManager.createNotificationChannel(channel4);
+        mNotificationManager.createNotificationChannel(channel1);
+        mNotificationManager.createNotificationChannel(channel2);
+        mNotificationManager.createNotificationChannel(channel3);
+        mNotificationManager.createNotificationChannel(channel4);
 
-            mNotificationManager.deleteNotificationChannel(channel3.getId());
+        mNotificationManager.deleteNotificationChannel(channel3.getId());
 
-            List<NotificationChannel> channels = mNotificationManager.getNotificationChannels();
-            for (NotificationChannel nc : channels) {
-                if (NotificationChannel.DEFAULT_CHANNEL_ID.equals(nc.getId())) {
-                    continue;
-                }
-                assertFalse(channel3.getId().equals(nc.getId()));
-                compareChannels(channelMap.get(nc.getId()), nc);
+        List<NotificationChannel> channels = mNotificationManager.getNotificationChannels();
+        for (NotificationChannel nc : channels) {
+            if (NotificationChannel.DEFAULT_CHANNEL_ID.equals(nc.getId())) {
+                continue;
             }
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel1.getId());
-            mNotificationManager.deleteNotificationChannel(channel2.getId());
-            mNotificationManager.deleteNotificationChannel(channel3.getId());
-            mNotificationManager.deleteNotificationChannel(channel4.getId());
+            if (NOTIFICATION_CHANNEL_ID.equals(nc.getId())) {
+                continue;
+            }
+            assertFalse(channel3.getId().equals(nc.getId()));
+            compareChannels(channelMap.get(nc.getId()), nc);
         }
     }
 
-    public void testRecreateDeletedChannel() {
+    public void testRecreateDeletedChannel() throws Exception {
         NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setShowBadge(true);
         NotificationChannel newChannel = new NotificationChannel(
                 channel.getId(), channel.getName(), NotificationManager.IMPORTANCE_HIGH);
-        try {
-            mNotificationManager.createNotificationChannel(channel);
-            mNotificationManager.deleteNotificationChannel(channel.getId());
+        mNotificationManager.createNotificationChannel(channel);
+        mNotificationManager.deleteNotificationChannel(channel.getId());
 
-            mNotificationManager.createNotificationChannel(newChannel);
+        mNotificationManager.createNotificationChannel(newChannel);
 
-            compareChannels(channel,
-                    mNotificationManager.getNotificationChannel(newChannel.getId()));
-
-        } finally {
-            mNotificationManager.deleteNotificationChannel(channel.getId());
-        }
+        compareChannels(channel,
+                mNotificationManager.getNotificationChannel(newChannel.getId()));
     }
 
-    public void testNotify() {
+    public void testNotify() throws Exception {
         mNotificationManager.cancelAll();
 
         final int id = 1;
@@ -284,7 +259,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testCancel() {
+    public void testCancel() throws Exception {
         final int id = 9;
         sendNotification(id, R.drawable.black);
         mNotificationManager.cancel(id);
@@ -294,7 +269,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testCancelAll() {
+    public void testCancelAll() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
         sendNotification(3, R.drawable.yellow);
@@ -309,11 +284,15 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         mNotificationManager.cancelAll();
 
-        StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-        assertTrue("notification list was not empty after cancelAll", sbns.length == 0);
+        for (int id = 1; id <= 3; id++) {
+            if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
+                fail("Failed to cancel notification id=" + id);
+            }
+        }
+
     }
 
-    public void testNotifyWithTimeout() {
+    public void testNotifyWithTimeout() throws Exception {
         mNotificationManager.cancelAll();
         final int id = 128;
         final long timeout = 1000;
@@ -338,7 +317,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         checkNotificationExistence(id, false);
     }
 
-    private void sendNotification(final int id, final int icon) {
+    private void sendNotification(final int id, final int icon) throws Exception {
         final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -346,13 +325,14 @@ public class NotificationManagerTest extends AndroidTestCase {
         intent.setAction(Intent.ACTION_MAIN);
 
         final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
-        final Notification notification = new Notification.Builder(mContext)
-                .setSmallIcon(icon)
-                .setWhen(System.currentTimeMillis())
-                .setContentTitle("notify#" + id)
-                .setContentText("This is #" + id + "notification  ")
-                .setContentIntent(pendingIntent)
-                .build();
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(icon)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentTitle("notify#" + id)
+                    .setContentText("This is #" + id + "notification  ")
+                    .setContentIntent(pendingIntent)
+                    .build();
         mNotificationManager.notify(id, notification);
 
         if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
