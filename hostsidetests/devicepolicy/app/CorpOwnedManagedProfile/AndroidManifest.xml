@@ -35,7 +35,7 @@
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE"/>
             </intent-filter>
         </receiver>
-        <activity android:name=".provisioning.StartProvisioningActivity"></activity>
+        <activity android:name="com.android.compatibility.common.util.devicepolicy.provisioning.StartProvisioningActivity"/>
 
         <service android:name=".CrossUserService"
                 android:exported="false">

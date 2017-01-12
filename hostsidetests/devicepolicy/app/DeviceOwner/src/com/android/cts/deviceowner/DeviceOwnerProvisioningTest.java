@@ -15,12 +15,16 @@
  */
 package com.android.cts.deviceowner;
 
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
 import static java.util.stream.Collectors.toList;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
-import com.android.cts.deviceowner.provisioning.SilentProvisioningTestManager;
+
+import com.android.compatibility.common.util.devicepolicy.provisioning.SilentProvisioningTestManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,15 +71,15 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
     }
 
     private void deviceOwnerProvision() throws Exception {
+        Intent intent = new Intent(ACTION_PROVISION_MANAGED_DEVICE)
+                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                        BasicAdminReceiver.getComponentName(getContext()))
+                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
         SilentProvisioningTestManager provisioningManager =
-                SilentProvisioningTestManager.getInstance();
-        provisioningManager.startProvisioning(getContext());
-        Log.i(TAG, "Start provisioning");
-
-        assertTrue(provisioningManager.waitForProvisioningResult(getContext()));
+                new SilentProvisioningTestManager(getContext());
+        assertTrue(provisioningManager.startProvisioningAndWait(intent));
         Log.i(TAG, "device owner provisioning successful");
     }
-
 
     private static List<String> getPackageNameList(List<ApplicationInfo> appInfos) {
         return appInfos.stream()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.comp.provisioning;
-
-import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
+package com.android.compatibility.common.util.devicepolicy.provisioning;
 
 import android.app.Activity;
-import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.WindowManager;
-import com.android.cts.comp.AdminReceiver;
 
+/**
+ * Must register it in AndroidManifest.xml
+ * <activity android:name="com.android.compatibility.common.util.devicepolicy.provisioning.StartProvisioningActivity"></activity>
+ */
 public class StartProvisioningActivity extends Activity {
     private static final int REQUEST_CODE = 1;
     private static final String TAG = "StartProvisionActivity";
+
+    public static final String EXTRA_BOOLEAN_CALLBACK = "EXTRA_BOOLEAN_CALLBACK";
+
+    IBooleanCallback mResultCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,14 +45,13 @@ public class StartProvisioningActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        mResultCallback = IBooleanCallback.Stub.asInterface(
+                getIntent().getExtras().getBinder(EXTRA_BOOLEAN_CALLBACK));
+        Log.i(TAG, "result callback class name " + mResultCallback);
+
         // Only provision it if the activity is not re-created
         if (savedInstanceState == null) {
-            Intent provisioningIntent = new Intent(ACTION_PROVISION_MANAGED_PROFILE)
-                    .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-                            AdminReceiver.getComponentName(this))
-                    .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true)
-                    // this flag for Corp owned only
-                    .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
+            Intent provisioningIntent = getIntent().getParcelableExtra(Intent.EXTRA_INTENT);
 
             startActivityForResult(provisioningIntent, REQUEST_CODE);
             Log.i(TAG, "Start provisioning intent");
@@ -58,10 +62,11 @@ public class StartProvisioningActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE) {
             try {
-                SilentProvisioningTestManager.getInstance().notifyProvisioningResult(
-                        resultCode == RESULT_OK);
-            } catch (InterruptedException e) {
-                Log.e(TAG, "notifyProvisioningResult", e);
+                boolean result = resultCode == RESULT_OK;
+                mResultCallback.onResult(result);
+                Log.i(TAG, "onActivityResult result: " + result);
+            } catch (RemoteException e) {
+                Log.e(TAG, "onActivityResult", e);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);

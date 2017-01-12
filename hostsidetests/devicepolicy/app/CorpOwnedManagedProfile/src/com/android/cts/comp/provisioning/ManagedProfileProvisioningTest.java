@@ -15,25 +15,30 @@
  */
 package com.android.cts.comp.provisioning;
 
-import com.android.cts.comp.Utils;
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.Intent;
 import android.test.AndroidTestCase;
-import android.util.Log;
-import com.android.cts.comp.AdminReceiver;
 
+import com.android.compatibility.common.util.devicepolicy.provisioning.SilentProvisioningTestManager;
+import com.android.cts.comp.AdminReceiver;
 
 public class ManagedProfileProvisioningTest extends AndroidTestCase {
     private static final String TAG = "ManagedProfileProvisioningTest";
 
     public void testProvisioningCorpOwnedManagedProfile() throws Exception {
-        SilentProvisioningTestManager provisioningManager =
-                SilentProvisioningTestManager.getInstance();
-        provisioningManager.reset();
-        provisioningManager.startProvisioning(getContext());
-        Log.i(TAG, "Start provisioning");
+        Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE)
+            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                    AdminReceiver.getComponentName(getContext()))
+            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true)
+            // this flag for Corp owned only
+            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
 
-        assertTrue(provisioningManager.waitForProvisioningResult(getContext()));
+        SilentProvisioningTestManager provisioningManager =
+                new SilentProvisioningTestManager(getContext());
+        assertTrue(provisioningManager.startProvisioningAndWait(intent));
     }
 
     // This is only necessary if the profile is created via managed provisioning flow.
