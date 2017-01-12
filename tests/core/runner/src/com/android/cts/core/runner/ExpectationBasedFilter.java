@@ -15,8 +15,13 @@
  */
 package com.android.cts.core.runner;
 
+import android.os.Bundle;
 import android.util.Log;
+import com.google.common.base.Splitter;
+import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.junit.runner.Description;
 import org.junit.runner.manipulation.Filter;
@@ -24,6 +29,7 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.Suite;
 import vogar.Expectation;
 import vogar.ExpectationStore;
+import vogar.ModeId;
 import vogar.Result;
 
 /**
@@ -51,25 +57,38 @@ import vogar.Result;
  *     ...
  * </pre>
  *
- * <p>And also a flatter hierarchy that looks like this (in CTSv1):
- * Runner
- * Test
- * ...
- * ...
- *
  * <p>It cannot filter out the non-leaf nodes in the hierarchy, i.e. {@link Suite} and
  * {@link ParentRunner}, as that would prevent it from traversing the hierarchy and finding
  * the leaf nodes.
  */
-class TestFilter extends Filter {
+class ExpectationBasedFilter extends Filter {
+
+    static final String TAG = "ExpectationBasedFilter";
+
+    private static final String ARGUMENT_EXPECTATIONS = "core-expectations";
+
+    private static final Splitter CLASS_LIST_SPLITTER = Splitter.on(',').trimResults();
 
     private final ExpectationStore expectationStore;
 
-    private final TestList testList;
+    private static List<String> getExpectationResourcePaths(Bundle args) {
+        return CLASS_LIST_SPLITTER.splitToList(args.getString(ARGUMENT_EXPECTATIONS));
+    }
 
-    public TestFilter(TestList testList, @Nullable ExpectationStore expectationStore) {
+    public ExpectationBasedFilter(Bundle args) {
+        ExpectationStore expectationStore = null;
+        try {
+            // Get the set of resource names containing the expectations.
+            Set<String> expectationResources = new LinkedHashSet<>(
+                getExpectationResourcePaths(args));
+            Log.i(TAG, "Loading expectations from: " + expectationResources);
+            expectationStore = ExpectationStore.parseResources(
+                getClass(), expectationResources, ModeId.DEVICE);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not initialize ExpectationStore: ", e);
+        }
+
         this.expectationStore = expectationStore;
-        this.testList = testList;
     }
 
     @Override
@@ -82,11 +101,6 @@ class TestFilter extends Filter {
             String className = testDescription.getClassName();
             String methodName = testDescription.getMethodName();
             String testName = className + "#" + methodName;
-
-            // If the test isn't in the list of tests to run then do not run it.
-            if (!testList.shouldRunTest(testName)) {
-                return false;
-            }
 
             if (expectationStore != null) {
                 Expectation expectation = expectationStore.get(testName);
