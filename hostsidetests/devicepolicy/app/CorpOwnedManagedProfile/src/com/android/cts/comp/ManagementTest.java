@@ -78,4 +78,10 @@ public class ManagementTest extends AndroidTestCase {
     public void testWipeData() {
         mDevicePolicyManager.wipeData(0);
     }
+
+    public void testCanRemoveManagedProfile() {
+        UserHandle profileUserHandle = Utils.getOtherProfile(mContext);
+        assertTrue(mDevicePolicyManager.removeUser(AdminReceiver.getComponentName(mContext),
+                profileUserHandle));
+    }
 }

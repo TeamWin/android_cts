@@ -174,6 +174,36 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
         assertTrue(getDevice().removeUser(mProfileUserId));
     }
 
+    public void testCanRemoveProfileEvenIfDisallowRemoveUserSet() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK2, COMP_DPC_PKG2, COMP_DPC_ADMIN2);
+        addDisallowRemoveUserRestriction();
+        // DISALLOW_REMOVE_USER only affects users, not profiles.
+        assertTrue(getDevice().removeUser(mProfileUserId));
+        assertUserGetsRemoved(mProfileUserId);
+    }
+
+    public void testDoCanRemoveProfileEvenIfUserRestrictionSet() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        setupManagedProfile(COMP_DPC_APK, COMP_DPC_PKG, COMP_DPC_ADMIN);
+        addDisallowRemoveUserRestriction();
+        addDisallowRemoveManagedProfileRestriction();
+
+        // The DO should be allowed to remove the managed profile, even though disallow remove user
+        // and disallow remove managed profile restrictions are set.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testCanRemoveManagedProfile",
+                mPrimaryUserId);
+        assertUserGetsRemoved(mProfileUserId);
+    }
+
+
     public void testCannotAddProfileIfRestrictionSet() throws Exception {
         if (!mHasFeature) {
             return;
@@ -358,6 +388,17 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 USER_RESTRICTION_TEST,
                 "testAddDisallowRemoveManagedProfileRestriction",
+                mPrimaryUserId);
+    }
+
+    /**
+     * Add {@link android.os.UserManager#DISALLOW_REMOVE_USER}.
+     */
+    private void addDisallowRemoveUserRestriction() throws Exception {
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                USER_RESTRICTION_TEST,
+                "testAddDisallowRemoveUserRestriction",
                 mPrimaryUserId);
     }
 
