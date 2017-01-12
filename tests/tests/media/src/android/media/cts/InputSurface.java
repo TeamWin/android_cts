@@ -36,8 +36,6 @@ import android.view.Surface;
 class InputSurface {
     private static final String TAG = "InputSurface";
 
-    private static final int EGL_RECORDABLE_ANDROID = 0x3142;
-
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
     private EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
     private EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
@@ -80,7 +78,7 @@ class InputSurface {
                 EGL14.EGL_GREEN_SIZE, 8,
                 EGL14.EGL_BLUE_SIZE, 8,
                 EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-                EGL_RECORDABLE_ANDROID, 1,
+                EGLExt.EGL_RECORDABLE_ANDROID, 1,
                 EGL14.EGL_NONE
         };
         int[] numConfigs = new int[1];
