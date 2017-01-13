@@ -50,6 +50,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IShardableTest;
 import com.android.tradefed.testtype.IStrictShardableTest;
+import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
@@ -81,7 +82,8 @@ import java.util.concurrent.TimeUnit;
  */
 @OptionClass(alias = "compatibility")
 public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildReceiver,
-        IStrictShardableTest, ISystemStatusCheckerReceiver {
+        IStrictShardableTest, ISystemStatusCheckerReceiver, ITestCollector {
+
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     public static final String SUBPLAN_OPTION = "subplan";
@@ -262,6 +264,12 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     private List<ISystemStatusChecker> mListCheckers = null;
 
+    @Option(name = "collect-tests-only",
+            description = "Only invoke the suite to collect list of applicable test cases. All "
+                    + "test run callbacks will be triggered, but test execution will not be "
+                    + "actually carried out.")
+    private Boolean mCollectTestsOnly = null;
+
     private int mTotalShards;
     private Integer mShardIndex = null;
     private IModuleRepo mModuleRepo;
@@ -386,6 +394,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 module.setBuild(mBuildHelper.getBuildInfo());
                 module.setDevice(mDevice);
                 module.setPreparerWhitelist(mPreparerWhitelist);
+                // don't set a value if unspecified
+                if (mCollectTestsOnly != null) {
+                    module.setCollectTestsOnly(mCollectTestsOnly);
+                }
                 isPrepared &= (module.prepare(mSkipPreconditions, mPreconditionArgs));
             }
             if (!isPrepared) {
@@ -755,5 +767,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Override
     public void setSystemStatusChecker(List<ISystemStatusChecker> systemCheckers) {
         mListCheckers = systemCheckers;
+    }
+
+    public void setCollectTestsOnly(boolean collectTestsOnly) {
+        mCollectTestsOnly = collectTestsOnly;
     }
 }
