@@ -217,7 +217,7 @@ public class ShapeDrawableTest {
         assertNull(shapeDrawable.getShaderFactory());
     }
 
-    private static class MockShaderFactory extends ShaderFactory {
+    public static class MockShaderFactory extends ShaderFactory {
         public Shader resize(int width, int height) {
             return null;
         }
@@ -306,7 +306,7 @@ public class ShapeDrawableTest {
         shapeDrawable.onDraw(null, null, new Paint());
     }
 
-    private static class MockShape extends Shape {
+    public static class MockShape extends Shape {
         @Override
         public void draw(Canvas canvas, Paint paint) {
         }
