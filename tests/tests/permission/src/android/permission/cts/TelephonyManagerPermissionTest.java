@@ -31,6 +31,7 @@ import android.telephony.TelephonyManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import java.util.Collections;
 
 /**
  * Test the non-location-related functionality of TelephonyManager.
@@ -265,6 +266,48 @@ public class TelephonyManagerPermissionTest {
         try {
             String imei = mTelephonyManager.getImei(0);
             fail("Got IMEI: " + imei);
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Verify that TelephonyManager.setAllowedCarriers requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#MODIFY_PHONE_STATE}.
+     */
+    @Test
+    public void testSetAllowedCarriers() {
+        if (!mHasTelephony
+                || !getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_TELEPHONY_CARRIERLOCK)) {
+            return;
+        }
+        try {
+            mTelephonyManager.setAllowedCarriers(0, Collections.emptyList());
+            fail("Able to set allowed carriers");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Verify that TelephonyManager.getAllowedCarriers requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#READ_PRIVILEGED_PHONE_STATE}.
+     */
+    @Test
+    public void testGetAllowedCarriers() {
+        if (!mHasTelephony
+                || !getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_TELEPHONY_CARRIERLOCK)) {
+            return;
+        }
+        try {
+            mTelephonyManager.getAllowedCarriers(0);
+            fail("Able to get allowed carriers");
         } catch (SecurityException e) {
             // expected
         }
