@@ -15,6 +15,12 @@
  */
 package com.android.cts.managedprofile;
 
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.admin.DeviceAdminReceiver;
@@ -22,7 +28,10 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import 	android.support.test.InstrumentationRegistry;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.PersistableBundle;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.util.Log;
 
@@ -33,6 +42,14 @@ import org.junit.Test;
 @SmallTest
 public class ProvisioningTest {
     private static final String TAG = ProvisioningTest.class.getSimpleName();
+
+    private static final String ADMIN_EXTRAS_BUNDLE_FILENAME = "admin_extras_bundle.txt";
+    private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = new PersistableBundle();
+    private static final String ADMIN_EXTRAS_BUNDLE_KEY_1 = "KEY_1";
+    private static final String ADMIN_EXTRAS_BUNDLE_VALUE_1 = "VALUE_1";
+    static {
+        ADMIN_EXTRAS_BUNDLE.putString(ADMIN_EXTRAS_BUNDLE_KEY_1, ADMIN_EXTRAS_BUNDLE_VALUE_1);
+    }
 
     private static final ComponentName ADMIN_RECEIVER_COMPONENT = new ComponentName(
             ProvisioningAdminReceiver.class.getPackage().getName(),
@@ -46,15 +63,16 @@ public class ProvisioningTest {
             getManager(context).setProfileName(ADMIN_RECEIVER_COMPONENT, "Managed Profile");
             getManager(context).setProfileEnabled(ADMIN_RECEIVER_COMPONENT);
             Log.i(TAG, "onProfileProvisioningComplete");
-        }
 
+            saveBundle(context, intent.getParcelableExtra(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE));
+        }
     }
 
     private Context mContext;
     private DevicePolicyManager mDpm;
 
     @Before
-    protected void setUp() {
+    public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
     }
@@ -70,14 +88,45 @@ public class ProvisioningTest {
         provisionManagedProfile();
     }
 
+    @Test
+    public void testVerifyAdminExtraBundle() {
+        PersistableBundle bundle = loadBundle(mContext);
+        assertNotNull(bundle);
+        assertEquals(ADMIN_EXTRAS_BUNDLE_VALUE_1, bundle.getString(ADMIN_EXTRAS_BUNDLE_KEY_1));
+    }
+
     private void provisionManagedProfile() throws InterruptedException {
-        Intent intent = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)
-                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-                        ADMIN_RECEIVER_COMPONENT)
-                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
+        Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE)
+                .putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, ADMIN_RECEIVER_COMPONENT)
+                .putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true)
+                .putExtra(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, ADMIN_EXTRAS_BUNDLE);
         SilentProvisioningTestManager provisioningManager =
                 new SilentProvisioningTestManager(mContext);
         assertTrue(provisioningManager.startProvisioningAndWait(intent));
         Log.i(TAG, "managed profile provisioning successful");
     }
+
+    private static void saveBundle(Context context, PersistableBundle bundle) {
+        if (bundle == null) {
+            Log.e(TAG, "null saveBundle");
+            return;
+        }
+
+        getAdminExtraSharedPreferences(context).edit()
+                .putString(ADMIN_EXTRAS_BUNDLE_KEY_1, bundle.getString(ADMIN_EXTRAS_BUNDLE_KEY_1))
+                .commit();
+    }
+
+    private static PersistableBundle loadBundle(Context context) {
+        SharedPreferences pref = getAdminExtraSharedPreferences(context);
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putString(ADMIN_EXTRAS_BUNDLE_KEY_1,
+                pref.getString(ADMIN_EXTRAS_BUNDLE_KEY_1, null));
+        return bundle;
+    }
+
+    private static SharedPreferences getAdminExtraSharedPreferences(Context context) {
+        return context.getSharedPreferences(ADMIN_EXTRAS_BUNDLE_FILENAME, 0);
+    }
+
 }
