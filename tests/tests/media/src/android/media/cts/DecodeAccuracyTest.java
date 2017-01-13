@@ -19,11 +19,22 @@ import android.media.cts.R;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.cts.util.MediaUtils;
 import android.graphics.Bitmap;
+import android.media.MediaFormat;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.view.View;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
 @TargetApi(24)
+@RunWith(AndroidJUnit4.class)
 public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private static final String TAG = DecodeAccuracyTest.class.getSimpleName();
@@ -32,12 +43,17 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     private static final String H264_CROPPED_VIDEO_FILE_NAME = "520x360h264decodertest.mp4";
     private static final int ALLOWED_GREATEST_PIXEL_DIFFERENCE = 90;
     private static final int OFFSET = 10;
+    private static final int PER_TEST_TIMEOUT_S = 30;
 
     private View videoView;
     private VideoViewFactory videoViewFactory;
 
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(PER_TEST_TIMEOUT_S);
+
+    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (videoView != null) {
             getHelper().cleanUpView(videoView);
         }
@@ -48,36 +64,42 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     }
 
     /* <------------- Tests Using H264 -------------> */
+    @Test
     public void testH264GLViewVideoDecode() throws Exception {
         runH264DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(H264_VIDEO_FILE_NAME));
     }
 
+    @Test
     public void testH264GLViewLargerHeightVideoDecode() throws Exception {
         runH264DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
+    @Test
     public void testH264GLViewLargerWidthVideoDecode() throws Exception {
         runH264DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerWidthVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
+    @Test
     public void testH264SurfaceViewVideoDecode() throws Exception {
         runH264DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 new VideoFormat(H264_VIDEO_FILE_NAME));
     }
 
+    @Test
     public void testH264SurfaceViewLargerHeightVideoDecode() throws Exception {
         runH264DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(H264_VIDEO_FILE_NAME)));
     }
 
+    @Test
     public void testH264SurfaceViewLargerWidthVideoDecode() throws Exception {
         runH264DecodeAccuracyTest(
                 new SurfaceViewFactory(),
@@ -85,36 +107,42 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     }
 
     /* <------------- Tests Using VP9 -------------> */
+    @Test
     public void testVP9GLViewVideoDecode() throws Exception {
         runVP9DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(VP9_VIDEO_FILE_NAME));
     }
 
+    @Test
     public void testVP9GLViewLargerHeightVideoDecode() throws Exception {
         runVP9DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
+    @Test
     public void testVP9GLViewLargerWidthVideoDecode() throws Exception {
         runVP9DecodeAccuracyTest(
                 new GLSurfaceViewFactory(),
                 getLargerWidthVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
+    @Test
     public void testVP9SurfaceViewVideoDecode() throws Exception {
         runVP9DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 new VideoFormat(VP9_VIDEO_FILE_NAME));
     }
 
+    @Test
     public void testVP9SurfaceViewLargerHeightVideoDecode() throws Exception {
         runVP9DecodeAccuracyTest(
                 new SurfaceViewFactory(),
                 getLargerHeightVideoFormat(new VideoFormat(VP9_VIDEO_FILE_NAME)));
     }
 
+    @Test
     public void testVP9SurfaceViewLargerWidthVideoDecode() throws Exception {
         runVP9DecodeAccuracyTest(
                 new SurfaceViewFactory(),
@@ -122,12 +150,14 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     }
 
     /* <------------- Tests H264 with cropping -------------> */
+    @Test
     public void testH264GLViewCroppedVideoDecode() throws Exception {
         runH264DecodeCroppedTest(
                 new GLSurfaceViewFactory(),
                 new VideoFormat(H264_CROPPED_VIDEO_FILE_NAME));
     }
 
+    @Test
     public void testH264SurfaceViewCroppedVideoDecode() throws Exception {
         runH264DecodeCroppedTest(
                 new SurfaceViewFactory(),
@@ -136,17 +166,23 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private void runH264DecodeAccuracyTest(
             VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
-        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertestgolden);
+        if (MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertestgolden);
+        }
     }
 
     private void runVP9DecodeAccuracyTest(
             VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
-        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.vp9decodertestgolden);
+        if (MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+            runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.vp9decodertestgolden);
+        }
     }
 
     private void runH264DecodeCroppedTest(
             VideoViewFactory videoViewFactory, VideoFormat videoFormat) {
-        runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertest520x360golden);
+        if (MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            runDecodeAccuracyTest(videoViewFactory, videoFormat, R.raw.h264decodertest520x360golden);
+        }
     }
 
     private void runDecodeAccuracyTest(
@@ -191,7 +227,8 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private void validateResult(
             VideoFormat videoFormat, VideoViewSnapshot videoViewSnapshot, int goldenResId) {
-        final Bitmap result = getHelper().generateBitmapFromVideoViewSnapshot(videoViewSnapshot);
+        final Bitmap result = checkNotNull("The expected bitmap from snapshot is null",
+                getHelper().generateBitmapFromVideoViewSnapshot(videoViewSnapshot));
         final Bitmap golden = getHelper().generateBitmapFromImageResourceId(goldenResId);
         final BitmapCompare.Difference difference = BitmapCompare.computeMinimumDifference(
                 result, golden, videoFormat.getOriginalWidth(), videoFormat.getOriginalHeight());
