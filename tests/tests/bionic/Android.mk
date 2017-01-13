@@ -36,6 +36,7 @@ LOCAL_STATIC_LIBRARIES += \
     libLLVMCore \
     libLLVMSupport \
 
+LOCAL_CXX_STL := libc++_static
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
