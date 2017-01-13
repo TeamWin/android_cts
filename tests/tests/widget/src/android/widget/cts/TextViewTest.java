@@ -18,6 +18,7 @@ package android.widget.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -26,7 +27,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.refEq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
@@ -6305,41 +6305,36 @@ public class TextViewTest {
 
     @Test
     public void testAutoSizeCallers_setCompoundDrawables() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
         drawable.setBounds(0, 0, autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3);
         mActivityRule.runOnUiThread(() ->
                 autoSizeTextView.setCompoundDrawables(drawable, drawable, drawable, drawable));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setCompoundDrawablesRelative() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
         drawable.setBounds(0, 0, autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3);
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setCompoundDrawablesRelative(
                 drawable, drawable, drawable, drawable));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setCompoundDrawablePadding() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
         // Setup the drawables before setting their padding in order to modify the available
         // space and trigger a resize.
         Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
@@ -6347,70 +6342,73 @@ public class TextViewTest {
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setCompoundDrawables(
                 drawable, drawable, drawable, drawable));
         mInstrumentation.waitForIdleSync();
-        reset(autoSizeTextView);
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setCompoundDrawablePadding(50));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setPadding() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setPadding(
                 autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3,
                 autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setPaddingRelative() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        final float initialTextSize = autoSizeTextView.getTextSize();
 
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setPaddingRelative(
                 autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3,
                 autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setTextScaleX() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        final float initialTextSize = autoSizeTextView.getTextSize();
 
         mActivityRule.runOnUiThread(() ->
-                autoSizeTextView.setTextScaleX(autoSizeTextView.getTextScaleX() * 1.5f));
+                autoSizeTextView.setTextScaleX(autoSizeTextView.getTextScaleX() * 4.5f));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
-        reset(autoSizeTextView);
+        final float changedTextSize = autoSizeTextView.getTextSize();
+
+        assertTrue(changedTextSize < initialTextSize);
+
         mActivityRule.runOnUiThread(() ->
                 autoSizeTextView.setTextScaleX(autoSizeTextView.getTextScaleX()));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
+
+        assertEquals(changedTextSize, autoSizeTextView.getTextSize(), 0f);
     }
 
     @Test
     public void testAutoSizeCallers_setTypeface() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        mActivityRule.runOnUiThread(() ->
+                autoSizeTextView.setText("The typeface change needs a bit more text then "
+                        + "the default used for this batch of tests in order to get to resize text."
+                        + " The resize function is always called but even with different typefaces "
+                        + "there may not be a need to resize text because it just fits. The longer "
+                        + "the text, the higher the chance for a resize. And here is yet another "
+                        + "sentence to make sure this test is not flaky. Not flaky at all."));
+        mInstrumentation.waitForIdleSync();
+        final float initialTextSize = autoSizeTextView.getTextSize();
 
         mActivityRule.runOnUiThread(() -> {
             Typeface differentTypeface = Typeface.MONOSPACE;
@@ -6420,220 +6418,189 @@ public class TextViewTest {
             autoSizeTextView.setTypeface(differentTypeface);
         });
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
-        reset(autoSizeTextView);
+        final float changedTextSize = autoSizeTextView.getTextSize();
+
+        // Don't really know if it is larger or smaller (depends on the typeface chosen above),
+        // but it should definitely have changed.
+        assertNotEquals(initialTextSize, changedTextSize, 0f);
+
         mActivityRule.runOnUiThread(() ->
                 autoSizeTextView.setTypeface(autoSizeTextView.getTypeface()));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
+
+        assertEquals(changedTextSize, autoSizeTextView.getTextSize(), 0f);
     }
 
     @Test
     public void testAutoSizeCallers_setLetterSpacing() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        final float initialTextSize = autoSizeTextView.getTextSize();
 
         mActivityRule.runOnUiThread(() ->
                 // getLetterSpacing() could return 0, make sure there is enough of a difference to
                 // trigger auto-size.
                 autoSizeTextView.setLetterSpacing(
-                        autoSizeTextView.getLetterSpacing() * 1.5f + 0.5f));
+                        autoSizeTextView.getLetterSpacing() * 1.5f + 4.5f));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        reset(autoSizeTextView);
+        final float changedTextSize = autoSizeTextView.getTextSize();
+
+        assertTrue(changedTextSize < initialTextSize);
+
         mActivityRule.runOnUiThread(() ->
                 autoSizeTextView.setLetterSpacing(autoSizeTextView.getLetterSpacing()));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
-    }
 
-    @Test
-    public void testAutoSizeCallers_setFontFeatureSettings() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
-                R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
-        mActivityRule.runOnUiThread(() -> {
-            String differentFontFeatureSettings = "smcp";
-            if ("smcp".equals(autoSizeTextView.getFontFeatureSettings())) {
-                differentFontFeatureSettings = "tnum";
-            }
-
-            autoSizeTextView.setFontFeatureSettings(differentFontFeatureSettings);
-        });
-        mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
-        reset(autoSizeTextView);
-        mActivityRule.runOnUiThread(() ->
-                autoSizeTextView.setFontFeatureSettings(autoSizeTextView.getFontFeatureSettings()));
-        mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
+        assertEquals(changedTextSize, autoSizeTextView.getTextSize(), 0f);
     }
 
     @Test
     public void testAutoSizeCallers_setHorizontallyScrolling() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setHorizontallyScrolling(
                 !autoSizeTextView.getHorizontallyScrolling()));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
-        reset(autoSizeTextView);
+        final float changedTextSize = autoSizeTextView.getTextSize();
+
+        assertTrue(changedTextSize < initialTextSize);
+
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setHorizontallyScrolling(
                 autoSizeTextView.getHorizontallyScrolling()));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-    }
 
-    @Test
-    public void testAutoSizeCallers_setMinLines() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
-                R.id.textview_autosize_xy, true);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setMinLines(
-                autoSizeTextView.getMinLines() + 11));
-        mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-    }
-
-    @Test
-    public void testAutoSizeCallers_setMinHeight() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
-                R.id.textview_autosize_xy, true);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setMinHeight(
-                (int) (autoSizeTextView.getHeight() * 1.5)));
-        mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
+        assertEquals(changedTextSize, autoSizeTextView.getTextSize(), 0f);
     }
 
     @Test
     public void testAutoSizeCallers_setMaxLines() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxLines(1));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setMaxHeight() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, true);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxHeight(
-                autoSizeTextView.getMaxHeight() / 4));
+        // Do not force exact height only.
+        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                200,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setLayoutParams(layoutParams));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+        final float initialTextSize = autoSizeTextView.getTextSize();
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxHeight(
+                autoSizeTextView.getHeight() / 4));
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setHeight() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, true);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
+        // Do not force exact height only.
+        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                200,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setLayoutParams(layoutParams));
+        mInstrumentation.waitForIdleSync();
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setHeight(
                 autoSizeTextView.getHeight() / 4));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setLines() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
-                R.id.textview_autosize_xy, true);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
-
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setLines(5));
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
+                R.id.textview_autosize_xy, false);
+        final float initialTextSize = autoSizeTextView.getTextSize();
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setLines(1));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
+
+        assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setMaxWidth() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
-                R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
+                R.id.textview_autosize_xy, true);
         // Do not force exact width only.
         final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
-                100);
+                200);
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setLayoutParams(layoutParams));
         mInstrumentation.waitForIdleSync();
-        reset(autoSizeTextView);
-
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setMaxWidth(
                 autoSizeTextView.getWidth() / 4));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() != initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setWidth() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, true);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        // Do not force exact width only.
+        final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                200);
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setLayoutParams(layoutParams));
+        mInstrumentation.waitForIdleSync();
 
+        final float initialTextSize = autoSizeTextView.getTextSize();
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setWidth(
                 autoSizeTextView.getWidth() / 4));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
+
+        assertTrue(autoSizeTextView.getTextSize() != initialTextSize);
     }
 
     @Test
     public void testAutoSizeCallers_setLineSpacing() throws Throwable {
-        AutoSizeTextViewTestDetails details = prepareAndRetrieveAutoSizeTestData(
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_xy, false);
-        final TextView autoSizeTextView = details.mAutoSizeTextView;
+        final float initialTextSize = autoSizeTextView.getTextSize();
 
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setLineSpacing(
-                autoSizeTextView.getLineSpacingExtra() * 2,
-                autoSizeTextView.getLineSpacingMultiplier() * 2));
+                autoSizeTextView.getLineSpacingExtra() * 4,
+                autoSizeTextView.getLineSpacingMultiplier() * 4));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, atLeastOnce())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
-        assertTrue(autoSizeTextView.getTextSize() < details.mTextSize);
-        reset(autoSizeTextView);
+        final float changedTextSize = autoSizeTextView.getTextSize();
+
+        assertTrue(changedTextSize < initialTextSize);
+
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setLineSpacing(
                 autoSizeTextView.getLineSpacingExtra(),
                 autoSizeTextView.getLineSpacingMultiplier()));
         mInstrumentation.waitForIdleSync();
-        verify(autoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
+
+        assertEquals(changedTextSize, autoSizeTextView.getTextSize(), 0f);
+    }
+
+    @Test
+    public void testAutoSizeCallers_setTextSizeIsNoOp() throws Throwable {
+        final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
+                R.id.textview_autosize_xy, false);
+        final float initialTextSize = autoSizeTextView.getTextSize();
+
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setTextSize(
+                initialTextSize + 123f));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(initialTextSize, autoSizeTextView.getTextSize(), 0f);
     }
 
     @Test
@@ -6652,39 +6619,38 @@ public class TextViewTest {
     }
 
     /**
-     * Removes all existing views from the layout and makes a spied copy of the requested view,
-     * attaches it to the layout and returns it after resetting. Some TextView attributes require
-     * non-fixed width and layout height.
+     * Some TextView attributes require non-fixed width and/or layout height. This function removes
+     * all other existing views from the layout leaving only one auto-size TextView (for exercising
+     * the auto-size behavior) which has been set up to suit the test needs.
      *
-     * @param viewId The id of the view to spy, reset and return.
+     * @param viewId The id of the view to prepare.
      * @param shouldWrapLayoutContent Specifies if the layout params should wrap content
      *
-     * @return an object which contains a reset spied version of the view ready to test along with
-     *         the initial size of the text.
+     * @return a TextView configured for auto size tests.
      */
-    private AutoSizeTextViewTestDetails prepareAndRetrieveAutoSizeTestData(final int viewId,
+    private TextView prepareAndRetrieveAutoSizeTestData(final int viewId,
             final boolean shouldWrapLayoutContent) throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             LinearLayout ll = (LinearLayout) mActivity.findViewById(R.id.layout_textviewtest);
-            TextView textView = (TextView) mActivity.findViewById(viewId);
+            TextView targetedTextView = (TextView) mActivity.findViewById(viewId);
             ll.removeAllViews();
-            ll.addView(spy(textView));
+            ll.addView(targetedTextView);
         });
         mInstrumentation.waitForIdleSync();
-        TextView spiedAutoSizeTextView = (TextView) mActivity.findViewById(viewId);
-        verify(spiedAutoSizeTextView, never())
-                .setTextSize(eq(TypedValue.COMPLEX_UNIT_PX), any(Float.class));
 
+        final TextView textView = (TextView) mActivity.findViewById(viewId);
         if (shouldWrapLayoutContent) {
             // Do not force exact width or height.
             final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            mActivityRule.runOnUiThread(() -> spiedAutoSizeTextView.setLayoutParams(layoutParams));
+            mActivityRule.runOnUiThread(() -> {
+                textView.setLayoutParams(layoutParams);
+            });
             mInstrumentation.waitForIdleSync();
         }
 
-        return new AutoSizeTextViewTestDetails(spiedAutoSizeTextView);
+        return textView;
     }
 
     /**
@@ -6722,17 +6688,6 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
 
         return new ClickableSpanTestDetails(mockTextLink, mTextView, startPos, endPos);
-    }
-
-    private static final class AutoSizeTextViewTestDetails {
-        float mTextSize;
-        TextView mAutoSizeTextView;
-
-        AutoSizeTextViewTestDetails(TextView autoSizeTextView) {
-            mAutoSizeTextView = autoSizeTextView;
-            mTextSize = mAutoSizeTextView.getTextSize();
-            reset(mAutoSizeTextView);
-        }
     }
 
     private static final class ClickableSpanTestDetails {
