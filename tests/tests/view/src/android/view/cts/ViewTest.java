@@ -2924,6 +2924,14 @@ public class ViewTest {
         assertTrue(view.hasCalledOnFocusChanged());
     }
 
+    @UiThreadTest
+    @Test
+    public void testRestoreDefaultFocus() {
+        MockView view = new MockView(mActivity);
+        view.restoreDefaultFocus(0);
+        assertTrue(view.hasCalledRequestFocus());
+    }
+
     @Test
     public void testDrawableState() {
         MockView view = new MockView(mActivity);

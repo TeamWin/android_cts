@@ -1526,6 +1526,96 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(mMockViewGroup.isOnRequestFocusInDescendantsCalled);
     }
 
+    private void setupRestoreDefaultFocus() {
+        // Mark 2 children as focusable and add to the parent, then mark the second one as focused
+        // by default.
+        mMockViewGroup = new MockViewGroup(mContext);
+        mMockTextView = new MockTextView(mContext);
+        mMockTextView.setFocusable(true);
+        mTextView = new TextView(mContext);
+        mTextView.setFocusable(true);
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.addView(mTextView);
+        mTextView.setFocusedByDefault(true);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testRestoreDefaultFocus() {
+        // Invoking restoreDefaultFocus with various conditions that affect the outcome.
+        setupRestoreDefaultFocus();
+        mTextView.setFocusedByDefault(false);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mMockTextView, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mTextView.setKeyboardNavigationCluster(true);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mMockTextView, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(null, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mTextView.setVisibility(View.INVISIBLE);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mMockTextView, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mTextView, mMockViewGroup.findFocus());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testDefaultFocusViewRemoved() {
+        // Removing default-focus view from its parent in various ways.
+        setupRestoreDefaultFocus();
+        mMockViewGroup.removeView(mTextView);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mMockTextView, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mMockViewGroup.removeViews(1, 1);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mMockTextView, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mMockViewGroup.removeAllViewsInLayout();
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(null, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mMockViewGroup.detachViewFromParent(mTextView);
+        mMockViewGroup.attachViewToParent(mTextView, 1, null);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mTextView, mMockViewGroup.findFocus());
+
+        setupRestoreDefaultFocus();
+        mMockViewGroup.detachViewFromParent(mTextView);
+        mMockViewGroup.removeDetachedView(mTextView, false);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertSame(mMockTextView, mMockViewGroup.findFocus());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testAddViewWithDefaultFocus() {
+        // Adding a view that has default focus propagates the default focus chain to the root.
+        mMockViewGroup = new MockViewGroup(mContext);
+        mMockTextView = new MockTextView(mContext);
+        mMockTextView.setFocusable(true);
+        mTextView = new TextView(mContext);
+        mTextView.setFocusable(true);
+        mTextView.setFocusedByDefault(true);
+        mMockViewGroup.addView(mMockTextView);
+        mMockViewGroup.addView(mTextView);
+        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        assertTrue(mTextView.isFocused());
+    }
+
     @UiThreadTest
     @Test
     public void testRequestFocusWithCluster() {
