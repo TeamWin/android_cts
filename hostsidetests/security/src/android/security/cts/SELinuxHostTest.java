@@ -239,6 +239,27 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Asserts that the actual file contents are equal to the expected file
+     * contents.
+     *
+     * @param expectedFile
+     *  The file with the expected contents.
+     * @param actualFile
+     *  The actual file being checked.
+     */
+    private void assertFileEquals(File expectedFile, File actualFile) throws Exception {
+        BufferedReader expectedReader = new BufferedReader(new FileReader(expectedFile.getAbsolutePath()));
+        BufferedReader actualReader = new BufferedReader(new FileReader(actualFile.getAbsolutePath()));
+        String expectedLine, actualLine;
+        while ((expectedLine = expectedReader.readLine()) != null) {
+            actualLine = actualReader.readLine();
+            assertEquals("Lines do not match:", expectedLine, actualLine);
+        }
+        actualLine = actualReader.readLine();
+        assertTrue("Extra lines starting with: " + actualLine, (actualLine == null));
+    }
+
+    /**
      * Asserts that the actual file contents starts with the expected file
      * contents.
      *
@@ -269,12 +290,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* obtain seapp_contexts file from running device */
         deviceSeappFile = File.createTempFile("seapp_contexts", ".tmp");
         deviceSeappFile.deleteOnExit();
-        mDevice.pullFile("/seapp_contexts", deviceSeappFile);
+        mDevice.pullFile("/plat_seapp_contexts", deviceSeappFile);
 
         /* retrieve the AOSP seapp_contexts file from jar */
         aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
 
-        assertFileStartsWith(aospSeappFile, deviceSeappFile);
+        assertFileEquals(aospSeappFile, deviceSeappFile);
     }
 
     /**

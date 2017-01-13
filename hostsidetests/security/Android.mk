@@ -36,9 +36,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := cts-migration-lib
 
 LOCAL_CTS_TEST_PACKAGE := android.host.security
 
-selinux_general_seapp_contexts := $(call intermediates-dir-for,ETC,plat_seapp_contexts)/plat_seapp_contexts
+selinux_plat_seapp_contexts := $(call intermediates-dir-for,ETC,plat_seapp_contexts)/plat_seapp_contexts
 
-selinux_general_seapp_neverallows := $(call intermediates-dir-for,ETC,plat_seapp_neverallows)/plat_seapp_neverallows
+selinux_plat_seapp_neverallows := $(call intermediates-dir-for,ETC,plat_seapp_neverallows)/plat_seapp_neverallows
 
 selinux_plat_file_contexts := $(call intermediates-dir-for,ETC,plat_file_contexts)/plat_file_contexts
 
@@ -49,8 +49,8 @@ selinux_general_service_contexts := $(call intermediates-dir-for,ETC,general_ser
 LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
     $(HOST_OUT_EXECUTABLES)/checkfc \
-    $(selinux_general_seapp_contexts) \
-    $(selinux_general_seapp_neverallows) \
+    $(selinux_plat_seapp_contexts) \
+    $(selinux_plat_seapp_neverallows) \
     $(selinux_general_file_contexts) \
     $(selinux_general_property_contexts) \
     $(selinux_general_service_contexts)
