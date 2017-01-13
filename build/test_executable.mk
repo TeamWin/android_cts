@@ -18,6 +18,9 @@
 # Replace "include $(BUILD_EXECUTABLE)" with "include $(BUILD_CTS_EXECUTABLE)"
 #
 
+ifeq ($(filter $(LOCAL_CXX_STL),libc++_static),)
 LOCAL_CXX_STL := libc++
+endif
+
 include $(BUILD_EXECUTABLE)
 
