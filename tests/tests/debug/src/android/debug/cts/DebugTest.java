@@ -25,8 +25,17 @@ public class DebugTest extends TestCase {
     }
 
     public static native boolean ptraceAttach();
-
     public void test_ptraceAttach() {
         assertEquals(true, ptraceAttach());
+    }
+
+    public static native boolean processVmReadv();
+    public void test_processVmReadv() {
+        assertEquals(true, processVmReadv());
+    }
+
+    public static native boolean processVmReadvNullptr();
+    public void test_processVmReadvNullptr() {
+        assertEquals(true, processVmReadvNullptr());
     }
 }

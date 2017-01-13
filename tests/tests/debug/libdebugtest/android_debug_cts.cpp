@@ -19,8 +19,12 @@
 
 #include <sys/ptrace.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <functional>
+#include <vector>
 
 #define LOG_TAG "Cts-DebugTest"
 
@@ -48,8 +52,19 @@ static bool parent(pid_t child) {
     return true;
 }
 
-static bool child(pid_t parent) __attribute__((noreturn));
-static bool child(pid_t parent) {
+static bool run_test(const std::function<void(pid_t)> &test) {
+    pid_t pid = fork();
+    assert_or_return(pid >= 0);
+    if (pid != 0)
+        return parent(pid);
+    else {
+        // child
+        test(getppid());
+        _exit(0);
+    }
+}
+
+static void ptraceAttach(pid_t parent) {
     assert_or_exit(ptrace(PTRACE_ATTACH, parent, nullptr, nullptr) == 0);
     int status;
     assert_or_exit(waitpid(parent, &status, __WALL) == parent);
@@ -57,15 +72,52 @@ static bool child(pid_t parent) {
     assert_or_exit(WSTOPSIG(status) == SIGSTOP);
 
     assert_or_exit(ptrace(PTRACE_DETACH, parent, nullptr, nullptr) == 0);
-    _exit(0);
 }
 
 // public static native boolean ptraceAttach();
 extern "C" jboolean Java_android_debug_cts_DebugTest_ptraceAttach(JNIEnv *, jclass) {
-    pid_t pid = fork();
-    assert_or_return(pid >= 0);
-    if (pid != 0)
-        return parent(pid);
-    else
-        child(getppid());
+    return run_test(ptraceAttach);
+}
+
+
+static void processVmReadv(pid_t parent, const std::vector<long *> &addresses) {
+    long destination;
+    iovec local = { &destination, sizeof destination };
+
+    for (long *address : addresses) {
+        // Since we are forked, the address will be valid in the remote process as well.
+        iovec remote = { address, sizeof *address };
+        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s About to read %p\n", __func__,
+                            address);
+        assert_or_exit(process_vm_readv(parent, &local, 1, &remote, 1, 0) == sizeof destination);
+
+        // Compare the data with the contents of our memory.
+        assert_or_exit(destination == *address);
+    }
+}
+
+static long global_variable = 0x47474747;
+// public static native boolean processVmReadv();
+extern "C" jboolean Java_android_debug_cts_DebugTest_processVmReadv(JNIEnv *, jclass) {
+    long stack_variable = 0x42424242;
+    // This runs the test with a selection of different kinds of addresses and
+    // makes sure the child process (simulating a debugger) can read them.
+    return run_test([&](pid_t parent) {
+        processVmReadv(parent, std::vector<long *>{
+                                   &global_variable, &stack_variable,
+                                   reinterpret_cast<long *>(&processVmReadv)});
+    });
+}
+
+// public static native boolean processVmReadvNullptr();
+extern "C" jboolean Java_android_debug_cts_DebugTest_processVmReadvNullptr(JNIEnv *, jclass) {
+    // Make sure reading unallocated memory behaves reasonably.
+    return run_test([](pid_t parent) {
+        long destination;
+        iovec local = {&destination, sizeof destination};
+        iovec remote = {nullptr, sizeof(long)};
+
+        assert_or_exit(process_vm_readv(parent, &local, 1, &remote, 1, 0) == -1);
+        assert_or_exit(errno == EFAULT);
+    });
 }
