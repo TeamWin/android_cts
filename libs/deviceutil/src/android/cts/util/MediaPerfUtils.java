@@ -54,14 +54,15 @@ public class MediaPerfUtils {
     public static String addPerformanceHeadersToLog(
             DeviceReportLog log, String message, int round, String codecName,
             MediaFormat configFormat, MediaFormat inputFormat, MediaFormat outputFormat) {
+        String mime = configFormat.getString(MediaFormat.KEY_MIME);
+        int width = configFormat.getInteger(MediaFormat.KEY_WIDTH);
+        int height = configFormat.getInteger(MediaFormat.KEY_HEIGHT);
+
         log.addValue("round", round, ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValue("codec_name", codecName, ResultType.NEUTRAL, ResultUnit.NONE);
-        log.addValue("mime_type", configFormat.getString(MediaFormat.KEY_MIME),
-                ResultType.NEUTRAL, ResultUnit.NONE);
-        log.addValue("width", configFormat.getInteger(MediaFormat.KEY_WIDTH),
-                ResultType.NEUTRAL, ResultUnit.NONE);
-        log.addValue("height", configFormat.getInteger(MediaFormat.KEY_HEIGHT),
-                ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("mime_type", mime, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("width", width, ResultType.NEUTRAL, ResultUnit.NONE);
+        log.addValue("height", height, ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValue("config_format", formatForReport(configFormat),
                 ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValue("input_format", formatForReport(inputFormat),
@@ -71,6 +72,16 @@ public class MediaPerfUtils {
 
         message += " codec=" + codecName + " round=" + round + " configFormat=" + configFormat
                 + " inputFormat=" + inputFormat + " outputFormat=" + outputFormat;
+
+        Range<Double> reported =
+            MediaUtils.getVideoCapabilities(codecName, mime)
+                    .getAchievableFrameRatesFor(width, height);
+        if (reported != null) {
+            log.addValue("reported_low", reported.getLower(), ResultType.NEUTRAL, ResultUnit.FPS);
+            log.addValue("reported_high", reported.getUpper(), ResultType.NEUTRAL, ResultUnit.FPS);
+            message += " reported=" + reported.getLower() + "-" + reported.getUpper();
+        }
+
         return message;
     }
 
