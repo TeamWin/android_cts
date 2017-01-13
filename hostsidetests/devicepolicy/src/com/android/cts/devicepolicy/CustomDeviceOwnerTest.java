@@ -170,4 +170,30 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
         }
     }
+
+    public void testInstallReason() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final File apk = buildHelper.getTestFile(TEST_APP_APK);
+        try {
+            // Install the test and prepare the test apk.
+            installAppAsUser(PACKAGE_INSTALLER_APK, mPrimaryUserId);
+            assertTrue(setDeviceOwner(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId,
+                    /*expectFailure*/ false));
+
+            getDevice().uninstallPackage(TEST_APP_PKG);
+            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
+            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG,
+                    PACKAGE_INSTALLER_PKG + ".InstallReasonTest", mPrimaryUserId);
+        } finally {
+            assertTrue("Failed to remove device owner.",
+                    removeAdmin(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId));
+            final String command = "rm " + TEST_APP_LOCATION + apk.getName();
+            final String commandOutput = getDevice().executeShellCommand(command);
+            getDevice().uninstallPackage(TEST_APP_PKG);
+            getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
+        }
+    }
 }
