@@ -2772,7 +2772,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="enterprise_privacy_page">Privacy info page</string>
     <string name="enterprise_privacy_page_info">
         Please press the Go button to open Settings. Verify that:\n
-        1) There is an entry for device privacy.\n
+        1) There is an entry for system privacy.\n
         2) Tapping that entry opens a screen in which you are told your organization can:\n
         3) Change settings on this device.\n
         4) See data associated with your work account.\n
@@ -2817,6 +2817,30 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="enterprise_privacy_retrieve_security_logs">Retrieve Security Logs</string>
     <string name="enterprise_privacy_clear_organization">Clear Org</string>
     <string name="enterprise_privacy_set_organization">Set Org</string>
+    <string name="enterprise_privacy_always_on_vpn">Always-on VPN</string>
+    <string name="enterprise_privacy_always_on_vpn_info">
+        Please do the following:\n
+        1) Press the Open Settings button.\n
+        2) In the screen that opens, verify that you are not told that an always-on VPN is set.\n
+        3) Use the Back button to return to this page.\n
+        4) Press the Set VPN button to set an always-on VPN.\n
+        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that an always-on VPN is set.\n
+        6) Press the Finish button to clear the always-on VPN.
+    </string>
+    <string name="enterprise_privacy_set_always_on_vpn">Set VPN</string>
+    <string name="enterprise_privacy_finish">Finish</string>
+    <string name="enterprise_privacy_comp_always_on_vpn">Always-on VPN (managed profile)</string>
+    <string name="enterprise_privacy_comp_always_on_vpn_info">
+        Please do the following:\n
+        1) Press the Start button to create a work profile.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are not told that an always-on VPN is set.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Set VPN button to set an always-on VPN in your work profile.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that an always-on VPN is set in your work profile.\n
+        7) Press the Finish button to remove the work profile and always-on VPN.
+    </string>
+    <string name="enterprise_privacy_start">Start</string>
     <string name="enterprise_privacy_quick_settings">Quick settings disclosure</string>
     <string name="enterprise_privacy_quick_settings_info">
         Please do the following:\n

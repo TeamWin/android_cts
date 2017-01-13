@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
@@ -31,6 +32,7 @@ import com.android.cts.verifier.managedprovisioning.Utils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CommandReceiverActivity extends Activity {
@@ -66,6 +68,10 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_ORGANIZATION_NAME = "set-organization-name";
     public static final String COMMAND_ENABLE_NETWORK_LOGGING = "enable-network-logging";
     public static final String COMMAND_DISABLE_NETWORK_LOGGING = "disable-network-logging";
+    public static final String COMMAND_CREATE_MANAGED_PROFILE = "create-managed-profile";
+    public static final String COMMAND_REMOVE_MANAGED_PROFILE = "remove-managed-profile";
+    public static final String COMMAND_SET_ALWAYS_ON_VPN = "set-always-on-vpn";
+    public static final String COMMAND_CLEAR_ALWAYS_ON_VPN = "clear-always-on-vpn";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -80,9 +86,9 @@ public class CommandReceiverActivity extends Activity {
     public static final String EXTRA_ORGANIZATION_NAME =
             "com.android.cts.verifier.managedprovisioning.extra.ORGANIZATION_NAME";
 
-
     private ComponentName mAdmin;
     private DevicePolicyManager mDpm;
+    private UserManager mUm;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,6 +97,7 @@ public class CommandReceiverActivity extends Activity {
         try {
             mDpm = (DevicePolicyManager) getSystemService(
                     Context.DEVICE_POLICY_SERVICE);
+            mUm = (UserManager) getSystemService(Context.USER_SERVICE);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
             Log.i(TAG, "Command: " + intent);
 
@@ -230,6 +237,42 @@ public class CommandReceiverActivity extends Activity {
                     }
                     mDpm.setNetworkLoggingEnabled(mAdmin, false);
                 } break;
+                case COMMAND_CREATE_MANAGED_PROFILE: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    if (mUm.getUserProfiles().size() > 1) {
+                        return;
+                    }
+                    startActivityForResult(new Intent(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)
+                            .putExtra(DevicePolicyManager
+                                    .EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                                    CompDeviceAdminTestReceiver.getReceiverComponentName())
+                            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true)
+                            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT,
+                                true), 0);
+                } break;
+                case COMMAND_REMOVE_MANAGED_PROFILE: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    removeManagedProfile();
+                } break;
+                case COMMAND_SET_ALWAYS_ON_VPN: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setAlwaysOnVpnPackage(mAdmin, getPackageName(),
+                            false /* lockdownEnabled */);
+                } break;
+                case COMMAND_CLEAR_ALWAYS_ON_VPN: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setAlwaysOnVpnPackage(mAdmin, null /* vpnPackage */,
+                            false /* lockdownEnabled */);
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
@@ -282,5 +325,11 @@ public class CommandReceiverActivity extends Activity {
         mDpm.setMaximumTimeToLock(mAdmin, 0);
         mDpm.setPermittedAccessibilityServices(mAdmin, null);
         mDpm.setPermittedInputMethods(mAdmin, null);
+    }
+
+    private void removeManagedProfile() {
+        for (final UserHandle userHandle : mUm.getUserProfiles()) {
+            mDpm.removeUser(mAdmin, userHandle);
+        }
     }
 }
