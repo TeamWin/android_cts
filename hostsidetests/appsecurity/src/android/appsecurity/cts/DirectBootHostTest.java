@@ -126,6 +126,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
     public void doDirectBootTest(String mode) throws Exception {
         int[] users = {};
+        boolean doTest = true;
         try {
             users = createUsersForTest();
 
@@ -147,17 +148,22 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
             // Reboot system into known state with keys ejected
             if (MODE_EMULATED.equals(mode)) {
-                getDevice().executeShellCommand("sm set-emulate-fbe true");
+                final String res = getDevice().executeShellCommand("sm set-emulate-fbe true");
+                if (res != null && res.contains("Emulation not supported")) {
+                    doTest = false;
+                }
                 getDevice().waitForDeviceOnline();
             } else {
                 getDevice().rebootUntilOnline();
             }
             waitForBootCompleted();
 
-            if (MODE_NONE.equals(mode)) {
-                runDeviceTests(PKG, CLASS, "testVerifyUnlockedAndDismiss", users);
-            } else {
-                runDeviceTests(PKG, CLASS, "testVerifyLockedAndDismiss", users);
+            if (doTest) {
+                if (MODE_NONE.equals(mode)) {
+                    runDeviceTests(PKG, CLASS, "testVerifyUnlockedAndDismiss", users);
+                } else {
+                    runDeviceTests(PKG, CLASS, "testVerifyLockedAndDismiss", users);
+                }
             }
 
         } finally {

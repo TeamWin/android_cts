@@ -73,7 +73,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
 
-    private static int sCounter = 9999;
+    private static int sCounter = 5549999;
 
     Context mContext;
     TelecomManager mTelecomManager;

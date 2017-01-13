@@ -18,6 +18,7 @@ package com.android.cts.verifier.managedprovisioning;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.util.ArrayMap;
@@ -172,6 +173,43 @@ public class UserRestrictions {
                 .putExtra(PolicyTransparencyTestActivity.EXTRA_TITLE, context.getString(item.label))
                 .putExtra(PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION,
                         item.intentAction);
+    }
+
+    public static boolean isRestrictionValid(Context context, String restriction) {
+        final PackageManager pm = context.getPackageManager();
+        switch (restriction) {
+            case UserManager.DISALLOW_ADD_USER:
+            case UserManager.DISALLOW_REMOVE_USER:
+                return UserManager.supportsMultipleUsers();
+            case UserManager.DISALLOW_ADJUST_VOLUME:
+                return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+            case UserManager.DISALLOW_CONFIG_CELL_BROADCASTS:
+                // Get com.android.internal.R.bool.config_cellBroadcastAppLinks
+                final int resId = context.getResources().getIdentifier(
+                        "config_cellBroadcastAppLinks", "bool", "android");
+                boolean isCellBroadcastAppLinkEnabled = context.getResources().getBoolean(resId);
+                try {
+                    if (isCellBroadcastAppLinkEnabled) {
+                        if (pm.getApplicationEnabledSetting("com.android.cellbroadcastreceiver")
+                                == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+                            isCellBroadcastAppLinkEnabled = false;  // CMAS app disabled
+                        }
+                    }
+                } catch (IllegalArgumentException ignored) {
+                    isCellBroadcastAppLinkEnabled = false;  // CMAS app not installed
+                }
+                return isCellBroadcastAppLinkEnabled;
+            case UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS:
+                return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+            case UserManager.DISALLOW_CONFIG_WIFI:
+                return pm.hasSystemFeature(PackageManager.FEATURE_WIFI);
+            case UserManager.DISALLOW_OUTGOING_BEAM:
+                return pm.hasSystemFeature(PackageManager.FEATURE_NFC);
+            case UserManager.DISALLOW_SHARE_LOCATION:
+                return pm.hasSystemFeature(PackageManager.FEATURE_LOCATION);
+            default:
+                return true;
+        }
     }
 
     private static class UserRestrictionItem {
