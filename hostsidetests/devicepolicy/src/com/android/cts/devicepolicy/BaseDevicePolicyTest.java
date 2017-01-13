@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -228,11 +229,18 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void removeTestUsers() throws Exception {
-        for (int userId : listUsers()) {
-            if (!mFixedUsers.contains(userId)) {
-                removeUser(userId);
-            }
+        for (int userId : getUsersCreatedByTests()) {
+            removeUser(userId);
         }
+    }
+
+    /**
+     * Returns the users that have been created since running this class' setUp() method.
+     */
+    protected List<Integer> getUsersCreatedByTests() throws Exception {
+        List<Integer> result = listUsers();
+        result.removeAll(mFixedUsers);
+        return result;
     }
 
     /** Removes any packages that were installed during the test. */

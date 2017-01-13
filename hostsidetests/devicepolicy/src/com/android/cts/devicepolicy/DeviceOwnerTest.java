@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -217,23 +218,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        ArrayList<Integer> originalUsers = listUsers();
         executeDeviceTestMethod(".CreateAndManageUserTest", "testCreateAndManageEphemeralUser");
 
-        ArrayList<Integer> newUsers = listUsers();
-
-        // Check that exactly one new user was created.
-        assertEquals(
-                "One user should have been created", originalUsers.size() + 1, newUsers.size());
-
-        // Get the id of the newly created user.
-        int newUserId = -1;
-        for (int userId : newUsers) {
-            if (!originalUsers.contains(userId)) {
-                newUserId = userId;
-                break;
-            }
-        }
+        List<Integer> newUsers = getUsersCreatedByTests();
+        assertEquals(1, newUsers.size());
+        int newUserId = newUsers.get(0);
 
         // Get the flags of the new user and check the user is ephemeral.
         int flags = getUserFlags(newUserId);
