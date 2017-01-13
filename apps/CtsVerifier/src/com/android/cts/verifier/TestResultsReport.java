@@ -49,7 +49,6 @@ import java.util.Locale;
  *     <test title="Audio Quality Verifier" class-name="com.android.cts.verifier.audioquality.AudioQualityVerifierActivity" result="not-executed" />
  *     <test title="Hardware/Software Feature Summary" class-name="com.android.cts.verifier.features.FeatureSummaryActivity" result="fail" />
  *     <test title="Bluetooth Test" class-name="com.android.cts.verifier.bluetooth.BluetoothTestActivity" result="fail" />
- *     <test title="SUID File Scanner" class-name="com.android.cts.verifier.suid.SuidFilesActivity" result="not-executed" />
  *     <test title="Accelerometer Test" class-name="com.android.cts.verifier.sensors.AccelerometerTestActivity" result="pass" />
  *   </test-results>
  * </test-results-report>

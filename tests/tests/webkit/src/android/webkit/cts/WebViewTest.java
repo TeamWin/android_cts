@@ -115,6 +115,14 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
      * assumed that no scrolling will happen.
      */
     private static final long MIN_SCROLL_WAIT_MS = 1000;
+
+    /**
+     * This is the minimum number of milliseconds to wait for findAll to
+     * find all the matches. If matches are not found, the Listener would
+     * call findAll again until it times out.
+     */
+    private static final long MIN_FIND_WAIT_MS = 3000;
+
     /**
      * Once scrolling has started, this is the interval that scrolling
      * is checked to see if there is a change. If no scrolling change
@@ -1456,18 +1464,34 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
     private static class WaitForFindResultsListener extends FutureTask<Integer>
             implements WebView.FindListener {
-        public WaitForFindResultsListener() {
+        private final WebViewOnUiThread mWebViewOnUiThread;
+        private final int mMatchesWanted;
+        private final String mStringWanted;
+        private final boolean mRetry;
+
+        public WaitForFindResultsListener(
+                WebViewOnUiThread wv, String wanted, int matches, boolean retry) {
             super(new Runnable() {
                 @Override
                 public void run() { }
             }, null);
+            mWebViewOnUiThread = wv;
+            mMatchesWanted = matches;
+            mStringWanted = wanted;
+            mRetry = retry;
         }
 
         @Override
         public void onFindResultReceived(int activeMatchOrdinal, int numberOfMatches,
                 boolean isDoneCounting) {
             if (isDoneCounting) {
-                set(numberOfMatches);
+                //If mRetry set to true and matches aren't equal, call findAll again
+                if (mRetry && numberOfMatches != mMatchesWanted) {
+                    mWebViewOnUiThread.findAll(mStringWanted);
+                }
+                else {
+                    set(numberOfMatches);
+                }
             }
         }
     }
@@ -1488,15 +1512,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p
                 + "</body></html>", "text/html", null);
 
-        WaitForFindResultsListener l = new WaitForFindResultsListener();
-        int previousScrollY = mOnUiThread.getScrollY();
-        mOnUiThread.pageDown(true);
-        // Wait for content fully loaded.
-        waitForScrollingComplete(previousScrollY);
+        WaitForFindResultsListener l = new WaitForFindResultsListener(mOnUiThread, "find", 2, true);
         mOnUiThread.setFindListener(l);
         mOnUiThread.findAll("find");
-
-        assertEquals(2, l.get().intValue());
+        assertEquals(2, l.get(MIN_FIND_WAIT_MS, TimeUnit.MILLISECONDS).intValue());
     }
 
     public void testFindNext() throws Throwable {
@@ -1513,10 +1532,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 "Find all instances of a word on the page and highlight them.</p>";
 
         mOnUiThread.loadDataAndWaitForCompletion("<html><body>" + p + p + "</body></html>", "text/html", null);
+        WaitForFindResultsListener l = new WaitForFindResultsListener(mOnUiThread, "all", 2, true);
+        mOnUiThread.setFindListener(l);
 
-        // highlight all the strings found
+        // highlight all the strings found and wait for all the matches to be found
         mOnUiThread.findAll("all");
-        getInstrumentation().waitForIdleSync();
+        l.get(MIN_FIND_WAIT_MS, TimeUnit.MILLISECONDS);
+        mOnUiThread.setFindListener(null);
 
         int previousScrollY = mOnUiThread.getScrollY();
 
