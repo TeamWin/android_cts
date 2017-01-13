@@ -2841,6 +2841,18 @@ You should be prompted to select credentials; choose the ones you just installed
         7) Press the Finish button to remove the work profile and always-on VPN.
     </string>
     <string name="enterprise_privacy_start">Start</string>
+    <string name="enterprise_privacy_global_http_proxy">Global HTTP Proxy</string>
+    <string name="enterprise_privacy_global_http_proxy_info">
+        Please do the following:\n
+        1) Press the Open Settings button.\n
+        2) In the screen that opens, verify that you are not told that a global HTTP proxy has been set.\n
+        3) Use the Back button to return to this page.\n
+        4) Press the Set Proxy button.\n
+        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that a global HTTP proxy has been set.\n
+        6) Press the Clear Proxy button.
+    </string>
+    <string name="enterprise_privacy_set_proxy">Set Proxy</string>
+    <string name="enterprise_privacy_clear_proxy">Clear Proxy</string>
     <string name="enterprise_privacy_quick_settings">Quick settings disclosure</string>
     <string name="enterprise_privacy_quick_settings_info">
         Please do the following:\n
