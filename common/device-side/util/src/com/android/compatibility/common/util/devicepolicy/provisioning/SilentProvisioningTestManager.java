@@ -15,9 +15,10 @@
  */
 package com.android.compatibility.common.util.devicepolicy.provisioning;
 
+import static android.app.admin.DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED;
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
+import static android.content.Intent.ACTION_MANAGED_PROFILE_ADDED;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -50,11 +51,9 @@ public class SilentProvisioningTestManager {
     };
 
     private final Context mContext;
-    private final ManagedProfileAddedReceiver mManagedProfileAddedReceiver;
 
     public SilentProvisioningTestManager(Context context) {
         mContext = context.getApplicationContext();
-        mManagedProfileAddedReceiver = new ManagedProfileAddedReceiver(mContext);
     }
 
     public boolean startProvisioningAndWait(Intent provisioningIntent) throws InterruptedException {
@@ -70,6 +69,35 @@ public class SilentProvisioningTestManager {
     }
 
     private boolean waitDeviceOwnerProvisioning() throws InterruptedException {
+        return pollProvisioningResult();
+    }
+
+    private boolean waitManagedProfileProvisioning() throws InterruptedException {
+        BlockingReceiver managedProfileProvisionedReceiver = new BlockingReceiver(mContext,
+                ACTION_MANAGED_PROFILE_PROVISIONED);
+        managedProfileProvisionedReceiver.register();
+        BlockingReceiver managedProfileAddedReceiver = new BlockingReceiver(mContext,
+                ACTION_MANAGED_PROFILE_ADDED);
+        managedProfileAddedReceiver.register();
+
+        if (!pollProvisioningResult()) {
+            return false;
+        }
+
+        if (!managedProfileProvisionedReceiver.await()) {
+            Log.i(TAG, "mManagedProfileProvisionedReceiver.await(): false");
+            return false;
+        }
+
+        if (!managedProfileAddedReceiver.await()) {
+            Log.i(TAG, "mManagedProfileAddedReceiver.await(): false");
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean pollProvisioningResult() throws InterruptedException {
         Boolean result = mProvisioningResults.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         if (result == null) {
             Log.i(TAG, "ManagedProvisioning doesn't return result within "
@@ -82,22 +110,6 @@ public class SilentProvisioningTestManager {
             return false;
         }
         return true;
-    }
-
-    private boolean waitManagedProfileProvisioning() throws InterruptedException {
-        mManagedProfileAddedReceiver.register();
-        Boolean result = mProvisioningResults.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        if (result == null) {
-            Log.i(TAG, "ManagedProvisioning doesn't return result within "
-                    + TIMEOUT_SECONDS + " seconds ");
-            return false;
-        }
-
-        if (!result) {
-            Log.i(TAG, "Failed to provision");
-            return false;
-        }
-        return mManagedProfileAddedReceiver.await();
     }
 
     private Intent getStartIntent(Intent intent) {
@@ -118,22 +130,23 @@ public class SilentProvisioningTestManager {
         }
     }
 
-    private static class ManagedProfileAddedReceiver extends BroadcastReceiver {
+    private static class BlockingReceiver extends BroadcastReceiver {
 
         private static final CountDownLatch mLatch = new CountDownLatch(1);
 
         private final Context mContext;
+        private final String mAction;
 
-        private ManagedProfileAddedReceiver(Context context) {
+        private BlockingReceiver(Context context, String action) {
             mContext = context;
+            mAction = action;
         }
 
-        private void register() {
-            mContext.registerReceiver(this, new IntentFilter(
-                    DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED));
+        public void register() {
+            mContext.registerReceiver(this, new IntentFilter(mAction));
         }
 
-        private boolean await() throws InterruptedException {
+        public boolean await() throws InterruptedException {
             return mLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         }
 
