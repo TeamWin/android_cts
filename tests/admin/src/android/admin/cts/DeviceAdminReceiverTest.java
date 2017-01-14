@@ -20,6 +20,8 @@ import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Process;
+import android.os.UserHandle;
 import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -31,6 +33,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
     private static final String BUGREPORT_HASH = "f4k3h45h";
     private static final long NETWORK_LOGS_TOKEN = 0L;
     private static final int NETWORK_LOGS_COUNT = 0;
+    private static final UserHandle CURRENT_USER_HANDLE = Process.myUserHandle();
 
     private static final String ACTION_BUGREPORT_SHARING_DECLINED =
             "android.app.action.BUGREPORT_SHARING_DECLINED";
@@ -61,6 +64,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
     private static final int BUGREPORT_SHARED = 0x100;
     private static final int SECURITY_LOGS_AVAILABLE = 0x200;
     private static final int NETWORK_LOGS_AVAILABLE = 0x400;
+    private static final int PASSWORD_EXPIRED = 0x800;
 
     private TestReceiver mReceiver;
     private boolean mDeviceAdmin;
@@ -80,16 +84,28 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
             return;
         }
         mReceiver.reset();
-        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_CHANGED));
+        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_CHANGED)
+                .putExtra(Intent.EXTRA_USER, CURRENT_USER_HANDLE));
         assertTrue(mReceiver.hasFlags(PASSWORD_CHANGED));
+        assertEquals(CURRENT_USER_HANDLE, mReceiver.getUser());
 
         mReceiver.reset();
-        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_FAILED));
+        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_FAILED)
+                .putExtra(Intent.EXTRA_USER, CURRENT_USER_HANDLE));
         assertTrue(mReceiver.hasFlags(PASSWORD_FAILED));
+        assertEquals(CURRENT_USER_HANDLE, mReceiver.getUser());
 
         mReceiver.reset();
-        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_SUCCEEDED));
+        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_SUCCEEDED)
+                .putExtra(Intent.EXTRA_USER, CURRENT_USER_HANDLE));
         assertTrue(mReceiver.hasFlags(PASSWORD_SUCCEEDED));
+        assertEquals(CURRENT_USER_HANDLE, mReceiver.getUser());
+
+        mReceiver.reset();
+        mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_PASSWORD_EXPIRING)
+                .putExtra(Intent.EXTRA_USER, CURRENT_USER_HANDLE));
+        assertTrue(mReceiver.hasFlags(PASSWORD_EXPIRED));
+        assertEquals(CURRENT_USER_HANDLE, mReceiver.getUser());
 
         mReceiver.reset();
         mReceiver.onReceive(mContext, new Intent(DeviceAdminReceiver.ACTION_DEVICE_ADMIN_ENABLED));
@@ -136,6 +152,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
     private class TestReceiver extends DeviceAdminReceiver {
 
         private int mFlags = 0;
+        private UserHandle mUser;
         private int bugreportFailureCode = -1;
         private String bugreportHash;
         private long networkLogsToken = -1L;
@@ -143,6 +160,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
 
         void reset() {
             mFlags = 0;
+            mUser = null;
             bugreportFailureCode = -1;
             networkLogsToken = -1L;
             networkLogsCount = -1;
@@ -151,6 +169,10 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
 
         boolean hasFlags(int flags) {
             return mFlags == flags;
+        }
+
+        UserHandle getUser() {
+            return mUser;
         }
 
         int getBugreportFailureCode() {
@@ -169,22 +191,52 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
             return networkLogsCount;
         }
 
-        @Override
+        /** @deprecated but should still be called by the default implementation. */
+        @Override @Deprecated
         public void onPasswordChanged(Context context, Intent intent) {
-            super.onPasswordChanged(context, intent);
             mFlags |= PASSWORD_CHANGED;
         }
 
         @Override
+        public void onPasswordChanged(Context context, Intent intent, UserHandle user) {
+            super.onPasswordChanged(context, intent, user);
+            mUser = user;
+        }
+
+        /** @deprecated but should still be called by the default implementation. */
+        @Override @Deprecated
         public void onPasswordFailed(Context context, Intent intent) {
-            super.onPasswordFailed(context, intent);
             mFlags |= PASSWORD_FAILED;
         }
 
         @Override
+        public void onPasswordFailed(Context context, Intent intent, UserHandle user) {
+            super.onPasswordFailed(context, intent, user);
+            mUser = user;
+        }
+
+        /** @deprecated but should still be called by the default implementation. */
+        @Override @Deprecated
+        public void onPasswordExpiring(Context context, Intent intent) {
+            mFlags |= PASSWORD_EXPIRED;
+        }
+
+        @Override
+        public void onPasswordExpiring(Context context, Intent intent, UserHandle user) {
+            super.onPasswordExpiring(context, intent, user);
+            mUser = user;
+        }
+
+        /** @deprecated but should still be called by the default implementation. */
+        @Override @Deprecated
         public void onPasswordSucceeded(Context context, Intent intent) {
-            super.onPasswordSucceeded(context, intent);
             mFlags |= PASSWORD_SUCCEEDED;
+        }
+
+        @Override
+        public void onPasswordSucceeded(Context context, Intent intent, UserHandle user) {
+            super.onPasswordSucceeded(context, intent, user);
+            mUser = user;
         }
 
         @Override
