@@ -2478,6 +2478,8 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
 
         KeyProtection params = new KeyProtection.Builder(
                 KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .build();
         String alias = "test1";
         mKeyStore.deleteEntry(alias);
