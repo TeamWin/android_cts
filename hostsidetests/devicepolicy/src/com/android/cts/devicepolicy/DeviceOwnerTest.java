@@ -17,6 +17,7 @@
 package com.android.cts.devicepolicy;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Set of tests for Device Owner use cases.
@@ -310,7 +311,18 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         executeDeviceTestMethod(".SecurityLoggingTest",
                 "testRetrievingSecurityLogsNotPossibleImmediatelyAfterPreviousSuccessfulRetrieval");
-        executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingAndDisablingSecurityLogging");
+        try {
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            rebootAndWaitUntilReady();
+            // Sleep for ~1 minute so that SecurityLogMonitor fetches the security events. This is
+            // an implementation detail we shouldn't rely on but there is no other way to do it
+            // currently.
+            Thread.sleep(TimeUnit.SECONDS.toMillis(70));
+            executeDeviceTestMethod(".SecurityLoggingTest", "testGetSecurityLogs");
+        } finally {
+            // Always attempt to disable security logging to bring the device to initial state.
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        }
     }
 
     public void testLockTask() throws Exception {

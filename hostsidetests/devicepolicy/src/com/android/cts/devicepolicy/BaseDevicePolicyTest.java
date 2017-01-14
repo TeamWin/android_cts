@@ -256,6 +256,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         return !runResult.hasFailedTests() && runResult.getNumTestsInState(TestStatus.PASSED) > 0;
     }
 
+    /** Reboots the device and block until the boot complete flag is set. */
+    protected void rebootAndWaitUntilReady() throws DeviceNotAvailableException {
+        getDevice().rebootUntilOnline();
+        assertTrue("Device failed to boot", getDevice().waitForBootComplete(60000));
+    }
+
     /** Returns true if the system supports the split between system and primary user. */
     protected boolean hasUserSplit() throws DeviceNotAvailableException {
         return getBooleanSystemProperty("ro.fw.system_user_split", false);

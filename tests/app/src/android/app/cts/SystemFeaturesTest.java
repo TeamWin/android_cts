@@ -467,6 +467,10 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     }
 
     public void testUsbAccessory() {
+        // USB accessory mode is only a requirement for devices with USB ports supporting
+        // peripheral mode. As there is no public API to distinguish a device with only host
+        // mode support from having both peripheral and host support, the test may have
+        // false negatives.
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) &&
                 !mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
@@ -474,23 +478,18 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
-    public void testWifiFeature() throws Exception {
+  public void testWifiFeature() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // no WiFi, skip the test
             return;
         }
         boolean enabled = mWifiManager.isWifiEnabled();
         try {
-            // WifiManager is hard-coded to return true,
-            // the case without WiFi is already handled,
-            // so this case MUST have WiFi.
-            if (mWifiManager.setWifiEnabled(true)) {
-                assertAvailable(PackageManager.FEATURE_WIFI);
-            }
+            // assert wifimanager can toggle wifi from current sate
+            assertTrue(mWifiManager.setWifiEnabled(!enabled));
+
         } finally {
-            if (!enabled) {
-                mWifiManager.setWifiEnabled(false);
-            }
+            mWifiManager.setWifiEnabled(enabled);
         }
     }
 
