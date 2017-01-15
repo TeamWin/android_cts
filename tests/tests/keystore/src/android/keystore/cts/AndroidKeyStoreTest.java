@@ -2520,7 +2520,7 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
             if (!TestUtils.isHmacAlgorithm(algorithm)) {
                 continue;
             }
-            for (int keySizeBytes = 0; keySizeBytes <= 1024 / 8; keySizeBytes++) {
+            for (int keySizeBytes = 8; keySizeBytes <= 1024 / 8; keySizeBytes++) {
                 try {
                     KeyStore.SecretKeyEntry entry = new KeyStore.SecretKeyEntry(
                             new TransparentSecretKey(new byte[keySizeBytes], algorithm));
