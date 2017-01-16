@@ -16,6 +16,8 @@
 package com.android.cts.deviceowner;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED;
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static java.util.stream.Collectors.toList;
 
 import android.app.admin.DevicePolicyManager;
@@ -34,15 +36,15 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
 
     private List<String> mEnabledAppsBeforeTest;
     private PackageManager mPackageManager;
+    private DevicePolicyManager mDpm;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         mPackageManager = getContext().getPackageManager();
-        mEnabledAppsBeforeTest = getPackageNameList(mPackageManager.getInstalledApplications(
-                0 /* Default flags */));
-        deviceOwnerProvision();
+        mDpm = getContext().getSystemService(DevicePolicyManager.class);
+        mEnabledAppsBeforeTest = getPackageNameList();
     }
 
     @Override
@@ -51,14 +53,23 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
         super.tearDown();
     }
 
-
     public void testProvisionDeviceOwner() throws Exception {
-        // empty test to run setUp
+        deviceOwnerProvision(getBaseProvisioningIntent());
+    }
+
+    public void testProvisionDeviceOwner_withAllSystemAppsEnabled() throws Exception {
+        List<String> systemAppsBefore = getSystemPackageNameList();
+
+        Intent intent = getBaseProvisioningIntent()
+                .putExtra(EXTRA_PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED, true);
+        deviceOwnerProvision(intent);
+
+        List<String> systemAppsAfter = getSystemPackageNameList();
+        assertTrue(systemAppsBefore.equals(systemAppsAfter));
     }
 
     private void enableUninstalledApp() {
-        final List<String> currentEnabledApps = getPackageNameList(
-                mPackageManager.getInstalledApplications(0 /* Default flags */));
+        final List<String> currentEnabledApps = getPackageNameList();
 
         final List<String> disabledApps = new ArrayList<String>(mEnabledAppsBeforeTest);
         disabledApps.removeAll(currentEnabledApps);
@@ -70,20 +81,35 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
         }
     }
 
-    private void deviceOwnerProvision() throws Exception {
-        Intent intent = new Intent(ACTION_PROVISION_MANAGED_DEVICE)
+    private Intent getBaseProvisioningIntent() {
+        return new Intent(ACTION_PROVISION_MANAGED_DEVICE)
                 .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
                         BasicAdminReceiver.getComponentName(getContext()))
                 .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
+    }
+
+    private void deviceOwnerProvision(Intent intent) throws Exception {
         SilentProvisioningTestManager provisioningManager =
                 new SilentProvisioningTestManager(getContext());
         assertTrue(provisioningManager.startProvisioningAndWait(intent));
         Log.i(TAG, "device owner provisioning successful");
+        assertTrue(mDpm.isDeviceOwnerApp(getContext().getPackageName()));
+        Log.i(TAG, "device owner app: " + getContext().getPackageName());
     }
 
-    private static List<String> getPackageNameList(List<ApplicationInfo> appInfos) {
-        return appInfos.stream()
+    private List<String> getPackageNameList() {
+        return getPackageNameList(0 /* Default flags */);
+    }
+
+    private List<String> getSystemPackageNameList() {
+        return getPackageNameList(MATCH_SYSTEM_ONLY);
+    }
+
+    private List<String> getPackageNameList(int flags) {
+        return mPackageManager.getInstalledApplications(flags)
+                .stream()
                 .map((ApplicationInfo appInfo) -> appInfo.packageName)
+                .sorted()
                 .collect(toList());
     }
 }

@@ -458,7 +458,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testDeviceOwnerProvisioning() throws Exception {
-        executeDeviceTestMethod(".DeviceOwnerProvisioningTest", "testProvisionDeviceOwner");
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
