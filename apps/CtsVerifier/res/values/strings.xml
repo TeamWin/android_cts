@@ -2839,6 +2839,41 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="enterprise_privacy_install">Install</string>
     <string name="enterprise_privacy_uninstall">Uninstall</string>
+    <string name="enterprise_privacy_admin_granted_location_access">Location access permission</string>
+    <string name="enterprise_privacy_admin_granted_location_access_info">
+        Please do the following:\n
+        1) Press the Reset button.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your location.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Grant button.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your location.\n
+        7) Press the Reset button.
+    </string>
+    <string name="enterprise_privacy_reset">Reset</string>
+    <string name="enterprise_privacy_grant">Grant</string>
+    <string name="enterprise_privacy_admin_granted_microphone_access">Microphone access permission</string>
+    <string name="enterprise_privacy_admin_granted_microphone_access_info">
+        Please do the following:\n
+        1) Press the Reset button.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your microphone.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Grant button.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your microphone.\n
+        7) Press the Reset button.
+    </string>
+    <string name="enterprise_privacy_admin_granted_camera_access">Camera access permission</string>
+    <string name="enterprise_privacy_admin_granted_camera_access_info">
+        Please do the following:\n
+        1) Press the Reset button.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your camera.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Grant button.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your camera.\n
+        7) Press the Reset button.
+    </string>
     <string name="enterprise_privacy_always_on_vpn">Always-on VPN</string>
     <string name="enterprise_privacy_always_on_vpn_info">
         Please do the following:\n

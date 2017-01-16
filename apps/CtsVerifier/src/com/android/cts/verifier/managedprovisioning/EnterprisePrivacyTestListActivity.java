@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import android.Manifest;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -45,6 +46,12 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
             = "ENTERPRISE_PRIVACY_SECURITY_LOGGING";
     private static final String ENTERPRISE_PRIVACY_ENTERPRISE_INSTALLED_APPS
             = "ENTERPRISE_PRIVACY_ENTERPRISE_INSTALLED_APPS";
+    private static final String ENTERPRISE_PRIVACY_LOCATION_ACCESS
+            = "ENTERPRISE_PRIVACY_LOCATION_ACCESS";
+    private static final String ENTERPRISE_PRIVACY_MICROPHONE_ACCESS
+            = "ENTERPRISE_PRIVACY_MICROPHONE_ACCESS";
+    private static final String ENTERPRISE_PRIVACY_CAMERA_ACCESS
+            = "ENTERPRISE_PRIVACY_CAMERA_ACCESS";
     private static final String ENTERPRISE_PRIVACY_ALWAYS_ON_VPN
             = "ENTERPRISE_PRIVACY_ALWAYS_ON_VPN";
     private static final String ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN
@@ -97,6 +104,24 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS))});
     }
 
+    private TestListItem buildAdminGrantedPermissionTest(String id, int titleRes, int infoRes,
+            String permission) {
+        return createInteractiveTestItem(this, id, titleRes, infoRes,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_reset, buildCommandIntent(
+                                CommandReceiverActivity.COMMAND_SET_PERMISSION_GRANT_STATE)
+                                .putExtra(CommandReceiverActivity.EXTRA_PERMISSION, permission)
+                                .putExtra(CommandReceiverActivity.EXTRA_GRANT_STATE,
+                                        DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT)),
+                        new ButtonInfo(R.string.enterprise_privacy_grant, buildCommandIntent(
+                                CommandReceiverActivity.COMMAND_SET_PERMISSION_GRANT_STATE)
+                                .putExtra(CommandReceiverActivity.EXTRA_PERMISSION, permission)
+                                .putExtra(CommandReceiverActivity.EXTRA_GRANT_STATE,
+                                        DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)),
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS))});
+    }
+
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_PAGE,
                 R.string.enterprise_privacy_page,
@@ -129,6 +154,18 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                                         .COMMAND_UNINSTALL_HELPER_PACKAGE)),
                         new ButtonInfo(R.string.enterprise_privacy_open_settings,
                                 new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS))}));
+        adapter.add(buildAdminGrantedPermissionTest(ENTERPRISE_PRIVACY_LOCATION_ACCESS,
+                R.string.enterprise_privacy_admin_granted_location_access,
+                R.string.enterprise_privacy_admin_granted_location_access_info,
+                Manifest.permission.ACCESS_FINE_LOCATION));
+        adapter.add(buildAdminGrantedPermissionTest(ENTERPRISE_PRIVACY_MICROPHONE_ACCESS,
+                R.string.enterprise_privacy_admin_granted_microphone_access,
+                R.string.enterprise_privacy_admin_granted_microphone_access_info,
+                Manifest.permission.RECORD_AUDIO));
+        adapter.add(buildAdminGrantedPermissionTest(ENTERPRISE_PRIVACY_CAMERA_ACCESS,
+                R.string.enterprise_privacy_admin_granted_camera_access,
+                R.string.enterprise_privacy_admin_granted_camera_access_info,
+                Manifest.permission.CAMERA));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ALWAYS_ON_VPN,
                 R.string.enterprise_privacy_always_on_vpn,
                 R.string.enterprise_privacy_always_on_vpn_info,
