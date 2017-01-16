@@ -21,17 +21,15 @@
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <!-- this has the CoreTestRunner which needs to be in a separate APK -->
-        <option name="test-file-name" value="CtsLibcoreTestRunner.apk" />
         <!-- this has just the instrumentation which acts as the tests we want to run -->
         <option name="test-file-name" value="CtsLibcoreJsr166TestCases.apk" />
     </target_preparer>
     <test class="com.android.compatibility.testtype.LibcoreTest" >
-        <!-- override AJUR -->
-        <option name="runner" value="com.android.cts.core.runner.CoreTestRunner" />
         <option name="package" value="android.libcore.cts.jsr166" />
-        <option name="instrumentation-arg" key="core-listener"
-                value="com.android.cts.runner.CtsTestRunListener"/>
+        <option name="instrumentation-arg" key="listener"
+                value="com.android.cts.runner.CtsTestRunListener" />
+        <option name="instrumentation-arg" key="filter"
+                value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
         <option name="core-expectation" value="/brokentests.txt" />
         <option name="core-expectation" value="/icebox.txt" />

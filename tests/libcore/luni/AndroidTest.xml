@@ -21,19 +21,19 @@
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <!-- this has just the instrumentation which acts as the tests we want to run -->
         <option name="test-file-name" value="CtsLibcoreTestCases.apk" />
     </target_preparer>
     <test class="com.android.compatibility.testtype.LibcoreTest" >
-        <!-- override AJUR -->
-        <option name="runner" value="com.android.cts.core.runner.CoreTestRunner" />
         <option name="package" value="android.libcore.cts" />
-        <option name="instrumentation-arg" key="core-listener"
-                value="com.android.cts.runner.CtsTestRunListener"/>
+        <option name="instrumentation-arg" key="listener"
+                value="com.android.cts.runner.CtsTestRunListener" />
+        <option name="instrumentation-arg" key="filter"
+                value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
         <option name="core-expectation" value="/brokentests.txt" />
         <option name="core-expectation" value="/icebox.txt" />
         <option name="core-expectation" value="/taggedtests.txt" />
-        <option name="core-expectation" value="/expectations/cts-runner-specific-failures.txt" />
         <option name="runtime-hint" value="45m"/>
         <!-- 20x default timeout of 600sec -->
         <option name="shell-timeout" value="12000000"/>
