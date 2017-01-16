@@ -258,6 +258,14 @@
                   android:screenOrientation="landscape"
                   android:documentLaunchMode="always"
         />
+        <receiver
+            android:name=".LaunchBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.server.cts.LAUNCH_BROADCAST_ACTION"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
 

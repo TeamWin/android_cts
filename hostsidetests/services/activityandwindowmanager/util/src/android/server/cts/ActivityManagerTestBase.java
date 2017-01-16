@@ -71,6 +71,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final String AM_STACK_LIST = "am stack list";
 
     private static final String AM_FORCE_STOP_TEST_PACKAGE = "am force-stop android.server.cts";
+    private static final String AM_FORCE_STOP_SECOND_TEST_PACKAGE
+            = "am force-stop android.server.cts.second";
+    private static final String AM_FORCE_STOP_THIRD_TEST_PACKAGE
+            = "am force-stop android.server.cts.third";
 
     private static final String AM_REMOVE_STACK = "am stack remove ";
 
@@ -131,7 +135,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     static String getActivityComponentName(final String activityName) {
-        return componentName + "/." + activityName;
+        return getActivityComponentName(componentName, activityName);
+    }
+
+    static String getActivityComponentName(final String packageName, final String activityName) {
+        return packageName + "/." + activityName;
     }
 
     // A little ugly, but lets avoid having to strip static everywhere for
@@ -141,11 +149,19 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     static String getBaseWindowName() {
-        return componentName + "/" + componentName + ".";
+        return getBaseWindowName(componentName);
+    }
+
+    static String getBaseWindowName(final String packageName) {
+        return packageName + "/" + packageName + ".";
     }
 
     static String getWindowName(final String activityName) {
-        return getBaseWindowName() + activityName;
+        return getWindowName(componentName, activityName);
+    }
+
+    static String getWindowName(final String packageName, final String activityName) {
+        return getBaseWindowName(packageName) + activityName;
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
@@ -197,6 +213,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         super.tearDown();
         try {
             executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+            executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
+            executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
             // Restore rotation settings to the state they were before test.
             setAccelerometerRotation(mInitialAccelerometerRotation);
             setUserRotation(mUserRotation);

@@ -17,6 +17,8 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsDeviceServicesTestApp.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestSecondApp.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestThirdApp.apk" />
         <option name="test-file-name" value="CtsDeviceDisplaySizeApp.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
