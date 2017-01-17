@@ -6618,6 +6618,32 @@ public class TextViewTest {
         assertTrue(autoSizeTextViewXY.getTextSize() < sizeSetInPixels);
     }
 
+    @UiThreadTest
+    @Test
+    public void testOnInitializeA11yNodeInfo_populatesHintTextProperly() {
+        final TextView textView = new TextView(mActivity);
+        textView.setText("", BufferType.EDITABLE);
+        final String hintText = "Hint text";
+        textView.setHint(hintText);
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        textView.onInitializeAccessibilityNodeInfo(info);
+        assertTrue("Hint text flag set incorrectly for accessibility", info.isShowingHintText());
+        assertTrue("Hint text not showing as accessibility text",
+                TextUtils.equals(hintText, info.getText()));
+        assertTrue("Hint text not provided to accessibility",
+                TextUtils.equals(hintText, info.getHintText()));
+
+        final String nonHintText = "Something else";
+        textView.setText(nonHintText, BufferType.EDITABLE);
+        textView.onInitializeAccessibilityNodeInfo(info);
+        assertFalse("Hint text flag set incorrectly for accessibility", info.isShowingHintText());
+        assertTrue("Text not provided to accessibility",
+                TextUtils.equals(nonHintText, info.getText()));
+        assertTrue("Hint text not provided to accessibility",
+                TextUtils.equals(hintText, info.getHintText()));
+    }
+
+
     /**
      * Some TextView attributes require non-fixed width and/or layout height. This function removes
      * all other existing views from the layout leaving only one auto-size TextView (for exercising
