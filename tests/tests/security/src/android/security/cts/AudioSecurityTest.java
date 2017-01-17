@@ -15,12 +15,13 @@
  */
 package android.security.cts;
 
-import android.cts.util.CtsAndroidTestCase;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.audiofx.AudioEffect;
 import android.util.Log;
+
+import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
