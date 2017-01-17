@@ -63,8 +63,6 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         }
     }
 
-    protected static final SecureRandom sRandom = new SecureRandom();
-
     private Context mCurrentCallerPackage;
     private int mUserId;
     private UserHandle mUserHandle;
