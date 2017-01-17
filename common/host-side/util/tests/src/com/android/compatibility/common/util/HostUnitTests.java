@@ -28,6 +28,7 @@ public class HostUnitTests extends TestSuite {
     public HostUnitTests() {
         super();
         addTestSuite(DynamicConfigHandlerTest.class);
+        addTestSuite(ResultHandlerTest.class);
     }
 
     public static Test suite() {
