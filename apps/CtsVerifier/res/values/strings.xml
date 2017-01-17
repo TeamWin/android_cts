@@ -795,9 +795,12 @@
     <string name="snsr_device_admin_receiver">Sensor Tests Device Admin Receiver</string>
     <string name="snsr_test_summary">Tests passed: %1$d, Tests skipped: %2$d, Tests failed: %3$d</string>
     <string name="snsr_test_complete">Test completed without errors.</string>
-    <string name="snsr_test_complete_with_errors">Test completed with errors: those errors
-        might degrade the user experience and might cause some applications to misbehave. They are
-        not required for Android Compatibility at this time, but will in a future release.</string>
+    <string name="snsr_test_complete_with_errors">Test completed with errors which indicates
+      the device does not meet Android compatibility requirement.
+      This will degrade user experience and cause applications to misbehave.
+      To help debugging, please take a bug report and back up contents under
+      /sdcard/sensorTests of the device under test.
+    </string>
     <string name="snsr_test_pass">PASS</string>
     <string name="snsr_test_skipped">SKIPPED</string>
     <string name="snsr_test_fail">FAIL</string>
