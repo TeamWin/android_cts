@@ -27,7 +27,6 @@ import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -629,7 +628,7 @@ public class PostponedTransitionTest {
         assertFalse(fragment.isAdded());
         assertNull(fragment.getView());
         assertNotNull(mBeginningFragment.getView());
-        assertEquals(View.VISIBLE, mBeginningFragment.getView().getVisibility());
+        assertTrue(FragmentTestUtil.isVisible(mBeginningFragment));
         assertTrue(mBeginningFragment.getView().isAttachedToWindow());
     }
 
@@ -687,7 +686,9 @@ public class PostponedTransitionTest {
         assertTrue(fromFragment.getView().isAttachedToWindow());
         assertTrue(toFragment.getView().isAttachedToWindow());
         assertEquals(View.VISIBLE, fromFragment.getView().getVisibility());
-        assertEquals(View.INVISIBLE, toFragment.getView().getVisibility());
+        assertTrue(FragmentTestUtil.isVisible(fromFragment));
+        assertEquals(View.VISIBLE, toFragment.getView().getVisibility());
+        assertFalse(FragmentTestUtil.isVisible(toFragment));
         assureNoTransition(fromFragment);
         assureNoTransition(toFragment);
         assertTrue(fromFragment.isResumed());

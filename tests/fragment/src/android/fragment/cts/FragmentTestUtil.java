@@ -17,17 +17,17 @@ package android.fragment.cts;
 
 import static org.junit.Assert.assertEquals;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentController;
 import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
-import android.os.Handler;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Pair;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 public class FragmentTestUtil {
     public static void waitForExecution(final ActivityTestRule<FragmentTestActivity> rule) {
@@ -159,5 +159,13 @@ public class FragmentTestUtil {
             result[0] = Pair.create(savedState, nonConfig);
         });
         return result[0];
+    }
+
+    public static boolean isVisible(Fragment fragment) {
+        View view = fragment.getView();
+        AccessibilityNodeInfo accessibilityNodeInfo = view.createAccessibilityNodeInfo();
+        boolean isVisible = accessibilityNodeInfo.isVisibleToUser();
+        accessibilityNodeInfo.recycle();
+        return isVisible;
     }
 }
