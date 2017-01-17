@@ -994,16 +994,24 @@ public class LocationManagerTest extends BaseMockLocationTest {
     }
 
     /**
-     * Test case for bug 33091107.
+     * Test case for bug 33091107, where a malicious app used to be able to fool a real provider
+     * into providing a mock location that isn't marked as being mock.
      */
     public void testLocationShouldStillBeMarkedMockWhenProvidersDoNotMatch()
-        throws InterruptedException {
+            throws InterruptedException {
         double latitude = 20;
         double longitude = 40;
 
-        // Register a listener for the location we are about to set.
-        updateLocationAndWait(
-                TEST_MOCK_PROVIDER_NAME, LocationManager.GPS_PROVIDER, latitude, longitude);
+        List<String> providers = mManager.getAllProviders();
+        if (providers.isEmpty()) {
+            // Device doesn't have any providers. Can't perform this test, and no need to do so:
+            // no providers that malicious app could fool
+            return;
+        }
+        String realProviderToFool = providers.get(0);
+
+        // Register for location updates, then set a mock location and ensure it is marked "mock"
+        updateLocationAndWait(TEST_MOCK_PROVIDER_NAME, realProviderToFool, latitude, longitude);
     }
 
     @UiThreadTest
