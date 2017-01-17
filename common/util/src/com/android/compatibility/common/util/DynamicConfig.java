@@ -42,12 +42,7 @@ public class DynamicConfig {
     public static final String ENTRY_TAG = "entry";
     public static final String VALUE_TAG = "value";
     public static final String KEY_ATTR = "key";
-
     public final static String CONFIG_FOLDER_ON_DEVICE = "/sdcard/dynamic-config-files/";
-    public final static String CONFIG_FOLDER_ON_HOST =
-            System.getProperty("java.io.tmpdir") + "/dynamic-config-files/";
-    public final static String MERGED_CONFIG_FILE_FOLDER =
-            System.getProperty("java.io.tmpdir") + "/dynamic-config-files/merged";
 
     protected Map<String, List<String>> mDynamicConfigMap = new HashMap<String, List<String>>();
 

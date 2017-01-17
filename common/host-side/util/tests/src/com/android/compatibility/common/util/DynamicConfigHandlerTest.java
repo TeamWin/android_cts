@@ -95,8 +95,9 @@ public class DynamicConfigHandlerTest extends TestCase {
     public void testDynamicConfigHandler() throws Exception {
         String module = "test1";
         File localConfigFile = createFileFromStr(localConfig, module);
+        File mergedFile = null;
         try {
-            File mergedFile = DynamicConfigHandler
+            mergedFile = DynamicConfigHandler
                     .getMergedDynamicConfigFile(localConfigFile, overrideJson, module);
 
             Map<String, List<String>> configMap = DynamicConfig.createConfigMap(mergedFile);
@@ -117,6 +118,7 @@ public class DynamicConfigHandlerTest extends TestCase {
                     .contains("override-config-list-val-2-1"));
         } finally {
             FileUtil.deleteFile(localConfigFile);
+            FileUtil.recursiveDelete(mergedFile.getParentFile());
         }
     }
 
