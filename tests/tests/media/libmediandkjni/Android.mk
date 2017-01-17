@@ -14,6 +14,9 @@
 #
 LOCAL_PATH := $(call my-dir)
 
+#------------------------------------------------------------------------------
+# Builds libctsmediacodec_jni.so
+#
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libctsmediacodec_jni
@@ -21,19 +24,56 @@ LOCAL_MODULE    := libctsmediacodec_jni
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
-	native-media-jni.cpp \
-	codec-utils-jni.cpp  \
-	md5_utils.cpp
+  native-media-jni.cpp \
+  codec-utils-jni.cpp  \
+  md5_utils.cpp
 
 LOCAL_C_INCLUDES := \
-	$(JNI_H_INCLUDE) \
-	system/core/include
+  $(JNI_H_INCLUDE) \
+  system/core/include
 
 LOCAL_C_INCLUDES += $(call include-path-for, mediandk)
 
-LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libmediandk
+LOCAL_SHARED_LIBRARIES := \
+  libandroid libnativehelper_compat_libc++ \
+  liblog libmediandk
 
 LOCAL_SDK_VERSION := 23
+
+LOCAL_CFLAGS := -Werror -Wall
+
+include $(BUILD_SHARED_LIBRARY)
+
+#------------------------------------------------------------------------------
+# Builds libctsmediadrm_jni.so
+#
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := libctsmediadrm_jni
+
+# Don't include this package in any configuration by default.
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := \
+  CtsMediaDrmJniOnLoad.cpp \
+  codec-utils-jni.cpp  \
+  md5_utils.cpp \
+  native-mediadrm-jni.cpp \
+
+LOCAL_C_INCLUDES := \
+  $(JNI_H_INCLUDE) \
+  system/core/include
+
+
+LOCAL_C_INCLUDES += $(call include-path-for, mediandk)
+
+LOCAL_SHARED_LIBRARIES := \
+  libandroid libnativehelper_compat_libc++ \
+  liblog libmediandk libdl
+
+LOCAL_SDK_VERSION := 23
+
+LOCAL_NDK_STL_VARIANT := c++_static
 
 LOCAL_CFLAGS := -Werror -Wall
 
