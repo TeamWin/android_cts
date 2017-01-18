@@ -653,4 +653,71 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
         fail(failureMessage);
     }
+
+    /**
+     * Sets a user restriction via SetPolicyActivity.
+     * <p>IMPORTANT: The package that contains SetPolicyActivity must have been installed prior to
+     * calling this method.
+     * @param key user restriction key
+     * @param value true if we should set the restriction, false if we should clear it
+     * @param userId userId to set/clear the user restriction on
+     * @param packageName package where SetPolicyActivity is installed
+     * @return The output of the command
+     * @throws DeviceNotAvailableException
+     */
+    protected String changeUserRestriction(String key, boolean value, int userId,
+            String packageName) throws DeviceNotAvailableException {
+        return changePolicy(getUserRestrictionCommand(value),
+                " --es extra-restriction-key " + key, userId, packageName);
+    }
+
+    /**
+     * Same as {@link #changeUserRestriction(String, boolean, int, String)} but asserts that it
+     * succeeds.
+     */
+    protected void changeUserRestrictionOrFail(String key, boolean value, int userId,
+            String packageName) throws DeviceNotAvailableException {
+        changePolicyOrFail(getUserRestrictionCommand(value), " --es extra-restriction-key " + key,
+                userId, packageName);
+    }
+
+    /**
+     * Sets some policy via SetPolicyActivity.
+     * <p>IMPORTANT: The package that contains SetPolicyActivity must have been installed prior to
+     * calling this method.
+     * @param command command to pass to SetPolicyActivity
+     * @param extras extras to pass to SetPolicyActivity
+     * @param userId the userId where we invoke SetPolicyActivity
+     * @param packageName where SetPolicyActivity is installed
+     * @return The output of the command
+     * @throws DeviceNotAvailableException
+     */
+    protected String changePolicy(String command, String extras, int userId, String packageName)
+            throws DeviceNotAvailableException {
+        String adbCommand = "am start -W --user " + userId
+                + " -c android.intent.category.DEFAULT "
+                + " --es extra-command " + command
+                + " " + extras
+                + " " + packageName + "/.SetPolicyActivity";
+        String commandOutput = getDevice().executeShellCommand(adbCommand);
+        CLog.d("Output for command " + adbCommand + ": " + commandOutput);
+        return commandOutput;
+    }
+
+    /**
+     * Same as {@link #changePolicy(String, String, int, String)} but asserts that it succeeds.
+     */
+    protected void changePolicyOrFail(String command, String extras, int userId,
+            String packageName) throws DeviceNotAvailableException {
+        String commandOutput = changePolicy(command, extras, userId, packageName);
+        assertTrue("Command was expected to succeed " + commandOutput,
+                commandOutput.contains("Status: ok"));
+    }
+
+    private String getUserRestrictionCommand(boolean setRestriction) {
+        if (setRestriction) {
+            return "add-restriction";
+        }
+        return "clear-restriction";
+    }
 }
