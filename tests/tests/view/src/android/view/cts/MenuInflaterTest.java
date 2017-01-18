@@ -19,6 +19,7 @@ package android.view.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -32,6 +33,7 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.SubMenu;
 import android.widget.PopupMenu;
 
@@ -249,6 +251,50 @@ public class MenuInflaterTest {
         assertTrue(mMenu.findItem(R.id.nongroup_checkable_item_1).isChecked());
         assertTrue(mMenu.findItem(R.id.nongroup_checkable_item_2).isChecked());
         assertTrue(mMenu.findItem(R.id.nongroup_checkable_item_3).isChecked());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testInflateTooltipFromXml() {
+        mMenuInflater.inflate(R.menu.tooltip, mMenu);
+
+        MenuItem item1 = mMenu.findItem(R.id.item1);
+        MenuItem item2 = mMenu.findItem(R.id.item2);
+        MenuItem item3 = mMenu.findItem(R.id.item3);
+
+        assertEquals("tooltip1", item1.getTooltip());
+
+        assertEquals("tooltip2", item2.getTooltip());
+        item2.setTooltip(null);
+        assertNull(item2.getTooltip());
+        item2.setTooltip("tooltip2_new");
+        assertEquals("tooltip2_new", item2.getTooltip());
+
+        assertNull(item3.getTooltip());
+        item3.setTooltip("tooltip3");
+        assertEquals("tooltip3", item3.getTooltip());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testInflateContentDescriptionFromXml() {
+        mMenuInflater.inflate(R.menu.content_description, mMenu);
+
+        MenuItem item1 = mMenu.findItem(R.id.item1);
+        MenuItem item2 = mMenu.findItem(R.id.item2);
+        MenuItem item3 = mMenu.findItem(R.id.item3);
+
+        assertEquals("description1", item1.getContentDescription());
+
+        assertEquals("description2", item2.getContentDescription());
+        item2.setContentDescription(null);
+        assertNull(item2.getContentDescription());
+        item2.setContentDescription("description2_new");
+        assertEquals("description2_new", item2.getContentDescription());
+
+        assertNull(item3.getContentDescription());
+        item3.setContentDescription("description3");
+        assertEquals("description3", item3.getContentDescription());
     }
 
     private void verifyDrawableContent(BitmapDrawable b, int resId) {
