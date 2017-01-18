@@ -16,17 +16,47 @@
 
 package com.android.server.cts;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
+import com.android.ddmlib.testrunner.TestIdentifier;
+import com.android.ddmlib.testrunner.TestResult;
+import com.android.ddmlib.testrunner.TestResult.TestStatus;
+import com.android.ddmlib.testrunner.TestRunResult;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.IBuildReceiver;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 
-import java.util.Scanner;
+import java.io.FileNotFoundException;
+import java.util.Map;
 
-public class ProtoDumpTestCase extends DeviceTestCase {
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver {
+
+    protected IBuildInfo mCtsBuild;
+
+    private static final String TEST_RUNNER = "android.support.test.runner.AndroidJUnitRunner";
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        assertNotNull(mCtsBuild);
+    }
+
+    @Override
+    public void setBuild(IBuildInfo buildInfo) {
+        mCtsBuild = buildInfo;
+    }
 
     /**
      * Call onto the device with an adb shell command and get the results of
@@ -45,5 +75,70 @@ public class ProtoDumpTestCase extends DeviceTestCase {
         final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
         getDevice().executeShellCommand(command, receiver);
         return parser.parseFrom(receiver.getOutput());
+    }
+
+    /**
+     * Install a device side test package.
+     *
+     * @param appFileName Apk file name, such as "CtsNetStatsApp.apk".
+     * @param grantPermissions whether to give runtime permissions.
+     */
+    protected void installPackage(String appFileName, boolean grantPermissions)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        CLog.d("Installing app " + appFileName);
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final String result = getDevice().installPackage(
+                buildHelper.getTestFile(appFileName), true, grantPermissions);
+        assertNull("Failed to install " + appFileName + ": " + result, result);
+    }
+
+    /**
+     * Run a device side test.
+     *
+     * @param pkgName Test package name, such as "com.android.server.cts.netstats".
+     * @param testClassName Test class name; either a fully qualified name, or "." + a class name.
+     * @param testMethodName Test method name.
+     * @throws DeviceNotAvailableException
+     */
+    protected void runDeviceTests(@Nonnull String pkgName,
+            @Nullable String testClassName, @Nullable String testMethodName)
+            throws DeviceNotAvailableException {
+        if (testClassName != null && testClassName.startsWith(".")) {
+            testClassName = pkgName + testClassName;
+        }
+
+        RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
+                pkgName, TEST_RUNNER, getDevice().getIDevice());
+        if (testClassName != null && testMethodName != null) {
+            testRunner.setMethodName(testClassName, testMethodName);
+        } else if (testClassName != null) {
+            testRunner.setClassName(testClassName);
+        }
+
+        CollectingTestListener listener = new CollectingTestListener();
+        assertTrue(getDevice().runInstrumentationTests(testRunner, listener));
+
+        final TestRunResult result = listener.getCurrentRunResults();
+        if (result.isRunFailure()) {
+            throw new AssertionError("Failed to successfully run device tests for "
+                    + result.getName() + ": " + result.getRunFailureMessage());
+        }
+        if (result.getNumTests() == 0) {
+            throw new AssertionError("No tests were run on the device");
+        }
+
+        if (result.hasFailedTests()) {
+            // build a meaningful error message
+            StringBuilder errorBuilder = new StringBuilder("On-device tests failed:\n");
+            for (Map.Entry<TestIdentifier, TestResult> resultEntry :
+                    result.getTestResults().entrySet()) {
+                if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
+                    errorBuilder.append(resultEntry.getKey().toString());
+                    errorBuilder.append(":\n");
+                    errorBuilder.append(resultEntry.getValue().getStackTrace());
+                }
+            }
+            throw new AssertionError(errorBuilder.toString());
+        }
     }
 }
