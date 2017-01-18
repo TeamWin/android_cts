@@ -47,8 +47,6 @@ LOCAL_MULTILIB := both
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_JAVA_RESOURCE_DIRS := resources
-
 LOCAL_JAVA_RESOURCE_FILES := \
     libcore/expectations/brokentests.txt \
     libcore/expectations/icebox.txt \
