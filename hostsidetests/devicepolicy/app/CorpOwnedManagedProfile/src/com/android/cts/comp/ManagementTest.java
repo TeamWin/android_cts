@@ -16,10 +16,11 @@
 package com.android.cts.comp;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.os.UserHandle;
 import android.test.AndroidTestCase;
-
+import android.test.MoreAsserts;
 import java.util.List;
 
 public class ManagementTest extends AndroidTestCase {
@@ -83,5 +84,16 @@ public class ManagementTest extends AndroidTestCase {
         UserHandle profileUserHandle = Utils.getOtherProfile(mContext);
         assertTrue(mDevicePolicyManager.removeUser(AdminReceiver.getComponentName(mContext),
                 profileUserHandle));
+    }
+
+    public void testCreateSecondaryUser() throws Exception {
+        ComponentName admin = AdminReceiver.getComponentName(mContext);
+        assertNotNull(mDevicePolicyManager.createAndManageUser(admin, "secondary-user",
+                admin, null, DevicePolicyManager.SKIP_SETUP_WIZARD));
+    }
+
+    public void testNoBindDeviceAdminTargetUsers() {
+        MoreAsserts.assertEmpty(mDevicePolicyManager.getBindDeviceAdminTargetUsers(
+                AdminReceiver.getComponentName(mContext)));
     }
 }

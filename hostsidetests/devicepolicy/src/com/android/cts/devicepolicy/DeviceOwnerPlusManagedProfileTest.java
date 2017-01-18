@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import java.util.List;
+
 /**
  * Tests for having both device owner and profile owner. Device owner is setup for you in
  * {@link #setUp()} and it is always the {@link #COMP_DPC_PKG}. You are required to call
@@ -386,6 +388,45 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
                 "testWipeData",
                 mProfileUserId);
         assertUserGetsRemoved(mProfileUserId);
+    }
+
+    public void testCannotBindToSecondaryUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testCreateSecondaryUser",
+                mPrimaryUserId);
+        List<Integer> newUsers = getUsersCreatedByTests();
+        assertEquals(1, newUsers.size());
+        int secondaryUserId = newUsers.get(0);
+        getDevice().startUser(secondaryUserId);
+
+        // Set the same affiliation ids on both users.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                AFFILIATION_TEST,
+                "testSetAffiliationId1",
+                mPrimaryUserId);
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                AFFILIATION_TEST,
+                "testSetAffiliationId1",
+                secondaryUserId);
+
+        // But check that we still can't bind to the other user.
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testNoBindDeviceAdminTargetUsers",
+                mPrimaryUserId);
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testNoBindDeviceAdminTargetUsers",
+                secondaryUserId);
     }
 
     protected void setupManagedProfile(String apkName, String packageName,
