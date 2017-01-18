@@ -165,10 +165,15 @@ class AccessoryTestCompanion extends TestCompanion {
 
                     case "echo max bytes": {
                         byte[] buffer = new byte[MAX_BUFFER_SIZE];
+                        byte[] empty = new byte[1];
 
                         int numTransferred = connection.bulkTransfer(in, buffer, MAX_BUFFER_SIZE,
                                 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
+
+                        // If the data length is a multple of the maxpacket size read zero packet.
+                        numTransferred = connection.bulkTransfer(in, empty, 1, 0);
+                        assertEquals(0, numTransferred);
 
                         numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
@@ -177,6 +182,7 @@ class AccessoryTestCompanion extends TestCompanion {
 
                     case "echo max*2 bytes": {
                         byte[] buffer = new byte[MAX_BUFFER_SIZE * 2];
+                        byte[] empty = new byte[1];
 
                         int numTransferred = connection.bulkTransfer(in, buffer, MAX_BUFFER_SIZE,
                                 0);
@@ -186,6 +192,10 @@ class AccessoryTestCompanion extends TestCompanion {
                         numTransferred = connection.bulkTransfer(in, buffer, MAX_BUFFER_SIZE,
                                 MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
+
+                        // If the data length is a multple of the maxpacket size read zero packet.
+                        numTransferred = connection.bulkTransfer(in, empty, 1, 0);
+                        assertEquals(0, numTransferred);
 
                         numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
