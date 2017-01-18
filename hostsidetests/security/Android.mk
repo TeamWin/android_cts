@@ -42,7 +42,7 @@ selinux_plat_file_contexts := $(call intermediates-dir-for,ETC,plat_file_context
 
 selinux_general_property_contexts := $(call intermediates-dir-for,ETC,general_property_contexts)/general_property_contexts
 
-selinux_general_service_contexts := $(call intermediates-dir-for,ETC,general_service_contexts)/general_service_contexts
+selinux_plat_service_contexts := $(call intermediates-dir-for,ETC,plat_service_contexts)/plat_service_contexts
 
 LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
@@ -51,7 +51,7 @@ LOCAL_JAVA_RESOURCE_FILES := \
     $(selinux_plat_seapp_neverallows) \
     $(selinux_general_file_contexts) \
     $(selinux_general_property_contexts) \
-    $(selinux_general_service_contexts)
+    $(selinux_plat_service_contexts)
 
 selinux_general_policy := $(call intermediates-dir-for,ETC,general_sepolicy.conf)/general_sepolicy.conf
 
