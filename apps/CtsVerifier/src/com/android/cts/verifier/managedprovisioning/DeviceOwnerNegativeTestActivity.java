@@ -45,6 +45,8 @@ public class DeviceOwnerNegativeTestActivity extends PassFailButtons.TestListAct
             = "ENTERPRISE_PRIVACY_QUICK_SETTINGS_NEGATIVE";
     private static final String ENTERPRISE_PRIVACY_KEYGUARD_NEGATIVE
             = "ENTERPRISE_PRIVACY_KEYGUARD_NEGATIVE";
+    private static final String ENTERPRISE_PRIVACY_ADD_ACCOUNT_NEGATIVE
+            = "ENTERPRISE_PRIVACY_ADD_ACCOUNT_NEGATIVE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +102,10 @@ public class DeviceOwnerNegativeTestActivity extends PassFailButtons.TestListAct
                 R.string.enterprise_privacy_keyguard_negative,
                 R.string.enterprise_privacy_keyguard_negative_info,
                 new ButtonInfo(R.string.go_button_text, new Intent(Settings.ACTION_SETTINGS))));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ADD_ACCOUNT_NEGATIVE,
+                R.string.enterprise_privacy_add_account_negative,
+                R.string.enterprise_privacy_add_account_negative_info,
+                new ButtonInfo(R.string.go_button_text, new Intent(Settings.ACTION_ADD_ACCOUNT))));
     }
 
     /**

@@ -2316,6 +2316,13 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Unlock the device.\n
         7) Repeat steps (1) through (6) for each screen lock type other than \"None\".
     </string>
+    <string name="enterprise_privacy_add_account_negative">Add account disclosure</string>
+    <string name="enterprise_privacy_add_account_negative_info">
+        Please do the following:\n
+        1) Press the Go button to open Settings.\n
+        2) In the screen that opens, verify that you are not told that the device is managed.\n
+        3) Use the Back button to return to this page.
+    </string>
 
     <!-- Strings for DeviceOwnerPositiveTestActivity -->
     <string name="positive_device_owner">Device Owner Tests</string>
@@ -2942,6 +2949,20 @@ You should be prompted to select credentials; choose the ones you just installed
         10) Verify that on the lock screen, you are told the device is managed by \"Foo, Inc.\".\n
         11) Unlock the device.\n
         12) Repeat steps (1) through (11) for each screen lock type other than \"None\".
+    </string>
+    <string name="enterprise_privacy_add_account">Add account disclosure</string>
+    <string name="enterprise_privacy_add_account_info">
+        Please do the following:\n
+        1) Press the Clear Org button.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are told that the device is managed.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Set Org button.\n
+        6) Press the Open Settings button.\n
+        7) In the screen that opens, verify that you are told that the device is managed by \"Foo, Inc.\".\n
+        8) Tap the \"Learn more\" link.\n
+        9) Verify that a screen informing you what your managing organization can do is shown.\n
+        11) Use the Back button to return to this page.
     </string>
 
     <!-- Strings for Network Logging Tests -->
