@@ -109,7 +109,6 @@ public class ColorSpaceTest {
         DoubleUnaryOperator op = Math::sqrt;
         ColorSpace.Rgb cs = new ColorSpace.Rgb("Test", new float[6], new float[2],
                 op, sIdentity, 0.0f, 1.0f);
-        assertEquals(op, cs.getOetf());
         assertEquals(0.5, cs.getOetf().applyAsDouble(0.25), 1e-5);
     }
 
@@ -123,7 +122,6 @@ public class ColorSpaceTest {
         DoubleUnaryOperator op = x -> x * x;
         ColorSpace.Rgb cs = new ColorSpace.Rgb("Test", new float[6], new float[2],
                 sIdentity, op, 0.0f, 1.0f);
-        assertEquals(op, cs.getEotf());
         assertEquals(0.0625, cs.getEotf().applyAsDouble(0.25), 1e-5);
     }
 
@@ -672,7 +670,7 @@ public class ColorSpaceTest {
         // These cannot change
         assertEquals(0, ColorSpace.get(ColorSpace.Named.SRGB).getId());
         assertEquals(-1, ColorSpace.MIN_ID);
-        assertEquals(64, ColorSpace.MAX_ID);
+        assertEquals(63, ColorSpace.MAX_ID);
     }
 
     @Test
