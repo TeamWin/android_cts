@@ -21,14 +21,8 @@
 
 #if defined(ARCH_SUPPORTS_SECCOMP)
 #include <libminijail.h>
+#include <seccomp_bpf_tests.h>
 #endif
-
-#include "seccomp-tests/tests/test_harness.h"
-
-// Forward declare from seccomp_bpf_tests.c.
-extern "C" {
-struct __test_metadata* get_seccomp_test_list();
-}
 
 static const char TAG[] = "SeccompBpfTest-Native";
 
