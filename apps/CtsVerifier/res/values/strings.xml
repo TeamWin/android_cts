@@ -2820,6 +2820,25 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="enterprise_privacy_retrieve_security_logs">Retrieve Security Logs</string>
     <string name="enterprise_privacy_clear_organization">Clear Org</string>
     <string name="enterprise_privacy_set_organization">Set Org</string>
+    <string name="enterprise_privacy_enterprise_installed_apps">Enterprise-installed apps</string>
+    <string name="enterprise_privacy_enterprise_installed_apps_info">
+        Please do the following:\n
+        1) You should have received NotificationBot.apk together with the CTS verifier. If you built the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on the host:\n
+            make NotificationBot\n
+        2) Upload the NotificationBot.apk to your device by issuing the following command on the host:\n
+            adb push /path/to/NotificationBot.apk /sdcard\n
+        3) Press the Uninstall button.\n
+        4) Press the Open Settings button.\n
+        5) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
+        6) Use the Back button to return to this page.\n
+        7) Press the Install button.\n
+        8) Repeat steps (4) through (6), verifying that in step (5), you are told now that your administrator installed one app.\n
+        9) Press the Uninstall button.\n
+        10) Issue the following command on the host:\n
+            adb shell rm /sdcard/NotificationBot.apk
+    </string>
+    <string name="enterprise_privacy_install">Install</string>
+    <string name="enterprise_privacy_uninstall">Uninstall</string>
     <string name="enterprise_privacy_always_on_vpn">Always-on VPN</string>
     <string name="enterprise_privacy_always_on_vpn_info">
         Please do the following:\n

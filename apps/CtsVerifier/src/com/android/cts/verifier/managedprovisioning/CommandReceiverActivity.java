@@ -17,10 +17,12 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInstaller;
 import android.graphics.BitmapFactory;
 import android.net.ProxyInfo;
 import android.os.Bundle;
@@ -31,6 +33,10 @@ import android.util.Log;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.managedprovisioning.Utils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +75,8 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_ORGANIZATION_NAME = "set-organization-name";
     public static final String COMMAND_ENABLE_NETWORK_LOGGING = "enable-network-logging";
     public static final String COMMAND_DISABLE_NETWORK_LOGGING = "disable-network-logging";
+    public static final String COMMAND_INSTALL_HELPER_PACKAGE = "install-helper-package";
+    public static final String COMMAND_UNINSTALL_HELPER_PACKAGE = "uninstall-helper-package";
     public static final String COMMAND_CREATE_MANAGED_PROFILE = "create-managed-profile";
     public static final String COMMAND_REMOVE_MANAGED_PROFILE = "remove-managed-profile";
     public static final String COMMAND_SET_ALWAYS_ON_VPN = "set-always-on-vpn";
@@ -88,6 +96,16 @@ public class CommandReceiverActivity extends Activity {
             "com.android.cts.verifier.managedprovisioning.extra.VALUE";
     public static final String EXTRA_ORGANIZATION_NAME =
             "com.android.cts.verifier.managedprovisioning.extra.ORGANIZATION_NAME";
+
+    // We care about installing and uninstalling only. It does not matter what apk is used.
+    // NotificationBot.apk is a good choice because it comes bundled with the CTS verifier.
+    protected static final String HELPER_APP_LOCATION = "/sdcard/NotificationBot.apk";
+    protected static final String HELPER_APP_PKG = "com.android.cts.robot";
+
+    public static final String ACTION_INSTALL_COMPLETE =
+            "com.android.cts.verifier.managedprovisioning.action.ACTION_INSTALL_COMPLETE";
+    public static final String ACTION_UNINSTALL_COMPLETE =
+            "com.android.cts.verifier.managedprovisioning.action.ACTION_UNINSTALL_COMPLETE";
 
     private ComponentName mAdmin;
     private DevicePolicyManager mDpm;
@@ -240,6 +258,14 @@ public class CommandReceiverActivity extends Activity {
                     }
                     mDpm.setNetworkLoggingEnabled(mAdmin, false);
                 } break;
+                case COMMAND_INSTALL_HELPER_PACKAGE: {
+                    installHelperPackage();
+                } break;
+                case COMMAND_UNINSTALL_HELPER_PACKAGE: {
+                    getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
+                            PendingIntent.getBroadcast(this, 0,
+                                    new Intent(ACTION_UNINSTALL_COMPLETE), 0).getIntentSender());
+                } break;
                 case COMMAND_CREATE_MANAGED_PROFILE: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
@@ -289,13 +315,32 @@ public class CommandReceiverActivity extends Activity {
                     }
                     mDpm.setRecommendedGlobalProxy(mAdmin, null);
                 }
-
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
         } finally {
             finish();
         }
+    }
+
+    private void installHelperPackage() throws Exception {
+        final PackageInstaller packageInstaller = getPackageManager().getPackageInstaller();
+        final PackageInstaller.Session session = packageInstaller.openSession(
+                packageInstaller.createSession(new PackageInstaller.SessionParams(
+                        PackageInstaller.SessionParams.MODE_FULL_INSTALL)));
+        final File file = new File(HELPER_APP_LOCATION);
+        final InputStream in = new FileInputStream(file);
+        final OutputStream out = session.openWrite("CommandReceiverActivity", 0, file.length());
+        final byte[] buffer = new byte[65536];
+        int count;
+        while ((count = in.read(buffer)) != -1) {
+            out.write(buffer, 0, count);
+        }
+        session.fsync(out);
+        in.close();
+        out.close();
+        session.commit(PendingIntent.getBroadcast(this, 0, new Intent(ACTION_INSTALL_COMPLETE), 0)
+                .getIntentSender());
     }
 
     private void clearAllPolicies() throws Exception {

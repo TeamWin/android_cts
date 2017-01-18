@@ -43,6 +43,8 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
     private static final String ENTERPRISE_PRIVACY_BUG_REPORT = "ENTERPRISE_PRIVACY_BUG_REPORT";
     private static final String ENTERPRISE_PRIVACY_SECURITY_LOGGING
             = "ENTERPRISE_PRIVACY_SECURITY_LOGGING";
+    private static final String ENTERPRISE_PRIVACY_ENTERPRISE_INSTALLED_APPS
+            = "ENTERPRISE_PRIVACY_ENTERPRISE_INSTALLED_APPS";
     private static final String ENTERPRISE_PRIVACY_ALWAYS_ON_VPN
             = "ENTERPRISE_PRIVACY_ALWAYS_ON_VPN";
     private static final String ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN
@@ -115,6 +117,18 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 R.string.enterprise_privacy_security_logging_info,
                 R.string.enterprise_privacy_retrieve_security_logs,
                 CommandReceiverActivity.COMMAND_RETRIEVE_SECURITY_LOGS));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ENTERPRISE_INSTALLED_APPS,
+                R.string.enterprise_privacy_enterprise_installed_apps,
+                R.string.enterprise_privacy_enterprise_installed_apps_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_install,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_INSTALL_HELPER_PACKAGE)),
+                        new ButtonInfo(R.string.enterprise_privacy_uninstall,
+                                buildCommandIntent(CommandReceiverActivity
+                                        .COMMAND_UNINSTALL_HELPER_PACKAGE)),
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS))}));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ALWAYS_ON_VPN,
                 R.string.enterprise_privacy_always_on_vpn,
                 R.string.enterprise_privacy_always_on_vpn_info,
