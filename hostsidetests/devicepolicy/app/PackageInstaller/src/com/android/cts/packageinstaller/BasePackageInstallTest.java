@@ -26,6 +26,7 @@ import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Process;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 
@@ -194,5 +195,9 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    protected int getInstallReason(String packageName) {
+        return mPackageManager.getInstallReason(packageName, Process.myUserHandle());
     }
 }
