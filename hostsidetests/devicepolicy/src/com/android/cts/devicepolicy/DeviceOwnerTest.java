@@ -357,6 +357,16 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    /**
+     * Execute WifiSetHttpProxyTest as device owner.
+     */
+    public void testWifiSetHttpProxyTest() throws Exception {
+        final boolean hasWifi = hasDeviceFeature("android.hardware.wifi");
+        if (hasWifi && mHasFeature) {
+            executeDeviceOwnerTest("WifiSetHttpProxyTest");
+        }
+    }
+
     public void testCannotSetDeviceOwnerAgain() throws Exception {
         if (!mHasFeature) {
             return;
