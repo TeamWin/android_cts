@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,23 +13,5 @@
 # limitations under the License.
 
 LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-    $(call all-java-files-under, common/src)
-
-LOCAL_PACKAGE_NAME := CtsAppWidgetTestCases
-
-LOCAL_STATIC_JAVA_LIBRARIES := mockito-target-minus-junit4 ctstestrunner hamcrest
-
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
-
-include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
