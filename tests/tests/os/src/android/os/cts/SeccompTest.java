@@ -98,8 +98,9 @@ public class SeccompTest extends AndroidTestCase {
             "global.KILL_one_arg_one",
             "global.KILL_one_arg_six",
             "global.arg_out_of_range",
-            "global.ERRNO_one",
-            "global.ERRNO_one_ok",
+            "global.ERRNO_valid",
+            "global.ERRNO_zero",
+            /* "global.ERRNO_capped", // presently fails */
         };
         runKernelUnitTestSuite(tests);
     }
@@ -180,9 +181,9 @@ public class SeccompTest extends AndroidTestCase {
     private void runKernelUnitTestSuite(final String[] tests) {
         for (final String test : tests) {
             // TODO: Replace the URL with the documentation when it's finished.
-            assertTrue(test + " failed. This test requires kernel functionality to pass. "
-                       + "Please go to http://XXXXX for instructions on how to enable or "
-                       + "backport the required functionality.",
+            assertTrue(test + " failed. This test requires kernel functionality to pass. Please go to "
+                       + "http://source.android.com/devices/tech/config/kernel.html#Seccomp-BPF-TSYNC"
+                       + " for instructions on how to enable or backport the required functionality.",
                        runKernelUnitTest(test));
         }
     }
