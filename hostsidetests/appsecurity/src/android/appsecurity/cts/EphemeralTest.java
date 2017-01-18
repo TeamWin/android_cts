@@ -107,6 +107,10 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
+    public void testExposedSystemActivities() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testExposedSystemActivities");
+    }
+
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
