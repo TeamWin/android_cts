@@ -140,73 +140,37 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.setFocusable(true);
         mMockViewGroup.addFocusables(list, 0);
         assertEquals(2, list.size());
-
-        // Group is a cluster.
-        list.clear();
-        mMockViewGroup.setKeyboardNavigationCluster(true);
-        mMockViewGroup.addFocusables(list, View.FOCUS_FORWARD);
-        assertEquals(0, list.size());
-        mMockViewGroup.addFocusables(list, View.FOCUS_DOWN);
-        assertEquals(2, list.size());
-        list.clear();
-        mTextView.requestFocus();
-        mMockViewGroup.addFocusables(list, View.FOCUS_FORWARD);
-        assertEquals(2, list.size());
     }
 
     @UiThreadTest
     @Test
-    public void testAddKeyboardNavigationGroups() {
+    public void testAddKeyboardNavigationClusters() {
         View v1 = new MockView(mContext);
         View v2 = new MockView(mContext);
         mMockViewGroup.addView(v1);
         mMockViewGroup.addView(v2);
 
-        // No groups.
+        // No clusters.
         ArrayList<View> list = new ArrayList<>();
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
-        assertEquals(0, list.size());
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        mMockViewGroup.addKeyboardNavigationClusters(list, 0);
         assertEquals(0, list.size());
 
-        // Children are a section and a cluster.
+        // A cluster and a non-cluster child.
         v1.setKeyboardNavigationCluster(true);
-        v2.setKeyboardNavigationSection(true);
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        mMockViewGroup.addKeyboardNavigationClusters(list, 0);
         assertEquals(1, list.size());
         assertEquals(v1, list.get(0));
         list.clear();
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
-        assertEquals(1, list.size());
-        assertEquals(v2, list.get(0));
-        list.clear();
-
-        // Nested groups. Should ignore children.
-        mMockViewGroup.setKeyboardNavigationCluster(true);
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
-        assertEquals(1, list.size());
-        assertEquals(mMockViewGroup, list.get(0));
-        list.clear();
-        mMockViewGroup.setKeyboardNavigationCluster(false);
-        mMockViewGroup.setKeyboardNavigationSection(true);
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
-        assertEquals(1, list.size());
-        assertEquals(mMockViewGroup, list.get(0));
-        list.clear();
-        mMockViewGroup.setKeyboardNavigationSection(false);
 
         // Blocking descendants from getting focus also blocks group search.
         mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
-        assertEquals(0, list.size());
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        mMockViewGroup.addKeyboardNavigationClusters(list, 0);
         assertEquals(0, list.size());
         mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
 
         // Testing the results ordering.
-        v2.setKeyboardNavigationSection(false);
         v2.setKeyboardNavigationCluster(true);
-        mMockViewGroup.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, list, 0);
+        mMockViewGroup.addKeyboardNavigationClusters(list, 0);
         assertEquals(2, list.size());
         assertEquals(v1, list.get(0));
         assertEquals(v2, list.get(1));
@@ -216,22 +180,14 @@ public class ViewGroupTest implements CTSResult {
         ViewGroup parent = new MockViewGroup(mContext);
         parent.addView(mMockViewGroup);
         mMockViewGroup.removeView(v2);
-        v1.setKeyboardNavigationCluster(false);
-        v1.setKeyboardNavigationSection(true);
-        parent.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        parent.addKeyboardNavigationClusters(list, 0);
         assertEquals(1, list.size());
         assertEquals(v1, list.get(0));
         list.clear();
 
-        // Searching for sections doesn't enter clusters.
-        mMockViewGroup.setKeyboardNavigationCluster(true);
-        parent.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
-        assertEquals(0, list.size());
-        mMockViewGroup.setKeyboardNavigationCluster(false);
-
         // Invisible children get ignored.
         mMockViewGroup.setVisibility(View.GONE);
-        parent.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, list, 0);
+        parent.addKeyboardNavigationClusters(list, 0);
         assertEquals(0, list.size());
     }
 
@@ -773,22 +729,6 @@ public class ViewGroupTest implements CTSResult {
 
     @UiThreadTest
     @Test
-    public void testFindFocusWithCluster() {
-        // v1 is a cluster, so it doesn't accept focus from outside if it.
-        View v1 = new MockView(mContext);
-        v1.setFocusable(true);
-        v1.setKeyboardNavigationCluster(true);
-        View v2 = new MockView(mContext);
-        v2.setFocusable(true);
-        mMockViewGroup.addView(v1);
-        mMockViewGroup.addView(v2);
-
-        mMockViewGroup.requestFocus();
-        assertSame(v2, mMockViewGroup.findFocus());
-    }
-
-    @UiThreadTest
-    @Test
     public void testFitSystemWindows() {
         Rect rect = new Rect(1, 1, 100, 100);
         assertFalse(mMockViewGroup.fitSystemWindows(rect));
@@ -845,28 +785,6 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.addView(child);
         child.addView(mMockTextView);
         assertSame(mMockTextView, child.focusSearch(mMockTextView, 1));
-    }
-
-    @UiThreadTest
-    @Test
-    public void testFocusSearchWithCluster() {
-        // focusSearch for FORWARD treats cluster like a root.
-        View view = new View(mContext);
-        view.setFocusable(true);
-        View auntView = new View(mContext);
-        auntView.setFocusable(true);
-        MockViewGroup viewParent = new MockViewGroup(mContext);
-        viewParent.addView(view);
-        mMockViewGroup.addView(viewParent);
-        mMockViewGroup.addView(auntView);
-        mMockViewGroup.returnActualFocusSearchResult = true;
-        viewParent.returnActualFocusSearchResult = true;
-        mMockViewGroup.setIsRootNamespace(true);
-        view.requestFocus();
-
-        assertSame(auntView, view.focusSearch(View.FOCUS_FORWARD));
-        viewParent.setKeyboardNavigationCluster(true);
-        assertSame(view, view.focusSearch(View.FOCUS_FORWARD));
     }
 
     @UiThreadTest
@@ -1614,23 +1532,6 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.addView(mTextView);
         mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
         assertTrue(mTextView.isFocused());
-    }
-
-    @UiThreadTest
-    @Test
-    public void testRequestFocusWithCluster() {
-        // requestFocus skips nested clusters.
-        View v1 = new View(mContext);
-        v1.setFocusable(true);
-        View v2 = new View(mContext);
-        v2.setFocusable(true);
-        mMockViewGroup.addView(v1);
-        mMockViewGroup.addView(v2);
-
-        assertSame(null, mMockViewGroup.findFocus());
-        v1.setKeyboardNavigationCluster(true);
-        assertTrue(mMockViewGroup.requestFocus());
-        assertSame(v2, mMockViewGroup.findFocus());
     }
 
     @UiThreadTest

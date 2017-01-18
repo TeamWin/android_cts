@@ -1204,45 +1204,24 @@ public class ViewTest {
     }
 
     @Test
-    public void testAddKeyboardNavigationGroups() {
+    public void testAddKeyboardNavigationClusters() {
         View view = new View(mActivity);
         ArrayList<View> viewList = new ArrayList<>();
 
-        // View is not a keyboard navigation group
+        // View is not a keyboard navigation cluster
         assertFalse(view.isKeyboardNavigationCluster());
-        assertFalse(view.isKeyboardNavigationSection());
-        assertEquals(0, viewList.size());
-
-        view.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, viewList, 0);
-        assertEquals(0, viewList.size());
-
-        view.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, viewList, 0);
+        view.addKeyboardNavigationClusters(viewList, 0);
         assertEquals(0, viewList.size());
 
         // View is a cluster
         view.setKeyboardNavigationCluster(true);
-        view.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, viewList, 0);
-        assertEquals(0, viewList.size());
-
-        view.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, viewList, 0);
-        assertEquals(1, viewList.size());
-        assertEquals(view, viewList.get(0));
-
-        viewList.clear();
-        view.setKeyboardNavigationCluster(false);
-
-        // View is a section
-        view.setKeyboardNavigationSection(true);
-        view.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, viewList, 0);
-        assertEquals(0, viewList.size());
-
-        view.addKeyboardNavigationGroups(View.KEYBOARD_NAVIGATION_GROUP_SECTION, viewList, 0);
+        view.addKeyboardNavigationClusters(viewList, 0);
         assertEquals(1, viewList.size());
         assertEquals(view, viewList.get(0));
     }
 
     @Test
-    public void testKeyboardNavigationGroupSearch() {
+    public void testKeyboardNavigationClusterSearch() {
         mMockParent.setIsRootNamespace(true);
         View v1 = new MockView(mActivity);
         View v2 = new MockView(mActivity);
@@ -1252,55 +1231,20 @@ public class ViewTest {
         // Searching for clusters.
         v1.setKeyboardNavigationCluster(true);
         v2.setKeyboardNavigationCluster(true);
-        assertEquals(v2, mMockParent.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, v1, View.FOCUS_FORWARD));
-        assertEquals(v1, mMockParent.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_FORWARD));
-        assertEquals(v2, mMockParent.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_BACKWARD));
-        assertEquals(v2, v1.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_FORWARD));
-        assertEquals(mMockParent, v1.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_BACKWARD));
-        assertEquals(mMockParent, v2.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_FORWARD));
-        assertEquals(v1, v2.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_CLUSTER, null, View.FOCUS_BACKWARD));
-        v1.setKeyboardNavigationCluster(false);
-        v2.setKeyboardNavigationCluster(false);
+        assertEquals(v2, mMockParent.keyboardNavigationClusterSearch(v1, View.FOCUS_FORWARD));
+        assertEquals(v1, mMockParent.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+        assertEquals(v2, mMockParent.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
+        assertEquals(v2, v1.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+        assertEquals(mMockParent, v1.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
+        assertEquals(mMockParent, v2.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
+        assertEquals(v1, v2.keyboardNavigationClusterSearch(null, View.FOCUS_BACKWARD));
 
-        // Searching for sections.
-        v1.setKeyboardNavigationSection(true);
-        v2.setKeyboardNavigationSection(true);
-        assertEquals(v2, mMockParent.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, v1, View.FOCUS_FORWARD));
-        assertEquals(v1, mMockParent.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_FORWARD));
-        assertEquals(v2, mMockParent.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_BACKWARD));
-        assertEquals(v2, v1.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_FORWARD));
-        assertEquals(v2, v1.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_BACKWARD));
-        assertEquals(v1, v2.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_FORWARD));
-        assertEquals(v1, v2.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_BACKWARD));
-
-        // Sections in 3-level hierarchy.
+        // Clusters in 3-level hierarchy.
         ViewGroup root = new MockViewParent(mActivity);
         root.setIsRootNamespace(true);
-        View auntSection = new MockView(mActivity);
-        auntSection.setKeyboardNavigationSection(true);
-        root.addView(auntSection);
         mMockParent.setIsRootNamespace(false);
         root.addView(mMockParent);
-
-        assertEquals(auntSection, v2.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_FORWARD));
-        mMockParent.setKeyboardNavigationCluster(true);
-        assertEquals(v1, v2.keyboardNavigationGroupSearch(
-                View.KEYBOARD_NAVIGATION_GROUP_SECTION, null, View.FOCUS_FORWARD));
+        assertEquals(root, v2.keyboardNavigationClusterSearch(null, View.FOCUS_FORWARD));
     }
 
     @Test
