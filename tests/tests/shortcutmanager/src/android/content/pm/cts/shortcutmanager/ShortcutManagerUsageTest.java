@@ -23,6 +23,7 @@ import android.app.AppOpsManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStatsManager;
+import android.content.pm.cts.shortcutmanager.common.Constants;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.format.Time;
 
@@ -54,7 +55,7 @@ public class ShortcutManagerUsageTest extends ShortcutManagerCtsTestsBase {
         Time tobj = new Time();
         tobj.set(System.currentTimeMillis());
         return tobj.format("%Y-%m-%d %H:%M:%S") + "." + signature + "."
-                + sRandom.nextLong();
+                + Constants.sRandom.nextLong();
     }
 
     private boolean hasEvent(UsageEvents events, String packageName, String id) {
