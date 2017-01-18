@@ -57,4 +57,28 @@
             android:layout_margin="10dp"
             android:background="#ddd"/>
 
+    <RelativeLayout
+            android:id="@+id/overlap_group"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+            android:layout_margin="10dp"
+            android:tooltip="overlap tooltip group"
+            android:background="#ddd">
+        <View
+                android:id="@+id/overlap1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:tooltip="overlap tooltip 1" />
+        <View
+                android:id="@+id/overlap2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:tooltip="overlap tooltip 2" />
+        <View
+                android:id="@+id/overlap3"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:tooltip="overlap tooltip 3" />
+    </RelativeLayout>
+
 </LinearLayout>
