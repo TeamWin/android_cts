@@ -105,8 +105,11 @@ public class PrivappPermissionsTest extends AndroidTestCase {
                 assertTrue("Not whitelisted permissions are granted for package "
                                 + pkg.packageName + ": " + grantedNotInWhitelist,
                         grantedNotInWhitelist.isEmpty());
-            }
 
+                assertTrue("Requested permissions not granted for package "
+                                + pkg.packageName + ": " + notGranted,
+                        notGranted.isEmpty());
+            }
         }
     }
 
