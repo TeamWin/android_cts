@@ -378,7 +378,9 @@ public class CustomPrintOptionsTest extends BasePrintTest {
         }
 
         // Abort printing
-        getActivity().finish();
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
+        getUiDevice().pressBack();
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
