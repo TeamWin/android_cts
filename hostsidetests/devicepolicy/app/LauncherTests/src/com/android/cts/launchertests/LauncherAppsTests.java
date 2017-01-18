@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.ServiceConnection;
@@ -120,6 +121,12 @@ public class LauncherAppsTests extends AndroidTestCase {
             assertTrue(activity.getUser().equals(mUser));
         }
         assertTrue(foundSimpleApp);
+
+        // Also make sure getApplicationInfo works too.
+        final ApplicationInfo ai =
+                mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser);
+        assertEquals(SIMPLE_APP_PACKAGE, ai.packageName);
+        assertEquals(mUser, UserHandle.getUserHandleForUid(ai.uid));
     }
 
     public void testPackageAddedCallbackForUser() throws Throwable {
