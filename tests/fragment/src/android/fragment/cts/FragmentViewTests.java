@@ -30,6 +30,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -971,6 +972,33 @@ public class FragmentViewTests {
         assertNotNull(findViewById(R.id.textA));
     }
 
+    // Ensure that there is no problem if the child fragment manager is used before
+    // the View has been added.
+    @Test
+    public void childFragmentManager() throws Throwable {
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
+        ViewGroup container = (ViewGroup)
+                mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final StrictViewFragment fragment1 = new ParentFragment();
+        fragment1.setLayoutId(R.layout.double_container);
+
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1)
+                .addToBackStack(null)
+                .commit();
+
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        FragmentTestUtil.assertChildren(container, fragment1);
+        ViewGroup innerContainer = (ViewGroup)
+                fragment1.getView().findViewById(R.id.fragmentContainer1);
+
+        Fragment fragment2 = fragment1.getChildFragmentManager().findFragmentByTag("inner");
+        FragmentTestUtil.assertChildren(innerContainer, fragment2);
+    }
+
     private View findViewById(int viewId) {
         return mActivityRule.getActivity().findViewById(viewId);
     }
@@ -993,4 +1021,26 @@ public class FragmentViewTests {
             view.setVisibility(visibility);
             super.onViewCreated(view, savedInstanceState);
         }
-    }}
+    }
+
+    public static class ParentFragment extends StrictViewFragment {
+        public ParentFragment() {
+            setLayoutId(R.layout.double_container);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View view = super.onCreateView(inflater, container, savedInstanceState);
+            final StrictViewFragment fragment2 = new StrictViewFragment();
+            fragment2.setLayoutId(R.layout.text_a);
+
+            getChildFragmentManager().beginTransaction()
+                    .add(R.id.fragmentContainer1, fragment2, "inner")
+                    .addToBackStack(null)
+                    .commit();
+            getChildFragmentManager().executePendingTransactions();
+            return view;
+        }
+    }
+}
