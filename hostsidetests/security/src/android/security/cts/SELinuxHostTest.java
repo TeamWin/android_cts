@@ -346,12 +346,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* obtain property_contexts file from running device */
         devicePcFile = File.createTempFile("property_contexts", ".tmp");
         devicePcFile.deleteOnExit();
-        mDevice.pullFile("/property_contexts", devicePcFile);
+        mDevice.pullFile("/plat_property_contexts", devicePcFile);
 
         /* retrieve the AOSP property_contexts file from jar */
-        aospPcFile = copyResourceToTempFile("/general_property_contexts");
+        aospPcFile = copyResourceToTempFile("/plat_property_contexts");
 
-        assertFileStartsWith(aospPcFile, devicePcFile);
+        assertFileEquals(aospPcFile, devicePcFile);
     }
 
     /**
