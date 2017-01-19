@@ -173,8 +173,7 @@ public class StaticLayoutLineBreakingTest {
 
         debugLayout(source, staticLayout);
 
-        int lineCount = staticLayout.getLineCount();
-        assertTrue("Number of lines", lineCount <= maxLines);
+        final int lineCount = staticLayout.getLineCount();
 
         for (int line = 0; line < lineCount; line++) {
             int lineStart = staticLayout.getLineStart(line);
