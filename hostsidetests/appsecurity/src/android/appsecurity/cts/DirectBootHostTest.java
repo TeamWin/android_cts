@@ -16,8 +16,6 @@
 
 package android.appsecurity.cts;
 
-import android.appsecurity.cts.SplitTests.BaseInstallMultiple;
-
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
