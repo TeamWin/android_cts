@@ -61,6 +61,7 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
     private static final String ENTERPRISE_PRIVACY_QUICK_SETTINGS
             = "ENTERPRISE_PRIVACY_QUICK_SETTINGS";
     private static final String ENTERPRISE_PRIVACY_KEYGUARD = "ENTERPRISE_PRIVACY_KEYGUARD";
+    private static final String ENTERPRISE_PRIVACY_ADD_ACCOUNT = "ENTERPRISE_PRIVACY_ADD_ACCOUNT";
 
     public static final String EXTRA_TEST_ID =
             "com.android.cts.verifier.managedprovisioning.extra.TEST_ID";
@@ -222,6 +223,20 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 new ButtonInfo[] {
                         new ButtonInfo(R.string.enterprise_privacy_open_settings,
                                 new Intent(Settings.ACTION_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_clear_organization,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)),
+                        new ButtonInfo(R.string.enterprise_privacy_set_organization,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
+                                        .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
+                                                "Foo, Inc."))}));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ADD_ACCOUNT,
+                R.string.enterprise_privacy_add_account,
+                R.string.enterprise_privacy_add_account_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ADD_ACCOUNT)),
                         new ButtonInfo(R.string.enterprise_privacy_clear_organization,
                                 buildCommandIntent(
                                         CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)),
