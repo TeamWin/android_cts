@@ -183,6 +183,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.getDeviceId();
         mTelephonyManager.getDeviceId(mTelephonyManager.getDefaultSim());
         mTelephonyManager.getDeviceSoftwareVersion();
+        mTelephonyManager.getImei();
+        mTelephonyManager.getImei(mTelephonyManager.getDefaultSim());
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
@@ -484,6 +486,59 @@ public class TelephonyManagerTest {
         CarrierConfigManager carrierConfigManager =
                 getContext().getSystemService(CarrierConfigManager.class);
         assertEquals(mTelephonyManager.getCarrierConfig(), carrierConfigManager.getConfig());
+    }
+
+    /**
+     * Tests that the device properly reports either a valid IMEI if GSM or null.
+     */
+    @Test
+    public void testGetImei() {
+        String imei = mTelephonyManager.getImei();
+        if (mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_ABSENT && imei == null) {
+            // If no SIM card is present, IMEI can be null.
+            return;
+        }
+        verifyImei(imei, mTelephonyManager.getDeviceId());
+    }
+
+    /**
+     * Tests that the device properly reports either a valid IMEI if GSM or null.
+     */
+    @Test
+    public void testGetImeiForSlotId() {
+        // Test for slot id = 0.
+        String imei = mTelephonyManager.getImei(0);
+        verifyImei(imei, mTelephonyManager.getDeviceId(0));
+        // Also verify that no exception is thrown for any slot id (including invalid ones)
+        for (int i = -1; i <= mTelephonyManager.getPhoneCount(); i++) {
+            mTelephonyManager.getImei(i);
+        }
+    }
+
+    private void verifyImei(String imei, String deviceId) {
+        int phoneType = mTelephonyManager.getPhoneType();
+        switch (phoneType) {
+            case TelephonyManager.PHONE_TYPE_GSM:
+                assertGsmDeviceId(imei);
+                assertEquals(imei, deviceId);
+                break;
+            case TelephonyManager.PHONE_TYPE_CDMA:
+                // LTE device is using IMEI as device id
+                if (mTelephonyManager.getLteOnCdmaMode() == PhoneConstants.LTE_ON_CDMA_TRUE) {
+                    assertGsmDeviceId(imei);
+                    assertEquals(imei, deviceId);
+                    break;
+                }
+                // Fall through
+            case TelephonyManager.PHONE_TYPE_NONE:
+                if (imei != null) {
+                    assertGsmDeviceId(imei);
+                }
+                // An IMEI is not required for PHONE_TYPE_NONE or non-LTE PHONE_TYPE_CDMA
+                break;
+            default:
+                throw new IllegalArgumentException("Did you add a new phone type? " + phoneType);
+        }
     }
 
     private static Context getContext() {
