@@ -20,6 +20,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
@@ -102,7 +103,7 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
                         /*details*/ m.group(6));
                 return;
             }
-            System.err.println("line doesn't match: " + line);
+            CLog.i("line doesn't match: " + line);
         }
 
         private static void parse(Reader reader, FtraceEntryCallback callback) throws Exception {
