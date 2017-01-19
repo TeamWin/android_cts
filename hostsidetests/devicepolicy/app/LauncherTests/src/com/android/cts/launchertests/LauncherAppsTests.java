@@ -15,37 +15,31 @@
  */
 package com.android.cts.launchertests;
 
-import android.app.admin.DeviceAdminReceiver;
-import android.app.admin.DevicePolicyManager;
-import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
-import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.Parcel;
-import android.os.RemoteException;
-import android.os.ResultReceiver;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
-import android.util.Pair;
 
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
 
 /**
  * Tests for LauncherApps service
@@ -127,6 +121,30 @@ public class LauncherAppsTests extends AndroidTestCase {
                 mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser);
         assertEquals(SIMPLE_APP_PACKAGE, ai.packageName);
         assertEquals(mUser, UserHandle.getUserHandleForUid(ai.uid));
+    }
+
+    public void testAccessPrimaryProfileFromManagedProfile() throws Exception {
+        // Try to access main profile from managed profile, which is not allowed.
+        assertEquals(0, mLauncherApps.getActivityList(null, mUser).size());
+        assertNull(mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser));
+        assertFalse(mLauncherApps.isPackageEnabled(SIMPLE_APP_PACKAGE, mUser));
+
+        final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.android.com/"));
+        assertNull(mLauncherApps.resolveActivity(intent, mUser));
+    }
+
+    public void testGetProfiles_fromMainProfile() {
+        final List<UserHandle> profiles = mLauncherApps.getProfiles();
+        assertEquals(2, profiles.size());
+        assertTrue(profiles.contains(android.os.Process.myUserHandle()));
+        assertEquals(getContext().getSystemService(UserManager.class).getUserProfiles(),
+                profiles);
+    }
+
+    public void testGetProfiles_fromManagedProfile() {
+        final List<UserHandle> profiles = mLauncherApps.getProfiles();
+        assertEquals(1, profiles.size());
+        assertEquals(android.os.Process.myUserHandle(), profiles.get(0));
     }
 
     public void testPackageAddedCallbackForUser() throws Throwable {
