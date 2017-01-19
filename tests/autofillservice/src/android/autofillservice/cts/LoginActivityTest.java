@@ -15,14 +15,16 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.LoginActivity.ID_PASSWORD;
+import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
+
+import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 
 @SmallTest
 public class LoginActivityTest extends AutoFillServiceTestCase {
@@ -49,10 +51,22 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .addDataset(dataset.build())
                 .build());
 
-        sUiBot.triggerFillRequest();
+        sUiBot.triggerImeByRelativeId(ID_USERNAME);
+
+        // TODO(b/33197203, b/33802548): temporary hack because UI is based on notifications
+        sUiBot.collapseStatusBar();
+
+        // Make sure tapping on other fields from the dataset does not trigger it again
+        sUiBot.tapByRelativeId(ID_PASSWORD);
+        sUiBot.tapByRelativeId(ID_USERNAME);
+
+        // TODO(b/33197203, b/33802548): temporary hack because UI is based on notifications
+        sUiBot.expandStatusBar();
+
         sUiBot.selectDataset("The Dude");
 
         mLoginActivity.assertAutoFilled();
+        InstrumentedAutoFillService.assertNumberFillRequests(1);
     }
 
     /*
@@ -60,8 +74,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
      *
      *  - no dataset
      *  - multiple datasets
+     *  - partitioned datasets (i.e., multiple fields)
      *  - response-level authentication (custom and fingerprint)
      *  - dataset-level authentication (custom and fingerprint)
+     *
+     *  Save:
+     *  - when no dataset is returned initially
+     *  - when a dataset is returned initially
+     *  - make sure password is set
+     *  - test cases where non-savable-ids only are changed
      *
      *  Other assertions:
      *  - illegal state thrown on callback calls

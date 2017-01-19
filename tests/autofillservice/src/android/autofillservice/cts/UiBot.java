@@ -36,10 +36,14 @@ final class UiBot {
 
     private final UiDevice mDevice;
     private final int mTimeout;
+    private final String mPackageName;
 
-    UiBot(Instrumentation instrumentation, int timeout) {
+    UiBot(Instrumentation instrumentation, int timeout) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
         mTimeout = timeout;
+        mPackageName = instrumentation.getContext().getPackageName();
+
+        collapseStatusBar();
     }
 
     /**
@@ -53,13 +57,29 @@ final class UiBot {
     }
 
     /**
-     * Triggers the auto-fill affordance UI.
+     * Triggers IME by tapping a given field.
+     *
+     * @param id resource id, without the {@code +id} prefix
      */
-    void triggerFillRequest() {
-        Log.v(TAG, "triggerFillRequest()");
+    void triggerImeByRelativeId(String id) throws UiObjectNotFoundException {
+        Log.v(TAG, "triggerImeByRelativeId(): " + id);
+        final String fullId = mPackageName + ":id/" + id;
+        final UiObject field = mDevice.findObject(new UiSelector().resourceId(fullId));
+        final boolean clicked = field.clickAndWaitForNewWindow();
+        assertWithMessage("Failed to tap object with id '%s'", fullId).that(clicked).isTrue();
+    }
 
-        // TODO(b/33197203): use id string when using real auto-fill bar
-        clickOnNotification("AutoFill IME Emulation");
+    /**
+     * Taps a given UI object.
+     *
+     * @param id resource id, without the {@code +id} prefix
+     */
+    void tapByRelativeId(String id) throws UiObjectNotFoundException {
+        Log.v(TAG, "tapFieldByRelativeId(): " + id);
+        final String fullId = mPackageName + ":id/" + id;
+        final UiObject field = mDevice.findObject(new UiSelector().resourceId(fullId));
+        final boolean clicked = field.click();
+        assertWithMessage("Failed to tap object with id '%s'", fullId).that(clicked).isTrue();
     }
 
     /////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +147,15 @@ final class UiBot {
         assertWithMessage("could not find object with '%s'", text).that(uiObject.exists()).isTrue();
         return uiObject;
     }
+
+    void collapseStatusBar() throws Exception {
+        Helper.runShellCommand("service call statusbar 2");
+    }
+
+    void expandStatusBar() throws Exception {
+        Helper.runShellCommand("service call statusbar 1");
+    }
+
     /////////////////////////////////////////
     // End of temporary notification code. //
     /////////////////////////////////////////

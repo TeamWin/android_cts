@@ -50,6 +50,9 @@ public class LoginActivity extends Activity {
 
     private static final String TAG = "LoginActivity";
 
+    static final String ID_USERNAME = "username";
+    static final String ID_PASSWORD = "password";
+
     private EditText mUsernameEditText;
     private EditText mPasswordEditText;
     private TextView mOutput;
@@ -117,8 +120,8 @@ public class LoginActivity extends Activity {
      */
     void expectAutoFill(CannedDataset.Builder builder, String username, String password) {
         builder
-                .setField("username", AutoFillValue.forText(username))
-                .setField("password", AutoFillValue.forText(password));
+                .setField(ID_USERNAME, AutoFillValue.forText(username))
+                .setField(ID_PASSWORD, AutoFillValue.forText(password));
         mAutoFillExpectation = new AutoFillExpectation(username, password);
         mUsernameEditText
                 .addTextChangedListener(new MyTextWatcher(mAutoFillExpectation.usernameLatch));
