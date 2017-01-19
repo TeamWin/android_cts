@@ -43,7 +43,7 @@ public class AppWidgetConfirmPin extends Activity {
             }
 
             if (mRequest.getRequestType() != PinItemRequest.REQUEST_TYPE_APPWIDGET ||
-                    mRequest.getAppWidgetProviderInfo() == null) {
+                    mRequest.getAppWidgetProviderInfo(this) == null) {
                 throw new IllegalArgumentException("Wrong request");
             }
 
@@ -73,7 +73,8 @@ public class AppWidgetConfirmPin extends Activity {
     private void sendSetupReply(boolean success) {
         sendBroadcast(new Intent(Constants.ACTION_SETUP_REPLY)
                 .putExtra(Constants.EXTRA_SUCCESS, success)
-                .putExtra(Constants.EXTRA_PACKAGE, getPackageName()));
+                .putExtra(Constants.EXTRA_PACKAGE, getPackageName())
+                .putExtra(Constants.EXTRA_REQUEST, mRequest));
     }
 
     private void onCommandReceive(Intent intent) {

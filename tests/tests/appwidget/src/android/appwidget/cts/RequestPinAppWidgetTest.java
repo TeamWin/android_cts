@@ -19,24 +19,18 @@ package android.appwidget.cts;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.cts.common.Constants;
-import android.appwidget.cts.provider.FirstAppWidgetProvider;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
+import android.content.pm.LauncherApps;
 import android.os.Handler;
-import android.os.ParcelFileDescriptor;
-import android.test.InstrumentationTestCase;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class RequestPinAppWidgetTest extends InstrumentationTestCase {
+public class RequestPinAppWidgetTest extends AppWidgetTestCase {
 
     private static final String LAUNCHER_CLASS = "android.appwidget.cts.packages.Launcher";
     private static final String ACTION_PIN_RESULT = "android.appwidget.cts.ACTION_PIN_RESULT";
@@ -57,13 +51,12 @@ public class RequestPinAppWidgetTest extends InstrumentationTestCase {
     }
 
     private void runPinWidgetTest(final String launcherPkg) throws Exception {
-        Context context = getInstrumentation().getContext();
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS)) {
-            // System does not support app widgets.
+        if (!hasAppWidgets()) {
             return;
         }
-
         setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
+
+        Context context = getInstrumentation().getContext();
 
         // Request to pin widget
         BlockingReceiver setupReceiver = new BlockingReceiver()
@@ -72,13 +65,21 @@ public class RequestPinAppWidgetTest extends InstrumentationTestCase {
         PendingIntent pinResult = PendingIntent.getBroadcast(context, 0,
                 new Intent(ACTION_PIN_RESULT), PendingIntent.FLAG_ONE_SHOT);
         AppWidgetManager.getInstance(context).requestPinAppWidget(
-                new ComponentName(context, FirstAppWidgetProvider.class), pinResult);
+                getFirstWidgetComponent(), pinResult);
 
         setupReceiver.await();
         // Verify that the confirmation dialog was opened
         assertTrue(setupReceiver.mResult.getBooleanExtra(Constants.EXTRA_SUCCESS, false));
         assertEquals(launcherPkg, setupReceiver.mResult.getStringExtra(Constants.EXTRA_PACKAGE));
         setupReceiver.unregister();
+
+        LauncherApps.PinItemRequest req =
+                setupReceiver.mResult.getParcelableExtra(Constants.EXTRA_REQUEST);
+        assertNotNull(req);
+        // Verify that multiple calls to getAppWidgetProviderInfo have proper dimension.
+        boolean[] providerInfo = verifyInstalledProviders(Arrays.asList(
+                req.getAppWidgetProviderInfo(context), req.getAppWidgetProviderInfo(context)));
+        assertTrue(providerInfo[0]);
 
         // Accept the request
         BlockingReceiver resultReceiver = new BlockingReceiver().register(ACTION_PIN_RESULT);
@@ -114,22 +115,6 @@ public class RequestPinAppWidgetTest extends InstrumentationTestCase {
     private void setLauncher(String component) throws Exception {
         runShellCommand("cmd package set-home-activity --user "
                 + getInstrumentation().getContext().getUserId() + " " + component);
-    }
-
-    private ArrayList<String> runShellCommand(String command) throws Exception {
-        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
-
-        ArrayList<String> ret = new ArrayList<>();
-        // Read the input stream fully.
-        try (BufferedReader r = new BufferedReader(
-                new InputStreamReader(new ParcelFileDescriptor.AutoCloseInputStream(pfd)))) {
-            String line;
-            while ((line = r.readLine()) != null) {
-                ret.add(line);
-            }
-        }
-        return ret;
     }
 
     private class BlockingReceiver extends BroadcastReceiver {
