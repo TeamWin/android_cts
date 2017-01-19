@@ -71,7 +71,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
-    private static final String ADD_RESTRICTION_COMMAND = "add-restriction";
 
     private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(15);
 
@@ -244,8 +243,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // managed profile
         assertAppLinkResult("testTwoReceivers");
 
-        changeUserRestrictionForUser("allow_parent_profile_app_linking", ADD_RESTRICTION_COMMAND,
-                mProfileUserId);
+        changeUserRestrictionOrFail("allow_parent_profile_app_linking", true, mProfileUserId);
         // Now we should also have one receiver in the primary user, so three receivers in total.
         assertAppLinkResult("testThreeReceivers");
 
@@ -300,8 +298,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
         // We now set allow_parent_profile_app_linking, and hence we should have the app handler
         // in parent user if it is enabled.
-        changeUserRestrictionForUser("allow_parent_profile_app_linking", ADD_RESTRICTION_COMMAND,
-                mProfileUserId);
+        changeUserRestrictionOrFail("allow_parent_profile_app_linking", true, mProfileUserId);
 
         disableComponentOrPackage(mParentUserId, APP_HANDLER_COMPONENT);
         disableComponentOrPackage(mProfileUserId, APP_HANDLER_COMPONENT);
@@ -431,15 +428,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         String restriction = "no_debugging_features";  // UserManager.DISALLOW_DEBUGGING_FEATURES
 
-        String addRestrictionCommandOutput =
-                changeUserRestrictionForUser(restriction, ADD_RESTRICTION_COMMAND, mProfileUserId);
-        assertTrue("Command was expected to succeed " + addRestrictionCommandOutput,
-                addRestrictionCommandOutput.contains("Status: ok"));
+        changeUserRestrictionOrFail(restriction, true, mProfileUserId);
+
 
         // This should now fail, as the shell is not available to start activities under a different
         // user once the restriction is in place.
-        addRestrictionCommandOutput =
-                changeUserRestrictionForUser(restriction, ADD_RESTRICTION_COMMAND, mProfileUserId);
+        String addRestrictionCommandOutput =
+                changeUserRestriction(restriction, true, mProfileUserId);
         assertTrue(
                 "Expected SecurityException when starting the activity "
                         + addRestrictionCommandOutput,
@@ -640,13 +635,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
                 "testNfcShareEnabled", mParentUserId);
 
-        String restriction = "no_outgoing_beam";  // UserManager.DISALLOW_OUTGOING_BEAM
-        String command = "add-restriction";
-
-        String addRestrictionCommandOutput =
-                changeUserRestrictionForUser(restriction, command, mProfileUserId);
-        assertTrue("Command was expected to succeed " + addRestrictionCommandOutput,
-                addRestrictionCommandOutput.contains("Status: ok"));
+        changeUserRestrictionOrFail("no_outgoing_beam" /* UserManager.DISALLOW_OUTGOING_BEAM */,
+                true, mProfileUserId);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
                 "testNfcShareDisabled", mProfileUserId);
@@ -840,17 +830,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + getDevice().executeShellCommand(command));
     }
 
-    private String changeUserRestrictionForUser(String key, String command, int userId)
+    private void changeUserRestrictionOrFail(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
-        String adbCommand = "am start -W --user " + userId
-                + " -c android.intent.category.DEFAULT "
-                + " --es extra-command " + command
-                + " --es extra-restriction-key " + key
-                + " " + MANAGED_PROFILE_PKG + "/.SetPolicyActivity";
-        // Don't log output because sometimes used expecting failures.
-        CLog.d("Running command " + adbCommand);
-        String commandOutput = getDevice().executeShellCommand(adbCommand);
-        return commandOutput;
+        changeUserRestrictionOrFail(key, value, userId, MANAGED_PROFILE_PKG);
+    }
+
+    private String changeUserRestriction(String key, boolean value, int userId)
+            throws DeviceNotAvailableException {
+        return changeUserRestriction(key, value, userId, MANAGED_PROFILE_PKG);
     }
 
     private String changeCrossProfileWidgetForUser(String packageName, String command, int userId)

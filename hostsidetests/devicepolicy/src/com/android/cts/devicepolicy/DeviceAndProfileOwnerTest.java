@@ -83,8 +83,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String VPN_APP_PKG = "com.android.cts.vpnfirewall";
     private static final String VPN_APP_APK = "CtsVpnFirewallApp.apk";
 
-    private static final String COMMAND_ADD_USER_RESTRICTION = "add-restriction";
-    private static final String COMMAND_CLEAR_USER_RESTRICTION = "clear-restriction";
     private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
     private static final String COMMAND_UNBLOCK_ACCOUNT_TYPE = "unblock-accounttype";
 
@@ -365,13 +363,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
         try {
-            changeUserRestrictionForUser(DISALLOW_MODIFY_ACCOUNTS, COMMAND_ADD_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, true, mUserId);
             executeAccountTest("testAddAccount_blocked");
         } finally {
             // Ensure we clear the user restriction
-            changeUserRestrictionForUser(DISALLOW_MODIFY_ACCOUNTS, COMMAND_CLEAR_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, false, mUserId);
         }
         executeAccountTest("testAddAccount_allowed");
     }
@@ -383,13 +379,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
         try {
-            changeUserRestrictionForUser(DISALLOW_MODIFY_ACCOUNTS, COMMAND_ADD_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, true, mUserId);
             executeAccountTest("testRemoveAccount_blocked");
         } finally {
             // Ensure we clear the user restriction
-            changeUserRestrictionForUser(DISALLOW_MODIFY_ACCOUNTS, COMMAND_CLEAR_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, false, mUserId);
         }
         executeAccountTest("testRemoveAccount_allowed");
     }
@@ -461,13 +455,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(CUSTOMIZATION_APP_APK, mUserId);
         try {
-            changeUserRestrictionForUser(DISALLOW_SET_WALLPAPER, COMMAND_ADD_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_SET_WALLPAPER, true, mUserId);
             runDeviceTestsAsUser(CUSTOMIZATION_APP_PKG, ".CustomizationTest",
                 "testSetWallpaper_disallowed", mUserId);
         } finally {
-            changeUserRestrictionForUser(DISALLOW_SET_WALLPAPER, COMMAND_CLEAR_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_SET_WALLPAPER, false, mUserId);
         }
     }
 
@@ -516,14 +508,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
             // Add restrictions and test if we can install the apk.
             getDevice().uninstallPackage(TEST_APP_PKG);
-            changeUserRestrictionForUser(DISALLOW_INSTALL_UNKNOWN_SOURCES,
-                    COMMAND_ADD_USER_RESTRICTION, mUserId);
+            changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES, true, mUserId);
             runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
                     "testManualInstallBlocked", mUserId);
 
             // Clear restrictions and test if we can install the apk.
-            changeUserRestrictionForUser(DISALLOW_INSTALL_UNKNOWN_SOURCES,
-                    COMMAND_CLEAR_USER_RESTRICTION, mUserId);
+            changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES, false, mUserId);
 
             // Enable Unknown sources in Settings.
             unknownSourceSetting =
@@ -605,12 +595,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         final int userId = createUser();
         try {
-            changeUserRestrictionForUser(DISALLOW_REMOVE_USER, COMMAND_ADD_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_REMOVE_USER, true, mUserId);
             assertFalse(getDevice().removeUser(userId));
         } finally {
-            changeUserRestrictionForUser(DISALLOW_REMOVE_USER, COMMAND_CLEAR_USER_RESTRICTION,
-                    mUserId);
+            changeUserRestrictionOrFail(DISALLOW_REMOVE_USER, false, mUserId);
             assertTrue(getDevice().removeUser(userId));
         }
     }
@@ -672,34 +660,26 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ".ApplicationRestrictionsManagerTest", testName, mUserId);
     }
 
-    private void changeUserRestrictionForUser(String key, String command, int userId)
+    private void changeUserRestrictionOrFail(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
-        changePolicy(command, "--es extra-restriction-key " + key, userId);
+        changeUserRestrictionOrFail(key, value, userId, DEVICE_ADMIN_PKG);
     }
 
     private void changeAccountManagement(String command, String accountType, int userId)
             throws DeviceNotAvailableException {
-        changePolicy(command, "--es extra-account-type " + accountType, userId);
+        changePolicyOrFail(command, "--es extra-account-type " + accountType, userId);
     }
 
     private void changeApplicationRestrictionsManagingPackage(String packageName)
             throws DeviceNotAvailableException {
         String packageNameExtra = (packageName != null)
                 ? "--es extra-package-name " + packageName : "";
-        changePolicy("set-app-restrictions-manager", packageNameExtra, mUserId);
+        changePolicyOrFail("set-app-restrictions-manager", packageNameExtra, mUserId);
     }
 
-    private void changePolicy(String command, String extras, int userId)
+    private void changePolicyOrFail(String command, String extras, int userId)
             throws DeviceNotAvailableException {
-        String adbCommand = "am start -W --user " + userId
-                + " -c android.intent.category.DEFAULT "
-                + " --es extra-command " + command
-                + " " + extras
-                + " " + DEVICE_ADMIN_PKG + "/.SetPolicyActivity";
-        String commandOutput = getDevice().executeShellCommand(adbCommand);
-        CLog.d("Output for command " + adbCommand + ": " + commandOutput);
-        assertTrue("Command was expected to succeed " + commandOutput,
-                commandOutput.contains("Status: ok"));
+        changePolicyOrFail(command, extras, userId, DEVICE_ADMIN_PKG);
     }
 
     /**

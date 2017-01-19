@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -460,6 +462,28 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
+    }
+
+    public void testDisallowFactoryReset() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        int adminVersion = 24;
+        changeUserRestrictionOrFail("no_factory_reset", true, mPrimaryUserId,
+                DEVICE_OWNER_PKG);
+        try {
+            installAppAsUser(DeviceAdminHelper.getDeviceAdminApkFileName(adminVersion),
+                    mPrimaryUserId);
+            setDeviceAdmin(DeviceAdminHelper.getAdminReceiverComponent(adminVersion),
+                    mPrimaryUserId);
+            runDeviceTestsAsUser(
+                    DeviceAdminHelper.getDeviceAdminApkPackage(adminVersion),
+                    DeviceAdminHelper.getDeviceAdminJavaPackage() + ".WipeDataTest",
+                    "testWipeDataThrowsSecurityException", mPrimaryUserId);
+        } finally {
+            removeAdmin(DeviceAdminHelper.getAdminReceiverComponent(adminVersion), mPrimaryUserId);
+            getDevice().uninstallPackage(DeviceAdminHelper.getDeviceAdminApkPackage(adminVersion));
+        }
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
