@@ -50,6 +50,8 @@
 
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
                   android:theme="@style/WhiteBackgroundNoWindowAnimation"/>
+
+        <activity android:name="android.graphics.fonts.cts.MockActivity"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
