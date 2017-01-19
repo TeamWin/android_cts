@@ -29,6 +29,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.annotation.NonNull;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.XmlResourceParser;
@@ -45,6 +47,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -74,6 +77,7 @@ import android.widget.TextView;
 import com.android.compatibility.common.util.CTSResult;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
@@ -90,6 +94,10 @@ public class ViewGroupTest implements CTSResult {
     private MockViewGroup mMockViewGroup;
     private TextView mTextView;
     private MockTextView mMockTextView;
+
+    @Rule
+    public ActivityTestRule<CtsActivity> mCtsActivityRule =
+            new ActivityTestRule<>(CtsActivity.class, false, false);
 
     private final Sync mSync = new Sync();
     private static class Sync {
@@ -1053,6 +1061,43 @@ public class ViewGroupTest implements CTSResult {
 
         waitForResult();
         assertEquals(CTSResult.RESULT_OK, mResultCode);
+    }
+
+    @Test
+    public void testOnDescendantInvalidated() throws Throwable {
+        Activity activity = null;
+        try {
+            activity = mCtsActivityRule.launchActivity(new Intent());
+
+            mCtsActivityRule.runOnUiThread(() -> {
+                View child = mTextView;
+                MockViewGroup parent = mMockViewGroup;
+                MockViewGroup grandParent = new MockViewGroup(mContext);
+                parent.addView(child);
+                grandParent.addView(parent);
+                mCtsActivityRule.getActivity().setContentView(grandParent);
+
+                parent.isOnDescendantInvalidatedCalled = false;
+                grandParent.isOnDescendantInvalidatedCalled = false;
+
+                parent.invalidateChild(child, new Rect(0, 0, 1, 1));
+
+                assertTrue(parent.isOnDescendantInvalidatedCalled);
+                assertTrue(grandParent.isOnDescendantInvalidatedCalled);
+
+                parent.isOnDescendantInvalidatedCalled = false;
+                grandParent.isOnDescendantInvalidatedCalled = false;
+
+                grandParent.invalidateChild(child, new Rect(0, 0, 1, 1));
+
+                assertFalse(parent.isOnDescendantInvalidatedCalled);
+                assertTrue(grandParent.isOnDescendantInvalidatedCalled);
+            });
+        } finally {
+            if (activity != null) {
+                activity.finish();
+            }
+        }
     }
 
     private void waitForResult() {
@@ -2500,6 +2545,7 @@ public class ViewGroupTest implements CTSResult {
         public boolean isDrawableStateChangedCalled;
         public boolean isRequestLayoutCalled;
         public boolean isOnLayoutCalled;
+        public boolean isOnDescendantInvalidatedCalled;
         public int left;
         public int top;
         public int right;
@@ -2858,6 +2904,12 @@ public class ViewGroupTest implements CTSResult {
         @Override
         public boolean isChildrenDrawnWithCacheEnabled() {
             return super.isChildrenDrawnWithCacheEnabled();
+        }
+
+        @Override
+        public void onDescendantInvalidated(@NonNull View child, @NonNull View target) {
+            isOnDescendantInvalidatedCalled = true;
+            super.onDescendantInvalidated(child, target);
         }
     }
 
