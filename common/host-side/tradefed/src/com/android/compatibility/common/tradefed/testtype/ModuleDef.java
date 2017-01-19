@@ -268,7 +268,8 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
-    public boolean prepare(boolean skipPrep) throws DeviceNotAvailableException {
+    public boolean prepare(boolean skipPrep, List<String> preconditionArgs)
+            throws DeviceNotAvailableException {
         for (ITargetPreparer preparer : mPreconditions) {
             CLog.d("Preparer: %s", preparer.getClass().getSimpleName());
             if (preparer instanceof IAbiReceiver) {
@@ -276,6 +277,9 @@ public class ModuleDef implements IModuleDef {
             }
             setOption(preparer, CompatibilityTest.SKIP_PRECONDITIONS_OPTION,
                     Boolean.toString(skipPrep));
+            for (String preconditionArg : preconditionArgs) {
+                setOption(preparer, CompatibilityTest.PRECONDITION_ARG_OPTION, preconditionArg);
+            }
             try {
                 preparer.setUp(mDevice, mBuild);
             } catch (BuildError e) {
