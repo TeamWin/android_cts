@@ -30,8 +30,9 @@ import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
-import android.os.Environment;
 import android.os.ConditionVariable;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
@@ -45,8 +46,11 @@ import com.android.compatibility.common.util.MediaUtils;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.InterruptedException;
 import java.lang.Runnable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -90,10 +94,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private File mOutFile2;
     private Camera mCamera;
     private MediaStubActivity mActivity = null;
+    private int mFileIndex;
 
     private MediaRecorder mMediaRecorder;
     private ConditionVariable mMaxDurationCond;
     private ConditionVariable mMaxFileSizeCond;
+    private ConditionVariable mMaxFileSizeApproachingCond;
+    private ConditionVariable mNextOutputFileStartedCond;
+    private boolean mExpectMaxFileCond;
 
     public MediaRecorderTest() {
         super("android.media.cts", MediaStubActivity.class);
@@ -129,9 +137,13 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                 mMediaRecorder = new MediaRecorder();
                 mOutFile = new File(OUTPUT_PATH);
                 mOutFile2 = new File(OUTPUT_PATH2);
+                mFileIndex = 0;
 
                 mMaxDurationCond = new ConditionVariable();
                 mMaxFileSizeCond = new ConditionVariable();
+                mMaxFileSizeApproachingCond = new ConditionVariable();
+                mNextOutputFileStartedCond = new ConditionVariable();
+                mExpectMaxFileCond = true;
 
                 mMediaRecorder.setOutputFile(OUTPUT_PATH);
                 mMediaRecorder.setOnInfoListener(new OnInfoListener() {
@@ -178,6 +190,10 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMaxDurationCond = null;
         mMaxFileSizeCond.close();
         mMaxFileSizeCond = null;
+        mMaxFileSizeApproachingCond.close();
+        mMaxFileSizeApproachingCond = null;
+        mNextOutputFileStartedCond.close();
+        mNextOutputFileStartedCond = null;
         mActivity = null;
         super.tearDown();
     }
@@ -593,10 +609,163 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         checkOutputFileSize(OUTPUT_PATH, fileSize, tolerance);
     }
 
+    public void testRecordExceedFileSizeLimit() throws Exception {
+        if (!hasMicrophone() || !hasCamera() || !hasAmrNb() || !hasH264()) {
+            MediaUtils.skipTest("no microphone, camera, or codecs");
+            return;
+        }
+        long fileSize = 128 * 1024;
+        long tolerance = 50 * 1024;
+        List<String> recordFileList = new ArrayList<String>();
+        mFileIndex = 0;
+
+        // Override the handler in setup for test.
+        mMediaRecorder.setOnInfoListener(new OnInfoListener() {
+            public void onInfo(MediaRecorder mr, int what, int extra) {
+                mOnInfoCalled = true;
+                if (what ==
+                    MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
+                    Log.v(TAG, "max duration reached");
+                    mMaxDurationCond.open();
+                } else if (what ==
+                    MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED) {
+                    if (!mExpectMaxFileCond) {
+                        fail("Do not expect MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED");
+                    } else {
+                        Log.v(TAG, "max file size reached");
+                        mMaxFileSizeCond.open();
+                    }
+                } else if (what ==
+                    MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING) {
+                    Log.v(TAG, "max file size is approaching");
+                    mMaxFileSizeApproachingCond.open();
+
+                    // Test passing a read-only FileDescriptor and expect IOException.
+                    if (mFileIndex == 1) {
+                        RandomAccessFile file = null;
+                        try {
+                            String path = OUTPUT_PATH + '0';
+                            file = new RandomAccessFile(path, "r");
+                            mMediaRecorder.setNextOutputFile(file.getFD());
+                            fail("Expect IOException.");
+                        } catch (IOException e) {
+                            // Expected.
+                        } finally {
+                            try {
+                                file.close();
+                            } catch (IOException e) {
+                                fail("Fail to close file");
+                            }
+                        }
+                    }
+
+                    // Test passing a read-only FileDescriptor and expect IOException.
+                    if (mFileIndex == 2) {
+                        ParcelFileDescriptor out = null;
+                        String path = null;
+                        try {
+                            path = OUTPUT_PATH + '0';
+                            out = ParcelFileDescriptor.open(new File(path),
+                                    ParcelFileDescriptor.MODE_READ_ONLY | ParcelFileDescriptor.MODE_CREATE);
+                            mMediaRecorder.setNextOutputFile(out.getFileDescriptor());
+                            fail("Expect IOException.");
+                        } catch (IOException e) {
+                            // Expected.
+                        } finally {
+                            try {
+                                out.close();
+                            } catch (IOException e) {
+                                fail("Fail to close file");
+                            }
+                        }
+                    }
+
+                    // Test passing a write-only FileDescriptor and expect IOException.
+                    if (mFileIndex == 3) {
+                        ParcelFileDescriptor out = null;
+                        String path = null;
+                        try {
+                            path = OUTPUT_PATH + '9';
+                            out = ParcelFileDescriptor.open(new File(path),
+                                    ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE);
+                            mMediaRecorder.setNextOutputFile(out.getFileDescriptor());
+                            fail("Expect IOException.");
+                        } catch (IOException e) {
+                            // Expected.
+                        } finally {
+                            try {
+                                out.close();
+                                new File(path).delete();
+                            } catch (IOException e) {
+                                fail("Fail to close file");
+                            }
+                        }
+                    }
+
+                    // only record 5 files.
+                    if (mFileIndex < 6) {
+                        try {
+                            String path = OUTPUT_PATH + mFileIndex;
+                            mMediaRecorder.setNextOutputFile(path);
+                            recordFileList.add(path);
+                            mFileIndex++;
+                        } catch (IOException e) {
+                            fail("Fail to set next output file error: " + e);
+                        }
+                    }
+                } else if (what ==
+                    MediaRecorder.MEDIA_RECORDER_INFO_NEXT_OUTPUT_FILE_STARTED) {
+                    Log.v(TAG, "Next output file started");
+                    mNextOutputFileStartedCond.open();
+                }
+            }
+        });
+        mExpectMaxFileCond = false;
+        mMediaRecorder.setOutputFile(OUTPUT_PATH + mFileIndex);
+        recordFileList.add(OUTPUT_PATH + mFileIndex);
+        mFileIndex++;
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setVideoSize(VIDEO_WIDTH, VIDEO_HEIGHT);
+        mMediaRecorder.setVideoEncodingBitRate(256000);
+        mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
+        mMediaRecorder.setMaxFileSize(fileSize);
+        mMediaRecorder.prepare();
+        mMediaRecorder.start();
+
+        // Record total 5 files including previous one.
+        int fileCount = 0;
+        while (fileCount < 5) {
+            if (!mMaxFileSizeApproachingCond.block(MAX_FILE_SIZE_TIMEOUT_MS)) {
+                fail("timed out waiting for MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING");
+            }
+            if (!mNextOutputFileStartedCond.block(MAX_FILE_SIZE_TIMEOUT_MS)) {
+                fail("timed out waiting for MEDIA_RECORDER_INFO_NEXT_OUTPUT_FILE_STARTED");
+            }
+            fileCount++;
+            mMaxFileSizeApproachingCond.close();
+            mNextOutputFileStartedCond.close();
+        }
+
+        mExpectMaxFileCond = true;
+        if (!mMaxFileSizeCond.block(MAX_FILE_SIZE_TIMEOUT_MS)) {
+            fail("timed out waiting for MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED");
+        }
+        mMediaRecorder.stop();
+
+        for (String filePath : recordFileList) {
+            checkOutputFileSize(filePath, fileSize, tolerance);
+        }
+    }
+
     private void checkOutputFileSize(final String fileName, long fileSize, long tolerance) {
-        assertTrue(mOutFile.exists());
-        assertEquals(fileSize, mOutFile.length(), tolerance);
-        assertTrue(mOutFile.delete());
+        File file = new File(fileName);
+        assertTrue(file.exists());
+        assertEquals(fileSize, file.length(), tolerance);
+        assertTrue(file.delete());
     }
 
     public void testOnErrorListener() throws Exception {
