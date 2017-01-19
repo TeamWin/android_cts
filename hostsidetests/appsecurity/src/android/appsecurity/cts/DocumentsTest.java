@@ -85,4 +85,8 @@ public class DocumentsTest extends DocumentsTestCase {
     public void testCreateDocumentAtInitialLocation() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testCreateDocumentAtInitialLocation");
     }
+
+    public void testCreateWebLink() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testCreateWebLink");
+    }
 }
