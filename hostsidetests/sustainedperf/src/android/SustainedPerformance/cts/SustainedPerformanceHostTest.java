@@ -157,7 +157,6 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
     }
 
     private void setUpEnvironment() throws Exception {
-        device.disconnectFromWifi();
         dhryMin = Double.MAX_VALUE;
         dhryMax = Double.MIN_VALUE;
         Thread.sleep(600000);
