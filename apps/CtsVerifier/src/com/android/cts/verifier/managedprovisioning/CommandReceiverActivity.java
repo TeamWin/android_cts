@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
@@ -37,7 +38,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +77,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_DISABLE_NETWORK_LOGGING = "disable-network-logging";
     public static final String COMMAND_INSTALL_HELPER_PACKAGE = "install-helper-package";
     public static final String COMMAND_UNINSTALL_HELPER_PACKAGE = "uninstall-helper-package";
+    public static final String COMMAND_SET_PERMISSION_GRANT_STATE = "set-permission-grant-state";
     public static final String COMMAND_CREATE_MANAGED_PROFILE = "create-managed-profile";
     public static final String COMMAND_REMOVE_MANAGED_PROFILE = "remove-managed-profile";
     public static final String COMMAND_SET_ALWAYS_ON_VPN = "set-always-on-vpn";
@@ -96,6 +97,10 @@ public class CommandReceiverActivity extends Activity {
             "com.android.cts.verifier.managedprovisioning.extra.VALUE";
     public static final String EXTRA_ORGANIZATION_NAME =
             "com.android.cts.verifier.managedprovisioning.extra.ORGANIZATION_NAME";
+    public static final String EXTRA_PERMISSION =
+            "com.android.cts.verifier.managedprovisioning.extra.PERMISSION";
+    public static final String EXTRA_GRANT_STATE =
+            "com.android.cts.verifier.managedprovisioning.extra.GRANT_STATE";
 
     // We care about installing and uninstalling only. It does not matter what apk is used.
     // NotificationBot.apk is a good choice because it comes bundled with the CTS verifier.
@@ -221,17 +226,9 @@ public class CommandReceiverActivity extends Activity {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
                     }
-                    // STOPSHIP(b/33068581): Network logging will be un-hidden for O. Remove
-                    // reflection when the un-hiding happens.
-                    final Method setNetworkLoggingEnabledMethod =
-                            DevicePolicyManager.class.getDeclaredMethod(
-                                    "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
-                    final Method retrieveNetworkLogsMethod =
-                            DevicePolicyManager.class.getDeclaredMethod(
-                                    "retrieveNetworkLogs", ComponentName.class, long.class);
-                    setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, true);
-                    retrieveNetworkLogsMethod.invoke(mDpm, mAdmin, 0 /* batchToken */);
-                    setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, false);
+                    mDpm.setNetworkLoggingEnabled(mAdmin, true);
+                    mDpm.retrieveNetworkLogs(mAdmin, 0 /* batchToken */);
+                    mDpm.setNetworkLoggingEnabled(mAdmin, false);
                 } break;
                 case COMMAND_RETRIEVE_SECURITY_LOGS: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
@@ -262,9 +259,13 @@ public class CommandReceiverActivity extends Activity {
                     installHelperPackage();
                 } break;
                 case COMMAND_UNINSTALL_HELPER_PACKAGE: {
-                    getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
-                            PendingIntent.getBroadcast(this, 0,
-                                    new Intent(ACTION_UNINSTALL_COMPLETE), 0).getIntentSender());
+                    uninstallHelperPackage();
+                } break;
+                case COMMAND_SET_PERMISSION_GRANT_STATE: {
+                    mDpm.setPermissionGrantState(mAdmin, getPackageName(),
+                            intent.getStringExtra(EXTRA_PERMISSION),
+                            intent.getIntExtra(EXTRA_GRANT_STATE,
+                                    DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT));
                 } break;
                 case COMMAND_CREATE_MANAGED_PROFILE: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
@@ -343,6 +344,12 @@ public class CommandReceiverActivity extends Activity {
                 .getIntentSender());
     }
 
+    private void uninstallHelperPackage() {
+        getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
+                PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), 0)
+                        .getIntentSender());
+    }
+
     private void clearAllPolicies() throws Exception {
         clearProfileOwnerRelatedPolicies();
 
@@ -367,13 +374,20 @@ public class CommandReceiverActivity extends Activity {
         mDpm.setKeyguardDisabled(mAdmin, false);
         mDpm.setAutoTimeRequired(mAdmin, false);
         mDpm.setStatusBarDisabled(mAdmin, false);
-        // STOPSHIP(b/33068581): Network logging will be un-hidden for O. Remove reflection when the
-        // un-hiding happens.
-        final Method setNetworkLoggingEnabledMethod = DevicePolicyManager.class.getDeclaredMethod(
-                "setNetworkLoggingEnabled", ComponentName.class, boolean.class);
-        setNetworkLoggingEnabledMethod.invoke(mDpm, mAdmin, false);
         mDpm.setOrganizationName(mAdmin, null);
+        mDpm.setNetworkLoggingEnabled(mAdmin, false);
+        mDpm.setPermissionGrantState(mAdmin, getPackageName(),
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
+        mDpm.setPermissionGrantState(mAdmin, getPackageName(), Manifest.permission.RECORD_AUDIO,
+                DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
+        mDpm.setPermissionGrantState(mAdmin, getPackageName(), Manifest.permission.CAMERA,
+                DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
+        mDpm.setAlwaysOnVpnPackage(mAdmin, null, false);
         mDpm.setRecommendedGlobalProxy(mAdmin, null);
+
+        uninstallHelperPackage();
+        removeManagedProfile();
     }
 
     private void clearProfileOwnerRelatedPolicies() {
