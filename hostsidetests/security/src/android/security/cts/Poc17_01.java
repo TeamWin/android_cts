@@ -16,11 +16,15 @@
 
 package android.security.cts;
 
+import android.platform.test.annotations.SecurityTest;
+
+@SecurityTest
 public class Poc17_01 extends SecurityTestCase {
 
     /**
      *  b/31799863
      */
+    @SecurityTest
     public void testPocCVE_2016_8482() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvmap")) {
             AdbUtils.runPoc("CVE-2016-8482", getDevice(), 60);
