@@ -714,7 +714,7 @@ public class StaticMetadata {
      */
     public int[] getAvailableToneMapModesChecked() {
         Key<int[]> key = CameraCharacteristics.TONEMAP_AVAILABLE_TONE_MAP_MODES;
-        int[] modes = getValueFromKeyNonNull(key);
+        int[] modes = mCharacteristics.get(key);
 
         if (modes == null) {
             return new int[0];
