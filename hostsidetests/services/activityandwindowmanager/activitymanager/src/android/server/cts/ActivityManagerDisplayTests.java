@@ -230,6 +230,33 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Test that move-task works when moving between displays.
+     */
+    public void testMoveTaskBetweenDisplays() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                VIRTUAL_DISPLAY_ACTIVITY);
+        mAmWmState.assertFocusedStack("Focus must remain on primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display", TEST_ACTIVITY_NAME);
+        mAmWmState.assertNotFocusedStack("Focused stack must be on secondary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Launch other activity with different uid and check it is launched on primary display.
+        moveActivityToStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertFocusedActivity("Focus must be on moved activity", TEST_ACTIVITY_NAME);
+        mAmWmState.assertFocusedStack("Focus must return to primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+    }
+
+    /**
      * Tests launching activities on secondary display and then removing it to see if stack focus
      * is moved correctly.
      */
