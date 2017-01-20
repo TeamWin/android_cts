@@ -23,12 +23,16 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.net.ProxyInfo;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import com.android.cts.verifier.R;
@@ -78,6 +82,10 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_INSTALL_HELPER_PACKAGE = "install-helper-package";
     public static final String COMMAND_UNINSTALL_HELPER_PACKAGE = "uninstall-helper-package";
     public static final String COMMAND_SET_PERMISSION_GRANT_STATE = "set-permission-grant-state";
+    public static final String COMMAND_ADD_PERSISTENT_PREFERRED_ACTIVITIES =
+            "add-persistent-preferred-activities";
+    public static final String COMMAND_CLEAR_PERSISTENT_PREFERRED_ACTIVITIES =
+            "clear-persistent-preferred-activities";
     public static final String COMMAND_CREATE_MANAGED_PROFILE = "create-managed-profile";
     public static final String COMMAND_REMOVE_MANAGED_PROFILE = "remove-managed-profile";
     public static final String COMMAND_SET_ALWAYS_ON_VPN = "set-always-on-vpn";
@@ -267,6 +275,57 @@ public class CommandReceiverActivity extends Activity {
                             intent.getIntExtra(EXTRA_GRANT_STATE,
                                     DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT));
                 } break;
+                case COMMAND_ADD_PERSISTENT_PREFERRED_ACTIVITIES: {
+                    final ComponentName componentName =
+                            EnterprisePrivacyTestDefaultAppActivity.COMPONENT_NAME;
+                    // Browser
+                    IntentFilter filter = new IntentFilter();
+                    filter.addAction(Intent.ACTION_VIEW);
+                    filter.addCategory(Intent.CATEGORY_BROWSABLE);
+                    filter.addDataScheme("http");
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    // Camera
+                    filter = new IntentFilter();
+                    filter.addAction(MediaStore.ACTION_IMAGE_CAPTURE);
+                    filter.addAction(MediaStore.ACTION_VIDEO_CAPTURE);
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    // Map
+                    filter = new IntentFilter();
+                    filter.addAction(Intent.ACTION_VIEW);
+                    filter.addDataScheme("geo");
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    // E-mail
+                    filter = new IntentFilter();
+                    filter.addAction(Intent.ACTION_SENDTO);
+                    filter.addAction(Intent.ACTION_SEND);
+                    filter.addAction(Intent.ACTION_SEND_MULTIPLE);
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    // Calendar
+                    filter = new IntentFilter();
+                    filter.addAction(Intent.ACTION_INSERT);
+                    filter.addDataType("vnd.android.cursor.dir/event");
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    // Contacts
+                    filter = new IntentFilter();
+                    filter.addAction(Intent.ACTION_PICK);
+                    filter.addDataType(ContactsContract.Contacts.CONTENT_TYPE);
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    // Dialer
+                    filter = new IntentFilter();
+                    filter.addAction(Intent.ACTION_DIAL);
+                    filter.addAction(Intent.ACTION_CALL);
+                    mDpm.addPersistentPreferredActivity(mAdmin, filter, componentName);
+                    getPackageManager().setComponentEnabledSetting(componentName,
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                            PackageManager.DONT_KILL_APP);
+                } break;
+                case COMMAND_CLEAR_PERSISTENT_PREFERRED_ACTIVITIES: {
+                    mDpm.clearPackagePersistentPreferredActivities(mAdmin, getPackageName());
+                    getPackageManager().setComponentEnabledSetting(
+                            EnterprisePrivacyTestDefaultAppActivity.COMPONENT_NAME,
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                            PackageManager.DONT_KILL_APP);
+                } break;
                 case COMMAND_CREATE_MANAGED_PROFILE: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
@@ -383,11 +442,16 @@ public class CommandReceiverActivity extends Activity {
                 DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
         mDpm.setPermissionGrantState(mAdmin, getPackageName(), Manifest.permission.CAMERA,
                 DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
+        mDpm.clearPackagePersistentPreferredActivities(mAdmin, getPackageName());
         mDpm.setAlwaysOnVpnPackage(mAdmin, null, false);
         mDpm.setRecommendedGlobalProxy(mAdmin, null);
 
         uninstallHelperPackage();
         removeManagedProfile();
+        getPackageManager().setComponentEnabledSetting(
+                EnterprisePrivacyTestDefaultAppActivity.COMPONENT_NAME,
+                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                PackageManager.DONT_KILL_APP);
     }
 
     private void clearProfileOwnerRelatedPolicies() {

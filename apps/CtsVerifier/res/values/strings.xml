@@ -2881,6 +2881,18 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your camera.\n
         7) Press the Reset button.
     </string>
+    <string name="enterprise_privacy_default_apps">Default apps</string>
+    <string name="enterprise_privacy_default_apps_info">
+        Please do the following:\n
+        1) Press the Reset button.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are not told that your administrator set any default apps.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Set Default Apps button.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has set seven default apps.\n
+        7) Press the Reset button.
+    </string>
+    <string name="enterprise_privacy_set_default_apps">Set Default Apps</string>
     <string name="enterprise_privacy_always_on_vpn">Always-on VPN</string>
     <string name="enterprise_privacy_always_on_vpn_info">
         Please do the following:\n
@@ -2964,6 +2976,7 @@ You should be prompted to select credentials; choose the ones you just installed
         9) Verify that a screen informing you what your managing organization can do is shown.\n
         11) Use the Back button to return to this page.
     </string>
+    <string name="enterprise_privacy_default_app">CTS Verifier Test</string>
 
     <!-- Strings for Network Logging Tests -->
     <string name="device_owner_network_logging_ui">Network Logging UI</string>
