@@ -25,7 +25,8 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     mockito-target \
     android-common \
     ctsdeviceutil \
-    ctstestrunner
+    ctstestrunner \
+    legacy-android-test
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
