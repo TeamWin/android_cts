@@ -35,6 +35,7 @@ import android.support.annotation.Nullable;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.telephony.VisualVoicemailService;
 import android.telephony.VisualVoicemailSms;
 import android.telephony.VisualVoicemailSmsFilterSettings;
@@ -251,6 +252,15 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
                 "//CTSVVM:STATUS:key=");
         assertEquals("STATUS", result.getPrefix());
         assertEquals("", result.getFields().getString("key"));
+    }
+
+    public void testGetVisualVoicemailPackageName_isSelf(){
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+        assertEquals(PACKAGE, telephonyManager.getVisualVoicemailPackageName(mPhoneAccountHandle));
     }
 
     private VisualVoicemailSms getSmsFromText(String clientPrefix, String text) {
