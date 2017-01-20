@@ -288,6 +288,84 @@ public class ResultReporterTest extends TestCase {
                 finalTestResult2.getResultStatus());
     }
 
+    public void testRetryCanSetDone() throws Exception {
+        mReporter.invocationStarted(mBuildInfo);
+        // Set mCanMarkDone directly (otherwise we must build result directory, write XML, and
+        // perform actual retry)
+        mReporter.mCanMarkDone = true;
+        // Set up IInvocationResult with existing results from previous session
+        IInvocationResult invocationResult = mReporter.getResult();
+        IModuleResult moduleResult = invocationResult.getOrCreateModule(ID);
+        moduleResult.setDone(false);
+        ICaseResult caseResult = moduleResult.getOrCreateResult(CLASS);
+        ITestResult testResult1 = caseResult.getOrCreateResult(METHOD_1);
+        testResult1.setResultStatus(TestStatus.PASS);
+        testResult1.setRetry(true);
+        ITestResult testResult2 = caseResult.getOrCreateResult(METHOD_2);
+        testResult2.setResultStatus(TestStatus.FAIL);
+        testResult2.setStackTrace(STACK_TRACE);
+        testResult2.setRetry(true);
+
+        // Assume no additional filtering is applied to retry, and all tests for the module have
+        // been collected. Thus, module "done" value should switch.
+        mReporter.testRunStarted(ID, 1);
+
+        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        mReporter.testStarted(test2);
+        mReporter.testEnded(test2, new HashMap<String, String>());
+
+        mReporter.testRunEnded(10, new HashMap<String, String>());
+        mReporter.invocationEnded(10);
+
+        // Verification that results have been overwritten.
+        IInvocationResult result = mReporter.getResult();
+        assertEquals("Expected 2 pass", 2, result.countResults(TestStatus.PASS));
+        assertEquals("Expected 0 failures", 0, result.countResults(TestStatus.FAIL));
+        List<IModuleResult> modules = result.getModules();
+        assertEquals("Expected 1 module", 1, modules.size());
+        IModuleResult module = modules.get(0);
+        assertTrue("Module should be marked done", module.isDone());
+    }
+
+    public void testRetryCannotSetDone() throws Exception {
+        mReporter.invocationStarted(mBuildInfo);
+        // Set mCanMarkDone directly (otherwise we must build result directory, write XML, and
+        // perform actual retry)
+        mReporter.mCanMarkDone = false;
+        // Set up IInvocationResult with existing results from previous session
+        IInvocationResult invocationResult = mReporter.getResult();
+        IModuleResult moduleResult = invocationResult.getOrCreateModule(ID);
+        moduleResult.setDone(false);
+        ICaseResult caseResult = moduleResult.getOrCreateResult(CLASS);
+        ITestResult testResult1 = caseResult.getOrCreateResult(METHOD_1);
+        testResult1.setResultStatus(TestStatus.PASS);
+        testResult1.setRetry(true);
+        ITestResult testResult2 = caseResult.getOrCreateResult(METHOD_2);
+        testResult2.setResultStatus(TestStatus.FAIL);
+        testResult2.setStackTrace(STACK_TRACE);
+        testResult2.setRetry(true);
+
+        // Since using retry-type failed option, we only run previously failed test
+        // and don't run any non-executed tests, so module "done" value should not switch.
+        mReporter.testRunStarted(ID, 1);
+
+        TestIdentifier test2 = new TestIdentifier(CLASS, METHOD_2);
+        mReporter.testStarted(test2);
+        mReporter.testEnded(test2, new HashMap<String, String>());
+
+        mReporter.testRunEnded(10, new HashMap<String, String>());
+        mReporter.invocationEnded(10);
+
+        // Verification that results have been overwritten.
+        IInvocationResult result = mReporter.getResult();
+        assertEquals("Expected 2 pass", 2, result.countResults(TestStatus.PASS));
+        assertEquals("Expected 0 failures", 0, result.countResults(TestStatus.FAIL));
+        List<IModuleResult> modules = result.getModules();
+        assertEquals("Expected 1 module", 1, modules.size());
+        IModuleResult module = modules.get(0);
+        assertFalse("Module should not be marked done", module.isDone());
+    }
+
     public void testResultReporting_moduleNotDone() throws Exception {
         mReporter.invocationStarted(mBuildInfo);
         mReporter.testRunStarted(ID, 2);

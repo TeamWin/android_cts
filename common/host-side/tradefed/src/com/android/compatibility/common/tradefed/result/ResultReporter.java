@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.result;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
+import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
@@ -82,6 +83,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
 
+    @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
+            description = "used with " + CompatibilityTest.RETRY_OPTION
+            + ", retry tests of a certain status. Possible values include \"failed\" and "
+            + "\"not_executed\".",
+            importance = Importance.IF_UNSET)
+    private RetryType mRetryType = null;
+
     @Option(name = "result-server", description = "Server to publish test results.")
     private String mResultServer;
 
@@ -116,6 +124,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private int mCurrentTestNum;
     private int mTotalTestsInModule;
 
+
+    // Whether modules can be marked done for this invocation. Initialized in invocationStarted()
+    // Visible for unit testing
+    protected boolean mCanMarkDone;
+    // Whether the current module has previously been marked done
+    private boolean mModuleWasDone;
+
     // Nullable. If null, "this" is considered the master and must handle
     // result aggregation and reporting. When not null, it should forward events
     // to the master.
@@ -148,6 +163,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             if (mDeviceSerial == null && buildInfo.getDeviceSerial() != null) {
                 mDeviceSerial = buildInfo.getDeviceSerial();
             }
+            mCanMarkDone = canMarkDone(mBuildHelper.getRecentCommandLineArgs());
         }
 
         if (isShardResultReporter()) {
@@ -244,13 +260,14 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 mTotalTestsInModule +=
                         Math.max(0, numTests - mCurrentModuleResult.getNotExecuted());
             }
-            mCurrentModuleResult.setDone(false);
         } else {
             mCurrentModuleResult = mResult.getOrCreateModule(id);
             mTotalTestsInModule = numTests;
             // Reset counters
             mCurrentTestNum = 0;
         }
+        mModuleWasDone = mCurrentModuleResult.isDone();
+        mCurrentModuleResult.setDone(false);
     }
 
     /**
@@ -335,8 +352,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         mCurrentModuleResult.addRuntime(elapsedTime);
-        // Expect them to be equal, but greater than to be safe.
-        mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+        if (mCanMarkDone || mModuleWasDone) {
+            // Only mark module done if status of the invocation allows it (mCanMarkDone) or module
+            // was previously marked done (mModuleWasDone) and all expected tests are collected.
+            // Expect mCurrentTestNum = mTotalTestsInModule, but use >= to be safe
+            mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+        }
         mCurrentModuleResult.setNotExecuted(Math.max(mTotalTestsInModule - mCurrentTestNum, 0));
         if (isShardResultReporter()) {
             // Forward module results to the master.
@@ -601,6 +622,28 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 CLog.e(ioe);
             }
         }
+    }
+
+    /**
+     * Returns whether it is safe to mark modules as "done", given the invocation command-line
+     * arguments. Returns true unless this is a retry and specific filtering techniques are applied
+     * on the command-line, such as:
+     *   --retry-type failed
+     *   --include-filter
+     *   --exclude-filter
+     *   -t/--test
+     *   --subplan
+     */
+    private boolean canMarkDone(String args) {
+        if (mRetrySessionId == null) {
+            return true; // always allow modules to be marked done if not retry
+        }
+        return !(RetryType.FAILED.equals(mRetryType)
+                || args.contains(CompatibilityTest.INCLUDE_FILTER_OPTION)
+                || args.contains(CompatibilityTest.EXCLUDE_FILTER_OPTION)
+                || args.contains(CompatibilityTest.SUBPLAN_OPTION)
+                || args.matches(String.format(".* (-%s|--%s) .*",
+                CompatibilityTest.TEST_OPTION_SHORT_NAME, CompatibilityTest.TEST_OPTION)));
     }
 
     /**
