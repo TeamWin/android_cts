@@ -269,6 +269,7 @@ public class MediaPreparer extends PreconditionPreparer {
             BuildError, DeviceNotAvailableException {
 
         if (mSkipMediaDownload) {
+            logInfo("Skipping media preparation");
             return; // skip this precondition
         }
         setMountPoint(device);

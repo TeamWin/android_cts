@@ -88,6 +88,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private static final String SUBPLAN_OPTION = "subplan";
     public static final String MODULE_OPTION = "module";
     public static final String TEST_OPTION = "test";
+    public static final String PRECONDITION_ARG_OPTION = "precondition-arg";
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
@@ -140,6 +141,12 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             description = "the test run.",
             importance = Importance.IF_UNSET)
     private String mTestName = null;
+
+    @Option(name = PRECONDITION_ARG_OPTION,
+            description = "the arguments to pass to a precondition. The expected format is"
+                    + "\"<arg-name>:<arg-value>\"",
+            importance = Importance.ALWAYS)
+    private List<String> mPreconditionArgs = new ArrayList<>();
 
     @Option(name = MODULE_ARG_OPTION,
             description = "the arguments to pass to a module. The expected format is"
@@ -382,7 +389,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 module.setBuild(mBuildHelper.getBuildInfo());
                 module.setDevice(mDevice);
                 module.setPreparerWhitelist(mPreparerWhitelist);
-                isPrepared &= (module.prepare(mSkipPreconditions));
+                isPrepared &= (module.prepare(mSkipPreconditions, mPreconditionArgs));
             }
             mModuleRepo.setPrepared(isPrepared);
 

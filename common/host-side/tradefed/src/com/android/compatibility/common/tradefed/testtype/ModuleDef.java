@@ -254,13 +254,17 @@ public class ModuleDef implements IModuleDef {
      * {@inheritDoc}
      */
     @Override
-    public boolean prepare(boolean skipPrep) throws DeviceNotAvailableException {
+    public boolean prepare(boolean skipPrep, List<String> preconditionArgs)
+            throws DeviceNotAvailableException {
         for (ITargetPreparer preparer : mDynamicConfigPreparers) {
             runPreparerSetup(preparer);
         }
         for (ITargetPreparer preparer : mPreconditions) {
             setOption(preparer, CompatibilityTest.SKIP_PRECONDITIONS_OPTION,
                     Boolean.toString(skipPrep));
+            for (String preconditionArg : preconditionArgs) {
+                setOption(preparer, CompatibilityTest.PRECONDITION_ARG_OPTION, preconditionArg);
+            }
             try {
                 runPreparerSetup(preparer);
             } catch (RuntimeException e) {
