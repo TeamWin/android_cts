@@ -25,5 +25,6 @@ public class Constants {
 
     public static final String EXTRA_SUCCESS = "SUCCESS";
     public static final String EXTRA_PACKAGE = "PACKAGE_NAME";
+    public static final String EXTRA_REQUEST = "REQUEST";
 
 }
