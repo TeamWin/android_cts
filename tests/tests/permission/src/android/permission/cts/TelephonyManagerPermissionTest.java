@@ -244,6 +244,32 @@ public class TelephonyManagerPermissionTest {
 
     }
 
+    /**
+     * Verify that TelephonyManager.getImei requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#READ_PHONE_STATE}.
+     */
+    @Test
+    public void testGetImei() {
+        if (!mHasTelephony) {
+            return;
+        }
+
+        try {
+            String imei = mTelephonyManager.getImei();
+            fail("Got IMEI: " + imei);
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            String imei = mTelephonyManager.getImei(0);
+            fail("Got IMEI: " + imei);
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
     }
