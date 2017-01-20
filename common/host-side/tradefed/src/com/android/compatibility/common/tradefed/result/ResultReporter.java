@@ -16,7 +16,6 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
 import com.android.compatibility.common.util.ICaseResult;
@@ -29,7 +28,6 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
@@ -60,13 +58,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -489,8 +484,15 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
                     elapsedTime + startTime, mReferenceUrl, getLogUrl(),
                     mBuildHelper.getCommandLineArgs());
-            info("Test Result: %s", resultFile.getCanonicalPath());
             File zippedResults = zipResults(mResultDir);
+
+            // Create failure report after zip file so extra data is not uploaded
+            File failureReport = ResultHandler.createFailureReport(resultFile);
+            if (failureReport.exists()) {
+                info("Test Result: %s", failureReport.getCanonicalPath());
+            } else {
+                info("Test Result: %s", resultFile.getCanonicalPath());
+            }
             info("Full Result: %s", zippedResults.getCanonicalPath());
 
             saveLog(resultFile, zippedResults);
