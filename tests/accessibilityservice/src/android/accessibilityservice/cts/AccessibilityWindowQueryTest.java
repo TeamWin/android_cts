@@ -31,6 +31,7 @@ import android.content.res.Resources;
 import android.graphics.Rect;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
@@ -54,7 +55,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class AccessibilityWindowQueryTest
         extends AccessibilityActivityTestCase<AccessibilityWindowQueryActivity> {
-
+    private static String CONTENT_VIEW_RES_NAME =
+            "android.accessibilityservice.cts:id/added_content";
     private static final long TIMEOUT_WINDOW_STATE_IDLE = 500;
 
     public AccessibilityWindowQueryTest() {
@@ -62,10 +64,27 @@ public class AccessibilityWindowQueryTest
     }
 
     @MediumTest
-    public void testFindByText() throws Exception {
+    public void testFindByText() throws Throwable {
+        // First, make the root view of the activity an accessibility node. This allows us to
+        // later exclude views that are part of the activity's DecorView.
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getActivity().findViewById(R.id.added_content)
+                    .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+            }
+        });
+
+        // Start looking from the added content instead of from the root accessibility node so
+        // that nodes that we don't expect (i.e. window control buttons) are not included in the
+        // list of accessibility nodes returned by findAccessibilityNodeInfosByText.
+        final AccessibilityNodeInfo addedContent = getInstrumentation().getUiAutomation()
+                .getRootInActiveWindow().findAccessibilityNodeInfosByViewId(CONTENT_VIEW_RES_NAME)
+                        .get(0);
+
         // find a view by text
-        List<AccessibilityNodeInfo> buttons = getInstrumentation().getUiAutomation()
-                .getRootInActiveWindow().findAccessibilityNodeInfosByText("b");
+        List<AccessibilityNodeInfo> buttons = addedContent.findAccessibilityNodeInfosByText("b");
+
         assertEquals(9, buttons.size());
     }
 
@@ -825,7 +844,6 @@ public class AccessibilityWindowQueryTest
             classNameAndTextList.add("android.widget.ButtonB8");
             classNameAndTextList.add("android.widget.ButtonB9");
 
-            String contentViewIdResName = "android.accessibilityservice.cts:id/added_content";
             boolean verifyContent = false;
 
             Queue<AccessibilityNodeInfo> fringe = new LinkedList<AccessibilityNodeInfo>();
@@ -836,7 +854,7 @@ public class AccessibilityWindowQueryTest
                 AccessibilityNodeInfo current = fringe.poll();
 
                 if (!verifyContent
-                        && contentViewIdResName.equals(current.getViewIdResourceName())) {
+                        && CONTENT_VIEW_RES_NAME.equals(current.getViewIdResourceName())) {
                     verifyContent = true;
                 }
 
