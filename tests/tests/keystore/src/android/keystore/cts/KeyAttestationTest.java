@@ -29,6 +29,7 @@ import static android.keystore.cts.AuthorizationList.KM_PURPOSE_DECRYPT;
 import static android.keystore.cts.AuthorizationList.KM_PURPOSE_ENCRYPT;
 import static android.keystore.cts.AuthorizationList.KM_PURPOSE_SIGN;
 import static android.keystore.cts.AuthorizationList.KM_PURPOSE_VERIFY;
+import static android.keystore.cts.AuthorizationList.KM_PURPOSE_WRAP_KEY;
 import static android.keystore.cts.RootOfTrust.KM_VERIFIED_BOOT_VERIFIED;
 import static android.security.keystore.KeyProperties.DIGEST_NONE;
 import static android.security.keystore.KeyProperties.DIGEST_SHA256;
@@ -42,6 +43,7 @@ import static android.security.keystore.KeyProperties.PURPOSE_DECRYPT;
 import static android.security.keystore.KeyProperties.PURPOSE_ENCRYPT;
 import static android.security.keystore.KeyProperties.PURPOSE_SIGN;
 import static android.security.keystore.KeyProperties.PURPOSE_VERIFY;
+import static android.security.keystore.KeyProperties.PURPOSE_WRAP_KEY;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PKCS1;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PSS;
 import static org.hamcrest.CoreMatchers.is;
@@ -220,6 +222,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         int[] purposes = {
                 PURPOSE_SIGN | PURPOSE_VERIFY,
                 PURPOSE_ENCRYPT | PURPOSE_DECRYPT,
+                PURPOSE_WRAP_KEY,
         };
         String[][] encryptionPaddingModes = {
                 {
@@ -249,13 +252,18 @@ public class KeyAttestationTest extends AndroidTestCase {
                 },
         };
 
+        // We don't allow the caller to specify padding mode for wrapping.
+        String[][] wrapKeyPaddingModes = {};
+
         for (int keySize : keySizes) {
             for (byte[] challenge : challenges) {
                 for (int purpose : purposes) {
                     if (isEncryptionPurpose(purpose)) {
                         testRsaAttestations(keySize, challenge, purpose, encryptionPaddingModes);
-                    } else {
+                    } else if (isSignaturePurpose(purpose)){
                         testRsaAttestations(keySize, challenge, purpose, signaturePaddingModes);
+                    } else {
+                        testRsaAttestations(keySize, challenge, purpose, wrapKeyPaddingModes);
                     }
                 }
             }
@@ -378,6 +386,7 @@ public class KeyAttestationTest extends AndroidTestCase {
             // Because we sometimes set "no padding", allow non-randomized encryption.
             builder.setRandomizedEncryptionRequired(false);
         }
+
         if (isSignaturePurpose(purposes)) {
             builder.setSignaturePaddings(paddingModes);
         }
@@ -412,6 +421,10 @@ public class KeyAttestationTest extends AndroidTestCase {
         if (isEncryptionPurpose(purposes)) {
             expectedKeyUsage[KEY_USAGE_KEY_ENCIPHERMENT_BIT_OFFSET] = true;
             expectedKeyUsage[KEY_USAGE_DATA_ENCIPHERMENT_BIT_OFFSET] = true;
+        }
+        if (isWrapPurpose(purposes)) {
+            expectedKeyUsage[KEY_USAGE_KEY_ENCIPHERMENT_BIT_OFFSET] = true;
+            expectedKeyUsage[KEY_USAGE_DATA_ENCIPHERMENT_BIT_OFFSET] = false;
         }
         assertThat(attestationCert.getKeyUsage(), is(expectedKeyUsage));
     }
@@ -803,6 +816,10 @@ public class KeyAttestationTest extends AndroidTestCase {
         return (purposes & PURPOSE_SIGN) != 0 || (purposes & PURPOSE_VERIFY) != 0;
     }
 
+    private boolean isWrapPurpose(int purposes) {
+        return (purposes & PURPOSE_WRAP_KEY) != 0;
+    }
+
     private ImmutableSet<Integer> buildPurposeSet(int purposes) {
         ImmutableSet.Builder<Integer> builder = ImmutableSet.builder();
         if ((purposes & PURPOSE_SIGN) != 0)
@@ -813,6 +830,8 @@ public class KeyAttestationTest extends AndroidTestCase {
             builder.add(KM_PURPOSE_ENCRYPT);
         if ((purposes & PURPOSE_DECRYPT) != 0)
             builder.add(KM_PURPOSE_DECRYPT);
+        if ((purposes & PURPOSE_WRAP_KEY) != 0)
+            builder.add(KM_PURPOSE_WRAP_KEY);
         return builder.build();
     }
 
