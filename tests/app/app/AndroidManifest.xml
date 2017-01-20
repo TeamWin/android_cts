@@ -88,7 +88,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="vnd.android.cursor.dir/person" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.app.stubs.activity.INSTRUMENTATION_TEST"/>
+            </intent-filter>
         </activity>
+
+        <activity android:name="android.app.stubs.ActivityMonitorTestActivity"
+                  android:label="ActivityMonitorTestActivity" />
 
         <activity android:name="android.app.stubs.AliasActivityStub">
             <meta-data android:name="android.app.alias"
