@@ -19,13 +19,19 @@ package com.android.compatibility.common.tradefed.targetprep;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.targetprep.TargetSetupError;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An {@link ITargetPreparer} that performs checks and/or tasks to ensure the
@@ -38,13 +44,35 @@ public abstract class PreconditionPreparer implements ITargetPreparer {
             description = "Whether preconditions should be skipped")
     private boolean mSkipPreconditions = false;
 
+    @Option(name = CompatibilityTest.PRECONDITION_ARG_OPTION,
+            description = "the arguments to pass to a precondition. The expected format is"
+                    + "\"<arg-name>:<arg-value>\"")
+    private List<String> mPreconditionArgs = new ArrayList<>();
+
     protected final String LOG_TAG = getClass().getSimpleName();
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
         if (!mSkipPreconditions) {
+            for (String preconditionArg : mPreconditionArgs) {
+                String[] parts = preconditionArg.split(":");
+                String argName = parts[0];
+                // If arg-value is not supplied, set to "true"
+                String argValue = (parts.length > 1) ? parts[1] : Boolean.toString(true);
+                setOption(argName, argValue);
+            }
             run(device, buildInfo);
+        }
+    }
+
+    private void setOption(String option, String value) {
+        try {
+            OptionSetter setter = new OptionSetter(this);
+            setter.setOptionValue(option, value);
+        } catch (ConfigurationException e) {
+            CLog.i("Value %s for option %s not applicable for class %s", value, option,
+                    this.getClass().getName());
         }
     }
 
