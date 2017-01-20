@@ -93,8 +93,8 @@ public class TooltipTest {
         }
     }
 
-    private void setTooltip(View view, CharSequence tooltip) throws Throwable {
-        mActivityRule.runOnUiThread(() -> view.setTooltip(tooltip));
+    private void setTooltipText(View view, CharSequence tooltipText) throws Throwable {
+        mActivityRule.runOnUiThread(() -> view.setTooltipText(tooltipText));
     }
 
     private boolean hasTooltip(View view) {
@@ -195,28 +195,28 @@ public class TooltipTest {
     @Test
     public void testGetSetTooltip() throws Throwable {
         // No tooltip set in resource
-        assertEquals(null, mNoTooltipView.getTooltip());
+        assertEquals(null, mNoTooltipView.getTooltipText());
 
         // Set the tooltip, read it back
-        final String tooltipString1 = "new tooltip";
-        setTooltip(mNoTooltipView, tooltipString1);
-        assertEquals(tooltipString1, mNoTooltipView.getTooltip());
+        final String tooltipText1 = "new tooltip";
+        setTooltipText(mNoTooltipView, tooltipText1);
+        assertEquals(tooltipText1, mNoTooltipView.getTooltipText());
 
         // Clear the tooltip.
-        setTooltip(mNoTooltipView, null);
-        assertEquals(null, mNoTooltipView.getTooltip());
+        setTooltipText(mNoTooltipView, null);
+        assertEquals(null, mNoTooltipView.getTooltipText());
 
         // Check the tooltip set in resource
-        assertEquals("tooltip text", mTooltipView.getTooltip());
+        assertEquals("tooltip text", mTooltipView.getTooltipText());
 
         // Clear the tooltip set in resource
-        setTooltip(mTooltipView, null);
-        assertEquals(null, mTooltipView.getTooltip());
+        setTooltipText(mTooltipView, null);
+        assertEquals(null, mTooltipView.getTooltipText());
 
         // Set the tooltip again, read it back
-        final String tooltipString2 = "new tooltip 2";
-        setTooltip(mTooltipView, tooltipString2);
-        assertEquals(tooltipString2, mTooltipView.getTooltip());
+        final String tooltipText2 = "new tooltip 2";
+        setTooltipText(mTooltipView, tooltipText2);
+        assertEquals(tooltipText2, mTooltipView.getTooltipText());
     }
 
     @Test
@@ -253,10 +253,10 @@ public class TooltipTest {
         callPerformLongClick(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
 
-        setTooltip(mTooltipView, "updated tooltip");
+        setTooltipText(mTooltipView, "updated tooltip");
         assertTrue(hasTooltip(mTooltipView));
 
-        setTooltip(mTooltipView, null);
+        setTooltipText(mTooltipView, null);
         assertFalse(hasTooltip(mTooltipView));
     }
 
@@ -631,7 +631,7 @@ public class TooltipTest {
     @Test
     public void testMouseHoverTooltipUnsetWhileHovering() throws Throwable {
         injectHoverMove(mTooltipView);
-        setTooltip(mTooltipView, null);
+        setTooltipText(mTooltipView, null);
         waitOut(ViewConfiguration.getHoverTooltipShowTimeout());
         assertFalse(hasTooltip(mTooltipView));
     }
@@ -650,7 +650,7 @@ public class TooltipTest {
         mNoTooltipView.setOnHoverListener((v, event) -> true);
         mTooltipView.setOnHoverListener((v, event) -> true);
 
-        setTooltip(mTopmostView, "tooltip");
+        setTooltipText(mTopmostView, "tooltip");
 
         // Hover over a child with a tooltip works normally.
         injectLongHoverMove(mTooltipView);
@@ -684,7 +684,7 @@ public class TooltipTest {
         assertFalse(hasTooltip(mTopmostView));
 
         // Set a tooltip on the intermediate parent, now it is showing tooltips.
-        setTooltip(mGroupView, "tooltip");
+        setTooltipText(mGroupView, "tooltip");
         injectLongHoverMove(mNoTooltipView);
         assertFalse(hasTooltip(mNoTooltipView));
         assertFalse(hasTooltip(mTopmostView));
@@ -762,7 +762,7 @@ public class TooltipTest {
         injectLongHoverMove(parent);
         assertTrue(hasTooltip(child2));
 
-        setTooltip(child2, null);
+        setTooltipText(child2, null);
         injectLongHoverMove(parent);
         assertTrue(hasTooltip(child1));
 

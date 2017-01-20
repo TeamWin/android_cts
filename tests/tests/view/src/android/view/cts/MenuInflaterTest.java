@@ -262,17 +262,17 @@ public class MenuInflaterTest {
         MenuItem item2 = mMenu.findItem(R.id.item2);
         MenuItem item3 = mMenu.findItem(R.id.item3);
 
-        assertEquals("tooltip1", item1.getTooltip());
+        assertEquals("tooltip1", item1.getTooltipText());
 
-        assertEquals("tooltip2", item2.getTooltip());
-        item2.setTooltip(null);
-        assertNull(item2.getTooltip());
-        item2.setTooltip("tooltip2_new");
-        assertEquals("tooltip2_new", item2.getTooltip());
+        assertEquals("tooltip2", item2.getTooltipText());
+        item2.setTooltipText(null);
+        assertNull(item2.getTooltipText());
+        item2.setTooltipText("tooltip2_new");
+        assertEquals("tooltip2_new", item2.getTooltipText());
 
-        assertNull(item3.getTooltip());
-        item3.setTooltip("tooltip3");
-        assertEquals("tooltip3", item3.getTooltip());
+        assertNull(item3.getTooltipText());
+        item3.setTooltipText("tooltip3");
+        assertEquals("tooltip3", item3.getTooltipText());
     }
 
     @UiThreadTest
