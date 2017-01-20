@@ -2783,11 +2783,14 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="enterprise_privacy_page_info">
         Please press the Go button to open Settings. Verify that:\n
         1) There is an entry for system privacy.\n
-        2) Tapping that entry opens a screen in which you are told your organization can:\n
-        3) Change settings on this device.\n
-        4) See data associated with your work account.\n
-        5) See the list of all apps on your device.\n
-        6) See usage of each app on your device.\n
+        2) Tapping that entry opens a screen.\n
+        3) In this screen, you are told your organization can:\n
+        * Change settings on this device.\n
+        * See data associated with your work account.\n
+        * See the list of all apps on your device.\n
+        * See usage of each app on your device.\n
+        * Lock the device and change the password.\n
+        * Wipe the device.\n
         \n
         Use the Back button to return to this page.
     </string>
