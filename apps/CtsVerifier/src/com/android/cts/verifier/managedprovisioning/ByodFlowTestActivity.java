@@ -299,11 +299,13 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_cross_profile_from_work_instruction,
                 new Intent(ByodHelperActivity.ACTION_TEST_CROSS_PROFILE_INTENTS_DIALOG));
 
+        /* Disable due to b/33571176
         mAppLinkingTest = new DialogTestListItem(this,
                 R.string.provisioning_app_linking,
                 "BYOD_AppLinking",
                 R.string.provisioning_byod_app_linking_instruction,
                 new Intent(ByodHelperActivity.ACTION_TEST_APP_LINKING_DIALOG));
+        */
 
         mKeyguardDisabledFeaturesTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_keyguard_disabled_features,
@@ -404,7 +406,9 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
         adapter.add(mCrossProfileIntentFiltersTestFromPersonal);
         adapter.add(mCrossProfileIntentFiltersTestFromWork);
+        /* Disable due to b/33571176
         adapter.add(mAppLinkingTest);
+        */
         adapter.add(mDisableNonMarketTest);
         adapter.add(mEnableNonMarketTest);
         adapter.add(mIntentFiltersTest);
