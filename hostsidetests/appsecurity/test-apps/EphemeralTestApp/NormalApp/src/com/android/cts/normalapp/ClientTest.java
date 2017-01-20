@@ -58,6 +58,8 @@ public class ClientTest {
             "com.android.cts.ephemeraltest.QUERY";
     private static final String EXTRA_ACTIVITY_NAME =
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_NAME";
+    private static final String EXTRA_ACTIVITY_RESULT =
+            "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
 
     private BroadcastReceiver mReceiver;
     private final SynchronousQueue<BroadcastResult> mResultQueue = new SynchronousQueue<>();
@@ -129,6 +131,8 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(testResult.activityName,
                     is("NormalActivity"));
+            assertThat(testResult.result,
+                    is("android.content.pm.PackageManager$NameNotFoundException"));
         }
 
         // start the normal activity; directed package
@@ -141,6 +145,8 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(testResult.activityName,
                     is("NormalActivity"));
+            assertThat(testResult.result,
+                    is("android.content.pm.PackageManager$NameNotFoundException"));
         }
 
         // start the normal activity; directed component
@@ -154,6 +160,8 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(testResult.activityName,
                     is("NormalActivity"));
+            assertThat(testResult.result,
+                    is("android.content.pm.PackageManager$NameNotFoundException"));
         }
     }
 
@@ -219,14 +227,19 @@ public class ClientTest {
     private static class BroadcastResult {
         final String packageName;
         final String activityName;
-        public BroadcastResult(String packageName, String activityName) {
+        final String result;
+
+        public BroadcastResult(String packageName, String activityName, String result) {
             this.packageName = packageName;
             this.activityName = activityName;
+            this.result = result;
         }
 
         @Override
         public String toString() {
-            return "[pkg=" + packageName + ", activity=" + activityName + "]";
+            return "[pkg=" + packageName
+                    + ", activity=" + activityName
+                    + ", result=" + result + "]";
         }
     }
 
@@ -242,7 +255,9 @@ public class ClientTest {
                 mQueue.offer(
                         new BroadcastResult(
                                 intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME),
-                                intent.getStringExtra(EXTRA_ACTIVITY_NAME)),
+                                intent.getStringExtra(EXTRA_ACTIVITY_NAME),
+                                intent.getStringExtra(EXTRA_ACTIVITY_RESULT)
+                                ),
                         5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
