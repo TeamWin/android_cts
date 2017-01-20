@@ -85,10 +85,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     private static final String PLAN_OPTION = "plan";
-    private static final String SUBPLAN_OPTION = "subplan";
+    public static final String SUBPLAN_OPTION = "subplan";
     public static final String MODULE_OPTION = "module";
     public static final String TEST_OPTION = "test";
     public static final String PRECONDITION_ARG_OPTION = "precondition-arg";
+    public static final char TEST_OPTION_SHORT_NAME = 't';
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
@@ -137,7 +138,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private String mModuleName = null;
 
     @Option(name = TEST_OPTION,
-            shortName = 't',
+            shortName = TEST_OPTION_SHORT_NAME,
             description = "the test run.",
             importance = Importance.IF_UNSET)
     private String mTestName = null;
