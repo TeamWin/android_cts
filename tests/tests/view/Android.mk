@@ -33,7 +33,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     mockito-target \
     ub-uiautomator \
-    android-support-test
+    android-support-test \
+    legacy-android-test
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++
 

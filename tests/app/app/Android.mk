@@ -25,7 +25,12 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common voip-common org.apache.http.legacy
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctsdeviceutil ctstestrunner ctstestserver mockito-target
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctsdeviceutil \
+    ctstestrunner \
+    ctstestserver \
+    mockito-target \
+    legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
               src/android/app/stubs/ISecondary.aidl
