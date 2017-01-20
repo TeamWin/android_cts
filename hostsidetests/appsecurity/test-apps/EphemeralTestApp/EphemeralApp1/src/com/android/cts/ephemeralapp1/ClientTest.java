@@ -62,6 +62,20 @@ public class ClientTest {
     private static final String EXTRA_ACTIVITY_RESULT =
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
 
+    /**
+     * Intents that we expect the system to expose activities to ephemeral apps to handle.
+     */
+    private static final Intent[] EXPECTED_EXPOSED_SYSTEM_INTENTS = new Intent[] {
+        makeIntent(Intent.ACTION_OPEN_DOCUMENT, Intent.CATEGORY_OPENABLE, "*/*"),
+        makeIntent(Intent.ACTION_OPEN_DOCUMENT, null, "*/*"),
+        makeIntent(Intent.ACTION_GET_CONTENT, Intent.CATEGORY_OPENABLE, "*/*"),
+        makeIntent(Intent.ACTION_GET_CONTENT, null, "*/*"),
+        makeIntent(Intent.ACTION_OPEN_DOCUMENT_TREE, null, null),
+        makeIntent(Intent.ACTION_CREATE_DOCUMENT, Intent.CATEGORY_OPENABLE, "text/plain"),
+        makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain"),
+
+    };
+
     private BroadcastReceiver mReceiver;
     private final SynchronousQueue<BroadcastResult> mResultQueue = new SynchronousQueue<>();
 
@@ -237,6 +251,21 @@ public class ClientTest {
         }
     }
 
+    @Test
+    public void testExposedSystemActivities() throws Exception {
+        for (Intent queryIntent : EXPECTED_EXPOSED_SYSTEM_INTENTS) {
+            assertIntentHasExposedActivities(queryIntent);
+        }
+    }
+
+    private void assertIntentHasExposedActivities(Intent queryIntent) throws Exception {
+        final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                .getContext().getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
+        if (resolveInfo == null || resolveInfo.size() == 0) {
+            fail("No activies found for Intent: " + queryIntent);
+        }
+    }
+
     private BroadcastResult getResult() {
         final BroadcastResult result;
         try {
@@ -248,6 +277,17 @@ public class ClientTest {
             throw new IllegalStateException("Activity didn't receive a Result in 5 seconds");
         }
         return result;
+    }
+
+    private static Intent makeIntent(String action, String category, String mimeType) {
+        Intent intent = new Intent(action);
+        if (category != null) {
+            intent.addCategory(category);
+        }
+        if (mimeType != null) {
+            intent.setType(mimeType);
+        }
+        return intent;
     }
 
     private static class BroadcastResult {
