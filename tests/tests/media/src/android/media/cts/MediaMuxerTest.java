@@ -24,6 +24,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -31,6 +32,7 @@ import android.media.cts.R;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
@@ -196,6 +198,46 @@ public class MediaMuxerTest extends AndroidTestCase {
         } finally {
             muxer.release();
         }
+
+        // Test FileDescriptor Constructor expect sucess.
+        RandomAccessFile file = null;
+        try {
+            file = new RandomAccessFile(outputFile, "rws");
+            muxer = new MediaMuxer(file.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
+        } finally {
+            file.close();
+            muxer.release();
+        }
+
+        // Test FileDescriptor Constructor expect exception with read only mode.
+        RandomAccessFile file2 = null;
+        try {
+            file2 = new RandomAccessFile(outputFile, "r");
+            muxer = new MediaMuxer(file2.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            fail("should throw IOException.");
+        } catch (IOException e) {
+            // expected
+        } finally {
+            file2.close();
+            // No need to release the muxer.
+        }
+
+        // Test FileDescriptor Constructor expect NO exception with write only mode.
+        ParcelFileDescriptor out = null;
+        try {
+            out = ParcelFileDescriptor.open(new File(outputFile),
+                    ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE);
+            muxer = new MediaMuxer(out.getFileDescriptor(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        } catch (IllegalArgumentException e) {
+            fail("should not throw IllegalArgumentException.");
+        } catch (IOException e) {
+            fail("should not throw IOException.");
+        } finally {
+            out.close();
+            muxer.release();
+        }
+
         new File(outputFile).delete();
     }
 
