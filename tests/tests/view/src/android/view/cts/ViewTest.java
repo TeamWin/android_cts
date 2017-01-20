@@ -37,6 +37,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -76,7 +77,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -3374,8 +3374,9 @@ public class ViewTest extends ActivityInstrumentationTestCase2<ViewTestCtsActivi
         Rect outRect = new Rect();
         View view = new View(mActivity);
         // mAttachInfo is null
-        WindowManager wm = (WindowManager)mActivity.getSystemService(Context.WINDOW_SERVICE);
-        Display d = wm.getDefaultDisplay();
+        DisplayManager dm = (DisplayManager) mActivity.getApplicationContext().getSystemService(
+                Context.DISPLAY_SERVICE);
+        Display d = dm.getDisplay(Display.DEFAULT_DISPLAY);
         view.getWindowVisibleDisplayFrame(outRect);
         assertEquals(0, outRect.left);
         assertEquals(0, outRect.top);
