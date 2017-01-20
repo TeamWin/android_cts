@@ -352,6 +352,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.profile_owner_permission_lockdown_test_info,
                 permissionCheckIntent);
 
+        /* Disable due to b/33571768
         mSelectWorkChallenge = new DialogTestListItem(this,
                 R.string.provisioning_byod_select_work_challenge,
                 "BYOD_SelectWorkChallenge",
@@ -363,6 +364,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_ConfirmWorkCredentials",
                 R.string.provisioning_byod_confirm_work_credentials_description,
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+        */
 
         mOrganizationInfoTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_organization_info,
@@ -417,8 +419,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mAuthenticationBoundKeyTest);
         adapter.add(mVpnTest);
         adapter.add(mTurnOffWorkFeaturesTest);
+        /* Disable due to b/33571768
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
+        */
         adapter.add(mOrganizationInfoTest);
         adapter.add(mParentProfilePassword);
         adapter.add(mPolicyTransparencyTest);
