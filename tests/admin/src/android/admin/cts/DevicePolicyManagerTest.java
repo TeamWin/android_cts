@@ -797,4 +797,29 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetBackupServiceEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetBackupServiceEnabled");
+            return;
+        }
+        try {
+            mDevicePolicyManager.setBackupServiceEnabled(mComponent, false);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testIsBackupServiceEnabled_failIfNotDeviceOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testIsBackupServiceEnabled");
+            return;
+        }
+        try {
+            mDevicePolicyManager.isBackupServiceEnabled(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertDeviceOwnerMessage(e.getMessage());
+        }
+    }
 }
