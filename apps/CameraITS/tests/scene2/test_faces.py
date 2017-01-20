@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import its.image
+import its.caps
 import its.device
 import its.objects
 import os.path
@@ -31,13 +32,14 @@ def main():
         fd_modes = props['android.statistics.info.availableFaceDetectModes']
         a = props['android.sensor.info.activeArraySize']
         aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
-        gain, exp, _, _, focus = cam.do_3a(get_results=True)
-        print 'iso = %d' % gain
-        print 'exp = %.2fms' % (exp*1.0E-6)
-        if focus == 0.0:
-            print 'fd = infinity'
-        else:
-            print 'fd = %.2fcm' % (1.0E2/focus)
+        if its.caps.read_3a(props):
+            gain, exp, _, _, focus = cam.do_3a(get_results=True)
+            print 'iso = %d' % gain
+            print 'exp = %.2fms' % (exp*1.0E-6)
+            if focus == 0.0:
+                print 'fd = infinity'
+            else:
+                print 'fd = %.2fcm' % (1.0E2/focus)
         for fd_mode in fd_modes:
             assert(FD_MODE_OFF <= fd_mode <= FD_MODE_FULL)
             req = its.objects.auto_capture_request()
