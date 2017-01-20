@@ -129,6 +129,36 @@ public class LauncherAppsTests extends AndroidTestCase {
         assertEquals(mUser, UserHandle.getUserHandleForUid(ai.uid));
     }
 
+    public void testAccessPrimaryProfileFromManagedProfile() throws Exception {
+        // Try to access main profile from managed profile, which is not allowed.
+        try {
+            mLauncherApps.getActivityList(null, mUser);
+            fail("Didn't throw SecurityException");
+        } catch (SecurityException e) {
+            assertTrue(e.getMessage().contains("another profile"));
+        }
+        try {
+            mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser);
+            fail("Didn't throw SecurityException");
+        } catch (SecurityException e) {
+            assertTrue(e.getMessage().contains("another profile"));
+        }
+    }
+
+    public void testGetProfiles_fromMainProfile() {
+        final List<UserHandle> profiles = mLauncherApps.getProfiles();
+        assertEquals(2, profiles.size());
+        assertTrue(profiles.contains(android.os.Process.myUserHandle()));
+        assertEquals(getContext().getSystemService(UserManager.class).getUserProfiles(),
+                profiles);
+    }
+
+    public void testGetProfiles_fromManagedProfile() {
+        final List<UserHandle> profiles = mLauncherApps.getProfiles();
+        assertEquals(1, profiles.size());
+        assertEquals(android.os.Process.myUserHandle(), profiles.get(0));
+    }
+
     public void testPackageAddedCallbackForUser() throws Throwable {
         int result = sendMessageToCallbacksService(MSG_CHECK_PACKAGE_ADDED,
                 mUser, SIMPLE_APP_PACKAGE);
