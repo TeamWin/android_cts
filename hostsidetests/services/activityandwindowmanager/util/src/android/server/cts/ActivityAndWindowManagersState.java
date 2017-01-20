@@ -18,6 +18,7 @@ package android.server.cts;
 
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
+import static android.server.cts.ActivityManagerTestBase.componentName;
 import static android.server.cts.StateLogger.log;
 
 import android.server.cts.ActivityManagerState.ActivityStack;
@@ -157,9 +158,28 @@ public class ActivityAndWindowManagersState extends Assert {
      * @param waitForActivitiesVisible array of activity names to wait for.
      * @param stackIds ids of stack where provided activities should be found.
      *                 Pass null to skip this check.
+     * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
+     *                                  for equality.
      */
     void waitForValidState(ITestDevice device, String[] waitForActivitiesVisible, int[] stackIds,
             boolean compareTaskAndStackBounds) throws Exception {
+        waitForValidState(device, waitForActivitiesVisible, stackIds, compareTaskAndStackBounds,
+                componentName);
+    }
+
+    /**
+     * Wait for the activities to appear in proper stacks and for valid state in AM and WM.
+     *
+     * @param device test device.
+     * @param waitForActivitiesVisible array of activity names to wait for.
+     * @param stackIds ids of stack where provided activities should be found.
+     *                 Pass null to skip this check.
+     * @param compareTaskAndStackBounds flag indicating if we should compare task and stack bounds
+     *                                  for equality.
+     * @param packageName name of the package of activities that we're waiting for.
+     */
+    void waitForValidState(ITestDevice device, String[] waitForActivitiesVisible, int[] stackIds,
+            boolean compareTaskAndStackBounds, String packageName) throws Exception {
         int retriesLeft = 5;
         do {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
@@ -167,7 +187,7 @@ public class ActivityAndWindowManagersState extends Assert {
             mAmState.computeState(device);
             mWmState.computeState(device);
             if (shouldWaitForValidStacks(compareTaskAndStackBounds)
-                    || shouldWaitForActivities(waitForActivitiesVisible, stackIds)) {
+                    || shouldWaitForActivities(waitForActivitiesVisible, stackIds, packageName)) {
                 log("***Waiting for valid stacks and activities states...");
                 try {
                     Thread.sleep(1000);
@@ -279,7 +299,8 @@ public class ActivityAndWindowManagersState extends Assert {
         return false;
     }
 
-    private boolean shouldWaitForActivities(String[] waitForActivitiesVisible, int[] stackIds) {
+    private boolean shouldWaitForActivities(String[] waitForActivitiesVisible, int[] stackIds,
+            String packageName) {
         if (waitForActivitiesVisible == null || waitForActivitiesVisible.length == 0) {
             return false;
         }
@@ -292,10 +313,11 @@ public class ActivityAndWindowManagersState extends Assert {
         for (int i = 0; i < waitForActivitiesVisible.length; i++) {
             // Check if window is visible - it should be represented as one of the window states.
             final String windowName = mUseActivityNames ?
-                    ActivityManagerTestBase.getWindowName(waitForActivitiesVisible[i])
+                    ActivityManagerTestBase.getWindowName(packageName, waitForActivitiesVisible[i])
                     : waitForActivitiesVisible[i];
             final String activityComponentName =
-                    ActivityManagerTestBase.getActivityComponentName(waitForActivitiesVisible[i]);
+                    ActivityManagerTestBase.getActivityComponentName(packageName,
+                            waitForActivitiesVisible[i]);
 
             mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
@@ -403,7 +425,13 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     void assertFocusedActivity(String msg, String activityName) throws Exception {
-        final String componentName = ActivityManagerTestBase.getActivityComponentName(activityName);
+        assertFocusedActivity(msg, componentName, activityName);
+    }
+
+    void assertFocusedActivity(String msg, String packageName, String activityName)
+            throws Exception {
+        final String componentName = ActivityManagerTestBase.getActivityComponentName(packageName,
+                activityName);
         assertEquals(msg, componentName, mAmState.getFocusedActivity());
         assertEquals(msg, componentName, mWmState.getFocusedApp());
     }

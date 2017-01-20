@@ -38,6 +38,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
+    private static final String SECOND_ACTIVITY_NAME = "SecondActivity";
+    private static final String THIRD_ACTIVITY_NAME = "ThirdActivity";
+    private static final String SECOND_PACKAGE_NAME = "android.server.cts.second";
+    private static final String THIRD_PACKAGE_NAME = "android.server.cts.third";
 
     private static final int INVALID_DENSITY_DPI = -1;
     private static final int CUSTOM_DENSITY_DPI = 222;
@@ -213,7 +217,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -273,7 +276,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
-        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME);
         mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                 TEST_ACTIVITY_NAME);
 
@@ -304,7 +306,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mDisplayId);
-        mAmWmState.waitForValidState(mDevice, BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                 BROADCAST_RECEIVER_ACTIVITY);
 
@@ -322,6 +323,150 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
                 VIRTUAL_DISPLAY_ACTIVITY);
+    }
+
+    /** Test that system is allowed to launch on secondary displays. */
+    public void testPermissionLaunchFromSystem() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                VIRTUAL_DISPLAY_ACTIVITY);
+        mAmWmState.assertFocusedStack("Focus must remain on primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                TEST_ACTIVITY_NAME);
+        final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+        assertTrue("Focused stack must be on secondary display",
+                FULLSCREEN_WORKSPACE_STACK_ID != externalFocusedStackId);
+
+        // Launch other activity with different uid and check it is launched on focused stack on
+        // secondary display.
+        final String startCmd =  "am start -n " + SECOND_PACKAGE_NAME + "/." + SECOND_ACTIVITY_NAME;
+        executeShellCommand(startCmd);
+
+        mAmWmState.waitForValidState(mDevice, new String[] {SECOND_ACTIVITY_NAME},
+                null /* stackIds */, false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", SECOND_PACKAGE_NAME,
+                SECOND_ACTIVITY_NAME);
+        assertEquals("Activity launched by system must be on external display",
+                externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+    }
+
+    /** Test that launching from app that is on external display is allowed. */
+    public void testPermissionLaunchFromAppOnSecondary() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                VIRTUAL_DISPLAY_ACTIVITY);
+        mAmWmState.assertFocusedStack("Focus must remain on primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Launch activity with different uid on secondary display.
+        final String startCmd =  "am start -n " + SECOND_PACKAGE_NAME + "/." + SECOND_ACTIVITY_NAME;
+        final String displayTarget = " --display " + newDisplay.mDisplayId;
+        executeShellCommand(startCmd + displayTarget);
+
+        mAmWmState.waitForValidState(mDevice, new String[] {SECOND_ACTIVITY_NAME},
+                null /* stackIds */, false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
+                SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME);
+        final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+        assertTrue("Focused stack must be on secondary display",
+                FULLSCREEN_WORKSPACE_STACK_ID != externalFocusedStackId);
+
+        // Launch another activity with third different uid from app on secondary display and check
+        // it is launched on secondary display.
+        final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
+        final String targetActivity = " --es target_activity " + THIRD_ACTIVITY_NAME
+                + " --es package_name " + THIRD_PACKAGE_NAME;
+        final String includeStoppedPackagesFlag = " -f 0x00000020";
+        executeShellCommand("am broadcast -a " + broadcastAction + targetActivity
+                + includeStoppedPackagesFlag);
+
+        mAmWmState.waitForValidState(mDevice, new String[] {THIRD_ACTIVITY_NAME},
+                null /* stackIds */, false /* compareTaskAndStackBounds */, THIRD_PACKAGE_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
+                THIRD_PACKAGE_NAME, THIRD_ACTIVITY_NAME);
+        assertEquals("Activity launched by app on secondary display must be on that display",
+                externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+    }
+
+    /** Test that launching from display owner is allowed. */
+    public void testPermissionLaunchFromOwner() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                VIRTUAL_DISPLAY_ACTIVITY);
+        mAmWmState.assertFocusedStack("Focus must remain on primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Launch other activity with different uid on secondary display.
+        final String startCmd =  "am start -n " + SECOND_PACKAGE_NAME + "/." + SECOND_ACTIVITY_NAME;
+        final String displayTarget = " --display " + newDisplay.mDisplayId;
+        executeShellCommand(startCmd + displayTarget);
+
+        mAmWmState.waitForValidState(mDevice, new String[] {SECOND_ACTIVITY_NAME},
+                null /* stackIds */, false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
+                SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME);
+        final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+        assertTrue("Focused stack must be on secondary display",
+                FULLSCREEN_WORKSPACE_STACK_ID != externalFocusedStackId);
+
+        // Launch other activity with same uid as owner and check if is launched on focused stack on
+        // secondary display.
+        final String broadcastAction = componentName + ".LAUNCH_BROADCAST_ACTION";
+        executeShellCommand("am broadcast -a " + broadcastAction
+                + " --ez new_task true --ez multiple_task true");
+
+        mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app", TEST_ACTIVITY_NAME);
+        assertEquals("Activity launched by owner must be on external display",
+                externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+    }
+
+    /**
+     * Test that launching from app that is not present on external display and doesn't own it to
+     * that external display is not allowed.
+     */
+    public void testPermissionLaunchFromDifferentApp() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
+                VIRTUAL_DISPLAY_ACTIVITY);
+        mAmWmState.assertFocusedStack("Focus must remain on primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                TEST_ACTIVITY_NAME);
+        final int externalFocusedStackId = mAmWmState.getAmState().getFocusedStackId();
+        assertTrue("Focused stack must be on secondary display",
+                FULLSCREEN_WORKSPACE_STACK_ID != externalFocusedStackId);
+
+        // Launch other activity with different uid and check it is launched on primary display.
+        final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
+        final String includeStoppedPackagesFlag = " -f 0x00000020";
+        executeShellCommand("am broadcast -a " + broadcastAction + includeStoppedPackagesFlag);
+
+        mAmWmState.waitForValidState(mDevice, new String[] {SECOND_ACTIVITY_NAME},
+                null /* stackIds */, false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME);
+        mAmWmState.assertFocusedActivity("Focus must be on newly launched app",
+                SECOND_PACKAGE_NAME, SECOND_ACTIVITY_NAME);
+        assertEquals("Activity launched by system must be on primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID, mAmWmState.getAmState().getFocusedStackId());
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
