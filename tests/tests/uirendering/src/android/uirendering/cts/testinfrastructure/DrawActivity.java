@@ -160,7 +160,8 @@ public class DrawActivity extends Activity {
                 mView.postInvalidate();
             } else {
                 synchronized (mLock) {
-                    mLock.set(mViewWrapper.getLeft(), mViewWrapper.getTop());
+                    final int[] locationOnScreen = mViewWrapper.getLocationOnScreen();
+                    mLock.set(locationOnScreen[0], locationOnScreen[1]);
                     mLock.notify();
                 }
                 mView.getViewTreeObserver().removeOnPreDrawListener(this);
