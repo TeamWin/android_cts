@@ -355,7 +355,9 @@ public class DeviceOwnerPlusManagedProfileTest extends BaseDevicePolicyTest {
         addDisallowRemoveManagedProfileRestriction();
         // Now we can't delete the managed profile any more to create a new one.
         assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG2);
-        assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG);
+        // But if it is initiated by the device owner, it is still possible, because the device
+        // owner itself has set the restriction
+        assertProvisionManagedProfileAllowed(COMP_DPC_PKG);
     }
 
     private void assertProvisionManagedProfileAllowed(String packageName) throws Exception {
