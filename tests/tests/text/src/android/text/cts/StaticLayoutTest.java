@@ -1196,8 +1196,8 @@ public class StaticLayoutTest {
         assertEquals(0, layout.getLineForOffset(lineBreakOffset - 1));
 
         assertEquals(0, layout.getOffsetForHorizontal(0, 0.0f));
-        assertEquals(lineBreakOffset - 2, layout.getOffsetForHorizontal(0, width));
-        assertEquals(lineBreakOffset - 2, layout.getOffsetForHorizontal(0, width * 2));
+        assertEquals(lineBreakOffset, layout.getOffsetForHorizontal(0, width));
+        assertEquals(lineBreakOffset, layout.getOffsetForHorizontal(0, width * 2));
 
         final int lineCount = layout.getLineCount();
         assertEquals(testString.length(), layout.getOffsetForHorizontal(lineCount - 1, width));
