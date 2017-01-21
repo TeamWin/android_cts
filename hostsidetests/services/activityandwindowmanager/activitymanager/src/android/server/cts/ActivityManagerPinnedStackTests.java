@@ -47,7 +47,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
-    private static final String EXTRA_ENTER_PIP_ON_MOVE_TO_BG = "enter_pip_on_move_to_bg";
+    private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
@@ -266,8 +266,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
-        // Launch the PIP activity with requestAutoEnterPip
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_MOVE_TO_BG, "true");
+        // Launch the PIP activity on pause
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
         assertPinnedStackDoesNotExist();
 
         // Go home and ensure that there is a pinned stack
@@ -279,11 +279,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
-        // Launch the PIP activity with requestAutoEnterPip, and have it start another activity on
+        // Launch the PIP activity on pause, and have it start another activity on
         // top of itself.  Wait for the new activity to be visible and ensure that the pinned stack
         // was not created in the process
         launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP_ON_MOVE_TO_BG, "true",
+                EXTRA_ENTER_PIP_ON_PAUSE, "true",
                 EXTRA_START_ACTIVITY, getActivityComponentName(NON_RESIZEABLE_ACTIVITY));
         mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY},
                 false /* compareTaskAndStackBounds */);
@@ -298,19 +298,19 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
-        // Launch the PIP activity with requestAutoEnterPip, and set it to finish itself after
+        // Launch the PIP activity on pause, and set it to finish itself after
         // some period.  Wait for the previous activity to be visible, and ensure that the pinned
         // stack was not created in the process
         launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP_ON_MOVE_TO_BG, "true",
+                EXTRA_ENTER_PIP_ON_PAUSE, "true",
                 EXTRA_FINISH_SELF_ON_RESUME, "true");
         assertPinnedStackDoesNotExist();
     }
 
     public void testAutoEnterPictureInPictureAspectRatio() throws Exception {
-        // Launch the PIP activity with requestAutoEnterPip, and set the aspect ratio
+        // Launch the PIP activity on pause, and set the aspect ratio
         launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP_ON_MOVE_TO_BG, "true",
+                EXTRA_ENTER_PIP_ON_PAUSE, "true",
                 EXTRA_SET_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
 
         // Go home while the pip activity is open to trigger auto-PIP
@@ -336,8 +336,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
 
-        // Launch the PIP activity with requestAutoEnterPip
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_MOVE_TO_BG, "true");
+        // Launch the PIP activity on pause
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
 
         // Go home while the PIP activity is open to trigger auto-enter PIP
         launchHomeActivity();
@@ -362,6 +362,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Tap the screen at a known location in the pinned stack bounds to trigger the activity
         // to exit and re-enter pip
+        // TODO: add channel for expanding the PIP, but for now, just force-tap twice
+        tapToFinishPip();
         tapToFinishPip();
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
@@ -384,6 +386,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Tap the screen at a known location in the pinned stack bounds to trigger the activity
         // to exit and re-enter pip
+        // TODO: add channel for expanding the PIP, but for now, just force-tap twice
+        tapToFinishPip();
         tapToFinishPip();
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;

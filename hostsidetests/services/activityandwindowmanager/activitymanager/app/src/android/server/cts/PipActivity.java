@@ -22,6 +22,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
+import android.app.PictureInPictureArgs;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -29,8 +30,9 @@ import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.TextUtils;
 import android.view.WindowManager;
+
+import java.util.Collections;
 
 public class PipActivity extends Activity {
 
@@ -46,7 +48,7 @@ public class PipActivity extends Activity {
     // Adds a click listener to finish this activity when it is clicked
     private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     // Calls requestAutoEnterPictureInPicture() with the value provided
-    private static final String EXTRA_ENTER_PIP_ON_MOVE_TO_BG = "enter_pip_on_move_to_bg";
+    private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
     // Starts the activity (component name) provided by the value at the end of onCreate
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     // Finishes the activity at the end of onCreate (after EXTRA_START_ACTIVITY is handled)
@@ -81,7 +83,7 @@ public class PipActivity extends Activity {
                 try {
                     final float aspectRatio = Float.valueOf(getIntent().getStringExtra(
                             EXTRA_ENTER_PIP_ASPECT_RATIO));
-                    enterPictureInPictureMode(aspectRatio);
+                    enterPictureInPictureMode(new PictureInPictureArgs(aspectRatio, null));
                 } catch (Exception e) {
                     // This call can fail intentionally if the aspect ratio is too extreme
                 }
@@ -90,19 +92,13 @@ public class PipActivity extends Activity {
             }
         }
 
-        // Request auto-enter PIP
-        if (getIntent().hasExtra(EXTRA_ENTER_PIP_ON_MOVE_TO_BG)) {
-            enterPictureInPictureModeOnMoveToBackground(Boolean.valueOf(
-                    getIntent().getStringExtra(EXTRA_ENTER_PIP_ON_MOVE_TO_BG)));
-        }
-
         // We need to wait for either enterPictureInPicture() or requestAutoEnterPictureInPicture()
         // to be called before setting the aspect ratio
         if (getIntent().hasExtra(EXTRA_SET_ASPECT_RATIO)) {
             final float aspectRatio = Float.valueOf(getIntent().getStringExtra(
                     EXTRA_SET_ASPECT_RATIO));
             try {
-                setPictureInPictureAspectRatio(aspectRatio);
+                setPictureInPictureArgs(new PictureInPictureArgs(aspectRatio, null));
             } catch (Exception e) {
                 // This call can fail intentionally if the aspect ratio is too extreme
             }
@@ -140,6 +136,11 @@ public class PipActivity extends Activity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(mReceiver);
+
+        // Enter PIP on move to background
+        if (getIntent().hasExtra(EXTRA_ENTER_PIP_ON_PAUSE)) {
+            enterPictureInPictureMode();
+        }
     }
 
     @Override
