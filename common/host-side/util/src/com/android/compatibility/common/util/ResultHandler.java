@@ -86,7 +86,7 @@ public class ResultHandler {
     private static final String LOG_URL_ATTR = "log_url";
     private static final String MESSAGE_ATTR = "message";
     private static final String MODULE_TAG = "Module";
-    private static final String MODULES_EXECUTED_ATTR = "modules_done";
+    private static final String MODULES_DONE_ATTR = "modules_done";
     private static final String MODULES_TOTAL_ATTR = "modules_total";
     private static final String NAME_ATTR = "name";
     private static final String NOT_EXECUTED_ATTR = "not_executed";
@@ -185,9 +185,9 @@ public class ResultHandler {
                     String moduleId = AbiUtils.createId(abi, name);
                     boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
                     IModuleResult module = invocation.getOrCreateModule(moduleId);
-                    module.setDone(done);
-                    int notExecuted =
-                            Integer.parseInt(parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
+                    module.initializeDone(done);
+                    int notExecuted = Integer.parseInt(
+                            parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
                     module.setNotExecuted(notExecuted);
                     long runtime = Long.parseLong(parser.getAttributeValue(NS, RUNTIME_ATTR));
                     module.addRuntime(runtime);
@@ -240,7 +240,7 @@ public class ResultHandler {
                             && !checksumReporter.containsModuleResult(
                             module, invocation.getBuildFingerprint());
                     if (checksumMismatch) {
-                        module.setDone(false);
+                        module.initializeDone(false);
                     }
                 }
                 parser.require(XmlPullParser.END_TAG, NS, RESULT_TAG);
@@ -353,7 +353,7 @@ public class ResultHandler {
         serializer.attribute(NS, PASS_ATTR, Integer.toString(passed));
         serializer.attribute(NS, FAILED_ATTR, Integer.toString(failed));
         serializer.attribute(NS, NOT_EXECUTED_ATTR, Integer.toString(notExecuted));
-        serializer.attribute(NS, MODULES_EXECUTED_ATTR,
+        serializer.attribute(NS, MODULES_DONE_ATTR,
                 Integer.toString(result.getModuleCompleteCount()));
         serializer.attribute(NS, MODULES_TOTAL_ATTR,
                 Integer.toString(result.getModules().size()));

@@ -16,6 +16,7 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
 import com.android.compatibility.common.tradefed.testtype.IModuleDef;
@@ -64,6 +65,9 @@ public class ModuleRepoTest extends TestCase {
     private static final Set<String> EXCLUDES = new HashSet<>();
     private static final Set<String> FILES = new HashSet<>();
     private static final String FILENAME = "%s.config";
+    private static final String ROOT_DIR_ATTR = "ROOT_DIR";
+    private static final String SUITE_NAME_ATTR = "SUITE_NAME";
+    private static final String START_TIME_MS_ATTR = "START_TIME_MS";
     private static final String ABI_32 = "armeabi-v7a";
     private static final String ABI_64 = "arm64-v8a";
     private static final String MODULE_NAME_A = "FooModuleA";
@@ -105,6 +109,7 @@ public class ModuleRepoTest extends TestCase {
     }
     private IModuleRepo mRepo;
     private File mTestsDir;
+    private File mRootDir;
     private IBuildInfo mBuild;
 
     @Override
@@ -112,6 +117,15 @@ public class ModuleRepoTest extends TestCase {
         mTestsDir = setUpConfigs();
         mRepo = new ModuleRepo();
         mBuild = new CompatibilityBuildProvider().getBuild();
+        // Flesh out the result directory structure so ModuleRepo can write to the test runs file
+        mRootDir = FileUtil.createTempDir("root");
+        mBuild.addBuildAttribute(ROOT_DIR_ATTR, mRootDir.getAbsolutePath());
+        mBuild.addBuildAttribute(SUITE_NAME_ATTR, "suite");
+        mBuild.addBuildAttribute(START_TIME_MS_ATTR, Long.toString(0));
+        File subRootDir = new File(mRootDir, String.format("android-suite"));
+        File resultsDir = new File(subRootDir, "results");
+        File resultDir = new File(resultsDir, CompatibilityBuildHelper.getDirSuffix(0));
+        resultDir.mkdirs();
     }
 
     private File setUpConfigs() throws IOException {
@@ -138,6 +152,7 @@ public class ModuleRepoTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         tearDownConfigs(mTestsDir);
+        tearDownConfigs(mRootDir);
     }
 
     private void tearDownConfigs(File testsDir) {
