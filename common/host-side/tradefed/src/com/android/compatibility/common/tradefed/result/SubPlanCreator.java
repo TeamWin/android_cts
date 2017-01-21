@@ -65,14 +65,6 @@ public class SubPlanCreator {
         STATUS_MAP = Collections.unmodifiableMap(statusMap);
     }
 
-    // TODO(aaronholden): remove this temporary workaround for b/33090757
-    private static final Set<String> MULTITEST_MODULES;
-    static {
-        Set<String> multiTestModuleSet = new HashSet<String>();
-        multiTestModuleSet.add("CtsDeqpTestCases");
-        MULTITEST_MODULES = Collections.unmodifiableSet(multiTestModuleSet);
-    }
-
     @Option (name = "name", shortName = 'n', description = "the name of the subplan to create",
             importance=Importance.IF_UNSET)
     private String mSubPlanName = null;
@@ -192,49 +184,7 @@ public class SubPlanCreator {
             subPlan.addIncludeFilter(new TestFilter(mAbiName, mModuleName, mTestName).toString());
         }
         Set<TestStatus> statusesToRun = getStatusesToRun();
-
         for (IModuleResult module : mResult.getModules()) {
-
-            // TODO(aaronholden): remove this special case from SubPlanCreator, and filter
-            // individual tests only when the module should run. Tracked by b/33211104
-            if (MULTITEST_MODULES.contains(module.getName())) {
-                // cannot check module.isDone() since this value is not accurate for modules
-                // with multiple test configs. If we should run not-executed tests, include module
-                // and exclude tests with status not in mResultTypes.
-                TestFilter moduleFilter =
-                            new TestFilter(module.getAbi(), module.getName(), null /*test*/);
-                if (mResultTypes.contains(NOT_EXECUTED)) {
-                    subPlan.addIncludeFilter(moduleFilter.toString());
-                    for (ICaseResult caseResult : module.getResults()) {
-                        for (ITestResult testResult : caseResult.getResults()) {
-                            if (!statusesToRun.contains(testResult.getResultStatus())) {
-                                TestFilter testExclude = new TestFilter(module.getAbi(),
-                                        module.getName(), testResult.getFullName());
-                                subPlan.addExcludeFilter(testExclude.toString());
-                            }
-                        }
-                    }
-                } else {
-                    // not running not-executed tests, only include executed tests
-                    if (shouldRunModule(module)) {
-                        // at least some executed tests will be included
-                        for (ICaseResult caseResult : module.getResults()) {
-                            for (ITestResult testResult : caseResult.getResults()) {
-                                if (statusesToRun.contains(testResult.getResultStatus())) {
-                                    TestFilter testInclude = new TestFilter(module.getAbi(),
-                                            module.getName(), testResult.getFullName());
-                                    subPlan.addIncludeFilter(testInclude.toString());
-                                }
-                            }
-                        }
-                    } else {
-                        // no executed tests will be included, so exclude entire module
-                        subPlan.addExcludeFilter(moduleFilter.toString());
-                    }
-                }
-                continue;
-            }
-
             if (shouldRunModule(module)) {
                 TestFilter moduleInclude =
                             new TestFilter(module.getAbi(), module.getName(), null /*test*/);
