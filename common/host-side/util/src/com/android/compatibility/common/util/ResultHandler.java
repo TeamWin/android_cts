@@ -277,10 +277,12 @@ public class ResultHandler {
             String suiteBuild, IInvocationResult result, File resultDir,
             long startTime, long endTime, String referenceUrl, String logUrl,
             String commandLineArgs)
-            throws IOException, XmlPullParserException {
+                    throws IOException, XmlPullParserException {
+        InvocationHistory invocationHistory = InvocationHistory.createInvocationHistory(result);
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
         int notExecuted = result.getNotExecuted();
+        invocationHistory.addSummary(passed, failed, notExecuted, startTime);
         File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
         OutputStream stream = new FileOutputStream(resultFile);
         XmlSerializer serializer = XmlPullParserFactory.newInstance(TYPE, null).newSerializer();
@@ -328,8 +330,7 @@ public class ResultHandler {
         String hostName = "";
         try {
             hostName = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException ignored) {
-        }
+        } catch (UnknownHostException ignored) {}
         serializer.attribute(NS, HOST_NAME_ATTR, hostName);
         serializer.attribute(NS, OS_NAME_ATTR, System.getProperty("os.name"));
         serializer.attribute(NS, OS_VERSION_ATTR, System.getProperty("os.version"));
@@ -379,6 +380,10 @@ public class ResultHandler {
                     }
                     serializer.startTag(NS, TEST_TAG);
                     serializer.attribute(NS, RESULT_ATTR, status.getValue());
+                    if (status == TestStatus.FAIL) {
+                        invocationHistory.addTestFailure(module.getName(), cr.getName(),
+                                module.getAbi(), r, startTime);
+                    }
                     serializer.attribute(NS, NAME_ATTR, r.getName());
                     String message = r.getMessage();
                     if (message != null) {
@@ -422,6 +427,7 @@ public class ResultHandler {
         }
         serializer.endDocument();
         createChecksum(resultDir, result);
+        invocationHistory.tryWriteToFile(resultDir);
         return resultFile;
     }
 
