@@ -18,6 +18,7 @@ package android.widget.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -39,9 +40,11 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -266,6 +269,31 @@ public class PopupMenuTest {
         // Popup menu should be automatically dismissed on selecting an item
         verify(mBuilder.mOnDismissListener, times(1)).onDismiss(mPopupMenu);
         verifyNoMoreInteractions(mBuilder.mOnDismissListener);
+    }
+
+    @Test
+    public void testItemViewAttributes() throws Throwable {
+        mBuilder = new Builder().withDismissListener();
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, mBuilder::show, true);
+
+        Menu menu = mPopupMenu.getMenu();
+        ListView menuItemList = mPopupMenu.getMenuListView();
+
+        for (int i = 0; i != menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            View itemView = menuItemList.getChildAt(i);
+
+            if (i < 2) {
+                assertNotNull(item.getContentDescription());
+                assertNotNull(item.getTooltipText());
+            } else {
+                assertNull(item.getContentDescription());
+                assertNull(item.getTooltipText());
+            }
+
+            assertEquals(item.getContentDescription(), itemView.getContentDescription());
+            assertEquals(item.getTooltipText(), itemView.getTooltipText());
+        }
     }
 
     /**
