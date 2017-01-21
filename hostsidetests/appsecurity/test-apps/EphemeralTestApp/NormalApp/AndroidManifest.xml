@@ -51,7 +51,7 @@
         </activity>
         <activity
             android:name=".ExposedActivity"
-            android:visibleToEphemeral="true">
+            android:visibleToInstantApps="true">
             <!-- TEST: ephemeral apps can see this activity using query methods -->
             <intent-filter android:priority="-10">
                 <action android:name="com.android.cts.ephemeraltest.QUERY" />
