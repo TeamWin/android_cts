@@ -30,6 +30,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(AbiUtilsTest.class);
         addTestSuite(CaseResultTest.class);
         addTestSuite(DynamicConfigTest.class);
+        addTestSuite(InvocationHistoryTest.class);
         addTestSuite(MetricsXmlSerializerTest.class);
         addTestSuite(ModuleResultTest.class);
         addTestSuite(MultipartFormTest.class);
