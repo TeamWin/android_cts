@@ -28,6 +28,8 @@ LOCAL_MODULE := compatibility-common-util-devicesidelib
 
 LOCAL_SDK_VERSION := current
 
+LOCAL_STATIC_JAVA_LIBRARIES := guava json
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 ###############################################################################
@@ -42,7 +44,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := compatibility-common-util-hostsidelib
 
-LOCAL_STATIC_JAVA_LIBRARIES := junit kxml2-2.3.0 platform-test-annotations-host
+LOCAL_STATIC_JAVA_LIBRARIES := junit kxml2-2.3.0 platform-test-annotations-host \
+   guavalib jsonlib
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
