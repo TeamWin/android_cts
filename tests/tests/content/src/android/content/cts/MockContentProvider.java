@@ -18,6 +18,7 @@ package android.content.cts;
 
 import static junit.framework.Assert.assertEquals;
 
+import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.ContentProvider;
 import android.content.ContentProvider.PipeDataWriter;
@@ -193,6 +194,21 @@ public class MockContentProvider extends ContentProvider
         default:
             throw new IllegalArgumentException("Unknown URL " + uri);
         }
+    }
+
+    @Override
+    public String[] getStreamTypes(@NonNull Uri uri, @NonNull String mimeTypeFilter) {
+        if (URL_MATCHER.match(uri) == TESTTABLE2_ID) {
+            switch (Integer.parseInt(uri.getPathSegments().get(1)) % 10) {
+                case 0:
+                    return new String[]{"image/jpeg"};
+                case 1:
+                    return new String[]{"audio/mpeg"};
+                case 2:
+                    return new String[]{"video/mpeg", "audio/mpeg"};
+            }
+        }
+        return super.getStreamTypes(uri, mimeTypeFilter);
     }
 
     @Override
