@@ -108,7 +108,10 @@ public class ToastTest extends BaseToastTest {
     }
 
     @Test
-    public void testAddTwoToastsViaAddingWindowApisWhenUidFocusedQuickly() throws Exception {
+    public void testAddTwoToastsViaAddingWindowApisWhenUidNotFocusedQuickly() throws Exception {
+        // Finish the activity so the UID loses focus
+        finishActivity(false);
+
         try {
             showToastsViaAddingWindow(2, false);
             Assert.fail("Only one custom toast window at a time should be allowed");
@@ -117,6 +120,14 @@ public class ToastTest extends BaseToastTest {
         } catch (Exception ex) {
             Assert.fail("Unexpected exception when adding second toast window" + ex);
         }
+    }
+
+    @Test
+    public void testAddTwoToastsViaAddingWindowApisWhenUidFocusedQuickly() throws Exception {
+        showToastsViaAddingWindow(2, false);
+
+        // Wait for the toast to timeout
+        waitForToastTimeout();
     }
 
     @Test
