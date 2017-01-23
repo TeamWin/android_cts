@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Load dynamic config for test cases
@@ -65,6 +66,10 @@ public class DynamicConfig {
 
     public List<String> getValues(String key) {
         return mDynamicConfigMap.get(key);
+    }
+
+    public Set<String> keySet() {
+        return mDynamicConfigMap.keySet();
     }
 
     public static File getConfigFile(File configFolder, String moduleName)
