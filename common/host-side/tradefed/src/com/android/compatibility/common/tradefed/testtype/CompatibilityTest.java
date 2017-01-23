@@ -355,6 +355,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 // Get the tests to run in this shard
                 modules = mModuleRepo.getModules(getDevice().getSerialNumber(), mShardIndex);
             }
+            // Update BuildInfo in each shard to store the original command-line arguments from
+            // the session to be retried. These arguments will be serialized in the report later.
+            if (mRetrySessionId != null) {
+                loadRetryCommandLineArgs(mRetrySessionId);
+            }
 
             listener = new FailureListener(listener, getDevice(), mBugReportOnFailure,
                     mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure, mMaxLogcatBytes);
@@ -612,6 +617,30 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     }
 
     /**
+     * Sets the retry command-line args to be stored in the BuildInfo and serialized into the
+     * report upon completion of the invocation.
+     */
+    void loadRetryCommandLineArgs(Integer sessionId) {
+        IInvocationResult result = null;
+        try {
+            result = ResultHandler.findResult(mBuildHelper.getResultsDir(), sessionId);
+        } catch (FileNotFoundException e) {
+            // We should never reach this point, because this method should only be called
+            // after setupFilters(), so result exists if we've gotten this far
+            throw new RuntimeException(e);
+        }
+        if (result == null) {
+            // Again, this should never happen
+            throw new IllegalArgumentException(String.format(
+                    "Could not find session with id %d", sessionId));
+        }
+        String retryCommandLineArgs = result.getCommandLineArgs();
+        if (retryCommandLineArgs != null) {
+            mBuildHelper.setRetryCommandLineArgs(retryCommandLineArgs);
+        }
+    }
+
+    /**
      * Sets the include/exclude filters up based on if a module name was given or whether this is a
      * retry run.
      */
@@ -646,8 +675,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
             String retryCommandLineArgs = result.getCommandLineArgs();
             if (retryCommandLineArgs != null) {
-                // Copy the original command into the build helper so it can be serialized later
-                mBuildHelper.setRetryCommandLineArgs(retryCommandLineArgs);
                 try {
                     // parse the command-line string from the result file and set options
                     ArgsOptionParser parser = new ArgsOptionParser(this);
