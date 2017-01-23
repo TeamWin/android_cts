@@ -296,7 +296,7 @@ public class ResultReporterTest extends TestCase {
         // Set up IInvocationResult with existing results from previous session
         IInvocationResult invocationResult = mReporter.getResult();
         IModuleResult moduleResult = invocationResult.getOrCreateModule(ID);
-        moduleResult.setDone(false);
+        moduleResult.initializeDone(false);
         ICaseResult caseResult = moduleResult.getOrCreateResult(CLASS);
         ITestResult testResult1 = caseResult.getOrCreateResult(METHOD_1);
         testResult1.setResultStatus(TestStatus.PASS);

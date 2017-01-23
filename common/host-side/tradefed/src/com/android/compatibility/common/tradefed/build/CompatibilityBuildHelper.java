@@ -232,6 +232,13 @@ public class CompatibilityBuildHelper {
     }
 
     /**
+     * @return a {@link File} in the resultDir for counting expected test runs
+     */
+    public File getTestRunsFile() throws FileNotFoundException {
+        return new File(getResultDir(), "test_runs.txt");
+    }
+
+    /**
      * @return a {@link String} to use for directory suffixes created from the given time.
      */
     public static String getDirSuffix(long millis) {

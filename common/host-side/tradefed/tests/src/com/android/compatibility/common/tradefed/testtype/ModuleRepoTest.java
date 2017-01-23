@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -40,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -75,6 +78,9 @@ public class ModuleRepoTest extends TestCase {
     private static final Set<String> EXCLUDES = new HashSet<>();
     private static final Set<String> FILES = new HashSet<>();
     private static final String FILENAME = "%s.config";
+    private static final String ROOT_DIR_ATTR = "ROOT_DIR";
+    private static final String SUITE_NAME_ATTR = "SUITE_NAME";
+    private static final String START_TIME_MS_ATTR = "START_TIME_MS";
     private static final String ABI_32 = "armeabi-v7a";
     private static final String ABI_64 = "arm64-v8a";
     private static final String MODULE_NAME_A = "FooModuleA";
@@ -116,6 +122,7 @@ public class ModuleRepoTest extends TestCase {
     }
     private ModuleRepo mRepo;
     private File mTestsDir;
+    private File mRootDir;
     private IBuildInfo mMockBuildInfo;
 
     @Override
@@ -123,6 +130,19 @@ public class ModuleRepoTest extends TestCase {
         mTestsDir = setUpConfigs();
         mRepo = new ModuleRepo();
         mMockBuildInfo = EasyMock.createMock(IBuildInfo.class);
+        // Flesh out the result directory structure so ModuleRepo can write to the test runs file
+        mRootDir = FileUtil.createTempDir("root");
+        File subRootDir = new File(mRootDir, String.format("android-suite"));
+        File resultsDir = new File(subRootDir, "results");
+        File resultDir = new File(resultsDir, CompatibilityBuildHelper.getDirSuffix(0));
+        resultDir.mkdirs();
+
+        Map<String, String> mockBuildInfoMap = new HashMap<String, String>();
+        mockBuildInfoMap.put(ROOT_DIR_ATTR, mRootDir.getAbsolutePath());
+        mockBuildInfoMap.put(SUITE_NAME_ATTR, "suite");
+        mockBuildInfoMap.put(START_TIME_MS_ATTR, Long.toString(0));
+        EasyMock.expect(mMockBuildInfo.getBuildAttributes()).andReturn(mockBuildInfoMap).anyTimes();
+        EasyMock.replay(mMockBuildInfo);
     }
 
     private File setUpConfigs() throws IOException {
@@ -154,6 +174,12 @@ public class ModuleRepoTest extends TestCase {
     public void tearDown() throws Exception {
         FileUtil.recursiveDelete(mTestsDir);
         mRepo.resetModuleRepo();
+        tearDownConfigs(mTestsDir);
+        tearDownConfigs(mRootDir);
+    }
+
+    private void tearDownConfigs(File testsDir) {
+        FileUtil.recursiveDelete(testsDir);
     }
 
     public void testInitialization() throws Exception {

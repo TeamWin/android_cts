@@ -17,6 +17,7 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
+import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
 import com.android.compatibility.common.util.ICaseResult;
@@ -247,27 +248,30 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        if (mCurrentModuleResult != null && mCurrentModuleResult.getId().equals(id)) {
-            // In case we get another test run of a known module, update the complete
-            // status to false to indicate it is not complete.
-            if (mCurrentModuleResult.isDone()) {
-                // modules run with HostTest treat each test class as a separate module.
-                // TODO(aaronholden): remove this case when JarHostTest is no longer calls
-                // testRunStarted for each test class.
-                mTotalTestsInModule += numTests;
-            } else {
-                // treat new tests as not executed tests from current module
-                mTotalTestsInModule +=
-                        Math.max(0, numTests - mCurrentModuleResult.getNotExecuted());
-            }
+        if (mCurrentModuleResult != null && mCurrentModuleResult.getId().equals(id)
+                && mCurrentModuleResult.isDone()) {
+            // Modules run with JarHostTest treat each test class as a separate module,
+            // resulting in additional unexpected test runs.
+            // This case exists only for N
+            mTotalTestsInModule += numTests;
         } else {
+            // Handle non-JarHostTest case
             mCurrentModuleResult = mResult.getOrCreateModule(id);
-            mTotalTestsInModule = numTests;
+            mModuleWasDone = mCurrentModuleResult.isDone();
+            if (!mModuleWasDone) {
+                // we only want to update testRun variables if the IModuleResult is not yet done
+                // otherwise leave testRun variables alone so isDone evaluates to true.
+                if (mCurrentModuleResult.getExpectedTestRuns() == 0) {
+                    mCurrentModuleResult.setExpectedTestRuns(TestRunHandler.getTestRuns(
+                            mBuildHelper, mCurrentModuleResult.getId()));
+                }
+                mCurrentModuleResult.addTestRun();
+            }
             // Reset counters
+            mTotalTestsInModule = numTests;
             mCurrentTestNum = 0;
         }
-        mModuleWasDone = mCurrentModuleResult.isDone();
-        mCurrentModuleResult.setDone(false);
+        mCurrentModuleResult.inProgress(true);
     }
 
     /**
@@ -351,17 +355,30 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
+        mCurrentModuleResult.inProgress(false);
         mCurrentModuleResult.addRuntime(elapsedTime);
-        if (mCanMarkDone || mModuleWasDone) {
-            // Only mark module done if status of the invocation allows it (mCanMarkDone) or module
-            // was previously marked done (mModuleWasDone) and all expected tests are collected.
-            // Expect mCurrentTestNum = mTotalTestsInModule, but use >= to be safe
-            mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+        if (!mModuleWasDone) {
+            // Not executed count now represents an upper-bound for a fix to b/33211104.
+            // Only setNotExecuted this number if the module has already been completely executed.
+            int testCountDiff = Math.max(mTotalTestsInModule - mCurrentTestNum, 0);
+            if (isShardResultReporter()) {
+                // reset value, which is added to total count for master shard upon merge
+                mCurrentModuleResult.setNotExecuted(testCountDiff);
+            } else {
+                // increment value for master shard
+                mCurrentModuleResult.setNotExecuted(mCurrentModuleResult.getNotExecuted()
+                        + testCountDiff);
+            }
+            if (mCanMarkDone) {
+                // Only mark module done if status of the invocation allows it (mCanMarkDone) and
+                // if module has not already been marked done.
+                mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+            }
         }
-        mCurrentModuleResult.setNotExecuted(Math.max(mTotalTestsInModule - mCurrentTestNum, 0));
         if (isShardResultReporter()) {
             // Forward module results to the master.
             mMasterResultReporter.mergeModuleResult(mCurrentModuleResult);
+            mCurrentModuleResult.resetTestRuns();
         }
     }
 
