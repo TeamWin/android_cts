@@ -16,6 +16,8 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.util.LinearPartition;
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
@@ -204,6 +206,7 @@ public class ModuleRepo implements IModuleRepo {
             throw new IllegalArgumentException(
                     String.format("No config files found in %s", testsDir.getAbsolutePath()));
         }
+        Map<String, Integer> shardedTestCounts = new HashMap<>();
         for (File configFile : configFiles) {
             final String name = configFile.getName().replace(CONFIG_EXT, "");
             final String[] pathArg = new String[] { configFile.getAbsolutePath() };
@@ -256,6 +259,9 @@ public class ModuleRepo implements IModuleRepo {
                     if (mTotalShards > 1) {
                          shardedTests = splitShardableTests(tests, buildInfo);
                     }
+                    if (shardedTests.size() > 1) {
+                        shardedTestCounts.put(id, shardedTests.size());
+                    }
                     for (IRemoteTest test : shardedTests) {
                         addModuleDef(name, abi, test, pathArg);
                     }
@@ -265,6 +271,7 @@ public class ModuleRepo implements IModuleRepo {
                         configFile.getName()), e);
             }
         }
+        TestRunHandler.setTestRuns(new CompatibilityBuildHelper(buildInfo), shardedTestCounts);
     }
 
     private List<IRemoteTest> splitShardableTests(List<IRemoteTest> tests, IBuildInfo buildInfo) {

@@ -41,6 +41,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.suite.checker.ISystemStatusChecker;
 import com.android.tradefed.suite.checker.ISystemStatusCheckerReceiver;
 import com.android.tradefed.testtype.Abi;
@@ -69,6 +70,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -445,11 +447,17 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 if (checkers != null && !checkers.isEmpty()) {
                     runPreModuleCheck(module.getName(), checkers, mDevice, listener);
                 }
+                // Workaround to b/34202787: Add result forwarder that ensures module is reported
+                // with 0 tests if test runner doesn't report anything in this case.
+                // Necessary for solution to b/33289177, in which completed modules may sometimes
+                // not be marked done until retried with 0 tests.
+                ModuleResultForwarder moduleListener = new ModuleResultForwarder(listener);
                 try {
                     if (module.getTest() instanceof IBuildReceiver) {
                         ((IBuildReceiver)module.getTest()).setBuild(mBuildHelper.getBuildInfo());
                     }
-                    module.run(listener);
+                    module.run(moduleListener);
+                    moduleListener.finish(module.getId());
                 } catch (DeviceUnresponsiveException due) {
                     // being able to catch a DeviceUnresponsiveException here implies that recovery
                     // was successful, and test execution should proceed to next module
@@ -773,4 +781,32 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public void setCollectTestsOnly(boolean collectTestsOnly) {
         mCollectTestsOnly = collectTestsOnly;
     }
+
+    private class ModuleResultForwarder extends ResultForwarder {
+
+        private boolean mTestRunStarted = false;
+        private ITestInvocationListener mListener;
+
+        public ModuleResultForwarder(ITestInvocationListener listener) {
+            super(listener);
+            mListener = listener;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void testRunStarted(String name, int numTests) {
+            mListener.testRunStarted(name, numTests);
+            mTestRunStarted = true;
+        }
+
+        public void finish(String moduleId) {
+            if (!mTestRunStarted) {
+                mListener.testRunStarted(moduleId, 0);
+                mListener.testRunEnded(0, Collections.emptyMap());
+            }
+        }
+    }
+
 }
