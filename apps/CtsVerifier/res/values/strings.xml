@@ -1881,6 +1881,14 @@ You should be prompted to select credentials; choose the ones you just installed
         Check that the CtsVerifier logo is displayed at the top of the page.
         Then hit back and stop the provisioning.
     </string>
+    <string name="provisioning_tests_byod_custom_terms">Custom terms</string>
+    <string name="provisioning_tests_byod_custom_terms_instructions">
+        1. Please press the Go button to start the provisioning.\n
+        2. Click \"View Terms\" button\n
+        3. Expand \"Company ABC\" section. Verify the section content is \"Company Terms Content.\"\n
+        4. Then hit back twice and stop the provisioning.
+    </string>
+    <string name="provisioning_tests_byod_custom_term_header1">Company ABC</string>
 
     <!-- Strings for BYOD managed provisioning (ByodFlowTestActivity) -->
     <string name="test_category_managed_provisioning">Managed Provisioning</string>

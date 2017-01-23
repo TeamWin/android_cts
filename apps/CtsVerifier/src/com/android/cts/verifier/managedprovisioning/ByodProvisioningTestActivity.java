@@ -44,14 +44,17 @@ public class ByodProvisioningTestActivity extends PassFailButtons.TestListActivi
                         R.string.provisioning_tests_byod_custom_color,
                         R.string.provisioning_tests_byod_custom_color_info,
                         new ButtonInfo(R.string.go_button_text, colorIntent)));
-        Uri logoUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName()
-                + "/" + R.drawable.icon);
+        Uri logoUri = getResourceUri(R.drawable.icon);
         Intent imageIntent = new Intent(this, ProvisioningStartingActivity.class)
                 .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_LOGO_URI, logoUri);
         adapter.add(Utils.createInteractiveTestItem(this, "BYOD_CustomImage",
                         R.string.provisioning_tests_byod_custom_image,
                         R.string.provisioning_tests_byod_custom_image_info,
                         new ButtonInfo(R.string.go_button_text, imageIntent)));
+        adapter.add(Utils.createInteractiveTestItem(this, "BYOD_CustomTerms",
+                R.string.provisioning_tests_byod_custom_terms,
+                R.string.provisioning_tests_byod_custom_terms_instructions,
+                new ButtonInfo(R.string.go_button_text, getTestTermsIntent())));
 
         setTestListAdapter(adapter);
     }
@@ -80,5 +83,25 @@ public class ByodProvisioningTestActivity extends PassFailButtons.TestListActivi
             startActivityForResult(provisioningIntent, 0);
             finish();
         }
+    }
+
+    private Intent getTestTermsIntent() {
+        Bundle bundle = new Bundle();
+        bundle.putString(DevicePolicyManager.EXTRA_PROVISIONING_DISCLAIMER_HEADER,
+                getString(R.string.provisioning_tests_byod_custom_term_header1));
+        bundle.putParcelable(DevicePolicyManager.EXTRA_PROVISIONING_DISCLAIMER_CONTENT,
+                getResourceUri(R.raw.company_terms_content));
+
+        return new Intent(this, ProvisioningStartingActivity.class)
+                .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DISCLAIMERS,
+                        new Bundle[] { bundle });
+    }
+
+    private Uri getResourceUri(int resId) {
+        return new Uri.Builder().scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                .authority(getPackageName())
+                .appendPath(getResources().getResourceTypeName(resId))
+                .appendPath(getResources().getResourceEntryName(resId))
+                .build();
     }
 }
