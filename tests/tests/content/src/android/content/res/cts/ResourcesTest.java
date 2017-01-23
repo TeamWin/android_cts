@@ -31,6 +31,7 @@ import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -705,5 +706,42 @@ public class ResourcesTest extends AndroidTestCase {
                 0, readCount);
 
         is.close();
+    }
+
+    public void testGetFont_invalidResourceId() {
+        try {
+            mResources.getFont(-1);
+            fail("Font resource -1 should not be found.");
+        } catch (NotFoundException e) {
+            //expected
+        }
+    }
+
+    public void testGetFont_fontFile() {
+        Typeface font = mResources.getFont(R.font.samplefont);
+
+        assertNotNull(font);
+        assertNotSame(Typeface.DEFAULT, font);
+    }
+
+    public void testGetFont_xmlFile() {
+        Typeface font = mResources.getFont(R.font.samplexmlfont);
+
+        assertNotNull(font);
+        assertNotSame(Typeface.DEFAULT, font);
+    }
+
+    public void testGetFont_fontFileIsCached() {
+        Typeface font = mResources.getFont(R.font.samplefont);
+        Typeface font2 = mResources.getFont(R.font.samplefont);
+
+        assertEquals(font, font2);
+    }
+
+    public void testGetFont_xmlFileIsCached() {
+        Typeface font = mResources.getFont(R.font.samplexmlfont);
+        Typeface font2 = mResources.getFont(R.font.samplexmlfont);
+
+        assertEquals(font, font2);
     }
 }
