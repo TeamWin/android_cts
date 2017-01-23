@@ -147,6 +147,18 @@ public class TypefaceTest {
         Typeface.createFromAsset(null, null);
     }
 
+    @Test(expected=NullPointerException.class)
+    public void testCreateFromAssetNullPath() {
+        // input abnormal params.
+        Typeface.createFromAsset(mContext.getAssets(), null);
+    }
+
+    @Test(expected=RuntimeException.class)
+    public void testCreateFromAssetInvalidPath() {
+        // input abnormal params.
+        Typeface.createFromAsset(mContext.getAssets(), "invalid path");
+    }
+
     @Test
     public void testCreateFromAsset() {
         Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "samplefont.ttf");
@@ -166,10 +178,22 @@ public class TypefaceTest {
         assertNotNull(typeface);
     }
 
+    @Test(expected=RuntimeException.class)
+    public void testCreateFromFileWithInvalidPath() throws IOException {
+        File file = new File("/invalid/path");
+        Typeface.createFromFile(file);
+    }
+
     @Test(expected=NullPointerException.class)
     public void testCreateFromFileByFileNameNull() throws IOException {
         // input abnormal params.
         Typeface.createFromFile((String) null);
+    }
+
+    @Test(expected=RuntimeException.class)
+    public void testCreateFromFileByInvalidFileName() throws IOException {
+        // input abnormal params.
+        Typeface.createFromFile("/invalid/path");
     }
 
     @Test
