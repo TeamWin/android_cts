@@ -39,6 +39,12 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     private static final String STATIC_LIB_PROVIDER4_APK = "CtsStaticSharedLibProviderApp4.apk";
     private static final String STATIC_LIB_PROVIDER4_PKG = "android.os.lib.provider";
 
+    private static final String STATIC_LIB_PROVIDER5_APK = "CtsStaticSharedLibProviderApp5.apk";
+    private static final String STATIC_LIB_PROVIDER5_PKG = "android.os.lib.provider";
+
+    private static final String STATIC_LIB_PROVIDER6_APK = "CtsStaticSharedLibProviderApp6.apk";
+    private static final String STATIC_LIB_PROVIDER6_PKG = "android.os.lib.provider";
+
     private static final String STATIC_LIB_CONSUMER1_APK = "CtsStaticSharedLibConsumerApp1.apk";
     private static final String STATIC_LIB_CONSUMER1_PKG = "android.os.lib.consumer1";
 
@@ -221,6 +227,22 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER4_PKG);
+        }
+    }
+
+    public void testLibraryAndPackageNameCanMatch() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER5_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER6_PKG);
+        try {
+            // Install a library with same name as package should work.
+            assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                    STATIC_LIB_PROVIDER5_APK), false, false));
+            // Install a library with same name as package should work.
+            assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                    STATIC_LIB_PROVIDER6_APK), true, false));
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER5_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER6_PKG);
         }
     }
 
