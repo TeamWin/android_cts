@@ -71,4 +71,10 @@ public class TestApp extends Activity {
             }
         });
     }
+
+    public void onEnterAnimationComplete() {
+        Log.i(TAG, "TestApp onEnterAnimationComplete ");
+        sendBroadcast(new Intent(Utils.APP_3P_HASDRAWED));
+    }
+
 }
