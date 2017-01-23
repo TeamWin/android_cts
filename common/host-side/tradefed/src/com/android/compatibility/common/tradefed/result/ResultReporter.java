@@ -473,7 +473,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
                     elapsedTime + startTime, mReferenceUrl, getLogUrl(),
                     mBuildHelper.getCommandLineArgs());
-            info("Test Result: %s", resultFile.getCanonicalPath());
+            // Create failure report after zip file so extra data is not uploaded
+            File failureReport = ResultHandler.createFailureReport(resultFile);
+            if (failureReport.exists()) {
+                info("Test Result: %s", failureReport.getCanonicalPath());
+            } else {
+                info("Test Result: %s", resultFile.getCanonicalPath());
+            }
             File zippedResults = zipResults(mResultDir);
             debug("Full Result: %s", zippedResults.getCanonicalPath());
 
