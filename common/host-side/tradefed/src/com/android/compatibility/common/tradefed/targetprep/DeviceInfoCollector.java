@@ -26,7 +26,6 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
-import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.FileUtil;
 
 import java.io.File;
@@ -93,8 +92,8 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
             BuildError, DeviceNotAvailableException {
         for (Entry<String, String> entry : BUILD_KEYS.entrySet()) {
-            buildInfo.addBuildAttribute(entry.getKey(),
-                    ArrayUtil.join(",", device.getProperty(entry.getValue())));
+            buildInfo.addBuildAttribute(
+                    entry.getKey(), nullToEmpty(device.getProperty(entry.getValue())));
         }
         if (mSkipDeviceInfo) {
             return;
@@ -151,5 +150,9 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
             String mResultPath = mResultDir.getAbsolutePath();
             CollectorUtil.pullFromDevice(device, mSrcDir, mResultPath);
         }
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }
