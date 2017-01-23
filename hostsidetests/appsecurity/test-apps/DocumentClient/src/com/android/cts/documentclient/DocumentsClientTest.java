@@ -548,12 +548,9 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertEquals("doc:web-linkable-file", DocumentsContract.getDocumentId(uri));
 
         final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
-        final String streamTypes[] = resolver.getStreamTypes(uri, "*/*");
-        assertEquals(1, streamTypes.length);
-        assertEquals("text/plain", streamTypes[0]);
 
         Bundle bundle = new Bundle();
-        bundle.putString(Intent.EXTRA_EMAIL, "x@x.com");
+        bundle.putStringArray(Intent.EXTRA_EMAIL, new String[] { "x@x.com" });
         final IntentSender intentSender = DocumentsContract.createWebLinkIntent(resolver,
                 uri, bundle);
 
@@ -564,7 +561,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         // Confirm the permissions dialog. The dialog is provided by the stub
         // provider.
-        UiObject okButton = new UiObject(new UiSelector().text("OK").clickable(true));
+        UiObject okButton = new UiObject(new UiSelector().resourceId("android:id/button1"));
         assertNotNull(okButton);
         assertTrue(okButton.waitForExists(TIMEOUT));
         okButton.click();
