@@ -39,6 +39,7 @@ public class ManagedProfileProvisioningTest extends AndroidTestCase {
         SilentProvisioningTestManager provisioningManager =
                 new SilentProvisioningTestManager(getContext());
         assertTrue(provisioningManager.startProvisioningAndWait(intent));
+        assertTrue(isExtraUserPresent(provisioningManager.getReceviedProfileProvisionedIntent()));
     }
 
     // This is only necessary if the profile is created via managed provisioning flow.
@@ -46,5 +47,9 @@ public class ManagedProfileProvisioningTest extends AndroidTestCase {
         DevicePolicyManager dpm = (DevicePolicyManager)
                 getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
         dpm.setProfileEnabled(AdminReceiver.getComponentName(getContext()));
+    }
+
+    private boolean isExtraUserPresent(Intent intent) {
+        return intent != null && intent.getExtras().containsKey(Intent.EXTRA_USER);
     }
 }
