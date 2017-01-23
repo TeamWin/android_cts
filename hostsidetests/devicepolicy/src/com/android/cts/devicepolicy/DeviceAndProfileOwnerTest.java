@@ -628,6 +628,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     }
 
+    public void testRequiredStrongAuthTimeout() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".RequiredStrongAuthTimeoutTest");
+    }
+
     protected void executeDeviceTestClass(String className) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
