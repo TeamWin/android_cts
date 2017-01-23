@@ -6287,6 +6287,31 @@ public class TextViewTest {
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
     }
 
+    @UiThreadTest
+    @Test
+    public void testOnInitializeA11yNodeInfo_populatesHintTextProperly() {
+        final TextView textView = new TextView(mActivity);
+        textView.setText("", BufferType.EDITABLE);
+        final String hintText = "Hint text";
+        textView.setHint(hintText);
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        textView.onInitializeAccessibilityNodeInfo(info);
+        assertTrue("Hint text flag set incorrectly for accessibility", info.isShowingHintText());
+        assertTrue("Hint text not showing as accessibility text",
+                TextUtils.equals(hintText, info.getText()));
+        assertTrue("Hint text not provided to accessibility",
+                TextUtils.equals(hintText, info.getHintText()));
+
+        final String nonHintText = "Something else";
+        textView.setText(nonHintText, BufferType.EDITABLE);
+        textView.onInitializeAccessibilityNodeInfo(info);
+        assertFalse("Hint text flag set incorrectly for accessibility", info.isShowingHintText());
+        assertTrue("Text not provided to accessibility",
+                TextUtils.equals(nonHintText, info.getText()));
+        assertTrue("Hint text not provided to accessibility",
+                TextUtils.equals(hintText, info.getHintText()));
+    }
+
     @Test
     public void testAutoSizeCallers_setCompoundDrawables() throws Throwable {
         final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
@@ -6592,41 +6617,140 @@ public class TextViewTest {
         DisplayMetrics metrics = mActivity.getResources().getDisplayMetrics();
         TextView autoSizeTextViewXY = (TextView) mActivity.findViewById(R.id.textview_autosize_xy);
 
-        // The size has been set to 50dp in the layout but this being an AUTO_SIZE_TYPE_XY TextView,
-        // the size is considered max size thus the value returned by getSize() in this case should
-        // be lower than the one set (given that there is not much available space and the font size
-        // is very high). In theory the values could be equal for a different TextView
+        // The size has been set to 50dp in the layout but this being an AUTO_SIZE_TEXT_TYPE_XY
+        // TextView, the size is considered max size thus the value returned by getSize() in this
+        // case should be lower than the one set (given that there is not much available space and
+        // the font size is very high). In theory the values could be equal for a different TextView
         // configuration.
         final float sizeSetInPixels = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 50f, metrics);
         assertTrue(autoSizeTextViewXY.getTextSize() < sizeSetInPixels);
     }
 
-    @UiThreadTest
     @Test
-    public void testOnInitializeA11yNodeInfo_populatesHintTextProperly() {
+    public void testAutoSizeXY_getSetAutoSizeTextXY_defaults() {
         final TextView textView = new TextView(mActivity);
-        textView.setText("", BufferType.EDITABLE);
-        final String hintText = "Hint text";
-        textView.setHint(hintText);
-        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
-        textView.onInitializeAccessibilityNodeInfo(info);
-        assertTrue("Hint text flag set incorrectly for accessibility", info.isShowingHintText());
-        assertTrue("Hint text not showing as accessibility text",
-                TextUtils.equals(hintText, info.getText()));
-        assertTrue("Hint text not provided to accessibility",
-                TextUtils.equals(hintText, info.getHintText()));
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
+        // Min/Max/Granularity values for auto-sizing are 0 because they are not used.
+        assertEquals(0, textView.getAutoSizeMinTextSize());
+        assertEquals(0, textView.getAutoSizeMaxTextSize());
+        assertEquals(0, textView.getAutoSizeStepGranularity());
 
-        final String nonHintText = "Something else";
-        textView.setText(nonHintText, BufferType.EDITABLE);
-        textView.onInitializeAccessibilityNodeInfo(info);
-        assertFalse("Hint text flag set incorrectly for accessibility", info.isShowingHintText());
-        assertTrue("Text not provided to accessibility",
-                TextUtils.equals(nonHintText, info.getText()));
-        assertTrue("Hint text not provided to accessibility",
-                TextUtils.equals(hintText, info.getHintText()));
+        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_XY);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_XY, textView.getAutoSizeTextType());
+        // Min/Max default values for auto-sizing XY have been loaded.
+        final int minSize = textView.getAutoSizeMinTextSize();
+        assertNotEquals(0, minSize);
+        final int maxSize = textView.getAutoSizeMaxTextSize();
+        assertNotEquals(0, maxSize);
+        assertTrue(minSize < maxSize);
+        final int stepGranularity = textView.getAutoSizeStepGranularity();
+        assertNotEquals(0, stepGranularity);
+
+        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_NONE);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
+        // Min/Max values for auto-sizing XY have been cleared.
+        assertEquals(0, textView.getAutoSizeMinTextSize());
+        assertEquals(0, textView.getAutoSizeMaxTextSize());
+        assertEquals(0, textView.getAutoSizeStepGranularity());
     }
 
+    @Test
+    public void testAutoSizeXY_getSetAutoSizeStepGranularity() {
+        final TextView textView = new TextView(mActivity);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
+        final int initialValue = 0;
+        assertEquals(initialValue, textView.getAutoSizeStepGranularity());
+
+        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_XY);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_XY, textView.getAutoSizeTextType());
+        final int defaultValue = 1; // 1px.
+        // If the auto-size type is AUTO_SIZE_TEXT_TYPE_XY then it means textView went through the
+        // auto-size setup and given that 0 is an invalid value it changed it to the default.
+        assertEquals(defaultValue, textView.getAutoSizeStepGranularity());
+
+        final int newValue = 33;
+        textView.setAutoSizeStepGranularity(TypedValue.COMPLEX_UNIT_PX, newValue);
+        assertEquals(newValue, textView.getAutoSizeStepGranularity());
+    }
+
+    @Test
+    public void testAutoSizeXY_getSetAutoSizeMinTextSize() {
+        final TextView textView = new TextView(mActivity);
+        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_XY);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_XY, textView.getAutoSizeTextType());
+        final int minSize = textView.getAutoSizeMinTextSize();
+        assertNotEquals(0, minSize);
+        final int maxSize = textView.getAutoSizeMaxTextSize();
+        assertNotEquals(0, maxSize);
+
+        // This is just a test check to verify the next assertions. If this fails it is a problem
+        // of this test setup (we need at least 2 units).
+        assertTrue((maxSize - minSize) > 1);
+        final int newMinSize = maxSize - 1;
+        textView.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_PX, newMinSize);
+        assertEquals(newMinSize, textView.getAutoSizeMinTextSize());
+        // Max size has not changed.
+        assertEquals(maxSize, textView.getAutoSizeMaxTextSize());
+
+        // Prevent validation error (max <= min).
+        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_SP, newMinSize + 10);
+        textView.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_SP, newMinSize);
+        // It does not matter which unit has been used to set the min size, the getter always
+        // returns it in pixels.
+        assertEquals((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, newMinSize,
+                mActivity.getResources().getDisplayMetrics()), textView.getAutoSizeMinTextSize());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAutoSizeXY_throwsException_whenMaxLessThanMin() {
+        final TextView textView = new TextView(mActivity);
+        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_XY);
+        textView.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_PX, 10);
+        // Should throw IllegalStateException here (because min > max).
+        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, 9);
+    }
+
+    @Test
+    public void testAutoSizeXY_getSetAutoSizeMaxTextSize() {
+        final TextView textView = new TextView(mActivity);
+        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_XY);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_XY, textView.getAutoSizeTextType());
+        final int minSize = textView.getAutoSizeMinTextSize();
+        assertNotEquals(0, minSize);
+        final int maxSize = textView.getAutoSizeMaxTextSize();
+        assertNotEquals(0, maxSize);
+
+        final int newMaxSize = maxSize + 11;
+        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, newMaxSize);
+        assertEquals(newMaxSize, textView.getAutoSizeMaxTextSize());
+        // Min size has not changed.
+        assertEquals(minSize, textView.getAutoSizeMinTextSize());
+
+        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_SP, newMaxSize);
+        // It does not matter which unit has been used to set the max size, the getter always
+        // returns it in pixels.
+        assertEquals((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, newMaxSize,
+                mActivity.getResources().getDisplayMetrics()), textView.getAutoSizeMaxTextSize());
+    }
+
+    @Test
+    public void testAutoSizeXY_autoSizeCalledWhenTypeChanged() throws Throwable {
+        mTextView = findTextView(R.id.textview_text);
+        // Make sure we pick an already inflated non auto-sized text view.
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, mTextView.getAutoSizeTextType());
+        // Set the text size to a very low value in order to prepare for auto-size.
+        final int customTextSize = 3;
+        mActivityRule.runOnUiThread(() ->
+                mTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, customTextSize));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(customTextSize, mTextView.getTextSize(), 0f);
+        mActivityRule.runOnUiThread(() ->
+                mTextView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_XY));
+        mInstrumentation.waitForIdleSync();
+        // The size of the text should have changed.
+        assertNotEquals(customTextSize, mTextView.getTextSize(), 0f);
+    }
 
     /**
      * Some TextView attributes require non-fixed width and/or layout height. This function removes
