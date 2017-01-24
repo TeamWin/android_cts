@@ -774,6 +774,24 @@ public class CanvasTest {
     }
 
     @Test
+    public void testRestoreToCountExceptionBehavior() {
+        int restoreTo = mCanvas.save();
+        mCanvas.save();
+        int beforeCount = mCanvas.getSaveCount();
+
+        boolean exceptionObserved = false;
+        try {
+            mCanvas.restoreToCount(restoreTo - 1);
+        } catch (IllegalArgumentException e) {
+            exceptionObserved = true;
+        }
+
+        // restore to count threw, AND did no restoring
+        assertTrue(exceptionObserved);
+        assertEquals(beforeCount, mCanvas.getSaveCount());
+    }
+
+    @Test
     public void testRestoreToCount() {
         final Matrix m1 = new Matrix();
         m1.setValues(values1);
