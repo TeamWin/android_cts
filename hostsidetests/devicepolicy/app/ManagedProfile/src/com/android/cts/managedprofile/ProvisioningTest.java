@@ -29,7 +29,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.PersistableBundle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -43,13 +42,17 @@ import org.junit.Test;
 public class ProvisioningTest {
     private static final String TAG = ProvisioningTest.class.getSimpleName();
 
-    private static final String ADMIN_EXTRAS_BUNDLE_FILENAME = "admin_extras_bundle.txt";
+    private static final String SHARED_PREFERENCE_FILE_NAME = "shared-preferences-file-name";
+
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = new PersistableBundle();
     private static final String ADMIN_EXTRAS_BUNDLE_KEY_1 = "KEY_1";
     private static final String ADMIN_EXTRAS_BUNDLE_VALUE_1 = "VALUE_1";
     static {
         ADMIN_EXTRAS_BUNDLE.putString(ADMIN_EXTRAS_BUNDLE_KEY_1, ADMIN_EXTRAS_BUNDLE_VALUE_1);
     }
+
+    public static final String KEY_PROVISIONING_SUCCESSFUL_RECEIVED =
+            "key-provisioning-successful-received";
 
     private static final ComponentName ADMIN_RECEIVER_COMPONENT = new ComponentName(
             ProvisioningAdminReceiver.class.getPackage().getName(),
@@ -95,6 +98,12 @@ public class ProvisioningTest {
         assertEquals(ADMIN_EXTRAS_BUNDLE_VALUE_1, bundle.getString(ADMIN_EXTRAS_BUNDLE_KEY_1));
     }
 
+    @Test
+    public void testVerifySuccessfulIntentWasReceived() {
+        assertTrue(getSharedPreferences(mContext).getBoolean(KEY_PROVISIONING_SUCCESSFUL_RECEIVED,
+                false));
+    }
+
     private void provisionManagedProfile() throws InterruptedException {
         Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE)
                 .putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, ADMIN_RECEIVER_COMPONENT)
@@ -112,21 +121,21 @@ public class ProvisioningTest {
             return;
         }
 
-        getAdminExtraSharedPreferences(context).edit()
+        getSharedPreferences(context).edit()
                 .putString(ADMIN_EXTRAS_BUNDLE_KEY_1, bundle.getString(ADMIN_EXTRAS_BUNDLE_KEY_1))
                 .commit();
     }
 
     private static PersistableBundle loadBundle(Context context) {
-        SharedPreferences pref = getAdminExtraSharedPreferences(context);
+        SharedPreferences pref = getSharedPreferences(context);
         PersistableBundle bundle = new PersistableBundle();
         bundle.putString(ADMIN_EXTRAS_BUNDLE_KEY_1,
                 pref.getString(ADMIN_EXTRAS_BUNDLE_KEY_1, null));
         return bundle;
     }
 
-    private static SharedPreferences getAdminExtraSharedPreferences(Context context) {
-        return context.getSharedPreferences(ADMIN_EXTRAS_BUNDLE_FILENAME, 0);
+    public static SharedPreferences getSharedPreferences(Context context) {
+        return context.getSharedPreferences(SHARED_PREFERENCE_FILE_NAME, 0);
     }
 
 }
