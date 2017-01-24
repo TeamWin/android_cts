@@ -18,7 +18,7 @@ package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.*;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 import android.graphics.drawable.Icon;
@@ -131,7 +131,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getAccountHandle(), is(PhoneAccountHandle.class));
+        assertThat(mCall.getDetails().getAccountHandle(), instanceOf(PhoneAccountHandle.class));
         assertEquals(TEST_PHONE_ACCOUNT_HANDLE, mCall.getDetails().getAccountHandle());
     }
 
@@ -143,7 +143,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getCallCapabilities(), is(Integer.class));
+        assertThat(mCall.getDetails().getCallCapabilities(), instanceOf(Integer.class));
         assertEquals(CALL_CAPABILITIES, mCall.getDetails().getCallCapabilities());
         assertTrue(mCall.getDetails().can(Call.Details.CAPABILITY_HOLD));
         assertTrue(mCall.getDetails().can(Call.Details.CAPABILITY_MUTE));
@@ -248,7 +248,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getCallerDisplayName(), is(String.class));
+        assertThat(mCall.getDetails().getCallerDisplayName(), instanceOf(String.class));
         assertEquals(CALLER_DISPLAY_NAME, mCall.getDetails().getCallerDisplayName());
     }
 
@@ -260,7 +260,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getCallerDisplayNamePresentation(), is(Integer.class));
+        assertThat(mCall.getDetails().getCallerDisplayNamePresentation(), instanceOf(Integer.class));
         assertEquals(CALLER_DISPLAY_NAME_PRESENTATION, mCall.getDetails().getCallerDisplayNamePresentation());
     }
 
@@ -272,7 +272,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getCallProperties(), is(Integer.class));
+        assertThat(mCall.getDetails().getCallProperties(), instanceOf(Integer.class));
 
         assertEquals(CALL_PROPERTIES, mCall.getDetails().getCallProperties());
     }
@@ -285,7 +285,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getConnectTimeMillis(), is(Long.class));
+        assertThat(mCall.getDetails().getConnectTimeMillis(), instanceOf(Long.class));
     }
 
     /**
@@ -296,7 +296,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getDisconnectCause(), is(DisconnectCause.class));
+        assertThat(mCall.getDetails().getDisconnectCause(), instanceOf(DisconnectCause.class));
     }
 
     /**
@@ -308,7 +308,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         }
 
         if (mCall.getDetails().getExtras() != null) {
-            assertThat(mCall.getDetails().getExtras(), is(Bundle.class));
+            assertThat(mCall.getDetails().getExtras(), instanceOf(Bundle.class));
         }
     }
 
@@ -320,7 +320,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getIntentExtras(), is(Bundle.class));
+        assertThat(mCall.getDetails().getIntentExtras(), instanceOf(Bundle.class));
     }
 
     /**
@@ -332,7 +332,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         }
 
         if (mCall.getDetails().getGatewayInfo() != null) {
-            assertThat(mCall.getDetails().getGatewayInfo(), is(GatewayInfo.class));
+            assertThat(mCall.getDetails().getGatewayInfo(), instanceOf(GatewayInfo.class));
         }
     }
 
@@ -344,7 +344,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getHandle(), is(Uri.class));
+        assertThat(mCall.getDetails().getHandle(), instanceOf(Uri.class));
         assertEquals(getTestNumber(), mCall.getDetails().getHandle());
     }
 
@@ -356,7 +356,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getHandlePresentation(), is(Integer.class));
+        assertThat(mCall.getDetails().getHandlePresentation(), instanceOf(Integer.class));
         assertEquals(MockConnectionService.CONNECTION_PRESENTATION, mCall.getDetails().getHandlePresentation());
     }
 
@@ -368,7 +368,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getStatusHints(), is(StatusHints.class));
+        assertThat(mCall.getDetails().getStatusHints(), instanceOf(StatusHints.class));
         assertEquals(mStatusHints.getLabel(), mCall.getDetails().getStatusHints().getLabel());
         assertEquals(
                 mStatusHints.getIcon().toString(),
@@ -384,7 +384,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        assertThat(mCall.getDetails().getVideoState(), is(Integer.class));
+        assertThat(mCall.getDetails().getVideoState(), instanceOf(Integer.class));
     }
 
     /**
