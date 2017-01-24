@@ -29,6 +29,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.provider.Settings;
 import android.provider.Telephony.Sms;
 import android.provider.Telephony.Sms.Intents;
 import android.support.annotation.Nullable;
@@ -261,6 +262,30 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         }
         TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
         assertEquals(PACKAGE, telephonyManager.getVisualVoicemailPackageName(mPhoneAccountHandle));
+    }
+
+    public void testVoicemailRingtoneSettings(){
+        TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+
+        PhoneAccountHandle defaultAccount = telecomManager
+                .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+
+        Uri uri = Settings.System.DEFAULT_NOTIFICATION_URI;
+        telephonyManager.setVoicemailRingtoneUri(defaultAccount, uri);
+        assertEquals(uri, telephonyManager.getVoicemailRingtoneUri(defaultAccount));
+    }
+
+    public void testVoicemailVibrationSettings(){
+        TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+
+        PhoneAccountHandle defaultAccount = telecomManager
+                .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+        telephonyManager.setVoicemailVibrationEnabled(defaultAccount,true);
+        assertTrue(telephonyManager.isVoicemailVibrationEnabled(defaultAccount));
+        telephonyManager.setVoicemailVibrationEnabled(defaultAccount,false);
+        assertFalse(telephonyManager.isVoicemailVibrationEnabled(defaultAccount));
     }
 
     private VisualVoicemailSms getSmsFromText(String clientPrefix, String text) {
