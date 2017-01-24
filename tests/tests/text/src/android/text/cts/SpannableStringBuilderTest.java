@@ -629,6 +629,79 @@ public class SpannableStringBuilderTest {
     }
 
     @Test
+    public void testGetSpans_returnsInInsertionOrder_regular() {
+        assertGetSpans_returnsInInsertionOrder(Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    @Test
+    public void testGetSpans_returnsInInsertionOrder_priority() {
+        assertGetSpans_returnsInInsertionOrder(
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | Spanned.SPAN_PRIORITY);
+    }
+
+    private static void assertGetSpans_returnsInInsertionOrder(int flags) {
+        final SpannableStringBuilder builder = new SpannableStringBuilder();
+        final SubscriptSpan[] expected = new SubscriptSpan[5];
+        for (int i = 0; i < expected.length; i++) {
+            final int currentLength = builder.length();
+            builder.append("12\n");
+            expected[i] = new SubscriptSpan();
+            builder.setSpan(expected[i], currentLength + 1, currentLength + 2, flags);
+        }
+
+        final SubscriptSpan[] spans = builder.getSpans(0, builder.length(), SubscriptSpan.class);
+
+        assertNotNull(spans);
+        assertEquals(expected.length, spans.length);
+        for (int i = 0; i < expected.length; i++) {
+            assertSame(expected[i], spans[i]);
+        }
+    }
+
+    @Test
+    public void testGetSpans_returnsInInsertionOrder_priorityAndRegular() {
+        // insert spans from end to start of the string, interleaved. for each alternation:
+        // * regular span start is less than the priority span;
+        // * setSpan for regular span is called before the priority span
+        // expected result is: priority spans in the insertion order, then regular spans in
+        // insertion order
+        final int arrayLength = 5;
+        final SpannableStringBuilder builder = new SpannableStringBuilder();
+        final SubscriptSpan[] regularSpans = new SubscriptSpan[arrayLength];
+        final SubscriptSpan[] prioritySpans = new SubscriptSpan[arrayLength];
+        for (int i = 0; i < arrayLength; i++) {
+            builder.append("12");
+            regularSpans[i] = new SubscriptSpan();
+            prioritySpans[i] = new SubscriptSpan();
+        }
+
+        // set spans on builder with pattern [regular, priority, regular, priority,...]
+        // in reverse order (regularSpan[0] is at the end of the builder, regularSpan[5] is at the
+        // begining.
+        for (int i = 1; i <= arrayLength; i++) {
+            final int spanStart = builder.length() - (i * 2);
+            builder.setSpan(regularSpans[i - 1], spanStart, spanStart + 1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            builder.setSpan(prioritySpans[i - 1], spanStart + 1, spanStart + 2,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE | Spanned.SPAN_PRIORITY);
+        }
+
+        final SubscriptSpan[] spans = builder.getSpans(0, builder.length(), SubscriptSpan.class);
+        assertNotNull(spans);
+        assertEquals(arrayLength * 2, spans.length);
+
+        // assert priority spans are returned before the regular spans, in the insertion order
+        for (int i = 0; i < arrayLength; i++) {
+            assertSame(prioritySpans[i], spans[i]);
+        }
+
+        // assert regular spans are returned after priority spans, in the insertion order
+        for (int i = 0; i < arrayLength; i++) {
+            assertSame(regularSpans[i], spans[i + arrayLength]);
+        }
+    }
+
+    @Test
     public void testGetSpans_returnsSpansInInsertionOrderWhenTheLaterCoversTheFirst() {
         String text = "p_in_s";
         SpannableStringBuilder builder = new SpannableStringBuilder(text);
