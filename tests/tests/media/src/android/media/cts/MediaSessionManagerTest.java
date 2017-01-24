@@ -133,6 +133,63 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         assertEquals(listener.mKeyEvents.size(), 0);
     }
 
+    public void testSetOnMediaKeyListener() throws Exception {
+        HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        Handler handler = new Handler(handlerThread.getLooper());
+
+        MediaSessionCallback callback = new MediaSessionCallback(2);
+        MediaSession session = new MediaSession(getInstrumentation().getTargetContext(), TAG);
+        session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        session.setCallback(callback, handler);
+        PlaybackState state = new PlaybackState.Builder()
+                .setState(PlaybackState.STATE_PLAYING, 0, 1.0f).build();
+        // Fake the media session service so this session can take the media key events.
+        session.setPlaybackState(state);
+        session.setActive(true);
+
+        // Ensure that the listener is called for media key event,
+        // and any other media sessions don't get the key.
+        MediaKeyListener listener = new MediaKeyListener(2, true, handler);
+        mSessionManager.setOnMediaKeyListener(listener, handler);
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(listener.mKeyEvents.size(), 2);
+        assertKeyEventEquals(listener.mKeyEvents.get(0),
+                KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
+        assertKeyEventEquals(listener.mKeyEvents.get(1),
+                KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+        assertFalse(callback.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(callback.mKeyEvents.size(), 0);
+
+        // Ensure that the listener is called for media key event,
+        // and another media session gets the key.
+        listener = new MediaKeyListener(2, false, handler);
+        mSessionManager.setOnMediaKeyListener(listener, handler);
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        assertTrue(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(listener.mKeyEvents.size(), 2);
+        assertKeyEventEquals(listener.mKeyEvents.get(0),
+                KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
+        assertKeyEventEquals(listener.mKeyEvents.get(1),
+                KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+        assertTrue(callback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(callback.mKeyEvents.size(), 2);
+        assertKeyEventEquals(callback.mKeyEvents.get(0),
+                KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
+        assertKeyEventEquals(callback.mKeyEvents.get(1),
+                KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
+
+        // Ensure that the listener isn't called anymore.
+        listener = new MediaKeyListener(1, true, handler);
+        mSessionManager.setOnMediaKeyListener(listener, handler);
+        mSessionManager.setOnMediaKeyListener(null, handler);
+        injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
+        assertFalse(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(listener.mKeyEvents.size(), 0);
+    }
+
     private class VolumeKeyLongPressListener
             implements MediaSessionManager.OnVolumeKeyLongPressListener {
         private final List<KeyEvent> mKeyEvents = new ArrayList<>();
@@ -150,6 +207,46 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             // Ensure the listener is called on the thread.
             assertEquals(mHandler.getLooper(), Looper.myLooper());
             mCountDownLatch.countDown();
+        }
+    }
+
+    private class MediaKeyListener implements MediaSessionManager.OnMediaKeyListener {
+        private final CountDownLatch mCountDownLatch;
+        private final boolean mConsume;
+        private final Handler mHandler;
+        private final List<KeyEvent> mKeyEvents = new ArrayList<>();
+
+        public MediaKeyListener(int count, boolean consume, Handler handler) {
+            mCountDownLatch = new CountDownLatch(count);
+            mConsume = consume;
+            mHandler = handler;
+        }
+
+        @Override
+        public boolean onMediaKey(KeyEvent event) {
+            mKeyEvents.add(event);
+            // Ensure the listener is called on the thread.
+            assertEquals(mHandler.getLooper(), Looper.myLooper());
+            mCountDownLatch.countDown();
+            return mConsume;
+        }
+    }
+
+    private class MediaSessionCallback extends MediaSession.Callback {
+        private final CountDownLatch mCountDownLatch;
+        private final List<KeyEvent> mKeyEvents = new ArrayList<>();
+
+        private MediaSessionCallback(int count) {
+            mCountDownLatch = new CountDownLatch(count);
+        }
+
+        public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+            KeyEvent event = (KeyEvent) mediaButtonIntent.getParcelableExtra(
+                    Intent.EXTRA_KEY_EVENT);
+            assertNotNull(event);
+            mKeyEvents.add(event);
+            mCountDownLatch.countDown();
+            return true;
         }
     }
 }
