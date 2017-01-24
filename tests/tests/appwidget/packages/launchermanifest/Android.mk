@@ -25,6 +25,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src) \
         $(call all-java-files-under, ../../common/src)
+LOCAL_FULL_LIBS_MANIFEST_FILES := \
+    $(LOCAL_PATH)/AndroidManifest-pinActivity.xml
 
 LOCAL_SDK_VERSION := current
 
@@ -46,6 +48,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src) \
         $(call all-java-files-under, ../../common/src)
+LOCAL_FULL_LIBS_MANIFEST_FILES := \
+    $(LOCAL_PATH)/AndroidManifest-pinActivity.xml
 
 LOCAL_SDK_VERSION := current
 
@@ -53,5 +57,26 @@ LOCAL_SDK_VERSION := current
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_AAPT_FLAGS += --rename-manifest-package android.appwidget.cts.packages.launcher2
+
+include $(BUILD_CTS_PACKAGE)
+
+#-----------------------------------------------------------
+include $(CLEAR_VARS)
+
+LOCAL_PACKAGE_NAME := CtsAppWidgetLauncher3
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, ../src) \
+        $(call all-java-files-under, ../../common/src)
+
+LOCAL_SDK_VERSION := current
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+LOCAL_AAPT_FLAGS += --rename-manifest-package android.appwidget.cts.packages.launcher3
 
 include $(BUILD_CTS_PACKAGE)
