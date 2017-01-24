@@ -51,9 +51,18 @@ public class SilentProvisioningTestManager {
     };
 
     private final Context mContext;
+    private final BlockingReceiver mManagedProfileProvisionedReceiver;
+    private final BlockingReceiver mManagedProfileAddedReceiver;
 
     public SilentProvisioningTestManager(Context context) {
         mContext = context.getApplicationContext();
+        mManagedProfileProvisionedReceiver =
+                new BlockingReceiver(mContext, ACTION_MANAGED_PROFILE_PROVISIONED);
+        mManagedProfileAddedReceiver = new BlockingReceiver(mContext, ACTION_MANAGED_PROFILE_ADDED);
+    }
+
+    public Intent getReceviedProfileProvisionedIntent() {
+        return mManagedProfileProvisionedReceiver.getReceivedIntent();
     }
 
     public boolean startProvisioningAndWait(Intent provisioningIntent) throws InterruptedException {
@@ -73,23 +82,19 @@ public class SilentProvisioningTestManager {
     }
 
     private boolean waitManagedProfileProvisioning() throws InterruptedException {
-        BlockingReceiver managedProfileProvisionedReceiver = new BlockingReceiver(mContext,
-                ACTION_MANAGED_PROFILE_PROVISIONED);
-        managedProfileProvisionedReceiver.register();
-        BlockingReceiver managedProfileAddedReceiver = new BlockingReceiver(mContext,
-                ACTION_MANAGED_PROFILE_ADDED);
-        managedProfileAddedReceiver.register();
+        mManagedProfileProvisionedReceiver.register();
+        mManagedProfileAddedReceiver.register();
 
         if (!pollProvisioningResult()) {
             return false;
         }
 
-        if (!managedProfileProvisionedReceiver.await()) {
+        if (!mManagedProfileProvisionedReceiver.await()) {
             Log.i(TAG, "mManagedProfileProvisionedReceiver.await(): false");
             return false;
         }
 
-        if (!managedProfileAddedReceiver.await()) {
+        if (!mManagedProfileAddedReceiver.await()) {
             Log.i(TAG, "mManagedProfileAddedReceiver.await(): false");
             return false;
         }
@@ -132,14 +137,15 @@ public class SilentProvisioningTestManager {
 
     private static class BlockingReceiver extends BroadcastReceiver {
 
-        private static final CountDownLatch mLatch = new CountDownLatch(1);
-
+        private final CountDownLatch mLatch = new CountDownLatch(1);
         private final Context mContext;
         private final String mAction;
+        private Intent mReceivedIntent;
 
         private BlockingReceiver(Context context, String action) {
             mContext = context;
             mAction = action;
+            mReceivedIntent = null;
         }
 
         public void register() {
@@ -150,8 +156,13 @@ public class SilentProvisioningTestManager {
             return mLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         }
 
+        public Intent getReceivedIntent() {
+            return mReceivedIntent;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
+            mReceivedIntent = intent;
             mLatch.countDown();
         }
     }
