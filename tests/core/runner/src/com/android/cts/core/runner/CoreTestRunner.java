@@ -27,8 +27,10 @@ import android.util.Log;
 import com.android.cts.core.runner.support.ExtendedAndroidRunnerBuilder;
 import com.google.common.base.Splitter;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,6 +41,7 @@ import java.util.Set;
 import org.junit.runner.Computer;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Request;
+import org.junit.runner.Result;
 import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.Filterable;
@@ -289,15 +292,26 @@ public class CoreTestRunner extends Instrumentation {
         Log.d(TAG, "Finished preparations, running/listing tests");
 
         Bundle results = new Bundle();
+        Result junitResults = new Result();
         try {
-            core.run(Request.runner(runner));
+            junitResults = core.run(Request.runner(runner));
         } catch (RuntimeException e) {
             final String msg = "Fatal exception when running tests";
             Log.e(TAG, msg, e);
             // report the exception to instrumentation out
             results.putString(Instrumentation.REPORT_KEY_STREAMRESULT,
                     msg + "\n" + Log.getStackTraceString(e));
+        } finally {
+            ByteArrayOutputStream summaryStream = new ByteArrayOutputStream();
+            // create the stream used to output summary data to the user
+            PrintStream summaryWriter = new PrintStream(summaryStream);
+            instrumentationResultPrinter.instrumentationRunFinished(summaryWriter,
+                    results, junitResults);
+            summaryWriter.close();
+            results.putString(Instrumentation.REPORT_KEY_STREAMRESULT,
+                    String.format("\n%s", summaryStream.toString()));
         }
+
 
         Log.d(TAG, "Finished");
         finish(Activity.RESULT_OK, results);
