@@ -58,16 +58,18 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String SIMPLE_PRE_M_APP_PKG = "com.android.cts.launcherapps.simplepremapp";
     private static final String SIMPLE_PRE_M_APP_APK = "CtsSimplePreMApp.apk";
 
-    private static final String APP_RESTRICTIONS_MANAGING_APP_PKG
-            = "com.android.cts.apprestrictions.managingapp";
-    private static final String APP_RESTRICTIONS_MANAGING_APP_APK
-            = "CtsAppRestrictionsManagingApp.apk";
     private static final String APP_RESTRICTIONS_TARGET_APP_PKG
             = "com.android.cts.apprestrictions.targetapp";
     private static final String APP_RESTRICTIONS_TARGET_APP_APK = "CtsAppRestrictionsTargetApp.apk";
 
     private static final String CERT_INSTALLER_PKG = "com.android.cts.certinstaller";
     private static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
+
+    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
+    private static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
+    private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
+    private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
+    private static final String DELEGATION_BLOCK_UNINSTALL = "delegation-block-uninstall";
 
     private static final String TEST_APP_APK = "CtsSimpleApp.apk";
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
@@ -107,9 +109,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             getDevice().uninstallPackage(PERMISSIONS_APP_PKG);
             getDevice().uninstallPackage(SIMPLE_PRE_M_APP_PKG);
-            getDevice().uninstallPackage(APP_RESTRICTIONS_MANAGING_APP_PKG);
             getDevice().uninstallPackage(APP_RESTRICTIONS_TARGET_APP_PKG);
             getDevice().uninstallPackage(CERT_INSTALLER_PKG);
+            getDevice().uninstallPackage(DELEGATE_APP_PKG);
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
             getDevice().uninstallPackage(VPN_APP_PKG);
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
@@ -159,18 +161,19 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, mUserId);
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
         installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
 
         try {
             // Only the DPC can manage app restrictions by default.
             executeDeviceTestClass(".ApplicationRestrictionsTest");
-            executeAppRestrictionsManagingPackageTest("testCannotManageAppRestrictions");
+            executeAppRestrictionsManagingPackageTest("testCannotAccessApis");
 
-            // Letting the APP_RESTRICTIONS_MANAGING_APP_PKG manage app restrictions too.
-            changeApplicationRestrictionsManagingPackage(APP_RESTRICTIONS_MANAGING_APP_PKG);
-            executeAppRestrictionsManagingPackageTest("testCanManageAppRestrictions");
-            executeAppRestrictionsManagingPackageTest("testSettingComponentNameThrowsException");
+            // Letting the DELEGATE_APP_PKG manage app restrictions too.
+            changeApplicationRestrictionsManagingPackage(DELEGATE_APP_PKG);
+            executeAppRestrictionsManagingPackageTest("testCanAccessApis");
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest",
+                    "testSettingAdminComponentNameThrowsException", mUserId);
 
             // The DPC should still be able to manage app restrictions normally.
             executeDeviceTestClass(".ApplicationRestrictionsTest");
@@ -178,21 +181,69 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // The app shouldn't be able to manage app restrictions for other users.
             int parentUserId = getPrimaryUser();
             if (parentUserId != mUserId) {
-                installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, parentUserId);
+                installAppAsUser(DELEGATE_APP_APK, parentUserId);
                 installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, parentUserId);
-                runDeviceTestsAsUser(
-                        APP_RESTRICTIONS_MANAGING_APP_PKG, ".ApplicationRestrictionsManagerTest",
-                        "testCannotManageAppRestrictions", parentUserId);
+                runDeviceTestsAsUser(DELEGATE_APP_PKG, ".AppRestrictionsDelegateTest",
+                        "testCannotAccessApis", parentUserId);
             }
 
-            // Revoking the permission for APP_RESTRICTIONS_MANAGING_APP_PKG to manage restrictions.
+            // Revoking the permission for DELEGAYE_APP_PKG to manage restrictions.
             changeApplicationRestrictionsManagingPackage(null);
-            executeAppRestrictionsManagingPackageTest("testCannotManageAppRestrictions");
+            executeAppRestrictionsManagingPackageTest("testCannotAccessApis");
 
             // The DPC should still be able to manage app restrictions normally.
             executeDeviceTestClass(".ApplicationRestrictionsTest");
         } finally {
             changeApplicationRestrictionsManagingPackage(null);
+        }
+    }
+
+    public void testDelegation() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        final String delegationTests[] = {
+            ".AppRestrictionsDelegateTest",
+            ".CertInstallDelegateTest",
+            ".BlockUninstallDelegateTest"
+        };
+
+        // Set a device lockscreen password (precondition for installing private key pairs).
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordHelper", "testSetPassword",
+                mUserId);
+
+        // Install relevant apps.
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        installAppAsUser(TEST_APP_APK, mUserId);
+        installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
+
+        try {
+            // APIs are not accessible by default.
+            executeDelegationTests(delegationTests, false /* negative result */);
+
+            // Granting the appropriate delegation scopes makes APIs accessible.
+            setDelegatedScopes(DELEGATE_APP_PKG, Arrays.asList(
+                    DELEGATION_APP_RESTRICTIONS,
+                    DELEGATION_CERT_INSTALL,
+                    DELEGATION_BLOCK_UNINSTALL));
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest", mUserId);
+            executeDelegationTests(delegationTests, true /* positive result */);
+
+            // APIs are not accessible after revoking delegations.
+            setDelegatedScopes(DELEGATE_APP_PKG, null);
+            executeDelegationTests(delegationTests, false /* negative result */);
+
+            // Additional delegation tests.
+            executeDeviceTestClass(".DelegationTest");
+
+        } finally {
+            setDelegatedScopes(DELEGATE_APP_PKG, null);
+            // Clear lockscreen password previously set for installing private key pairs (DO only).
+            if (mPrimaryUserId == mUserId) {
+                runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
+                        ".ResetPasswordHelper", "testClearPassword", mUserId);
+            }
         }
     }
 
@@ -335,7 +386,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        installAppAsUser(APP_RESTRICTIONS_MANAGING_APP_APK, mUserId);
         executeDeviceTestClass(".SupportMessageTest");
     }
 
@@ -670,8 +720,18 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void executeAppRestrictionsManagingPackageTest(String testName) throws Exception {
-        runDeviceTestsAsUser(APP_RESTRICTIONS_MANAGING_APP_PKG,
-                ".ApplicationRestrictionsManagerTest", testName, mUserId);
+        runDeviceTestsAsUser(DELEGATE_APP_PKG,
+                ".AppRestrictionsDelegateTest", testName, mUserId);
+    }
+
+    private void executeDelegationTests(String[] delegationTests, boolean positive)
+            throws Exception {
+        for (String delegationTestClass : delegationTests) {
+            CLog.e("Delegation test " + delegationTestClass + " " +
+                    (positive ? "testCanAccessApis" : "testCannotAccessApis"));
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, delegationTestClass,
+                positive ? "testCanAccessApis" : "testCannotAccessApis", mUserId);
+        }
     }
 
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)
@@ -689,6 +749,21 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         String packageNameExtra = (packageName != null)
                 ? "--es extra-package-name " + packageName : "";
         changePolicyOrFail("set-app-restrictions-manager", packageNameExtra, mUserId);
+    }
+
+    private void setDelegatedScopes(String packageName, List<String> scopes)
+            throws DeviceNotAvailableException {
+        final String packageNameExtra = "--es extra-package-name " + packageName;
+        String scopesExtra = "";
+        if (scopes != null && scopes.size() > 0) {
+            scopesExtra = "--esa extra-scopes-list " + scopes.get(0);
+            for (int i = 1; i < scopes.size(); ++i) {
+                scopesExtra += "," + scopes.get(i);
+            }
+        }
+        final String extras = packageNameExtra + " " + scopesExtra;
+
+        changePolicyOrFail("set-delegated-scopes", extras, mUserId);
     }
 
     private void changePolicyOrFail(String command, String extras, int userId)
