@@ -781,7 +781,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         } finally {
             conn.stopMonitoring();
 
-            cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND normal";
+            cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND allow";
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
             am.removeOnUidImportanceListener(uidGoneListener);
