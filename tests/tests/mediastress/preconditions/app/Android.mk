@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,32 +13,27 @@
 # limitations under the License.
 
 LOCAL_PATH:= $(call my-dir)
+
 include $(CLEAR_VARS)
 
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+# When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_DEX_PREOPT := false
 
-# Include both the 32 and 64 bit versions
-LOCAL_MULTILIB := both
-
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner ctsdeviceutil compatibility-device-util
-
-LOCAL_HOST_SHARED_LIBRARIES := compatibility-device-media-preconditions
-
-LOCAL_JNI_SHARED_LIBRARIES := libctsmediastress_jni libnativehelper_compat_libc++
+LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsMediaStressTestCases
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test compatibility-device-util ctsdeviceutil
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts
+
+LOCAL_PACKAGE_NAME := CtsMediaPreparerApp
 
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
-
