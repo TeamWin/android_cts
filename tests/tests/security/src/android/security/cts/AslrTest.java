@@ -96,8 +96,6 @@ public class AslrTest extends InstrumentationTestCase {
 
     public void testRandomization() throws Exception {
         testMappingEntropy("stack");
-        testMappingEntropy("heap");
-        testMappingEntropy("anon:libc_malloc");
     }
 
     public void testOneExecutableIsPie() throws IOException {
