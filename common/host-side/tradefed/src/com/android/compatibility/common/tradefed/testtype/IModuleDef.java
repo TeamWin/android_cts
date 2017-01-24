@@ -66,7 +66,7 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     void setPreparerWhitelist(Set<String> preparerWhitelist);
 
     /**
-     * Runs the module's precondition checks and setup tasks.
+     * Pushes dynamic configuration, then runs the module's precondition checks and setup tasks.
      * @param skipPrep whether preparation should be skipped
      * @param preconditionArgs arguments to set on precondition preparers for the module, taking
      * format arg-name:arg-value. If "arg-value" is unset, the value will default to "true".
