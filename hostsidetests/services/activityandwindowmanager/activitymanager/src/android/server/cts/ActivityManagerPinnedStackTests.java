@@ -52,6 +52,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
 
+    private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
+    private static final int APP_OPS_MODE_ALLOWED = 0;
+    private static final int APP_OPS_MODE_IGNORED = 1;
+    private static final int APP_OPS_MODE_ERRORED = 2;
+
     private static final int ROTATION_0 = 0;
     private static final int ROTATION_90 = 1;
     private static final int ROTATION_180 = 2;
@@ -481,6 +486,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackIsOnTop();
     }
 
+    public void testAppOpsDenyPipOnPause() throws Exception {
+        // Disable enter-pip-on-hide and try to enter pip
+        setAppOpsOpToMode(ActivityManagerTestBase.componentName,
+                APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_IGNORED);
+
+        // Launch the PIP activity on pause
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
+        assertPinnedStackDoesNotExist();
+
+        // Go home and ensure that there is no pinned stack
+        launchHomeActivity();
+        assertPinnedStackDoesNotExist();
+
+        // Re-enable enter-pip-on-hide
+        setAppOpsOpToMode(ActivityManagerTestBase.componentName,
+                APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_ALLOWED);
+    }
+
     /**
      * Asserts that the pinned stack bounds does not intersect with the IME bounds.
      */
@@ -565,6 +588,13 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         int tapX = pinnedStackBounds.x + pinnedStackBounds.width - 100;
         int tapY = pinnedStackBounds.y + pinnedStackBounds.height - 100;
         executeShellCommand(String.format("input tap %d %d", tapX, tapY));
+    }
+
+    /**
+     * Sets an app-ops op for a given package to a given mode.
+     */
+    private void setAppOpsOpToMode(String packageName, int op, int mode) throws Exception {
+        executeShellCommand(String.format("appops set %s %d %d", packageName, op, mode));
     }
 
     private void pinnedStackTester(String startActivityCmd, String topActivityName,
