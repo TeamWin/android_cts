@@ -51,11 +51,8 @@ public class ShortcutManagerMultiuserTest extends BaseShortcutManagerHostTest {
                 "test02_createShortuctsOnPrimaryUser", getPrimaryUserId());
         runDeviceTestsAsUser(TARGET_PKG, ".ShortcutManagerManagedUserTest",
                 "test03_createShortuctsOnManagedProfile", profileId);
-
         runDeviceTestsAsUser(TARGET_PKG, ".ShortcutManagerManagedUserTest",
-                "test04_getAndLaunch_primary", getPrimaryUserId());
-        runDeviceTestsAsUser(TARGET_PKG, ".ShortcutManagerManagedUserTest",
-                "test04_getAndLaunch_managed", profileId);
+                "test04_getAndLaunch", getPrimaryUserId());
     }
 
     public void testSecondaryUser() throws Exception {
