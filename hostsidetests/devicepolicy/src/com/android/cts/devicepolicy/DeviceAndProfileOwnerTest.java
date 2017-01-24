@@ -700,6 +700,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".PolicyTransparencyTest");
     }
 
+    public void testResetPasswordWithToken() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".ResetPasswordWithTokenTest", "testResetPasswordWithToken");
+    }
+
     protected void executeDeviceTestClass(String className) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
