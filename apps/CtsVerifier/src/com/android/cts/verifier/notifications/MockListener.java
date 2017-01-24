@@ -56,9 +56,8 @@ public class MockListener extends NotificationListenerService {
     static final String SERVICE_PROBE_HINTS = SERVICE_BASE + "SERVICE_PROBE_HINTS";
     static final String SERVICE_ORDER = SERVICE_BASE + "SERVICE_ORDER";
     static final String SERVICE_DND = SERVICE_BASE + "SERVICE_DND";
-    static final String SERVICE_SNOOZE_ONE = SERVICE_BASE + "SERVICE_SNOOZE_ONE";
-    static final String SERVICE_UNSNOOZE_ONE = SERVICE_BASE + "SERVICE_UNSNOOZE_ONE";
     static final String SERVICE_SNOOZE_UNTIL = SERVICE_BASE + "SERVICE_SNOOZE_UNTIL";
+    static final String SERVICE_GET_SNOOZED = SERVICE_BASE + "GET_SNOOZED";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
     static final String EXTRA_INT = "INT";
@@ -85,6 +84,7 @@ public class MockListener extends NotificationListenerService {
     private ArrayMap<String, String> mNotificationKeys = new ArrayMap<>();
     private ArrayList<String> mRemoved = new ArrayList<String>();
     private ArrayMap<String, JSONObject> mRemovedReason = new ArrayMap<>();
+    private ArrayList<String> mSnoozed = new ArrayList<>();
     private ArrayList<String> mOrder = new ArrayList<>();
     private Set<String> mTestPackages = new HashSet<>();
     private BroadcastReceiver mReceiver;
@@ -100,6 +100,7 @@ public class MockListener extends NotificationListenerService {
 
         mPosted = new ArrayList<String>();
         mRemoved = new ArrayList<String>();
+        mSnoozed = new ArrayList<String>();
 
         mReceiver = new BroadcastReceiver() {
             @Override
@@ -161,19 +162,20 @@ public class MockListener extends NotificationListenerService {
                     bundle.putInt(EXTRA_INT, MockListener.this.getCurrentListenerHints());
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
-                } else if (SERVICE_SNOOZE_ONE.equals(action)) {
-                    String tag = intent.getStringExtra(EXTRA_TAG);
-                    String key = mNotificationKeys.get(tag);
-                    MockListener.this.snoozeNotification(key);
-                } else if (SERVICE_UNSNOOZE_ONE.equals(action)) {
-                    String tag = intent.getStringExtra(EXTRA_TAG);
-                    String key = mNotificationKeys.get(tag);
-                    MockListener.this.unsnoozeNotification(key);
                 } else if (SERVICE_SNOOZE_UNTIL.equals(action)) {
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
                     MockListener.this.snoozeNotification(key,
                             intent.getLongExtra(EXTRA_LONG, (long) 0));
+                } else if (SERVICE_GET_SNOOZED.equals(action)) {
+                    mSnoozed.clear();
+                    StatusBarNotification[] snoozed = MockListener.this.getSnoozedNotifications();
+                    for (StatusBarNotification sbn : snoozed) {
+                        mSnoozed.add(sbn.getTag());
+                    }
+                    bundle.putStringArrayList(EXTRA_PAYLOAD, mSnoozed);
+                    setResultExtras(bundle);
+                    setResultCode(Activity.RESULT_OK);
                 } else {
                     Log.w(TAG, "unknown action");
                     setResultCode(Activity.RESULT_CANCELED);
@@ -194,9 +196,8 @@ public class MockListener extends NotificationListenerService {
         filter.addAction(SERVICE_SNOOZE);
         filter.addAction(SERVICE_HINTS);
         filter.addAction(SERVICE_PROBE_HINTS);
-        filter.addAction(SERVICE_SNOOZE_ONE);
-        filter.addAction(SERVICE_UNSNOOZE_ONE);
         filter.addAction(SERVICE_SNOOZE_UNTIL);
+        filter.addAction(SERVICE_GET_SNOOZED);
         registerReceiver(mReceiver, filter);
     }
 
@@ -228,6 +229,7 @@ public class MockListener extends NotificationListenerService {
         mRemoved.clear();
         mOrder.clear();
         mRemovedReason.clear();
+        mSnoozed.clear();
     }
 
     @Override
@@ -316,6 +318,10 @@ public class MockListener extends NotificationListenerService {
         requestStringListResult(context, SERVICE_POSTED, catcher);
     }
 
+    public static void probeListenerSnoozed(Context context, StringListResultCatcher catcher) {
+        requestStringListResult(context, SERVICE_GET_SNOOZED, catcher);
+    }
+
     public static void probeListenerOrder(Context context, StringListResultCatcher catcher) {
         requestStringListResult(context, SERVICE_ORDER, catcher);
     }
@@ -349,14 +355,6 @@ public class MockListener extends NotificationListenerService {
 
     public static void clearOne(Context context, String tag, int code) {
         sendCommand(context, SERVICE_CLEAR_ONE, tag, code);
-    }
-
-    public static void snoozeOne(Context context, String tag) {
-        sendCommand(context, SERVICE_SNOOZE_ONE, tag, 0);
-    }
-
-    public static void unsnoozeOne(Context context, String tag) {
-        sendCommand(context, SERVICE_UNSNOOZE_ONE, tag, 0);
     }
 
     public static void snoozeOneUntil(Context context, String tag, long until) {

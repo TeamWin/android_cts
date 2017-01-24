@@ -117,6 +117,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         tests.add(new AdjustNotificationTest());
         tests.add(new AdjustEnqueuedNotificationTest());
         tests.add(new SnoozeNotificationUntilContextTest());
+        tests.add(new UnsnoozeNotificationTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotEnqueuedTest());
@@ -1025,8 +1026,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     }
 
     private class CreateChannelTest extends InteractiveTestCase {
-        private NotificationChannel channel = new NotificationChannel("channelForOtherPkg", "new",
-                NotificationManager.IMPORTANCE_LOW);
+        private NotificationChannel channel = new NotificationChannel(UUID.randomUUID().toString(),
+                "new", NotificationManager.IMPORTANCE_LOW);
 
         @Override
         View inflate(ViewGroup parent) {
@@ -1074,8 +1075,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     }
 
     private class DeleteChannelTest extends InteractiveTestCase {
-        private NotificationChannel channel = new NotificationChannel("1channelForOtherPkg", "new",
-                NotificationManager.IMPORTANCE_LOW);
+        private NotificationChannel channel = new NotificationChannel(UUID.randomUUID().toString(),
+                "new", NotificationManager.IMPORTANCE_LOW);
 
         @Override
         View inflate(ViewGroup parent) {
@@ -1098,6 +1099,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                             public void accept(ArrayList<Parcelable> result) {
                                 if (result == null || result.size() == 0) {
                                     status = FAIL;
+                                    logFail();
                                     return;
                                 }
                                 boolean pass = false;
@@ -1120,6 +1122,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                 if (result == null || result.size() <= 1) {
                                     status = PASS;
                                 } else {
+                                    logFail();
                                     status = FAIL;
                                 }
                                 next();
@@ -1139,7 +1142,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     }
 
     private class UpdateChannelTest extends InteractiveTestCase {
-        private String id = "channelToUpdate";
+        private String id = UUID.randomUUID().toString();
         private NotificationChannel channel = new NotificationChannel(id, "new",
                 NotificationManager.IMPORTANCE_LOW);
         private NotificationChannel updatedChannel = new NotificationChannel(id, "new",
@@ -1241,7 +1244,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             }
             sendNotifications(channel);
             status = READY;
-            delay();
+            delay(6000);
         }
 
         @Override
@@ -1283,6 +1286,10 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void tearDown() {
             MockAssistant.deleteChannel(mContext, THIS_PKG, channel.getId());
+            mNm.cancel(mTag1, mId1);
+            mNm.cancel(mTag2, mId2);
+            mNm.cancel(mTag2, mId3);
+            MockAssistant.resetListenerData(mContext);
             delay();
         }
     }
@@ -1373,6 +1380,83 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             mNm.cancel(mTag1, mId1);
             mNm.cancel(mTag2, mId2);
             mNm.cancel(mTag2, mId3);
+            MockAssistant.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class UnsnoozeNotificationTest extends InteractiveTestCase {
+        final static int READY_TO_SNOOZE = 0;
+        final static int SNOOZED = 1;
+        final static int READY_TO_UNSNOOZE = 2;
+        final static int UNSNOOZED = 3;
+        int state = -1;
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_unsnooze_one);
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            delay();
+        }
+
+        @Override
+        void test() {
+            status = RETEST;
+
+            if (state == READY_TO_SNOOZE) {
+                MockAssistant.snoozeUntilContext(mContext, mTag1, "hello");
+                state = SNOOZED;
+            } else if (state == SNOOZED) {
+                MockAssistant.probeListenerRemovedWithReason(mContext,
+                        new MockAssistant.BundleListResultCatcher() {
+                            @Override
+                            public void accept(ArrayList<Parcelable> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = true;
+                                for (Parcelable payloadData : result) {
+                                    Bundle payload = (Bundle) payloadData;
+                                    pass &= checkEquals(mTag1,
+                                            payload.getString(KEY_TAG),
+                                            "data dismissal test: notification tag (%s, %s)");
+                                    pass &= checkEquals(MockAssistant.REASON_SNOOZED,
+                                            payload.getInt(KEY_REASON),
+                                            "data dismissal test: reason (%d, %d)");
+                                }
+                                status = pass ? PASS : FAIL;
+                                next();
+                            }
+                        });
+            } else if (state == READY_TO_UNSNOOZE) {
+                MockAssistant.unsnoozeOne(mContext, mTag1);
+                state = UNSNOOZED;
+            } else {
+                MockAssistant.probeListenerPosted(mContext,
+                        new MockAssistant.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() != 0
+                                        && result.contains(mTag1)) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
             MockAssistant.resetListenerData(mContext);
             delay();
         }
