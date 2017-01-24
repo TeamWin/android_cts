@@ -173,6 +173,7 @@ public class DisplayTest extends InstrumentationTestCase {
         assertFalse(cap.getDesiredMaxLuminance() < -1.0f);
         assertFalse(cap.getDesiredMinLuminance() < -1.0f);
         assertFalse(cap.getDesiredMaxAverageLuminance() < -1.0f);
+        assertFalse(display.isHdr());
     }
 
     /**
@@ -205,6 +206,8 @@ public class DisplayTest extends InstrumentationTestCase {
         assertTrue(0 < display.getRefreshRate());
 
         assertTrue(display.getName().contains(OVERLAY_DISPLAY_NAME_PREFIX));
+
+        assertFalse(display.isWideColorGamut());
     }
 
     /**
