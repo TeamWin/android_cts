@@ -59,75 +59,38 @@ public class ShortcutManagerManagedUserTest extends ShortcutManagerDeviceTestBas
                                 new ComponentName(getContext(), MainActivity.class))).build())));
     }
 
-    public void test04_getAndLaunch_primary() {
-        Launcher.setAsDefaultLauncher(getInstrumentation(), getContext());
-
-        final UserHandle userCurrent = android.os.Process.myUserHandle();
-        final UserHandle userOther = getManagedUser();
-
-        final ShortcutQuery q = new ShortcutQuery()
-                .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC)
-                .setPackage(getContext().getPackageName())
-                .setShortcutIds(list("s1"));
-        assertWith(getLauncherApps().getShortcuts(q, userCurrent))
-                .haveIds("s1")
-                .areAllDynamic()
-                .forShortcutWithId("s1", si -> {
-                    assertEquals("label1", si.getShortLabel());
-                    assertEquals(userCurrent, si.getUserHandle());
-                });
-        assertWith(getLauncherApps().getShortcuts(q, userOther))
-                .haveIds("s1")
-                .areAllDynamic()
-                .forShortcutWithId("s1", si -> {
-                    assertEquals("label2", si.getShortLabel());
-                    assertEquals(userOther, si.getUserHandle());
-                });
-
-        // Just call start and make sure they don't throw.
-        getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
-                userCurrent);
-
-        // TODO Make sure the activity actually starts.
-        getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
-                userOther);
-    }
-
-    public void test04_getAndLaunch_managed() {
+    public void test04_getAndLaunch() {
         Launcher.setAsDefaultLauncher(getInstrumentation(), getContext());
 
         final UserHandle userMain = android.os.Process.myUserHandle();
-        final UserHandle userOther = getManagedUser();
+        final UserHandle userManaged = getManagedUser();
 
         final ShortcutQuery q = new ShortcutQuery()
                 .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC)
                 .setPackage(getContext().getPackageName())
                 .setShortcutIds(list("s1"));
-        try {
-            getLauncherApps().getShortcuts(q, userOther);
-            fail("Didn't throw SecurityException");
-        } catch (SecurityException e) {
-            assertTrue(e.getMessage().contains("another profile"));
-        }
         assertWith(getLauncherApps().getShortcuts(q, userMain))
                 .haveIds("s1")
                 .areAllDynamic()
                 .forShortcutWithId("s1", si -> {
-                    assertEquals("label2", si.getShortLabel());
+                    assertEquals("label1", si.getShortLabel());
                     assertEquals(userMain, si.getUserHandle());
                 });
+        assertWith(getLauncherApps().getShortcuts(q, userManaged))
+                .haveIds("s1")
+                .areAllDynamic()
+                .forShortcutWithId("s1", si -> {
+                    assertEquals("label2", si.getShortLabel());
+                    assertEquals(userManaged, si.getUserHandle());
+                });
 
-        try {
-            getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
-                    userOther);
-            fail("Didn't throw SecurityException");
-        } catch (SecurityException e) {
-            assertTrue(e.getMessage().contains("another profile"));
-        }
+        // Just call start and make sure they don't throw.
+        getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
+                userMain);
 
         // TODO Make sure the activity actually starts.
         getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
-                userMain);
+                userManaged);
     }
 
     private UserHandle getManagedUser() {
