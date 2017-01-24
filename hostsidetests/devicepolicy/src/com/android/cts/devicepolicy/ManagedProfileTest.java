@@ -792,9 +792,50 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mParentUserId);
     }
 
+    private void givePackageWriteSettingsPermission(int userId, String pkg) throws Exception {
+        // Allow app to write to settings (for RingtoneManager.setActualDefaultUri to work)
+        String command = "appops set --user " + userId + " " + pkg
+                + " android:write_settings allow";
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
+    }
+
     public void testRingtoneSync() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        givePackageWriteSettingsPermission(mProfileUserId, MANAGED_PROFILE_PKG);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".RingtoneSyncTest",
                 "testRingtoneSync", mProfileUserId);
+    }
+
+    // Test if setting RINGTONE disables sync
+    public void testRingtoneSyncAutoDisableRingtone() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        givePackageWriteSettingsPermission(mProfileUserId, MANAGED_PROFILE_PKG);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".RingtoneSyncTest",
+                "testRingtoneDisableSync", mProfileUserId);
+    }
+
+    // Test if setting NOTIFICATION disables sync
+    public void testRingtoneSyncAutoDisableNotification() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        givePackageWriteSettingsPermission(mProfileUserId, MANAGED_PROFILE_PKG);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".RingtoneSyncTest",
+                "testNotificationDisableSync", mProfileUserId);
+    }
+
+    // Test if setting ALARM disables sync
+    public void testRingtoneSyncAutoDisableAlarm() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        givePackageWriteSettingsPermission(mProfileUserId, MANAGED_PROFILE_PKG);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".RingtoneSyncTest",
+                "testAlarmDisableSync", mProfileUserId);
     }
 
     public void testTrustAgentInfo() throws Exception {
