@@ -27,6 +27,7 @@ import android.widget.RemoteViews;
 
 public class NotificationTest extends AndroidTestCase {
 
+    private Notification.Action mAction;
     private Notification mNotification;
     private Context mContext;
 
@@ -34,6 +35,7 @@ public class NotificationTest extends AndroidTestCase {
     private static final String CONTENT_TITLE = "contentTitle";
     private static final String CONTENT_TEXT = "contentText";
     private static final String URI_STRING = "uriString";
+    private static final String ACTION_TITLE = "actionTitle";
     private static final int TOLERANCE = 200;
 
     @Override
@@ -163,6 +165,16 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
+    }
+
+    public void testActionBuilder() {
+        final Intent intent = new Intent();
+        final PendingIntent actionIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+        mAction = null;
+        mAction = new Notification.Action.Builder(0, ACTION_TITLE, actionIntent).build();
+        assertEquals(ACTION_TITLE, mAction.title);
+        assertEquals(actionIntent, mAction.actionIntent);
+        assertEquals(true, mAction.getAllowGeneratedReplies());
     }
 
     public void testToString() {
