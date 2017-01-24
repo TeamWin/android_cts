@@ -490,6 +490,10 @@ public class ModuleRepo implements IModuleRepo {
         if (res.isEmpty()) {
             return null;
         }
+        if (shardIndex >= res.size()) {
+            // If we could not shard up to expectation
+            return null;
+        }
         return res.get(shardIndex);
     }
 

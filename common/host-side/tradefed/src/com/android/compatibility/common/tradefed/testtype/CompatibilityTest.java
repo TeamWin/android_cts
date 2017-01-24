@@ -365,7 +365,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     mLogcatOnFailure, mScreenshotOnFailure, mRebootOnFailure, mMaxLogcatBytes);
             int moduleCount = modules.size();
             if (moduleCount == 0) {
-                CLog.logAndDisplay(LogLevel.INFO, "No module to run.");
+                CLog.logAndDisplay(LogLevel.INFO, "No module to run on %s.",
+                        mDevice.getSerialNumber());
+                // Make sure we unlock other shards.
+                sPreparedLatch.countDown();
                 return;
             } else {
                 CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
