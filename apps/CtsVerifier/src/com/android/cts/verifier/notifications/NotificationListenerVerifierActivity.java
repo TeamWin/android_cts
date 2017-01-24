@@ -79,9 +79,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new DismissOneTest());
         tests.add(new DismissOneWithReasonTest());
         tests.add(new DismissAllTest());
-        tests.add(new SnoozeNotificationTest());
-        tests.add(new UnsnoozeNotificationTest());
         tests.add(new SnoozeNotificationForTimeTest());
+        tests.add(new GetSnoozedNotificationTest());
         tests.add(new EnableHintsTest());
         tests.add(new SnoozeTest());
         tests.add(new UnsnoozeTest());
@@ -666,143 +665,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
-    private class SnoozeNotificationTest extends InteractiveTestCase {
-        @Override
-        View inflate(ViewGroup parent) {
-            return createAutoItem(parent, R.string.nls_snooze_one);
-        }
-
-        @Override
-        void setUp() {
-            sendNotifications();
-            status = READY;
-            delay();
-        }
-
-        @Override
-        void test() {
-            if (status == READY) {
-                MockListener.snoozeOne(mContext, mTag1);
-                status = RETEST;
-            } else {
-                MockListener.probeListenerRemoved(mContext,
-                        new MockListener.StringListResultCatcher() {
-                            @Override
-                            public void accept(List<String> result) {
-                                if (result != null && result.size() != 0
-                                        && result.contains(mTag1)
-                                        && !result.contains(mTag2)
-                                        && !result.contains(mTag3)) {
-                                    status = PASS;
-                                } else {
-                                    logFail();
-                                    status = FAIL;
-                                }
-                                next();
-                            }
-                        });
-            }
-            delay();
-        }
-
-        @Override
-        void tearDown() {
-            mNm.cancel(mTag1, mId1);
-            mNm.cancel(mTag2, mId2);
-            mNm.cancel(mTag2, mId3);
-            MockListener.resetListenerData(mContext);
-            delay();
-        }
-    }
-
-    private class UnsnoozeNotificationTest extends InteractiveTestCase {
-        final static int READY_TO_SNOOZE = 0;
-        final static int SNOOZED = 1;
-        final static int READY_TO_UNSNOOZE = 2;
-        final static int UNSNOOZED = 3;
-        int state = -1;
-        @Override
-        View inflate(ViewGroup parent) {
-            return createAutoItem(parent, R.string.nls_unsnooze_one);
-        }
-
-        @Override
-        void setUp() {
-            sendNotifications();
-            status = READY;
-            delay();
-        }
-
-        @Override
-        void test() {
-            status = RETEST;
-
-            if (state == READY_TO_SNOOZE) {
-                MockListener.snoozeOne(mContext, mTag1);
-                state = SNOOZED;
-            } else if (state == SNOOZED) {
-                MockListener.probeListenerRemovedWithReason(mContext,
-                        new StringListResultCatcher() {
-                            @Override
-                            public void accept(List<String> result) {
-                                if (result == null || result.size() == 0) {
-                                    status = FAIL;
-                                    return;
-                                }
-                                boolean pass = true;
-                                for (String payloadData : result) {
-                                    JSONObject payload = null;
-                                    try {
-                                        payload = new JSONObject(payloadData);
-                                        pass &= checkEquals(mTag1,
-                                                payload.getString(JSON_TAG),
-                                                "data dismissal test: notification tag (%s, %s)");
-                                        pass &= checkEquals(MockListener.REASON_SNOOZED,
-                                                payload.getInt(JSON_TAG),
-                                                "data dismissal test: reason (%d, %d)");
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                if (!pass) {
-                                    logFail();
-                                    status = FAIL;
-                                    next();
-                                    return;
-                                } else {
-                                    state = READY_TO_UNSNOOZE;
-                                }
-                            }
-                        });
-            } else if (state == READY_TO_UNSNOOZE) {
-                MockListener.unsnoozeOne(mContext, mTag1);
-                state = UNSNOOZED;
-            } else {
-                MockListener.probeListenerPosted(mContext,
-                        new MockListener.StringListResultCatcher() {
-                            @Override
-                            public void accept(List<String> result) {
-                                if (result != null && result.size() != 0
-                                        && result.contains(mTag1)) {
-                                    status = PASS;
-                                } else {
-                                    logFail();
-                                    status = FAIL;
-                                }
-                                next();
-                            }
-                        });
-            }
-        }
-
-        @Override
-        void tearDown() {
-            mNm.cancelAll();
-            MockListener.resetListenerData(mContext);
-            delay();
-        }
-    }
-
     private class SnoozeNotificationForTimeTest extends InteractiveTestCase {
         final static int READY_TO_SNOOZE = 0;
         final static int SNOOZED = 1;
@@ -870,6 +732,96 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                             public void accept(List<String> result) {
                                 if (result != null && result.size() != 0
                                         && result.contains(mTag1)) {
+                                    status = PASS;
+                                } else {
+                                    logFail();
+                                    status = FAIL;
+                                }
+                                next();
+                            }
+                        });
+            }
+            delay();
+        }
+
+        @Override
+        void tearDown() {
+            mNm.cancelAll();
+            MockListener.resetListenerData(mContext);
+            delay();
+        }
+    }
+
+    private class GetSnoozedNotificationTest extends InteractiveTestCase {
+        final static int READY_TO_SNOOZE = 0;
+        final static int SNOOZED = 1;
+        final static int READY_TO_CHECK_FOR_GET_SNOOZE = 2;
+        int state = -1;
+        long snoozeTime = 30000;
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_get_snoozed);
+        }
+
+        @Override
+        void setUp() {
+            sendNotifications();
+            status = READY;
+            state = READY_TO_SNOOZE;
+            delay();
+        }
+
+        @Override
+        void test() {
+            status = RETEST;
+            if (state == READY_TO_SNOOZE) {
+                MockListener.snoozeOneUntil(mContext, mTag1,
+                        System.currentTimeMillis() + snoozeTime);
+                MockListener.snoozeOneUntil(mContext, mTag2,
+                        System.currentTimeMillis() + snoozeTime);
+                state = SNOOZED;
+            } else if (state == SNOOZED){
+                MockListener.probeListenerRemovedWithReason(mContext,
+                        new StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result == null || result.size() == 0) {
+                                    status = FAIL;
+                                    return;
+                                }
+                                boolean pass = true;
+                                for (String payloadData : result) {
+                                    JSONObject payload = null;
+                                    try {
+                                        payload = new JSONObject(payloadData);
+                                        pass &= checkEquals(mTag1,
+                                                payload.getString(JSON_TAG),
+                                                "data dismissal test: notification tag (%s, %s)");
+                                        pass &= checkEquals(MockListener.REASON_SNOOZED,
+                                                payload.getInt(JSON_TAG),
+                                                "data dismissal test: reason (%d, %d)");
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                if (!pass) {
+                                    logFail();
+                                    status = FAIL;
+                                    next();
+                                    return;
+                                } else {
+                                    state = READY_TO_CHECK_FOR_GET_SNOOZE;
+                                }
+                            }
+                        });
+            } else {
+                MockListener.probeListenerSnoozed(mContext,
+                        new MockListener.StringListResultCatcher() {
+                            @Override
+                            public void accept(List<String> result) {
+                                if (result != null && result.size() == 2
+                                        && result.contains(mTag1)
+                                        && result.contains(mTag2)) {
                                     status = PASS;
                                 } else {
                                     logFail();

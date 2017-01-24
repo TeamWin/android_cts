@@ -62,6 +62,7 @@ public class MockAssistant extends NotificationAssistantService {
     public static final String SERVICE_ADJUST_ENQUEUE = SERVICE_BASE + "ADJUST_ENQUEUE";
     public static final String SERVICE_SNOOZE_UNTIL_CONTEXT = SERVICE_BASE + "CONTEXT_SNOOZE";
     public static final String SERVICE_SNOOZED = SERVICE_BASE + "SNOOZED_UNTIL_CONTEXT";
+    public static final String SERVICE_UNSNOOZE_ONE = SERVICE_BASE + "SERVICE_UNSNOOZE_ONE";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
     static final String EXTRA_INT = "INT";
@@ -226,6 +227,10 @@ public class MockAssistant extends NotificationAssistantService {
                     String snoozeCriterionId = intent.getStringExtra(EXTRA_PAYLOAD);
                     MockAssistant.this.snoozeNotification(
                             mNotificationKeys.get(tag), snoozeCriterionId);
+                } else if (SERVICE_UNSNOOZE_ONE.equals(action)) {
+                    String tag = intent.getStringExtra(EXTRA_TAG);
+                    String key = mNotificationKeys.get(tag);
+                    MockAssistant.this.unsnoozeNotification(key);
                 } else {
                     Log.w(TAG, "unknown action");
                     setResultCode(Activity.RESULT_CANCELED);
@@ -252,6 +257,7 @@ public class MockAssistant extends NotificationAssistantService {
         filter.addAction(SERVICE_ADJUST_ENQUEUE);
         filter.addAction(SERVICE_SNOOZE_UNTIL_CONTEXT);
         filter.addAction(SERVICE_SNOOZED);
+        filter.addAction(SERVICE_UNSNOOZE_ONE);
         registerReceiver(mReceiver, filter);
     }
 
@@ -403,10 +409,6 @@ public class MockAssistant extends NotificationAssistantService {
         requestStringListResult(context, SERVICE_POSTED, catcher);
     }
 
-    public static void probeListenerOrder(Context context, StringListResultCatcher catcher) {
-        requestStringListResult(context, SERVICE_ORDER, catcher);
-    }
-
     public static void probeListenerPayloads(Context context, BundleListResultCatcher catcher) {
         requestBundleListResult(context, SERVICE_PAYLOADS, catcher);
     }
@@ -485,6 +487,10 @@ public class MockAssistant extends NotificationAssistantService {
             broadcast.putExtra(EXTRA_CODE, code);
         }
         context.sendBroadcast(broadcast);
+    }
+
+    public static void unsnoozeOne(Context context, String tag) {
+        sendCommand(context, SERVICE_UNSNOOZE_ONE, tag, 0);
     }
 
     public abstract static class StatusCatcher extends BroadcastReceiver {
