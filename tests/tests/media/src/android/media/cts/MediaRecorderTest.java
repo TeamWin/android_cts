@@ -680,30 +680,21 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                         }
                     }
 
-                    // Test passing a write-only FileDescriptor and expect IOException.
+                    // Test passing a write-only FileDescriptor and expect NO IOException.
                     if (mFileIndex == 3) {
-                        ParcelFileDescriptor out = null;
-                        String path = null;
                         try {
-                            path = OUTPUT_PATH + '9';
+                            ParcelFileDescriptor out = null;
+                            String path = OUTPUT_PATH + mFileIndex;
                             out = ParcelFileDescriptor.open(new File(path),
                                     ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE);
                             mMediaRecorder.setNextOutputFile(out.getFileDescriptor());
-                            fail("Expect IOException.");
+                            out.close();
+                            recordFileList.add(path);
+                            mFileIndex++;
                         } catch (IOException e) {
-                            // Expected.
-                        } finally {
-                            try {
-                                out.close();
-                                new File(path).delete();
-                            } catch (IOException e) {
-                                fail("Fail to close file");
-                            }
+                            fail("Fail to set next output file error: " + e);
                         }
-                    }
-
-                    // only record 5 files.
-                    if (mFileIndex < 6) {
+                    } else if (mFileIndex < 6) {
                         try {
                             String path = OUTPUT_PATH + mFileIndex;
                             mMediaRecorder.setNextOutputFile(path);
