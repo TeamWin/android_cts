@@ -1112,6 +1112,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                             mContext, OTHER_PKG, channel.getId());
                                     status = RETEST;
                                 }
+                                delay();
                             }
                         });
             } else if (status == RETEST) {
