@@ -404,7 +404,7 @@ public class AccessibilityEndToEndTest extends
         getInstrumentation()
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
-                this, InstrumentedAccessibilityService.class);
+                getInstrumentation(), InstrumentedAccessibilityService.class);
         try {
             assertFalse(service.wasOnInterruptCalled());
 
