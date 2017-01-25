@@ -26,6 +26,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
@@ -42,7 +43,7 @@ abstract class AutoFillServiceTestCase {
     protected static UiBot sUiBot;
 
     @BeforeClass
-    public static void setUiBot() {
+    public static void setUiBot() throws Exception {
         sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation(), UI_TIMEOUT_SEC);
     }
 
@@ -50,6 +51,11 @@ abstract class AutoFillServiceTestCase {
     public static void disableService() {
         runShellCommand("settings delete secure %s", AUTO_FILL_SERVICE);
         assertServiceDisabled();
+    }
+
+    @Before
+    public void resetServiceState() {
+        InstrumentedAutoFillService.resetNumberFillRequests();
     }
 
     /**

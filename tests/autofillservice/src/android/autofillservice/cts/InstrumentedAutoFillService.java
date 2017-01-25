@@ -34,6 +34,7 @@ import android.view.autofill.FillResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,6 +46,8 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     private static final AtomicReference<CannedFillResponse> sCannedFillResponse =
             new AtomicReference<>();
+
+    private static AtomicInteger sNumberFillRequests = new AtomicInteger(0);
 
     // TODO(b/33197203, b/33802548): add tests for onConnected() / onDisconnected() and/or remove
     // overriden methods below that are only logging their calls.
@@ -62,8 +65,9 @@ public class InstrumentedAutoFillService extends AutoFillService {
     @Override
     public void onFillRequest(AssistStructure structure, Bundle data,
             CancellationSignal cancellationSignal, FillCallback callback) {
+        final int requestNumber = sNumberFillRequests.incrementAndGet();
         final CannedFillResponse cannedResponse = sCannedFillResponse.getAndSet(null);
-        Log.v(TAG, "onFillRequest(): cannedResponse = " + cannedResponse);
+        Log.v(TAG, "onFillRequest(#" + requestNumber + "): cannedResponse = " + cannedResponse);
 
         if (cannedResponse == null) {
             callback.onSuccess(null);
@@ -118,6 +122,24 @@ public class InstrumentedAutoFillService extends AutoFillService {
         if (!ok) {
             throw new IllegalStateException("already set: " + sCannedFillResponse.get());
         }
+    }
+
+    /**
+     * Resets the number of requests to {@link #onFillRequest(AssistStructure, Bundle,
+     * CancellationSignal, FillCallback)} so it can be verified by
+     * {@link #assertNumberFillRequests(int)}.
+     */
+    static void resetNumberFillRequests() {
+        sNumberFillRequests.set(0);
+    }
+
+    /**
+     * Asserts the number of calls to {@link #onFillRequest(AssistStructure, Bundle,
+     * CancellationSignal, FillCallback)} since the last call to {@link #resetNumberFillRequests()}.
+     */
+    static void assertNumberFillRequests(int expected) {
+        final int actual = sNumberFillRequests.get();
+        assertWithMessage("Invalid number of fill requests").that(actual).isEqualTo(expected);
     }
 
     private void fill(Dataset.Builder builder, Map<String, AutoFillValue> fields,
