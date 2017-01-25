@@ -365,11 +365,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_REENTER_PIP_ON_EXIT, "true");
         assertPinnedStackExists();
 
-        // Tap the screen at a known location in the pinned stack bounds to trigger the activity
-        // to exit and re-enter pip
-        // TODO: add channel for expanding the PIP, but for now, just force-tap twice
-        tapToFinishPip();
-        tapToFinishPip();
+        // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
+        launchActivity(PIP_ACTIVITY);
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
         }, "Waiting for PIP to exit to fullscreen");
@@ -389,11 +386,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_REENTER_PIP_ON_EXIT, "true");
         assertPinnedStackExists();
 
-        // Tap the screen at a known location in the pinned stack bounds to trigger the activity
-        // to exit and re-enter pip
-        // TODO: add channel for expanding the PIP, but for now, just force-tap twice
-        tapToFinishPip();
-        tapToFinishPip();
+        // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
+        launchActivity(PIP_ACTIVITY);
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
         }, "Waiting for PIP to exit to fullscreen");
