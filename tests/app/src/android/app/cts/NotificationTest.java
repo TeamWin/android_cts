@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import android.app.Notification;
+import android.app.Notification.MessagingStyle.Message;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -185,6 +186,22 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(ACTION_TITLE, mAction.title);
         assertEquals(actionIntent, mAction.actionIntent);
         assertEquals(true, mAction.getAllowGeneratedReplies());
+    }
+
+    public void testMessagingStyle_historicMessages() {
+        mNotification = new Notification.Builder(mContext)
+                .setSmallIcon(1)
+                .setContentTitle(CONTENT_TITLE)
+                .setStyle(new Notification.MessagingStyle("self name")
+                        .addMessage("text", 0, "sender")
+                        .addMessage(new Message("image", 0, "sender")
+                                .setData("image/png", Uri.parse("http://example.com/image.png")))
+                        .addHistoricMessage(new Message("historic text", 0, "historic sender"))
+                        .setConversationTitle("title")
+                ).build();
+
+        assertNotNull(
+                mNotification.extras.getParcelableArray(Notification.EXTRA_HISTORIC_MESSAGES));
     }
 
     public void testToString() {
