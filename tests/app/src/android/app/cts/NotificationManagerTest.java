@@ -18,6 +18,7 @@ package android.app.cts;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.stubs.R;
@@ -107,6 +108,34 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_HIGH);
             mNotificationManager.createNotificationChannel(channelDupe);
             compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+        } finally {
+            mNotificationManager.deleteNotificationChannel(channel.getId());
+        }
+    }
+
+    public void testCreateChannelWithGroup() {
+        NotificationChannelGroup ncg = new NotificationChannelGroup("g", "n");
+        mNotificationManager.createNotificationChannelGroup(ncg);
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(ncg.getId());
+        try {
+            mNotificationManager.createNotificationChannel(channel);
+            compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+        } finally {
+            mNotificationManager.deleteNotificationChannel(channel.getId());
+        }
+    }
+
+    public void testCreateChannelWithBadGroup() {
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup("garbage");
+        try {
+            try {
+                mNotificationManager.createNotificationChannel(channel);
+                fail("Created notification with bad group");
+            } catch (IllegalArgumentException e) {}
         } finally {
             mNotificationManager.deleteNotificationChannel(channel.getId());
         }
@@ -372,5 +401,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.getImportance(), actual.getImportance());
         assertEquals(expected.getSound(), actual.getSound());
         assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
+        assertEquals(expected.getGroup(), actual.getGroup());
     }
 }
