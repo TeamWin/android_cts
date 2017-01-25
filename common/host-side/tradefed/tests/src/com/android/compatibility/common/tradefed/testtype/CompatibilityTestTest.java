@@ -287,7 +287,7 @@ public class CompatibilityTestTest extends TestCase {
             }
         }, 0);
         mTest.setDevice(mMockDevice);
-        EasyMock.expect(mMockDevice.getSerialNumber()).andReturn("FAKE_SERIAL");
+        EasyMock.expect(mMockDevice.getSerialNumber()).andReturn("FAKE_SERIAL").times(2);
         EasyMock.replay(mMockDevice, mMockListener);
         mTest.run(mMockListener);
         EasyMock.verify(mMockDevice, mMockListener);

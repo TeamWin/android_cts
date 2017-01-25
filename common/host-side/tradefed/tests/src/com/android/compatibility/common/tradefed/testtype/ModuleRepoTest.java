@@ -421,4 +421,20 @@ public class ModuleRepoTest extends TestCase {
         assertEquals(mod3, res.get(0));
         assertEquals(mod4, res.get(1));
     }
+
+    /**
+     * When reaching splitting time, we need to ensure that even after best effort, if we cannot
+     * split into the requested number of shardIndex, we simply return null to report an empty
+     * shard.
+     */
+    public void testGetShard_cannotSplitMore() {
+        List<IModuleDef> testList = new ArrayList<>();
+        TestRuntime test1 = new TestRuntime();
+        test1.runtimeHint = 100l;
+        IModuleDef mod1 = new ModuleDef("test1", new Abi("arm", "32"), test1,
+                new ArrayList<ITargetPreparer>());
+        testList.add(mod1);
+        List<IModuleDef> res = mRepo.getShard(testList, 1, 2);
+        assertNull(res);
+    }
 }
