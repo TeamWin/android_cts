@@ -538,18 +538,18 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         }
 
         // Add deferred surfaces to their configurations
-        surfaceViewOutput.setDeferredSurface(mPreviewSurface);
-        surfaceTextureOutput.setDeferredSurface(sharedOutputSurface1);
+        surfaceViewOutput.addSurface(mPreviewSurface);
+        surfaceTextureOutput.addSurface(sharedOutputSurface1);
 
-        // Verify bad inputs to setDeferredSurface
+        // Verify bad inputs to addSurface
         try {
-            surfaceViewOutput.setDeferredSurface(null);
+            surfaceViewOutput.addSurface(null);
             fail("No error from setting a null deferred surface");
         } catch (NullPointerException e) {
             // expected
         }
         try {
-            surfaceViewOutput.setDeferredSurface(mPreviewSurface);
+            surfaceViewOutput.addSurface(mPreviewSurface);
             fail("Shouldn't be able to set deferred surface twice");
         } catch (IllegalStateException e) {
             // expected
@@ -559,12 +559,12 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         List<OutputConfiguration> deferredSurfaces = new ArrayList<>();
         deferredSurfaces.add(surfaceTextureOutput);
 
-        mSession.finishDeferredConfiguration(deferredSurfaces);
+        mSession.finalizeOutputConfigurations(deferredSurfaces);
 
         // Try a second time, this should error
 
         try {
-            mSession.finishDeferredConfiguration(deferredSurfaces);
+            mSession.finalizeOutputConfigurations(deferredSurfaces);
             fail("Should have received ISE for trying to finish a deferred output twice");
         } catch (IllegalArgumentException e) {
             // expected
@@ -593,7 +593,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         deferredSurfaces.clear();
         deferredSurfaces.add(surfaceViewOutput);
 
-        mSession.finishDeferredConfiguration(deferredSurfaces);
+        mSession.finalizeOutputConfigurations(deferredSurfaces);
 
         // Use final deferred surface for a bit
         imageListener.resetImageCount();
@@ -611,16 +611,16 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
                 new OutputConfiguration(maxPreviewSize, SurfaceTexture.class);
         deferredSurfaces.clear();
         try {
-            mSession.finishDeferredConfiguration(deferredSurfaces);
-            fail("No error for empty list passed to finishDeferredConfiguration");
+            mSession.finalizeOutputConfigurations(deferredSurfaces);
+            fail("No error for empty list passed to finalizeOutputConfigurations");
         } catch (IllegalArgumentException e) {
             // expected
         }
 
         deferredSurfaces.add(badConfig);
         try {
-            mSession.finishDeferredConfiguration(deferredSurfaces);
-            fail("No error for invalid output config being passed to finishDeferredConfiguration");
+            mSession.finalizeOutputConfigurations(deferredSurfaces);
+            fail("No error for invalid output config being passed to finalizeOutputConfigurations");
         } catch (IllegalArgumentException e) {
             // expected
         }
