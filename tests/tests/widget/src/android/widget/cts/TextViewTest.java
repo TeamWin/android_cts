@@ -131,6 +131,9 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.view.textclassifier.TextClassificationManager;
+import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextSelection;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -195,6 +198,8 @@ public class TextViewTest {
         mTextView.setKeyListener(QwertyKeyListener.getInstance(false, Capitalize.NONE));
         mTextView.setText("", BufferType.EDITABLE);
         mTextView.requestFocus();
+        // Disable smart selection
+        mTextView.setTextClassifier(TextClassifier.NO_OP);
     }
 
     /**
@@ -6762,6 +6767,32 @@ public class TextViewTest {
         assertNotEquals(customTextSize, mTextView.getTextSize(), 0f);
     }
 
+    @Test
+    public void testSmartSelection() throws Throwable {
+        mTextView = findTextView(R.id.textview_text);
+        String text = "The president-elect, Filip, is coming to town tomorrow.";
+        int startIndex = text.indexOf("president");
+        int endIndex = startIndex + "president".length();
+        initTextViewForTypingOnUiThread();
+        TextClassificationManager tcm = mActivity.getSystemService(TextClassificationManager.class);
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setTextIsSelectable(true);
+            mTextView.setText(text, BufferType.EDITABLE);
+            mTextView.setTextClassifier(tcm.getDefaultTextClassifier());
+        });
+        mInstrumentation.waitForIdleSync();
+
+        Point offset = getCenterPositionOfTextAt(mTextView, startIndex, endIndex);
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTextView, offset.x, offset.y);
+        PollingCheck.waitFor(mTextView::hasSelection);
+
+        TextSelection selection = tcm.getDefaultTextClassifier()
+                .suggestSelection(text, startIndex, endIndex);
+        assertEquals(selection.getSelectionStartIndex(), mTextView.getSelectionStart());
+        assertEquals(selection.getSelectionEndIndex(), mTextView.getSelectionEnd());
+        // TODO: Test the floating toolbar content.
+    }
+
     /**
      * Some TextView attributes require non-fixed width and/or layout height. This function removes
      * all other existing views from the layout leaving only one auto-size TextView (for exercising
@@ -6985,6 +7016,25 @@ public class TextViewTest {
     private void setLineSpacing(final float add, final float mult) throws Throwable {
         mActivityRule.runOnUiThread(() -> mTextView.setLineSpacing(add, mult));
         mInstrumentation.waitForIdleSync();
+    }
+
+    /**
+     * Returns the x, y coordinates of text at a specified indices relative to the position of the
+     * TextView.
+     *
+     * @param textView
+     * @param startIndex start index of the text in the textView
+     * @param endIndex end index of the text in the textView
+     */
+    private static Point getCenterPositionOfTextAt(
+            TextView textView, int startIndex, int endIndex) {
+        int xStart = (int) textView.getLayout().getPrimaryHorizontal(startIndex, true, true);
+        int xEnd = (int) textView.getLayout().getPrimaryHorizontal(endIndex, true, true);
+        int line = textView.getLayout().getLineForOffset(endIndex);
+        int yTop = textView.getLayout().getLineTop(line);
+        int yBottom = textView.getLayout().getLineBottom(line);
+
+        return new Point((xStart + xEnd) / 2 /* x */, (yTop + yBottom) / 2 /* y */);
     }
 
     private static abstract class TestSelectedRunnable implements Runnable {
