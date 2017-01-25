@@ -68,4 +68,13 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
                 "testVerifyAdminExtraBundle", mProfileUserId);
     }
+
+    public void testVerifySuccessfulIntentWasReceived() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testVerifySuccessfulIntentWasReceived", mProfileUserId);
+    }
 }

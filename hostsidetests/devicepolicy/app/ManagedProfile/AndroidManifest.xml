@@ -123,6 +123,15 @@
                        android:resource="@xml/authenticator" />
         </service>
         <activity android:name="com.android.compatibility.common.util.devicepolicy.provisioning.StartProvisioningActivity"/>
+
+        <activity
+                android:name=".ProvisioningSuccessActivity"
+                android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.app.action.PROVISIONING_SUCCESSFUL"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
