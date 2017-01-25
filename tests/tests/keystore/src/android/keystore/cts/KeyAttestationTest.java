@@ -53,9 +53,11 @@ import static org.junit.matchers.JUnitMatchers.hasItems;
 
 import com.google.common.collect.ImmutableSet;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.Context;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.security.KeyStoreException;
+import android.security.keystore.AttestationUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
@@ -360,6 +362,12 @@ public class KeyAttestationTest extends AndroidTestCase {
                         e);
             }
         }
+    }
+
+    public void testDeviceIdAttestation() throws Exception {
+        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_SERIAL);
+        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_IMEI);
+        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID);
     }
 
     @SuppressWarnings("deprecation")
@@ -863,6 +871,16 @@ public class KeyAttestationTest extends AndroidTestCase {
                 throw new GeneralSecurityException("Failed to verify certificate "
                         + certChain[i - 1] + " with public key " + certChain[i].getPublicKey(), e);
             }
+        }
+    }
+
+    private void testDeviceIdAttestationFailure(int idType) throws Exception {
+        try {
+            AttestationUtils.attestDeviceIds(getContext(), new int[] {idType}, "123".getBytes());
+            fail("Attestation should have failed.");
+        } catch (SecurityException e) {
+            // Attestation is expected to fail with a SecurityException as we do not hold
+            // READ_PRIVILEGED_PHONE_STATE permission.
         }
     }
 }
