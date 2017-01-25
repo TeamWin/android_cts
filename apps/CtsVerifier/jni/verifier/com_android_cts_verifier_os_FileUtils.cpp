@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include <grp.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -100,8 +101,10 @@ static JNINativeMethod gMethods[] = {
 int register_com_android_cts_verifier_os_FileUtils(JNIEnv* env)
 {
     jclass clazz = env->FindClass("com/android/cts/verifier/os/FileUtils");
+    assert(clazz != null);
 
     jclass fileStatusClass = env->FindClass("com/android/cts/verifier/os/FileUtils$FileStatus");
+    assert(fileStatusClass != null);
     gFileStatusDevFieldID = env->GetFieldID(fileStatusClass, "dev", "I");
     gFileStatusInoFieldID = env->GetFieldID(fileStatusClass, "ino", "I");
     gFileStatusModeFieldID = env->GetFieldID(fileStatusClass, "mode", "I");
