@@ -107,15 +107,6 @@ public class ConsoleReporterTest extends TestCase {
         assertEquals(0, mReporter.getPassedTests());
         assertEquals(0, mReporter.getCurrentTestNum());
         assertEquals(3, mReporter.getTotalTestsInModule());
-
-        runTests();
-        // Same id, should not reset test counters, but aggregate total tests
-        mReporter.testRunStarted(ID2, 5);
-        assertEquals(ID2, mReporter.getModuleId());
-        assertEquals(2, mReporter.getFailedTests());
-        assertEquals(1, mReporter.getPassedTests());
-        assertEquals(3, mReporter.getCurrentTestNum());
-        assertEquals(8, mReporter.getTotalTestsInModule());
     }
 
     /** Run 4 test, but one is ignored */
