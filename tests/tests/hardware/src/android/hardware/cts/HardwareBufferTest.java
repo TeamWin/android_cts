@@ -61,6 +61,9 @@ public class HardwareBufferTest {
         buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGB_565, 1,
                 HardwareBuffer.USAGE0_CPU_READ);
         assertEquals(HardwareBuffer.RGB_565, buffer.getFormat());
+        buffer = HardwareBuffer.create(2, 1, HardwareBuffer.BLOB, 1,
+                HardwareBuffer.USAGE0_CPU_READ);
+        assertEquals(HardwareBuffer.BLOB, buffer.getFormat());
     }
 
     @Test
@@ -84,6 +87,11 @@ public class HardwareBufferTest {
         assertEquals(null, buffer);
         try {
             buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGB_888, -1,
+                    HardwareBuffer.USAGE0_CPU_READ);
+        } catch (IllegalArgumentException e) {}
+        assertEquals(null, buffer);
+        try {
+            buffer = HardwareBuffer.create(2, 2, HardwareBuffer.BLOB, 1,
                     HardwareBuffer.USAGE0_CPU_READ);
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);

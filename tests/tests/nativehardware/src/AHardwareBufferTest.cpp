@@ -23,6 +23,7 @@
 #include <sys/un.h>
 
 #include <android/hardware_buffer.h>
+#include <android_runtime/android_hardware_HardwareBuffer.h>
 #include <ui/GraphicBuffer.h>
 #include <utils/Errors.h>
 
@@ -40,55 +41,6 @@ static inline GraphicBuffer* AHardwareBuffer_to_GraphicBuffer(
 static inline AHardwareBuffer* GraphicBuffer_to_AHardwareBuffer(
         GraphicBuffer* buffer) {
     return reinterpret_cast<AHardwareBuffer*>(buffer);
-}
-
-// This function is temporarily necessary to convert between bit versions.
-static inline uint32_t convertGralloc1ToGralloc0UsageBits(uint64_t usage0,
-        uint64_t usage1) {
-    uint32_t bits = 0;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_CPU_READ)
-        bits |= GRALLOC_USAGE_SW_READ_RARELY;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN)
-        bits |= GRALLOC_USAGE_SW_READ_OFTEN;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_CPU_WRITE)
-        bits |= GRALLOC_USAGE_SW_WRITE_RARELY;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_CPU_WRITE_OFTEN)
-        bits |= GRALLOC_USAGE_SW_WRITE_OFTEN;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_GPU_SAMPLED_IMAGE)
-        bits |= GRALLOC_USAGE_HW_TEXTURE;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_GPU_COLOR_OUTPUT)
-        bits |= GRALLOC_USAGE_HW_RENDER;
-    // Not sure what this should be.
-    if (usage0 & AHARDWAREBUFFER_USAGE0_GPU_STORAGE_IMAGE) bits |= 0;
-    // Not sure what this should be.
-    if (usage0 & AHARDWAREBUFFER_USAGE0_GPU_CUBEMAP) bits |= 0;
-    // Not yet supported in gralloc1.
-    // if (usage0 & AHARDWAREBUFFER_USAGE0_GPU_DATA_BUFFER) bits |= 0;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_VIDEO_ENCODE)
-        bits |= GRALLOC_USAGE_HW_VIDEO_ENCODER;
-    if (usage0 & AHARDWAREBUFFER_USAGE0_PROTECTED_CONTENT)
-        bits |= GRALLOC_USAGE_PROTECTED;
-
-    (void)usage1;
-
-    return bits;
-}
-
-static uint32_t convertFromGraphicBufferFormat(uint32_t format) {
-    switch (format) {
-        case PIXEL_FORMAT_RGBA_8888:
-            return AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
-        case PIXEL_FORMAT_RGBA_FP16:
-            return AHARDWAREBUFFER_FORMAT_R16G16B16A16_SFLOAT;
-        case PIXEL_FORMAT_RGBX_8888:
-            return AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM;
-        case PIXEL_FORMAT_RGB_565:
-            return AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM;
-        case PIXEL_FORMAT_RGB_888:
-            return AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM;
-        default:
-            return 0;
-    }
 }
 
 static ::testing::AssertionResult BuildFailureMessage(uint32_t expected,
@@ -110,11 +62,14 @@ static ::testing::AssertionResult CheckAHardwareBufferMatchesDesc(
         return BuildFailureMessage(desc.layers,
                 static_cast<uint32_t>(buffer->layerCount), "layers");
     if (static_cast<uint32_t>(buffer->usage) !=
-            convertGralloc1ToGralloc0UsageBits(desc.usage0, desc.usage1))
+            android_hardware_HardwareBuffer_convertToGrallocUsageBits(
+                    desc.usage0, desc.usage1))
         return BuildFailureMessage(
-                convertGralloc1ToGralloc0UsageBits(desc.usage0, desc.usage1),
+                android_hardware_HardwareBuffer_convertToGrallocUsageBits(
+                        desc.usage0, desc.usage1),
                 static_cast<uint32_t>(buffer->usage), "usages");
-    if (convertFromGraphicBufferFormat(buffer->getPixelFormat()) != desc.format)
+    if (android_hardware_HardwareBuffer_convertFromPixelFormat(
+            buffer->getPixelFormat()) != desc.format)
         return BuildFailureMessage(desc.format,
                 static_cast<uint32_t>(buffer->format), "formats");
     return ::testing::AssertionSuccess();
@@ -133,6 +88,28 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_FailsWithNullInput) {
     EXPECT_EQ(BAD_VALUE, res);
     res = AHardwareBuffer_allocate(NULL, NULL);
     EXPECT_EQ(BAD_VALUE, res);
+}
+
+// Test that passing in NULL values to allocate works as expected.
+TEST(AHardwareBufferTest, AHardwareBuffer_allocate_BlobFormatRequiresHeight1) {
+    AHardwareBuffer* buffer;
+    AHardwareBuffer_Desc desc;
+
+    desc.width = 2;
+    desc.height = 4;
+    desc.layers = 1;
+    desc.usage0 = AHARDWAREBUFFER_USAGE0_CPU_READ;
+    desc.usage1 = 0;
+    desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
+    int res = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(BAD_VALUE, res);
+
+    desc.height = 1;
+    res = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, res);
+    EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(buffer, desc));
+    AHardwareBuffer_release(buffer);
+    buffer = NULL;
 }
 
 // Test that allocate can create an AHardwareBuffer correctly.
