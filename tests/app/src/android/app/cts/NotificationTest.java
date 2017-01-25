@@ -150,6 +150,16 @@ public class NotificationTest extends AndroidTestCase {
         assertNull(result.sound);
     }
 
+    public void testColorizeNotification() {
+        mNotification = new Notification.Builder(mContext)
+                .setSmallIcon(1)
+                .setContentTitle(CONTENT_TITLE)
+                .setColorized(true)
+                .build();
+
+        assertTrue(mNotification.extras.getBoolean(Notification.EXTRA_COLORIZED));
+    }
+
     public void testBuilder() {
         final Intent intent = new Intent();
         final PendingIntent contentIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
