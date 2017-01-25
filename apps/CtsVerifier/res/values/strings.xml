@@ -3525,5 +3525,31 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="visual_voicemail_service_remove_sim">Remove SIM</string>
     <string name="visual_voicemail_service_remove_sim_received">SIM removal event received</string>
 
+    <!-- Strings for CallSettingsCheck test -->
+    <string name="call_settings_check_test">Hide voicemail in call settings test</string>
+    <string name="call_settings_check_instructions">This test verifies that the default dialer can
+        hide voicemail settings in the call settings menu by using
+        TelephonyManager.METADATA_HIDE_VOICEMAIL_SETTINGS_MENU
+    </string>
+    <string name="open_call_settings_explanation">Tap the button, and verify that \"voicemail\" does
+        not exist in the call settings
+    </string>
+    <string name="open_call_settings">Open call settings</string>
+    <string name="voicemail_hidden">\"Voicemail\" does not exist</string>
+    <string name="voicemail_not_hidden">\"Voicemail\" exists</string>
+
+
+    <!-- Strings for VoicemailSettingsCheck test -->
+    <string name="ringtone_settings_check_test">Hide settings in voicemail test</string>
+    <string name="ringtone_settings_check_instructions">This test verifies that voicemail settings
+        accessible with public API can be hidden when launching
+        TelephonyManager.ACTION_CONFIGURE_VOICEMAIL with EXTRA_HIDE_PUBLIC_SETTINGS.
+    </string>
+    <string name="open_voicemail_settings_explanation">Tap the button, ringtone and virbration
+        settings does not exist in the voicemail settings.
+    </string>
+    <string name="open_voicemail_settings">Open voicemail settings</string>
+    <string name="ringtone_hidden">Ringtone settings does not exist</string>
+    <string name="ringtone_not_hidden">Ringtone settings exists</string>
 
 </resources>
