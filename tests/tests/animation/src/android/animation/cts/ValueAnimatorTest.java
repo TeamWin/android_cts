@@ -231,10 +231,12 @@ public class ValueAnimatorTest {
         final float seekFraction = 0.2f;
         final CountDownLatch frameUpdateLatch = new CountDownLatch(1);
 
+        final AnimatorSetTest.MyListener myListener = new AnimatorSetTest.MyListener();
         final ValueAnimator anim  = ValueAnimator.ofFloat(0, 1).setDuration(duration);
         anim.setInterpolator(null);
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         anim.addListener(listener);
+        anim.addListener(myListener);
         mActivityRule.runOnUiThread(() -> {
             anim.start();
             anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -256,7 +258,9 @@ public class ValueAnimatorTest {
             anim.setCurrentPlayTime(currentPlayTime);
         });
         assertTrue(frameUpdateLatch.await(100, TimeUnit.MILLISECONDS));
-        verify(listener, within(200)).onAnimationEnd(anim);
+        verify(listener, within(200)).onAnimationEnd(anim, false);
+        // Also make sure the onAnimationEnd(anim) is called.
+        assertTrue(myListener.mEndIsCalled);
     }
 
     @Test
@@ -309,6 +313,7 @@ public class ValueAnimatorTest {
 
     @Test
     public void testUpdateListeners() throws Throwable {
+        final AnimatorSetTest.MyListener myListener = new AnimatorSetTest.MyListener();
         ValueAnimator.AnimatorUpdateListener l1 = mock(ValueAnimator.AnimatorUpdateListener.class);
         ValueAnimator.AnimatorUpdateListener l2 = mock(ValueAnimator.AnimatorUpdateListener.class);
         ValueAnimator.AnimatorUpdateListener l3 = mock(ValueAnimator.AnimatorUpdateListener.class);
@@ -327,13 +332,16 @@ public class ValueAnimatorTest {
         a1.removeUpdateListener(l3);
 
         a1.addListener(listener);
+        a1.addListener(myListener);
 
         mActivityRule.runOnUiThread(() -> {
             a1.start();
         });
 
         // Wait for the anim to finish.
-        verify(listener, within(200)).onAnimationEnd(a1);
+        verify(listener, within(200)).onAnimationEnd(a1, false);
+        // Also make sure the onAnimationEnd(anim) is called.
+        assertTrue(myListener.mEndIsCalled);
 
         verify(l1, times(0)).onAnimationUpdate(a1);
         verify(l2, times(0)).onAnimationUpdate(a1);
@@ -344,6 +352,7 @@ public class ValueAnimatorTest {
     @Test
     public void testValuesSetterAndGetter() throws Throwable {
 
+        final AnimatorSetTest.MyListener myListener = new AnimatorSetTest.MyListener();
         ValueAnimator a2 = ValueAnimator.ofPropertyValuesHolder();
         PropertyValuesHolder p1 = PropertyValuesHolder.ofFloat("scaleX", 0f, 1f);
         PropertyValuesHolder p2 = PropertyValuesHolder.ofFloat("scaleY", 1f, 2f);
@@ -366,12 +375,15 @@ public class ValueAnimatorTest {
         });
         AnimatorListenerAdapter l1 = mock(AnimatorListenerAdapter.class);
         a1.addListener(l1);
+        a1.addListener(myListener);
 
         mActivityRule.runOnUiThread(() -> {
             a1.start();
         });
 
-        verify(l1, within(200)).onAnimationEnd(a1);
+        verify(l1, within(200)).onAnimationEnd(a1, false);
+        // Also make sure the onAnimationEnd(anim) is called.
+        assertTrue(myListener.mEndIsCalled);
     }
 
     @Test
@@ -386,6 +398,7 @@ public class ValueAnimatorTest {
             }
         };
 
+        final AnimatorSetTest.MyListener myListener = new AnimatorSetTest.MyListener();
         ValueAnimator a1 = new ValueAnimator();
         a1.setDuration(50);
         a1.setObjectValues(new PointF(0, 0), new PointF(1, 1));
@@ -400,11 +413,14 @@ public class ValueAnimatorTest {
         });
         AnimatorListenerAdapter l1 = mock(AnimatorListenerAdapter.class);
         a1.addListener(l1);
+        a1.addListener(myListener);
         mActivityRule.runOnUiThread(() -> {
             a1.start();
         });
 
-        verify(l1, within(200)).onAnimationEnd(a1);
+        verify(l1, within(200)).onAnimationEnd(a1, false);
+        // Also make sure the onAnimationEnd(anim) is called.
+        assertTrue(myListener.mEndIsCalled);
     }
 
     @Test
@@ -572,7 +588,7 @@ public class ValueAnimatorTest {
         final Animator.AnimatorListener watcher = mock(Animator.AnimatorListener.class);
         animator.addListener(watcher);
         mActivityRule.runOnUiThread(animator::start);
-        verify(watcher, times(1)).onAnimationStart(animator);
+        verify(watcher, times(1)).onAnimationStart(animator, false);
         assertTrue(((Float)animator.getAnimatedValue()) >= 0.5f);
         assertTrue(animator.getAnimatedFraction() >= 0.5f);
         mActivityRule.runOnUiThread(animator::cancel);

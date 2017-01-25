@@ -15,10 +15,14 @@
  */
 package android.animation.cts;
 
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -57,6 +61,7 @@ public class AnimatorSetTest {
     private ObjectAnimator yAnimator;
     private ObjectAnimator xAnimator;
     Set<Integer> identityHashes = new HashSet<>();
+    private static final float EPSILON = 0.001f;
 
     @Rule
     public ActivityTestRule<AnimationActivity> mActivityRule =
@@ -147,6 +152,37 @@ public class AnimatorSetTest {
         for (int i = 0; i < listeners.length; i++) {
             assertTrue(listeners[i].mEndIsCalled);
         }
+
+        // Now reverse the animations and verify whether the play order is reversed.
+        for (int i = 0; i < animators.length; i++) {
+            if (i == animators.length - 1) {
+                listeners[i] = new MyListener();
+            } else {
+                final int current = i;
+                listeners[i] = new MyListener() {
+                    @Override
+                    public void onAnimationStart(Animator anim) {
+                        super.onAnimationStart(anim);
+                        // Check that the previous animator has finished.
+                        assertTrue(listeners[current + 1].mEndIsCalled);
+                    }
+                };
+            }
+            animators[i].removeAllListeners();
+            animators[i].addListener(listeners[i]);
+        }
+
+        mActivityRule.runOnUiThread(() -> {
+            set.reverse();
+            startLatch.countDown();
+        });
+
+        // Set timeout to 100ms, if current count reaches 0 before the timeout, startLatch.await(..)
+        // will return immediately.
+        assertTrue(startLatch.await(100, TimeUnit.MILLISECONDS));
+        assertTrue(set.isRunning());
+        assertTrue(endLatch.await(totalDuration * 2, TimeUnit.MILLISECONDS));
+
     }
 
     @Test
@@ -473,6 +509,112 @@ public class AnimatorSetTest {
         assertSame(animator2.getInterpolator(), clone2.getInterpolator());
     }
 
+    /**
+     * Testing seeking in an AnimatorSet containing sequential animators.
+     */
+    @Test
+    public void testSeeking() throws Throwable {
+        final AnimatorSet set = new AnimatorSet();
+        final ValueAnimator a1 = ValueAnimator.ofFloat(0f, 150f);
+        a1.setDuration(150);
+        final ValueAnimator a2 = ValueAnimator.ofFloat(150f, 250f);
+        a2.setDuration(100);
+        final ValueAnimator a3 = ValueAnimator.ofFloat(250f, 300f);
+        a3.setDuration(50);
+
+        a1.setInterpolator(null);
+        a2.setInterpolator(null);
+        a3.setInterpolator(null);
+
+        set.playSequentially(a1, a2, a3);
+
+        set.setCurrentPlayTime(100);
+        assertEquals(100f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(150f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(250f, (Float) a3.getAnimatedValue(), EPSILON);
+
+        set.setCurrentPlayTime(280);
+        assertEquals(150f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(250f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(280f, (Float) a3.getAnimatedValue(), EPSILON);
+
+        AnimatorListenerAdapter setListener = new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                assertEquals(150f, (Float) a1.getAnimatedValue(), EPSILON);
+                assertEquals(250f, (Float) a2.getAnimatedValue(), EPSILON);
+                assertEquals(300f, (Float) a3.getAnimatedValue(), EPSILON);
+
+            }
+        };
+        AnimatorListenerAdapter mockListener = mock(AnimatorListenerAdapter.class);
+        set.addListener(setListener);
+        set.addListener(mockListener);
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+        });
+
+        verify(mockListener, within(300)).onAnimationEnd(set, false);
+
+        // Seek after a run to the middle-ish, and verify the first animator is at the end
+        // value and the 3rd at beginning value, and the 2nd animator is at the seeked value.
+        set.setCurrentPlayTime(200);
+        assertEquals(150f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(200f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(250f, (Float) a3.getAnimatedValue(), EPSILON);
+    }
+
+    /**
+     * Testing seeking in an AnimatorSet containing infinite animators.
+     */
+    @Test
+    public void testSeekingInfinite() {
+        final AnimatorSet set = new AnimatorSet();
+        final ValueAnimator a1 = ValueAnimator.ofFloat(0f, 100f);
+        a1.setDuration(100);
+        final ValueAnimator a2 = ValueAnimator.ofFloat(100f, 200f);
+        a2.setDuration(100);
+        a2.setRepeatCount(ValueAnimator.INFINITE);
+        a2.setRepeatMode(ValueAnimator.RESTART);
+
+        final ValueAnimator a3 = ValueAnimator.ofFloat(100f, 200f);
+        a3.setDuration(100);
+        a3.setRepeatCount(ValueAnimator.INFINITE);
+        a3.setRepeatMode(ValueAnimator.REVERSE);
+
+        a1.setInterpolator(null);
+        a2.setInterpolator(null);
+        a3.setInterpolator(null);
+        set.play(a1).before(a2);
+        set.play(a1).before(a3);
+
+        set.setCurrentPlayTime(50);
+        assertEquals(50f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(100f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(100f, (Float) a3.getAnimatedValue(), EPSILON);
+
+        set.setCurrentPlayTime(100);
+        assertEquals(100f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(100f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(100f, (Float) a3.getAnimatedValue(), EPSILON);
+
+        // Seek to the 1st iteration of the infinite repeat animators, and they should have the
+        // same value.
+        set.setCurrentPlayTime(180);
+        assertEquals(100f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(180f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(180f, (Float) a3.getAnimatedValue(), EPSILON);
+
+        // Seek to the 2nd iteration of the infinite repeat animators, and they should have
+        // different values as they have different repeat mode.
+        set.setCurrentPlayTime(280);
+        assertEquals(100f, (Float) a1.getAnimatedValue(), EPSILON);
+        assertEquals(180f, (Float) a2.getAnimatedValue(), EPSILON);
+        assertEquals(120f, (Float) a3.getAnimatedValue(), EPSILON);
+
+    }
+
     @Test
     public void testNotifiesAfterEnd() throws Throwable {
         final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
@@ -498,7 +640,6 @@ public class AnimatorSetTest {
             animatorSet.start();
             animator.end();
             assertFalse(animator.isStarted());
-            assertFalse(animatorSet.isStarted());
         });
     }
 
@@ -515,7 +656,7 @@ public class AnimatorSetTest {
         int y = 2;
     }
 
-    class MyListener extends AnimatorListenerAdapter {
+    static class MyListener extends AnimatorListenerAdapter {
         boolean mStartIsCalled = false;
         boolean mEndIsCalled = false;
 
