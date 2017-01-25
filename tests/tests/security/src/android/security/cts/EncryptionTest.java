@@ -16,12 +16,13 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.os.SystemProperties;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -34,7 +35,7 @@ public class EncryptionTest extends AndroidTestCase {
         System.loadLibrary("ctssecurity_jni");
     }
 
-    private static final int min_api_level = 23;
+    private static final int MIN_API_LEVEL = 23;
 
     private static final String TAG = "EncryptionTest";
 
@@ -77,15 +78,8 @@ public class EncryptionTest extends AndroidTestCase {
     }
 
     private boolean isRequired() {
-        int first_api_level =
-            SystemProperties.getInt("ro.product.first_api_level", 0);
-
-        // Optional before min_api_level or if the device has low RAM
-        if (first_api_level > 0 && first_api_level < min_api_level) {
-            return false;
-        } else {
-            return !hasLowRAM();
-        }
+        // Optional before MIN_API_LEVEL or if the device has low RAM
+        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !hasLowRAM();
     }
 
     public void testConfig() throws Exception {
