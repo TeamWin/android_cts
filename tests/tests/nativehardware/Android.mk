@@ -32,6 +32,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
   libandroid \
+  libandroid_runtime \
   libutils \
   liblog \
 
