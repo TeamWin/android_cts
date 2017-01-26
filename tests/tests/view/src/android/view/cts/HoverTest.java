@@ -16,31 +16,35 @@
 
 package android.view.cts;
 
+import static com.android.compatibility.common.util.CtsMouseUtil.clearHoverListener;
+import static com.android.compatibility.common.util.CtsMouseUtil.installHoverListener;
+import static com.android.compatibility.common.util.CtsMouseUtil.obtainMouseEvent;
+import static com.android.compatibility.common.util.CtsMouseUtil.verifyEnterMove;
+import static com.android.compatibility.common.util.CtsMouseUtil.verifyEnterMoveExit;
+
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.hamcrest.Description;
+import com.android.compatibility.common.util.CtsMouseUtil.ActionMatcher;
+import com.android.compatibility.common.util.CtsMouseUtil.PositionMatcher;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 
 /**
@@ -73,48 +77,6 @@ public class HoverTest {
     public ActivityTestRule<HoverCtsActivity> mActivityRule =
             new ActivityTestRule<>(HoverCtsActivity.class);
 
-    static class ActionMatcher extends ArgumentMatcher<MotionEvent> {
-        private final int mAction;
-
-        ActionMatcher(int action) {
-            mAction = action;
-        }
-
-        public boolean matches(Object actual) {
-            return (actual instanceof MotionEvent) && ((MotionEvent) actual).getAction() == mAction;
-        }
-
-        public void describeTo(Description description) {
-            description.appendText("action=" + MotionEvent.actionToString(mAction));
-        }
-    }
-
-    static class MoveMatcher extends ActionMatcher {
-        private final int mX;
-        private final int mY;
-
-        MoveMatcher(int x, int y) {
-            super(MotionEvent.ACTION_HOVER_MOVE);
-            mX = x;
-            mY = y;
-        }
-
-        public boolean matches(Object actual) {
-            return super.matches(actual)
-                    && ((int)((MotionEvent)actual).getX()) == mX
-                    && ((int)((MotionEvent)actual).getY()) == mY;
-        }
-
-        public void describeTo(Description description) {
-            super.describeTo(description);
-            description.appendText("@(" + mX + "," + mY + ")");
-        }
-    }
-
-    private final ActionMatcher mEnterMatcher = new ActionMatcher(MotionEvent.ACTION_HOVER_ENTER);
-    private final ActionMatcher mMoveMatcher = new ActionMatcher(MotionEvent.ACTION_HOVER_MOVE);
-    private final ActionMatcher mExitMatcher = new ActionMatcher(MotionEvent.ACTION_HOVER_EXIT);
-
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -136,62 +98,14 @@ public class HoverTest {
         mLayer4Right = mActivity.findViewById(R.id.layer4_right);
     }
 
-    private void verifyHoverSequence(
-            View.OnHoverListener listener, View view, int moveCount, boolean exit) {
-        InOrder inOrder = inOrder(listener);
-        inOrder.verify(listener, times(1)).onHover(eq(view), argThat(mEnterMatcher));
-        inOrder.verify(listener, times(moveCount)).onHover(eq(view), argThat(mMoveMatcher));
-        if (exit) {
-            inOrder.verify(listener, times(1)).onHover(eq(view), argThat(mExitMatcher));
-        }
-        verifyNoMoreInteractions(listener);
-    }
-
-    private void verifyEnterMove(View.OnHoverListener listener, View view, int moveCount) {
-        verifyHoverSequence(listener, view, moveCount, false);
-    }
-
-    private void verifyEnterMoveExit(View.OnHoverListener listener, View view, int moveCount) {
-        verifyHoverSequence(listener, view, moveCount, true);
-    }
-
     private void injectHoverMove(View view) {
         injectHoverMove(view, 0, 0);
     }
 
     private void injectHoverMove(View view, int offsetX, int offsetY) {
         mActivity.getWindow().injectInputEvent(
-                obtainMotionEvent(view, MotionEvent.ACTION_HOVER_MOVE, offsetX, offsetY));
+                obtainMouseEvent(MotionEvent.ACTION_HOVER_MOVE, view, offsetX, offsetY));
         mInstrumentation.waitForIdleSync();
-    }
-
-    private MotionEvent obtainMotionEvent(View anchor, int action, int offsetX, int offsetY) {
-        final long eventTime = SystemClock.uptimeMillis();
-        final int[] screenPos = new int[2];
-        anchor.getLocationOnScreen(screenPos);
-        final int x = screenPos[0] + offsetX;
-        final int y = screenPos[1] + offsetY;
-        MotionEvent event = MotionEvent.obtain(eventTime, eventTime, action, x, y, 0);
-        event.setSource(InputDevice.SOURCE_MOUSE);
-        return event;
-    }
-
-    private View.OnHoverListener installHoverListener(View view) {
-        return installHoverListener(view, true);
-    }
-
-    private View.OnHoverListener installHoverListener(View view, boolean result) {
-        final View.OnHoverListener mockListener = mock(View.OnHoverListener.class);
-        view.setOnHoverListener((v, event) -> {
-            // Clone the event to work around event instance reuse in the framework.
-            mockListener.onHover(v, MotionEvent.obtain(event));
-            return result;
-        });
-        return mockListener;
-    }
-
-    private void clearHoverListener(View view) {
-        view.setOnHoverListener(null);
     }
 
     private void remove(View view) throws Throwable {
@@ -221,10 +135,14 @@ public class HoverTest {
 
         InOrder inOrder = inOrder(listener);
 
-        inOrder.verify(listener, times(1)).onHover(eq(mInner11), argThat(mEnterMatcher));
-        inOrder.verify(listener, times(1)).onHover(eq(mInner11), argThat(new MoveMatcher(1, 2)));
-        inOrder.verify(listener, times(1)).onHover(eq(mInner11), argThat(new MoveMatcher(3, 4)));
-        inOrder.verify(listener, times(1)).onHover(eq(mInner11), argThat(new MoveMatcher(5, 6)));
+        inOrder.verify(listener, times(1)).onHover(eq(mInner11),
+                argThat(new ActionMatcher(MotionEvent.ACTION_HOVER_ENTER)));
+        inOrder.verify(listener, times(1)).onHover(eq(mInner11),
+                argThat(new PositionMatcher(MotionEvent.ACTION_HOVER_MOVE, 1, 2)));
+        inOrder.verify(listener, times(1)).onHover(eq(mInner11),
+                argThat(new PositionMatcher(MotionEvent.ACTION_HOVER_MOVE, 3, 4)));
+        inOrder.verify(listener, times(1)).onHover(eq(mInner11),
+                argThat(new PositionMatcher(MotionEvent.ACTION_HOVER_MOVE, 5, 6)));
 
         verifyNoMoreInteractions(listener);
     }
