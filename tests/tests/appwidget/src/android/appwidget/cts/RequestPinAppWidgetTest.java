@@ -101,6 +101,30 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         runPinWidgetTest("android.appwidget.cts.packages.launcher2");
     }
 
+    public void verifyIsRequestPinAppWidgetSupported(String launcherPkg, boolean expectedSupport)
+        throws Exception {
+        if (!hasAppWidgets()) {
+            return;
+        }
+        setLauncher(launcherPkg + "/" + LAUNCHER_CLASS);
+
+        Context context = getInstrumentation().getContext();
+        assertEquals(expectedSupport,
+                AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported());
+    }
+
+    public void testIsRequestPinAppWidgetSupported_launcher1() throws Exception {
+        verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher1", true);
+    }
+
+    public void testIsRequestPinAppWidgetSupported_launcher2() throws Exception {
+        verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher2", true);
+    }
+
+    public void testIsRequestPinAppWidgetSupported_launcher3() throws Exception {
+        verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher3", false);
+    }
+
     private String getDefaultLauncher() throws Exception {
         final String PREFIX = "Launcher: ComponentInfo{";
         final String POSTFIX = "}";

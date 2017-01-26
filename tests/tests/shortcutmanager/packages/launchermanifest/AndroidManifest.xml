@@ -45,7 +45,7 @@
         </activity-alias>
         <activity android:name="ShortcutConfirmPin">
             <intent-filter>
-                <action android:name="android.content.pm.action.CONFIRM_PIN_ITEM" />
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
             </intent-filter>
         </activity>
     </application>
