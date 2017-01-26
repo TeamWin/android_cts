@@ -63,7 +63,11 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         final String[] VOICEMAILS_PROJECTION = new String[] {
                 Voicemails._ID, Voicemails.NUMBER, Voicemails.DATE, Voicemails.DURATION,
                 Voicemails.IS_READ, Voicemails.SOURCE_PACKAGE, Voicemails.SOURCE_DATA,
-                Voicemails.HAS_CONTENT, Voicemails.MIME_TYPE};
+                Voicemails.HAS_CONTENT, Voicemails.MIME_TYPE, Voicemails.TRANSCRIPTION,
+                Voicemails.PHONE_ACCOUNT_COMPONENT_NAME,
+                Voicemails.PHONE_ACCOUNT_ID, Voicemails.DIRTY, Voicemails.DELETED,
+                Voicemails.LAST_MODIFIED, Voicemails.BACKED_UP, Voicemails.RESTORED,
+                Voicemails.ARCHIVED, Voicemails.IS_OMTP_VOICEMAIL};
         final int ID_INDEX = 0;
         final int NUMBER_INDEX = 1;
         final int DATE_INDEX = 2;
@@ -73,6 +77,16 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         final int SOURCE_DATA_INDEX = 6;
         final int HAS_CONTENT_INDEX = 7;
         final int MIME_TYPE_INDEX = 8;
+        final int TRANSCRIPTION_INDEX= 9;
+        final int PHONE_ACCOUNT_COMPONENT_NAME_INDEX = 10;
+        final int PHONE_ACCOUNT_ID_INDEX = 11;
+        final int DIRTY_INDEX = 12;
+        final int DELETED_INDEX = 13;
+        final int LAST_MODIFIED_INDEX = 14;
+        final int BACKED_UP_INDEX = 15;
+        final int RESTORED_INDEX = 16;
+        final int ARCHIVED_INDEX = 17;
+        final int IS_OMTP_VOICEMAIL_INDEX = 18;
 
         String insertCallsNumber = "0123456789";
         long insertCallsDuration = 120;
@@ -95,6 +109,15 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         value.put(Voicemails.MIME_TYPE, insertMimeType);
         value.put(Voicemails.IS_READ, false);
         value.put(Voicemails.HAS_CONTENT, true);
+        value.put(Voicemails.TRANSCRIPTION, "foo");
+        value.put(Voicemails.PHONE_ACCOUNT_COMPONENT_NAME, "com.foo");
+        value.put(Voicemails.PHONE_ACCOUNT_ID, "bar");
+        value.put(Voicemails.DIRTY, 0);
+        value.put(Voicemails.DELETED, 0);
+        value.put(Voicemails.BACKED_UP, 0);
+        value.put(Voicemails.RESTORED, 0);
+        value.put(Voicemails.ARCHIVED, 0);
+        value.put(Voicemails.IS_OMTP_VOICEMAIL, 0);
 
         Uri uri = mVoicemailProvider.insert(mVoicemailContentUri, value);
         Cursor cursor = mVoicemailProvider.query(
@@ -110,6 +133,15 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         assertEquals(insertMimeType, cursor.getString(MIME_TYPE_INDEX));
         assertEquals(0, cursor.getInt(IS_READ_INDEX));
         assertEquals(1, cursor.getInt(HAS_CONTENT_INDEX));
+        assertEquals("foo",cursor.getString(TRANSCRIPTION_INDEX));
+        assertEquals("com.foo",cursor.getString(PHONE_ACCOUNT_COMPONENT_NAME_INDEX));
+        assertEquals("bar",cursor.getString(PHONE_ACCOUNT_ID_INDEX));
+        assertEquals(0,cursor.getInt(DIRTY_INDEX));
+        assertEquals(0,cursor.getInt(DELETED_INDEX));
+        assertEquals(0,cursor.getInt(BACKED_UP_INDEX));
+        assertEquals(0,cursor.getInt(RESTORED_INDEX));
+        assertEquals(0,cursor.getInt(ARCHIVED_INDEX));
+        assertEquals(0,cursor.getInt(IS_OMTP_VOICEMAIL_INDEX));
         int id = cursor.getInt(ID_INDEX);
         assertEquals(id, Integer.parseInt(uri.getLastPathSegment()));
         cursor.close();
@@ -120,6 +152,12 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         value.put(Voicemails.DATE, updateDate);
         value.put(Voicemails.DURATION, updateCallsDuration);
         value.put(Voicemails.SOURCE_DATA, updateSourceData);
+        value.put(Voicemails.DIRTY, 1);
+        value.put(Voicemails.DELETED, 1);
+        value.put(Voicemails.BACKED_UP, 1);
+        value.put(Voicemails.RESTORED, 1);
+        value.put(Voicemails.ARCHIVED, 1);
+        value.put(Voicemails.IS_OMTP_VOICEMAIL, 1);
 
         mVoicemailProvider.update(uri, value, null, null);
         cursor = mVoicemailProvider.query(mVoicemailContentUri, VOICEMAILS_PROJECTION,
@@ -131,6 +169,12 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         assertEquals(updateDate, cursor.getLong(DATE_INDEX));
         assertEquals(updateCallsDuration, cursor.getLong(DURATION_INDEX));
         assertEquals(updateSourceData, cursor.getString(SOURCE_DATA_INDEX));
+        assertEquals(1,cursor.getInt(DIRTY_INDEX));
+        assertEquals(1,cursor.getInt(DELETED_INDEX));
+        assertEquals(1,cursor.getInt(BACKED_UP_INDEX));
+        assertEquals(1,cursor.getInt(RESTORED_INDEX));
+        assertEquals(1,cursor.getInt(ARCHIVED_INDEX));
+        assertEquals(1,cursor.getInt(IS_OMTP_VOICEMAIL_INDEX));
         cursor.close();
 
         // Test: delete
