@@ -175,6 +175,8 @@
                 android:name=".EntryPointAliasActivity"
                 android:targetActivity=".TrampolineActivity" >
         </activity-alias>
+        <activity android:name=".MultiWindowSupportObserver"
+            android:exported="true" />
     </application>
 </manifest>
 

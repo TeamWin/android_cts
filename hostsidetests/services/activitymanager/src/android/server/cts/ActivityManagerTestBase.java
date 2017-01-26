@@ -95,6 +95,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     final private String NO_HOME_SCREEN_OBSERVER = "NoHomeScreenObserver";
     private static boolean mCheckedNoHomeScreen = false;
     private static boolean mNoHomeScreen = false;
+    final private String SUPPORT_OBSERVER = "MultiWindowSupportObserver";
+    private static boolean mConfigLoaded = false;
+    private static boolean mSupportMultiWindow = true;
 
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -278,8 +281,27 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected boolean supportsMultiWindowMode() throws DeviceNotAvailableException {
-        return !hasDeviceFeature("android.hardware.type.watch")
-                || PRETEND_DEVICE_SUPPORTS_DOCKING;
+        if(hasDeviceFeature("android.hardware.type.watch")) {
+            mSupportMultiWindow = false;
+        } else {
+            if (!mConfigLoaded) {
+                try {
+                    executeShellCommand("am start -n " + "android.server.app/." + SUPPORT_OBSERVER);
+                    waitForResume("android.server.app", SUPPORT_OBSERVER);
+                    Map map = getLogResults(SUPPORT_OBSERVER);
+                    String value = (String)map.get(RESULT_KEY_HEAD);
+                    if (value != null && value.equals("OK")) {
+                        mConfigLoaded = true;
+                        mSupportMultiWindow = !map.get("config_supportsMultiWindow").equals("false");
+                    }
+                    executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+                    clearLogs();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return mSupportMultiWindow || PRETEND_DEVICE_SUPPORTS_DOCKING;
     }
 
     protected boolean supportsScreenRotation() throws DeviceNotAvailableException {
@@ -306,11 +328,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                     mNoHomeScreen = map.get("config_noHomeScreen").equals("true");
                 }
                 executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return mNoHomeScreen;
+              } catch (Exception e) {
+                  e.printStackTrace();
+              }
+          }
+          return mNoHomeScreen;
+      }
+
+    private void clearLogs() throws DeviceNotAvailableException {
+        executeShellCommand("logcat -c");
     }
 
     private Map<String, String> getLogResults(String className) throws Exception {

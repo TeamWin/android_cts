@@ -23,7 +23,8 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
+        <activity android:name=".MultiWindowSupportObserver"
+            android:exported="true"/>
         <provider android:name="android.wm.cts.dndsourceapp.DragSourceContentProvider"
                   android:authorities="android.wm.cts.dndsource.contentprovider"
                   android:grantUriPermissions="true"/>
