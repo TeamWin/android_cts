@@ -74,7 +74,8 @@
 
         <meta-data android:name="com.google.android.backup.api_key"
                 android:value="AEdPqrEAAAAIbK6ldcOzoeRtQ1u1dFVJ1A7KetRhit-a1Xa82Q" />
-
+        <meta-data android:name="android.telephony.HIDE_VOICEMAIL_SETTINGS_MENU"
+            android:value="true"/>
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name=".TestListActivity" android:label="@string/app_name" />
@@ -2897,6 +2898,39 @@
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
         </activity>
+
+        <activity
+            android:name=".voicemail.CallSettingsCheckActivity"
+            android:label="@string/call_settings_check_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
+
+        <activity
+            android:name=".voicemail.VoicemailSettingsCheckActivity"
+            android:label="@string/ringtone_settings_check_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telephony"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
+
 
         <service
             android:name=".voicemail.CtsVisualVoicemailService"
