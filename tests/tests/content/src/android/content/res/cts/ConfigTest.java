@@ -46,6 +46,7 @@ public class ConfigTest extends AndroidTestCase {
         KEYBOARDHIDDEN,
         NAVIGATION,
         ORIENTATION,
+        COLOR_MODE,
         WIDTH,
         HEIGHT,
         DENSITY,
@@ -117,6 +118,9 @@ public class ConfigTest extends AndroidTestCase {
                     break;
                 case ORIENTATION:
                     mConfig.orientation = value;
+                    break;
+                case COLOR_MODE:
+                    mConfig.colorMode = value;
                     break;
                 case WIDTH:
                     mMetrics.widthPixels = value;
@@ -355,6 +359,34 @@ public class ConfigTest extends AndroidTestCase {
         checkValue(res, R.configVarying.simple, "simple square");
         checkValue(res, R.configVarying.bag,
                 R.styleable.TestConfig, new String[]{"bag square"});
+
+        config = makeEmptyConfig();
+        config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_HDR_YES);
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple hdr");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag hdr"});
+
+        config = makeEmptyConfig();
+        config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_HDR_NO);
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple ldr");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag ldr"});
+
+        config = makeEmptyConfig();
+        config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_WIDE_COLOR_GAMUT_YES);
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple widecg");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag widecg"});
+
+        config = makeEmptyConfig();
+        config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_WIDE_COLOR_GAMUT_NO);
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple nowidecg");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag nowidecg"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_SMALL);
@@ -891,9 +923,9 @@ public class ConfigTest extends AndroidTestCase {
 // nokeys is set
 
     @MediumTest
-    public void testPrecidence() {
+    public void testPrecedence() {
         /**
-         * Check for precidence of resources selected when there are multiple
+         * Check for precedence of resources selected when there are multiple
          * options matching the current config.
          */
         TotalConfig config = makeEmptyConfig();
@@ -939,6 +971,18 @@ public class ConfigTest extends AndroidTestCase {
         checkValue(res, R.configVarying.simple, "simple landscape");
         checkValue(res, R.configVarying.bag,
                 R.styleable.TestConfig, new String[]{"bag landscape"});
+
+        config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_HDR_YES);
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple hdr");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag hdr"});
+
+        config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_WIDE_COLOR_GAMUT_YES);
+        res = config.getResources();
+        checkValue(res, R.configVarying.simple, "simple widecg");
+        checkValue(res, R.configVarying.bag,
+                R.styleable.TestConfig, new String[]{"bag widecg"});
 
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
