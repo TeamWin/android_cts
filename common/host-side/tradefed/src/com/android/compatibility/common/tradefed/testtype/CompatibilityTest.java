@@ -55,6 +55,7 @@ import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.util.AbiFormatter;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
+import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.TimeUtil;
 import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
@@ -64,7 +65,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -471,11 +471,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     // was successful, and test execution should proceed to next module
                     ByteArrayOutputStream stack = new ByteArrayOutputStream();
                     due.printStackTrace(new PrintWriter(stack, true));
-                    try {
-                        stack.close();
-                    } catch (IOException ioe) {
-                        // won't happen on BAOS
-                    }
+                    StreamUtil.close(stack);
                     CLog.w("Ignored DeviceUnresponsiveException because recovery was successful, "
                             + "proceeding with next module. Stack trace: %s",
                             stack.toString());
@@ -743,7 +739,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     mIncludeFilters.add(new TestFilter(mAbiName, module, mTestName).toString());
                 }
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         } else if (mTestName != null) {
             throw new IllegalArgumentException(
@@ -808,6 +804,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         mListCheckers = systemCheckers;
     }
 
+    @Override
     public void setCollectTestsOnly(boolean collectTestsOnly) {
         mCollectTestsOnly = collectTestsOnly;
     }

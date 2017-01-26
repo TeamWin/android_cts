@@ -222,35 +222,31 @@ public class ModuleRepo implements IModuleRepo {
                         // skip this name/abi combination.
                         continue;
                     }
-                    {
-                        Map<String, List<String>> args = new HashMap<>();
-                        if (mModuleArgs.containsKey(name)) {
-                            args.putAll(mModuleArgs.get(name));
-                        }
-                        if (mModuleArgs.containsKey(id)) {
-                            args.putAll(mModuleArgs.get(id));
-                        }
-                        if (args != null && args.size() > 0) {
-                            for (Entry<String, List<String>> entry : args.entrySet()) {
-                                for (String value : entry.getValue()) {
-                                    // Collection-type options can be injected with multiple values
-                                    config.injectOptionValue(entry.getKey(), value);
-                                }
-                            }
+
+                    Map<String, List<String>> args = new HashMap<>();
+                    if (mModuleArgs.containsKey(name)) {
+                        args.putAll(mModuleArgs.get(name));
+                    }
+                    if (mModuleArgs.containsKey(id)) {
+                        args.putAll(mModuleArgs.get(id));
+                    }
+                    for (Entry<String, List<String>> entry : args.entrySet()) {
+                        for (String value : entry.getValue()) {
+                            // Collection-type options can be injected with multiple values
+                            config.injectOptionValue(entry.getKey(), value);
                         }
                     }
+
                     List<IRemoteTest> tests = config.getTests();
                     for (IRemoteTest test : tests) {
                         String className = test.getClass().getName();
-                        Map<String, List<String>> args = new HashMap<>();
+                        Map<String, List<String>> testArgsMap = new HashMap<>();
                         if (mTestArgs.containsKey(className)) {
-                            args.putAll(mTestArgs.get(className));
+                            testArgsMap.putAll(mTestArgs.get(className));
                         }
-                        if (args != null && args.size() > 0) {
-                            for (Entry<String, List<String>> entry : args.entrySet()) {
-                                for (String value : entry.getValue()) {
-                                    config.injectOptionValue(entry.getKey(), value);
-                                }
+                        for (Entry<String, List<String>> entry : testArgsMap.entrySet()) {
+                            for (String value : entry.getValue()) {
+                                config.injectOptionValue(entry.getKey(), value);
                             }
                         }
                         addFiltersToTest(test, abi, name);
