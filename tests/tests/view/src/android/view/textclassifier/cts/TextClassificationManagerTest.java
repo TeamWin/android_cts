@@ -1,0 +1,160 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.view.textclassifier.cts;
+
+import static org.junit.Assert.assertThat;
+
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.view.textclassifier.TextClassificationManager;
+import android.view.textclassifier.TextClassificationResult;
+import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLanguage;
+import android.view.textclassifier.TextSelection;
+
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.List;
+import java.util.Locale;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class TextClassificationManagerTest {
+
+    private TextClassificationManager mTcm;
+    private TextClassifier mClassifier;
+
+    @Before
+    public void setup() {
+        mTcm = InstrumentationRegistry.getTargetContext()
+                .getSystemService(TextClassificationManager.class);
+        mClassifier = mTcm.getDefaultTextClassifier();
+    }
+
+    @Test
+    public void testSmartSelection() {
+        String text = "Contact me at droid@email.com";
+        String selected = "droid";
+        String suggested = "droid@email.com";
+        int startIndex = text.indexOf(selected);
+        int endIndex = startIndex + selected.length();
+        int smartStartIndex = text.indexOf(suggested);
+        int smartEndIndex = smartStartIndex + suggested.length();
+
+        assertThat(mClassifier.suggestSelection(text, startIndex, endIndex),
+                isTextSelection(smartStartIndex, smartEndIndex, TextClassifier.TYPE_EMAIL));
+    }
+
+    @Test
+    public void testTextClassificationResult() {
+        String text = "Contact me at droid@email.com";
+        String classifiedText = "droid@email.com";
+        int startIndex = text.indexOf(classifiedText);
+        assertThat(mClassifier.getTextClassificationResult(text, startIndex, text.length()),
+                isTextClassificationResult(classifiedText, TextClassifier.TYPE_EMAIL));
+    }
+
+    @Test
+    public void testLanguageDetection() {
+        String text = "This is english text";
+        assertThat(mTcm.detectLanguages(text), isDetectedLanguage("en"));
+
+        text = "Das ist deutscher text";
+        assertThat(mTcm.detectLanguages(text), isDetectedLanguage("de"));
+
+        text = "これは日本語テキストです";
+        assertThat(mTcm.detectLanguages(text), isDetectedLanguage("ja"));
+    }
+
+    private static Matcher<TextSelection> isTextSelection(
+            final int startIndex, final int endIndex, final String type) {
+        return new BaseMatcher<TextSelection>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof TextSelection) {
+                    TextSelection selection = (TextSelection) o;
+                    return startIndex == selection.getSelectionStartIndex()
+                            && endIndex == selection.getSelectionEndIndex()
+                            && selection.getEntityCount() > 0
+                            && type.equals(selection.getEntity(0));
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendValue(
+                        String.format("%d, %d, %s=1.0", startIndex, endIndex, type));
+            }
+        };
+    }
+
+    private static Matcher<TextClassificationResult> isTextClassificationResult(
+            final String text, final String type) {
+        return new BaseMatcher<TextClassificationResult>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof TextClassificationResult) {
+                    TextClassificationResult result = (TextClassificationResult) o;
+                    return text.equals(result.getText())
+                            && result.getEntityCount() > 0
+                            && type.equals(result.getEntity(0));
+                    // TODO: Include other properties.
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("text=").appendValue(text)
+                        .appendText(", type=").appendValue(type);
+            }
+        };
+    }
+
+    private static Matcher<List<TextLanguage>> isDetectedLanguage(final String language) {
+        return new BaseMatcher<List<TextLanguage>>() {
+            @Override
+            public boolean matches(Object o) {
+                if (o instanceof List) {
+                    List languages = (List) o;
+                    if (!languages.isEmpty()) {
+                        Object o1 = languages.get(0);
+                        if (o1 instanceof TextLanguage) {
+                            TextLanguage lang = (TextLanguage) o1;
+                            return lang.getLanguageCount() > 0
+                                    && new Locale(language).getLanguage()
+                                            .equals(lang.getLanguage(0).getLanguage());
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendValue(String.format("%s=1.0", language));
+            }
+        };
+    }
+}
