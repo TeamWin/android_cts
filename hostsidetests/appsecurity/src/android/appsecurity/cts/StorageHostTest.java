@@ -100,6 +100,10 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal");
     }
 
+    public void testVerifyCategory() throws Exception {
+        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory");
+    }
+
     public void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
