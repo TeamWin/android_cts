@@ -18,6 +18,7 @@ package android.app.cts;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -26,6 +27,9 @@ import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
 
 public class NotificationTest extends AndroidTestCase {
+    private static final String TEXT_RESULT_KEY = "text";
+    private static final String DATA_RESULT_KEY = "data";
+    private static final String DATA_AND_TEXT_RESULT_KEY = "data and text";
 
     private Notification.Action mAction;
     private Notification mNotification;
@@ -190,5 +194,68 @@ public class NotificationTest extends AndroidTestCase {
     public void testToString() {
         mNotification = new Notification();
         assertNotNull(mNotification.toString());
+    }
+
+    public void testNotificationActionBuilder_setDataOnlyRemoteInput() throws Throwable {
+        Notification.Action a = newActionBuilder()
+                .addRemoteInput(newDataOnlyRemoteInput()).build();
+        RemoteInput[] textInputs = a.getRemoteInputs();
+        assertTrue(textInputs == null || textInputs.length == 0);
+        verifyRemoteInputArrayHasSingleResult(a.getDataOnlyRemoteInputs(), DATA_RESULT_KEY);
+    }
+
+    public void testNotificationActionBuilder_setTextAndDataOnlyRemoteInput() throws Throwable {
+        Notification.Action a = newActionBuilder()
+                .addRemoteInput(newDataOnlyRemoteInput())
+                .addRemoteInput(newTextRemoteInput())
+                .build();
+
+        verifyRemoteInputArrayHasSingleResult(a.getRemoteInputs(), TEXT_RESULT_KEY);
+        verifyRemoteInputArrayHasSingleResult(a.getDataOnlyRemoteInputs(), DATA_RESULT_KEY);
+    }
+
+    public void testNotificationActionBuilder_setTextAndDataOnlyAndBothRemoteInput()
+            throws Throwable {
+        Notification.Action a = newActionBuilder()
+                .addRemoteInput(newDataOnlyRemoteInput())
+                .addRemoteInput(newTextRemoteInput())
+                .addRemoteInput(newTextAndDataRemoteInput())
+                .build();
+
+        assertTrue(a.getRemoteInputs() != null && a.getRemoteInputs().length == 2);
+        assertEquals(TEXT_RESULT_KEY, a.getRemoteInputs()[0].getResultKey());
+        assertFalse(a.getRemoteInputs()[0].isDataOnly());
+        assertEquals(DATA_AND_TEXT_RESULT_KEY, a.getRemoteInputs()[1].getResultKey());
+        assertFalse(a.getRemoteInputs()[1].isDataOnly());
+
+        verifyRemoteInputArrayHasSingleResult(a.getDataOnlyRemoteInputs(), DATA_RESULT_KEY);
+        assertTrue(a.getDataOnlyRemoteInputs()[0].isDataOnly());
+    }
+
+    private static RemoteInput newDataOnlyRemoteInput() {
+        return new RemoteInput.Builder(DATA_RESULT_KEY)
+            .setAllowFreeFormInput(false)
+            .setAllowDataType("mimeType", true)
+            .build();
+    }
+
+    private static RemoteInput newTextAndDataRemoteInput() {
+        return new RemoteInput.Builder(DATA_AND_TEXT_RESULT_KEY)
+            .setAllowDataType("mimeType", true)
+            .build();  // allowFreeForm defaults to true
+    }
+
+    private static RemoteInput newTextRemoteInput() {
+        return new RemoteInput.Builder(TEXT_RESULT_KEY).build();  // allowFreeForm defaults to true
+    }
+
+    private static void verifyRemoteInputArrayHasSingleResult(
+            RemoteInput[] remoteInputs, String expectedResultKey) {
+        assertTrue(remoteInputs != null && remoteInputs.length == 1);
+        assertEquals(expectedResultKey, remoteInputs[0].getResultKey());
+    }
+
+    private static Notification.Action.Builder newActionBuilder() {
+        return new Notification.Action.Builder(0, "title", null);
     }
 }
