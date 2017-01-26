@@ -48,23 +48,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
 
-    private static final String TAG = "BindDeviceAdminServiceGoodSetupTest";
-    private DevicePolicyManager mDpm;
-    private UserHandle mTargetUserHandle;
+    private static final String TAG = "BindDeviceAdminTest";
+
     private static final String NON_MANAGING_PACKAGE = AdminReceiver.COMP_DPC_2_PACKAGE_NAME;
-
-    @Override
-    public void setUp() {
-        mDpm = (DevicePolicyManager)
-                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        assertEquals(AdminReceiver.COMP_DPC_PACKAGE_NAME, mContext.getPackageName());
-
-        List<UserHandle> allowedTargetUsers = mDpm.getBindDeviceAdminTargetUsers(
-                AdminReceiver.getComponentName(mContext));
-        assertEquals(1, allowedTargetUsers.size());
-        mTargetUserHandle = allowedTargetUsers.get(0);
-    }
-
     private static final ServiceConnection EMPTY_SERVICE_CONNECTION = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {}
@@ -72,19 +58,39 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
         @Override
         public void onServiceDisconnected(ComponentName name) {}
     };
-
     private static final IInterface NOT_IN_MAIN_THREAD_POISON_PILL = () -> null;
+
+    private DevicePolicyManager mDpm;
+    private List<UserHandle> mTargetUsers;
+
+    @Override
+    public void setUp() {
+        mDpm = (DevicePolicyManager)
+                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        assertEquals(AdminReceiver.COMP_DPC_PACKAGE_NAME, mContext.getPackageName());
+
+        mTargetUsers = mDpm.getBindDeviceAdminTargetUsers(AdminReceiver.getComponentName(mContext));
+        assertTrue("No target users found", mTargetUsers.size() > 0);
+    }
+
+    public void testOnlyDeviceOwnerCanHaveMoreThanOneTargetUser() {
+        if (!mDpm.isDeviceOwnerApp(AdminReceiver.getComponentName(mContext).getPackageName())) {
+            assertEquals(1, mTargetUsers.size());
+        }
+    }
 
     /**
      * If the intent is implicit, expected to throw {@link IllegalArgumentException}.
      */
     public void testCannotBind_implicitIntent() throws Exception {
-        try {
-            final Intent implicitIntent = new Intent(Intent.ACTION_VIEW);
-            bind(implicitIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
-            fail("IllegalArgumentException should be thrown");
-        } catch (IllegalArgumentException ex) {
-            MoreAsserts.assertContainsRegex("Service intent must be explicit", ex.getMessage());
+        final Intent implicitIntent = new Intent(Intent.ACTION_VIEW);
+        for (UserHandle targetUser : mTargetUsers) {
+            try {
+                bind(implicitIntent, EMPTY_SERVICE_CONNECTION, targetUser);
+                fail("IllegalArgumentException should be thrown for target user " + targetUser);
+            } catch (IllegalArgumentException ex) {
+                MoreAsserts.assertContainsRegex("Service intent must be explicit", ex.getMessage());
+            }
         }
     }
 
@@ -94,19 +100,24 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
     public void testCannotBind_notResolvableIntent() throws Exception {
         final Intent notResolvableIntent = new Intent();
         notResolvableIntent.setClassName(mContext, "NotExistService");
-        assertFalse(bind(notResolvableIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle));
+        for (UserHandle targetUser : mTargetUsers) {
+            assertFalse("Should not be allowed to bind to target user " + targetUser,
+                    bind(notResolvableIntent, EMPTY_SERVICE_CONNECTION, targetUser));
+        }
     }
 
     /**
      * Make sure we cannot bind exported service.
      */
     public void testCannotBind_exportedCrossUserService() throws Exception {
-        try {
-            final Intent serviceIntent = new Intent(mContext, ExportedCrossUserService.class);
-            bind(serviceIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
-            fail("SecurityException should be thrown");
-        } catch (SecurityException ex) {
-            MoreAsserts.assertContainsRegex("must be unexported", ex.getMessage());
+        final Intent serviceIntent = new Intent(mContext, ExportedCrossUserService.class);
+        for (UserHandle targetUser : mTargetUsers) {
+            try {
+                bind(serviceIntent, EMPTY_SERVICE_CONNECTION, targetUser);
+                fail("SecurityException should be thrown for target user " + targetUser);
+            } catch (SecurityException ex) {
+                MoreAsserts.assertContainsRegex("must be unexported", ex.getMessage());
+            }
         }
     }
 
@@ -114,13 +125,15 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
      * Talk to a DPC package that is neither device owner nor profile owner.
      */
     public void testCheckCannotBind_nonManagingPackage() throws Exception {
-        try {
-            final Intent serviceIntent = new Intent();
-            serviceIntent.setClassName(NON_MANAGING_PACKAGE, CrossUserService.class.getName());
-            bind(serviceIntent, EMPTY_SERVICE_CONNECTION, mTargetUserHandle);
-            fail("SecurityException should be thrown");
-        } catch (SecurityException ex) {
-            MoreAsserts.assertContainsRegex("Only allow to bind service", ex.getMessage());
+        final Intent serviceIntent = new Intent();
+        serviceIntent.setClassName(NON_MANAGING_PACKAGE, CrossUserService.class.getName());
+        for (UserHandle targetUser : mTargetUsers) {
+            try {
+                bind(serviceIntent, EMPTY_SERVICE_CONNECTION, targetUser);
+                fail("SecurityException should be thrown for target user " + targetUser);
+            } catch (SecurityException ex) {
+                MoreAsserts.assertContainsRegex("Only allow to bind service", ex.getMessage());
+            }
         }
     }
 
@@ -142,15 +155,18 @@ public class BindDeviceAdminServiceGoodSetupTest extends AndroidTestCase {
      */
     public void testCrossProfileCall_echo() throws Exception {
         final String ANSWER = "42";
-        assertCrossProfileCall(ANSWER, service -> service.echo(ANSWER), mTargetUserHandle);
+        for (UserHandle targetUser : mTargetUsers) {
+            assertCrossProfileCall(ANSWER, service -> service.echo(ANSWER), targetUser);
+        }
     }
 
     /**
      * Make sure we are talking to the target user.
      */
     public void testCrossProfileCall_getUserHandle() throws Exception {
-        assertCrossProfileCall(
-                mTargetUserHandle, service -> service.getUserHandle(), mTargetUserHandle);
+        for (UserHandle targetUser : mTargetUsers) {
+            assertCrossProfileCall(targetUser, service -> service.getUserHandle(), targetUser);
+        }
     }
 
     /**

@@ -15,22 +15,34 @@
  */
 package com.android.cts.comp;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
 
 public class Utils {
-    static UserHandle getOtherProfile(Context context) {
+
+    private static final String TAG = "BindDeviceAdminTest";
+
+    /**
+     * Returns the user handle of the other profile of the same user, or {@code null} if there
+     * are no other profiles or there are more than one.
+     */
+    static @Nullable
+    UserHandle getOtherProfile(Context context) {
         List<UserHandle> otherProfiles = context.getSystemService(UserManager.class)
                 .getUserProfiles();
         otherProfiles.remove(Process.myUserHandle());
-        assertEquals(1, otherProfiles.size());
-        return otherProfiles.get(0);
+        if (otherProfiles.size() == 1) {
+            return otherProfiles.get(0);
+        }
+        Log.d(TAG, "There are " + otherProfiles.size() + " other profiles for user "
+                + Process.myUserHandle() + ": " + otherProfiles);
+        return null;
     }
 }

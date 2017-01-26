@@ -57,8 +57,10 @@ public class BindDeviceAdminServiceFailsTest extends AndroidTestCase {
 
     public void testCannotBind() throws Exception {
         UserHandle otherProfile = Utils.getOtherProfile(mContext);
-        checkCannotBind(AdminReceiver.COMP_DPC_PACKAGE_NAME, otherProfile);
-        checkCannotBind(AdminReceiver.COMP_DPC_2_PACKAGE_NAME, otherProfile);
+        if (otherProfile != null) {
+            checkCannotBind(AdminReceiver.COMP_DPC_PACKAGE_NAME, otherProfile);
+            checkCannotBind(AdminReceiver.COMP_DPC_2_PACKAGE_NAME, otherProfile);
+        }
     }
 
     private void checkCannotBind(String targetPackageName, UserHandle otherProfile) {

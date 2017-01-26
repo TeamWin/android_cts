@@ -45,6 +45,10 @@ public class UserRestrictionTest extends AndroidTestCase {
         setUserRestriction(UserManager.DISALLOW_REMOVE_USER, true);
     }
 
+    public void testClearDisallowRemoveUserRestriction() {
+        setUserRestriction(UserManager.DISALLOW_REMOVE_USER, false);
+    }
+
     private void setUserRestriction(String restriction, boolean add) {
         DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
         ComponentName admin = AdminReceiver.getComponentName(getContext());
