@@ -166,6 +166,26 @@ public class ProgressBarTest {
 
     @UiThreadTest
     @Test
+    public void testQueryAnimationState() {
+        assertTrue(mProgressBar.isAnimating());
+        assertFalse(mProgressBarHorizontal.isAnimating());
+
+        mProgressBarHorizontal.setIndeterminate(true);
+        assertTrue(mProgressBarHorizontal.isAnimating());
+
+        mProgressBarHorizontal.setIndeterminate(false);
+        assertFalse(mProgressBarHorizontal.isAnimating());
+
+        mProgressBar.setVisibility(View.GONE);
+        assertFalse(mProgressBar.isAnimating());
+        mProgressBar.setVisibility(View.INVISIBLE);
+        assertFalse(mProgressBar.isAnimating());
+        mProgressBar.setVisibility(View.VISIBLE);
+        assertTrue(mProgressBar.isAnimating());
+    }
+
+    @UiThreadTest
+    @Test
     public void testAccessIndeterminateDrawable() {
         // set IndeterminateDrawable
         // normal value
