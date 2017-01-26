@@ -15,6 +15,9 @@
  */
 package android.server.cts;
 
+import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.log.LogUtil.CLog;
+
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * docked state.
      */
     public void testConfigurationUpdatesWhenResizedFromFullscreen() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -49,6 +57,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * from docked state to fullscreen (reverse).
      */
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
         final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
@@ -64,6 +77,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Tests whether the Display sizes change when rotating the device.
      */
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
+        if (!supportsScreenRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
+
         setDeviceRotation(0);
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
@@ -77,8 +95,23 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * is in the docked stack.
      */
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
+        if (!supportsScreenRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         setDeviceRotation(0);
-        launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        // Launch our own activity to side in case Recents (or other activity to side) doesn't
+        // support rotation.
+        launchActivityToSide(false /* randomData */, false /* multipleTask */, TEST_ACTIVITY_NAME);
+        // Launch target activity in docked stack.
+        launchActivity(false /* toSide */, false /* randomData */, false /* multipleTask */,
+                RESIZEABLE_ACTIVITY_NAME);
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
 
@@ -135,6 +168,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Asserts that initial and final reported sizes in fullscreen stack are the same.
      */
     private void moveActivityFullSplitFull(String activityName) throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         // Launch to fullscreen stack and record size.
         launchActivityInStack(activityName, FULLSCREEN_WORKSPACE_STACK_ID);
         final ReportedSizes initialFullscreenSizes = getActivityDisplaySize(activityName,
@@ -184,6 +222,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Asserts that initial and final reported sizes in docked stack are the same.
      */
     private void moveActivitySplitFullSplit(String activityName) throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         // Launch to docked stack and record size.
         launchActivityInStack(activityName, DOCKED_STACK_ID);
         final ReportedSizes initialDockedSizes = getActivityDisplaySize(activityName,

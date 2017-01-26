@@ -1,5 +1,12 @@
 [
 {
+  description: "Disable ListeningPortsTest",
+  names: [
+    "android.security.cts.ListeningPortsTest"
+  ],
+  bug: 31803630
+},
+{
   description: "some AlarmClockTests are not robust across different device types",
   names: [
     "android.alarmclock.cts.DismissAlarmTest#testAll",
@@ -313,5 +320,12 @@
   description: "Still investigating this, root cause unknown yet",
   bug: 27578806,
   names: ["com.android.cts.cpptools.RunAsHostTest#testRunAs"]
+},
+{
+  description: "Wired headset tests are no longer a requirement per CDD",
+  names: [
+    "android.telecom.cts.WiredHeadsetTest"
+  ],
+  bug: 26149528
 }
 ]

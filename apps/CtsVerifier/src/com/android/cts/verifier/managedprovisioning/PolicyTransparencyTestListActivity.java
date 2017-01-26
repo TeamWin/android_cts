@@ -18,6 +18,7 @@ package com.android.cts.verifier.managedprovisioning;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -121,7 +122,8 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
         for (String restriction : UserRestrictions.getUserRestrictions()) {
             final Intent intent = UserRestrictions.getUserRestrictionTestIntent(this, restriction);
-            if (!mIsDeviceOwner && !UserRestrictions.isValidForPO(restriction)) {
+            if (!UserRestrictions.isRestrictionValid(this, restriction) ||
+                    (!mIsDeviceOwner && !UserRestrictions.isValidForPO(restriction))) {
                 continue;
             }
             final String title = UserRestrictions.getRestrictionLabel(this, restriction);
@@ -133,7 +135,8 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         for (Pair<Intent, Integer> policy : POLICIES) {
             final Intent intent = policy.first;
             String test = intent.getStringExtra(PolicyTransparencyTestActivity.EXTRA_TEST);
-            if (!mIsDeviceOwner && !ALSO_VALID_FOR_PO.contains(test)) {
+            if (!isPolicyValid(test) ||
+                    (!mIsDeviceOwner && !ALSO_VALID_FOR_PO.contains(test))) {
                 continue;
             }
             final String title = getString(policy.second);
@@ -141,6 +144,16 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TITLE, title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, testId);
             adapter.add(TestListItem.newTest(title, testId, intent, null));
+        }
+    }
+
+    private boolean isPolicyValid(String test) {
+        final PackageManager pm = getPackageManager();
+        switch (test) {
+            case PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD:
+                return pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS);
+            default:
+                return true;
         }
     }
 

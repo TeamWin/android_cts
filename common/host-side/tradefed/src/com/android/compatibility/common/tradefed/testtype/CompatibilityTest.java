@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.result.SubPlanCreator;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
 import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
@@ -49,6 +50,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -69,10 +71,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Test for running Compatibility Suites
@@ -83,9 +87,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String INCLUDE_FILTER_OPTION = "include-filter";
     public static final String EXCLUDE_FILTER_OPTION = "exclude-filter";
     private static final String PLAN_OPTION = "plan";
-    private static final String SUBPLAN_OPTION = "subplan";
+    public static final String SUBPLAN_OPTION = "subplan";
     public static final String MODULE_OPTION = "module";
     public static final String TEST_OPTION = "test";
+    public static final String PRECONDITION_ARG_OPTION = "precondition-arg";
+    public static final char TEST_OPTION_SHORT_NAME = 't';
     private static final String MODULE_ARG_OPTION = "module-arg";
     private static final String TEST_ARG_OPTION = "test-arg";
     public static final String RETRY_OPTION = "retry";
@@ -98,6 +104,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     public static final String DEVICE_TOKEN_OPTION = "device-token";
     public static final String LOGCAT_ON_FAILURE_SIZE_OPTION = "logcat-on-failure-size";
     private static final String URL = "dynamic-config-url";
+
+    // Constants for checking invocation or preconditions preparation failure
+    private static final int NUM_PREP_ATTEMPTS = 10;
+    private static final int MINUTES_PER_PREP_ATTEMPT = 2;
 
     /* API Key for compatibility test project, used for dynamic configuration */
     private static final String API_KEY = "AIzaSyAbwX5JRlmsLeygY2WWihpIJPXFLueOQ3U";
@@ -130,10 +140,16 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     private String mModuleName = null;
 
     @Option(name = TEST_OPTION,
-            shortName = 't',
+            shortName = TEST_OPTION_SHORT_NAME,
             description = "the test run.",
             importance = Importance.IF_UNSET)
     private String mTestName = null;
+
+    @Option(name = PRECONDITION_ARG_OPTION,
+            description = "the arguments to pass to a precondition. The expected format is"
+                    + "\"<arg-name>:<arg-value>\"",
+            importance = Importance.ALWAYS)
+    private List<String> mPreconditionArgs = new ArrayList<>();
 
     @Option(name = MODULE_ARG_OPTION,
             description = "the arguments to pass to a module. The expected format is"
@@ -339,6 +355,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 }
 
             }
+            // Update BuildInfo in each shard to store the original command-line arguments from
+            // the session to be retried. These arguments will be serialized in the report later.
+            if (mRetrySessionId != null) {
+                loadRetryCommandLineArgs(mRetrySessionId);
+            }
             // Get the tests to run in this shard
             List<IModuleDef> modules = mModuleRepo.getModules(getDevice().getSerialNumber());
 
@@ -376,15 +397,24 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 module.setBuild(mBuildHelper.getBuildInfo());
                 module.setDevice(mDevice);
                 module.setPreparerWhitelist(mPreparerWhitelist);
-                isPrepared &= (module.prepare(mSkipPreconditions));
+                isPrepared &= (module.prepare(mSkipPreconditions, mPreconditionArgs));
             }
             mModuleRepo.setPrepared(isPrepared);
 
-            if (!mModuleRepo.isPrepared()) {
-                CLog.logAndDisplay(LogLevel.ERROR,
-                        "Incorrect preparation detected, exiting test run from %s",
-                        mDevice.getSerialNumber());
-                return;
+            int prepAttempt = 1;
+            while (!mModuleRepo.isPrepared(MINUTES_PER_PREP_ATTEMPT, TimeUnit.MINUTES)) {
+                if (prepAttempt >= NUM_PREP_ATTEMPTS
+                        || InvocationFailureHandler.hasFailed(mBuildHelper)) {
+                    CLog.logAndDisplay(LogLevel.ERROR,
+                            "Incorrect preparation detected, exiting test run from %s",
+                            mDevice.getSerialNumber());
+                    return;
+                } else {
+                    CLog.logAndDisplay(LogLevel.INFO,
+                            "Device %s on standby while all shards complete preparation",
+                            mDevice.getSerialNumber());
+                }
+                prepAttempt++;
             }
 
             // Run the tests
@@ -407,8 +437,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 if (checkers != null && !checkers.isEmpty()) {
                     runPreModuleCheck(module.getName(), checkers, mDevice, listener);
                 }
+                // Workaround to b/34202787: Add result forwarder that ensures module is reported
+                // with 0 tests if test runner doesn't report anything in this case.
+                // Necessary for solution to b/33289177, in which completed modules may sometimes
+                // not be marked done until retried with 0 tests.
+                ModuleResultForwarder moduleListener = new ModuleResultForwarder(listener);
                 try {
-                    module.run(listener);
+                    module.run(moduleListener);
+                    moduleListener.finish(module.getId());
                 } catch (DeviceUnresponsiveException due) {
                     // being able to catch a DeviceUnresponsiveException here implies that recovery
                     // was successful, and test execution should proceed to next module
@@ -567,6 +603,30 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     }
 
     /**
+     * Sets the retry command-line args to be stored in the BuildInfo and serialized into the
+     * report upon completion of the invocation.
+     */
+    void loadRetryCommandLineArgs(Integer sessionId) {
+        IInvocationResult result = null;
+        try {
+            result = ResultHandler.findResult(mBuildHelper.getResultsDir(), sessionId);
+        } catch (FileNotFoundException e) {
+            // We should never reach this point, because this method should only be called
+            // after setupFilters(), so result exists if we've gotten this far
+            throw new RuntimeException(e);
+        }
+        if (result == null) {
+            // Again, this should never happen
+            throw new IllegalArgumentException(String.format(
+                    "Could not find session with id %d", sessionId));
+        }
+        String retryCommandLineArgs = result.getCommandLineArgs();
+        if (retryCommandLineArgs != null) {
+            mBuildHelper.setRetryCommandLineArgs(retryCommandLineArgs);
+        }
+    }
+
+    /**
      * Sets the include/exclude filters up based on if a module name was given or whether this is a
      * retry run.
      */
@@ -601,8 +661,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
             String retryCommandLineArgs = result.getCommandLineArgs();
             if (retryCommandLineArgs != null) {
-                // Copy the original command into the build helper so it can be serialized later
-                mBuildHelper.setRetryCommandLineArgs(retryCommandLineArgs);
                 try {
                     // parse the command-line string from the result file and set options
                     ArgsOptionParser parser = new ArgsOptionParser(this);
@@ -713,6 +771,33 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         }
 
         return shardQueue;
+    }
+
+    private class ModuleResultForwarder extends ResultForwarder {
+
+        private boolean mTestRunStarted = false;
+        private ITestInvocationListener mListener;
+
+        public ModuleResultForwarder(ITestInvocationListener listener) {
+            super(listener);
+            mListener = listener;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void testRunStarted(String name, int numTests) {
+            mListener.testRunStarted(name, numTests);
+            mTestRunStarted = true;
+        }
+
+        public void finish(String moduleId) {
+            if (!mTestRunStarted) {
+                mListener.testRunStarted(moduleId, 0);
+                mListener.testRunEnded(0, Collections.emptyMap());
+            }
+        }
     }
 
 }

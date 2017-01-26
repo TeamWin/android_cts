@@ -125,7 +125,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         mCompletionService = new ExecutorCompletionService<>(mExecutionService);
     }
 
-    private Map<String, File> extractReferenceImages(String zipFile) {
+    private Map<String, File> extractReferenceImages(String zipFile) throws Exception {
         final Map<String, File> references = new HashMap<>();
         final InputStream zipStream = ThemeHostTest.class.getResourceAsStream(zipFile);
         if (zipStream != null) {
@@ -150,7 +150,12 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
                 fail("Failed to unzip assets: " + zipFile);
             }
         } else {
-            fail("Failed to get resource: " + zipFile);
+            if (checkHardwareTypeSkipTest(mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim())) {
+                Log.logAndDisplay(LogLevel.WARN, LOG_TAG,
+                        "Could not obtain resources for skipped themes test: " + zipFile);
+            } else {
+                fail("Failed to get resource: " + zipFile);
+            }
         }
 
         return references;

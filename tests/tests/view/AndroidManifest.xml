@@ -250,6 +250,7 @@
         </activity>
 
         <activity android:name="android.view.cts.surfacevalidator.CapturedActivity"
+            android:configChanges="orientation|screenSize"
             android:screenOrientation="portrait"
             android:theme="@style/WhiteBackgroundTheme">
             <intent-filter>

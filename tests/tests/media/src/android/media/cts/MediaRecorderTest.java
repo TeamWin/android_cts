@@ -424,17 +424,6 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return 1;
     }
 
-    public void testRecordAudioFromAudioSourceUnprocessed() throws Exception {
-        if (!hasMicrophone()) {
-            return; // skip
-        }
-        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.UNPROCESSED);
-        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
-        mMediaRecorder.setOutputFile(OUTPUT_PATH);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
-        recordMedia(MAX_FILE_SIZE, mOutFile);
-    }
-
     public void testGetAudioSourceMax() throws Exception {
         final int max = MediaRecorder.getAudioSourceMax();
         assertTrue(MediaRecorder.AudioSource.DEFAULT <= max);

@@ -67,26 +67,17 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        if (mModuleId == null || !mModuleId.equals(id)) {
-            mModuleId = id;
-            mTotalTestsInModule = numTests;
-            // Reset counters
-            mCurrentTestNum = 0;
-            mPassedTests = 0;
-            mFailedTests = 0;
-            mNotExecutedTests = 0;
-            mTestFailed = false;
-            logMessage("Starting %s with %d test%s",
-                    id, mTotalTestsInModule, (mTotalTestsInModule > 1) ? "s" : "");
-        } else {
-            if (mNotExecutedTests == 0) {
-                mTotalTestsInModule += numTests;
-            } else {
-                mTotalTestsInModule += Math.max(0, numTests - mNotExecutedTests);
-            }
-            logMessage("Continuing %s with %d test%s",
-                    id, mTotalTestsInModule, (mTotalTestsInModule > 1) ? "s" : "");
-        }
+        boolean isRepeatModule = (mModuleId != null && mModuleId.equals(id));
+        mModuleId = id;
+        mTotalTestsInModule = numTests;
+        // Reset counters
+        mCurrentTestNum = 0;
+        mPassedTests = 0;
+        mFailedTests = 0;
+        mNotExecutedTests = 0;
+        mTestFailed = false;
+        logMessage("%s %s with %d test%s", (isRepeatModule) ? "Continuing" : "Starting", id,
+                mTotalTestsInModule, (mTotalTestsInModule > 1) ? "s" : "");
     }
 
     /**

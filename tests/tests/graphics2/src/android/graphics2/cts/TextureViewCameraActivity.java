@@ -55,13 +55,7 @@ public class TextureViewCameraActivity extends Activity implements
         Assert.assertTrue(mTextureView.isOpaque());
         mWidth = width;
         mHeight = height;
-        PackageManager packageManager = getPackageManager();
-        boolean hasRearCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA);
-        boolean hasFrontCamera =
-                packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT);
-        if (hasRearCamera) {
-            mCamera = Camera.open();
-        } else if (hasFrontCamera) {
+        if (Camera.getNumberOfCameras() > 0) {
             mCamera = Camera.open(0);
         } else {
             // no camera, and no frame update, so just complete here.
@@ -84,8 +78,10 @@ public class TextureViewCameraActivity extends Activity implements
     }
 
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        mCamera.stopPreview();
-        mCamera.release();
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            mCamera.release();
+        }
         return true;
     }
 

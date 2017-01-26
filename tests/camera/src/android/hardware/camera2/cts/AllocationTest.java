@@ -494,6 +494,10 @@ public class AllocationTest extends AndroidTestCase {
                             });
 
                             stopCapture();
+                            if (VERBOSE) Log.v(TAG, "Cleanup Renderscript cache");
+                            scriptGraph.close();
+                            RenderScriptSingleton.clearContext();
+                            RenderScriptSingleton.setContext(getContext());
                         }
                     }
                 });
