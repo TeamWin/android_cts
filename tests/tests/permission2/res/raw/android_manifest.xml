@@ -1757,14 +1757,6 @@
     <permission android:name="android.permission.SET_TIME"
         android:protectionLevel="signature|privileged" />
 
-    <!-- Allows applications to set the system time zone.
-         <p>Protection level: normal
-    -->
-    <permission android:name="android.permission.SET_TIME_ZONE"
-        android:label="@string/permlab_setTimeZone"
-        android:description="@string/permdesc_setTimeZone"
-        android:protectionLevel="normal" />
-
     <!-- ==================================================== -->
     <!-- Permissions related to changing status bar   -->
     <!-- ==================================================== -->
