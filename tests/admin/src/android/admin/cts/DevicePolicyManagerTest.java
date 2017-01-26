@@ -822,4 +822,16 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             assertDeviceOwnerMessage(e.getMessage());
         }
     }
+
+    public void testCreateAdminSupportIntent_returnNullIfRestrictionIsNotSet() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testCreateAdminSupportIntent");
+            return;
+        }
+        Intent intent = mDevicePolicyManager.createAdminSupportIntent(
+                DevicePolicyManager.POLICY_DISABLE_CAMERA);
+        assertNull(intent);
+        intent = mDevicePolicyManager.createAdminSupportIntent(UserManager.DISALLOW_ADJUST_VOLUME);
+        assertNull(intent);
+    }
 }
