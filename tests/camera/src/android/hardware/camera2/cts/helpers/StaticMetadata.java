@@ -2224,6 +2224,13 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if the enable ZSL key is supported.
+     */
+    public boolean isEnableZslSupported() {
+        return areKeysAvailable(CaptureRequest.CONTROL_ENABLE_ZSL);
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return
