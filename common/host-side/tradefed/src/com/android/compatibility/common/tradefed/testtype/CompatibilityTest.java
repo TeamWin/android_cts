@@ -368,7 +368,9 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 CLog.logAndDisplay(LogLevel.INFO, "No module to run on %s.",
                         mDevice.getSerialNumber());
                 // Make sure we unlock other shards.
-                sPreparedLatch.countDown();
+                if (sPreparedLatch != null) {
+                    sPreparedLatch.countDown();
+                }
                 return;
             } else {
                 CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
