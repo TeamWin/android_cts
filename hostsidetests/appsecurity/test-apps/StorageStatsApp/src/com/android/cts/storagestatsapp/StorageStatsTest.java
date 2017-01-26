@@ -118,4 +118,13 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertMostlyEquals(3 * MB_IN_BYTES, after.getVideoBytes() - before.getVideoBytes());
         assertMostlyEquals(2 * MB_IN_BYTES, after.getImageBytes() - before.getImageBytes());
     }
+
+    public void testVerifyCategory() throws Exception {
+        final PackageManager pm = getContext().getPackageManager();
+        final ApplicationInfo a = pm.getApplicationInfo(PKG_A, 0);
+        final ApplicationInfo b = pm.getApplicationInfo(PKG_B, 0);
+
+        assertEquals(ApplicationInfo.CATEGORY_VIDEO, a.category);
+        assertEquals(ApplicationInfo.CATEGORY_UNDEFINED, b.category);
+    }
 }
