@@ -32,7 +32,7 @@ public class LaunchImeWithPipActivity extends Activity {
         final Display display = wm.getDefaultDisplay();
         final Point displaySize = new Point();
         display.getRealSize(displaySize);
-        PipActivity.launchActivity(this, new Rect(0, displaySize.y - 150, 150, displaySize.y),
-                false /* tapToLaunch */);
+        PipActivity.launchActivityIntoPinnedStack(this,
+                new Rect(0, displaySize.y - 150, 150, displaySize.y));
     }
 }

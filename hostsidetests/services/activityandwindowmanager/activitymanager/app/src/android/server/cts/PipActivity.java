@@ -158,16 +158,25 @@ public class PipActivity extends Activity {
     }
 
     /**
-     * Launches a new instance of the PipActivity.
+     * Launches a new instance of the PipActivity directly into the pinned stack.
      */
-    static void launchActivity(Activity caller, Rect bounds, boolean tapToFinish) {
+    static void launchActivityIntoPinnedStack(Activity caller, Rect bounds) {
         final Intent intent = new Intent(caller, PipActivity.class);
         intent.setFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(EXTRA_TAP_TO_FINISH, tapToFinish);
 
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchBounds(bounds);
         options.setLaunchStackId(4 /* ActivityManager.StackId.PINNED_STACK_ID */);
         caller.startActivity(intent, options.toBundle());
+    }
+
+    /**
+     * Launches a new instance of the PipActivity that will automatically enter PiP.
+     */
+    static void launchEnterPipActivity(Activity caller) {
+        final Intent intent = new Intent(caller, PipActivity.class);
+        intent.setFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(EXTRA_ENTER_PIP, "true");
+        caller.startActivity(intent);
     }
 }

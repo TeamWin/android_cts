@@ -40,14 +40,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
-    private static final String LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY = "LaunchTapToFinishPipActivity";
     private static final String LAUNCH_IME_WITH_PIP_ACTIVITY = "LaunchImeWithPipActivity";
+    private static final String LAUNCHER_ENTER_PIP_ACTIVITY = "LaunchEnterPipActivity";
     private static final String PIP_ON_STOP_ACTIVITY = "PipOnStopActivity";
 
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
     private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
+    private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
@@ -88,7 +89,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testNonTappablePipActivity() throws Exception {
         // Launch the tap-to-finish activity at a specific place
-        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
 
@@ -148,7 +151,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         final WindowManagerState wmState = mAmWmState.getWmState();
 
         // Launch an activity into the pinned stack
-        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
 
         // Get the display dimensions
@@ -170,7 +175,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testPinnedStackInBoundsAfterRotation() throws Exception {
         // Launch an activity into the pinned stack
-        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
 
         // Ensure that the PIP stack is fully visible in each orientation
@@ -496,6 +503,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Re-enable enter-pip-on-hide
         setAppOpsOpToMode(ActivityManagerTestBase.componentName,
                 APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_ALLOWED);
+    }
+
+    public void testEnterPipFromTaskWithMultipleActivities() throws Exception {
+        // Try to enter picture-in-picture from an activity that has more than one activity in the
+        // task and ensure that it works
+        launchActivity(LAUNCHER_ENTER_PIP_ACTIVITY);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
     }
 
     /**
