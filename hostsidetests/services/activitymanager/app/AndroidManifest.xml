@@ -159,6 +159,8 @@
             android:exported="true"
             android:launchMode="singleInstance"
         />
+        <activity android:name=".MultiWindowSupportObserver"
+            android:exported="true" />
     </application>
 </manifest>
 

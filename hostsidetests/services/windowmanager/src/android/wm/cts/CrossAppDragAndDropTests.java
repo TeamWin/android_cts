@@ -52,7 +52,10 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String SOURCE_PACKAGE_NAME = "android.wm.cts.dndsourceapp";
     private static final String TARGET_PACKAGE_NAME = "android.wm.cts.dndtargetapp";
     private static final String TARGET_23_PACKAGE_NAME = "android.wm.cts.dndtargetappsdk23";
-
+    private static boolean mConfigLoaded = false;
+    private final String SUPPORT_OBSERVER = "MultiWindowSupportObserver";
+    private static boolean mSupportMultiWindow = true;
+    private final String AM_FORCE_STOP_TEST_PACKAGE = "am force-stop android.wm.cts.dndsourceapp";
 
     private static final String SOURCE_ACTIVITY_NAME = "DragSource";
     private static final String TARGET_ACTIVITY_NAME = "DropTarget";
@@ -392,5 +395,24 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     public void testGrantWriteRequestWrite() throws Exception {
         doTestDragAndDrop(GRANT_WRITE, REQUEST_WRITE, RESULT_OK);
+    }
+    protected boolean supportsMultiWindowMode() {
+        if (!mConfigLoaded) {
+            try {
+                executeShellCommand("am start -n " + "android.wm.cts.dndsourceapp/." + SUPPORT_OBSERVER);
+                waitForResume("android.wm.cts.dndsourceapp", SUPPORT_OBSERVER);
+                Map map = getLogResults(SUPPORT_OBSERVER);
+                String value = (String)map.get(RESULT_KEY_DROP_RESULT);
+                if (value != null && value.equals("OK")) {
+                   mConfigLoaded = true;
+                    mSupportMultiWindow = !map.get("config_supportsMultiWindow").equals("false");
+                }
+                executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+                clearLogs();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return mSupportMultiWindow;
     }
 }
