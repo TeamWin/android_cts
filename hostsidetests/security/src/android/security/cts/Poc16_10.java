@@ -22,6 +22,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 import android.platform.test.annotations.RootPermissionTest;
+import android.platform.test.annotations.SecurityTest;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -31,11 +32,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
 
+@SecurityTest
 public class Poc16_10 extends SecurityTestCase {
 
     /**
      *  b/30904789
      */
+    @SecurityTest
     public void testPocCVE_2016_6730() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6730", getDevice(), 60);
@@ -45,6 +48,7 @@ public class Poc16_10 extends SecurityTestCase {
     /**
      *  b/30906023
      */
+    @SecurityTest
     public void testPocCVE_2016_6731() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6731", getDevice(), 60);
@@ -54,6 +58,7 @@ public class Poc16_10 extends SecurityTestCase {
     /**
      *  b/30906599
      */
+    @SecurityTest
     public void testPocCVE_2016_6732() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6732", getDevice(), 60);
