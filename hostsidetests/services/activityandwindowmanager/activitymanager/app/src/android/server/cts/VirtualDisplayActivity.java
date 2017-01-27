@@ -16,19 +16,19 @@
 
 package android.server.cts;
 
+import static android.content.Context.DISPLAY_SERVICE;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_SHOW_WITH_INSECURE_LOCKSCREEN;
+
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.WindowManager;
 
 /**
  * Activity that is able to create and destroy a virtual display.
@@ -38,6 +38,8 @@ public class VirtualDisplayActivity extends Activity {
 
     private static final int DEFAULT_DENSITY_DPI = 160;
     private static final String KEY_DENSITY_DPI = "density_dpi";
+    private static final String KEY_SHOW_WITH_INSECURE_LOCKSCREEN = "show_with_insecure_lockscreen";
+    private static final String KEY_PUBLIC_DISPLAY = "public_display";
 
     private DisplayManager mDisplayManager;
     private VirtualDisplay mVirtualDisplay;
@@ -53,7 +55,7 @@ public class VirtualDisplayActivity extends Activity {
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         mSurface = mSurfaceView.getHolder().getSurface();
 
-        mDisplayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+        mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
     }
 
     @Override
@@ -86,11 +88,28 @@ public class VirtualDisplayActivity extends Activity {
             final int width = mSurfaceView.getWidth();
             final int height = mSurfaceView.getHeight();
             final int densityDpi = extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
+            int flags = 0;
+
+            final boolean showWithInsecureLockscreen
+                    = extras.getBoolean(KEY_SHOW_WITH_INSECURE_LOCKSCREEN);
+            if (showWithInsecureLockscreen) {
+                flags |= VIRTUAL_DISPLAY_FLAG_SHOW_WITH_INSECURE_LOCKSCREEN;
+            }
+
+            final boolean publicDisplay = extras.getBoolean(KEY_PUBLIC_DISPLAY);
+            if (publicDisplay) {
+                flags |= VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+            }
+
             Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "
-                    + densityDpi);
-            final int flags = 0;
-            mVirtualDisplay = mDisplayManager.createVirtualDisplay("VirtualDisplay", width, height,
-                    densityDpi, mSurface, flags);
+                    + densityDpi + ", showWithInsecureLockscreen=" + showWithInsecureLockscreen
+                    + ", publicDisplay=" + publicDisplay);
+            try {
+                mVirtualDisplay = mDisplayManager.createVirtualDisplay("VirtualDisplay", width,
+                        height, densityDpi, mSurface, flags);
+            } catch (IllegalArgumentException e) {
+                // This is expected when trying to create show-when-locked public display.
+            }
         }
     }
 

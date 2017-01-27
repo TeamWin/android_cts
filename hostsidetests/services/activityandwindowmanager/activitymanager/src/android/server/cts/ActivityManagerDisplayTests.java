@@ -26,6 +26,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
+import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 import static android.server.cts.StateLogger.log;
 
 /**
@@ -237,8 +239,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testMoveTaskBetweenDisplays() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */);
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -328,8 +329,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /** Test that system is allowed to launch on secondary displays. */
     public void testPermissionLaunchFromSystem() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */);
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -360,8 +360,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /** Test that launching from app that is on external display is allowed. */
     public void testPermissionLaunchFromAppOnSecondary() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */);
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -401,8 +400,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /** Test that launching from display owner is allowed. */
     public void testPermissionLaunchFromOwner() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */);
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -440,8 +438,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testPermissionLaunchFromDifferentApp() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */);
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -469,6 +466,69 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 FULLSCREEN_WORKSPACE_STACK_ID, mAmWmState.getAmState().getFocusedStackId());
     }
 
+    /**
+     * Test that virtual display content is hidden when device is locked.
+     */
+    public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
+        // Create new usual virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+
+        // Lock the device.
+        sleepDevice();
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_STOPPED);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, false /* visible */);
+
+        // Unlock and check if visibility is back.
+        wakeUpAndUnlockDevice();
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+    }
+
+    /**
+     * Test that show-with-insecure-lockscreen virtual display is showing content when device is
+     * locked.
+     */
+    public void testShowWhenLockedVirtualDisplay() throws Exception {
+        // Create new show-with-insecure-lockscreen virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */, true /* showWithInsecureLockscreen */,
+                false /* publicDisplay */, true /* mustBeCreated */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+
+        // Lock the device.
+        sleepDevice();
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_STOPPED);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+
+        // Unlock and check if visibility is back.
+        wakeUpAndUnlockDevice();
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+    }
+
+    /**
+     * Test that only private virtual display can be show-with-insecure-lockscreen.
+     */
+    public void testShowWhenLockedPublicVirtualDisplay() throws Exception {
+        // Try to create new show-with-insecure-lockscreen public virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */, true /* showWithInsecureLockscreen */,
+                true /* publicDisplay */, false /* mustBeCreated */);
+
+        // Check that the display is not created.
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        assertNull(newDisplay);
+    }
+
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
     private DisplayState findNewDisplayId(ReportedDisplays oldDisplays,
             ReportedDisplays newDisplays) {
@@ -494,8 +554,27 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * @return {@link DisplayState} of newly created display.
      * @throws Exception
      */
-    private DisplayState createVirtualDisplay(int densityDpi,
-            boolean launchInSplitScreen) throws Exception {
+    private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen) throws Exception {
+        return createVirtualDisplay(densityDpi, launchInSplitScreen,
+                false /* showWithInsecureLockscreen */, false /* publicDisplay */,
+                true /* mustBeCreated */);
+    }
+
+    /**
+     * Create new virtual display.
+     * @param densityDpi provide custom density for the display.
+     * @param launchInSplitScreen start {@link VirtualDisplayActivity} to side from
+     *                            {@link LaunchingActivity} on primary display.
+     * @param showWithInsecureLockscreen allow showing content when device is showing an insecure
+     *                               keyguard.
+     * @param publicDisplay make display public.
+     * @param mustBeCreated should assert if the display was or wasn't created.
+     * @return {@link DisplayState} of newly created display.
+     * @throws Exception
+     */
+    private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen,
+            boolean showWithInsecureLockscreen, boolean publicDisplay, boolean mustBeCreated)
+            throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
             launchActivityToSide(false /* randomData */, false /* multipleTaskFlag */,
@@ -509,13 +588,20 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final int originalDisplayCount = originalDS.mDisplayStates.size();
 
         // Create virtual display with custom density dpi.
-        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi));
+        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, showWithInsecureLockscreen,
+                publicDisplay));
         mVirtualDisplayCreated = true;
 
         // Wait for the virtual display to be created and get configurations.
         final ReportedDisplays ds = getDisplaysStateAfterCreation(originalDisplayCount + 1);
-        assertEquals("New virtual display must be created",
-                originalDisplayCount + 1, ds.mDisplayStates.size());
+        if (mustBeCreated) {
+            assertEquals("New virtual display must be created",
+                    originalDisplayCount + 1, ds.mDisplayStates.size());
+        } else {
+            assertEquals("New virtual display must not be created",
+                    originalDisplayCount, ds.mDisplayStates.size());
+            return null;
+        }
 
         // Find the newly added display.
         final DisplayState newDisplay = findNewDisplayId(originalDS, ds);
@@ -660,7 +746,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         }
     }
 
-    private static String getCreateVirtualDisplayCommand(int densityDpi) {
+    private static String getCreateVirtualDisplayCommand(int densityDpi,
+            boolean showWithInsecureLockscreen, boolean publicDisplay) {
         final StringBuilder commandBuilder
                 = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
@@ -668,6 +755,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         if (densityDpi != INVALID_DENSITY_DPI) {
             commandBuilder.append(" --ei density_dpi ").append(densityDpi);
         }
+        commandBuilder.append(" --ez show_with_insecure_lockscreen ")
+                .append(showWithInsecureLockscreen);
+        commandBuilder.append(" --ez public_display ").append(publicDisplay);
         return commandBuilder.toString();
     }
 
