@@ -39,6 +39,7 @@ import android.opengl.GLES20;
 import android.opengl.GLES11Ext;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.SecurityTest;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.view.Surface;
@@ -182,10 +183,12 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_3873_b_20718524);
     }
 
+    @SecurityTest
     public void testStagefright_cve_2015_3862_b_22954006() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3862_b_22954006);
     }
 
+    @SecurityTest
     public void testStagefright_cve_2015_3867_b_23213430() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3867_b_23213430);
     }
