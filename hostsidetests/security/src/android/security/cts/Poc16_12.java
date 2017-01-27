@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 The Android Open Source Project
+0;256;0c * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 import android.platform.test.annotations.RootPermissionTest;
+import android.platform.test.annotations.SecurityTest;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -31,13 +32,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
 
-
+@SecurityTest
 public class Poc16_12 extends SecurityTestCase {
 
     //Criticals
     /**
      *  b/31606947
      */
+    @SecurityTest
     public void testPocCVE_2016_8424() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvmap")) {
             AdbUtils.runPoc("CVE-2016-8424", getDevice(), 60);
@@ -47,6 +49,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31797770
      */
+    @SecurityTest
     public void testPocCVE_2016_8425() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvhost-vic")) {
             AdbUtils.runPoc("CVE-2016-8425", getDevice(), 60);
