@@ -16,8 +16,10 @@
 
 package android.app.cts;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
@@ -47,7 +49,9 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(null, channel.getVibrationPattern());
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.getImportance());
         assertEquals(null, channel.getSound());
-        assertFalse(channel.canShowBadge());
+        assertTrue(channel.canShowBadge());
+        assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
+        assertEquals(null, channel.getGroup());
     }
 
     public void testWriteToParcel() {
@@ -89,13 +93,19 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertTrue(channel.shouldVibrate());
     }
 
-    public void testRingtone() {
+    public void testSound() {
         Uri expected = new Uri.Builder().scheme("fruit").appendQueryParameter("favorite", "bananas")
+                .build();
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_UNKNOWN)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
                 .build();
         NotificationChannel channel =
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setSound(expected);
+        channel.setSound(expected, attributes);
         assertEquals(expected, channel.getSound());
+        assertEquals(attributes, channel.getAudioAttributes());
     }
 
     public void testShowBadge() {
@@ -103,5 +113,12 @@ public class NotificationChannelTest extends AndroidTestCase {
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         channel.setShowBadge(true);
         assertTrue(channel.canShowBadge());
+    }
+
+    public void testGroup() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup("banana");
+        assertEquals("banana", channel.getGroup());
     }
 }
