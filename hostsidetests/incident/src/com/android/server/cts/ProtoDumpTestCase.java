@@ -24,6 +24,7 @@ import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.ddmlib.testrunner.TestRunResult;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
+import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
@@ -36,6 +37,8 @@ import com.google.protobuf.Parser;
 
 import java.io.FileNotFoundException;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -140,5 +143,28 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
             }
             throw new AssertionError(errorBuilder.toString());
         }
+    }
+
+    /**
+     * Execute the given command, and find the given pattern and return the resulting
+     * {@link Matcher}.
+     */
+    protected Matcher execCommandAndFind(String command, String pattern) throws Exception {
+        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        getDevice().executeShellCommand(command, receiver);
+        final String output = receiver.getOutput();
+        final Matcher matcher = Pattern.compile(pattern).matcher(output);
+        assertTrue("Pattern '" + pattern + "' didn't match. Output=\n" + output, matcher.find());
+        return matcher;
+    }
+
+    /**
+     * Execute the given command, find the given pattern, and return the first captured group
+     * as a String.
+     */
+    protected String execCommandAndGetFirstGroup(String command, String pattern) throws Exception {
+        final Matcher matcher = execCommandAndFind(command, pattern);
+        assertTrue("No group found for pattern '" + pattern + "'", matcher.groupCount() > 0);
+        return matcher.group(1);
     }
 }
