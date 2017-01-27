@@ -170,7 +170,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testBuilder() {
         final Intent intent = new Intent();
         final PendingIntent contentIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
-        mNotification = new Notification.Builder(mContext)
+        mNotification = new Notification.Builder(mContext, "channel_id")
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
@@ -180,6 +180,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
+        assertEquals(mNotification.getChannel(), "channel_id");
     }
 
     public void testActionBuilder() {
@@ -211,6 +212,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testToString() {
         mNotification = new Notification();
         assertNotNull(mNotification.toString());
+        mNotification = null;
     }
 
     public void testNotificationActionBuilder_setDataOnlyRemoteInput() throws Throwable {

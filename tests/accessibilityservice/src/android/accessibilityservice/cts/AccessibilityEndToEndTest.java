@@ -345,19 +345,20 @@ public class AccessibilityEndToEndTest extends
             NotificationChannel created =
                     notificationManager.getNotificationChannel(channel.getId());
             final int notificationId = 1;
-            final Notification notification = new Notification.Builder(getActivity())
-                    .setSmallIcon(android.R.drawable.stat_notify_call_mute)
-                    .setContentIntent(PendingIntent.getActivity(getActivity(), 0, new Intent(),
-                            PendingIntent.FLAG_CANCEL_CURRENT))
-                    .setTicker(message)
-                    .setContentTitle("")
-                    .setContentText("")
-                    .setChannel(channel.getId())
-                    .setPriority(Notification.PRIORITY_MAX)
-                    // Mark the notification as "interruptive" by specifying a vibration pattern.
-                    // This ensures it's announced properly on watch-type devices.
-                    .setVibrate(new long[]{})
-                    .build();
+            final Notification notification =
+                    new Notification.Builder(getActivity(), channel.getId())
+                            .setSmallIcon(android.R.drawable.stat_notify_call_mute)
+                            .setContentIntent(PendingIntent.getActivity(getActivity(), 0,
+                                    new Intent(),
+                                    PendingIntent.FLAG_CANCEL_CURRENT))
+                            .setTicker(message)
+                            .setContentTitle("")
+                            .setContentText("")
+                            .setPriority(Notification.PRIORITY_MAX)
+                            // Mark the notification as "interruptive" by specifying a vibration
+                            // pattern. This ensures it's announced properly on watch-type devices.
+                            .setVibrate(new long[]{})
+                            .build();
 
             // create and populate the expected event
             final AccessibilityEvent expected = AccessibilityEvent.obtain();
