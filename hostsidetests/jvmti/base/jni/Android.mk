@@ -25,6 +25,9 @@ LOCAL_SRC_FILES := cts_agent.cpp \
                    jni_binder.cpp \
                    jvmti_helper.cpp \
 
+# Tagging.
+LOCAL_SRC_FILES += tagging.cpp
+
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_HEADER_LIBRARIES := libopenjdkjvmti_headers
 
