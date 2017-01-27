@@ -24,6 +24,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.app.UiAutomation;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
@@ -314,10 +315,16 @@ public class AccessibilityEndToEndTest extends
     @SuppressWarnings("deprecation")
     public void testTypeNotificationStateChangedAccessibilityEvent() throws Throwable {
         // No notification UI on televisions.
-        if((getActivity().getResources().getConfiguration().uiMode
+        if ((getActivity().getResources().getConfiguration().uiMode
                 & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION) {
             Log.i(LOG_TAG, "Skipping: testTypeNotificationStateChangedAccessibilityEvent" +
                     " - No notification UI on televisions.");
+            return;
+        }
+        PackageManager pm = getInstrumentation().getTargetContext().getPackageManager();
+        if (pm.hasSystemFeature(pm.FEATURE_WATCH)) {
+            Log.i(LOG_TAG, "Skipping: testTypeNotificationStateChangedAccessibilityEvent" +
+                    " - Watches have different notification system.");
             return;
         }
 
