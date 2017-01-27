@@ -123,6 +123,15 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * is launched to side from docked stack.
      */
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
+        if (!supportsScreenRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         setDeviceRotation(0);
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
