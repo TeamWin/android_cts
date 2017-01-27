@@ -26,6 +26,9 @@ import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.result.ByteArrayInputStreamSource;
+import com.android.tradefed.result.InputStreamSource;
+import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 
@@ -36,6 +39,9 @@ import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Unit tests for {@link ResultReporter}
+ */
 public class ResultReporterTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
@@ -405,5 +411,28 @@ public class ResultReporterTest extends TestCase {
             assertTrue(String.format("%s (%s) was not created", filename, file.getAbsolutePath()),
                     file.exists() && file.isFile() && file.length() > 0);
         }
+    }
+
+    /**
+     * Ensure that when {@link ResultReporter#testLog(String, LogDataType, InputStreamSource)} is
+     * called, a single invocation result folder is created and populated.
+     */
+    public void testTestLog() throws Exception {
+        InputStreamSource fakeData = new ByteArrayInputStreamSource("test".getBytes());
+        mReporter.invocationStarted(mBuildInfo);
+        mReporter.testLog("test1", LogDataType.LOGCAT, fakeData);
+        // date folder
+        assertEquals(1, mBuildHelper.getLogsDir().list().length);
+        // inv_ folder
+        assertEquals(1, mBuildHelper.getLogsDir().listFiles()[0].list().length);
+        // actual logs
+        assertEquals(1, mBuildHelper.getLogsDir().listFiles()[0].listFiles()[0].list().length);
+        mReporter.testLog("test2", LogDataType.LOGCAT, fakeData);
+        // date folder
+        assertEquals(1, mBuildHelper.getLogsDir().list().length);
+        // inv_ folder
+        assertEquals(1, mBuildHelper.getLogsDir().listFiles()[0].list().length);
+        // actual logs
+        assertEquals(2, mBuildHelper.getLogsDir().listFiles()[0].listFiles()[0].list().length);
     }
 }

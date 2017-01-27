@@ -137,6 +137,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     // to the master.
     private final ResultReporter mMasterResultReporter;
 
+    private LogFileSaver mTestLogSaver;
+
     /**
      * Default constructor.
      */
@@ -232,7 +234,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             mLogDir = new File(mBuildHelper.getLogsDir(),
                     CompatibilityBuildHelper.getDirSuffix(mBuildHelper.getStartTime()));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            CLog.e(e);
         }
         if (mLogDir != null && mLogDir.mkdirs()) {
             debug("Created log dir %s", mLogDir.getAbsolutePath());
@@ -240,6 +242,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         if (mLogDir == null || !mLogDir.exists()) {
             throw new IllegalArgumentException(String.format("Could not create log dir %s",
                     mLogDir.getAbsolutePath()));
+        }
+        if (mTestLogSaver == null) {
+            mTestLogSaver = new LogFileSaver(mLogDir);
         }
     }
 
@@ -538,12 +543,11 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             return;
         }
         try {
-            LogFileSaver saver = new LogFileSaver(mLogDir);
-            File logFile = saver.saveAndZipLogData(name, type, stream.createInputStream());
+            File logFile = mTestLogSaver.saveAndZipLogData(name, type, stream.createInputStream());
             debug("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
             warn("Failed to write log for %s", name);
-            e.printStackTrace();
+            CLog.e(e);
         }
     }
 
