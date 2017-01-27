@@ -26,6 +26,9 @@ public class DemoModeTest extends BaseTestCase {
     }
 
     public void testIsDemoUser_inDemoUser() throws Exception {
+        if (!getDevice().isMultiUserSupported()) {
+            return;
+        }
         final int demoUserId = createDemoUser();
         getDevice().startUser(demoUserId);
         installAppAsUser(RETAIL_DEMO_TEST_APK, demoUserId);
