@@ -17,6 +17,7 @@
 package android.backup.cts;
 
 import android.app.Instrumentation;
+import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -46,12 +47,19 @@ public class BackupQuotaTest extends InstrumentationTestCase {
 
     private static final int SMALL_LOGCAT_DELAY = 1000;
 
+    private boolean isBackupSupported;
     private boolean wasBackupEnabled;
     private String oldTransport;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
+        isBackupSupported = packageManager != null
+                && packageManager.hasSystemFeature(PackageManager.FEATURE_BACKUP);
+        if (!isBackupSupported) {
+            return;
+        }
         // Enable backup and select local backup transport
         assertTrue("LocalTransport should be available.", hasBackupTransport(LOCAL_TRANSPORT));
         wasBackupEnabled = enableBackup(true);
@@ -61,12 +69,17 @@ public class BackupQuotaTest extends InstrumentationTestCase {
     @Override
     protected void tearDown() throws Exception {
         // Return old transport
-        setBackupTransport(oldTransport);
-        enableBackup(wasBackupEnabled);
+        if (isBackupSupported) {
+            setBackupTransport(oldTransport);
+            enableBackup(wasBackupEnabled);
+        }
         super.tearDown();
     }
 
     public void testQuotaExceeded() throws Exception {
+        if (!isBackupSupported) {
+            return;
+        }
         exec("logcat --clear");
         exec("setprop log.tag." + APP_LOG_TAG +" VERBOSE");
         // Launch test app and create file exceeding limit for local transport
