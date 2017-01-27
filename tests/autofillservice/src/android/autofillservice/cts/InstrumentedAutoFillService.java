@@ -108,8 +108,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
     }
 
     @Override
-    public void onSaveRequest(AssistStructure structure, Bundle data,
-            CancellationSignal cancellationSignal, SaveCallback callback) {
+    public void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
         Log.v(TAG, "onSaveRequest()");
     }
 
