@@ -31,6 +31,9 @@ LOCAL_SRC_FILES += tagging.cpp
 # Tracking.
 LOCAL_SRC_FILES += tracking.cpp
 
+# redefinition.
+LOCAL_SRC_FILES += redefine.cpp
+
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_HEADER_LIBRARIES := libopenjdkjvmti_headers
 
@@ -39,6 +42,8 @@ LOCAL_SHARED_LIBRARIES := liblog \
 
 # Platform libraries that are not available to apps. Link in statically.
 LOCAL_STATIC_LIBRARIES := libbase
+
+LOCAL_STRIP_MODULE := keep_symbols
 
 # Turn on all warnings.
 LOCAL_C_FLAGS := -fno-rtti \
