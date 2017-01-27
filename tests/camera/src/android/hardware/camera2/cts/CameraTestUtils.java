@@ -128,17 +128,17 @@ public class CameraTestUtils extends Assert {
             Environment.getExternalStorageDirectory().getPath();
 
     static {
-        sTestLocation0.setTime(1199145600L);
+        sTestLocation0.setTime(1199145600000L);
         sTestLocation0.setLatitude(37.736071);
         sTestLocation0.setLongitude(-122.441983);
         sTestLocation0.setAltitude(21.0);
 
-        sTestLocation1.setTime(1199145601L);
+        sTestLocation1.setTime(1199145601000L);
         sTestLocation1.setLatitude(0.736071);
         sTestLocation1.setLongitude(0.441983);
         sTestLocation1.setAltitude(1.0);
 
-        sTestLocation2.setTime(1199145602L);
+        sTestLocation2.setTime(1199145602000L);
         sTestLocation2.setLatitude(-89.736071);
         sTestLocation2.setLongitude(-179.441983);
         sTestLocation2.setAltitude(100000.0);
@@ -1956,7 +1956,8 @@ public class CameraTestUtils extends Assert {
 
         // Validate other exif tags for all non-legacy devices
         if (!staticInfo.isHardwareLevelLegacy()) {
-            verifyJpegExifExtraTags(exif, expectedSize, captureResult, staticInfo, collector);
+            verifyJpegExifExtraTags(exif, expectedSize, captureResult, staticInfo, collector,
+                    expectedExifData);
         }
     }
 
@@ -2057,7 +2058,8 @@ public class CameraTestUtils extends Assert {
      * Verify extra tags in JPEG EXIF
      */
     private static void verifyJpegExifExtraTags(ExifInterface exif, Size jpegSize,
-            CaptureResult result, StaticMetadata staticInfo, CameraErrorCollector collector)
+            CaptureResult result, StaticMetadata staticInfo, CameraErrorCollector collector,
+            ExifTestData expectedExifData)
             throws ParseException {
         /**
          * TAG_IMAGE_WIDTH and TAG_IMAGE_LENGTH and TAG_ORIENTATION.
@@ -2253,6 +2255,21 @@ public class CameraTestUtils extends Assert {
                 /*defaultValue*/-1);
         collector.expectTrue(
                 "Exif TAG_SUBSEC_TIME_DIG value is null or invalid!", subSecTimeDig > 0);
+
+        /**
+         * TAG_GPS_DATESTAMP & TAG_GPS_TIMESTAMP.
+         * The GPS timestamp information should be in seconds UTC time.
+         */
+        String gpsDatestamp = exif.getAttribute(ExifInterface.TAG_GPS_DATESTAMP);
+        collector.expectNotNull("Exif TAG_GPS_DATESTAMP shouldn't be null", gpsDatestamp);
+        String gpsTimestamp = exif.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP);
+        collector.expectNotNull("Exif TAG_GPS_TIMESTAMP shouldn't be null", gpsTimestamp);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd hh:mm:ss z");
+        String gpsExifTimeString = gpsDatestamp + " " + gpsTimestamp + " UTC";
+        Date gpsDateTime = dateFormat.parse(gpsExifTimeString);
+        Date expected = new Date(expectedExifData.gpsLocation.getTime());
+        collector.expectEquals("Jpeg EXIF GPS time should match", expected, gpsDateTime);
     }
 
 
