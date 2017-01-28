@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * Test to check the format of the dumps of the batterystats test.
  */
-public class BatteryStatsDumpsysTesst extends BaseDumpsysTest {
+public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
    private static final String TEST_APK = "CtsFramestatsTestApp.apk";
     private static final String TEST_PKG = "com.android.cts.framestatstestapp";
 
