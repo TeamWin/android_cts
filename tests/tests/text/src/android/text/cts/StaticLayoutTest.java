@@ -76,8 +76,8 @@ public class StaticLayoutTest {
     private StaticLayout mDefaultLayout;
     private TextPaint mDefaultPaint;
 
-    private class TestingTextPaint extends TextPaint {
-        // need to have a subclass to insure measurement happens in Java and not C++
+    private static class TestingTextPaint extends TextPaint {
+        // need to have a subclass to ensure measurement happens in Java and not C++
     }
 
     @Before

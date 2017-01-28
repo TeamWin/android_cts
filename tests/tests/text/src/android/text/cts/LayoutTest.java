@@ -323,7 +323,7 @@ public class LayoutTest {
         assertTrue(widthLongest > widthLonger);
     }
 
-    private final class MockLayout extends Layout {
+    private static final class MockLayout extends Layout {
         public MockLayout(CharSequence text, TextPaint paint, int width,
                 Alignment align, float spacingmult, float spacingadd) {
             super(text, paint, width, align, spacingmult, spacingadd);

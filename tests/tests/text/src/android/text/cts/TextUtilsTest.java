@@ -979,7 +979,7 @@ public class TextUtilsTest  {
     /**
      * MockGetChars for test.
      */
-    private class MockGetChars implements GetChars {
+    private static class MockGetChars implements GetChars {
         private boolean mHasCalledGetChars;
         private GetCharsParams mGetCharsParams = new GetCharsParams();
 
@@ -1026,7 +1026,7 @@ public class TextUtilsTest  {
     /**
      * MockCharSequence for test.
      */
-    private class MockCharSequence implements CharSequence {
+    private static class MockCharSequence implements CharSequence {
         private char mText[];
 
         public MockCharSequence(String text) {

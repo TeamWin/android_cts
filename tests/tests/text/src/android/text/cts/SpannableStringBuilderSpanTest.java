@@ -401,7 +401,7 @@ public class SpannableStringBuilderSpanTest {
 
         private Spannable mSpannable;
 
-        private class AddedRemoved {
+        private static class AddedRemoved {
             Object span;
             int start;
             int end;
@@ -413,7 +413,7 @@ public class SpannableStringBuilderSpanTest {
             }
         }
 
-        private class Changed {
+        private static class Changed {
             Object span;
             int oldStart;
             int oldEnd;

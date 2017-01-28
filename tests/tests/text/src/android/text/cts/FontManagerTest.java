@@ -15,15 +15,24 @@
  */
 package android.text.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.FontConfig;
 import android.text.FontManager;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.FileDescriptor;
 import java.util.List;
@@ -31,48 +40,51 @@ import java.util.List;
 /**
  * Tests {@link FontManager}.
  */
-public class FontManagerTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class FontManagerTest {
 
     private FontManager mFontManager;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mFontManager = (FontManager) getContext().getSystemService(Context.FONT_SERVICE);
+        final Context targetContext = InstrumentationRegistry.getTargetContext();
+        mFontManager = (FontManager) targetContext.getSystemService(Context.FONT_SERVICE);
     }
 
-    @SmallTest
+    @Test
     public void testGetSystemFontsData() {
-        FontConfig config = mFontManager.getSystemFonts();
+        final FontConfig config = mFontManager.getSystemFonts();
 
         assertNotNull(config);
         assertTrue("There should at least be one font family", config.getFamilies().size() > 0);
         for (int i = 0; i < config.getFamilies().size(); ++i) {
-            FontConfig.Family family = config.getFamilies().get(i);
+            final FontConfig.Family family = config.getFamilies().get(i);
             assertTrue("Each font family should have at least one font",
                     family.getFonts().size() > 0);
             for (int j = 0; j < family.getFonts().size(); ++j) {
-                FontConfig.Font font = family.getFonts().get(j);
+                final FontConfig.Font font = family.getFonts().get(j);
                 assertNotNull("FontManager should provide a FileDescriptor for each system font",
                         font.getFd());
             }
         }
     }
 
-    @SmallTest
+    @Test
     public void testFileDescriptorsAreReadOnly() throws Exception {
-        FontConfig fc = mFontManager.getSystemFonts();
+        final FontConfig fc = mFontManager.getSystemFonts();
 
-        List<FontConfig.Family> families = fc.getFamilies();
+        final List<FontConfig.Family> families = fc.getFamilies();
         for (int i = 0; i < families.size(); ++i) {
-            List<FontConfig.Font> fonts = families.get(i).getFonts();
+            final List<FontConfig.Font> fonts = families.get(i).getFonts();
             for (int j = 0; j < fonts.size(); ++j) {
-                ParcelFileDescriptor pfd = fonts.get(j).getFd();
+                final ParcelFileDescriptor pfd = fonts.get(j).getFd();
                 assertNotNull(pfd);
-                FileDescriptor fd = pfd.getFileDescriptor();
+                final FileDescriptor fd = pfd.getFileDescriptor();
                 long size = Os.lseek(fd, 0, OsConstants.SEEK_END);
                 // Read only mapping should success.
-                long addr = Os.mmap(0, size, OsConstants.PROT_READ, OsConstants.MAP_SHARED, fd, 0);
+                final long addr = Os.mmap(0, size, OsConstants.PROT_READ, OsConstants.MAP_SHARED,
+                        fd, 0);
                 Os.munmap(addr, size);
 
                 // Mapping with PROT_WRITE should fail with EPERM.

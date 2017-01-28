@@ -60,7 +60,7 @@ public class MyanmarTest {
         }
     }
 
-    private class CaptureTextView extends TextView {
+    private static class CaptureTextView extends TextView {
 
         CaptureTextView(Context context) {
             super(context);
