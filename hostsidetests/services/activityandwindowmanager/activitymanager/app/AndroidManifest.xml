@@ -29,6 +29,12 @@
                 android:resizeableActivity="true"
                 android:exported="true"
         />
+        <activity android:name=".ResumeWhilePausingActivity"
+                android:allowEmbedded="true"
+                android:resumeWhilePausing="true"
+                android:taskAffinity=""
+                android:exported="true"
+        />
         <activity android:name=".ResizeableActivity"
                 android:resizeableActivity="true"
                 android:exported="true"

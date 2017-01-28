@@ -36,6 +36,7 @@ import java.util.List;
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";
     private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
+    private static final String RESUME_WHILE_PAUSING_ACTIVITY = "ResumeWhilePausingActivity";
     private static final String PIP_ACTIVITY = "PipActivity";
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
@@ -52,6 +53,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
+    private static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP = "assert_no_on_stop_before_pip";
+    private static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
 
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -510,6 +513,35 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // task and ensure that it works
         launchActivity(LAUNCHER_ENTER_PIP_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+    }
+
+    public void testEnterPipWithResumeWhilePausingActivityNoStop() throws Exception {
+        /*
+         * Launch the resumeWhilePausing activity and ensure that the PiP activity did not get
+         * stopped and actually went into the pinned stack.
+         *
+         * Note that this is a workaround because to trigger the path that we want to happen in
+         * activity manager, we need to add the leaving activity to the stopping state, which only
+         * happens when a hidden stack is brought forward. Normally, this happens when you go home,
+         * but since we can't launch into the home stack directly, we have a workaround.
+         *
+         * 1) Launch an activity in a new dynamic stack
+         * 2) Resize the dynamic stack to non-fullscreen bounds
+         * 3) Start the PiP activity that will enter picture-in-picture when paused in the
+         *    fullscreen stack
+         * 4) Bring the activity in the dynamic stack forward to trigger PiP
+         */
+        int stackId = launchActivityInNewDynamicStack(RESUME_WHILE_PAUSING_ACTIVITY);
+        resizeStack(stackId, 0, 0, 500, 500);
+        // Launch an activity that will enter PiP when it is paused with a delay that is long enough
+        // for the next resumeWhilePausing activity to finish resuming, but slow enough to not
+        // trigger the current system pause timeout (currently 500ms)
+        launchActivityInStack(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+                EXTRA_ENTER_PIP_ON_PAUSE, "true",
+                EXTRA_ON_PAUSE_DELAY, "350",
+                EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
         assertPinnedStackExists();
     }
 

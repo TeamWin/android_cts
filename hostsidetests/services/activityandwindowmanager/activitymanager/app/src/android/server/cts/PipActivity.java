@@ -30,6 +30,8 @@ import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
+import android.util.Log;
 import android.view.WindowManager;
 
 import java.util.Collections;
@@ -57,6 +59,13 @@ public class PipActivity extends Activity {
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
     // Shows this activity over the keyguard
     private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
+    // Adds an assertion that we do not ever get onStop() before we enter picture in picture
+    private static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP = "assert_no_on_stop_before_pip";
+    // The amount to delay to artificially introduce in onPause() (before EXTRA_ENTER_PIP_ON_PAUSE
+    // is processed)
+    private static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
+
+    private boolean mEnteredPictureInPicture;
 
     private Handler mHandler = new Handler();
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -137,6 +146,11 @@ public class PipActivity extends Activity {
         super.onPause();
         unregisterReceiver(mReceiver);
 
+        // Pause if requested
+        if (getIntent().hasExtra(EXTRA_ON_PAUSE_DELAY)) {
+            SystemClock.sleep(Long.valueOf(getIntent().getStringExtra(EXTRA_ON_PAUSE_DELAY)));
+        }
+
         // Enter PIP on move to background
         if (getIntent().hasExtra(EXTRA_ENTER_PIP_ON_PAUSE)) {
             enterPictureInPictureMode();
@@ -144,8 +158,23 @@ public class PipActivity extends Activity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        if (getIntent().hasExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP) && !mEnteredPictureInPicture) {
+            Log.w("PipActivity", "Unexpected onStop() called before entering picture-in-picture");
+            finish();
+        }
+    }
+
+    @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+
+        // Mark that we've entered picture-in-picture so that we can stop checking for
+        // EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP
+        if (isInPictureInPictureMode) {
+            mEnteredPictureInPicture = true;
+        }
 
         if (!isInPictureInPictureMode && getIntent().hasExtra(EXTRA_REENTER_PIP_ON_EXIT)) {
             // This call to re-enter PIP can happen too quickly (host side tests can have difficulty
@@ -163,6 +192,7 @@ public class PipActivity extends Activity {
     static void launchActivityIntoPinnedStack(Activity caller, Rect bounds) {
         final Intent intent = new Intent(caller, PipActivity.class);
         intent.setFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
 
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchBounds(bounds);
@@ -177,6 +207,7 @@ public class PipActivity extends Activity {
         final Intent intent = new Intent(caller, PipActivity.class);
         intent.setFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRA_ENTER_PIP, "true");
+        intent.putExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
         caller.startActivity(intent);
     }
 }
