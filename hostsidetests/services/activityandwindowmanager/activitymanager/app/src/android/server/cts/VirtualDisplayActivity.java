@@ -19,7 +19,8 @@ package android.server.cts;
 import static android.content.Context.DISPLAY_SERVICE;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_SHOW_WITH_INSECURE_LOCKSCREEN;
+import static android.hardware.display.DisplayManager
+        .VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -38,7 +39,8 @@ public class VirtualDisplayActivity extends Activity {
 
     private static final int DEFAULT_DENSITY_DPI = 160;
     private static final String KEY_DENSITY_DPI = "density_dpi";
-    private static final String KEY_SHOW_WITH_INSECURE_LOCKSCREEN = "show_with_insecure_lockscreen";
+    private static final String KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD
+            = "can_show_with_insecure_keyguard";
     private static final String KEY_PUBLIC_DISPLAY = "public_display";
 
     private DisplayManager mDisplayManager;
@@ -90,10 +92,10 @@ public class VirtualDisplayActivity extends Activity {
             final int densityDpi = extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
             int flags = 0;
 
-            final boolean showWithInsecureLockscreen
-                    = extras.getBoolean(KEY_SHOW_WITH_INSECURE_LOCKSCREEN);
-            if (showWithInsecureLockscreen) {
-                flags |= VIRTUAL_DISPLAY_FLAG_SHOW_WITH_INSECURE_LOCKSCREEN;
+            final boolean canShowWithInsecureKeyguard
+                    = extras.getBoolean(KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD);
+            if (canShowWithInsecureKeyguard) {
+                flags |= VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
             }
 
             final boolean publicDisplay = extras.getBoolean(KEY_PUBLIC_DISPLAY);
@@ -102,7 +104,7 @@ public class VirtualDisplayActivity extends Activity {
             }
 
             Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "
-                    + densityDpi + ", showWithInsecureLockscreen=" + showWithInsecureLockscreen
+                    + densityDpi + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
                     + ", publicDisplay=" + publicDisplay);
             try {
                 mVirtualDisplay = mDisplayManager.createVirtualDisplay("VirtualDisplay", width,
