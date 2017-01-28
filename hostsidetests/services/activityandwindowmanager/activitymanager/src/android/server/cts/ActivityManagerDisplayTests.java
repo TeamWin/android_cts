@@ -490,13 +490,13 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Test that show-with-insecure-lockscreen virtual display is showing content when device is
+     * Test that show-with-insecure-keyguard virtual display is showing content when device is
      * locked.
      */
     public void testShowWhenLockedVirtualDisplay() throws Exception {
-        // Create new show-with-insecure-lockscreen virtual display.
+        // Create new show-with-insecure-keyguard virtual display.
         final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */, true /* showWithInsecureLockscreen */,
+                false /* launchInSplitScreen */, true /* canShowWithInsecureKeyguard */,
                 false /* publicDisplay */, true /* mustBeCreated */);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
@@ -516,12 +516,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Test that only private virtual display can be show-with-insecure-lockscreen.
+     * Test that only private virtual display can show content with insecure keyguard.
      */
     public void testShowWhenLockedPublicVirtualDisplay() throws Exception {
-        // Try to create new show-with-insecure-lockscreen public virtual display.
+        // Try to create new show-with-insecure-keyguard public virtual display.
         final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */, true /* showWithInsecureLockscreen */,
+                false /* launchInSplitScreen */, true /* canShowWithInsecureKeyguard */,
                 true /* publicDisplay */, false /* mustBeCreated */);
 
         // Check that the display is not created.
@@ -556,7 +556,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen) throws Exception {
         return createVirtualDisplay(densityDpi, launchInSplitScreen,
-                false /* showWithInsecureLockscreen */, false /* publicDisplay */,
+                false /* canShowWithInsecureKeyguard */, false /* publicDisplay */,
                 true /* mustBeCreated */);
     }
 
@@ -565,15 +565,15 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * @param densityDpi provide custom density for the display.
      * @param launchInSplitScreen start {@link VirtualDisplayActivity} to side from
      *                            {@link LaunchingActivity} on primary display.
-     * @param showWithInsecureLockscreen allow showing content when device is showing an insecure
-     *                               keyguard.
+     * @param canShowWithInsecureKeyguard allow showing content when device is showing an insecure
+     *                                    keyguard.
      * @param publicDisplay make display public.
      * @param mustBeCreated should assert if the display was or wasn't created.
      * @return {@link DisplayState} of newly created display.
      * @throws Exception
      */
     private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen,
-            boolean showWithInsecureLockscreen, boolean publicDisplay, boolean mustBeCreated)
+            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean mustBeCreated)
             throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
@@ -588,7 +588,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final int originalDisplayCount = originalDS.mDisplayStates.size();
 
         // Create virtual display with custom density dpi.
-        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, showWithInsecureLockscreen,
+        executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, canShowWithInsecureKeyguard,
                 publicDisplay));
         mVirtualDisplayCreated = true;
 
@@ -747,7 +747,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     private static String getCreateVirtualDisplayCommand(int densityDpi,
-            boolean showWithInsecureLockscreen, boolean publicDisplay) {
+            boolean canShowWithInsecureKeyguard, boolean publicDisplay) {
         final StringBuilder commandBuilder
                 = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
@@ -755,8 +755,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         if (densityDpi != INVALID_DENSITY_DPI) {
             commandBuilder.append(" --ei density_dpi ").append(densityDpi);
         }
-        commandBuilder.append(" --ez show_with_insecure_lockscreen ")
-                .append(showWithInsecureLockscreen);
+        commandBuilder.append(" --ez can_show_with_insecure_keyguard ")
+                .append(canShowWithInsecureKeyguard);
         commandBuilder.append(" --ez public_display ").append(publicDisplay);
         return commandBuilder.toString();
     }
