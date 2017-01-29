@@ -503,6 +503,17 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
             }
         }
 
+        // Confirm that zero surface size isn't supported for OutputConfiguration
+        Size[] sizeZeros = { new Size(0, 0), new Size(1, 0), new Size(0, 1) };
+        for (Size size : sizeZeros) {
+            try {
+                OutputConfiguration bad = new OutputConfiguration(size, SurfaceHolder.class);
+                fail("OutputConfiguration allowed use of zero surfaceSize");
+            } catch (IllegalArgumentException e) {
+                //expected
+            }
+        }
+
         // Create session
 
         BlockingSessionCallback sessionListener =
