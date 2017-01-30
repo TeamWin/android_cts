@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -1298,6 +1299,28 @@ public class PopupWindowTest {
         }
     }
 
+    @Test
+    public void testPositionAfterParentScroll() throws Throwable {
+        View.OnScrollChangeListener scrollChangeListener = mock(
+                View.OnScrollChangeListener.class);
+
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.setContentView(R.layout.popup_window_scrollable);
+
+            View anchor = mActivity.findViewById(R.id.anchor_upper);
+            PopupWindow window = createPopupWindow();
+            window.showAsDropDown(anchor);
+        });
+
+        mActivityRule.runOnUiThread(() -> {
+            View parent = mActivity.findViewById(R.id.main_container);
+            parent.scrollBy(0, 500);
+            parent.setOnScrollChangeListener(scrollChangeListener);
+        });
+
+        verify(scrollChangeListener, never()).onScrollChange(
+                any(View.class), anyInt(), anyInt(), anyInt(), anyInt());
+    }
 
     private static class BaseTransition extends Transition {
         @Override
