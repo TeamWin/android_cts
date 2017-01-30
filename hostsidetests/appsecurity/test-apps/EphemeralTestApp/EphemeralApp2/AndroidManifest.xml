@@ -15,7 +15,8 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.ephemeralapp2">
+    package="com.android.cts.ephemeralapp2"
+    android:targetSandboxVersion="2">
 
   <!-- TEST: exists only for testing ephemeral app1 can't see this app -->
   <application
