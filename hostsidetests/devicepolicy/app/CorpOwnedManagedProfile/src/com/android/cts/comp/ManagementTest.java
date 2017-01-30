@@ -54,14 +54,14 @@ public class ManagementTest extends AndroidTestCase {
 
     /**
      * Assumes that the managed profile is enabled.
-     * Otherwise, {@link Utils#getOtherProfile()} won't work.
+     * Otherwise, {@link Utils#getOtherProfile} won't return a profile.
      */
     public void testOtherProfilesEqualsBindTargetUsers() {
         UserHandle otherProfile = Utils.getOtherProfile(mContext);
+        assertNotNull(otherProfile);
 
         List<UserHandle> allowedTargetUsers = mDevicePolicyManager.getBindDeviceAdminTargetUsers(
                 AdminReceiver.getComponentName(mContext));
-
         assertEquals(1, allowedTargetUsers.size());
         assertEquals(otherProfile, allowedTargetUsers.get(0));
     }
@@ -82,6 +82,7 @@ public class ManagementTest extends AndroidTestCase {
 
     public void testCanRemoveManagedProfile() {
         UserHandle profileUserHandle = Utils.getOtherProfile(mContext);
+        assertNotNull(profileUserHandle);
         assertTrue(mDevicePolicyManager.removeUser(AdminReceiver.getComponentName(mContext),
                 profileUserHandle));
     }

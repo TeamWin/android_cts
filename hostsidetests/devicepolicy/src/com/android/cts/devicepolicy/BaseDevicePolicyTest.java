@@ -412,13 +412,13 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     protected void assertCannotCreateManagedProfile(int parentUserId)
-            throws DeviceNotAvailableException {
+            throws Exception {
         String commandOutput = getCreateManagedProfileCommandOutput(parentUserId);
         if (commandOutput.startsWith("Error")) {
             return;
         }
         int userId = getUserIdFromCreateUserCommandOutput(commandOutput);
-        getDevice().removeUser(userId);
+        removeUser(userId);
         fail("Expected not to be able to create a managed profile. Output was: " + commandOutput);
     }
 
