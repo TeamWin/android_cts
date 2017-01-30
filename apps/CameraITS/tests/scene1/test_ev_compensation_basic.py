@@ -41,6 +41,14 @@ def main():
         its.caps.skip_unless(its.caps.ev_compensation(props) and
                              its.caps.ae_lock(props))
 
+        debug = its.caps.debug_mode()
+        largest_yuv = its.objects.get_largest_yuv_format(props)
+        if debug:
+            fmt = largest_yuv
+        else:
+            match_ar = (largest_yuv['width'], largest_yuv['height'])
+            fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
+
         ev_per_step = its.objects.rational_to_float(
                 props['android.control.aeCompensationStep'])
         steps_per_ev = int(1.0 / ev_per_step)
@@ -61,7 +69,7 @@ def main():
             req = its.objects.auto_capture_request()
             req['android.control.aeExposureCompensation'] = ev
             req["android.control.aeLock"] = True
-            caps = cam.do_capture([req]*THRESH_CONVERGE_FOR_EV)
+            caps = cam.do_capture([req]*THRESH_CONVERGE_FOR_EV, fmt)
             for cap in caps:
                 if (cap['metadata']['android.control.aeState'] == LOCKED):
                     y = its.image.convert_capture_to_planes(cap)[0]

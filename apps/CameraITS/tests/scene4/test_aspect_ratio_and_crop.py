@@ -77,6 +77,7 @@ def main():
         run_crop_test = (level3_device or full_device) and raw_avlb
         if not run_crop_test:
             print "Crop test skipped"
+        debug = its.caps.debug_mode()
         # Converge 3A and get the estimates.
         sens, exp, gains, xform, focus = cam.do_3a(get_results=True,
                                                    lock_ae=True, lock_awb=True)
@@ -104,7 +105,8 @@ def main():
             img_name = "%s_%s_w%d_h%d.png" \
                        % (NAME, "raw", size_raw[1], size_raw[0])
             aspect_ratio_gt, cc_ct_gt, circle_size_raw = measure_aspect_ratio(
-                                                         img_raw, 1, img_name)
+                                                         img_raw, 1, img_name,
+                                                         debug)
             # Normalize the circle size to 1/4 of the image size, so that
             # circle size won"t affect the crop test result
             factor_cp_thres = (min(size_raw[0:1])/4.0) / max(circle_size_raw)
@@ -154,8 +156,9 @@ def main():
                 img = its.image.convert_capture_to_rgb_image(frm_iter)
                 img_name = "%s_%s_with_%s_w%d_h%d.png" \
                            % (NAME, fmt_iter, fmt_cmpr, w_iter, h_iter)
-                aspect_ratio, cc_ct, _ = measure_aspect_ratio(img, raw_avlb,
-                                                              img_name)
+                aspect_ratio, cc_ct, (cc_w, cc_h) = \
+                        measure_aspect_ratio(img, raw_avlb, img_name,
+                                             debug)
                 # check pass/fail for aspect ratio
                 # image size >= LARGE_SIZE: use THRES_L_AR_TEST
                 # image size == 0 (extreme case): THRES_XS_AR_TEST
@@ -234,7 +237,7 @@ def main():
             assert (failed_image_number_for_crop_test == 0)
 
 
-def measure_aspect_ratio(img, raw_avlb, img_name):
+def measure_aspect_ratio(img, raw_avlb, img_name, debug):
     """ Measure the aspect ratio of the black circle in the test image.
 
     Args:
@@ -242,6 +245,7 @@ def measure_aspect_ratio(img, raw_avlb, img_name):
         raw_avlb: True: raw capture is available; False: raw capture is not
              available.
         img_name: string with image info of format and size.
+        debug: boolean for whether in debug mode.
     Returns:
         aspect_ratio: aspect ratio number in float.
         cc_ct: circle center position relative to the center of image.
@@ -371,7 +375,8 @@ def measure_aspect_ratio(img, raw_avlb, img_name):
     cv2.putText(img, "image center", (text_imgct_x, text_imgct_y),
                 cv2.FONT_HERSHEY_SIMPLEX, line_width/2.0, (255, 0, 0),
                 line_width)
-    its.image.write_image(img/255, img_name, True)
+    if debug:
+        its.image.write_image(img/255, img_name, True)
 
     print "Aspect ratio: %.3f" % aspect_ratio
     print "Circle center position regarding to image center: %.3fx%.3f" % \
