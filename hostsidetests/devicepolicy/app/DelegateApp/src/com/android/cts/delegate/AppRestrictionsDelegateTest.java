@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.apprestrictions.managingapp;
+package com.android.cts.delegate;
+
+import static android.app.admin.DevicePolicyManager.DELEGATION_APP_RESTRICTIONS;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -22,19 +24,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.UserManager;
 import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests that a package other than the DPC can manage app restrictions if allowed by the DPC
- * via {@link DevicePolicyManager#setApplicationRestrictionsManagingPackage(ComponentName, String)}
+ * Test that an app given the {@link DevicePolicyManager#DELEGATION_APP_RESTRICTIONS} scope via
+ * {@link DevicePolicyManager#setDelegatedScopes} can manage app restrictions.
  */
-public class ApplicationRestrictionsManagerTest extends InstrumentationTestCase {
+public class AppRestrictionsDelegateTest extends InstrumentationTestCase {
 
     private static final String APP_RESTRICTIONS_TARGET_PKG =
             "com.android.cts.apprestrictions.targetapp";
@@ -43,13 +46,10 @@ public class ApplicationRestrictionsManagerTest extends InstrumentationTestCase 
     private static final String ACTION_RESTRICTIONS_VALUE =
             "com.android.cts.apprestrictions.targetapp.RESTRICTIONS_VALUE";
 
-    private static final ComponentName TEST_COMPONENT_NAME = new ComponentName(
-            APP_RESTRICTIONS_TARGET_PKG, ApplicationRestrictionsManagerTest.class.getName());
-
     private static final Bundle BUNDLE_0 = createBundle0();
     private static final Bundle BUNDLE_1 = createBundle1();
 
-    private static final long WAIT_FOR_ACTIVITY_TIMEOUT_SECONDS = 10;
+    private static final long TIMEOUT_SECONDS = 10;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -63,8 +63,7 @@ public class ApplicationRestrictionsManagerTest extends InstrumentationTestCase 
     };
 
     private Context mContext;
-    private DevicePolicyManager mDevicePolicyManager;
-    private UserManager mUserManager;
+    private DevicePolicyManager mDpm;
     private final Semaphore mOnRestrictionsSemaphore = new Semaphore(0);
     private Bundle mReceivedRestrictions;
 
@@ -73,9 +72,7 @@ public class ApplicationRestrictionsManagerTest extends InstrumentationTestCase 
         super.setUp();
 
         mContext = getInstrumentation().getContext();
-        mDevicePolicyManager = (DevicePolicyManager)
-                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
-        mUserManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+        mDpm = mContext.getSystemService(DevicePolicyManager.class);
 
         mContext.registerReceiver(mReceiver, new IntentFilter(ACTION_RESTRICTIONS_VALUE));
     }
@@ -83,72 +80,47 @@ public class ApplicationRestrictionsManagerTest extends InstrumentationTestCase 
     @Override
     protected void tearDown() throws Exception {
         mContext.unregisterReceiver(mReceiver);
-
         super.tearDown();
     }
 
-    public void testCannotManageAppRestrictions() {
-        assertFalse(mDevicePolicyManager.isCallerApplicationRestrictionsManagingPackage());
+    public void testCannotAccessApis() {
+        assertFalse("DelegateApp should not be an app restrictions delegate",
+                amIAppRestrictionsDelegate());
         try {
-            mDevicePolicyManager.setApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG, null);
+            mDpm.setApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG, null);
             fail("Expected SecurityException not thrown");
         } catch (SecurityException expected) {
             MoreAsserts.assertContainsRegex(
-                    "cannot manage application restrictions", expected.getMessage());
+                    "Caller with uid \\d+ is not a delegate of scope delegation-app-restrictions.",
+                    expected.getMessage());
         }
         try {
-            mDevicePolicyManager.getApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG);
+            mDpm.getApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG);
             fail("Expected SecurityException not thrown");
         } catch (SecurityException expected) {
             MoreAsserts.assertContainsRegex(
-                    "cannot manage application restrictions", expected.getMessage());
+                    "Caller with uid \\d+ is not a delegate of scope delegation-app-restrictions.",
+                    expected.getMessage());
         }
-
-        // Should still be able to retrieve our own restrictions via user manager
-        mUserManager.getApplicationRestrictions(mContext.getPackageName());
     }
 
-    public void testCanManageAppRestrictions() {
-        assertTrue(mDevicePolicyManager.isCallerApplicationRestrictionsManagingPackage());
+    public void testCanAccessApis() throws InterruptedException {
+        assertTrue("DelegateApp is not an app restrictions delegate", amIAppRestrictionsDelegate());
         try {
-            mDevicePolicyManager.setApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG, BUNDLE_0);
-            assertBundle0(mDevicePolicyManager.getApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG));
+            mDpm.setApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG, BUNDLE_0);
+            assertBundle0(mDpm.getApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG));
 
             // Check that the target app can retrieve the same restrictions.
             assertBundle0(waitForChangedRestriction());
 
             // Test overwriting
-            mDevicePolicyManager.setApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG, BUNDLE_1);
-            assertBundle1(mDevicePolicyManager.getApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG));
+            mDpm.setApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG, BUNDLE_1);
+            assertBundle1(mDpm.getApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG));
             assertBundle1(waitForChangedRestriction());
         } finally {
-            mDevicePolicyManager.setApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG, new Bundle());
-            assertTrue(mDevicePolicyManager.getApplicationRestrictions(
-                    null, APP_RESTRICTIONS_TARGET_PKG).isEmpty());
-        }
-    }
-
-    public void testSettingComponentNameThrowsException() {
-        assertTrue(mDevicePolicyManager.isCallerApplicationRestrictionsManagingPackage());
-        try {
-            mDevicePolicyManager.setApplicationRestrictions(
-                    TEST_COMPONENT_NAME, APP_RESTRICTIONS_TARGET_PKG, null);
-            fail("Expected SecurityException not thrown");
-        } catch (SecurityException expected) {
-            MoreAsserts.assertContainsRegex("No active admin", expected.getMessage());
-        }
-        try {
-            mDevicePolicyManager.getApplicationRestrictions(
-                    TEST_COMPONENT_NAME, APP_RESTRICTIONS_TARGET_PKG);
-            fail("Expected SecurityException not thrown");
-        } catch (SecurityException expected) {
-            MoreAsserts.assertContainsRegex("No active admin", expected.getMessage());
+            mDpm.setApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG, new Bundle());
+            assertTrue(
+                mDpm.getApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG).isEmpty());
         }
     }
 
@@ -185,16 +157,15 @@ public class ApplicationRestrictionsManagerTest extends InstrumentationTestCase 
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 
-    private Bundle waitForChangedRestriction() {
+    private Bundle waitForChangedRestriction() throws InterruptedException {
         startTestActivity();
-
-        try {
-            assertTrue(mOnRestrictionsSemaphore.tryAcquire(
-                    WAIT_FOR_ACTIVITY_TIMEOUT_SECONDS, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            fail("waitForChangedRestriction() interrupted");
-        }
-
+        assertTrue("App restrictions target app did not respond in time",
+                mOnRestrictionsSemaphore.tryAcquire(TIMEOUT_SECONDS, TimeUnit.SECONDS));
         return mReceivedRestrictions;
+    }
+
+    private boolean amIAppRestrictionsDelegate() {
+        final List<String> scopes = mDpm.getDelegatedScopes(null, mContext.getPackageName());
+        return scopes.contains(DELEGATION_APP_RESTRICTIONS);
     }
 }
