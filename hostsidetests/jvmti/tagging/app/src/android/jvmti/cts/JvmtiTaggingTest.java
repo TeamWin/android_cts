@@ -37,28 +37,28 @@ public class JvmtiTaggingTest extends JvmtiTestBase {
 
     private static WeakReference<Object> test() {
         Object o1 = new Object();
-        setTag(o1, 1);
+        JniBindings.setTag(o1, 1);
 
         Object o2 = new Object();
-        setTag(o2, 2);
+        JniBindings.setTag(o2, 2);
 
-        assertEquals(1, getTag(o1));
-        assertEquals(2, getTag(o2));
-
-        Runtime.getRuntime().gc();
-        Runtime.getRuntime().gc();
-
-        assertEquals(1, getTag(o1));
-        assertEquals(2, getTag(o2));
+        assertEquals(1, JniBindings.getTag(o1));
+        assertEquals(2, JniBindings.getTag(o2));
 
         Runtime.getRuntime().gc();
         Runtime.getRuntime().gc();
 
-        setTag(o1, 10);
-        setTag(o2, 20);
+        assertEquals(1, JniBindings.getTag(o1));
+        assertEquals(2, JniBindings.getTag(o2));
 
-        assertEquals(10, getTag(o1));
-        assertEquals(20, getTag(o2));
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().gc();
+
+        JniBindings.setTag(o1, 10);
+        JniBindings.setTag(o2, 20);
+
+        assertEquals(10, JniBindings.getTag(o1));
+        assertEquals(20, JniBindings.getTag(o2));
 
         return new WeakReference<Object>(o1);
     }
@@ -93,7 +93,7 @@ public class JvmtiTaggingTest extends JvmtiTestBase {
             Integer o = new Integer(i);
             l.add(o);
             if (i % 10 != 0) {
-                setTag(o, i % 10);
+                JniBindings.setTag(o, i % 10);
             }
         }
 
@@ -208,6 +208,7 @@ public class JvmtiTaggingTest extends JvmtiTestBase {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public int compareTo(Pair p) {
             if (tag != p.tag) {
                 return Long.compare(tag, p.tag);
@@ -241,11 +242,6 @@ public class JvmtiTaggingTest extends JvmtiTestBase {
             return "<" + obj + ";" + tag + ">";
         }
     }
-
-
-    private static native void setTag(Object o, long tag);
-
-    private static native long getTag(Object o);
 
     private static native Object[] getTaggedObjects(long[] searchTags, boolean returnObjects,
             boolean returnTags);
