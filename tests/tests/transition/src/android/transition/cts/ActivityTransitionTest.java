@@ -17,6 +17,8 @@ package android.transition.cts;
 
 import static com.android.compatibility.common.util.CtsMockitoUtils.within;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertEquals;
@@ -258,6 +260,29 @@ public class ActivityTransitionTest extends BaseTransitionTest {
             assertEquals(View.VISIBLE, green.getVisibility());
             targetActivity.finish();
         });
+    }
+
+    @Test
+    public void testAnimationQuery() {
+        assertFalse(mActivity.isActivityTransitionRunning());
+        mInstrumentation.runOnMainSync(() -> {
+            mActivity.getWindow().setExitTransition(new Fade());
+            Intent intent = new Intent(mActivity, TargetActivity.class);
+            ActivityOptions activityOptions =
+                    ActivityOptions.makeSceneTransitionAnimation(mActivity);
+            mActivity.startActivity(intent, activityOptions.toBundle());
+        });
+
+        assertTrue(mActivity.isActivityTransitionRunning());
+
+        TargetActivity targetActivity = waitForTargetActivity();
+        assertTrue(targetActivity.isActivityTransitionRunning());
+        mInstrumentation.runOnMainSync(() -> {
+            targetActivity.finish();
+        });
+
+        assertTrue(targetActivity.isActivityTransitionRunning());
+        assertTrue(mActivity.isActivityTransitionRunning());
     }
 
     private TargetActivity waitForTargetActivity() {
