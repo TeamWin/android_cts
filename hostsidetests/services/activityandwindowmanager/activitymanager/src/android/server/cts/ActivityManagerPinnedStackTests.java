@@ -56,6 +56,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP = "assert_no_on_stop_before_pip";
     private static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
 
+    private static final String PIP_ACTIVITY_ACTION_ENTER_PIP =
+            "android.server.cts.PipActivity.enter_pip";
+
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
     private static final int APP_OPS_MODE_IGNORED = 1;
@@ -543,6 +546,21 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
         launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
         assertPinnedStackExists();
+    }
+
+    public void testDisallowEnterPipActivityLocked() throws Exception {
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
+        ActivityTask task =
+                mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID).getTopTask();
+
+        // Lock the task and ensure that we can't enter picture-in-picture both explicitly and
+        // when paused
+        executeShellCommand("am task lock " + task.mTaskId);
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        assertPinnedStackDoesNotExist();
+        launchHomeActivity();
+        assertPinnedStackDoesNotExist();
+        executeShellCommand("am task lock stop");
     }
 
     /**
