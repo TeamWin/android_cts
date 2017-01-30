@@ -51,7 +51,7 @@ LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkfc \
     $(selinux_plat_seapp_contexts) \
     $(selinux_plat_seapp_neverallows) \
-    $(selinux_general_file_contexts) \
+    $(selinux_plat_file_contexts) \
     $(selinux_plat_property_contexts) \
     $(selinux_plat_service_contexts)
 
