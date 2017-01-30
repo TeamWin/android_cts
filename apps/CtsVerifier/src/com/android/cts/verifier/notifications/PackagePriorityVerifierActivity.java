@@ -17,6 +17,8 @@
 package com.android.cts.verifier.notifications;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.util.Log;
@@ -39,6 +41,7 @@ public class PackagePriorityVerifierActivity
     private static final String ACTION_CANCEL = "com.android.cts.robot.ACTION_CANCEL";
     private static final String EXTRA_ID = "ID";
     private static final String EXTRA_NOTIFICATION = "NOTIFICATION";
+    private static final String NOTIFICATION_CHANNEL_ID = "PackagePriorityVerifierActivity";
     static final String NOTIFICATION_BOT_PACKAGE = "com.android.cts.robot";
     private CharSequence mAppLabel;
 
@@ -66,6 +69,16 @@ public class PackagePriorityVerifierActivity
         tests.add(new WaitForSetPriorityHigh());
         tests.add(new PackagePriorityOrderTest());
         return tests;
+    }
+
+    private void createChannel() {
+        NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
+        mNm.createNotificationChannel(channel);
+    }
+
+    private void deleteChannel() {
+        mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
     }
 
     // Tests
@@ -155,6 +168,7 @@ public class PackagePriorityVerifierActivity
 
         @Override
         void setUp() {
+            createChannel();
             sendNotifications();
             status = READY;
             // wait for notifications to move through the system
@@ -184,6 +198,7 @@ public class PackagePriorityVerifierActivity
         @Override
         void tearDown() {
             cancelNotifications();
+            deleteChannel();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -200,6 +215,7 @@ public class PackagePriorityVerifierActivity
 
         @Override
         void setUp() {
+            createChannel();
             sendNotifications();
             status = READY;
             // wait for notifications to move through the system
@@ -229,6 +245,7 @@ public class PackagePriorityVerifierActivity
         @Override
         void tearDown() {
             cancelNotifications();
+            deleteChannel();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -237,7 +254,7 @@ public class PackagePriorityVerifierActivity
 
     private void sendNotifications() {
         // post ours first, with an explicit time in the past to avoid any races.
-        Notification.Builder alice = new Notification.Builder(mContext)
+        Notification.Builder alice = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("alice title")
                 .setContentText("alice content")
                 .setSmallIcon(R.drawable.ic_stat_alice)
@@ -246,7 +263,7 @@ public class PackagePriorityVerifierActivity
         mNm.notify(0, alice.build());
 
         // then post theirs, so it should be higher by default due to recency
-        Notification.Builder bob = new Notification.Builder(mContext)
+        Notification.Builder bob = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("bob title")
                 .setContentText("bob content")
                 .setSmallIcon(android.R.drawable.stat_notify_error) // must be global resource

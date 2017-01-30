@@ -18,6 +18,8 @@ package com.android.cts.vpnfirewall;
 
 import android.R;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -36,6 +38,7 @@ public class ReflectorVpnService extends VpnService {
 
     private static String TAG = "ReflectorVpnService";
     private static final int NOTIFICATION_ID = 1;
+    private static final String NOTIFICATION_CHANNEL_ID = TAG;
     private static int MTU = 1799;
 
     private ParcelFileDescriptor mFd = null;
@@ -50,7 +53,11 @@ public class ReflectorVpnService extends VpnService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Put ourself in the foreground to stop the system killing us while we wait for orders from
         // the hostside test.
-        startForeground(NOTIFICATION_ID, new Notification.Builder(this)
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID,
+                NotificationManager.IMPORTANCE_DEFAULT));
+        startForeground(NOTIFICATION_ID, new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_dialog_alert)
                 .build());
         start();
@@ -60,6 +67,8 @@ public class ReflectorVpnService extends VpnService {
     @Override
     public void onDestroy() {
         stop();
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
         super.onDestroy();
     }
 

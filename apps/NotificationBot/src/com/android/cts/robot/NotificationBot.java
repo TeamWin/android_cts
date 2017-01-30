@@ -17,6 +17,7 @@ package com.android.cts.robot;
 
 import android.app.Notification;
 import android.app.Notification.Action;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.RemoteInput;
@@ -35,6 +36,7 @@ import java.util.List;
 
 public class NotificationBot extends BroadcastReceiver {
     private static final String TAG = "NotificationBot";
+    private static final String NOTIFICATION_CHANNEL_ID = TAG;
     private static final String EXTRA_ID = "ID";
     private static final String EXTRA_NOTIFICATION = "NOTIFICATION";
     private static final String ACTION_POST = "com.android.cts.robot.ACTION_POST";
@@ -133,14 +135,19 @@ public class NotificationBot extends BroadcastReceiver {
         final RemoteInput ri = new RemoteInput.Builder("result")
                 .setLabel("Type something here and press send button").build();
 
-        final Notification.Builder nb = new Notification.Builder(context)
+        NotificationManager notificationManager =
+                context.getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID,
+                NotificationManager.IMPORTANCE_DEFAULT));
+        final Notification.Builder nb = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle(intent.getStringExtra(EXTRA_NOTIFICATION_TITLE))
                 .setSmallIcon(android.R.drawable.ic_popup_sync)
                 .addAction(new Action.Builder(0,
                         "Type something here and press send button", receiverIntent)
                         .addRemoteInput(ri)
                         .build());
-        context.getSystemService(NotificationManager.class).notify(0, nb.build());
+        notificationManager.notify(0, nb.build());
     }
 
     /**

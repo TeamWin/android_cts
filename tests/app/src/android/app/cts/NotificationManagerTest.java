@@ -300,12 +300,13 @@ public class NotificationManagerTest extends AndroidTestCase {
         final int id = 128;
         final long timeout = 1000;
 
-        final Notification notification = new Notification.Builder(mContext)
-                .setSmallIcon(R.drawable.black)
-                .setContentTitle("notify#" + id)
-                .setContentText("This is #" + id + "notification  ")
-                .setTimeout(System.currentTimeMillis() + timeout)
-                .build();
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .setTimeout(System.currentTimeMillis() + timeout)
+                        .build();
         mNotificationManager.notify(id, notification);
 
         if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
