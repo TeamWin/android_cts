@@ -1157,7 +1157,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void setUp() {
             updatedChannel.setVibrationPattern(new long[] {467, 2478, 24738});
-            updatedChannel.setSound(new Uri.Builder().appendPath("sound").build());
+            updatedChannel.setSound(new Uri.Builder().appendPath("sound").build(), null);
             updatedChannel.setLights(true);
             updatedChannel.enableVibration(true);
             updatedChannel.setBypassDnd(true);
@@ -1481,6 +1481,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         pass &= checkEquals(expected.getSound(), actual.getSound(), msg);
         pass &= checkEquals(expected.canBypassDnd(), actual.canBypassDnd(), msg);
         pass &= checkEquals(expected.getVibrationPattern(), actual.getVibrationPattern(), msg);
+        pass &= checkEquals(expected.getAudioAttributes(), actual.getAudioAttributes(), msg);
         return pass;
     }
 

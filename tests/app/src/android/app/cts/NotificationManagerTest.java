@@ -24,6 +24,7 @@ import android.app.PendingIntent;
 import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
 import android.net.Uri;
 import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
@@ -77,7 +78,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
         channel.enableVibration(true);
         channel.setVibrationPattern(new long[] {5, 8, 2, 1});
-        channel.setSound(new Uri.Builder().scheme("test").build());
+        channel.setSound(new Uri.Builder().scheme("test").build(),
+                new AudioAttributes.Builder().setUsage(
+                        AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED).build());
         channel.setLights(true);
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
@@ -382,5 +385,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.getSound(), actual.getSound());
         assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
         assertEquals(expected.getGroup(), actual.getGroup());
+        assertEquals(expected.getAudioAttributes(), actual.getAudioAttributes());
     }
 }
