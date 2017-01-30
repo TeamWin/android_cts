@@ -15,8 +15,7 @@
  */
 package com.android.server.cts.netstats;
 
-import static junit.framework.Assert.assertEquals;
-
+import android.net.TrafficStats;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
@@ -34,12 +33,27 @@ import java.net.URL;
 public class NetstatsDeviceTest {
     private static final String TAG = "NetstatsDeviceTest";
 
-    @Test
-    public void testDoNetwork() throws Exception {
-        Log.i(TAG, "Making network requests...");
+    private static final int NET_TAG = 123123123;
 
+    @Test
+    public void testDoNetworkWithoutTagging() throws Exception {
+        Log.i(TAG, "testDoNetworkWithoutTagging");
+
+        makeNetworkRequest();
+    }
+
+    @Test
+    public void testDoNetworkWithTagging() throws Exception {
+        Log.i(TAG, "testDoNetworkWithTagging");
+
+        TrafficStats.getAndSetThreadStatsTag(NET_TAG);
+        makeNetworkRequest();
+    }
+
+    private void makeNetworkRequest() throws Exception {
         final URL url = new URL("http://www.android.com/");
         final HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        HttpURLConnection.setFollowRedirects(true);
         try {
             final int status = urlConnection.getResponseCode();
 
