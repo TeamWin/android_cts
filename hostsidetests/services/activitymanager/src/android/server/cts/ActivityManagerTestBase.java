@@ -78,6 +78,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String AM_MOVE_TASK = "am stack movetask ";
 
+    private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
+            "am supports-split-screen-multiwindow";
+
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
 
     /** A reference to the device under test. */
@@ -274,6 +277,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean supportsScreenRotation() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.hardware.type.watch")
                 || PRETEND_DEVICE_SUPPORTS_ROTATION;
+    }
+
+    protected boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
+        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW, outputReceiver);
+        String output = outputReceiver.getOutput();
+        return !output.startsWith("false");
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
