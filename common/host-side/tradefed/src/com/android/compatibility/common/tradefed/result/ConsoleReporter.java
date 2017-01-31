@@ -21,6 +21,7 @@ import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionCopier;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.util.TimeUtil;
@@ -50,13 +51,15 @@ public class ConsoleReporter implements IShardableListener {
      * {@inheritDoc}
      */
     @Override
-    public void invocationStarted(IBuildInfo buildInfo) {
-        if (buildInfo == null) {
-            CLog.w("buildInfo should not be null");
+    public void invocationStarted(IInvocationContext context) {
+        if (context == null) {
+            CLog.w("InvocationContext should not be null");
             return;
         }
+        IBuildInfo primaryBuild = context.getBuildInfos().get(0);
+
         // Escape any "%" signs in the device serial.
-        mDeviceSerial = buildInfo.getDeviceSerial().replace("%", "%%");
+        mDeviceSerial = primaryBuild.getDeviceSerial().replace("%", "%%");
     }
 
     /**

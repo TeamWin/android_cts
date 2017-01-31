@@ -26,6 +26,8 @@ import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.result.ByteArrayInputStreamSource;
 import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
@@ -73,6 +75,7 @@ public class ResultReporterTest extends TestCase {
 
     private ResultReporter mReporter;
     private IBuildInfo mBuildInfo;
+    private IInvocationContext mContext;
     private CompatibilityBuildHelper mBuildHelper;
 
     private File mRoot = null;
@@ -107,6 +110,8 @@ public class ResultReporterTest extends TestCase {
         setter.setOptionValue("dynamic-config-url", DYNAMIC_CONFIG_URL);
         mBuildInfo = provider.getBuild();
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        mContext = new InvocationContext();
+        mContext.addDeviceBuildInfo("fakeDevice", mBuildInfo);
     }
 
     @Override
@@ -116,7 +121,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testSetup() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         // Should have created a directory for the logs
         File[] children = mBuildHelper.getLogsDir().listFiles();
         assertTrue("Didn't create logs dir", children.length == 1 && children[0].isDirectory());
@@ -136,7 +141,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testResultReporting() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 2);
         TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
         mReporter.testStarted(test1);
@@ -194,7 +199,7 @@ public class ResultReporterTest extends TestCase {
     public void testRepeatedExecutions() throws Exception {
         String[] methods = new String[] {METHOD_1, METHOD_2, METHOD_3};
 
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
 
         makeTestRun(methods, new boolean[] {true, false, true});
         makeTestRun(methods, new boolean[] {true, false, false});
@@ -240,7 +245,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testRetry() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
 
         // Set up IInvocationResult with existing results from previous session
         mReporter.testRunStarted(ID, 2);
@@ -295,7 +300,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testRetryCanSetDone() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         // Set mCanMarkDone directly (otherwise we must build result directory, write XML, and
         // perform actual retry)
         mReporter.mCanMarkDone = true;
@@ -334,7 +339,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testRetryCannotSetDone() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         // Set mCanMarkDone directly (otherwise we must build result directory, write XML, and
         // perform actual retry)
         mReporter.mCanMarkDone = false;
@@ -373,7 +378,7 @@ public class ResultReporterTest extends TestCase {
     }
 
     public void testResultReporting_moduleNotDone() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 2);
         TestIdentifier test1 = new TestIdentifier(CLASS, METHOD_1);
         mReporter.testStarted(test1);
@@ -419,7 +424,7 @@ public class ResultReporterTest extends TestCase {
      */
     public void testTestLog() throws Exception {
         InputStreamSource fakeData = new ByteArrayInputStreamSource("test".getBytes());
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testLog("test1", LogDataType.LOGCAT, fakeData);
         // date folder
         assertEquals(1, mBuildHelper.getLogsDir().list().length);

@@ -16,8 +16,6 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
-import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
 import com.android.compatibility.common.util.ICaseResult;
@@ -37,6 +35,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionCopier;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ILogSaver;
 import com.android.tradefed.result.ILogSaverListener;
@@ -158,34 +157,35 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * {@inheritDoc}
      */
     @Override
-    public void invocationStarted(IBuildInfo buildInfo) {
+    public void invocationStarted(IInvocationContext context) {
+        IBuildInfo primaryBuild = context.getBuildInfos().get(0);
         synchronized(this) {
             if (mBuildHelper == null) {
-                mBuildHelper = new CompatibilityBuildHelper(buildInfo);
+                mBuildHelper = new CompatibilityBuildHelper(primaryBuild);
             }
-            if (mDeviceSerial == null && buildInfo.getDeviceSerial() != null) {
-                mDeviceSerial = buildInfo.getDeviceSerial();
+            if (mDeviceSerial == null && primaryBuild.getDeviceSerial() != null) {
+                mDeviceSerial = primaryBuild.getDeviceSerial();
             }
             mCanMarkDone = canMarkDone(mBuildHelper.getRecentCommandLineArgs());
         }
 
         if (isShardResultReporter()) {
             // Shard ResultReporters forward invocationStarted to the mMasterResultReporter
-            mMasterResultReporter.invocationStarted(buildInfo);
+            mMasterResultReporter.invocationStarted(context);
             return;
         }
 
         // NOTE: Everything after this line only applies to the master ResultReporter.
 
         synchronized(this) {
-            if (buildInfo.getDeviceSerial() != null) {
+            if (primaryBuild.getDeviceSerial() != null) {
                 // The master ResultReporter collects all device serials being used
                 // for the current implementation.
-                mMasterDeviceSerials.add(buildInfo.getDeviceSerial());
+                mMasterDeviceSerials.add(primaryBuild.getDeviceSerial());
             }
 
             // The master ResultReporter collects all buildInfos.
-            mMasterBuildInfos.add(buildInfo);
+            mMasterBuildInfos.add(primaryBuild);
 
             if (mResultDir == null) {
                 // For the non-sharding case, invocationStarted is only called once,
