@@ -52,6 +52,7 @@ import com.android.ex.camera2.blocking.BlockingStateCallback;
 
 import junit.framework.Assert;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
 
@@ -279,6 +280,12 @@ public class Camera2MultiViewTestCase extends
         return camera.getOrderedPreviewSizes();
     }
 
+    protected void verifyCreateSessionWithConfigsFailure(String cameraId,
+            List<OutputConfiguration> configs) throws Exception {
+        CameraHolder camera = getCameraHolder(cameraId);
+        camera.verifyCreateSessionWithConfigsFailure(configs);
+    }
+
     /**
      * Wait until the SurfaceTexture available from the TextureView, then return it.
      * Return null if the wait times out.
@@ -434,6 +441,20 @@ public class Camera2MultiViewTestCase extends
                 throws Exception {
             mSessionListener = new BlockingSessionCallback();
             mSession = configureCameraSessionWithConfig(mCamera, outputConfigs, mSessionListener, mHandler);
+        }
+
+        public void verifyCreateSessionWithConfigsFailure(List<OutputConfiguration> configs)
+                throws Exception {
+            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+            CameraCaptureSession session = configureCameraSessionWithConfig(
+                    mCamera, configs, sessionListener, mHandler);
+
+            Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
+                    BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
+            int state = sessionListener.getStateWaiter().waitForAnyOfStates(
+                    Arrays.asList(sessionStates), SESSION_CONFIGURE_TIMEOUT_MS);
+            assertTrue("Expecting a createSessionWithConfig failure.",
+                    state == BlockingSessionCallback.SESSION_CONFIGURE_FAILED);
         }
 
         public void startPreviewWithConfigs(List<OutputConfiguration> outputConfigs,
