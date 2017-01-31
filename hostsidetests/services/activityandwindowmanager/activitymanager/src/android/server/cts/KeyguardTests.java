@@ -256,7 +256,7 @@ public class KeyguardTests extends KeyguardTestBase {
         launchActivity("KeyguardLockActivity");
         mAmWmState.computeState(mDevice, new String[] { "KeyguardLockActivity" });
         mAmWmState.assertVisibility("KeyguardLockActivity", true);
-        executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
     }

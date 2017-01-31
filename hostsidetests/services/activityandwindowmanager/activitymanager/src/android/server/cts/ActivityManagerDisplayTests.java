@@ -314,7 +314,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         sleepDevice();
 
         // Finish activity on secondary display.
-        executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
         // Unlock and check if the focus is switched back to primary display.
         wakeUpAndUnlockDevice();

@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
 
 /**
@@ -33,6 +34,7 @@ import android.view.WindowManager;
 public class BroadcastReceiverActivity extends Activity {
 
     public static final String ACTION_TRIGGER_BROADCAST = "trigger_broadcast";
+    private static final String TAG = BroadcastReceiverActivity.class.getSimpleName();
 
     private TestBroadcastReceiver mBroadcastReceiver = new TestBroadcastReceiver();
 
@@ -56,6 +58,8 @@ public class BroadcastReceiverActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final Bundle extras = intent.getExtras();
+            Log.i(TAG, "onReceive: extras=" + extras);
+
             if (extras == null) {
                 return;
             }

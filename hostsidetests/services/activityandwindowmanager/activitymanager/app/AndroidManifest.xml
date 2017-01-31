@@ -258,6 +258,10 @@
                   android:screenOrientation="landscape"
                   android:documentLaunchMode="always"
         />
+        <activity android:name=".MoveTaskToBackActivity"
+                  android:exported="true"
+                  android:launchMode="singleInstance"
+        />
         <receiver
             android:name=".LaunchBroadcastReceiver"
             android:enabled="true"

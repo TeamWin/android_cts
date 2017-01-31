@@ -87,6 +87,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
     static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
 
+    /** Broadcast shell command for finishing {@link BroadcastReceiverActivity}. */
+    static final String FINISH_ACTIVITY_BROADCAST
+            = "am broadcast -a trigger_broadcast --ez finish true";
+
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
 
     static final String AM_MOVE_TASK = "am stack move-task ";
