@@ -192,8 +192,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
                     assertEquals(MAX_BUFFER_SIZE, numRead);
                     assertArrayEquals(origBufferMax, bufferMax);
 
-                    // Send two transfers in a row
-                    nextTest(is, os, "measure transfer speed");
+                    nextTest(is, os, "measure out transfer speed");
 
                     byte[] result = new byte[1];
                     long bytesSent = 0;
@@ -209,8 +208,32 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
                     assertEquals(1, result[0]);
                     // We don't mandate min speed for now, let's collect data on what it is.
                     getReportLog().setSummary(
-                            "Speed", speedKBPS, ResultType.HIGHER_BETTER, ResultUnit.KBPS);
-                    Log.i(LOG_TAG, "Data transfer speed is " + speedKBPS + "KBPS");
+                            "Output USB accesory transfer speed",
+                            speedKBPS,
+                            ResultType.HIGHER_BETTER,
+                            ResultUnit.KBPS);
+                    Log.i(LOG_TAG, "Write data transfer speed is " + speedKBPS + "KBPS");
+
+                    nextTest(is, os, "measure in transfer speed");
+
+                    long bytesRead = 0;
+                    timeStart = SystemClock.elapsedRealtime();
+                    while (bytesRead < TEST_DATA_SIZE_THRESHOLD) {
+                        numRead = is.read(bufferMax);
+                        bytesRead += numRead;
+                    }
+                    numRead = is.read(result);
+                    speedKBPS = (bytesRead * 8 * 1000. / 1024.)
+                            / (SystemClock.elapsedRealtime() - timeStart);
+                    assertEquals(1, numRead);
+                    assertEquals(1, result[0]);
+                    // We don't mandate min speed for now, let's collect data on what it is.
+                    getReportLog().setSummary(
+                            "Input USB accesory transfer speed",
+                            speedKBPS,
+                            ResultType.HIGHER_BETTER,
+                            ResultUnit.KBPS);
+                    Log.i(LOG_TAG, "Read data transfer speed is " + speedKBPS + "KBPS");
 
                     nextTest(is, os, "done");
                 }

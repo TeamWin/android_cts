@@ -164,7 +164,7 @@ class AccessoryTestCompanion extends TestCompanion {
                     }
                     break;
 
-                    case "measure transfer speed": {
+                    case "measure out transfer speed": {
                         byte[] buffer = new byte[MAX_BUFFER_SIZE];
 
                         long bytesRead = 0;
@@ -174,9 +174,27 @@ class AccessoryTestCompanion extends TestCompanion {
                             bytesRead += numTransferred;
                         }
 
-                        // If the data length is a multple of the maxpacket size read zero packet.
-                        int numTransferred = connection.bulkTransfer(in, buffer, 1, 0);
-                        assertEquals(0, numTransferred);
+                        // If the data length is a multple of the maxpacket size try reading zero
+                        // length packet. On some implementation it might be missing.
+                        connection.bulkTransfer(in, buffer, 1, 100);
+
+                        byte[] confirm = new byte[] {1};
+                        int numTransferred = connection.bulkTransfer(out, confirm, 1, 0);
+                        assertEquals(1, numTransferred);
+                    }
+                    break;
+
+                    case "measure in transfer speed": {
+                        byte[] buffer = new byte[MAX_BUFFER_SIZE];
+
+                        long bytesWritten = 0;
+                        int numTransferred = 0;
+                        while (bytesWritten < TEST_DATA_SIZE_THRESHOLD) {
+                            numTransferred =
+                                    connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 0);
+                            assertEquals(MAX_BUFFER_SIZE, numTransferred);
+                            bytesWritten += numTransferred;
+                        }
 
                         byte[] confirm = new byte[] {1};
                         numTransferred = connection.bulkTransfer(out, confirm, 1, 0);
@@ -192,9 +210,9 @@ class AccessoryTestCompanion extends TestCompanion {
                                 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
 
-                        // If the data length is a multple of the maxpacket size read zero packet.
-                        numTransferred = connection.bulkTransfer(in, empty, 1, 0);
-                        assertEquals(0, numTransferred);
+                        // If the data length is a multple of the maxpacket size try reading zero
+                        // length packet. On some implementation it might be missing.
+                        connection.bulkTransfer(in, empty, 1, 100);
 
                         numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
@@ -214,11 +232,11 @@ class AccessoryTestCompanion extends TestCompanion {
                                 MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
 
-                        // If the data length is a multple of the maxpacket size read zero packet.
-                        numTransferred = connection.bulkTransfer(in, empty, 1, 0);
-                        assertEquals(0, numTransferred);
+                        // If the data length is a multple of the maxpacket size try reading zero
+                        // length packet. On some implementation it might be missing.
+                        connection.bulkTransfer(in, empty, 1, 100);
 
-                        numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 0);
+                        numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 100);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
 
                         numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE,
