@@ -25,7 +25,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
  * an unsupported smallest width.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.DisplaySizeTest
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.DisplaySizeTest
  */
 public class DisplaySizeTest extends DeviceTestCase {
     private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";

@@ -31,7 +31,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerReplaceWindowTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerReplaceWindowTests
  */
 public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 

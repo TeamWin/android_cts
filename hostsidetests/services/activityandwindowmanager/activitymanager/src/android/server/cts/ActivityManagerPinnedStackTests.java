@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerPinnedStackTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerPinnedStackTests
  */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";

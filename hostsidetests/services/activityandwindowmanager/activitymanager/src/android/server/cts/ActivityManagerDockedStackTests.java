@@ -20,7 +20,7 @@ import java.awt.Rectangle;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerDockedStackTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerDockedStackTests
  */
 public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 

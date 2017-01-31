@@ -23,7 +23,7 @@ import java.util.regex.Matcher;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerAmStartOptionsTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerAmStartOptionsTests
  */
 public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase {
 

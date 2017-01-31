@@ -18,7 +18,7 @@ package android.server.cts;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.KeyguardLockedTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.KeyguardLockedTests
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
 

@@ -32,7 +32,7 @@ import static android.server.cts.StateLogger.log;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerDisplayTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerDisplayTests
  */
 public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private static final String DUMPSYS_ACTIVITY_PROCESSES = "dumpsys activity processes";

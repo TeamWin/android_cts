@@ -20,7 +20,7 @@ import android.server.cts.WindowManagerState.WindowState;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.KeyguardTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.KeyguardTests
  */
 public class KeyguardTests extends KeyguardTestBase {
 
