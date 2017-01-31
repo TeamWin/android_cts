@@ -28,9 +28,12 @@ import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.testtype.ITestCollector;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 
+import org.easymock.EasyMock;
+
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -50,6 +53,21 @@ public class ModuleDefTest extends TestCase {
         assertEquals("Incorrect ID", ID, def.getId());
         assertEquals("Incorrect ABI", ABI, def.getAbi().getName());
         assertEquals("Incorrect Name", NAME, def.getName());
+    }
+
+    public void testModuleFinisher() throws Exception {
+        IAbi abi = new Abi(ABI, "");
+        MockRemoteTest mockTest = new MockRemoteTest();
+        IModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>());
+        ITestInvocationListener mockListener = EasyMock.createMock(ITestInvocationListener.class);
+        // listener should receive testRunStarted/testRunEnded events even for no-op run() method
+        mockListener.testRunStarted(ID, 0);
+        EasyMock.expectLastCall().once();
+        mockListener.testRunEnded(0, Collections.emptyMap());
+        EasyMock.expectLastCall().once();
+        EasyMock.replay(mockListener);
+        def.run(mockListener);
+        EasyMock.verify(mockListener);
     }
 
     private class MockRemoteTest implements IRemoteTest, ITestFilterReceiver, IAbiReceiver,
