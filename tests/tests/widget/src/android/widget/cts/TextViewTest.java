@@ -6809,6 +6809,37 @@ public class TextViewTest {
         // TODO: Test the floating toolbar content.
     }
 
+    @Test
+    public void testSmartSelection_multiSelect() throws Throwable {
+        mTextView = findTextView(R.id.textview_text);
+        String text = "The president-elect, Filip, is coming to town tomorrow.";
+        int startIndex = text.indexOf("is coming to town");
+        int endIndex = startIndex + "is coming to town".length();
+        initTextViewForTypingOnUiThread();
+        TextClassificationManager tcm = mActivity.getSystemService(TextClassificationManager.class);
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setTextIsSelectable(true);
+            mTextView.setText(text, BufferType.EDITABLE);
+            mTextView.setTextClassifier(tcm.getDefaultTextClassifier());
+        });
+        mInstrumentation.waitForIdleSync();
+
+        Point start = getCenterPositionOfTextAt(mTextView, startIndex, startIndex);
+        Point end = getCenterPositionOfTextAt(mTextView, endIndex, endIndex);
+        int[] viewOnScreenXY = new int[2];
+        mTextView.getLocationOnScreen(viewOnScreenXY);
+        int startX = start.x + viewOnScreenXY[0];
+        int startY = start.y + viewOnScreenXY[1];
+        int offsetX = end.x - start.x;
+
+        CtsTouchUtils.emulateLongPressAndDragGesture(
+                mInstrumentation, startX, startY, offsetX, 0 /* offsetY */);
+
+        // No smart selection when multiple words are selected.
+        assertEquals(startIndex, mTextView.getSelectionStart());
+        assertEquals(endIndex, mTextView.getSelectionEnd());
+    }
+
     /**
      * Some TextView attributes require non-fixed width and/or layout height. This function removes
      * all other existing views from the layout leaving only one auto-size TextView (for exercising
