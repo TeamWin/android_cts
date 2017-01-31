@@ -34,6 +34,8 @@ import java.util.ArrayList;
 
 /**
  * Test class to verify transparency for policies enforced by device/profile owner.
+ * Expects to be passed an extra: {@link PolicyTransparencyTestActivity#EXTRA_TEST_ID} to identify
+ * which test in the calling activity should be updated.
  */
 public class PolicyTransparencyTestListActivity extends PassFailButtons.TestListActivity
         implements View.OnClickListener {
@@ -42,8 +44,13 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     public static final String EXTRA_IS_DEVICE_OWNER =
             "com.android.cts.verifier.managedprovisioning.extra.IS_DEVICE_OWNER";
 
+    // Pairs of:
+    // - An intent to start PolicyTransparencyTestActivity
+    // - a label to show the user.
+    // These contain all the policies except for the user restriction ones
     private static final Pair<Intent, Integer>[] POLICIES;
     static {
+        // names of the tests
         final String[] policyTests = new String[] {
             PolicyTransparencyTestActivity.TEST_CHECK_AUTO_TIME_REQUIRED,
             PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION,
@@ -87,6 +94,7 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         }
     }
 
+    // List of names of test that are also valid for PO
     private static final ArrayList<String> ALSO_VALID_FOR_PO = new ArrayList<String>();
     static {
         ALSO_VALID_FOR_PO.add(

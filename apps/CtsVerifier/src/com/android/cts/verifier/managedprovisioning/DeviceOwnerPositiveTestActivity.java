@@ -293,6 +293,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
                 PolicyTransparencyTestListActivity.EXTRA_IS_DEVICE_OWNER, true);
+        // So that PolicyTransparencyTestListActivity knows which test to update with the result:
         policyTransparencyTestIntent.putExtra(
                 PolicyTransparencyTestActivity.EXTRA_TEST_ID, POLICY_TRANSPARENCY_TEST_ID);
         adapter.add(createTestItem(this, POLICY_TRANSPARENCY_TEST_ID,
