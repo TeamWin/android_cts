@@ -90,7 +90,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
                     STATIC_LIB_CONSUMER1_APK), false, false));
             // Try to load code and resources
             runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
-                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "android.os.lib.consumer1.CookieTest",
                     "testLoadCodeAndResources");
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
@@ -205,7 +205,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
                     STATIC_LIB_CONSUMER2_APK), false, false));
             // Ensure code and resources can be loaded
             runDeviceTests(STATIC_LIB_CONSUMER2_PKG,
-                    "android.os.lib.consumer2.UseSharedLibraryTest",
+                    "android.os.lib.consumer2.CookieTest",
                     "testLoadCodeAndResources");
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_CONSUMER2_PKG);
@@ -270,7 +270,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
                     STATIC_LIB_CONSUMER2_APK), false, false));
             // Ensure libraries are properly reported
             runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
-                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "android.os.lib.consumer1.CookieTest",
                     "testSharedLibrariesProperlyReported");
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
@@ -297,7 +297,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
                     STATIC_LIB_CONSUMER1_APK), false, false));
             // Ensure the client can see only the lib it depends on
             runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
-                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "android.os.lib.consumer1.CookieTest",
                     "testAppCanSeeOnlyLibrariesItDependOn");
         } finally {
             getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
