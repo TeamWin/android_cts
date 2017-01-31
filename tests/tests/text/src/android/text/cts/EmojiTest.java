@@ -184,7 +184,7 @@ public class EmojiTest {
         }
     }
 
-    private class CaptureCanvas extends View {
+    private static class CaptureCanvas extends View {
 
         String mTestStr;
         Paint paint = new Paint();
@@ -216,7 +216,7 @@ public class EmojiTest {
 
     }
 
-    private class CaptureTextView extends TextView {
+    private static class CaptureTextView extends TextView {
 
         CaptureTextView(Context context) {
             super(context);
@@ -240,7 +240,7 @@ public class EmojiTest {
 
     }
 
-    private class CaptureEditText extends EditText {
+    private static class CaptureEditText extends EditText {
 
         CaptureEditText(Context context) {
             super(context);
