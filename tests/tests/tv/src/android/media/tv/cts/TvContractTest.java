@@ -188,6 +188,24 @@ public class TvContractTest extends AndroidTestCase {
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
                 "US_TVPG_TV_MA", "US_TVPG_S", "US_TVPG_V");
         values.put(Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
+        values.put(Programs.COLUMN_TYPE, Programs.TYPE_MOVIE);
+        values.put(Programs.COLUMN_WATCH_NEXT_TYPE, Programs.WATCH_NEXT_TYPE_CONTINUE);
+        values.put(Programs.COLUMN_POSTER_ART_URI, "http://foo.com/artwork.png");
+        values.put(Programs.COLUMN_POSTER_ART_ASPECT_RATIO, Programs.ASPECT_RATIO_2_3);
+        values.put(Programs.COLUMN_THUMBNAIL_URI, "http://foo.com/thumbnail.jpg");
+        values.put(Programs.COLUMN_THUMBNAIL_ASPECT_RATIO, Programs.ASPECT_RATIO_16_9);
+        values.put(Programs.COLUMN_LOGO, "http://foo.com/logo.jpg");
+        values.put(Programs.COLUMN_AVAILABILITY, Programs.AVAILABILITY_AVAILABLE);
+        values.put(Programs.COLUMN_STARTING_PRICE, "10.99 USD");
+        values.put(Programs.COLUMN_OFFER_PRICE, "3.99 USD");
+        values.put(Programs.COLUMN_RELEASE_DATE, "1985");
+        values.put(Programs.COLUMN_ITEM_COUNT, 1);
+        values.put(Programs.COLUMN_LIVE, 0);
+        values.put(Programs.COLUMN_INTERACTION_TYPE, Programs.INTERACTION_TYPE_LIKES);
+        values.put(Programs.COLUMN_INTERACTION_COUNT, 4000);
+        values.put(Programs.COLUMN_AUTHOR, "author_name1");
+        values.put(Programs.COLUMN_REVIEW_RATING_STYLE, Programs.REVIEW_RATING_STYLE_STARS);
+        values.put(Programs.COLUMN_REVIEW_RATING, "4.5");
 
         return values;
     }
@@ -351,6 +369,22 @@ public class TvContractTest extends AndroidTestCase {
             verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_DURATION);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_INTENT_URI);
             verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_WEIGHT);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_TYPE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_WATCH_NEXT_TYPE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_POSTER_ART_ASPECT_RATIO);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_THUMBNAIL_ASPECT_RATIO);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_LOGO);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_AVAILABILITY);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_STARTING_PRICE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_OFFER_PRICE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_RELEASE_DATE);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_ITEM_COUNT);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_LIVE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_INTERACTION_TYPE);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_INTERACTION_COUNT);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_AUTHOR);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_REVIEW_RATING_STYLE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_REVIEW_RATING);
         }
     }
 
