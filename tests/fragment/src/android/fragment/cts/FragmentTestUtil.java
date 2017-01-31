@@ -17,8 +17,10 @@ package android.fragment.cts;
 
 import static org.junit.Assert.assertEquals;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentController;
+import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
 import android.os.Parcelable;
@@ -40,26 +42,43 @@ public class FragmentTestUtil {
         instrumentation.runOnMainSync(() -> {});
     }
 
+    private static void runOnUiThreadRethrow(ActivityTestRule<FragmentTestActivity> rule,
+            Runnable r) {
+        try {
+            rule.runOnUiThread(r);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
     public static boolean executePendingTransactions(
             final ActivityTestRule<FragmentTestActivity> rule) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        return executePendingTransactions(rule, rule.getActivity().getFragmentManager());
+    }
+
+    public static boolean executePendingTransactions(
+            final ActivityTestRule<FragmentTestActivity> rule, final FragmentManager fm) {
         final boolean[] ret = new boolean[1];
-        instrumentation.runOnMainSync(new Runnable() {
+        runOnUiThreadRethrow(rule, new Runnable() {
             @Override
             public void run() {
-                ret[0] = rule.getActivity().getFragmentManager().executePendingTransactions();
+                ret[0] = fm.executePendingTransactions();
             }
         });
         return ret[0];
     }
 
     public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        return popBackStackImmediate(rule, rule.getActivity().getFragmentManager());
+    }
+
+    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
+            final FragmentManager fm) {
         final boolean[] ret = new boolean[1];
-        instrumentation.runOnMainSync(new Runnable() {
+        runOnUiThreadRethrow(rule, new Runnable() {
             @Override
             public void run() {
-                ret[0] = rule.getActivity().getFragmentManager().popBackStackImmediate();
+                ret[0] = fm.popBackStackImmediate();
             }
         });
         return ret[0];
@@ -67,12 +86,16 @@ public class FragmentTestUtil {
 
     public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
             final int id, final int flags) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        return popBackStackImmediate(rule, rule.getActivity().getFragmentManager(), id, flags);
+    }
+
+    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
+            final FragmentManager fm, final int id, final int flags) {
         final boolean[] ret = new boolean[1];
-        instrumentation.runOnMainSync(new Runnable() {
+        runOnUiThreadRethrow(rule, new Runnable() {
             @Override
             public void run() {
-                ret[0] = rule.getActivity().getFragmentManager().popBackStackImmediate(id, flags);
+                ret[0] = fm.popBackStackImmediate(id, flags);
             }
         });
         return ret[0];
@@ -80,12 +103,16 @@ public class FragmentTestUtil {
 
     public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
             final String name, final int flags) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        return popBackStackImmediate(rule, rule.getActivity().getFragmentManager(), name, flags);
+    }
+
+    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
+            final FragmentManager fm, final String name, final int flags) {
         final boolean[] ret = new boolean[1];
-        instrumentation.runOnMainSync(new Runnable() {
+        runOnUiThreadRethrow(rule, new Runnable() {
             @Override
             public void run() {
-                ret[0] = rule.getActivity().getFragmentManager().popBackStackImmediate(name, flags);
+                ret[0] = fm.popBackStackImmediate(name, flags);
             }
         });
         return ret[0];
@@ -93,11 +120,11 @@ public class FragmentTestUtil {
 
     public static void setContentView(final ActivityTestRule<FragmentTestActivity> rule,
             final int layoutId) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.runOnMainSync(new Runnable() {
+        final Activity activity = rule.getActivity();
+        runOnUiThreadRethrow(rule, new Runnable() {
             @Override
             public void run() {
-                rule.getActivity().setContentView(layoutId);
+                activity.setContentView(layoutId);
             }
         });
     }
