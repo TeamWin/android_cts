@@ -27,6 +27,7 @@ import android.graphics.BitmapFactory;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
 import android.media.tv.TvContract.Channels;
+import android.media.tv.TvContract.Programs;
 import android.media.tv.TvContract.Programs.Genres;
 import android.media.tv.TvContract.RecordedPrograms;
 import android.net.Uri;
@@ -44,44 +45,44 @@ import java.util.List;
  */
 public class TvContractTest extends AndroidTestCase {
     private static final String[] CHANNELS_PROJECTION = {
-        TvContract.Channels._ID,
-        TvContract.Channels.COLUMN_INPUT_ID,
-        TvContract.Channels.COLUMN_TYPE,
-        TvContract.Channels.COLUMN_SERVICE_TYPE,
-        TvContract.Channels.COLUMN_ORIGINAL_NETWORK_ID,
-        TvContract.Channels.COLUMN_TRANSPORT_STREAM_ID,
-        TvContract.Channels.COLUMN_SERVICE_ID,
-        TvContract.Channels.COLUMN_DISPLAY_NUMBER,
-        TvContract.Channels.COLUMN_DISPLAY_NAME,
-        TvContract.Channels.COLUMN_NETWORK_AFFILIATION,
-        TvContract.Channels.COLUMN_DESCRIPTION,
-        TvContract.Channels.COLUMN_VIDEO_FORMAT,
-        TvContract.Channels.COLUMN_INTERNAL_PROVIDER_DATA,
-        TvContract.Channels.COLUMN_VERSION_NUMBER,
+        Channels._ID,
+        Channels.COLUMN_INPUT_ID,
+        Channels.COLUMN_TYPE,
+        Channels.COLUMN_SERVICE_TYPE,
+        Channels.COLUMN_ORIGINAL_NETWORK_ID,
+        Channels.COLUMN_TRANSPORT_STREAM_ID,
+        Channels.COLUMN_SERVICE_ID,
+        Channels.COLUMN_DISPLAY_NUMBER,
+        Channels.COLUMN_DISPLAY_NAME,
+        Channels.COLUMN_NETWORK_AFFILIATION,
+        Channels.COLUMN_DESCRIPTION,
+        Channels.COLUMN_VIDEO_FORMAT,
+        Channels.COLUMN_INTERNAL_PROVIDER_DATA,
+        Channels.COLUMN_VERSION_NUMBER,
     };
 
     private static final String[] PROGRAMS_PROJECTION = {
-        TvContract.Programs._ID,
-        TvContract.Programs.COLUMN_CHANNEL_ID,
-        TvContract.Programs.COLUMN_TITLE,
-        TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER,
-        TvContract.Programs.COLUMN_SEASON_TITLE,
-        TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER,
-        TvContract.Programs.COLUMN_EPISODE_TITLE,
-        TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS,
-        TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS,
-        TvContract.Programs.COLUMN_BROADCAST_GENRE,
-        TvContract.Programs.COLUMN_CANONICAL_GENRE,
-        TvContract.Programs.COLUMN_SHORT_DESCRIPTION,
-        TvContract.Programs.COLUMN_LONG_DESCRIPTION,
-        TvContract.Programs.COLUMN_VIDEO_WIDTH,
-        TvContract.Programs.COLUMN_VIDEO_HEIGHT,
-        TvContract.Programs.COLUMN_AUDIO_LANGUAGE,
-        TvContract.Programs.COLUMN_CONTENT_RATING,
-        TvContract.Programs.COLUMN_POSTER_ART_URI,
-        TvContract.Programs.COLUMN_THUMBNAIL_URI,
-        TvContract.Programs.COLUMN_INTERNAL_PROVIDER_DATA,
-        TvContract.Programs.COLUMN_VERSION_NUMBER,
+        Programs._ID,
+        Programs.COLUMN_CHANNEL_ID,
+        Programs.COLUMN_TITLE,
+        Programs.COLUMN_SEASON_DISPLAY_NUMBER,
+        Programs.COLUMN_SEASON_TITLE,
+        Programs.COLUMN_EPISODE_DISPLAY_NUMBER,
+        Programs.COLUMN_EPISODE_TITLE,
+        Programs.COLUMN_START_TIME_UTC_MILLIS,
+        Programs.COLUMN_END_TIME_UTC_MILLIS,
+        Programs.COLUMN_BROADCAST_GENRE,
+        Programs.COLUMN_CANONICAL_GENRE,
+        Programs.COLUMN_SHORT_DESCRIPTION,
+        Programs.COLUMN_LONG_DESCRIPTION,
+        Programs.COLUMN_VIDEO_WIDTH,
+        Programs.COLUMN_VIDEO_HEIGHT,
+        Programs.COLUMN_AUDIO_LANGUAGE,
+        Programs.COLUMN_CONTENT_RATING,
+        Programs.COLUMN_POSTER_ART_URI,
+        Programs.COLUMN_THUMBNAIL_URI,
+        Programs.COLUMN_INTERNAL_PROVIDER_DATA,
+        Programs.COLUMN_VERSION_NUMBER,
     };
 
     private static long OPERATION_TIME = 1000l;
@@ -127,7 +128,7 @@ public class TvContractTest extends AndroidTestCase {
         // Clean up, just in case we failed to delete the entry when a test failed.
         // The cotentUris are specific to this package, so this will delete only the
         // entries inserted by this package.
-        String[] projection = { TvContract.Channels._ID };
+        String[] projection = { Channels._ID };
         try (Cursor cursor = mContentResolver.query(mChannelsUri, projection, null, null, null)) {
             while (cursor != null && cursor.moveToNext()) {
                 long channelId = cursor.getLong(0);
@@ -142,92 +143,88 @@ public class TvContractTest extends AndroidTestCase {
 
     private static ContentValues createDummyChannelValues(String inputId, boolean preview) {
         ContentValues values = new ContentValues();
-        values.put(TvContract.Channels.COLUMN_INPUT_ID, inputId);
-        values.put(TvContract.Channels.COLUMN_TYPE,
-                preview ? TvContract.Channels.TYPE_PREVIEW : TvContract.Channels.TYPE_OTHER);
-        values.put(TvContract.Channels.COLUMN_SERVICE_TYPE,
-                TvContract.Channels.SERVICE_TYPE_AUDIO_VIDEO);
-        values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, "1");
-        values.put(TvContract.Channels.COLUMN_VIDEO_FORMAT, TvContract.Channels.VIDEO_FORMAT_480P);
+        values.put(Channels.COLUMN_INPUT_ID, inputId);
+        values.put(Channels.COLUMN_TYPE, preview ? Channels.TYPE_PREVIEW : Channels.TYPE_OTHER);
+        values.put(Channels.COLUMN_SERVICE_TYPE, Channels.SERVICE_TYPE_AUDIO_VIDEO);
+        values.put(Channels.COLUMN_DISPLAY_NUMBER, "1");
+        values.put(Channels.COLUMN_VIDEO_FORMAT, Channels.VIDEO_FORMAT_480P);
 
         return values;
     }
 
     private static ContentValues createDummyProgramValues(long channelId) {
         ContentValues values = new ContentValues();
-        values.put(TvContract.Programs.COLUMN_CHANNEL_ID, channelId);
-        values.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
-        values.put(TvContract.Programs.COLUMN_EPISODE_TITLE, "episode_title");
-        values.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
-        values.put(TvContract.Programs.COLUMN_SEASON_TITLE, "season_title");
-        values.put(TvContract.Programs.COLUMN_CANONICAL_GENRE, TvContract.Programs.Genres.encode(
-                TvContract.Programs.Genres.MOVIES, TvContract.Programs.Genres.DRAMA));
+        values.put(Programs.COLUMN_CHANNEL_ID, channelId);
+        values.put(Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
+        values.put(Programs.COLUMN_EPISODE_TITLE, "episode_title");
+        values.put(Programs.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
+        values.put(Programs.COLUMN_SEASON_TITLE, "season_title");
+        values.put(Programs.COLUMN_CANONICAL_GENRE, Programs.Genres.encode(
+                Programs.Genres.MOVIES, Programs.Genres.DRAMA));
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
                 "US_TVPG_TV_MA", "US_TVPG_S", "US_TVPG_V");
-        values.put(TvContract.Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
+        values.put(Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
 
         return values;
     }
 
     private static ContentValues createDummyPreviewProgramValues(long channelId) {
         ContentValues values = new ContentValues();
-        values.put(TvContract.Programs.COLUMN_CHANNEL_ID, channelId);
-        values.put(TvContract.Programs.COLUMN_INTERNAL_PROVIDER_ID, "ID-4321");
-        values.put(TvContract.Programs.COLUMN_PREVIEW_VIDEO_URI, "http://test.com/preview.mp4");
-        values.put(TvContract.Programs.COLUMN_PREVIEW_LAST_PLAYBACK_POSITION, 5000);
-        values.put(TvContract.Programs.COLUMN_PREVIEW_DURATION, 60000);
-        values.put(TvContract.Programs.COLUMN_PREVIEW_INTENT_URI,
-                "preview_app_link_intent");
-        values.put(TvContract.Programs.COLUMN_PREVIEW_WEIGHT, 100);
-        values.put(TvContract.Programs.COLUMN_TITLE, "program_title");
-        values.put(TvContract.Programs.COLUMN_SHORT_DESCRIPTION, "short_description");
-        values.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
-        values.put(TvContract.Programs.COLUMN_EPISODE_TITLE, "episode_title");
-        values.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
-        values.put(TvContract.Programs.COLUMN_SEASON_TITLE, "season_title");
-        values.put(TvContract.Programs.COLUMN_CANONICAL_GENRE, TvContract.Programs.Genres.encode(
-                TvContract.Programs.Genres.SPORTS, TvContract.Programs.Genres.DRAMA));
+        values.put(Programs.COLUMN_CHANNEL_ID, channelId);
+        values.put(Programs.COLUMN_INTERNAL_PROVIDER_ID, "ID-4321");
+        values.put(Programs.COLUMN_PREVIEW_VIDEO_URI, "http://test.com/preview.mp4");
+        values.put(Programs.COLUMN_PREVIEW_LAST_PLAYBACK_POSITION, 5000);
+        values.put(Programs.COLUMN_PREVIEW_DURATION, 60000);
+        values.put(Programs.COLUMN_PREVIEW_INTENT_URI, "preview_app_link_intent");
+        values.put(Programs.COLUMN_PREVIEW_WEIGHT, 100);
+        values.put(Programs.COLUMN_TITLE, "program_title");
+        values.put(Programs.COLUMN_SHORT_DESCRIPTION, "short_description");
+        values.put(Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
+        values.put(Programs.COLUMN_EPISODE_TITLE, "episode_title");
+        values.put(Programs.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
+        values.put(Programs.COLUMN_SEASON_TITLE, "season_title");
+        values.put(Programs.COLUMN_CANONICAL_GENRE, Programs.Genres.encode(
+                Programs.Genres.SPORTS, Programs.Genres.DRAMA));
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
                 "US_TVPG_TV_MA", "US_TVPG_S", "US_TVPG_V");
-        values.put(TvContract.Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
+        values.put(Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
 
         return values;
     }
 
     private static ContentValues createDummyRecordedProgramValues(String inputId, long channelId) {
         ContentValues values = new ContentValues();
-        values.put(TvContract.RecordedPrograms.COLUMN_INPUT_ID, inputId);
-        values.put(TvContract.RecordedPrograms.COLUMN_CHANNEL_ID, channelId);
-        values.put(TvContract.RecordedPrograms.COLUMN_SEASON_DISPLAY_NUMBER , "3B");
-        values.put(TvContract.RecordedPrograms.COLUMN_SEASON_TITLE, "season_title");
-        values.put(TvContract.RecordedPrograms.COLUMN_EPISODE_DISPLAY_NUMBER , "2A");
-        values.put(TvContract.RecordedPrograms.COLUMN_EPISODE_TITLE, "episode_title");
-        values.put(TvContract.RecordedPrograms.COLUMN_START_TIME_UTC_MILLIS, 1000);
-        values.put(TvContract.RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, 2000);
-        values.put(TvContract.RecordedPrograms.COLUMN_CANONICAL_GENRE,
-                TvContract.Programs.Genres.encode(
-                        TvContract.Programs.Genres.MOVIES, TvContract.Programs.Genres.DRAMA));
-        values.put(TvContract.RecordedPrograms.COLUMN_SHORT_DESCRIPTION, "short_description");
-        values.put(TvContract.RecordedPrograms.COLUMN_LONG_DESCRIPTION, "long_description");
-        values.put(TvContract.RecordedPrograms.COLUMN_VIDEO_WIDTH, 1920);
-        values.put(TvContract.RecordedPrograms.COLUMN_VIDEO_HEIGHT, 1080);
-        values.put(TvContract.RecordedPrograms.COLUMN_AUDIO_LANGUAGE, "en");
+        values.put(RecordedPrograms.COLUMN_INPUT_ID, inputId);
+        values.put(RecordedPrograms.COLUMN_CHANNEL_ID, channelId);
+        values.put(RecordedPrograms.COLUMN_SEASON_DISPLAY_NUMBER , "3B");
+        values.put(RecordedPrograms.COLUMN_SEASON_TITLE, "season_title");
+        values.put(RecordedPrograms.COLUMN_EPISODE_DISPLAY_NUMBER , "2A");
+        values.put(RecordedPrograms.COLUMN_EPISODE_TITLE, "episode_title");
+        values.put(RecordedPrograms.COLUMN_START_TIME_UTC_MILLIS, 1000);
+        values.put(RecordedPrograms.COLUMN_END_TIME_UTC_MILLIS, 2000);
+        values.put(RecordedPrograms.COLUMN_CANONICAL_GENRE,
+                Programs.Genres.encode(Programs.Genres.MOVIES, Programs.Genres.DRAMA));
+        values.put(RecordedPrograms.COLUMN_SHORT_DESCRIPTION, "short_description");
+        values.put(RecordedPrograms.COLUMN_LONG_DESCRIPTION, "long_description");
+        values.put(RecordedPrograms.COLUMN_VIDEO_WIDTH, 1920);
+        values.put(RecordedPrograms.COLUMN_VIDEO_HEIGHT, 1080);
+        values.put(RecordedPrograms.COLUMN_AUDIO_LANGUAGE, "en");
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
                 "US_TVPG_TV_MA", "US_TVPG_S", "US_TVPG_V");
-        values.put(TvContract.RecordedPrograms.COLUMN_CONTENT_RATING, rating.flattenToString());
-        values.put(TvContract.RecordedPrograms.COLUMN_POSTER_ART_URI, "http://foo.com/artwork.png");
-        values.put(TvContract.RecordedPrograms.COLUMN_THUMBNAIL_URI, "http://foo.com/thumbnail.jpg");
-        values.put(TvContract.RecordedPrograms.COLUMN_SEARCHABLE, 1);
-        values.put(TvContract.RecordedPrograms.COLUMN_RECORDING_DATA_URI, "file:///sdcard/foo/");
-        values.put(TvContract.RecordedPrograms.COLUMN_RECORDING_DATA_BYTES, 1024 * 1024);
-        values.put(TvContract.RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, 60 * 60 * 1000);
-        values.put(TvContract.RecordedPrograms.COLUMN_RECORDING_EXPIRE_TIME_UTC_MILLIS, 1454480880L);
-        values.put(TvContract.RecordedPrograms.COLUMN_INTERNAL_PROVIDER_DATA,
+        values.put(RecordedPrograms.COLUMN_CONTENT_RATING, rating.flattenToString());
+        values.put(RecordedPrograms.COLUMN_POSTER_ART_URI, "http://foo.com/artwork.png");
+        values.put(RecordedPrograms.COLUMN_THUMBNAIL_URI, "http://foo.com/thumbnail.jpg");
+        values.put(RecordedPrograms.COLUMN_SEARCHABLE, 1);
+        values.put(RecordedPrograms.COLUMN_RECORDING_DATA_URI, "file:///sdcard/foo/");
+        values.put(RecordedPrograms.COLUMN_RECORDING_DATA_BYTES, 1024 * 1024);
+        values.put(RecordedPrograms.COLUMN_RECORDING_DURATION_MILLIS, 60 * 60 * 1000);
+        values.put(RecordedPrograms.COLUMN_RECORDING_EXPIRE_TIME_UTC_MILLIS, 1454480880L);
+        values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_DATA,
                 "internal_provider_data".getBytes());
-        values.put(TvContract.RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG1, 4);
-        values.put(TvContract.RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG2, 3);
-        values.put(TvContract.RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG3, 2);
-        values.put(TvContract.RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG4, 1);
+        values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG1, 4);
+        values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG2, 3);
+        values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG3, 2);
+        values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG4, 1);
 
         return values;
     }
@@ -274,25 +271,20 @@ public class TvContractTest extends AndroidTestCase {
             assertNotNull(cursor);
             assertEquals(cursor.getCount(), 1);
             assertTrue(cursor.moveToNext());
-            assertEquals(channelId, cursor.getLong(cursor.getColumnIndex(TvContract.Channels._ID)));
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_INPUT_ID);
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_TYPE);
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_SERVICE_TYPE);
-            verifyIntegerColumn(cursor, expectedValues,
-                    TvContract.Channels.COLUMN_ORIGINAL_NETWORK_ID);
-            verifyIntegerColumn(cursor, expectedValues,
-                    TvContract.Channels.COLUMN_TRANSPORT_STREAM_ID);
-            verifyIntegerColumn(cursor, expectedValues,
-                    TvContract.Channels.COLUMN_SERVICE_ID);
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_DISPLAY_NUMBER);
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_DISPLAY_NAME);
-            verifyStringColumn(cursor, expectedValues,
-                    TvContract.Channels.COLUMN_NETWORK_AFFILIATION);
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_DESCRIPTION);
-            verifyStringColumn(cursor, expectedValues, TvContract.Channels.COLUMN_VIDEO_FORMAT);
-            verifyBlobColumn(cursor, expectedValues,
-                    TvContract.Channels.COLUMN_INTERNAL_PROVIDER_DATA);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Channels.COLUMN_VERSION_NUMBER);
+            assertEquals(channelId, cursor.getLong(cursor.getColumnIndex(Channels._ID)));
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_INPUT_ID);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_TYPE);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_SERVICE_TYPE);
+            verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_ORIGINAL_NETWORK_ID);
+            verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_TRANSPORT_STREAM_ID);
+            verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_SERVICE_ID);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_DISPLAY_NAME);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_NETWORK_AFFILIATION);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_DESCRIPTION);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_VIDEO_FORMAT);
+            verifyBlobColumn(cursor, expectedValues, Channels.COLUMN_INTERNAL_PROVIDER_DATA);
+            verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_VERSION_NUMBER);
         }
     }
 
@@ -309,9 +301,9 @@ public class TvContractTest extends AndroidTestCase {
         verifyChannel(channelUri, values, channelId);
 
         // Test: update
-        values.put(TvContract.Channels.COLUMN_DISPLAY_NUMBER, "1-1");
-        values.put(TvContract.Channels.COLUMN_DISPLAY_NAME, "One dash one");
-        values.put(TvContract.Channels.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
+        values.put(Channels.COLUMN_DISPLAY_NUMBER, "1-1");
+        values.put(Channels.COLUMN_DISPLAY_NAME, "One dash one");
+        values.put(Channels.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
 
         mContentResolver.update(channelUri, values, null, null);
         verifyChannel(channelUri, values, channelId);
@@ -330,58 +322,50 @@ public class TvContractTest extends AndroidTestCase {
             assertNotNull(cursor);
             assertEquals(cursor.getCount(), 1);
             assertTrue(cursor.moveToNext());
-            assertEquals(programId, cursor.getLong(cursor.getColumnIndex(TvContract.Programs._ID)));
-            verifyLongColumn(cursor, expectedValues, TvContract.Programs.COLUMN_CHANNEL_ID);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_TITLE);
-            verifyStringColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_SEASON_TITLE);
-            verifyStringColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_EPISODE_TITLE);
-            verifyLongColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS);
-            verifyLongColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_BROADCAST_GENRE);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_CANONICAL_GENRE);
-            verifyStringColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_SHORT_DESCRIPTION);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_LONG_DESCRIPTION);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_VIDEO_WIDTH);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_VIDEO_HEIGHT);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_AUDIO_LANGUAGE);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_CONTENT_RATING);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_POSTER_ART_URI);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_THUMBNAIL_URI);
-            verifyBlobColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_INTERNAL_PROVIDER_DATA);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_VERSION_NUMBER);
+            assertEquals(programId, cursor.getLong(cursor.getColumnIndex(Programs._ID)));
+            verifyLongColumn(cursor, expectedValues, Programs.COLUMN_CHANNEL_ID);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_TITLE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_SEASON_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_SEASON_TITLE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_EPISODE_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_EPISODE_TITLE);
+            verifyLongColumn(cursor, expectedValues, Programs.COLUMN_START_TIME_UTC_MILLIS);
+            verifyLongColumn(cursor, expectedValues, Programs.COLUMN_END_TIME_UTC_MILLIS);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_BROADCAST_GENRE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_CANONICAL_GENRE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_SHORT_DESCRIPTION);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_LONG_DESCRIPTION);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_VIDEO_WIDTH);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_VIDEO_HEIGHT);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_AUDIO_LANGUAGE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_CONTENT_RATING);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_POSTER_ART_URI);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_THUMBNAIL_URI);
+            verifyBlobColumn(cursor, expectedValues, Programs.COLUMN_INTERNAL_PROVIDER_DATA);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_VERSION_NUMBER);
 
-            verifyStringColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_INTERNAL_PROVIDER_ID);
-            verifyStringColumn(cursor, expectedValues, TvContract.Programs.COLUMN_PREVIEW_VIDEO_URI);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_INTERNAL_PROVIDER_ID);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_VIDEO_URI);
             verifyIntegerColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_PREVIEW_LAST_PLAYBACK_POSITION);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_PREVIEW_DURATION);
-            verifyStringColumn(cursor, expectedValues,
-                    TvContract.Programs.COLUMN_PREVIEW_INTENT_URI);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_PREVIEW_WEIGHT);
+                    Programs.COLUMN_PREVIEW_LAST_PLAYBACK_POSITION);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_DURATION);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_INTENT_URI);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_WEIGHT);
         }
     }
 
     private void verifyDeprecatedColumsInProgram(Uri programUri, ContentValues expectedValues) {
         final String[] DEPRECATED_COLUMNS_PROJECTION = {
-            TvContract.Programs.COLUMN_SEASON_NUMBER,
-            TvContract.Programs.COLUMN_EPISODE_NUMBER,
+            Programs.COLUMN_SEASON_NUMBER,
+            Programs.COLUMN_EPISODE_NUMBER,
         };
         try (Cursor cursor = mContentResolver.query(
                 programUri, DEPRECATED_COLUMNS_PROJECTION, null, null, null)) {
             assertNotNull(cursor);
             assertEquals(cursor.getCount(), 1);
             assertTrue(cursor.moveToNext());
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_SEASON_NUMBER);
-            verifyIntegerColumn(cursor, expectedValues, TvContract.Programs.COLUMN_EPISODE_NUMBER);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_SEASON_NUMBER);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_EPISODE_NUMBER);
         }
     }
 
@@ -434,9 +418,9 @@ public class TvContractTest extends AndroidTestCase {
         verifyProgram(programUri, values, programId);
 
         // Test: update
-        values.put(TvContract.Programs.COLUMN_TITLE, "new_program_title");
-        values.put(TvContract.Programs.COLUMN_SHORT_DESCRIPTION, "");
-        values.put(TvContract.Programs.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
+        values.put(Programs.COLUMN_TITLE, "new_program_title");
+        values.put(Programs.COLUMN_SHORT_DESCRIPTION, "");
+        values.put(Programs.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
 
         mContentResolver.update(programUri, values, null, null);
         verifyProgram(programUri, values, programId);
@@ -461,9 +445,9 @@ public class TvContractTest extends AndroidTestCase {
         verifyProgram(programUri, values, programId);
 
         // Test: update
-        values.put(TvContract.Programs.COLUMN_EPISODE_TITLE, "Sample title");
-        values.put(TvContract.Programs.COLUMN_SHORT_DESCRIPTION, "Short description");
-        values.put(TvContract.Programs.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
+        values.put(Programs.COLUMN_EPISODE_TITLE, "Sample title");
+        values.put(Programs.COLUMN_SHORT_DESCRIPTION, "Short description");
+        values.put(Programs.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
 
         mContentResolver.update(programUri, values, null, null);
         verifyProgram(programUri, values, programId);
@@ -482,14 +466,14 @@ public class TvContractTest extends AndroidTestCase {
         }
         // Test: insert
         ContentValues expected = createDummyProgramValues(channelId);
-        expected.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER, "3");
-        expected.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER, "9");
+        expected.put(Programs.COLUMN_SEASON_DISPLAY_NUMBER, "3");
+        expected.put(Programs.COLUMN_EPISODE_DISPLAY_NUMBER, "9");
 
         ContentValues input = new ContentValues(expected);
-        input.remove(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER);
-        input.remove(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER);
-        input.put(TvContract.Programs.COLUMN_SEASON_NUMBER, 3);
-        input.put(TvContract.Programs.COLUMN_EPISODE_NUMBER, 9);
+        input.remove(Programs.COLUMN_SEASON_DISPLAY_NUMBER);
+        input.remove(Programs.COLUMN_EPISODE_DISPLAY_NUMBER);
+        input.put(Programs.COLUMN_SEASON_NUMBER, 3);
+        input.put(Programs.COLUMN_EPISODE_NUMBER, 9);
 
         Uri rowUri = mContentResolver.insert(programsUri, input);
         long programId = ContentUris.parseId(rowUri);
@@ -498,10 +482,10 @@ public class TvContractTest extends AndroidTestCase {
         verifyDeprecatedColumsInProgram(programUri, input);
 
         // Test: update
-        expected.put(TvContract.Programs.COLUMN_SEASON_DISPLAY_NUMBER, "4");
-        expected.put(TvContract.Programs.COLUMN_EPISODE_DISPLAY_NUMBER, "10");
-        input.put(TvContract.Programs.COLUMN_SEASON_NUMBER, 4);
-        input.put(TvContract.Programs.COLUMN_EPISODE_NUMBER, 10);
+        expected.put(Programs.COLUMN_SEASON_DISPLAY_NUMBER, "4");
+        expected.put(Programs.COLUMN_EPISODE_DISPLAY_NUMBER, "10");
+        input.put(Programs.COLUMN_SEASON_NUMBER, 4);
+        input.put(Programs.COLUMN_EPISODE_NUMBER, 10);
 
         mContentResolver.update(programUri, input, null, null);
         verifyProgram(programUri, expected, programId);
@@ -571,8 +555,8 @@ public class TvContractTest extends AndroidTestCase {
         long channelId = ContentUris.parseId(channelUri);
         Uri programsUri = TvContract.buildProgramsUriForChannel(channelId);
         values = createDummyProgramValues(channelId);
-        values.put(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, programStartMillis);
-        values.put(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, programEndMillis);
+        values.put(Programs.COLUMN_START_TIME_UTC_MILLIS, programStartMillis);
+        values.put(Programs.COLUMN_END_TIME_UTC_MILLIS, programEndMillis);
         mContentResolver.insert(programsUri, values);
 
         // Overlap 1: starts early, ends early.
@@ -656,9 +640,9 @@ public class TvContractTest extends AndroidTestCase {
         verifyRecordedProgram(recordedProgramUri, values, recordedProgramId);
 
         // Test: update
-        values.put(TvContract.RecordedPrograms.COLUMN_EPISODE_TITLE, "episode_title1");
-        values.put(TvContract.RecordedPrograms.COLUMN_SHORT_DESCRIPTION, "short_description1");
-        values.put(TvContract.RecordedPrograms.COLUMN_INTERNAL_PROVIDER_DATA,
+        values.put(RecordedPrograms.COLUMN_EPISODE_TITLE, "episode_title1");
+        values.put(RecordedPrograms.COLUMN_SHORT_DESCRIPTION, "short_description1");
+        values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_DATA,
                 "internal_provider_data1".getBytes());
 
         mContentResolver.update(recordedProgramUri, values, null, null);
@@ -680,7 +664,7 @@ public class TvContractTest extends AndroidTestCase {
         Uri channelUri = mContentResolver.insert(mChannelsUri, values);
         long channelId = ContentUris.parseId(channelUri);
 
-        verifyRecordedProgramsTable(TvContract.RecordedPrograms.CONTENT_URI, channelId);
+        verifyRecordedProgramsTable(RecordedPrograms.CONTENT_URI, channelId);
     }
 
     private void verifyQueryWithSortOrder(Uri uri, final String[] projection,
@@ -725,68 +709,60 @@ public class TvContractTest extends AndroidTestCase {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        final String[] projection = { TvContract.Channels._ID };
-        verifyQueryWithSortOrder(TvContract.Channels.CONTENT_URI, projection,
-                TvContract.Channels._ID + " ASC");
+        final String[] projection = { Channels._ID };
+        verifyQueryWithSortOrder(Channels.CONTENT_URI, projection, Channels._ID + " ASC");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnQuery_Channels() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        final String[] projection = { TvContract.Channels._ID };
-        verifyQueryWithSelection(TvContract.Channels.CONTENT_URI, projection,
-                TvContract.Channels._ID + ">0");
+        final String[] projection = { Channels._ID };
+        verifyQueryWithSelection(Channels.CONTENT_URI, projection, Channels._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnUpdate_Channels() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        verifyUpdateWithSelection(TvContract.Channels.CONTENT_URI,
-                TvContract.Channels._ID + ">0");
+        verifyUpdateWithSelection(Channels.CONTENT_URI, Channels._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnDelete_Channels() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        verifyDeleteWithSelection(TvContract.Channels.CONTENT_URI,
-                TvContract.Channels._ID + ">0");
+        verifyDeleteWithSelection(Channels.CONTENT_URI, Channels._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSortOrderOnQuery_Programs() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        final String[] projection = { TvContract.Programs._ID };
-        verifyQueryWithSortOrder(TvContract.Programs.CONTENT_URI, projection,
-                TvContract.Programs._ID + " ASC");
+        final String[] projection = { Programs._ID };
+        verifyQueryWithSortOrder(Programs.CONTENT_URI, projection, Programs._ID + " ASC");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnQuery_Programs() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        final String[] projection = { TvContract.Channels._ID };
-        verifyQueryWithSelection(TvContract.Programs.CONTENT_URI, projection,
-                TvContract.Programs._ID + ">0");
+        final String[] projection = { Channels._ID };
+        verifyQueryWithSelection(Programs.CONTENT_URI, projection, Programs._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnUpdate_Programs() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        verifyUpdateWithSelection(TvContract.Programs.CONTENT_URI,
-                TvContract.Programs._ID + ">0");
+        verifyUpdateWithSelection(Programs.CONTENT_URI, Programs._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnDelete_Programs() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        verifyDeleteWithSelection(TvContract.Programs.CONTENT_URI,
-                TvContract.Programs._ID + ">0");
+        verifyDeleteWithSelection(Programs.CONTENT_URI, Programs._ID + ">0");
     }
 
     public void testDefaultValues() throws Exception {
@@ -794,17 +770,16 @@ public class TvContractTest extends AndroidTestCase {
             return;
         }
         ContentValues values = new ContentValues();
-        values.put(TvContract.Channels.COLUMN_INPUT_ID, mInputId);
+        values.put(Channels.COLUMN_INPUT_ID, mInputId);
         Uri channelUri = mContentResolver.insert(mChannelsUri, values);
         assertNotNull(channelUri);
         try (Cursor cursor = mContentResolver.query(
                 channelUri, CHANNELS_PROJECTION, null, null, null)) {
             cursor.moveToNext();
-            assertEquals(TvContract.Channels.TYPE_OTHER,
-                    cursor.getString(cursor.getColumnIndex(TvContract.Channels.COLUMN_TYPE)));
-            assertEquals(TvContract.Channels.SERVICE_TYPE_AUDIO_VIDEO,
-                    cursor.getString(cursor.getColumnIndex(
-                            TvContract.Channels.COLUMN_SERVICE_TYPE)));
+            assertEquals(Channels.TYPE_OTHER,
+                    cursor.getString(cursor.getColumnIndex(Channels.COLUMN_TYPE)));
+            assertEquals(Channels.SERVICE_TYPE_AUDIO_VIDEO,
+                    cursor.getString(cursor.getColumnIndex(Channels.COLUMN_SERVICE_TYPE)));
         }
         values.clear();
     }
@@ -971,11 +946,11 @@ public class TvContractTest extends AndroidTestCase {
         long channelId = ContentUris.parseId(channelUri);
         long curTime = System.currentTimeMillis();
         values = new ContentValues();
-        values.put(TvContract.Programs.COLUMN_CHANNEL_ID, channelId);
-        values.put(TvContract.Programs.COLUMN_BROADCAST_GENRE, Genres.encode(broadcastGenre));
-        values.put(TvContract.Programs.COLUMN_START_TIME_UTC_MILLIS, curTime - 60000);
-        values.put(TvContract.Programs.COLUMN_END_TIME_UTC_MILLIS, curTime + 60000);
-        Uri programUri = mContentResolver.insert(TvContract.Programs.CONTENT_URI, values);
+        values.put(Programs.COLUMN_CHANNEL_ID, channelId);
+        values.put(Programs.COLUMN_BROADCAST_GENRE, Genres.encode(broadcastGenre));
+        values.put(Programs.COLUMN_START_TIME_UTC_MILLIS, curTime - 60000);
+        values.put(Programs.COLUMN_END_TIME_UTC_MILLIS, curTime + 60000);
+        Uri programUri = mContentResolver.insert(Programs.CONTENT_URI, values);
         assertNotNull(programUri);
         return programUri;
     }
@@ -996,8 +971,8 @@ public class TvContractTest extends AndroidTestCase {
         }
         String[] broadcastGenre = new String[] {"Animation", "Classic, opera"};
         insertProgramWithBroadcastGenre(broadcastGenre);
-        try (Cursor c = mContentResolver.query(TvContract.Programs.CONTENT_URI,
-                new String[] {TvContract.Programs.COLUMN_BROADCAST_GENRE}, null, null, null)) {
+        try (Cursor c = mContentResolver.query(Programs.CONTENT_URI,
+                new String[] {Programs.COLUMN_BROADCAST_GENRE}, null, null, null)) {
             assertNotNull(c);
             assertEquals(1, c.getCount());
             c.moveToNext();
