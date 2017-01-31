@@ -1123,8 +1123,18 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                 if (result == null || result.size() <= 1) {
                                     status = PASS;
                                 } else {
-                                    logFail();
-                                    status = FAIL;
+                                    boolean fail = false;
+                                    for (Parcelable payloadData : result) {
+                                        NotificationChannel payload =
+                                                (NotificationChannel) payloadData;
+                                        fail |= compareChannels(channel, payload);
+                                    }
+                                    if (fail) {
+                                        logFail();
+                                        status = FAIL;
+                                    } else {
+                                        status = PASS;
+                                    }
                                 }
                                 next();
                             }

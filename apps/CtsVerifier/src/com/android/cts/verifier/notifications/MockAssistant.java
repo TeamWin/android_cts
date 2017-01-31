@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MockAssistant extends NotificationAssistantService {
-    static final String TAG = "MockListener";
+    static final String TAG = "MockAssistant";
 
     static final String SERVICE_BASE = "android.service.notification.cts.";
     static final String SERVICE_CHECK = SERVICE_BASE + "SERVICE_CHECK";
@@ -318,8 +318,7 @@ public class MockAssistant extends NotificationAssistantService {
     }
 
     @Override
-    public Adjustment onNotificationEnqueued(StatusBarNotification sbn, int importance,
-            boolean user) {
+    public Adjustment onNotificationEnqueued(StatusBarNotification sbn) {
         if (!mTestPackages.contains(sbn.getPackageName())) { return null; }
         Log.d(TAG, "enqueued: " + sbn.getTag());
         mEnqueued.add(sbn.getTag());
