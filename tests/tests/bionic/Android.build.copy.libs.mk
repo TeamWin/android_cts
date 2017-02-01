@@ -15,6 +15,8 @@ my_bionic_testlib_files := \
   dt_runpath_b_c_x/libtest_dt_runpath_c.so \
   dt_runpath_b_c_x/libtest_dt_runpath_x.so \
   libatest_simple_zip/libatest_simple_zip.so \
+  libcfi-test.so \
+  libcfi-test-bad.so \
   libdlext_test_different_soname.so \
   libdlext_test_fd/libdlext_test_fd.so \
   libdlext_test_norelro.so \
