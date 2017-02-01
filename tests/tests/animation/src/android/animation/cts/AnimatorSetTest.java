@@ -643,6 +643,24 @@ public class AnimatorSetTest {
         });
     }
 
+    /**
+     *
+     * This test verifies that custom ValueAnimators will be start()'ed in a set.
+     */
+    @Test
+    public void testChildAnimatorStartCalled() throws Throwable {
+        MyValueAnimator a1 = new MyValueAnimator();
+        MyValueAnimator a2 = new MyValueAnimator();
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(a1, a2);
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+            assertTrue(a1.mStartCalled);
+            assertTrue(a2.mStartCalled);
+        });
+
+    }
+
     static class TargetObj {
         public float value = 0;
 
@@ -666,6 +684,15 @@ public class AnimatorSetTest {
 
         public void onAnimationEnd(Animator animation) {
             mEndIsCalled = true;
+        }
+    }
+
+    static class MyValueAnimator extends ValueAnimator {
+        boolean mStartCalled = false;
+        @Override
+        public void start() {
+            // Do not call super intentionally.
+            mStartCalled = true;
         }
     }
 }
