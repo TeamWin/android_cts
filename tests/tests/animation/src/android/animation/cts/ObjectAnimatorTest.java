@@ -254,7 +254,7 @@ public class ObjectAnimatorTest {
         anim.addListener(listener);
 
         mActivityRule.runOnUiThread(anim::start);
-        verify(listener, within(500)).onAnimationEnd(anim);
+        verify(listener, within(500)).onAnimationEnd(anim, false);
         // Verify that null target ObjectAnimator didn't get canceled.
         verify(listener, times(0)).onAnimationCancel(anim);
         // Verify that the update listeners gets called a few times.
@@ -389,7 +389,7 @@ public class ObjectAnimatorTest {
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         anim.addListener(listener);
         mActivityRule.runOnUiThread(anim::start);
-        verify(listener, within(400)).onAnimationEnd(anim);
+        verify(listener, within(400)).onAnimationEnd(anim, false);
     }
 
     @Test
@@ -508,7 +508,7 @@ public class ObjectAnimatorTest {
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         anim.addListener(listener);
         mActivityRule.runOnUiThread(anim::start);
-        verify(listener, within(400)).onAnimationEnd(anim);
+        verify(listener, within(400)).onAnimationEnd(anim, false);
     }
 
     @Test
@@ -609,7 +609,7 @@ public class ObjectAnimatorTest {
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         anim.addListener(listener);
         mActivityRule.runOnUiThread(anim::start);
-        verify(listener, within(400)).onAnimationEnd(anim);
+        verify(listener, within(400)).onAnimationEnd(anim, false);
     }
 
     @Test
