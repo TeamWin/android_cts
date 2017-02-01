@@ -27,13 +27,17 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.server.cts.TestActivity;
+import android.util.Log;
 
 /** Utility class which contains common code for launching activities. */
 public class ActivityLauncher {
+    private static final String TAG = ActivityLauncher.class.getSimpleName();
+
     public static void launchActivityFromExtras(final Context context, Bundle extras) {
         if (extras == null) {
             extras = new Bundle();
         }
+        Log.i(TAG, "launchActivityFromExtras: extras=" + extras);
 
         final Intent newIntent = new Intent();
         final String targetActivity = extras.getString("target_activity");

@@ -16,6 +16,8 @@
 
 package android.server.cts;
 
+import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+
 import java.lang.Exception;
 import java.lang.String;
 
@@ -31,6 +33,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String TRANSLUCENT_ACTIVITY_NAME = "TranslucentActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String TURN_SCREEN_ON_ACTIVITY_NAME = "TurnScreenOnActivity";
+    private static final String MOVE_TASK_TO_BACK_ACTIVITY_NAME = "MoveTaskToBackActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
         launchActivity(VISIBLE_BEHIND_ACTIVITY);
@@ -161,9 +164,41 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.computeState(mDevice, new String[] { TEST_ACTIVITY_NAME });
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
         // Finish activity in non-focused (docked) stack.
-        executeShellCommand("am broadcast -a trigger_broadcast --ez finish true");
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
         mAmWmState.computeState(mDevice, new String[] { LAUNCHING_ACTIVITY });
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, false);
+    }
+
+    public void testFinishActivityWithMoveTaskToBackAfterPause() throws Exception {
+        performFinishActivityWithMoveTaskToBack("on_pause");
+    }
+
+    public void testFinishActivityWithMoveTaskToBackAfterStop() throws Exception {
+        performFinishActivityWithMoveTaskToBack("on_stop");
+    }
+
+    private void performFinishActivityWithMoveTaskToBack(String finishPoint) throws Exception {
+        // Make sure home activity is visible.
+        launchHomeActivity();
+        mAmWmState.assertHomeActivityVisible(true /* visible */);
+
+        // Launch an activity that calls "moveTaskToBack" to finish itself.
+        launchActivity(MOVE_TASK_TO_BACK_ACTIVITY_NAME, "finish_point", finishPoint);
+        mAmWmState.waitForValidState(mDevice, MOVE_TASK_TO_BACK_ACTIVITY_NAME);
+        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY_NAME, true);
+
+        // Launch a different activity on top.
+        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+        mAmWmState.waitForActivityState(mDevice, BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY_NAME, false);
+        mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
+
+        // Finish the top-most activity.
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+
+        // Home must be visible.
+        mAmWmState.waitForHomeActivityVisible(mDevice);
+        mAmWmState.assertHomeActivityVisible(true /* visible */);
     }
 }
