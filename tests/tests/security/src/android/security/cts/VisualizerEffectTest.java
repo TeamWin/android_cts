@@ -19,6 +19,7 @@ package android.security.cts;
 import junit.framework.TestCase;
 
 import android.content.Context;
+import android.platform.test.annotations.SecurityTest;
 import android.media.audiofx.AudioEffect;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
@@ -38,6 +39,7 @@ public class VisualizerEffectTest extends InstrumentationTestCase {
     }
 
     //Testing security bug: 30229821
+    @SecurityTest
     public void testVisualizer_MalformedConstructor() throws Exception {
         final String VISUALIZER_TYPE = "e46b26a0-dddd-11db-8afd-0002a5d5c51b";
         final int VISUALIZER_CMD_MEASURE = 0x10001;
