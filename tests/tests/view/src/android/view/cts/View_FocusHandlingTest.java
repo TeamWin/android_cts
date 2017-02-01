@@ -31,6 +31,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.FrameLayout;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -253,5 +254,42 @@ public class View_FocusHandlingTest {
         assertSame(View.FOCUSABLE_AUTO, auto.getFocusable());
         auto.setFocusable(false);
         assertSame(View.NOT_FOCUSABLE, auto.getFocusable());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testHasFocusable() {
+        final Activity activity = mActivityRule.getActivity();
+        final ViewGroup group = (ViewGroup) activity.findViewById(R.id.auto_test_area);
+
+        View singleView = new View(activity);
+        group.addView(singleView);
+
+        testHasFocusable(singleView);
+
+        group.removeView(singleView);
+
+        View groupView = new FrameLayout(activity);
+        group.addView(groupView);
+
+        testHasFocusable(groupView);
+    }
+
+    private void testHasFocusable(View view) {
+        assertEquals("single view was not auto-focusable", View.FOCUSABLE_AUTO,
+                view.getFocusable());
+        assertFalse("single view unexpectedly hasFocusable", view.hasFocusable());
+
+        view.setClickable(true);
+        assertTrue("single view doesn't hasFocusable", view.hasFocusable());
+
+        view.setClickable(false);
+        assertFalse("single view unexpectedly hasFocusable", view.hasFocusable());
+
+        view.setFocusable(View.NOT_FOCUSABLE);
+        assertFalse("single view unexpectedly hasFocusable", view.hasFocusable());
+
+        view.setFocusable(View.FOCUSABLE);
+        assertTrue("single view doesn't hasFocusable", view.hasFocusable());
     }
 }
