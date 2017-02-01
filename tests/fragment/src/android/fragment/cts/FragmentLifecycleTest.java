@@ -596,6 +596,15 @@ public class FragmentLifecycleTest {
         }
     }
 
+    @Test
+    public void targetFragmentSetClear() throws Throwable {
+        final Fragment one = new Fragment();
+        final Fragment two = new Fragment();
+
+        one.setTargetFragment(two, 0);
+        one.setTargetFragment(null, 0);
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override
