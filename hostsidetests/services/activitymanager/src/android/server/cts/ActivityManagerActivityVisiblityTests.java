@@ -128,7 +128,7 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testTranslucentActivityOverDockedStack() throws Exception {
-        if (!supportsMultiWindowMode()) {
+        if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
             return;
         }
@@ -156,7 +156,7 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testFinishActivityInNonFocusedStack() throws Exception {
-        if (!supportsMultiWindowMode()) {
+        if (!supportsSplitScreenMultiWindow()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
             return;
         }
