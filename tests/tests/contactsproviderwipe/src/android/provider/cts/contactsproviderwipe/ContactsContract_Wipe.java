@@ -16,6 +16,10 @@
 
 package android.provider.cts.contactsproviderwipe;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.ContentObserver;
@@ -25,6 +29,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.Intents;
 import android.provider.ContactsContract.ProviderStatus;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
@@ -157,11 +162,11 @@ public class ContactsContract_Wipe extends AndroidTestCase {
         assertBigger(newTimestamp, start);
     }
 
-    private void checkDatabaseWipeNotification(Uri notificationUri) throws Exception {
+    public void testDatabaseWipeNotification() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<Uri> notifiedUri = new AtomicReference<>();
 
-        getContext().getContentResolver().registerContentObserver(notificationUri,
+        getContext().getContentResolver().registerContentObserver(ProviderStatus.CONTENT_URI,
                 /* notifyForDescendants=*/ false,
                 new ContentObserver(new Handler(Looper.getMainLooper())) {
             @Override
@@ -177,11 +182,26 @@ public class ContactsContract_Wipe extends AndroidTestCase {
         assertTrue("Didn't receive content change notification",
                 latch.await(60, TimeUnit.SECONDS));
 
-        assertEquals(notificationUri, notifiedUri.get());
+        assertEquals(ProviderStatus.CONTENT_URI, notifiedUri.get());
     }
 
-    public void testDatabaseWipeNotification() throws Exception {
-        checkDatabaseWipeNotification(ProviderStatus.CONTENT_URI);
-        checkDatabaseWipeNotification(ProviderStatus.STATUS_CHANGE_NOTIFICATION_CONTENT_URI);
+    public void testDatabaseWipeBroadcast() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(Intents.CONTACTS_DATABASE_CREATED);
+
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG, "Received broadcast: " + intent);
+                latch.countDown();
+            }
+        }, filter);
+
+        wipeContactsProvider();
+
+        assertTrue("Didn't receive contacts wipe broadcast",
+                latch.await(60, TimeUnit.SECONDS));
     }
 }
