@@ -18,6 +18,7 @@ package com.android.cts.verifier.camera.its;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
@@ -121,6 +122,10 @@ public class ItsUtils {
     public static Size getMaxOutputSize(CameraCharacteristics ccs, int format)
             throws ItsException {
         return getMaxSize(getOutputSizes(ccs, format));
+    }
+
+    public static Rect getActiveArrayCropRegion(CameraCharacteristics ccs) {
+        return ccs.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
     }
 
     private static Size[] getOutputSizes(CameraCharacteristics ccs, int format)

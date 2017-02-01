@@ -726,10 +726,13 @@ public class ItsService extends Service implements SensorEventListener {
                     int format = readers[i].getImageFormat();
                     if (format == ImageFormat.RAW_SENSOR) {
                         if (mCaptureRawIsStats) {
+                            int aaw = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
+                                              .width();
+                            int aah = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
+                                              .height();
                             jsonSurface.put("format", "rawStats");
-                            jsonSurface.put("width", readers[i].getWidth()/mCaptureStatsGridWidth);
-                            jsonSurface.put("height",
-                                    readers[i].getHeight()/mCaptureStatsGridHeight);
+                            jsonSurface.put("width", aaw/mCaptureStatsGridWidth);
+                            jsonSurface.put("height", aah/mCaptureStatsGridHeight);
                         } else if (mCaptureRawIsDng) {
                             jsonSurface.put("format", "dng");
                         } else {
@@ -1170,14 +1173,16 @@ public class ItsService extends Service implements SensorEventListener {
                     if (height <= 0) {
                         height = ItsUtils.getMaxSize(sizes).getHeight();
                     }
-                    if (mCaptureStatsGridWidth <= 0) {
-                        mCaptureStatsGridWidth = width;
-                    }
-                    if (mCaptureStatsGridHeight <= 0) {
-                        mCaptureStatsGridHeight = height;
-                    }
 
-                    // TODO: Crop to the active array in the stats image analysis.
+                    // The stats computation only applies to the active array region.
+                    int aaw = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics).width();
+                    int aah = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics).height();
+                    if (mCaptureStatsGridWidth <= 0 || mCaptureStatsGridWidth > aaw) {
+                        mCaptureStatsGridWidth = aaw;
+                    }
+                    if (mCaptureStatsGridHeight <= 0 || mCaptureStatsGridHeight > aah) {
+                        mCaptureStatsGridHeight = aah;
+                    }
 
                     outputSizes[i] = new Size(width, height);
                 }
@@ -1569,9 +1574,18 @@ public class ItsService extends Service implements SensorEventListener {
                             long startTimeMs = SystemClock.elapsedRealtime();
                             int w = capture.getWidth();
                             int h = capture.getHeight();
+                            int aaw = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
+                                              .width();
+                            int aah = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
+                                              .height();
+                            int aax = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
+                                              .left;
+                            int aay = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
+                                              .top;
                             int gw = mCaptureStatsGridWidth;
                             int gh = mCaptureStatsGridHeight;
-                            float[] stats = StatsImage.computeStatsImage(img, w, h, gw, gh);
+                            float[] stats = StatsImage.computeStatsImage(
+                                                             img, w, h, aax, aay, aaw, aah, gw, gh);
                             long endTimeMs = SystemClock.elapsedRealtime();
                             Log.e(TAG, "Raw stats computation takes " + (endTimeMs - startTimeMs) + " ms");
                             int statsImgSize = stats.length * 4;
