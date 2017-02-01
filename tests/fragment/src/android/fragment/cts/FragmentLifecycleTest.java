@@ -441,6 +441,90 @@ public class FragmentLifecycleTest {
         assertFalse(fragment1.mCalledOnResume);
     }
 
+    @Test
+    public void testIsStateSaved() throws Throwable {
+        FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+        FragmentTestUtil.resume(mActivityRule, fc, null);
+        FragmentManager fm = fc.getFragmentManager();
+
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Fragment f = new StrictFragment();
+                fm.beginTransaction()
+                        .add(f, "1")
+                        .commitNow();
+
+                assertFalse("fragment reported state saved while resumed",
+                        f.isStateSaved());
+
+                fc.dispatchPause();
+                fc.saveAllState();
+
+                assertTrue("fragment reported state not saved after saveAllState",
+                        f.isStateSaved());
+
+                fc.dispatchStop();
+
+                assertTrue("fragment reported state not saved after stop",
+                        f.isStateSaved());
+
+                fc.dispatchDestroy();
+
+                assertFalse("fragment reported state saved after destroy",
+                        f.isStateSaved());
+            }
+        });
+    }
+
+    @Test
+    public void testSetArgumentsLifecycle() throws Throwable {
+        FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+        FragmentTestUtil.resume(mActivityRule, fc, null);
+        FragmentManager fm = fc.getFragmentManager();
+
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Fragment f = new StrictFragment();
+                f.setArguments(new Bundle());
+
+                fm.beginTransaction()
+                        .add(f, "1")
+                        .commitNow();
+
+                f.setArguments(new Bundle());
+
+                fc.dispatchPause();
+                fc.saveAllState();
+
+                boolean threw = false;
+                try {
+                    f.setArguments(new Bundle());
+                } catch (IllegalStateException ise) {
+                    threw = true;
+                }
+                assertTrue("fragment allowed setArguments after state save", threw);
+
+                fc.dispatchStop();
+
+                threw = false;
+                try {
+                    f.setArguments(new Bundle());
+                } catch (IllegalStateException ise) {
+                    threw = true;
+                }
+                assertTrue("fragment allowed setArguments after stop", threw);
+
+                fc.dispatchDestroy();
+
+                // Fully destroyed, so fragments have been removed.
+                f.setArguments(new Bundle());
+            }
+        });
+
+    }
+
     /*
      * Test that target fragments are in a useful state when we restore them, even if they're
      * on the back stack.
