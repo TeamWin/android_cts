@@ -79,7 +79,7 @@ def convert_capture_to_rgb_image(cap,
         return convert_yuv420_planar_to_rgb_image(y, u, v, w, h)
     elif cap["format"] == "jpeg":
         return decompress_jpeg_to_rgb_image(cap["data"])
-    elif cap["format"] == "raw":
+    elif cap["format"] == "raw" or cap["format"] == "rawStats":
         assert(props is not None)
         r,gr,gb,b = convert_capture_to_planes(cap, props)
         return convert_raw_to_rgb_image(r,gr,gb,b, props, cap["metadata"])
@@ -214,9 +214,11 @@ def convert_capture_to_planes(cap, props=None):
         Returns Y,U,V planes, where the Y plane is full-res and the U,V planes
         are each 1/2 x 1/2 of the full res.
 
-    For Bayer captures ("raw" or "raw10"):
+    For Bayer captures ("raw", "raw10", "raw12", or "rawStats"):
         Returns planes in the order R,Gr,Gb,B, regardless of the Bayer pattern
-        layout. Each plane is 1/2 x 1/2 of the full res.
+        layout. For full-res raw images ("raw", "raw10", "raw12"), each plane
+        is 1/2 x 1/2 of the full res. For "rawStats" images, the mean image
+        is returned.
 
     For JPEG captures ("jpeg"):
         Returns R,G,B full-res planes.
@@ -292,6 +294,12 @@ def convert_capture_to_planes(cap, props=None):
                 img[1::2].reshape(w*h/2)[1::2].reshape(h/2,w/2,1)]
         idxs = get_canonical_cfa_order(props)
         return [imgs[i] for i in idxs]
+    elif cap["format"] == "rawStats":
+        assert(props is not None)
+        white_level = float(props['android.sensor.info.whiteLevel'])
+        mean_image, var_image = its.image.unpack_rawstats_capture(cap)
+        idxs = get_canonical_cfa_order(props)
+        return [mean_image[:,:,i] / white_level for i in idxs]
     else:
         raise its.error.Error('Invalid format %s' % (cap["format"]))
 
