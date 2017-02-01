@@ -334,6 +334,59 @@ public class TvContractTest extends AndroidTestCase {
         }
     }
 
+    public void testChannelsTableForIllegalAccess() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        ContentValues values = createDummyChannelValues(mInputId, false);
+        Uri channelUri = mContentResolver.insert(mChannelsUri, values);
+
+        final String COLUMN_BROWSABLE = "browsable";
+        final String COLUMN_SYSTEM_APPROVED = "system_approved";
+
+        // Test: insert
+        values.put(COLUMN_BROWSABLE, 1);
+        values.putNull(COLUMN_SYSTEM_APPROVED);
+        try {
+            mContentResolver.insert(mChannelsUri, values);
+            fail("'" + COLUMN_BROWSABLE + "' should not be accessible.");
+        } catch (Exception e) {
+            // Expected.
+        }
+        values.putNull(COLUMN_BROWSABLE);
+        values.put(COLUMN_SYSTEM_APPROVED, 1);
+        try {
+            mContentResolver.insert(mChannelsUri, values);
+            fail("'" + COLUMN_SYSTEM_APPROVED + "' should not be accessible.");
+        } catch (Exception e) {
+            // Expected.
+        }
+
+        // Test: update
+        values.put(COLUMN_BROWSABLE, 1);
+        values.putNull(COLUMN_SYSTEM_APPROVED);
+        try {
+            mContentResolver.update(channelUri, values, null, null);
+            fail("'" + COLUMN_BROWSABLE + "' should not be accessible.");
+        } catch (Exception e) {
+            // Expected.
+        }
+        values.putNull(COLUMN_BROWSABLE);
+        values.put(COLUMN_SYSTEM_APPROVED, 1);
+        try {
+            mContentResolver.update(channelUri, values, null, null);
+            fail("'" + COLUMN_SYSTEM_APPROVED + "' should not be accessible.");
+        } catch (Exception e) {
+            // Expected.
+        }
+
+        mContentResolver.delete(mChannelsUri, null, null);
+        try (Cursor cursor = mContentResolver.query(
+                mChannelsUri, CHANNELS_PROJECTION, null, null, null)) {
+            assertEquals(0, cursor.getCount());
+        }
+    }
+
     private void verifyProgram(Uri programUri, ContentValues expectedValues, long programId) {
         try (Cursor cursor = mContentResolver.query(
                 programUri, null, null, null, null)) {
