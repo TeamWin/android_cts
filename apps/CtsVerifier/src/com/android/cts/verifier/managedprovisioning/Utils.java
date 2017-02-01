@@ -18,6 +18,7 @@ package com.android.cts.verifier.managedprovisioning;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.widget.Toast;
 import android.content.ActivityNotFoundException;
@@ -68,7 +69,9 @@ public class Utils {
     static void showBugreportNotification(Context context, String msg, int notificationId) {
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notification = new Notification.Builder(context)
+        mNotificationManager.createNotificationChannel(
+                new NotificationChannel(TAG, TAG, NotificationManager.IMPORTANCE_DEFAULT));
+        Notification notification = new Notification.Builder(context, TAG)
                 .setSmallIcon(R.drawable.icon)
                 .setContentTitle(context.getString(
                         R.string.device_owner_requesting_bugreport_tests))

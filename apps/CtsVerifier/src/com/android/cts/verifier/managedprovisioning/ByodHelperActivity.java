@@ -17,6 +17,7 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
 import android.app.admin.DevicePolicyManager;
 import android.app.Dialog;
 import android.app.KeyguardManager;
@@ -156,6 +157,7 @@ public class ByodHelperActivity extends LocationListenerActivity
     private static final String ORIGINAL_SETTINGS_NAME = "original settings";
 
     private static final int NOTIFICATION_ID = 7;
+    private static final String NOTIFICATION_CHANNEL_ID = TAG;
 
     private NotificationManager mNotificationManager;
     private Bundle mOriginalSettings;
@@ -170,7 +172,7 @@ public class ByodHelperActivity extends LocationListenerActivity
     private ArrayList<File> mTempFiles = new ArrayList<File>();
 
     private void showNotification(int visibility) {
-        final Notification notification = new Notification.Builder(this)
+        final Notification notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.icon)
                 .setContentTitle(getString(R.string.provisioning_byod_notification_title))
                 .setVisibility(visibility)
@@ -197,6 +199,9 @@ public class ByodHelperActivity extends LocationListenerActivity
         Intent intent = getIntent();
         String action = intent.getAction();
         Log.d(TAG, "ByodHelperActivity.onCreate: " + action);
+        mNotificationManager.createNotificationChannel(new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID,
+                NotificationManager.IMPORTANCE_DEFAULT));
 
         // we are explicitly started by {@link DeviceAdminTestReceiver} after a successful provisioning.
         if (action.equals(ACTION_PROFILE_PROVISIONED)) {
@@ -428,6 +433,7 @@ public class ByodHelperActivity extends LocationListenerActivity
 
     @Override
     protected void onDestroy() {
+        mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
         cleanUpTempUris();
         super.onDestroy();
     }

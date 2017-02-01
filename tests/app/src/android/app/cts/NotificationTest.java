@@ -158,7 +158,7 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testColorizeNotification() {
-        mNotification = new Notification.Builder(mContext)
+        mNotification = new Notification.Builder(mContext, "channel_id")
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
                 .setColorized(true)
@@ -194,7 +194,7 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testMessagingStyle_historicMessages() {
-        mNotification = new Notification.Builder(mContext)
+        mNotification = new Notification.Builder(mContext, "channel_id")
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
                 .setStyle(new Notification.MessagingStyle("self name")

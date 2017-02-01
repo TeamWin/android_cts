@@ -21,6 +21,8 @@ import static com.android.cts.verifier.notifications.MockListener.JSON_MATCHES_Z
 import static com.android.cts.verifier.notifications.MockListener.JSON_TAG;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ContentProviderOperation;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
@@ -30,6 +32,7 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.util.Log;
 import android.view.View;
@@ -47,6 +50,8 @@ public class AttentionManagementVerifierActivity
         extends InteractiveVerifierActivity {
     private static final String TAG = "NoListenerAttentionVerifier";
 
+    private static final String NOTIFICATION_CHANNEL_ID = TAG;
+    private static final String NOTIFICATION_CHANNEL_ID_NOISY = TAG + "/noisy";
     private static final String ALICE = "Alice";
     private static final String ALICE_PHONE = "+16175551212";
     private static final String ALICE_EMAIL = "alice@_foo._bar";
@@ -104,6 +109,23 @@ public class AttentionManagementVerifierActivity
         tests.add(new PhoneOrderTest());
         tests.add(new DeleteContactsTest());
         return tests;
+    }
+
+    private void createChannels() {
+        NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
+        mNm.createNotificationChannel(channel);
+        NotificationChannel noisyChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID_NOISY,
+                NOTIFICATION_CHANNEL_ID_NOISY, NotificationManager.IMPORTANCE_HIGH);
+        noisyChannel.enableVibration(true);
+        noisyChannel.setSound(
+                Settings.System.DEFAULT_RINGTONE_URI, Notification.AUDIO_ATTRIBUTES_DEFAULT);
+        mNm.createNotificationChannel(noisyChannel);
+    }
+
+    private void deleteChannels() {
+        mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+        mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID_NOISY);
     }
 
     // Tests
@@ -213,6 +235,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_URI, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -267,6 +290,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -305,6 +329,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_URI, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -358,6 +383,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -395,6 +421,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_URI, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -448,6 +475,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -462,6 +490,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_NONE, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -492,6 +521,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -506,6 +536,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_NONE, true, false);
             status = READY;
             // wait for notifications to move through the system
@@ -536,6 +567,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -552,6 +584,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             // send B & C noisy
             sendNotifications(SEND_B | SEND_C, MODE_NONE, false, true);
             status = READY;
@@ -601,6 +634,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -615,6 +649,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_NONE, true, false);
             status = READY;
             // wait for notifications to move through the system
@@ -668,6 +703,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -682,6 +718,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_URI, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -712,6 +749,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -726,6 +764,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_EMAIL, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -756,6 +795,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -770,6 +810,7 @@ public class AttentionManagementVerifierActivity
 
         @Override
         void setUp() {
+            createChannels();
             sendNotifications(MODE_PHONE, false, false);
             status = READY;
             // wait for notifications to move through the system
@@ -800,6 +841,7 @@ public class AttentionManagementVerifierActivity
         @Override
         void tearDown() {
             mNm.cancelAll();
+            deleteChannels();
             MockListener.resetListenerData(mContext);
             delay();
         }
@@ -826,39 +868,39 @@ public class AttentionManagementVerifierActivity
         int priorityB = usePriorities ? Notification.PRIORITY_MAX : Notification.PRIORITY_DEFAULT;
         int priorityC = usePriorities ? Notification.PRIORITY_LOW : Notification.PRIORITY_DEFAULT;
 
+        final String channelId = noisy ? NOTIFICATION_CHANNEL_ID_NOISY : NOTIFICATION_CHANNEL_ID;
+
         if ((which & SEND_B) != 0) {
-            Notification.Builder bob = new Notification.Builder(mContext)
+            Notification.Builder bob = new Notification.Builder(mContext, channelId)
                     .setContentTitle(BOB)
                     .setContentText(BOB)
                     .setSmallIcon(R.drawable.ic_stat_bob)
                     .setPriority(priorityB)
                     .setCategory(Notification.CATEGORY_MESSAGE)
                     .setWhen(whenB);
-            bob.setDefaults(noisy ? Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE : 0);
             addPerson(uriMode, bob, mBobUri, BOB_PHONE, BOB_EMAIL);
             mNm.notify(BOB, NOTIFICATION_ID + 2, bob.build());
         }
         if ((which & SEND_C) != 0) {
-            Notification.Builder charlie = new Notification.Builder(mContext)
-                    .setContentTitle(CHARLIE)
-                    .setContentText(CHARLIE)
-                    .setSmallIcon(R.drawable.ic_stat_charlie)
-                    .setPriority(priorityC)
-                    .setCategory(Notification.CATEGORY_MESSAGE)
-                    .setWhen(whenC);
-            charlie.setDefaults(noisy ? Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE : 0);
+            Notification.Builder charlie =
+                    new Notification.Builder(mContext, channelId)
+                            .setContentTitle(CHARLIE)
+                            .setContentText(CHARLIE)
+                            .setSmallIcon(R.drawable.ic_stat_charlie)
+                            .setPriority(priorityC)
+                            .setCategory(Notification.CATEGORY_MESSAGE)
+                            .setWhen(whenC);
             addPerson(uriMode, charlie, mCharlieUri, CHARLIE_PHONE, CHARLIE_EMAIL);
             mNm.notify(CHARLIE, NOTIFICATION_ID + 3, charlie.build());
         }
         if ((which & SEND_A) != 0) {
-            Notification.Builder alice = new Notification.Builder(mContext)
+            Notification.Builder alice = new Notification.Builder(mContext, channelId)
                     .setContentTitle(ALICE)
                     .setContentText(ALICE)
                     .setSmallIcon(R.drawable.ic_stat_alice)
                     .setPriority(priorityA)
                     .setCategory(Notification.CATEGORY_MESSAGE)
                     .setWhen(whenA);
-            alice.setDefaults(noisy ? Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE : 0);
             addPerson(uriMode, alice, mAliceUri, ALICE_PHONE, ALICE_EMAIL);
             mNm.notify(ALICE, NOTIFICATION_ID + 1, alice.build());
         }

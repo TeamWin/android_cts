@@ -71,6 +71,9 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     private static final String THIS_PKG = "com.android.cts.verifier";
     private static final String OTHER_PKG = "android";
 
+    public static final String ORIGINAL_CHANNEL_ID = TAG + ": original";
+    public static final String NEW_CHANNEL_ID = TAG + ": new";
+
     private String mTag1;
     private String mTag2;
     private String mTag3;
@@ -126,12 +129,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     }
 
     @SuppressLint("NewApi")
-    private void sendNotifications() {
-        sendNotifications(null);
-    }
-
-    @SuppressLint("NewApi")
-    private void sendNotifications(NotificationChannel channel) {
+    private void sendNotifications(String channelId) {
         mTag1 = UUID.randomUUID().toString();
         mTag2 = UUID.randomUUID().toString();
         mTag3 = UUID.randomUUID().toString();
@@ -152,7 +150,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         mPackageString = "com.android.cts.verifier";
 
-        Notification n1 = new Notification.Builder(mContext)
+        Notification n1 = new Notification.Builder(mContext, channelId)
                 .setContentTitle("One")
                 .setSortKey(Adjustment.KEY_CHANNEL_ID)
                 .setContentText(mTag1.toString())
@@ -161,13 +159,11 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                 .setWhen(mWhen1)
                 .setDeleteIntent(makeIntent(1, mTag1))
                 .setOnlyAlertOnce(true)
-                .setChannel(channel == null ? NotificationChannel.DEFAULT_CHANNEL_ID
-                        : channel.getId())
                 .build();
         mNm.notify(mTag1, mId1, n1);
         mFlag1 = Notification.FLAG_ONLY_ALERT_ONCE;
 
-        Notification n2 = new Notification.Builder(mContext)
+        Notification n2 = new Notification.Builder(mContext, channelId)
                 .setContentTitle("Two")
                 .setSortKey(Adjustment.KEY_PEOPLE)
                 .setContentText(mTag2.toString())
@@ -176,13 +172,11 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                 .setWhen(mWhen2)
                 .setDeleteIntent(makeIntent(2, mTag2))
                 .setAutoCancel(true)
-                .setChannel(channel == null ? NotificationChannel.DEFAULT_CHANNEL_ID
-                        : channel.getId())
                 .build();
         mNm.notify(mTag2, mId2, n2);
         mFlag2 = Notification.FLAG_AUTO_CANCEL;
 
-        Notification n3 = new Notification.Builder(mContext)
+        Notification n3 = new Notification.Builder(mContext, channelId)
                 .setContentTitle("Three")
                 .setSortKey(Adjustment.KEY_SNOOZE_CRITERIA)
                 .setContentText(mTag3.toString())
@@ -192,11 +186,32 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                 .setDeleteIntent(makeIntent(3, mTag3))
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(true)
-                .setChannel(channel == null ? NotificationChannel.DEFAULT_CHANNEL_ID
-                        : channel.getId())
                 .build();
         mNm.notify(mTag3, mId3, n3);
         mFlag3 = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_AUTO_CANCEL;
+    }
+
+    private void createChannels() {
+        try {
+            NotificationChannel newChannel = new NotificationChannel(
+                    NEW_CHANNEL_ID, NEW_CHANNEL_ID, NotificationManager.IMPORTANCE_LOW);
+            mNm.createNotificationChannel(newChannel);
+        } catch (Exception e) {
+            Log.e(TAG, "failed to create channel", e);
+        }
+        try {
+            NotificationChannel originalChannel = new NotificationChannel(ORIGINAL_CHANNEL_ID,
+                    ORIGINAL_CHANNEL_ID, NotificationManager.IMPORTANCE_LOW);
+            mNm.createNotificationChannel(originalChannel);
+        } catch (Exception e) {
+            Log.e(TAG, "failed to create channel", e);
+        }
+    }
+
+    private void deleteChannels() {
+        mNm.cancelAll();
+        mNm.deleteNotificationChannel(ORIGINAL_CHANNEL_ID);
+        mNm.deleteNotificationChannel(NEW_CHANNEL_ID);
     }
 
     // Tests
@@ -278,10 +293,16 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             // wait for notifications to move through the system
             delay();
+        }
+
+        @Override
+        void tearDown() {
+            deleteChannels();
         }
 
         @Override
@@ -307,15 +328,20 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_note_received);
-
         }
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             // wait for notifications to move through the system
             delay();
+        }
+
+        @Override
+        void tearDown() {
+            deleteChannels();
         }
 
         @Override
@@ -422,7 +448,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -455,7 +482,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -470,7 +497,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -509,7 +537,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -524,7 +552,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -557,7 +586,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -634,7 +663,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -659,7 +689,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -675,7 +705,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -700,7 +731,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -710,10 +741,6 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     private class AdjustNotificationTest extends InteractiveTestCase {
         private ArrayList<String> people;
         private ArrayList<SnoozeCriterion> snooze;
-        private NotificationChannel originalChannel = new NotificationChannel("original", "new",
-                NotificationManager.IMPORTANCE_LOW);
-        private NotificationChannel newChannel = new NotificationChannel("new", "new",
-                NotificationManager.IMPORTANCE_LOW);
         private Map<String, Bundle> adjustments;
 
         @Override
@@ -723,22 +750,13 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            try {
-                mNm.createNotificationChannel(newChannel);
-            } catch (Exception e) {
-                Log.e(TAG, "failed to create channel", e);
-            }
-            try {
-                mNm.createNotificationChannel(originalChannel);
-            } catch (Exception e) {
-                Log.e(TAG, "failed to create channel", e);
-            }
+            createChannels();
             adjustments = getAdjustments();
             snooze = adjustments.get(Adjustment.KEY_SNOOZE_CRITERIA).getParcelableArrayList(
                     Adjustment.KEY_SNOOZE_CRITERIA);
             people = adjustments.get(Adjustment.KEY_PEOPLE).getStringArrayList(
                     Adjustment.KEY_PEOPLE);
-            sendNotifications(originalChannel);
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -785,7 +803,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                     String tag = payload.getString(KEY_TAG);
                                     if (mTag1.equals(tag)) {
                                         found.add(mTag1);
-                                        pass &= checkEquals(newChannel.getId(),
+                                        pass &= checkEquals(NEW_CHANNEL_ID,
                                                 ((NotificationChannel) payload.getParcelable(
                                                         KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
@@ -800,7 +818,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                                         + "%s, %s)");
                                     } else if (mTag2.equals(tag)) {
                                         found.add(mTag2);
-                                        pass &= checkEquals(originalChannel.getId(),
+                                        pass &= checkEquals(ORIGINAL_CHANNEL_ID,
                                                 ((NotificationChannel) payload.getParcelable(
                                                         KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
@@ -815,7 +833,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                                         + "%s, %s)");
                                     } else if (mTag3.equals(tag)) {
                                         found.add(mTag3);
-                                        pass &= checkEquals(originalChannel.getId(),
+                                        pass &= checkEquals(ORIGINAL_CHANNEL_ID,
                                                 ((NotificationChannel) payload.getParcelable(
                                                         KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
@@ -845,9 +863,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
-            mNm.deleteNotificationChannel(originalChannel.getId());
-            mNm.deleteNotificationChannel(newChannel.getId());
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -857,10 +873,6 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
     private class AdjustEnqueuedNotificationTest extends InteractiveTestCase {
         private ArrayList<String> people;
         private ArrayList<SnoozeCriterion> snooze;
-        private NotificationChannel originalChannel = new NotificationChannel("original", "new",
-                NotificationManager.IMPORTANCE_LOW);
-        private NotificationChannel newChannel = new NotificationChannel("new", "new",
-                NotificationManager.IMPORTANCE_LOW);
         private Map<String, Bundle> adjustments;
 
         @Override
@@ -871,22 +883,13 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         @Override
         void setUp() {
             MockAssistant.adjustEnqueue(mContext);
-            try {
-                mNm.createNotificationChannel(newChannel);
-            } catch (Exception e) {
-                Log.e(TAG, "failed to create channel", e);
-            }
-            try {
-                mNm.createNotificationChannel(originalChannel);
-            } catch (Exception e) {
-                Log.e(TAG, "failed to create channel", e);
-            }
+            createChannels();
             adjustments = getAdjustments();
             snooze = adjustments.get(Adjustment.KEY_SNOOZE_CRITERIA).getParcelableArrayList(
                     Adjustment.KEY_SNOOZE_CRITERIA);
             people = adjustments.get(Adjustment.KEY_PEOPLE).getStringArrayList(
                     Adjustment.KEY_PEOPLE);
-            sendNotifications(originalChannel);
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -927,7 +930,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                     String tag = payload.getString(KEY_TAG);
                                     if (mTag1.equals(tag)) {
                                         found.add(mTag1);
-                                        pass &= checkEquals(newChannel.getId(),
+                                        pass &= checkEquals(NEW_CHANNEL_ID,
                                                 ((NotificationChannel) payload.getParcelable(
                                                         KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
@@ -942,7 +945,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                                         + "%s, %s)");
                                     } else if (mTag2.equals(tag)) {
                                         found.add(mTag2);
-                                        pass &= checkEquals(originalChannel.getId(),
+                                        pass &= checkEquals(ORIGINAL_CHANNEL_ID,
                                                 ((NotificationChannel) payload.getParcelable(
                                                         KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
@@ -957,7 +960,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
                                                         + "%s, %s)");
                                     } else if (mTag3.equals(tag)) {
                                         found.add(mTag3);
-                                        pass &= checkEquals(originalChannel.getId(),
+                                        pass &= checkEquals(ORIGINAL_CHANNEL_ID,
                                                 ((NotificationChannel) payload.getParcelable(
                                                         KEY_CHANNEL)).getId(),
                                                 "data integrity test: notification channel ("
@@ -987,9 +990,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
-            mNm.deleteNotificationChannel(originalChannel.getId());
-            mNm.deleteNotificationChannel(newChannel.getId());
+            deleteChannels();
             sleep(1000);
             MockAssistant.resetListenerData(mContext);
             delay();
@@ -1253,7 +1254,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             } catch (Exception e) {
                 Log.e(TAG, "failed to create channel", e);
             }
-            sendNotifications(channel);
+            sendNotifications(channel.getId());
             status = READY;
             delay(6000);
         }
@@ -1318,7 +1319,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -1391,6 +1393,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
             mNm.cancel(mTag1, mId1);
             mNm.cancel(mTag2, mId2);
             mNm.cancel(mTag2, mId3);
+            deleteChannels();
             MockAssistant.resetListenerData(mContext);
             delay();
         }
@@ -1409,7 +1412,8 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void setUp() {
-            sendNotifications();
+            createChannels();
+            sendNotifications(ORIGINAL_CHANNEL_ID);
             status = READY;
             delay();
         }
@@ -1467,7 +1471,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
 
         @Override
         void tearDown() {
-            mNm.cancelAll();
+            deleteChannels();
             MockAssistant.resetListenerData(mContext);
             delay();
         }

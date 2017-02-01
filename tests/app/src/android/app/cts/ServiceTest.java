@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.stubs.ActivityTestsBase;
 import android.app.stubs.LocalDeniedService;
@@ -41,6 +42,7 @@ import com.android.compatibility.common.util.IBinderParcelable;
 
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";
+    private static final String NOTIFICATION_CHANNEL_ID = TAG;
     private static final int STATE_START_1 = 0;
     private static final int STATE_START_2 = 1;
     private static final int STATE_START_3 = 2;
@@ -173,8 +175,8 @@ public class ServiceTest extends ActivityTestsBase {
         return notificationManager;
     }
 
-    private void sendNotififcation(int id, String title) {
-        Notification notification = new Notification.Builder(getContext())
+    private void sendNotification(int id, String title) {
+        Notification notification = new Notification.Builder(getContext(), NOTIFICATION_CHANNEL_ID)
             .setContentTitle(title)
             .setSmallIcon(R.drawable.black)
             .build();
@@ -391,6 +393,18 @@ public class ServiceTest extends ActivityTestsBase {
         mLocalService_ApplicationDoesNotHavePermission = new Intent(
                 LocalService.SERVICE_LOCAL_DENIED, null /*uri*/, mContext, LocalService.class);
         mStateReceiver = new MockBinder();
+        getNotificationManager().createNotificationChannel(new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        getNotificationManager().deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+        mContext.stopService(mLocalService);
+        mContext.stopService(mLocalForegroundService);
+        mContext.stopService(mLocalGrantedService);
+        mContext.stopService(mLocalService_ApplicationHasPermission);
     }
 
     private class MockBinder extends Binder {
@@ -461,15 +475,6 @@ public class ServiceTest extends ActivityTestsBase {
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        mContext.stopService(mLocalService);
-        mContext.stopService(mLocalForegroundService);
-        mContext.stopService(mLocalGrantedService);
-        mContext.stopService(mLocalService_ApplicationHasPermission);
-    }
-
     public void testLocalStartClass() throws Exception {
         startExpectResult(mLocalService);
     }
@@ -507,7 +512,7 @@ public class ServiceTest extends ActivityTestsBase {
 
             // Sends another notification reusing the same notification id.
             String newTitle = "YODA I AM";
-            sendNotififcation(1, newTitle);
+            sendNotification(1, newTitle);
             assertNotification(1, newTitle);
 
             // Start service as foreground again - it should kill notification #1 and show #2
@@ -602,7 +607,7 @@ public class ServiceTest extends ActivityTestsBase {
 
             // Sends another notification reusing the same notification id.
             newTitle = "YODA I AM";
-            sendNotififcation(1, newTitle);
+            sendNotification(1, newTitle);
             assertNotification(1, newTitle);
 
             // Start service as foreground again - it should show notification #2..
