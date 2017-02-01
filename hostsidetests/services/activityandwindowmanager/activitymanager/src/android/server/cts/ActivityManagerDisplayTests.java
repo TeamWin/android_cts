@@ -271,7 +271,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Create new virtual display.
         final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                true /* launchInSplitScreen */);
+                true /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
+                true /* publicDisplay */, true /* mustBeCreated */);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
@@ -279,15 +280,18 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
         mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                 TEST_ACTIVITY_NAME);
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
 
         // Destroy virtual display.
         destroyVirtualDisplay();
-        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForActivityState(mDevice, VIRTUAL_DISPLAY_ACTIVITY, STATE_STOPPED);
 
         // Check if the focus is switched back to primary display.
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedStack("Focused stack must be moved to primary display",
+                frontStackId);
         mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
-                VIRTUAL_DISPLAY_ACTIVITY);
+                TEST_ACTIVITY_NAME);
     }
 
     /**
@@ -527,6 +531,60 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Check that the display is not created.
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         assertNull(newDisplay);
+    }
+
+    /**
+     * Test that all activities that were on the private display are destroyed on display removal.
+     */
+    public void testContentDestroyOnDisplayRemoved() throws Exception {
+        // Create new private virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
+                false /* publicDisplay */, true /* mustBeCreated */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+
+        // Launch activities on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
+        mAmWmState.assertFocusedActivity("Launched activity must be focused", TEST_ACTIVITY_NAME);
+        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
+        mAmWmState.assertFocusedActivity("Launched activity must be focused",
+                RESIZEABLE_ACTIVITY_NAME);
+
+        // Destroy the display and check if activities are removed from system.
+        clearLogcat();
+        destroyVirtualDisplay();
+        final String activityName1
+                = ActivityManagerTestBase.getActivityComponentName(TEST_ACTIVITY_NAME);
+        final String activityName2
+                = ActivityManagerTestBase.getActivityComponentName(RESIZEABLE_ACTIVITY_NAME);
+        final String windowName1
+                = ActivityManagerTestBase.getWindowName(TEST_ACTIVITY_NAME);
+        final String windowName2
+                = ActivityManagerTestBase.getWindowName(RESIZEABLE_ACTIVITY_NAME);
+        mAmWmState.waitForWithAmState(mDevice,
+                (state) -> !state.containsActivity(activityName1)
+                        && !state.containsActivity(activityName2),
+                "Waiting for activity to be removed");
+        mAmWmState.waitForWithWmState(mDevice,
+                (state) -> !state.containsWindow(windowName1)
+                        && !state.containsWindow(windowName2),
+                "Waiting for activity window to be gone");
+
+        // Check AM state.
+        assertFalse("Activity from removed display must be destroyed",
+                mAmWmState.getAmState().containsActivity(activityName1));
+        assertFalse("Activity from removed display must be destroyed",
+                mAmWmState.getAmState().containsActivity(activityName2));
+        // Check WM state.
+        assertFalse("Activity windows from removed display must be destroyed",
+                mAmWmState.getWmState().containsWindow(windowName1));
+        assertFalse("Activity windows from removed display must be destroyed",
+                mAmWmState.getWmState().containsWindow(windowName2));
+        // Check activity logs.
+        assertActivityDestroyed(TEST_ACTIVITY_NAME);
+        assertActivityDestroyed(RESIZEABLE_ACTIVITY_NAME);
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */

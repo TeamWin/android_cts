@@ -673,6 +673,21 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
+    protected void assertActivityDestroyed(String activityName) throws DeviceNotAvailableException {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+
+        if (lifecycleCounts.mDestroyCount != 1) {
+            fail(activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    + " time(s), expecting single destruction.");
+        } else if (lifecycleCounts.mCreateCount != 0) {
+            fail(activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    + " time(s), not expecting any.");
+        } else if (lifecycleCounts.mConfigurationChangedCount != 0) {
+            fail(activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
+                    + " onConfigurationChanged() calls, not expecting any.");
+        }
+    }
+
     protected String[] getDeviceLogsForComponent(String componentName)
             throws DeviceNotAvailableException {
         return mDevice.executeAdbCommand(
