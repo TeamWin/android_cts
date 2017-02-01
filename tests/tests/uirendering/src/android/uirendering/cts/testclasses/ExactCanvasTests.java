@@ -202,13 +202,17 @@ public class ExactCanvasTests extends ActivityTestBase {
                 new Rect(10, 10, 80, 80));
 
         createTest()
-                .addCanvasClient((canvas, width, height) -> {
+                // The border of the square is somehow blurred in HWUI OpenGL hardware mode with
+                // picture recording/playback. Maybe this is related to bug:31456967
+                // Hence disable picture mode for now.
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                     canvas.drawColor(Color.WHITE);
                     Paint p = new Paint();
                     p.setColor(Color.BLUE);
                     canvas.drawRect(10, 10, 80, 80, p);
                 })
-                .addCanvasClient((canvas, width, height) -> ninePatchDrawable.draw(canvas))
+                .addCanvasClientWithoutUsingPicture(
+                        (canvas, width, height) -> ninePatchDrawable.draw(canvas))
                 .addLayout(R.layout.blue_padded_square, null)
                 .runWithVerifier(verifier);
     }

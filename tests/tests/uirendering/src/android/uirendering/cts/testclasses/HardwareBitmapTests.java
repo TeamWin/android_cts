@@ -65,7 +65,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testDecodeResource() {
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
@@ -77,7 +77,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
     public void testBitmapRegionDecode() throws IOException {
         InputStream inputStream = mRes.openRawResource(R.drawable.robot);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(inputStream, false);
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap hardwareBitmap = decoder.decodeRegion(new Rect(10, 15, 34, 39),
                     HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
@@ -119,11 +119,11 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testSetDensity() {
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot);
             bitmap.setDensity(DisplayMetrics.DENSITY_LOW);
             canvas.drawBitmap(bitmap, 0, 0, null);
-        }, true).addCanvasClient((canvas, width, height) -> {
+        }, true).addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             hardwareBitmap.setDensity(DisplayMetrics.DENSITY_LOW);
@@ -133,7 +133,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testNinePatch() {
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             InputStream is = mRes.openRawResource(R.drawable.blue_padded_square);
             NinePatchDrawable ninePatch = (NinePatchDrawable) Drawable.createFromResourceStream(
                     mRes, null, is, null, HARDWARE_OPTIONS);
@@ -153,7 +153,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testCreateScaledBitmap() {
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             Bitmap scaled = Bitmap.createScaledBitmap(hardwareBitmap, 24, 24, false);
@@ -165,7 +165,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testCreateSubsetBitmap() {
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             Matrix matrix = new Matrix();
@@ -179,7 +179,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testCreateTransformedBitmap() {
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             Matrix matrix = new Matrix();
@@ -198,10 +198,10 @@ public class HardwareBitmapTests extends ActivityTestBase {
         Bitmap bitmap = BitmapFactory.decodeResource(getActivity().getResources(), id, options);
         assertEquals(from, bitmap.getConfig());
 
-        createTest().addCanvasClient((canvas, width, height) -> {
+        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             canvas.drawBitmap(bitmap, 0, 0, null);
-        }, true).addCanvasClient((canvas, width, height) -> {
+        }, true).addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
             canvas.drawColor(Color.CYAN);
             Bitmap copy = bitmap.copy(to, false);
             assertNotNull(copy);

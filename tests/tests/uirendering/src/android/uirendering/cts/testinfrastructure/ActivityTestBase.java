@@ -138,7 +138,7 @@ public abstract class ActivityTestBase {
     protected Point runRenderSpec(TestCase testCase) {
         Point testOffset = getActivity().enqueueRenderSpecAndWait(
                 testCase.layoutID, testCase.canvasClient,
-                testCase.viewInitializer, testCase.useHardware);
+                testCase.viewInitializer, testCase.useHardware, testCase.usePicture);
         testCase.wasTestRan = true;
         if (testCase.readyFence != null) {
             try {
@@ -298,7 +298,28 @@ public abstract class ActivityTestBase {
 
         public TestCaseBuilder addCanvasClient(String debugString,
                     CanvasClient canvasClient, boolean useHardware) {
-            mTestCases.add(new TestCase(canvasClient, debugString, useHardware));
+            return addCanvasClientInternal(debugString, canvasClient, useHardware, false)
+                    .addCanvasClientInternal(debugString, canvasClient, useHardware, true);
+        }
+
+        public TestCaseBuilder addCanvasClientWithoutUsingPicture(CanvasClient canvasClient) {
+            return addCanvasClientWithoutUsingPicture(null, canvasClient);
+        }
+
+        public TestCaseBuilder addCanvasClientWithoutUsingPicture(String debugString,
+                CanvasClient canvasClient) {
+            return addCanvasClientInternal(debugString, canvasClient, false, false)
+                    .addCanvasClientInternal(debugString, canvasClient, true, false);
+        }
+
+        public TestCaseBuilder addCanvasClientWithoutUsingPicture(CanvasClient canvasClient,
+                boolean useHardware) {
+            return addCanvasClientInternal(null, canvasClient, useHardware, false);
+        }
+
+        private TestCaseBuilder addCanvasClientInternal(String debugString,
+                CanvasClient canvasClient, boolean useHardware, boolean usePicture) {
+            mTestCases.add(new TestCase(canvasClient, debugString, useHardware, usePicture));
             return this;
         }
 
@@ -320,6 +341,7 @@ public abstract class ActivityTestBase {
         public String canvasClientDebugString;
 
         public boolean useHardware;
+        public boolean usePicture = false;
         public boolean wasTestRan = false;
 
         public TestCase(int layoutId, ViewInitializer viewInitializer, boolean useHardware) {
@@ -328,10 +350,12 @@ public abstract class ActivityTestBase {
             this.useHardware = useHardware;
         }
 
-        public TestCase(CanvasClient client, String debugString, boolean useHardware) {
+        public TestCase(CanvasClient client, String debugString, boolean useHardware,
+                boolean usePicture) {
             this.canvasClient = client;
             this.canvasClientDebugString = debugString;
             this.useHardware = useHardware;
+            this.usePicture = usePicture;
         }
 
         public String getDebugString() {
@@ -347,7 +371,8 @@ public abstract class ActivityTestBase {
                 debug += "Layout resource : " +
                         getActivity().getResources().getResourceName(layoutID);
             }
-            debug += "\nTest ran in " + (useHardware ? "hardware" : "software") + "\n";
+            debug += "\nTest ran in " + (useHardware ? "hardware" : "software") +
+                    (usePicture ? " with picture" : " without picture") + "\n";
             return debug;
         }
     }

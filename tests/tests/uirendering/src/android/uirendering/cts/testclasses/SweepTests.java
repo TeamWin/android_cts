@@ -118,8 +118,9 @@ public class SweepTests extends ActivityTestBase {
         // Create the test cases with each combination
         do {
             int arrIndex = Math.min(index, bitmapComparers.length - 1);
-            createTest()
-                    .addCanvasClient(modifierAccessor.getDebugString(), canvasClient)
+            createTest() // picture mode is disable due to bug:34871089
+                    .addCanvasClientWithoutUsingPicture(
+                            modifierAccessor.getDebugString(), canvasClient)
                     .runWithComparer(bitmapComparers[arrIndex]);
             index++;
         } while (modifierAccessor.step());
