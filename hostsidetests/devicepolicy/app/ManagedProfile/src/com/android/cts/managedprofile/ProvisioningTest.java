@@ -16,13 +16,20 @@
 package com.android.cts.managedprofile;
 
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_KEEP_ACCOUNT_ON_MIGRATION;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION;
+import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.Manifest;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -88,7 +95,13 @@ public class ProvisioningTest {
 
     @Test
     public void testProvisionManagedProfile() throws InterruptedException {
-        provisionManagedProfile();
+        provisionManagedProfile(createBaseProvisioningIntent());
+    }
+
+    @Test
+    public void testProvisionManagedProfile_accountCopy() throws InterruptedException {
+        provisionManagedProfile(createBaseProvisioningIntent()
+                .putExtra(EXTRA_PROVISIONING_KEEP_ACCOUNT_ON_MIGRATION, true));
     }
 
     @Test
@@ -104,15 +117,42 @@ public class ProvisioningTest {
                 false));
     }
 
-    private void provisionManagedProfile() throws InterruptedException {
-        Intent intent = new Intent(ACTION_PROVISION_MANAGED_PROFILE)
+    @Test
+    public void testAccountExist() {
+        AccountManager am = AccountManager.get(mContext);
+        for (Account account : am.getAccountsByType(AccountAuthenticator.ACCOUNT_TYPE)) {
+            if (AccountAuthenticator.TEST_ACCOUNT.equals(account)) {
+                return;
+            }
+        }
+        fail("can't find migrated account");
+    }
+
+    @Test
+    public void testAccountNotExist() {
+        AccountManager am = AccountManager.get(mContext);
+        assertTrue("test account still exists after account migration",
+                am.getAccountsByType(AccountAuthenticator.ACCOUNT_TYPE).length == 0);
+    }
+
+    public Intent createBaseProvisioningIntent() {
+        return new Intent(ACTION_PROVISION_MANAGED_PROFILE)
                 .putExtra(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, ADMIN_RECEIVER_COMPONENT)
                 .putExtra(EXTRA_PROVISIONING_SKIP_ENCRYPTION, true)
-                .putExtra(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, ADMIN_EXTRAS_BUNDLE);
-        SilentProvisioningTestManager provisioningManager =
-                new SilentProvisioningTestManager(mContext);
+                .putExtra(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, ADMIN_EXTRAS_BUNDLE)
+                .putExtra(EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE, addAndGetTestAccount());
+    }
+
+    private void provisionManagedProfile(Intent intent) throws InterruptedException {
+        SilentProvisioningTestManager provisioningManager = new SilentProvisioningTestManager(mContext);
         assertTrue(provisioningManager.startProvisioningAndWait(intent));
         Log.i(TAG, "managed profile provisioning successful");
+    }
+
+    private Account addAndGetTestAccount() {
+        Account account = AccountAuthenticator.TEST_ACCOUNT;
+        AccountManager.get(mContext).addAccountExplicitly(account, null, null);
+        return account;
     }
 
     private static void saveBundle(Context context, PersistableBundle bundle) {
