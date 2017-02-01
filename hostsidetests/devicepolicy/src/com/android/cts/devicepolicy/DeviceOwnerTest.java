@@ -16,9 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -343,7 +340,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval");
     }
 
-    public void testLockTask() throws Exception {
+    public void testLockTask_deviceOwnerUser() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -359,6 +356,52 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         } finally {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
         }
+    }
+
+    public void testLockTask_unaffiliatedUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+
+        final int userId = createUser();
+        installAppAsUser(DEVICE_OWNER_APK, userId);
+        setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
+
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG,
+                ".AffiliationTest",
+                "testSetLockTaskThrowsExceptionIfUnaffiliated",
+                userId);
+
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG,
+                ".AffiliationTest",
+                "testSetLockTaskPackagesClearedIfUserBecomesUnaffiliated",
+                userId);
+    }
+
+    public void testLockTask_affiliatedSecondaryUser() throws Exception {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+            return;
+        }
+
+        final int userId = createUser();
+        installAppAsUser(INTENT_RECEIVER_APK, userId);
+        installAppAsUser(DEVICE_OWNER_APK, userId);
+        setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
+
+        switchUser(userId);
+
+        // Setting the same affiliation ids on both users and running the lock task tests.
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(
+                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
+        runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskTest", userId);
     }
 
     public void testSystemUpdatePolicy() throws Exception {
