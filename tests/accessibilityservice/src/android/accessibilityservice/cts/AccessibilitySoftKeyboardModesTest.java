@@ -86,7 +86,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         getActivity();
 
         mService = InstrumentedAccessibilityService.enableService(
-                this, InstrumentedAccessibilityService.class);
+                getInstrumentation(), InstrumentedAccessibilityService.class);
         mKeyboardController = mService.getSoftKeyboardController();
         mUiAutomation = getInstrumentation()
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);

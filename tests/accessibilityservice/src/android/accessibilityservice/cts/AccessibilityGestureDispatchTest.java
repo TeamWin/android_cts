@@ -105,7 +105,7 @@ public class AccessibilityGestureDispatchTest extends
             mFullScreenTextView.setOnTouchListener(mMyTouchListener);
         });
 
-        mService = StubGestureAccessibilityService.enableSelf(this);
+        mService = StubGestureAccessibilityService.enableSelf(getInstrumentation());
 
         mMotionEvents.clear();
         mCallback = new MyGestureCallback();
@@ -313,7 +313,7 @@ public class AccessibilityGestureDispatchTest extends
                 centerY + CLICK_SHIFT_FROM_CENTER_Y - mViewBounds.top);
 
         StubMagnificationAccessibilityService magnificationService =
-                StubMagnificationAccessibilityService.enableSelf(this);
+                StubMagnificationAccessibilityService.enableSelf(getInstrumentation());
         android.accessibilityservice.AccessibilityService.MagnificationController
                 magnificationController = magnificationService.getMagnificationController();
         try {
