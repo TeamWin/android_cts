@@ -350,27 +350,25 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 String.format("Surfaces returned from getSurfaces() don't match those passed in"),
                 previewSurfaces.equals(inputSurfaces));
 
-        // Verify that outputConfiguration throws exception if 2 surfaces are different size
+        // Verify that createCaptureSession fails if 2 surfaces are different size
         SurfaceTexture outputTexture2 = new SurfaceTexture(/* random texture ID*/ 5);
         outputTexture2.setDefaultBufferSize(previewSize.getWidth()/2,
                 previewSize.getHeight()/2);
         Surface outputSurface2 = new Surface(outputTexture2);
-        try {
-            OutputConfiguration configuration = new OutputConfiguration(
-                    OutputConfiguration.SURFACE_GROUP_ID_NONE, surfaces[0]);
-            configuration.enableSurfaceSharing();
-            configuration.addSurface(outputSurface2);
-            fail("No error for invalid output config created from different sizes of surfaces");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+        OutputConfiguration configuration = new OutputConfiguration(
+                OutputConfiguration.SURFACE_GROUP_ID_NONE, surfaces[0]);
+        configuration.enableSurfaceSharing();
+        configuration.addSurface(outputSurface2);
+        List<OutputConfiguration> outputConfigurations = new ArrayList<>();
+        outputConfigurations.add(configuration);
+        verifyCreateSessionWithConfigsFailure(cameraId, outputConfigurations);
 
         // Verify that outputConfiguration throws exception if 2 surfaces are different format
         ImageReader imageReader = makeImageReader(previewSize, ImageFormat.YUV_420_888,
                 MAX_READER_IMAGES, new ImageDropperListener(), mHandler);
         try {
-            OutputConfiguration configuration = new OutputConfiguration(
-                    OutputConfiguration.SURFACE_GROUP_ID_NONE, surfaces[0]);
+            configuration = new OutputConfiguration(OutputConfiguration.SURFACE_GROUP_ID_NONE,
+                    surfaces[0]);
             configuration.enableSurfaceSharing();
             configuration.addSurface(imageReader.getSurface());
             fail("No error for invalid output config created from different format surfaces");
@@ -392,8 +390,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         // Verify that outputConfiguration throws exception if deferred surface and non-deferred
         // surface properties don't match
         try {
-            OutputConfiguration configuration = new OutputConfiguration(
-                previewSize, SurfaceTexture.class);
+            configuration = new OutputConfiguration(previewSize, SurfaceTexture.class);
             configuration.addSurface(imageReader.getSurface());
             fail("No error for invalid output config created deferred class with different type");
         } catch (IllegalArgumentException e) {
