@@ -144,7 +144,7 @@ public class PropertyValuesHolderTest {
             throws InterruptedException {
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         objectAnimator.addListener(listener);
-        verify(listener, within(timeoutMilliseconds)).onAnimationEnd(objectAnimator);
+        verify(listener, within(timeoutMilliseconds)).onAnimationEnd(objectAnimator, false);
         mInstrumentation.waitForIdleSync();
     }
 
@@ -363,7 +363,7 @@ public class PropertyValuesHolderTest {
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         anim.addListener(listener);
         mActivityRule.runOnUiThread(anim::start);
-        verify(listener, within(400)).onAnimationEnd(anim);
+        verify(listener, within(400)).onAnimationEnd(anim, false);
     }
 
     @Test
@@ -457,7 +457,7 @@ public class PropertyValuesHolderTest {
         final Animator.AnimatorListener listener = mock(Animator.AnimatorListener.class);
         anim.addListener(listener);
         mActivityRule.runOnUiThread(anim::start);
-        verify(listener, within(400)).onAnimationEnd(anim);
+        verify(listener, within(400)).onAnimationEnd(anim, false);
     }
 
     @Test
