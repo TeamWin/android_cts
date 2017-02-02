@@ -61,12 +61,13 @@ static ::testing::AssertionResult CheckAHardwareBufferMatchesDesc(
     if (static_cast<uint32_t>(buffer->layerCount) != desc.layers)
         return BuildFailureMessage(desc.layers,
                 static_cast<uint32_t>(buffer->layerCount), "layers");
-    if (static_cast<uint32_t>(buffer->usage) !=
-            android_hardware_HardwareBuffer_convertToGrallocUsageBits(
-                    desc.usage0, desc.usage1))
-        return BuildFailureMessage(
-                android_hardware_HardwareBuffer_convertToGrallocUsageBits(
-                        desc.usage0, desc.usage1),
+    uint64_t producerUsage = 0;
+    uint64_t consumerUsage = 0;
+    android_hardware_HardwareBuffer_convertToGrallocUsageBits(
+            desc.usage0, desc.usage1, &producerUsage, &consumerUsage);
+    uint64_t combinedUsage = producerUsage | consumerUsage;
+    if (static_cast<uint32_t>(buffer->usage) != combinedUsage)
+        return BuildFailureMessage(combinedUsage,
                 static_cast<uint32_t>(buffer->usage), "usages");
     if (android_hardware_HardwareBuffer_convertFromPixelFormat(
             buffer->getPixelFormat()) != desc.format)
