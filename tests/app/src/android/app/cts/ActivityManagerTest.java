@@ -59,11 +59,13 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     private static final String SERVICE_NAME = "android.app.stubs.MockService";
     private static final int WAIT_TIME = 2000;
     // A secondary test activity from another APK.
-    private static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
-    private static final String SIMPLE_ACTIVITY = ".SimpleActivity";
-    private static final String SIMPLE_ACTIVITY_IMMEDIATE_EXIT = ".SimpleActivityImmediateExit";
-    private static final String SIMPLE_ACTIVITY_CHAIN_EXIT = ".SimpleActivityChainExit";
-    private static final String SIMPLE_SERVICE = ".SimpleService";
+    static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
+    static final String SIMPLE_ACTIVITY = ".SimpleActivity";
+    static final String SIMPLE_ACTIVITY_IMMEDIATE_EXIT = ".SimpleActivityImmediateExit";
+    static final String SIMPLE_ACTIVITY_CHAIN_EXIT = ".SimpleActivityChainExit";
+    static final String SIMPLE_SERVICE = ".SimpleService";
+    static final String SIMPLE_RECEIVER = ".SimpleReceiver";
+    static final String SIMPLE_REMOTE_RECEIVER = ".SimpleRemoteReceiver";
     // The action sent back by the SIMPLE_APP after a restart.
     private static final String ACTIVITY_LAUNCHED_ACTION =
             "com.android.cts.launchertests.LauncherAppsTests.LAUNCHED_ACTION";
@@ -789,6 +791,36 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
             data.recycle();
         }
+    }
+
+    public void testDefaultProcessInstrumentation() throws Exception {
+        String cmd = "am instrument -w android.app.cts/.DefaultProcessInstrumentation";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true" +
+                "\nINSTRUMENTATION_CODE: -1\n", result);
+    }
+
+    public void testAltProcessInstrumentation() throws Exception {
+        String cmd = "am instrument -w android.app.cts/.AltProcessInstrumentation";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + ":other=true" +
+                "\nINSTRUMENTATION_CODE: -1\n", result);
+    }
+
+    public void testWildcardProcessInstrumentation() throws Exception {
+        String cmd = "am instrument -w android.app.cts/.WildcardProcessInstrumentation";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true" +
+                "\nINSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + ":receiver=true" +
+                "\nINSTRUMENTATION_CODE: -1\n", result);
+    }
+
+    public void testMultiProcessInstrumentation() throws Exception {
+        String cmd = "am instrument -w android.app.cts/.MultiProcessInstrumentation";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true" +
+                "\nINSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + ":other=true" +
+                "\nINSTRUMENTATION_CODE: -1\n", result);
     }
 
     /**
