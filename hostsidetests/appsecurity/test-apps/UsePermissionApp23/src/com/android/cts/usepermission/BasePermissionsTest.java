@@ -433,6 +433,7 @@ public abstract class BasePermissionsTest {
                 (AccessibilityEvent event) -> event.getEventType()
                         == AccessibilityEvent.TYPE_VIEW_SCROLLED,
                 GLOBAL_TIMEOUT_MILLIS);
+        node.refresh();
         waitForIdle();
     }
 
