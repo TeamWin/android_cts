@@ -2872,7 +2872,7 @@ public class ViewTest {
     @Test
     public void testRestoreDefaultFocus() {
         MockView view = new MockView(mActivity);
-        view.restoreDefaultFocus(0);
+        view.restoreDefaultFocus();
         assertTrue(view.hasCalledRequestFocus());
     }
 

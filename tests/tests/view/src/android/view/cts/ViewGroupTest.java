@@ -72,6 +72,7 @@ import android.view.animation.LayoutAnimationController;
 import android.view.animation.RotateAnimation;
 import android.view.animation.Transformation;
 import android.view.cts.util.XmlUtils;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.android.compatibility.common.util.CTSResult;
@@ -1489,78 +1490,175 @@ public class ViewGroupTest implements CTSResult {
         assertTrue(mMockViewGroup.isOnRequestFocusInDescendantsCalled);
     }
 
-    private void setupRestoreDefaultFocus() {
-        // Mark 2 children as focusable and add to the parent, then mark the second one as focused
-        // by default.
-        mMockViewGroup = new MockViewGroup(mContext);
-        mMockTextView = new MockTextView(mContext);
-        mMockTextView.setFocusable(true);
-        mTextView = new TextView(mContext);
-        mTextView.setFocusable(true);
-        mMockViewGroup.addView(mMockTextView);
-        mMockViewGroup.addView(mTextView);
-        mTextView.setFocusedByDefault(true);
+    private class TestClusterHier {
+        public MockViewGroup top = new MockViewGroup(mContext);
+        public MockViewGroup cluster1 = new MockViewGroup(mContext);
+        public Button c1view1 = new Button(mContext);
+        public Button c1view2 = new Button(mContext);
+        public MockViewGroup cluster2 = new MockViewGroup(mContext);
+        public MockViewGroup nestedGroup = new MockViewGroup(mContext);
+        public Button c2view1 = new Button(mContext);
+        public Button c2view2 = new Button(mContext);
+        TestClusterHier() {
+            for (Button bt : new Button[]{c1view1, c1view2, c2view1, c2view2}) {
+                // Otherwise this test won't work during suite-run.
+                bt.setFocusableInTouchMode(true);
+            }
+            cluster1.setKeyboardNavigationCluster(true);
+            cluster2.setKeyboardNavigationCluster(true);
+            cluster1.addView(c1view1);
+            cluster1.addView(c1view2);
+            cluster2.addView(c2view1);
+            nestedGroup.addView(c2view2);
+            cluster2.addView(nestedGroup);
+            top.addView(cluster1);
+            top.addView(cluster2);
+        }
+    }
+
+    @UiThreadTest
+    @Test
+    public void testRestoreFocusInCluster() {
+        TestClusterHier h = new TestClusterHier();
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view1, h.top.findFocus());
+
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c2view1, h.top.findFocus());
+
+        h.c2view2.setFocusedInCluster();
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c2view2, h.top.findFocus());
+        h.c2view1.setFocusedInCluster();
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c2view1, h.top.findFocus());
+
+        h.c1view2.setFocusedInCluster();
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view2, h.top.findFocus());
+
+        h = new TestClusterHier();
+        h.cluster1.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertNull(h.top.findFocus());
+
+        h.c2view1.setVisibility(View.INVISIBLE);
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c2view2, h.top.findFocus());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testFocusInClusterRemovals() {
+        // Removing focused-in-cluster view from its parent in various ways.
+        TestClusterHier h = new TestClusterHier();
+        h.c1view1.setFocusedInCluster();
+        h.cluster1.removeView(h.c1view1);
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view2, h.cluster1.findFocus());
+
+        h = new TestClusterHier();
+        h.c1view1.setFocusedInCluster();
+        h.cluster1.removeViews(0, 1);
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view2, h.cluster1.findFocus());
+
+        h = new TestClusterHier();
+        h.c2view1.setFocusedInCluster();
+        h.cluster2.removeAllViewsInLayout();
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertNull(h.cluster2.findFocus());
+
+        h = new TestClusterHier();
+        h.c1view1.setFocusedInCluster();
+        h.cluster1.detachViewFromParent(h.c1view1);
+        h.cluster1.attachViewToParent(h.c1view1, 1, null);
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view1, h.cluster1.findFocus());
+
+        h = new TestClusterHier();
+        h.c1view1.setFocusedInCluster();
+        h.cluster1.detachViewFromParent(h.c1view1);
+        h.cluster1.removeDetachedView(h.c1view1, false);
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view2, h.cluster1.findFocus());
     }
 
     @UiThreadTest
     @Test
     public void testRestoreDefaultFocus() {
-        // Invoking restoreDefaultFocus with various conditions that affect the outcome.
-        setupRestoreDefaultFocus();
-        mTextView.setFocusedByDefault(false);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mMockTextView, mMockViewGroup.findFocus());
+        TestClusterHier h = new TestClusterHier();
+        h.c1view2.setFocusedByDefault(true);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c1view2, h.top.findFocus());
 
-        setupRestoreDefaultFocus();
-        mTextView.setKeyboardNavigationCluster(true);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mMockTextView, mMockViewGroup.findFocus());
+        h.c1view2.setFocusedByDefault(false);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c1view1, h.top.findFocus());
 
-        setupRestoreDefaultFocus();
-        mMockViewGroup.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(null, mMockViewGroup.findFocus());
+        // default focus favors higher-up views
+        h.c1view2.setFocusedByDefault(true);
+        h.cluster1.setFocusedByDefault(true);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c1view2, h.top.findFocus());
+        h.c2view1.setFocusedByDefault(true);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c1view2, h.top.findFocus());
+        h.cluster2.setFocusedByDefault(true);
+        h.cluster1.setFocusedByDefault(false);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c2view1, h.top.findFocus());
 
-        setupRestoreDefaultFocus();
-        mTextView.setVisibility(View.INVISIBLE);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mMockTextView, mMockViewGroup.findFocus());
-
-        setupRestoreDefaultFocus();
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mTextView, mMockViewGroup.findFocus());
+        // removing default receivers should resolve to an existing default
+        h = new TestClusterHier();
+        h.c1view2.setFocusedByDefault(true);
+        h.cluster1.setFocusedByDefault(true);
+        h.c2view2.setFocusedByDefault(true);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c1view2, h.top.findFocus());
+        h.c1view2.setFocusedByDefault(false);
+        h.cluster1.setFocusedByDefault(false);
+        // only 1 focused-by-default view left, but its in a different branch. Should still pull
+        // default focus.
+        h.top.restoreDefaultFocus();
+        assertSame(h.c2view2, h.top.findFocus());
     }
 
     @UiThreadTest
     @Test
     public void testDefaultFocusViewRemoved() {
         // Removing default-focus view from its parent in various ways.
-        setupRestoreDefaultFocus();
-        mMockViewGroup.removeView(mTextView);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mMockTextView, mMockViewGroup.findFocus());
+        TestClusterHier h = new TestClusterHier();
+        h.c1view1.setFocusedByDefault(true);
+        h.cluster1.removeView(h.c1view1);
+        h.cluster1.restoreDefaultFocus();
+        assertSame(h.c1view2, h.cluster1.findFocus());
 
-        setupRestoreDefaultFocus();
-        mMockViewGroup.removeViews(1, 1);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mMockTextView, mMockViewGroup.findFocus());
+        h = new TestClusterHier();
+        h.c1view1.setFocusedByDefault(true);
+        h.cluster1.removeViews(0, 1);
+        h.cluster1.restoreDefaultFocus();
+        assertSame(h.c1view2, h.cluster1.findFocus());
 
-        setupRestoreDefaultFocus();
-        mMockViewGroup.removeAllViewsInLayout();
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(null, mMockViewGroup.findFocus());
+        h = new TestClusterHier();
+        h.c1view1.setFocusedByDefault(true);
+        h.cluster1.removeAllViewsInLayout();
+        h.cluster1.restoreDefaultFocus();
+        assertNull(h.cluster1.findFocus());
 
-        setupRestoreDefaultFocus();
-        mMockViewGroup.detachViewFromParent(mTextView);
-        mMockViewGroup.attachViewToParent(mTextView, 1, null);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mTextView, mMockViewGroup.findFocus());
+        h = new TestClusterHier();
+        h.c1view1.setFocusedByDefault(true);
+        h.cluster1.detachViewFromParent(h.c1view1);
+        h.cluster1.attachViewToParent(h.c1view1, 1, null);
+        h.cluster1.restoreDefaultFocus();
+        assertSame(h.c1view1, h.cluster1.findFocus());
 
-        setupRestoreDefaultFocus();
-        mMockViewGroup.detachViewFromParent(mTextView);
-        mMockViewGroup.removeDetachedView(mTextView, false);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
-        assertSame(mMockTextView, mMockViewGroup.findFocus());
+        h = new TestClusterHier();
+        h.c1view1.setFocusedByDefault(true);
+        h.cluster1.detachViewFromParent(h.c1view1);
+        h.cluster1.removeDetachedView(h.c1view1, false);
+        h.cluster1.restoreDefaultFocus();
+        assertSame(h.c1view2, h.cluster1.findFocus());
     }
 
     @UiThreadTest
@@ -1572,11 +1670,30 @@ public class ViewGroupTest implements CTSResult {
         mMockTextView.setFocusable(true);
         mTextView = new TextView(mContext);
         mTextView.setFocusable(true);
+        mTextView.setFocusableInTouchMode(true);
         mTextView.setFocusedByDefault(true);
         mMockViewGroup.addView(mMockTextView);
         mMockViewGroup.addView(mTextView);
-        mMockViewGroup.restoreDefaultFocus(View.FOCUS_FORWARD);
+        mMockViewGroup.restoreDefaultFocus();
         assertTrue(mTextView.isFocused());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testDefaultFocusWorksForClusters() {
+        TestClusterHier h = new TestClusterHier();
+        h.c2view2.setFocusedByDefault(true);
+        h.cluster1.setFocusedByDefault(true);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c1view1, h.top.findFocus());
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c2view2, h.top.findFocus());
+
+        // make sure focused in cluster takes priority in cluster-focus
+        h.c1view2.setFocusedByDefault(true);
+        h.c1view1.setFocusedInCluster();
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view1, h.top.findFocus());
     }
 
     @UiThreadTest
