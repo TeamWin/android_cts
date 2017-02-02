@@ -23,7 +23,7 @@ import java.lang.String;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerActivityVisibilityTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerActivityVisibilityTests
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";

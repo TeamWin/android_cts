@@ -24,7 +24,7 @@ import static android.server.cts.WindowManagerState.TRANSIT_KEYGUARD_UNOCCLUDE;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.KeyguardTransitionTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.KeyguardTransitionTests
  */
 public class KeyguardTransitionTests extends ActivityManagerTestBase {
 

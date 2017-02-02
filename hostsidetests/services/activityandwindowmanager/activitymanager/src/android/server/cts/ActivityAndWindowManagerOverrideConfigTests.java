@@ -28,7 +28,7 @@ import static android.server.cts.StateLogger.log;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityAndWindowManagerOverrideConfigTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityAndWindowManagerOverrideConfigTests
  */
 public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "LogConfigurationActivity";

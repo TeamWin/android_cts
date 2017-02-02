@@ -27,6 +27,7 @@ import com.android.tradefed.device.ITestDevice;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -341,14 +342,47 @@ public class WindowManagerState {
         }
     }
 
-    public void getMatchingVisibleWindowState(final String windowName,
-            List<WindowState> windowList) {
+    void getMatchingVisibleWindowState(final String windowName, List<WindowState> windowList) {
         windowList.clear();
         for (WindowState ws : mWindowStates) {
             if (ws.isShown() && windowName.equals(ws.getName())) {
                 windowList.add(ws);
             }
         }
+    }
+
+    WindowState getWindowByPackageName(String packageName, int windowType) {
+        for (WindowState ws : mWindowStates) {
+            final String name = ws.getName();
+            if (name == null || !name.contains(packageName)) {
+                continue;
+            }
+            if (windowType != ws.getType()) {
+                continue;
+            }
+            return ws;
+        }
+
+        return null;
+    }
+
+    void getWindowsByPackageName(String packageName, List<Integer> restrictToTypeList,
+            List<WindowState> outWindowList) {
+        outWindowList.clear();
+        for (WindowState ws : mWindowStates) {
+            final String name = ws.getName();
+            if (name == null || !name.contains(packageName)) {
+                continue;
+            }
+            if (restrictToTypeList != null && !restrictToTypeList.contains(ws.getType())) {
+                continue;
+            }
+            outWindowList.add(ws);
+        }
+    }
+
+    void sortWindowsByLayer(List<WindowState> windows) {
+        windows.sort(Comparator.comparingInt(WindowState::getLayer));
     }
 
     WindowState getWindowStateForAppToken(String appToken) {
@@ -1046,7 +1080,7 @@ public class WindowManagerState {
         @Override
         public String toString() {
             return "WindowState: {" + mAppToken + " " + mName
-                    + getWindowTypeSuffix(mWindowType) + "}"
+                    + getWindowTypeSuffix(mWindowType) + "}" + " type=" + mType
                     + " cf=" + mContainingFrame + " pf=" + mParentFrame;
         }
     }

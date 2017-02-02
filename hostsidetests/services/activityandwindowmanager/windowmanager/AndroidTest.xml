@@ -13,13 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS drag and drop host test cases">
+<configuration description="Config for CTS window manager host test cases">
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropTargetAppSdk23.apk" />
         <option name="test-file-name" value="CtsDeviceWindowFramesTestApp.apk" />
+        <option name="test-file-name" value="CtsDeviceAlertWindowTestApp.apk" />
+        <option name="test-file-name" value="CtsDeviceAlertWindowTestAppSdk25.apk" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsWindowManagerHostTestCases.jar" />

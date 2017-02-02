@@ -36,7 +36,7 @@ import static android.server.cts.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
  * The exact animation is unspecified and can be overridden.
  *
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerTransitionSelectionTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerTransitionSelectionTests
  */
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
 

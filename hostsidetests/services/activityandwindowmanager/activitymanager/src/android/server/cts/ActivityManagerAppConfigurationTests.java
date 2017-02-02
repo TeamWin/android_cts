@@ -21,7 +21,7 @@ import java.util.List;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
- * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test android.server.cts.ActivityManagerAppConfigurationTests
+ * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerAppConfigurationTests
  */
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
