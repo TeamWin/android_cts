@@ -15,6 +15,8 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.ddmlib.Log.LogLevel;
@@ -202,13 +204,13 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public boolean isPrepared() {
+    public boolean isPrepared(long timeout, TimeUnit unit) {
+        // returns true only if CountDownLatch reaches zero && no shards have setPrepared to false
         try {
-            mPreparedLatch.await();
+            return (mPreparedLatch.await(timeout, unit)) ? mPrepared : false;
         } catch (InterruptedException e) {
             return false;
         }
-        return mPrepared;
     }
 
     /**
@@ -271,6 +273,7 @@ public class ModuleRepo implements IModuleRepo {
             throw new IllegalArgumentException(
                     String.format("No config files found in %s", testsDir.getAbsolutePath()));
         }
+        Map<String, Integer> shardedTestCounts = new HashMap<>();
         for (File configFile : configFiles) {
             final String name = configFile.getName().replace(CONFIG_EXT, "");
             final String[] pathArg = new String[] { configFile.getAbsolutePath() };
@@ -318,6 +321,9 @@ public class ModuleRepo implements IModuleRepo {
                     if (mShards > 1) {
                          shardedTests = splitShardableTests(tests, buildInfo);
                     }
+                    if (shardedTests.size() > 1) {
+                        shardedTestCounts.put(id, shardedTests.size());
+                    }
                     for (IRemoteTest test : shardedTests) {
                         if (test instanceof IBuildReceiver) {
                             ((IBuildReceiver)test).setBuild(buildInfo);
@@ -330,6 +336,7 @@ public class ModuleRepo implements IModuleRepo {
                         configFile.getName()), e);
             }
         }
+        TestRunHandler.setTestRuns(new CompatibilityBuildHelper(buildInfo), shardedTestCounts);
         mModulesPerShard = mModuleCount / shards;
         if (mModuleCount % shards != 0) {
             mModulesPerShard++; // Round up

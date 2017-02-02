@@ -16,7 +16,10 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
+import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
+import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;
@@ -27,7 +30,6 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.ResultUploader;
 import com.android.compatibility.common.util.TestStatus;
-import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.IBuildInfo;
@@ -58,13 +60,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -89,6 +88,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             description = "retry a previous session.",
             importance = Importance.IF_UNSET)
     private Integer mRetrySessionId = null;
+
+    @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
+            description = "used with " + CompatibilityTest.RETRY_OPTION
+            + ", retry tests of a certain status. Possible values include \"failed\" and "
+            + "\"not_executed\".",
+            importance = Importance.IF_UNSET)
+    private RetryType mRetryType = null;
 
     @Option(name = "result-server", description = "Server to publish test results.")
     private String mResultServer;
@@ -124,6 +130,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private int mCurrentTestNum;
     private int mTotalTestsInModule;
 
+
+    // Whether modules can be marked done for this invocation. Initialized in invocationStarted()
+    // Visible for unit testing
+    protected boolean mCanMarkDone;
+    // Whether the current module has previously been marked done
+    private boolean mModuleWasDone;
+
     // Nullable. If null, "this" is considered the master and must handle
     // result aggregation and reporting. When not null, it should forward events
     // to the master.
@@ -156,6 +169,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             if (mDeviceSerial == null && buildInfo.getDeviceSerial() != null) {
                 mDeviceSerial = buildInfo.getDeviceSerial();
             }
+            mCanMarkDone = canMarkDone(mBuildHelper.getRecentCommandLineArgs());
         }
 
         if (isShardResultReporter()) {
@@ -239,26 +253,30 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunStarted(String id, int numTests) {
-        if (mCurrentModuleResult != null && mCurrentModuleResult.getId().equals(id)) {
-            // In case we get another test run of a known module, update the complete
-            // status to false to indicate it is not complete.
-            if (mCurrentModuleResult.isDone()) {
-                // modules run with HostTest treat each test class as a separate module.
-                // TODO(aaronholden): remove this case when JarHostTest is no longer calls
-                // testRunStarted for each test class.
-                mTotalTestsInModule += numTests;
-            } else {
-                // treat new tests as not executed tests from current module
-                mTotalTestsInModule +=
-                        Math.max(0, numTests - mCurrentModuleResult.getNotExecuted());
-            }
-            mCurrentModuleResult.setDone(false);
+        if (mCurrentModuleResult != null && mCurrentModuleResult.getId().equals(id)
+                && mCurrentModuleResult.isDone()) {
+            // Modules run with JarHostTest treat each test class as a separate module,
+            // resulting in additional unexpected test runs.
+            // This case exists only for N
+            mTotalTestsInModule += numTests;
         } else {
+            // Handle non-JarHostTest case
             mCurrentModuleResult = mResult.getOrCreateModule(id);
-            mTotalTestsInModule = numTests;
+            mModuleWasDone = mCurrentModuleResult.isDone();
+            if (!mModuleWasDone) {
+                // we only want to update testRun variables if the IModuleResult is not yet done
+                // otherwise leave testRun variables alone so isDone evaluates to true.
+                if (mCurrentModuleResult.getExpectedTestRuns() == 0) {
+                    mCurrentModuleResult.setExpectedTestRuns(TestRunHandler.getTestRuns(
+                            mBuildHelper, mCurrentModuleResult.getId()));
+                }
+                mCurrentModuleResult.addTestRun();
+            }
             // Reset counters
+            mTotalTestsInModule = numTests;
             mCurrentTestNum = 0;
         }
+        mCurrentModuleResult.inProgress(true);
     }
 
     /**
@@ -342,13 +360,30 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
+        mCurrentModuleResult.inProgress(false);
         mCurrentModuleResult.addRuntime(elapsedTime);
-        // Expect them to be equal, but greater than to be safe.
-        mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
-        mCurrentModuleResult.setNotExecuted(Math.max(mTotalTestsInModule - mCurrentTestNum, 0));
+        if (!mModuleWasDone) {
+            // Not executed count now represents an upper-bound for a fix to b/33211104.
+            // Only setNotExecuted this number if the module has already been completely executed.
+            int testCountDiff = Math.max(mTotalTestsInModule - mCurrentTestNum, 0);
+            if (isShardResultReporter()) {
+                // reset value, which is added to total count for master shard upon merge
+                mCurrentModuleResult.setNotExecuted(testCountDiff);
+            } else {
+                // increment value for master shard
+                mCurrentModuleResult.setNotExecuted(mCurrentModuleResult.getNotExecuted()
+                        + testCountDiff);
+            }
+            if (mCanMarkDone) {
+                // Only mark module done if status of the invocation allows it (mCanMarkDone) and
+                // if module has not already been marked done.
+                mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
+            }
+        }
         if (isShardResultReporter()) {
             // Forward module results to the master.
             mMasterResultReporter.mergeModuleResult(mCurrentModuleResult);
+            mCurrentModuleResult.resetTestRuns();
         }
     }
 
@@ -407,7 +442,6 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
         // NOTE: Everything after this line only applies to the master ResultReporter.
 
-
         synchronized(this) {
             // The master ResultReporter tracks the progress of all invocations across
             // shard ResultReporters. Writing results should not proceed until all
@@ -459,17 +493,24 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
         long startTime = mResult.getStartTime();
         try {
+            // Zip the full test results directory.
+            copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
+            copyFormattingFiles(mResultDir);
+
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
                     elapsedTime + startTime, mReferenceUrl, getLogUrl(),
                     mBuildHelper.getCommandLineArgs());
-            info("Test Result: %s", resultFile.getCanonicalPath());
-
-            // Zip the full test results directory.
-            copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
-            copyFormattingFiles(mResultDir);
             File zippedResults = zipResults(mResultDir);
+
+            // Create failure report after zip file so extra data is not uploaded
+            File failureReport = ResultHandler.createFailureReport(resultFile);
+            if (failureReport.exists()) {
+                info("Test Result: %s", failureReport.getCanonicalPath());
+            } else {
+                info("Test Result: %s", resultFile.getCanonicalPath());
+            }
             info("Full Result: %s", zippedResults.getCanonicalPath());
 
             saveLog(resultFile, zippedResults);
@@ -488,6 +529,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Override
     public void invocationFailed(Throwable cause) {
         warn("Invocation failed: %s", cause);
+        InvocationFailureHandler.setFailed(mBuildHelper, cause);
     }
 
     /**
@@ -609,6 +651,28 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 CLog.e(ioe);
             }
         }
+    }
+
+    /**
+     * Returns whether it is safe to mark modules as "done", given the invocation command-line
+     * arguments. Returns true unless this is a retry and specific filtering techniques are applied
+     * on the command-line, such as:
+     *   --retry-type failed
+     *   --include-filter
+     *   --exclude-filter
+     *   -t/--test
+     *   --subplan
+     */
+    private boolean canMarkDone(String args) {
+        if (mRetrySessionId == null) {
+            return true; // always allow modules to be marked done if not retry
+        }
+        return !(RetryType.FAILED.equals(mRetryType)
+                || args.contains(CompatibilityTest.INCLUDE_FILTER_OPTION)
+                || args.contains(CompatibilityTest.EXCLUDE_FILTER_OPTION)
+                || args.contains(CompatibilityTest.SUBPLAN_OPTION)
+                || args.matches(String.format(".* (-%s|--%s) .*",
+                CompatibilityTest.TEST_OPTION_SHORT_NAME, CompatibilityTest.TEST_OPTION)));
     }
 
     /**

@@ -204,7 +204,13 @@ public final class GlesStubActivity extends Activity {
 
         static protected int[] getIntValues(int fieldId, int count) throws IllegalAccessException{
             int[] resultInts = new int[count];
-            GLES20.glGetIntegerv(fieldId, resultInts, 0);
+            // The JNI wrapper layer has a piece of code that defines
+            // the expected array length. It defaults to 1 and looks
+            // like it's missing GLES3 variables. So, we won't be
+            // querying if the array has zero lenght.
+            if (count > 0) {
+                GLES20.glGetIntegerv(fieldId, resultInts, 0);
+            }
             return resultInts;
         }
     }
@@ -318,7 +324,7 @@ public final class GlesStubActivity extends Activity {
         }
     }
 
-	// NOTE: Changes to the types of the variables will carry over to
+    // NOTE: Changes to the types of the variables will carry over to
     // GraphicsDeviceInfo proto via GraphicsDeviceInfo. See
     // go/edi-userguide for details.
     static ImplementationVariable[] GLES2_IMPLEMENTATION_VARIABLES = {

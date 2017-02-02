@@ -68,21 +68,21 @@ public class AccountCheckTest extends AndroidTestCase {
     }
 
     /**
-     * Add an incompatible account, type A.
+     * Add an incompatible account, type A, no features.
      */
     public void testAddIncompatibleA() throws Exception {
         addAccount();
     }
 
     /**
-     * Add an incompatible account, type B.
+     * Add an incompatible account, type B.  Disallow feature only.
      */
     public void testAddIncompatibleB() throws Exception {
         addAccount(ACCOUNT_FEATURE_DISALLOWED);
     }
 
     /**
-     * Add an incompatible account, type C.
+     * Add an incompatible account, type C.  Has the disallow feature.
      */
     public void testAddIncompatibleC() throws Exception {
         addAccount(ACCOUNT_FEATURE_ALLOWED, ACCOUNT_FEATURE_DISALLOWED);

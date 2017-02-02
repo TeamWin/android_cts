@@ -299,11 +299,13 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_cross_profile_from_work_instruction,
                 new Intent(ByodHelperActivity.ACTION_TEST_CROSS_PROFILE_INTENTS_DIALOG));
 
+        /* Disable due to b/33571176
         mAppLinkingTest = new DialogTestListItem(this,
                 R.string.provisioning_app_linking,
                 "BYOD_AppLinking",
                 R.string.provisioning_byod_app_linking_instruction,
                 new Intent(ByodHelperActivity.ACTION_TEST_APP_LINKING_DIALOG));
+        */
 
         mKeyguardDisabledFeaturesTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_keyguard_disabled_features,
@@ -350,6 +352,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.profile_owner_permission_lockdown_test_info,
                 permissionCheckIntent);
 
+        /* Disable due to b/33571768
         mSelectWorkChallenge = new DialogTestListItem(this,
                 R.string.provisioning_byod_select_work_challenge,
                 "BYOD_SelectWorkChallenge",
@@ -361,6 +364,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_ConfirmWorkCredentials",
                 R.string.provisioning_byod_confirm_work_credentials_description,
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+        */
 
         mOrganizationInfoTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_organization_info,
@@ -399,13 +403,14 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mCredSettingsVisibleTest);
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
-        adapter.add(mWiFiDataUsageSettingsVisibleTest);
         adapter.add(mCellularDataUsageSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
 
         adapter.add(mCrossProfileIntentFiltersTestFromPersonal);
         adapter.add(mCrossProfileIntentFiltersTestFromWork);
+        /* Disable due to b/33571176
         adapter.add(mAppLinkingTest);
+        */
         adapter.add(mDisableNonMarketTest);
         adapter.add(mEnableNonMarketTest);
         adapter.add(mIntentFiltersTest);
@@ -414,11 +419,17 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mAuthenticationBoundKeyTest);
         adapter.add(mVpnTest);
         adapter.add(mTurnOffWorkFeaturesTest);
+        /* Disable due to b/33571768
         adapter.add(mSelectWorkChallenge);
         adapter.add(mConfirmWorkCredentials);
+        */
         adapter.add(mOrganizationInfoTest);
         adapter.add(mParentProfilePassword);
         adapter.add(mPolicyTransparencyTest);
+
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            adapter.add(mWiFiDataUsageSettingsVisibleTest);
+        }
 
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
             adapter.add(mDisallowAppsControlTest);

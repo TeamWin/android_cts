@@ -303,6 +303,8 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
     public void testAdbInstallFile() throws Exception {
         final List<String> output = AdbOutputReader.getOutput(5000L, new String[] {
                 "adb",
+                "-s",
+                getDevice().getSerialNumber(),
                 "shell",
                 "cmd",
                 "package",
