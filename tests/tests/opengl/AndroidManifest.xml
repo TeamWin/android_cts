@@ -19,7 +19,8 @@
     android:versionName="1.0" >
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-sdk android:minSdkVersion="14" />
+    <!-- GLES30 requires 18 -->
+    <uses-sdk android:minSdkVersion="18" />
     <uses-feature android:glEsVersion="0x00020000"/>
     <instrumentation
         android:name="android.support.test.runner.AndroidJUnitRunner"
