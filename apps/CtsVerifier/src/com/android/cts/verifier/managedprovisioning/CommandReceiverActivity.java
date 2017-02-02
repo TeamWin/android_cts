@@ -404,9 +404,13 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void uninstallHelperPackage() {
-        getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
-                PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), 0)
-                        .getIntentSender());
+        try {
+            getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
+                    PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), 0)
+                            .getIntentSender());
+        } catch (IllegalArgumentException e) {
+            // The package is not installed: that's fine
+        }
     }
 
     private void clearAllPolicies() throws Exception {
