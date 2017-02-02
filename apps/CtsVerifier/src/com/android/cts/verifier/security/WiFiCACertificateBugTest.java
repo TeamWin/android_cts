@@ -21,6 +21,7 @@ import android.app.KeyguardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.security.KeyChain;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -65,8 +66,6 @@ public class WiFiCACertificateBugTest extends PassFailButtons.Activity {
 
         mKeyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
 
-        getPassButton().setEnabled(false);
-        Button transferCertificateButton = (Button) findViewById(R.id.transfer_ca_certificate);
         final Button goToSettingsButton = (Button) findViewById(R.id.gotosettings);
         goToSettingsButton.setEnabled(false);
         final Button goToWifiSettingsButton = (Button) findViewById(R.id.gotowifisettings);
@@ -76,60 +75,69 @@ public class WiFiCACertificateBugTest extends PassFailButtons.Activity {
 
         final TextView finalStepTextView = (TextView) findViewById(R.id.clear_creds_textView);
 
-        goToSettingsButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Launch settings of the device
-                startActivityForResult(
-                        new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS), 0);
-                if (testResult) {
-                    getPassButton().setEnabled(true);
-                    finalStepTextView.setText(getResources().getString(R.string
-                            .sec_pass_test_instruction));
-                } else {
-                    finalStepTextView.setText(getResources().getString(R.string
-                            .sec_fail_test_instruction));
-                }
-            }
-        });
-        goToWifiSettingsButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Launch WiFi settings of the device
-                startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
-            }
-        });
-        transferCertificateButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (transferCertificateToDevice()) {
-                    openDialog(getResources().getString(R.string.sec_file_transferred_text));
-                    goToSettingsButton.setEnabled(true);
-                    goToWifiSettingsButton.setEnabled(true);
-                    certificateTrustCheckButton.setEnabled(true);
-                } else {
-                    openDialog(getResources().getString(R.string.sec_file_transfer_failed));
-                }
-            }
-        });
-        certificateTrustCheckButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Certificate caCert = readCertificate(convertFileToByteArray(certStagingFile));
-                if (caCert != null) {
-                    if (isCaCertificateTrusted(caCert)) {
-                        testResult = false;
-                        openDialog(getResources().getString(R.string.sec_cert_trusted_text));
+        final Button transferCertificateButton =
+                (Button) findViewById(R.id.transfer_ca_certificate);
+        if (!isWifiCertificateSupported()) {
+            transferCertificateButton.setEnabled(false);
+            getPassButton().setEnabled(true);
+            finalStepTextView.setText(R.string.sec_autopass_test_instruction);
+        } else {
+            getPassButton().setEnabled(false);
 
+            goToSettingsButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Launch settings of the device
+                    startActivityForResult(
+                            new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS), 0);
+                    if (testResult) {
+                        getPassButton().setEnabled(true);
+                        finalStepTextView.setText(getResources().getString(R.string
+                                .sec_pass_test_instruction));
                     } else {
-                        testResult = true;
-                        openDialog(getResources().getString(R.string.sec_cert_nottrusted_text));
+                        finalStepTextView.setText(getResources().getString(R.string
+                                .sec_fail_test_instruction));
                     }
-                } else {
-                    openDialog(getResources().getString(R.string.sec_read_cert_exception));
                 }
-            }
-        });
+            });
+            goToWifiSettingsButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Launch Internal Storage.
+                    startActivity(KeyChain.createInstallIntent());
+                }
+            });
+            transferCertificateButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (transferCertificateToDevice()) {
+                        openDialog(getResources().getString(R.string.sec_file_transferred_text));
+                        goToSettingsButton.setEnabled(true);
+                        goToWifiSettingsButton.setEnabled(true);
+                        certificateTrustCheckButton.setEnabled(true);
+                    } else {
+                        openDialog(getResources().getString(R.string.sec_file_transfer_failed));
+                    }
+                }
+            });
+            certificateTrustCheckButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Certificate caCert = readCertificate(convertFileToByteArray(certStagingFile));
+                    if (caCert != null) {
+                        if (isCaCertificateTrusted(caCert)) {
+                            testResult = false;
+                            openDialog(getResources().getString(R.string.sec_cert_trusted_text));
+                        } else {
+                            testResult = true;
+                            openDialog(getResources().getString(R.string.sec_cert_nottrusted_text));
+                        }
+                    } else {
+                        openDialog(getResources().getString(R.string.sec_read_cert_exception));
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -247,5 +255,12 @@ public class WiFiCACertificateBugTest extends PassFailButtons.Activity {
         } catch (CertificateException e) {
             return null;
         }
+    }
+
+    /*
+     * Checks if the installation of Wifi CA certificates is supported.
+     */
+    private boolean isWifiCertificateSupported() {
+        return KeyChain.createInstallIntent() != null;
     }
 }
