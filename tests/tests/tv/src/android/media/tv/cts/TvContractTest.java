@@ -173,10 +173,10 @@ public class TvContractTest extends AndroidTestCase {
         values.put(Programs.COLUMN_CHANNEL_ID, channelId);
         values.put(Programs.COLUMN_INTERNAL_PROVIDER_ID, "ID-4321");
         values.put(Programs.COLUMN_PREVIEW_VIDEO_URI, "http://test.com/preview.mp4");
-        values.put(Programs.COLUMN_PREVIEW_LAST_PLAYBACK_POSITION, 5000);
-        values.put(Programs.COLUMN_PREVIEW_DURATION, 60000);
-        values.put(Programs.COLUMN_PREVIEW_INTENT_URI, "preview_app_link_intent");
-        values.put(Programs.COLUMN_PREVIEW_WEIGHT, 100);
+        values.put(Programs.COLUMN_LAST_PLAYBACK_POSITION_MILLIS, 5000);
+        values.put(Programs.COLUMN_DURATION_MILLIS, 60000);
+        values.put(Programs.COLUMN_APP_LINK_INTENT_URI, "app_link_intent");
+        values.put(Programs.COLUMN_WEIGHT, 100);
         values.put(Programs.COLUMN_TITLE, "program_title");
         values.put(Programs.COLUMN_SHORT_DESCRIPTION, "short_description");
         values.put(Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
@@ -194,7 +194,7 @@ public class TvContractTest extends AndroidTestCase {
         values.put(Programs.COLUMN_POSTER_ART_ASPECT_RATIO, Programs.ASPECT_RATIO_2_3);
         values.put(Programs.COLUMN_THUMBNAIL_URI, "http://foo.com/thumbnail.jpg");
         values.put(Programs.COLUMN_THUMBNAIL_ASPECT_RATIO, Programs.ASPECT_RATIO_16_9);
-        values.put(Programs.COLUMN_LOGO, "http://foo.com/logo.jpg");
+        values.put(Programs.COLUMN_LOGO_URI, "http://foo.com/logo.jpg");
         values.put(Programs.COLUMN_AVAILABILITY, Programs.AVAILABILITY_AVAILABLE);
         values.put(Programs.COLUMN_STARTING_PRICE, "10.99 USD");
         values.put(Programs.COLUMN_OFFER_PRICE, "3.99 USD");
@@ -365,15 +365,15 @@ public class TvContractTest extends AndroidTestCase {
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_INTERNAL_PROVIDER_ID);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_VIDEO_URI);
             verifyIntegerColumn(cursor, expectedValues,
-                    Programs.COLUMN_PREVIEW_LAST_PLAYBACK_POSITION);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_DURATION);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_INTENT_URI);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_WEIGHT);
+                    Programs.COLUMN_LAST_PLAYBACK_POSITION_MILLIS);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_DURATION_MILLIS);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_APP_LINK_INTENT_URI);
+            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_WEIGHT);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_TYPE);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_WATCH_NEXT_TYPE);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_POSTER_ART_ASPECT_RATIO);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_THUMBNAIL_ASPECT_RATIO);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_LOGO);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_LOGO_URI);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_AVAILABILITY);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_STARTING_PRICE);
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_OFFER_PRICE);
