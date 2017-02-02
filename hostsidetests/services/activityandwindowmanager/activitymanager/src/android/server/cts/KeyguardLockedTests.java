@@ -123,7 +123,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testEnterPipOverKeyguard() throws Exception {
-        if (!isHandheld()) {
+        if (!isHandheld() || !supportsPip()) {
             return;
         }
 

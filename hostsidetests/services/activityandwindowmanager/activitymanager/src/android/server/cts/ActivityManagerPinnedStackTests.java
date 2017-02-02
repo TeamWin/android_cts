@@ -94,6 +94,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testNonTappablePipActivity() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch the tap-to-finish activity at a specific place
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -110,6 +112,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackDefaultBounds() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
 
@@ -132,6 +136,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackMovementBounds() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
 
@@ -154,6 +160,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackOutOfBoundsInsetsNonNegative() throws Exception {
+        if (!supportsPip()) return;
+
         final WindowManagerState wmState = mAmWmState.getWmState();
 
         // Launch an activity into the pinned stack
@@ -180,6 +188,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackInBoundsAfterRotation() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch an activity into the pinned stack
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -199,6 +209,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackOffsetForIME() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch an activity which shows an IME
         launchActivity(LAUNCH_IME_WITH_PIP_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
@@ -215,6 +227,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testEnterPipAspectRatio() throws Exception {
+        if (!supportsPip()) return;
+
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
                 EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
@@ -228,6 +242,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testResizePipAspectRatio() throws Exception {
+        if (!supportsPip()) return;
+
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
                 EXTRA_SET_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
@@ -247,6 +263,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testEnterPipExtremeAspectRatios() throws Exception {
+        if (!supportsPip()) return;
+
         // Assert that we could not create a pinned stack with an extreme aspect ratio
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -255,6 +273,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testSetPipExtremeAspectRatios() throws Exception {
+        if (!supportsPip()) return;
+
         // Try to resize the a normal pinned stack to an extreme aspect ratio and ensure that
         // fails (the aspect ratio remains the same)
         launchActivity(PIP_ACTIVITY,
@@ -269,6 +289,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testDisallowPipLaunchFromStoppedActivity() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch the bottom pip activity
         launchActivity(PIP_ON_STOP_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
@@ -281,6 +303,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testAutoEnterPictureInPicture() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -294,6 +318,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testAutoEnterPictureInPictureLaunchActivity() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -313,6 +339,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testAutoEnterPictureInPictureFinish() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -326,6 +354,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testAutoEnterPictureInPictureAspectRatio() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch the PIP activity on pause, and set the aspect ratio
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP_ON_PAUSE, "true",
@@ -349,6 +379,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testAutoEnterPictureInPictureOverPip() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch another PIP activity
         launchActivity(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
@@ -370,6 +402,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPipUnPipOverHome() throws Exception {
+        if (!supportsPip()) return;
+
         // Go home
         launchHomeActivity();
         // Launch an auto pip activity
@@ -390,6 +424,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPipUnPipOverApp() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);
 
@@ -412,6 +448,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRemovePipWithNoFullscreenStack() throws Exception {
+        if (!supportsPip()) return;
+
         // Start with a clean slate, remove all the stacks but home
         removeStacks(ALL_STACK_IDS_BUT_HOME);
 
@@ -432,6 +470,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRemovePipWithVisibleFullscreenStack() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a fullscreen activity, and a pip activity over that
         launchActivity(TEST_ACTIVITY);
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -454,6 +494,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
         // launch a pip activity over home
         launchActivity(TEST_ACTIVITY);
@@ -477,6 +519,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testPinnedStackAlwaysOnTop() throws Exception {
+        if (!supportsPip()) return;
+
         // Launch activity into pinned stack and assert it's on top.
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         assertPinnedStackExists();
@@ -494,6 +538,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testAppOpsDenyPipOnPause() throws Exception {
+        if (!supportsPip()) return;
+
         // Disable enter-pip-on-hide and try to enter pip
         setAppOpsOpToMode(ActivityManagerTestBase.componentName,
                 APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_IGNORED);
@@ -512,6 +558,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testEnterPipFromTaskWithMultipleActivities() throws Exception {
+        if (!supportsPip()) return;
+
         // Try to enter picture-in-picture from an activity that has more than one activity in the
         // task and ensure that it works
         launchActivity(LAUNCHER_ENTER_PIP_ACTIVITY);
@@ -520,6 +568,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testEnterPipWithResumeWhilePausingActivityNoStop() throws Exception {
+        if (!supportsPip()) return;
+
         /*
          * Launch the resumeWhilePausing activity and ensure that the PiP activity did not get
          * stopped and actually went into the pinned stack.
@@ -549,6 +599,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     }
 
     public void testDisallowEnterPipActivityLocked() throws Exception {
+        if (!supportsPip()) return;
+
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
         ActivityTask task =
                 mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID).getTopTask();
