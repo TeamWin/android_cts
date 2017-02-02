@@ -33,7 +33,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_SDK_VERSION := current
+# 18 required for GLES 3, but going that low will stop some ABIs from
+# building. Using official Nougat level 24 to avoid missing something.
+LOCAL_SDK_VERSION := 24
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
