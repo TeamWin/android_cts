@@ -18,10 +18,11 @@ package com.android.cts.verifier.managedprovisioning;
 
 import android.app.Activity;
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.admin.DevicePolicyManager;
 import android.widget.Toast;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
@@ -66,12 +67,20 @@ public class Utils {
         }
     }
 
+    static void provisionManagedProfile(Activity activity, ComponentName admin, int requestCode) {
+        Intent sending = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
+        sending.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, admin);
+        if (sending.resolveActivity(activity.getPackageManager()) != null) {
+            activity.startActivityForResult(sending, requestCode);
+        } else {
+            showToast(activity, R.string.provisioning_byod_disabled);
+        }
+    }
+
     static void showBugreportNotification(Context context, String msg, int notificationId) {
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.createNotificationChannel(
-                new NotificationChannel(TAG, TAG, NotificationManager.IMPORTANCE_DEFAULT));
-        Notification notification = new Notification.Builder(context, TAG)
+        Notification notification = new Notification.Builder(context)
                 .setSmallIcon(R.drawable.icon)
                 .setContentTitle(context.getString(
                         R.string.device_owner_requesting_bugreport_tests))
@@ -79,5 +88,9 @@ public class Utils {
                 .setStyle(new Notification.BigTextStyle().bigText(msg))
                 .build();
         mNotificationManager.notify(notificationId, notification);
+    }
+
+    static void showToast(Context context, int messageId) {
+        Toast.makeText(context, messageId, Toast.LENGTH_SHORT).show();
     }
 }

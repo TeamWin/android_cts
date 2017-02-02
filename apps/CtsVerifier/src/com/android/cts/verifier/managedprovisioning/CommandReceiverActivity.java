@@ -69,8 +69,7 @@ public class CommandReceiverActivity extends Activity {
             "allow-only-system-input-methods";
     public static final String COMMAND_ALLOW_ONLY_SYSTEM_ACCESSIBILITY_SERVICES =
             "allow-only-system-accessibility-services";
-    public static final String COMMAND_DEVICE_OWNER_CLEAR_POLICIES = "do-clear-policies";
-    public static final String COMMAND_PROFILE_OWNER_CLEAR_POLICIES = "po-clear-policies";
+    public static final String COMMAND_CLEAR_POLICIES = "clear-policies";
     public static final String COMMAND_REMOVE_DEVICE_OWNER = "remove-device-owner";
     public static final String COMMAND_REQUEST_BUGREPORT = "request-bugreport";
     public static final String COMMAND_SET_USER_ICON = "set-user-icon";
@@ -197,7 +196,7 @@ public class CommandReceiverActivity extends Activity {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
                     }
-                    clearAllPolicies();
+                    clearAllPoliciesAndRestrictions();
                     mDpm.clearDeviceOwnerApp(getPackageName());
                 } break;
                 case COMMAND_REQUEST_BUGREPORT: {
@@ -211,17 +210,21 @@ public class CommandReceiverActivity extends Activity {
                                 Utils.BUGREPORT_NOTIFICATION_ID);
                     }
                 } break;
-                case COMMAND_DEVICE_OWNER_CLEAR_POLICIES: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
-                        return;
+                case COMMAND_CLEAR_POLICIES: {
+                    int mode = intent.getIntExtra(PolicyTransparencyTestListActivity.EXTRA_MODE,
+                            PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER);
+                    if (mode == PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER) {
+                        if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                            return;
+                        }
+                        clearAllPoliciesAndRestrictions();
+                    } else if(mode == PolicyTransparencyTestListActivity.MODE_PROFILE_OWNER) {
+                        if (!mDpm.isProfileOwnerApp(getPackageName())) {
+                            return;
+                        }
+                        clearProfileOwnerRelatedPoliciesAndRestrictions();
                     }
-                    clearAllPolicies();
-                } break;
-                case COMMAND_PROFILE_OWNER_CLEAR_POLICIES: {
-                    if (!mDpm.isProfileOwnerApp(getPackageName())) {
-                        return;
-                    }
-                    clearProfileOwnerRelatedPolicies();
+                    // No policies need to be cleared for COMP at the moment.
                 } break;
                 case COMMAND_SET_USER_ICON: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
@@ -413,25 +416,15 @@ public class CommandReceiverActivity extends Activity {
         }
     }
 
-    private void clearAllPolicies() throws Exception {
+    private void clearAllPoliciesAndRestrictions() throws Exception {
         clearProfileOwnerRelatedPolicies();
+        clearPolicyTransparencyUserRestriction(
+                PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER);
 
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_ADD_USER);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_ADJUST_VOLUME);
+        // There are a few user restrictions that are used, but not for policy transparency
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_BLUETOOTH);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_CELL_BROADCASTS);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_TETHERING);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_VPN);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_WIFI);
         mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_DATA_ROAMING);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_DEBUGGING_FEATURES);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_FACTORY_RESET);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_FUN);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_NETWORK_RESET);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_OUTGOING_BEAM);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_REMOVE_USER);
 
         mDpm.setDeviceOwnerLockScreenInfo(mAdmin, null);
         mDpm.setKeyguardDisabled(mAdmin, false);
@@ -458,18 +451,25 @@ public class CommandReceiverActivity extends Activity {
                 PackageManager.DONT_KILL_APP);
     }
 
-    private void clearProfileOwnerRelatedPolicies() {
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_APPS_CONTROL);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_CONFIG_CREDENTIALS);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_SHARE_LOCATION);
-        mDpm.clearUserRestriction(mAdmin, UserManager.DISALLOW_UNINSTALL_APPS);
+    private void clearProfileOwnerRelatedPoliciesAndRestrictions() {
+        clearPolicyTransparencyUserRestriction(
+                PolicyTransparencyTestListActivity.MODE_PROFILE_OWNER);
+        clearProfileOwnerRelatedPolicies();
+    }
 
+    private void clearProfileOwnerRelatedPolicies() {
         mDpm.setKeyguardDisabledFeatures(mAdmin, 0);
         mDpm.setPasswordQuality(mAdmin, 0);
         mDpm.setMaximumTimeToLock(mAdmin, 0);
         mDpm.setPermittedAccessibilityServices(mAdmin, null);
         mDpm.setPermittedInputMethods(mAdmin, null);
+    }
+
+    private void clearPolicyTransparencyUserRestriction(int mode) {
+        for (String userRestriction : UserRestrictions.getUserRestrictionsForPolicyTransparency(
+                mode)) {
+            mDpm.clearUserRestriction(mAdmin, userRestriction);
+        }
     }
 
     private void removeManagedProfile() {

@@ -72,6 +72,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
     private static final String ENTERPRISE_PRIVACY_TEST_ID = "ENTERPRISE_PRIVACY";
     private static final String NETWORK_LOGGING_UI_TEST_ID = "NETWORK_LOGGING_UI";
+    public static final String COMP_TEST_ID = "COMP_UI";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
     @Override
@@ -292,7 +293,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
-                PolicyTransparencyTestListActivity.EXTRA_IS_DEVICE_OWNER, true);
+                PolicyTransparencyTestListActivity.EXTRA_MODE,
+                PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER);
         // So that PolicyTransparencyTestListActivity knows which test to update with the result:
         policyTransparencyTestIntent.putExtra(
                 PolicyTransparencyTestActivity.EXTRA_TEST_ID, POLICY_TRANSPARENCY_TEST_ID);
@@ -308,6 +310,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         adapter.add(createTestItem(this, ENTERPRISE_PRIVACY_TEST_ID,
                 R.string.enterprise_privacy_test,
                 enterprisePolicyTestIntent));
+
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
+            Intent compIntent = new Intent(this, CompTestActivity.class)
+                    .putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, COMP_TEST_ID);
+            adapter.add(createTestItem(this, COMP_TEST_ID,
+                    R.string.comp_test,
+                    compIntent));
+        }
 
         // Network logging UI
         adapter.add(createInteractiveTestItem(this, NETWORK_LOGGING_UI_TEST_ID,
