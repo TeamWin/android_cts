@@ -64,6 +64,7 @@ public class Utils {
     /** Flag Secure Test intent constants */
     public static final String FLAG_SECURE_HASRESUMED = ACTION_PREFIX + "flag_secure_hasResumed";
     public static final String APP_3P_HASRESUMED = ACTION_PREFIX + "app_3p_hasResumed";
+    public static final String APP_3P_HASDRAWED = ACTION_PREFIX + "app_3p_hasDrawed";
     public static final String TEST_ACTIVITY_LOADED = ACTION_PREFIX + "test_activity_hasResumed";
 
     /** Two second timeout for getting back assist context */

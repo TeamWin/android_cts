@@ -57,23 +57,23 @@ public class SubPlanCreator {
     public static final String FAILED = "failed";
     public static final String NOT_EXECUTED = "not_executed";
     // static mapping of result types to TestStatuses
-    private static final Map<String, TestStatus> mStatusMap;
+    private static final Map<String, TestStatus> STATUS_MAP;
     static {
         Map<String, TestStatus> statusMap = new HashMap<String, TestStatus>();
         statusMap.put(PASSED, TestStatus.PASS);
         statusMap.put(FAILED, TestStatus.FAIL);
-        mStatusMap = Collections.unmodifiableMap(statusMap);
+        STATUS_MAP = Collections.unmodifiableMap(statusMap);
     }
 
     @Option (name = "name", shortName = 'n', description = "the name of the subplan to create",
             importance=Importance.IF_UNSET)
     private String mSubPlanName = null;
 
-    @Option (name = "session", shortName = 's', description = "the session id to derive from",
+    @Option (name = "session", description = "the session id to derive from",
             importance=Importance.IF_UNSET)
     private Integer mSessionId = null;
 
-    @Option (name = "result-type", shortName = 'r',
+    @Option (name = "result-type",
             description = "the result type to include. One of passed, failed, not_executed."
             + " Option may be repeated",
             importance=Importance.IF_UNSET)
@@ -183,10 +183,9 @@ public class SubPlanCreator {
         if (mModuleName != null) {
             subPlan.addIncludeFilter(new TestFilter(mAbiName, mModuleName, mTestName).toString());
         }
-
+        Set<TestStatus> statusesToRun = getStatusesToRun();
         for (IModuleResult module : mResult.getModules()) {
             if (shouldRunModule(module)) {
-                Set<TestStatus> statusesToRun = getStatusesToRun();
                 TestFilter moduleInclude =
                             new TestFilter(module.getAbi(), module.getName(), null /*test*/);
                 if (shouldRunEntireModule(module)) {
@@ -280,7 +279,7 @@ public class SubPlanCreator {
         for (String resultType : mResultTypes) {
             // no test status exists for not-executed tests
             if (resultType != NOT_EXECUTED) {
-                statusesToRun.add(mStatusMap.get(resultType));
+                statusesToRun.add(STATUS_MAP.get(resultType));
             }
         }
         return statusesToRun;

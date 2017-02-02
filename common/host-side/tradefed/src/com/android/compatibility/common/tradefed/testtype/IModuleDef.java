@@ -23,6 +23,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.IRuntimeHintProvider;
 
 import java.io.File;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -65,9 +66,13 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     void setPreparerWhitelist(Set<String> preparerWhitelist);
 
     /**
-     * Runs the module's precondition checks and setup tasks.
+     * Pushes dynamic configuration, then runs the module's precondition checks and setup tasks.
+     * @param skipPrep whether preparation should be skipped
+     * @param preconditionArgs arguments to set on precondition preparers for the module, taking
+     * format arg-name:arg-value. If "arg-value" is unset, the value will default to "true".
      * @return whether preparation succeeded.
      */
-    boolean prepare(boolean skipPrep) throws DeviceNotAvailableException;
+    boolean prepare(boolean skipPrep, List<String> preconditionArgs)
+            throws DeviceNotAvailableException;
 
 }

@@ -158,6 +158,22 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_28333006);
     }
 
+    public void testStagefright_bug_14388161() throws Exception {
+        doStagefrightTestMediaPlayer(R.raw.bug_14388161);
+    }
+
+    public void testStagefright_cve_2016_3755() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3755);
+    }
+
+    public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
+    }
+
+    public void testStagefright_bug_27855419_CVE_2016_2463() throws Exception {
+        doStagefrightTest(R.raw.bug_27855419);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -353,7 +369,13 @@ public class StagefrightTest extends InstrumentationTestCase {
         for (int t = 0; t < numtracks; t++) {
             // find all the available decoders for this format
             ArrayList<String> matchingCodecs = new ArrayList<String>();
-            MediaFormat format = ex.getTrackFormat(t);
+            MediaFormat format = null;
+            try {
+                format = ex.getTrackFormat(t);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "could not get track format for track " + t);
+                continue;
+            }
             String mime = format.getString(MediaFormat.KEY_MIME);
             for (MediaCodecInfo info: codecList.getCodecInfos()) {
                 if (info.isEncoder()) {

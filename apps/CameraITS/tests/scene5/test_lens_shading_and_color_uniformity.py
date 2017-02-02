@@ -52,16 +52,16 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.read_3a(props))
-        # Converge 3A and get the estimates.
-        sens, exp, gains, xform, focus = cam.do_3a(get_results=True,
-                                                   do_af=False,
-                                                   lock_ae=True,
-                                                   lock_awb=True)
-        print "AE sensitivity %d, exposure %dms" % (sens, exp / 1000000.0)
-        print "AWB gains", gains
-        print "AWB transform", xform
-        print "AF distance", focus
+        if its.caps.read_3a(props):
+            # Converge 3A and get the estimates.
+            sens, exp, gains, xform, focus = cam.do_3a(get_results=True,
+                                                       do_af=False,
+                                                       lock_ae=True,
+                                                       lock_awb=True)
+            print "AE sensitivity %d, exposure %dms" % (sens, exp / 1000000.0)
+            print "AWB gains", gains
+            print "AWB transform", xform
+            print "AF distance", focus
         req = its.objects.auto_capture_request()
         img_size = its.objects.get_available_output_sizes("yuv", props)
         w = img_size[0][0]

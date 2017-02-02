@@ -50,12 +50,12 @@ public class ReportLogCollector implements ITargetCleaner {
 
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError,
-            BuildError, DeviceNotAvailableException {
+        BuildError, DeviceNotAvailableException {
         prepareReportLogContainers(device, buildInfo);
     }
 
     private void addBuildInfo(ITestDevice device, IBuildInfo buildInfo, String key, String value)
-            throws DeviceNotAvailableException {
+        throws DeviceNotAvailableException {
     }
 
     private void prepareReportLogContainers(ITestDevice device, IBuildInfo buildInfo) {

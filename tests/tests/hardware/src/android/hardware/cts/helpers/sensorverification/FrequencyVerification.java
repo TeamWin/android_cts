@@ -75,7 +75,10 @@ public class FrequencyVerification extends AbstractSensorVerification {
                 sensor.getName(),
                 sensor.getMinDelay(),
                 sensor.getMaxDelay()));
+
+        double minDelayUs = sensor.getMinDelay();
         double maxDelayUs = sensor.getMaxDelay();
+
         if (maxDelayUs <= 0) {
             // This sensor didn't report its maxDelay.
             // It might be only capable of producing its max rate.
@@ -83,22 +86,32 @@ public class FrequencyVerification extends AbstractSensorVerification {
             Log.w(LOG_TAG, "This sensor (" + sensor.getName() + ") didn't report its maxDelay."
                     + "Please update it in the sensor HAL to avoid failures in coming "
                     + "android releases.");
-            maxDelayUs = sensor.getMinDelay();
+            maxDelayUs = minDelayUs;
         }
 
         if (environment.isSensorSamplingRateOverloaded()) {
-            maxDelayUs = sensor.getMinDelay();
+            maxDelayUs = minDelayUs;
         }
 
         // Convert the rateUs parameter into a delay in microseconds and rate in Hz.
         double delayUs = environment.getRequestedSamplingPeriodUs();
 
-        // When rateUs > maxDelay, the sensor can do as if we requested maxDelay.
-        double upperExpectedHz = SensorCtsHelper.getFrequency(
-                Math.min(delayUs, maxDelayUs), TimeUnit.MICROSECONDS);
-        // When rateUs < minDelay, the sensor can do as if we requested minDelay
-        double lowerExpectedHz = SensorCtsHelper.getFrequency(
-                Math.max(delayUs, sensor.getMinDelay()), TimeUnit.MICROSECONDS);
+        double lowerExpectedHz = 0;
+        double upperExpectedHz = 0;
+
+        // If sensor reports its maxDelay, then
+        // lowerExpectedHz = upperExpectedHz and minRate <= expectedHz <= maxRate.
+        // If sensor do not report its maxDelay, then
+        // lowerExpectedHz is as per request (obviously <= maxRate) & upperExpectedHz = maxRate.
+        if (sensor.getMaxDelay() > 0) {
+            delayUs = SensorCtsHelper.clamp(delayUs, minDelayUs, maxDelayUs);
+            double expectedHz = SensorCtsHelper.getFrequency(delayUs, TimeUnit.MICROSECONDS);
+            lowerExpectedHz = upperExpectedHz = expectedHz;
+        } else {
+            delayUs = Math.max(minDelayUs, delayUs);
+            lowerExpectedHz = SensorCtsHelper.getFrequency(delayUs, TimeUnit.MICROSECONDS);
+            upperExpectedHz = SensorCtsHelper.getFrequency(minDelayUs, TimeUnit.MICROSECONDS);
+        }
 
         // Set the pass thresholds based on default multipliers.
         double lowerThresholdHz = lowerExpectedHz * DEFAULT_LOWER_THRESHOLD / 100;

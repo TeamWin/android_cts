@@ -121,6 +121,10 @@ public class CompatibilityBuildHelper {
         }
     }
 
+    public String getRecentCommandLineArgs() {
+        return mBuildInfo.getBuildAttributes().get(COMMAND_LINE_ARGS);
+    }
+
     public String getSuiteBuild() {
         return mBuildInfo.getBuildAttributes().get(SUITE_BUILD);
     }
@@ -255,6 +259,20 @@ public class CompatibilityBuildHelper {
                     testsDir.getAbsolutePath()));
         }
         return testsDir;
+    }
+
+    /**
+     * @return a {@link File} in the resultDir for logging invocation failures
+     */
+    public File getInvocationFailureFile() throws FileNotFoundException {
+        return new File(getResultDir(), "invocation_failure.txt");
+    }
+
+    /**
+     * @return a {@link File} in the resultDir for counting expected test runs
+     */
+    public File getTestRunsFile() throws FileNotFoundException {
+        return new File(getResultDir(), "test_runs.txt");
     }
 
     /**

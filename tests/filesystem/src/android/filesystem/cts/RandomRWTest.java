@@ -17,7 +17,7 @@
 package android.filesystem.cts;
 
 import android.cts.util.CtsAndroidTestCase;
-
+import android.os.Environment;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 
@@ -51,11 +51,17 @@ public class RandomRWTest extends CtsAndroidTestCase {
     @CddTest(requirement="8.2")
     public void testRandomUpdate() throws Exception {
         final int WRITE_BUFFER_SIZE = 4 * 1024;
-        final long fileSize = 256 * 1024 * 1024;
+        final long usableSpace = Environment.getDataDirectory().getUsableSpace();
+        long fileSize = 256 * 1024 * 1024;
+        while (usableSpace < fileSize) {
+            fileSize = fileSize / 2;
+        }
         String streamName = "test_random_update";
         DeviceReportLog report = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-        FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize,
+        if (fileSize > FileUtil.BUFFER_SIZE) {
+            FileUtil.doRandomWriteTest(getContext(), DIR_RANDOM_WR, report, fileSize,
                 WRITE_BUFFER_SIZE);
+        }
         report.submit(getInstrumentation());
     }
 }

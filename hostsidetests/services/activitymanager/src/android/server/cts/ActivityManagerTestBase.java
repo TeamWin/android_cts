@@ -35,6 +35,8 @@ import static android.server.cts.StateLogger.log;
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
+    private static final boolean PRETEND_DEVICE_SUPPORTS_DOCKING = false;
+    private static final boolean PRETEND_DEVICE_SUPPORTS_ROTATION = false;
 
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
     // updated.
@@ -262,6 +264,16 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean supportsFreeform() throws DeviceNotAvailableException {
         return hasDeviceFeature("android.software.freeform_window_management")
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
+    }
+
+    protected boolean supportsMultiWindowMode() throws DeviceNotAvailableException {
+        return !hasDeviceFeature("android.hardware.type.watch")
+                || PRETEND_DEVICE_SUPPORTS_DOCKING;
+    }
+
+    protected boolean supportsScreenRotation() throws DeviceNotAvailableException {
+        return !hasDeviceFeature("android.hardware.type.watch")
+                || PRETEND_DEVICE_SUPPORTS_ROTATION;
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {

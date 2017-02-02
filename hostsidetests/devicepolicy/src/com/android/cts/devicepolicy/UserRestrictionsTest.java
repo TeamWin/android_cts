@@ -45,7 +45,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                         removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                                 mDeviceOwnerUserId));
                 assertTrue("Some user restrictions are still set",
-                        runTests("userrestrictions.CheckNoOwnerRestrictionsTest", mDeviceOwnerUserId));
+                        runTests("userrestrictions.CheckNoOwnerRestrictionsTest",
+                                mDeviceOwnerUserId));
             }
 
             // DO/PO might have set DISALLOW_REMOVE_USER, so it needs to be done after removing

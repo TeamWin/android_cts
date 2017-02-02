@@ -157,7 +157,6 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
     }
 
     private void setUpEnvironment() throws Exception {
-        device.disconnectFromWifi();
         dhryMin = Double.MAX_VALUE;
         dhryMax = Double.MIN_VALUE;
         Thread.sleep(600000);
@@ -220,12 +219,21 @@ public class SustainedPerformanceHostTest extends DeviceTestCase {
         device.executeShellCommand("settings put global airplane_mode_on 0");
         device.executeShellCommand("am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false");
 
+        double resDhry = dhrystoneResultsWithMode.get(2);
+        double resApp = appResultsWithMode.get(2);
+
+        /* Report if performance is below 5% margin for both dhrystone and shader */
+        if ((resDhry > 5) || (resApp > 5)) {
+            Log.w("SustainedPerformanceHostTests",
+                  "Sustainable mode results, Dhrystone: " + resDhry + " App: " + resApp);
+        }
+
         /*
-         * Checks if the performance in the mode is consistent with
+         * Error if the performance in the mode is not consistent with
          * 5% error margin for shader and 10% error margin for dhrystone.
          */
         assertFalse("Results in the mode are not sustainable",
-                (dhrystoneResultsWithMode.get(2) > 10) ||
-                (appResultsWithMode.get(2)) > 5);
+                    (resDhry > 15) ||
+                    (resApp > 5));
     }
 }

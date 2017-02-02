@@ -16,17 +16,30 @@
 
 package android.server.cts;
 
+import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.log.LogUtil.CLog;
+
 public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String NO_RELAUNCH_ACTIVITY_NAME = "NoRelaunchActivity";
 
     public void testRotation90Relaunch() throws Exception{
+        if (!supportsScreenRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
+
         // Should relaunch on every rotation and receive no onConfigurationChanged()
         testRotation(TEST_ACTIVITY_NAME, 1, 1, 0);
     }
 
     public void testRotation90NoRelaunch() throws Exception {
+        if (!supportsScreenRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
+
         // Should receive onConfigurationChanged() on every rotation and no relaunch
         testRotation(NO_RELAUNCH_ACTIVITY_NAME, 1, 0, 1);
     }
