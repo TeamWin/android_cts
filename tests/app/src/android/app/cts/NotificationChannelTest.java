@@ -89,8 +89,13 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertNull(channel.getVibrationPattern());
         channel.setVibrationPattern(pattern);
         assertEquals(pattern, channel.getVibrationPattern());
-        channel.enableVibration(true);
         assertTrue(channel.shouldVibrate());
+
+        channel.setVibrationPattern(new long[]{});
+        assertEquals(false, channel.shouldVibrate());
+
+        channel.setVibrationPattern(null);
+        assertEquals(false, channel.shouldVibrate());
     }
 
     public void testSound() {
