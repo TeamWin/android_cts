@@ -18,6 +18,8 @@ package android.app.cts;
 
 import android.app.Notification;
 import android.app.Notification.MessagingStyle.Message;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.RemoteInput;
 import android.content.Context;
@@ -42,6 +44,10 @@ public class NotificationTest extends AndroidTestCase {
     private static final String URI_STRING = "uriString";
     private static final String ACTION_TITLE = "actionTitle";
     private static final int TOLERANCE = 200;
+    private static final long TIMEOUT = 4000;
+    private static final NotificationChannel CHANNEL = new NotificationChannel("id", "name",
+            NotificationManager.IMPORTANCE_HIGH);
+    private static final String SHORTCUT_ID = "shortcutId";
 
     @Override
     protected void setUp() throws Exception {
@@ -62,6 +68,15 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(notificationTime, mNotification.when);
         assertEquals(0, mNotification.icon);
         assertEquals(TICKER_TEXT, mNotification.tickerText);
+        assertEquals(1, mNotification.number);
+    }
+
+    public void testBuilderConstructor() {
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId()).build();
+        assertEquals(CHANNEL.getId(), mNotification.getChannel());
+        assertEquals(Notification.BADGE_ICON_LARGE, mNotification.getBadgeIcon());
+        assertNull(mNotification.getShortcutId());
+        assertEquals((long) 0, mNotification.getTimeout());
     }
 
     public void testDescribeContents() {
@@ -71,7 +86,12 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testWriteToParcel() {
-        mNotification = new Notification();
+
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .chooseBadgeIcon(Notification.BADGE_ICON_SMALL)
+                .setShortcutId(SHORTCUT_ID)
+                .setTimeout(TIMEOUT)
+                .build();
         mNotification.icon = 0;
         mNotification.number = 1;
         final Intent intent = new Intent();
@@ -97,6 +117,7 @@ public class NotificationTest extends AndroidTestCase {
         mNotification.ledOnMS = 0;
         mNotification.ledOffMS = 0;
         mNotification.iconLevel = 0;
+
         Parcel parcel = Parcel.obtain();
         mNotification.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -120,6 +141,10 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.ledOnMS, result.ledOnMS);
         assertEquals(mNotification.ledOffMS, result.ledOffMS);
         assertEquals(mNotification.iconLevel, result.iconLevel);
+        assertEquals(mNotification.getShortcutId(), result.getShortcutId());
+        assertEquals(mNotification.getBadgeIcon(), result.getBadgeIcon());
+        assertEquals(mNotification.getTimeout(), result.getTimeout());
+        assertEquals(mNotification.getChannel(), result.getChannel());
 
         mNotification.contentIntent = null;
         parcel = Parcel.obtain();
@@ -170,17 +195,23 @@ public class NotificationTest extends AndroidTestCase {
     public void testBuilder() {
         final Intent intent = new Intent();
         final PendingIntent contentIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
-        mNotification = new Notification.Builder(mContext, "channel_id")
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
                 .setContentIntent(contentIntent)
+                .chooseBadgeIcon(Notification.BADGE_ICON_NONE)
+                .setShortcutId(SHORTCUT_ID)
+                .setTimeout(TIMEOUT)
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
-        assertEquals(mNotification.getChannel(), "channel_id");
+        assertEquals(CHANNEL.getId(), mNotification.getChannel());
+        assertEquals(Notification.BADGE_ICON_NONE, mNotification.getBadgeIcon());
+        assertEquals(SHORTCUT_ID, mNotification.getShortcutId());
+        assertEquals(TIMEOUT, mNotification.getTimeout());
     }
 
     public void testActionBuilder() {
@@ -194,7 +225,7 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testMessagingStyle_historicMessages() {
-        mNotification = new Notification.Builder(mContext, "channel_id")
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
                 .setStyle(new Notification.MessagingStyle("self name")
