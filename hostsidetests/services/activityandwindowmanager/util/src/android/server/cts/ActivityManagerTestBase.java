@@ -27,11 +27,14 @@ import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.String;
 import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
+
+import android.server.cts.ActivityManagerState.ActivityStack;
 
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -39,6 +42,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
     // updated.
+    /** Invalid stack ID. */
+    public static final int INVALID_STACK_ID = -1;
+
     /** First static stack ID. */
     public static final int FIRST_STATIC_STACK_ID = 0;
 
@@ -92,6 +98,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             = "am broadcast -a trigger_broadcast --ez finish true";
 
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
+    private static final String AM_RESIZE_STACK = "am stack resize ";
 
     static final String AM_MOVE_TASK = "am stack move-task ";
 
@@ -257,6 +264,37 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
+    /**
+     * Starts an activity in a new stack.
+     * @return the stack id of the newly created stack.
+     */
+    protected int launchActivityInNewDynamicStack(final String activityName) throws Exception {
+        HashSet<Integer> stackIds = getStackIds();
+        executeShellCommand("am stack start " + ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID
+                + " " + getActivityComponentName(activityName));
+        HashSet<Integer> newStackIds = getStackIds();
+        newStackIds.removeAll(stackIds);
+        if (newStackIds.isEmpty()) {
+            return INVALID_STACK_ID;
+        } else {
+            assertTrue(newStackIds.size() == 1);
+            return newStackIds.iterator().next();
+        }
+    }
+
+    /**
+     * Returns the set of stack ids.
+     */
+    private HashSet<Integer> getStackIds() throws Exception {
+        mAmWmState.computeState(mDevice, null);
+        final List<ActivityStack> stacks = mAmWmState.getAmState().getStacks();
+        final HashSet<Integer> stackIds = new HashSet<>();
+        for (ActivityStack s : stacks) {
+            stackIds.add(s.mStackId);
+        }
+        return stackIds;
+    }
+
     protected void launchHomeActivity()
             throws Exception {
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
@@ -312,8 +350,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
-    protected void launchActivityInStack(String activityName, int stackId) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName) + " --stack " + stackId);
+    protected void launchActivityInStack(String activityName, int stackId,
+            final String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs) + " --stack " + stackId);
 
         mAmWmState.waitForValidState(mDevice, activityName, stackId);
     }
@@ -360,6 +399,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         executeShellCommand(AM_RESIZE_DOCKED_STACK
                 + "0 0 " + stackWidth + " " + stackHeight
                 + " 0 0 " + taskWidth + " " + taskHeight);
+    }
+
+    protected void resizeStack(int stackId, int stackLeft, int stackTop, int stackWidth,
+            int stackHeight) throws DeviceNotAvailableException {
+        executeShellCommand(AM_RESIZE_STACK + String.format("%d %d %d %d %d", stackId, stackLeft,
+                stackTop, stackWidth, stackHeight));
     }
 
     protected void pressHomeButton() throws DeviceNotAvailableException {

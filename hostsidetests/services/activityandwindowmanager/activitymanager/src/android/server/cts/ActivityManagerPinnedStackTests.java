@@ -36,21 +36,28 @@ import java.util.List;
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";
     private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
+    private static final String RESUME_WHILE_PAUSING_ACTIVITY = "ResumeWhilePausingActivity";
     private static final String PIP_ACTIVITY = "PipActivity";
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
-    private static final String LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY = "LaunchTapToFinishPipActivity";
     private static final String LAUNCH_IME_WITH_PIP_ACTIVITY = "LaunchImeWithPipActivity";
+    private static final String LAUNCHER_ENTER_PIP_ACTIVITY = "LaunchEnterPipActivity";
     private static final String PIP_ON_STOP_ACTIVITY = "PipOnStopActivity";
 
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
     private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
+    private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     private static final String EXTRA_START_ACTIVITY = "start_activity";
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
+    private static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP = "assert_no_on_stop_before_pip";
+    private static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
+
+    private static final String PIP_ACTIVITY_ACTION_ENTER_PIP =
+            "android.server.cts.PipActivity.enter_pip";
 
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -88,7 +95,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testNonTappablePipActivity() throws Exception {
         // Launch the tap-to-finish activity at a specific place
-        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
 
@@ -148,7 +157,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         final WindowManagerState wmState = mAmWmState.getWmState();
 
         // Launch an activity into the pinned stack
-        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
 
         // Get the display dimensions
@@ -170,7 +181,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testPinnedStackInBoundsAfterRotation() throws Exception {
         // Launch an activity into the pinned stack
-        launchActivity(LAUNCH_TAP_TO_FINISH_PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_ENTER_PIP, "true",
+                EXTRA_TAP_TO_FINISH, "true");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
 
         // Ensure that the PIP stack is fully visible in each orientation
@@ -365,11 +378,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_REENTER_PIP_ON_EXIT, "true");
         assertPinnedStackExists();
 
-        // Tap the screen at a known location in the pinned stack bounds to trigger the activity
-        // to exit and re-enter pip
-        // TODO: add channel for expanding the PIP, but for now, just force-tap twice
-        tapToFinishPip();
-        tapToFinishPip();
+        // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
+        launchActivity(PIP_ACTIVITY);
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
         }, "Waiting for PIP to exit to fullscreen");
@@ -389,11 +399,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_REENTER_PIP_ON_EXIT, "true");
         assertPinnedStackExists();
 
-        // Tap the screen at a known location in the pinned stack bounds to trigger the activity
-        // to exit and re-enter pip
-        // TODO: add channel for expanding the PIP, but for now, just force-tap twice
-        tapToFinishPip();
-        tapToFinishPip();
+        // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
+        launchActivity(PIP_ACTIVITY);
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             return amState.getFrontStackId(DEFAULT_DISPLAY_ID) == FULLSCREEN_WORKSPACE_STACK_ID;
         }, "Waiting for PIP to exit to fullscreen");
@@ -502,6 +509,58 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Re-enable enter-pip-on-hide
         setAppOpsOpToMode(ActivityManagerTestBase.componentName,
                 APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_ALLOWED);
+    }
+
+    public void testEnterPipFromTaskWithMultipleActivities() throws Exception {
+        // Try to enter picture-in-picture from an activity that has more than one activity in the
+        // task and ensure that it works
+        launchActivity(LAUNCHER_ENTER_PIP_ACTIVITY);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+    }
+
+    public void testEnterPipWithResumeWhilePausingActivityNoStop() throws Exception {
+        /*
+         * Launch the resumeWhilePausing activity and ensure that the PiP activity did not get
+         * stopped and actually went into the pinned stack.
+         *
+         * Note that this is a workaround because to trigger the path that we want to happen in
+         * activity manager, we need to add the leaving activity to the stopping state, which only
+         * happens when a hidden stack is brought forward. Normally, this happens when you go home,
+         * but since we can't launch into the home stack directly, we have a workaround.
+         *
+         * 1) Launch an activity in a new dynamic stack
+         * 2) Resize the dynamic stack to non-fullscreen bounds
+         * 3) Start the PiP activity that will enter picture-in-picture when paused in the
+         *    fullscreen stack
+         * 4) Bring the activity in the dynamic stack forward to trigger PiP
+         */
+        int stackId = launchActivityInNewDynamicStack(RESUME_WHILE_PAUSING_ACTIVITY);
+        resizeStack(stackId, 0, 0, 500, 500);
+        // Launch an activity that will enter PiP when it is paused with a delay that is long enough
+        // for the next resumeWhilePausing activity to finish resuming, but slow enough to not
+        // trigger the current system pause timeout (currently 500ms)
+        launchActivityInStack(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+                EXTRA_ENTER_PIP_ON_PAUSE, "true",
+                EXTRA_ON_PAUSE_DELAY, "350",
+                EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
+        assertPinnedStackExists();
+    }
+
+    public void testDisallowEnterPipActivityLocked() throws Exception {
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
+        ActivityTask task =
+                mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID).getTopTask();
+
+        // Lock the task and ensure that we can't enter picture-in-picture both explicitly and
+        // when paused
+        executeShellCommand("am task lock " + task.mTaskId);
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        assertPinnedStackDoesNotExist();
+        launchHomeActivity();
+        assertPinnedStackDoesNotExist();
+        executeShellCommand("am task lock stop");
     }
 
     /**

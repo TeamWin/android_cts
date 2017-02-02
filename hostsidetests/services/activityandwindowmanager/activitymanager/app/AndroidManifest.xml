@@ -29,6 +29,12 @@
                 android:resizeableActivity="true"
                 android:exported="true"
         />
+        <activity android:name=".ResumeWhilePausingActivity"
+                android:allowEmbedded="true"
+                android:resumeWhilePausing="true"
+                android:taskAffinity=""
+                android:exported="true"
+        />
         <activity android:name=".ResizeableActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
@@ -99,7 +105,7 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
-        <activity android:name=".LaunchTapToFinishPipActivity"
+        <activity android:name=".LaunchEnterPipActivity"
                   android:resizeableActivity="false"
                   android:supportsPictureInPicture="true"
                   androidprv:alwaysFocusable="true"
