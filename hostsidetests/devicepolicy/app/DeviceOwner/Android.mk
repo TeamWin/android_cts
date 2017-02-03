@@ -29,7 +29,8 @@ LOCAL_JAVA_LIBRARIES := android.test.runner cts-junit
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     compatibility-device-util \
-    android-support-v4
+    android-support-v4 \
+    android-support-test
 
 LOCAL_SDK_VERSION := test_current
 
