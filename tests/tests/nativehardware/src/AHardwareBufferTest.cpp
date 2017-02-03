@@ -299,8 +299,3 @@ TEST(AHardwareBufferTest, AHardwareBuffer_Lock_and_Unlock_Succeed) {
 
     AHardwareBuffer_release(buffer);
 }
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
