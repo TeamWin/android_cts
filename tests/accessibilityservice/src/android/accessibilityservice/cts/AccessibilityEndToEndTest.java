@@ -353,32 +353,41 @@ public class AccessibilityEndToEndTest extends
         expected.getText().add(message);
         expected.setParcelableData(notification);
 
-        AccessibilityEvent awaitedEvent =
-            getInstrumentation().getUiAutomation().executeAndWaitForEvent(
-                new Runnable() {
-            @Override
-            public void run() {
-                // trigger the event
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // trigger the event
-                        NotificationManager notificationManager =
-                            (NotificationManager) getActivity().getSystemService(
-                                    Service.NOTIFICATION_SERVICE);
-                        notificationManager.notify(notificationId, notification);
-                        getActivity().finish();
-                    }
-                });
-            }},
-            new UiAutomation.AccessibilityEventFilter() {
-                // check the received event
+        AccessibilityEvent awaitedEvent;
+        NotificationManager notificationManager =
+                (NotificationManager) getActivity().getSystemService(Service.NOTIFICATION_SERVICE);
+        try {
+            awaitedEvent = getInstrumentation().getUiAutomation().executeAndWaitForEvent(
+                    new Runnable() {
                 @Override
-                public boolean accept(AccessibilityEvent event) {
-                    return equalsAccessiblityEvent(event, expected);
+                public void run() {
+                    // trigger the event
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // trigger the event
+                            notificationManager.notify(notificationId, notification);
+                        }
+                    });
+                }},
+                new UiAutomation.AccessibilityEventFilter() {
+                    // check the received event
+                    @Override
+                    public boolean accept(AccessibilityEvent event) {
+                        return equalsAccessiblityEvent(event, expected);
+                    }
+                },
+                TIMEOUT_ASYNC_PROCESSING);
+        } finally {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    notificationManager.cancel(notificationId);
+                    getActivity().finish();
                 }
-            },
-            TIMEOUT_ASYNC_PROCESSING);
+            });
+        }
+
         assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
     }
 
