@@ -10,6 +10,8 @@ endif
 
 # TODO(dimitry): Can this list be constructed dynamically?
 my_bionic_testlib_files := \
+  cfi_test_helper/cfi_test_helper \
+  cfi_test_helper2/cfi_test_helper2 \
   dt_runpath_a/libtest_dt_runpath_a.so \
   dt_runpath_b_c_x/libtest_dt_runpath_b.so \
   dt_runpath_b_c_x/libtest_dt_runpath_c.so \
