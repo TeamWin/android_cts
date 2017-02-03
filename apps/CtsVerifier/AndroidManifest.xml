@@ -146,14 +146,15 @@
                     android:value="android.software.backup" />
         </activity>
 
-        <activity android:name=".backup.BackupAccessibilityTestActivity" android:label="@string/backup_accessibility_test">
+	<!-- Further work is required for this test, b/32798562  -->
+        <!-- activity android:name=".backup.BackupAccessibilityTestActivity" android:label="@string/backup_accessibility_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_required_features"
                     android:value="android.software.backup" />
-        </activity>
+        </activity -->
 
         <activity android:name=".bluetooth.BluetoothTestActivity"
                 android:label="@string/bluetooth_test"
