@@ -182,5 +182,31 @@ public class ForwardDeleteTest extends KeyListenerTestCase {
         state.assertEquals("| U+1F1FA U+1F1F8");
         forwardDelete(state, 0);
         state.assertEquals("|");
+
+        // Single tag_base character
+        // U+1F3F4 is WAVING BLACK FLAG. This can be a tag_base character.
+        state.setByString("| 'a' U+1F3F4 U+1F3F4 'b'");
+        forwardDelete(state, 0);
+        state.assertEquals("| U+1F3F4 U+1F3F4 'b'");
+        forwardDelete(state, 0);
+        state.assertEquals("| U+1F3F4 'b'");
+        forwardDelete(state, 0);
+        state.assertEquals("| 'b'");
+
+        // U+E0067 is TAG LATIN SMALL LETTER G. This can be a part of tag_spec.
+        // U+E0062 is TAG LATIN SMALL LETTER B. This can be a part of tag_spec.
+        // U+E0073 is TAG LATIN SMALL LETTER S. This can be a part of tag_spec.
+        // U+E0063 is TAG LATIN SMALL LETTER C. This can be a part of tag_spec.
+        // U+E0074 is TAG LATIN SMALL LETTER T. This can be a part of tag_spec.
+        // U+E007F is CANCEL TAG. This is a tag_term character.
+        final String scotland = "U+1F3F4 U+E0067 U+E0062 U+E0073 U+E0063 U+E0074 U+E007F ";
+
+        state.setByString("| 'a' " + scotland + scotland + "'b'");
+        forwardDelete(state, 0);
+        state.assertEquals("| " + scotland + scotland + "'b'");
+        forwardDelete(state, 0);
+        state.assertEquals("| " + scotland + "'b'");
+        forwardDelete(state, 0);
+        state.assertEquals("| 'b'");
     }
 }
