@@ -69,11 +69,13 @@ public class InstrumentedAutoFillService extends AutoFillService {
         final CannedFillResponse cannedResponse = sCannedFillResponse.getAndSet(null);
         Log.v(TAG, "onFillRequest(#" + requestNumber + "): cannedResponse = " + cannedResponse);
 
+        assertWithMessage("CancelationSignal is null").that(cancellationSignal).isNotNull();
+
         if (cannedResponse == null) {
             callback.onSuccess(null);
             return;
         }
-        final FillResponse.Builder responseBuilder = new FillResponse.Builder();
+        final FillResponse.Builder responseBuilder = new FillResponse.Builder("4815162342");
         final List<CannedDataset> datasets = cannedResponse.datasets;
 
         if (datasets.isEmpty()) {
@@ -91,7 +93,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
             return;
         }
 
-        final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.name);
+        final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.id, dataset.name);
 
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
         final int nodes = structure.getWindowNodeCount();
