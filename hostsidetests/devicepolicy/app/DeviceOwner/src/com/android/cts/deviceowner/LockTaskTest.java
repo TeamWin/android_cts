@@ -19,6 +19,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
@@ -160,10 +162,13 @@ public class LockTaskTest {
     // Setting and unsetting the lock task packages.
     @Test
     public void testSetLockTaskPackages() {
-        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[] { TEST_PACKAGE });
+        final String[] packages = new String[] { TEST_PACKAGE, "some.other.package" };
+        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, packages);
+        assertArrayEquals(packages, mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT));
         assertTrue(mDevicePolicyManager.isLockTaskPermitted(TEST_PACKAGE));
 
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
+        assertEquals(0, mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT).length);
         assertFalse(mDevicePolicyManager.isLockTaskPermitted(TEST_PACKAGE));
     }
 

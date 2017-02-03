@@ -370,7 +370,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(
                 DEVICE_OWNER_PKG,
                 ".AffiliationTest",
-                "testSetLockTaskThrowsExceptionIfUnaffiliated",
+                "testLockTaskMethodsThrowExceptionIfUnaffiliated",
                 userId);
 
         runDeviceTestsAsUser(
