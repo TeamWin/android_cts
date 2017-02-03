@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -40,6 +41,8 @@ import android.app.stubs.R;
 
 import com.android.compatibility.common.util.IBinderParcelable;
 
+import java.util.List;
+
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
@@ -54,6 +57,8 @@ public class ServiceTest extends ActivityTestsBase {
     private static final
         String EXIST_CONN_TO_RECEIVE_SERVICE = "existing connection to receive service";
     private static final String EXIST_CONN_TO_LOSE_SERVICE = "existing connection to lose service";
+    private static final String EXTERNAL_SERVICE_COMPONENT =
+            "com.android.app2/android.app.stubs.LocalService";
     private int mExpectedServiceState;
     private Context mContext;
     private Intent mLocalService;
@@ -62,6 +67,7 @@ public class ServiceTest extends ActivityTestsBase {
     private Intent mLocalGrantedService;
     private Intent mLocalService_ApplicationHasPermission;
     private Intent mLocalService_ApplicationDoesNotHavePermission;
+    private Intent mExternalService;
 
     private IBinder mStateReceiver;
 
@@ -385,6 +391,8 @@ public class ServiceTest extends ActivityTestsBase {
         super.setUp();
         mContext = getContext();
         mLocalService = new Intent(mContext, LocalService.class);
+        mExternalService = new Intent();
+        mExternalService.setComponent(ComponentName.unflattenFromString(EXTERNAL_SERVICE_COMPONENT));
         mLocalForegroundService = new Intent(mContext, LocalForegroundService.class);
         mLocalDeniedService = new Intent(mContext, LocalDeniedService.class);
         mLocalGrantedService = new Intent(mContext, LocalGrantedService.class);
@@ -405,6 +413,7 @@ public class ServiceTest extends ActivityTestsBase {
         mContext.stopService(mLocalForegroundService);
         mContext.stopService(mLocalGrantedService);
         mContext.stopService(mLocalService_ApplicationHasPermission);
+        mContext.stopService(mExternalService);
     }
 
     private class MockBinder extends Binder {
@@ -474,6 +483,7 @@ public class ServiceTest extends ActivityTestsBase {
             }
         }
     }
+
 
     public void testLocalStartClass() throws Exception {
         startExpectResult(mLocalService);
@@ -584,6 +594,53 @@ public class ServiceTest extends ActivityTestsBase {
         waitForResultOrThrow(DELAY, "service to be destroyed");
         assertNoNotification(1);
         assertNoNotification(2);
+    }
+
+    public void testRunningServices() throws Exception {
+        final int maxReturnedServices = 10;
+        final Bundle bundle = new Bundle();
+        bundle.putParcelable(LocalService.REPORT_OBJ_NAME, new IBinderParcelable(mStateReceiver));
+
+        boolean success = false;
+
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+
+        // No services should be reported back at the beginning
+        assertEquals(0, am.getRunningServices(maxReturnedServices).size());
+        try {
+            mExpectedServiceState = STATE_START_1;
+            // Start external service.
+            mContext.startService(new Intent(mExternalService).putExtras(bundle));
+            waitForResultOrThrow(DELAY, "external service to start first time");
+
+            // Ensure we can't see service.
+            assertEquals(0, am.getRunningServices(maxReturnedServices).size());
+
+            // Start local service.
+            mContext.startService(new Intent(mLocalService).putExtras(bundle));
+            waitForResultOrThrow(DELAY, "local service to start first time");
+            success = true;
+
+            // Ensure we can see service and it is ours.
+            List<ActivityManager.RunningServiceInfo> services = am.getRunningServices(maxReturnedServices);
+            assertEquals(1, services.size());
+            assertEquals(android.os.Process.myUid(), services.get(0).uid);
+        } finally {
+            if (!success) {
+                mContext.stopService(mLocalService);
+                mContext.stopService(mExternalService);
+            }
+        }
+        mExpectedServiceState = STATE_DESTROY;
+
+        mContext.stopService(mExternalService);
+        waitForResultOrThrow(DELAY, "external service to be destroyed");
+
+        mContext.stopService(mLocalService);
+        waitForResultOrThrow(DELAY, "local service to be destroyed");
+
+        // Once our service has stopped, make sure we can't see any services.
+        assertEquals(0, am.getRunningServices(maxReturnedServices).size());
     }
 
     @MediumTest
