@@ -23,11 +23,13 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
 		CtsJniOnLoad.cpp \
-		android_cts_FileUtils.cpp
+		android_cts_FileUtils.cpp \
+		android_cts_CpuFeatures.cpp \
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
 LOCAL_SHARED_LIBRARIES := libnativehelper_compat_libc++ liblog libdl
+LOCAL_STATIC_LIBRARIES := cpufeatures
 LOCAL_SDK_VERSION := 19
 
 include $(BUILD_SHARED_LIBRARY)

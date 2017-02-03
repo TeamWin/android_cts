@@ -34,6 +34,7 @@ import android.os.Build;
 import android.util.Log;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CpuFeatures;
 import com.google.common.util.concurrent.AbstractFuture;
 
 import java.io.File;
