@@ -575,6 +575,19 @@ public class AccessibilityWindowQueryTest
             // Android TV doesn't support the divider window
             return;
         }
+
+        // Get com.android.internal.R.bool.config_supportsSplitScreenMultiWindow
+        try {
+            if (!getInstrumentation().getContext().getResources().getBoolean(
+                    Resources.getSystem().getIdentifier(
+                            "config_supportsSplitScreenMultiWindow", "bool", "android"))) {
+                // Check if split screen multi window is not supported.
+                return;
+            }
+        } catch (Resources.NotFoundException e) {
+            // Do nothing, assume split screen multi window is supported.
+        }
+
         // Get com.android.internal.R.bool.config_supportsMultiWindow
         if (!getInstrumentation().getContext().getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_supportsMultiWindow", "bool",
