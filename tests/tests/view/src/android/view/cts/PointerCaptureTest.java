@@ -25,6 +25,7 @@ import static com.android.compatibility.common.util.CtsMouseUtil.verifyEnterMove
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
@@ -64,10 +65,10 @@ public class PointerCaptureTest {
     private Instrumentation mInstrumentation;
     private PointerCaptureCtsActivity mActivity;
 
-    private View mOuter;
-    private View mInner;
-    private View mTarget;
-    private View mTarget2;
+    private PointerCaptureGroup mOuter;
+    private PointerCaptureGroup mInner;
+    private PointerCaptureView mTarget;
+    private PointerCaptureGroup mTarget2;
 
     @Rule
     public ActivityTestRule<PointerCaptureCtsActivity> mActivityRule =
@@ -88,7 +89,8 @@ public class PointerCaptureTest {
 
     private void requestCaptureSync(View view) throws Throwable {
         mActivityRule.runOnUiThread(view::requestPointerCapture);
-        PollingCheck.waitFor(TIMEOUT_DELTA, view::hasPointerCapture);
+        PollingCheck.waitFor(TIMEOUT_DELTA,
+                () -> view.hasPointerCapture() && mActivity.hasPointerCapture());
     }
 
     private void requestCaptureSync() throws Throwable {
@@ -97,7 +99,8 @@ public class PointerCaptureTest {
 
     private void releaseCaptureSync(View view) throws Throwable {
         mActivityRule.runOnUiThread(view::releasePointerCapture);
-        PollingCheck.waitFor(TIMEOUT_DELTA, () -> !view.hasPointerCapture());
+        PollingCheck.waitFor(TIMEOUT_DELTA,
+                () -> !view.hasPointerCapture() && !mActivity.hasPointerCapture());
     }
 
     private void releaseCaptureSync() throws Throwable {
@@ -125,10 +128,14 @@ public class PointerCaptureTest {
     }
 
     private static void injectRelativeMouseEvent(int action, int x, int y) {
+        injectMotionEvent(obtainRelativeMouseEvent(action, x, y));
+    }
+
+    private static MotionEvent obtainRelativeMouseEvent(int action, int x, int y) {
         final long eventTime = SystemClock.uptimeMillis();
         MotionEvent event = MotionEvent.obtain(eventTime, eventTime, action, x, y, 0);
         event.setSource(InputDevice.SOURCE_MOUSE_RELATIVE);
-        injectMotionEvent(event);
+        return event;
     }
 
     private static void verifyRelativeMouseEvent(InOrder inOrder,
@@ -170,15 +177,27 @@ public class PointerCaptureTest {
         assertEquals(enabled, mActivity.hasPointerCapture());
     }
 
+    private void resetViews() {
+        mOuter.reset();
+        mInner.reset();
+        mTarget.reset();
+        mTarget2.reset();
+
+        mOuter.setOnCapturedPointerListener(null);
+        mInner.setOnCapturedPointerListener(null);
+        mTarget.setOnCapturedPointerListener(null);
+        mTarget2.setOnCapturedPointerListener(null);
+    }
+
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
 
-        mOuter = mActivity.findViewById(R.id.outer);
-        mInner = mActivity.findViewById(R.id.inner);
-        mTarget = mActivity.findViewById(R.id.target);
-        mTarget2 = mActivity.findViewById(R.id.target2);
+        mOuter = (PointerCaptureGroup) mActivity.findViewById(R.id.outer);
+        mInner = (PointerCaptureGroup) mActivity.findViewById(R.id.inner);
+        mTarget = (PointerCaptureView) mActivity.findViewById(R.id.target);
+        mTarget2 = (PointerCaptureGroup) mActivity.findViewById(R.id.target2);
 
         PollingCheck.waitFor(TIMEOUT_DELTA, mActivity::hasWindowFocus);
     }
@@ -287,5 +306,140 @@ public class PointerCaptureTest {
 
         // Check the regular dispatch again.
         verifyHoverDispatch();
+    }
+
+    @Test
+    public void testPointerCaptureChangeDispatch() throws Throwable {
+        // Normal dispatch should reach every view in the hierarchy.
+        requestCaptureSync();
+
+        assertTrue(mOuter.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mOuter.hasCalledOnPointerCaptureChange());
+        assertTrue(mInner.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mInner.hasCalledOnPointerCaptureChange());
+        assertTrue(mTarget.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mTarget.hasCalledOnPointerCaptureChange());
+        assertTrue(mTarget2.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mTarget2.hasCalledOnPointerCaptureChange());
+
+        resetViews();
+
+        releaseCaptureSync();
+
+        assertTrue(mOuter.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mOuter.hasCalledOnPointerCaptureChange());
+        assertTrue(mInner.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mInner.hasCalledOnPointerCaptureChange());
+        assertTrue(mTarget.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mTarget.hasCalledOnPointerCaptureChange());
+        assertTrue(mTarget2.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mTarget2.hasCalledOnPointerCaptureChange());
+
+        resetViews();
+
+        // Manual dispatch should only reach the recipient and its descendants.
+        mInner.dispatchPointerCaptureChanged(true);
+        assertFalse(mOuter.hasCalledDispatchPointerCaptureChanged());
+        assertFalse(mOuter.hasCalledOnPointerCaptureChange());
+        assertTrue(mInner.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mInner.hasCalledOnPointerCaptureChange());
+        assertTrue(mTarget.hasCalledDispatchPointerCaptureChanged());
+        assertTrue(mTarget.hasCalledOnPointerCaptureChange());
+        assertFalse(mTarget2.hasCalledDispatchPointerCaptureChanged());
+        assertFalse(mTarget2.hasCalledOnPointerCaptureChange());
+    }
+
+    @Test
+    public void testOnCapturedPointerEvent() throws Throwable {
+        final MotionEvent event = obtainRelativeMouseEvent(MotionEvent.ACTION_MOVE, 1, 1);
+
+        // No focus, no capture. Dispatch does reach descendants, no handlers called.
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mOuter.hasCalledOnCapturedPointerEvent());
+        assertFalse(mInner.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mInner.hasCalledOnCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        requestCaptureSync();
+        // Same with capture but no focus
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mOuter.hasCalledOnCapturedPointerEvent());
+        assertFalse(mInner.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mInner.hasCalledOnCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        releaseCaptureSync();
+        requestFocusSync(mOuter);
+
+        // Same with focus but no capture.
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mOuter.hasCalledOnCapturedPointerEvent());
+        assertFalse(mInner.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mInner.hasCalledOnCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        requestCaptureSync();
+
+        // Have both focus and capture, both dispatch and handler called on the focused view,
+        // Nothing called for descendants.
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertTrue(mOuter.hasCalledOnCapturedPointerEvent());
+        assertFalse(mInner.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mInner.hasCalledOnCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mTarget.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        // Listener returning false does not block the callback.
+        mOuter.setOnCapturedPointerListener((v, e) -> false);
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertTrue(mOuter.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        // Listener returning true blocks the callback.
+        mOuter.setOnCapturedPointerListener((v, e) -> true);
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mOuter.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        requestFocusSync(mTarget);
+
+        // Dispatch reaches the focused view and all intermediate parents but not siblings.
+        // Handler only called on the focused view.
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mOuter.hasCalledOnCapturedPointerEvent());
+        assertTrue(mInner.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mInner.hasCalledOnCapturedPointerEvent());
+        assertTrue(mTarget.hasCalledDispatchCapturedPointerEvent());
+        assertTrue(mTarget.hasCalledOnCapturedPointerEvent());
+        assertFalse(mTarget2.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mTarget2.hasCalledOnCapturedPointerEvent());
+        resetViews();
+
+        // Unfocused parent with a listener does not interfere with dispatch.
+        mInner.setOnCapturedPointerListener((v, e) -> true);
+        mOuter.dispatchCapturedPointerEvent(event);
+        assertTrue(mOuter.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mOuter.hasCalledOnCapturedPointerEvent());
+        assertTrue(mInner.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mInner.hasCalledOnCapturedPointerEvent());
+        assertTrue(mTarget.hasCalledDispatchCapturedPointerEvent());
+        assertTrue(mTarget.hasCalledOnCapturedPointerEvent());
+        assertFalse(mTarget2.hasCalledDispatchCapturedPointerEvent());
+        assertFalse(mTarget2.hasCalledOnCapturedPointerEvent());
+        resetViews();
     }
 }
