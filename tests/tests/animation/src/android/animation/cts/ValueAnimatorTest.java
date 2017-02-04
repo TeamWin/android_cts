@@ -23,10 +23,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
@@ -134,6 +136,25 @@ public class ValueAnimatorTest {
         assertEquals(startDelay, mValueAnimator.getStartDelay());
     }
 
+    /**
+     * Verify that an animator with start delay will have its listener's onAnimationStart(...)
+     * and onAnimationEnd(...) called at the right time.
+     */
+    @Test
+    public void testListenerCallbackWithStartDelay() throws Throwable {
+        final ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
+        anim.setStartDelay(300);
+        anim.setDuration(300);
+        AnimatorListener listener = mock(AnimatorListenerAdapter.class);
+        anim.addListener(listener);
+        mActivityRule.runOnUiThread(() -> {
+            anim.start();
+        });
+
+        verify(listener, timeout(450).times(1)).onAnimationStart(anim, false);
+        verify(listener, timeout(450).times(1)).onAnimationEnd(anim, false);
+    }
+
     @Test
     public void testGetCurrentPlayTime() throws Throwable {
         startAnimation(mValueAnimator);
@@ -195,9 +216,9 @@ public class ValueAnimatorTest {
         currentPlayTime = delayedAnim.getCurrentPlayTime();
         currentFraction = delayedAnim.getAnimatedFraction();
         currentValue = (Float) delayedAnim.getAnimatedValue();
-        assertEquals(proposedCurrentPlayTime, currentPlayTime);
-        assertEquals(.5f, currentFraction, EPSILON);
-        assertEquals(50, currentValue, EPSILON);
+        assertTrue(currentPlayTime > proposedCurrentPlayTime);
+        assertTrue(currentFraction > 0.5f);
+        assertTrue(currentValue > 50);
 
         mActivityRule.runOnUiThread(delayedAnim::cancel);
     }
