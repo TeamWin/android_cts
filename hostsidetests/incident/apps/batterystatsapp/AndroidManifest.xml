@@ -20,6 +20,8 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+        <service android:name=".SimpleForegroundService" android:exported="true" />
+        <activity android:name=".SimpleActivity" android:label="BatteryStats Test Activity" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
