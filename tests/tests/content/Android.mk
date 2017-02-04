@@ -23,7 +23,15 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4 ctsdeviceutil ctstestrunner services.core
+LOCAL_STATIC_JAVA_LIBRARIES :=  android-support-v4 \
+                                android-support-multidex \
+                                ctsdeviceutil \
+                                ctstestrunner \
+                                services.core
+
+# Use multi-dex as the compatibility-common-util-devicesidelib dependency
+# on ctsdeviceutil pushes us beyond 64k methods.
+LOCAL_JACK_FLAGS := --multi-dex legacy
 
 # Resource unit tests use a private locale and some densities
 LOCAL_AAPT_FLAGS = -c xx_YY -c cs -c small -c normal -c large -c xlarge \
