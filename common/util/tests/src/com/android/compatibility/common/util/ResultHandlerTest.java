@@ -207,9 +207,8 @@ public class ResultHandlerTest extends TestCase {
             String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4,
                     SUMMARY_SOURCE, SUMMARY_MESSAGE, ResultType.HIGHER_BETTER.toReportString(),
                     ResultUnit.SCORE.toReportString(), Double.toString(SUMMARY_VALUE),
-                    DETAILS_SOURCE, DETAILS_MESSAGE, ResultType.LOWER_BETTER.toReportString(),
-                    ResultUnit.MS.toReportString(), Double.toString(DETAILS_VALUE_1),
-                    Double.toString(DETAILS_VALUE_2), Double.toString(DETAILS_VALUE_3));
+                    ResultType.LOWER_BETTER.toReportString(),
+                    ResultUnit.MS.toReportString());
             String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
             String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
             String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, RUNTIME_B, DONE_B,
