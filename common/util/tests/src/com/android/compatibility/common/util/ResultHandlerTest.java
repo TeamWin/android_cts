@@ -70,13 +70,8 @@ public class ResultHandlerTest extends TestCase {
     private static final String METHOD_3 = "testBlah3";
     private static final String METHOD_4 = "testBlah4";
     private static final String SUMMARY_SOURCE = String.format("%s#%s:20", CLASS_B, METHOD_4);
-    private static final String DETAILS_SOURCE = String.format("%s#%s:18", CLASS_B, METHOD_4);
     private static final String SUMMARY_MESSAGE = "Headline";
     private static final double SUMMARY_VALUE = 9001;
-    private static final String DETAILS_MESSAGE = "Deats";
-    private static final double DETAILS_VALUE_1 = 14;
-    private static final double DETAILS_VALUE_2 = 18;
-    private static final double DETAILS_VALUE_3 = 17;
     private static final String MESSAGE = "Something small is not alright";
     private static final String STACK_TRACE = "Something small is not alright\n " +
             "at four.big.insects.Marley.sing(Marley.java:10)";
