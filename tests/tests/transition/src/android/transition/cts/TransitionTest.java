@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -443,7 +444,7 @@ public class TransitionTest extends BaseTransitionTest {
         assertFalse(transition.animators.isEmpty());
         Animator animator = transition.animators.get(redSquare);
         Animator.AnimatorListener listener = transition.listeners.get(redSquare);
-        verify(listener, within(100)).onAnimationStart(any());
+        verify(listener, within(100)).onAnimationStart(any(), eq(false));
         assertSame(interpolator, animator.getInterpolator());
         endTransition();
     }
@@ -500,7 +501,7 @@ public class TransitionTest extends BaseTransitionTest {
         Animator redSquareAnimator = transition.animators.get(redSquare);
         Animator greenSquareAnimator = transition.animators.get(greenSquare);
         Animator.AnimatorListener listener = transition.listeners.get(redSquare);
-        verify(listener, within(100)).onAnimationStart(any());
+        verify(listener, within(100)).onAnimationStart(any(), eq(false));
         assertEquals(0, redSquareAnimator.getStartDelay());
         assertEquals(diffTop, greenSquareAnimator.getStartDelay());
         endTransition();
@@ -532,7 +533,7 @@ public class TransitionTest extends BaseTransitionTest {
         Animator animator = transition.animators.get(redSquare);
         assertFalse(animator.isRunning());
         Animator.AnimatorListener listener = transition.listeners.get(redSquare);
-        verify(listener, within(250)).onAnimationStart(any());
+        verify(listener, within(250)).onAnimationStart(any(), eq(false));
         endTransition();
     }
 
