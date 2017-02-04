@@ -16,6 +16,8 @@
 package com.android.server.cts;
 
 
+import com.android.tradefed.log.LogUtil;
+
 /**
  * Test for "dumpsys batterystats -c
  *
@@ -50,7 +52,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
-        Thread.sleep(5000);
 
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWakeLockTests",
                 "testHoldShortWakeLock");
@@ -58,20 +59,33 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWakeLockTests",
                 "testHoldLongWakeLock");
 
-        assertMaxWakeLockTime(500, "BSShortWakeLock");
-        assertMaxWakeLockTime(3000, "BSLongWakeLock");
+        assertValueRange("wl", "BSShortWakeLock", 14, (long) (500 * 0.9), 500 * 2);
+        assertValueRange("wl", "BSLongWakeLock", 14, (long) (3000 * 0.9), 3000 * 2);
+
+        batteryOffScreenOn();
+    }
+
+    public void testServiceForegroundDuration() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        getDevice().executeShellCommand(
+                "am start -n com.android.server.cts.device.batterystats/.SimpleActivity");
+        assertValueRange("st", "", 5, 0, 0); // No foreground service time before test
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsProcessStateTests",
+                "testForegroundService");
+        assertValueRange("st", "", 5, (long) (2000 * 0.8), 4000);
 
         batteryOffScreenOn();
     }
 
     /**
-     * Verifies that the maximum wakelock time for the specified wakelock name in the test package
-     * is at least 90% of the specified max time.
-     * @param expMaxTime expected max time
-     * @param wakeLockName name of the wakelock to check max wakelock time for
+     * Verifies that the recorded time for the specified tag and name in the test package
+     * is within the specified range
      * @throws Exception
      */
-    private void assertMaxWakeLockTime(long expMaxTime, String wakeLockName) throws Exception {
+    private void assertValueRange(String tag, String optionalAfterTag,
+            int index, long min, long max) throws Exception {
         String dumpsys = getDevice().executeShellCommand("dumpsys batterystats --checkin");
         String uidLine = getDevice().executeShellCommand("cmd package list packages -U "
                 + DEVICE_SIDE_TEST_PACKAGE);
@@ -82,17 +96,16 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertTrue(uid > 10000);
 
         String[] lines = dumpsys.split("\n");
-        long wlMaxTime = 0;
+        long time = 0;
         for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines[i];
-            if (line.contains(uid + ",l,wl," + wakeLockName)) {
+            if (line.contains(uid + ",l," + tag + "," + optionalAfterTag)) {
                 String[] wlParts = line.split(",");
-                // 14th entry is wakelock max
-                wlMaxTime = Long.parseLong(wlParts[14]);
+                //System.err.println(line);
+                time = Long.parseLong(wlParts[index]);
             }
         }
-        // At least 90% of expected time, to account for potential sleep duration inaccuracy
-        assertTrue(wlMaxTime > (expMaxTime * 0.9));
-        assertTrue(wlMaxTime < expMaxTime * 2);
+        assertTrue("Value not greater than min", time >= min);
+        assertTrue("Value not less than max", time <= max);
     }
 }

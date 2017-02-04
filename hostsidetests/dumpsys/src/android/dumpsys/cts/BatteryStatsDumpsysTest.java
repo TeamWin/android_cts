@@ -237,10 +237,11 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkSensor(String[] parts) {
-        assertEquals(7, parts.length);
+        assertEquals(8, parts.length);
         assertInteger(parts[4]); // sensorNumber
         assertInteger(parts[5]); // totalTime
         assertInteger(parts[6]); // count
+        assertInteger(parts[7]); // backgroundCount
     }
 
     private void checkVibrator(String[] parts) {
@@ -256,24 +257,31 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkStateTime(String[] parts) {
-        assertEquals(7, parts.length);
-        assertInteger(parts[4]); // foreground
-        assertInteger(parts[5]); // active
-        assertInteger(parts[6]); // running
+        assertEquals(10, parts.length);
+        assertInteger(parts[4]); // top
+        assertInteger(parts[5]); // foreground_service
+        assertInteger(parts[6]); // top_sleeping
+        assertInteger(parts[7]); // foreground
+        assertInteger(parts[8]); // background
+        assertInteger(parts[9]); // cached
     }
 
     private void checkWakelock(String[] parts) {
-        assertEquals(14, parts.length);
+        assertEquals(20, parts.length);
         assertNotNull(parts[4]);      // wakelock
         assertInteger(parts[5]);      // full totalTime
         assertEquals("f", parts[6]);  // full
         long full_count = assertInteger(parts[7]);      // full count
         assertInteger(parts[8]);      // partial totalTime
-        assertEquals("p", parts[9]);  // partial
-        long partial_count = assertInteger(parts[10]);     // partial count
-        assertInteger(parts[11]);     // window totalTime
-        assertEquals("w", parts[12]); // window
-        long window_count = assertInteger(parts[13]);     // window count
+        assertInteger(parts[9]);      // current
+        assertInteger(parts[10]);      // max
+        assertEquals("p", parts[11]);  // partial
+        long partial_count = assertInteger(parts[12]);     // partial count
+        assertInteger(parts[13]);     // window totalTime
+        assertInteger(parts[14]);      // current
+        assertInteger(parts[15]);      // max
+        assertEquals("w", parts[16]); // window
+        long window_count = assertInteger(parts[17]);     // window count
 
         // Sanity checks.
         assertTrue("full wakelock count must be >= 0", full_count >= 0);
@@ -312,7 +320,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkNetwork(String[] parts) {
-        assertEquals(14, parts.length);
+        assertEquals(18, parts.length);
         long mbRx = assertInteger(parts[4]);  // mobileBytesRx
         long mbTx = assertInteger(parts[5]);  // mobileBytesTx
         long wbRx = assertInteger(parts[6]);  // wifiBytesRx
@@ -323,6 +331,10 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         long wpTx = assertInteger(parts[11]); // wifiPacketsTx
         assertInteger(parts[12]); // mobileActiveTime (usec)
         assertInteger(parts[13]); // mobileActiveCount
+        assertInteger(parts[14]); // btBytesRx
+        assertInteger(parts[15]); // btBytesTx
+        assertInteger(parts[16]); // mobileWakeup
+        assertInteger(parts[17]); // wifiWakeup
 
         // Assuming each packet contains some bytes, bytes >= packets >= 0.
         assertTrue("mobileBytesRx must be >= mobilePacketsRx", mbRx >= mpRx);
@@ -336,14 +348,15 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkUserActivity(String[] parts) {
-        assertEquals(7, parts.length);
+        assertEquals(8, parts.length);
         assertInteger(parts[4]); // other
         assertInteger(parts[5]); // button
         assertInteger(parts[6]); // touch
+        assertInteger(parts[7]); // accessibility
     }
 
     private void checkBattery(String[] parts) {
-        assertEquals(12, parts.length);
+        assertEquals(13, parts.length);
         if (!parts[4].equals("N/A")) {
             assertInteger(parts[4]);  // startCount
         }
@@ -354,7 +367,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[9]);  // startClockTime
         long bOffReal = assertInteger(parts[10]); // batteryScreenOffRealtime
         long bOffUp = assertInteger(parts[11]); // batteryScreenOffUptime
-
+        long bEstCap = assertInteger(parts[12]); // batteryEstimatedCapacity
         // The device cannot be up more than there are real-world seconds.
         assertTrue("batteryRealtime must be >= batteryUptime", bReal >= bUp);
         assertTrue("totalRealtime must be >= totalUptime", tReal >= tUp);
@@ -368,14 +381,17 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertTrue("totalUptime must be >= batteryUptime", tUp >= bUp);
         assertTrue("batteryUptime must be >= batteryScreenOffUptime", bUp >= bOffUp);
         assertTrue("batteryScreenOffUptime must be >= 0", bOffUp >= 0);
+        assertTrue("batteryEstimatedCapacity must be >= 0", bEstCap >= 0);
     }
 
     private void checkBatteryDischarge(String[] parts) {
-        assertEquals(8, parts.length);
+        assertEquals(10, parts.length);
         assertInteger(parts[4]); // low
         assertInteger(parts[5]); // high
         assertInteger(parts[6]); // screenOn
         assertInteger(parts[7]); // screenOff
+        assertInteger(parts[8]); // dischargeCount
+        assertInteger(parts[9]); // dischargeScreenOffCount
     }
 
     private void checkBatteryLevel(String[] parts) {
@@ -411,7 +427,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkGlobalNetwork(String[] parts) {
-        assertEquals(12, parts.length);
+        assertEquals(14, parts.length);
         assertInteger(parts[4]);  // mobileRxTotalBytes
         assertInteger(parts[5]);  // mobileTxTotalBytes
         assertInteger(parts[6]);  // wifiRxTotalBytes
@@ -420,6 +436,8 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[9]);  // mobileTxTotalPackets
         assertInteger(parts[10]); // wifiRxTotalPackets
         assertInteger(parts[11]); // wifiTxTotalPackets
+        assertInteger(parts[12]); // btRxTotalBytes
+        assertInteger(parts[13]); // btTxTotalBytes
     }
 
     private void checkScreenBrightness(String[] parts) {
