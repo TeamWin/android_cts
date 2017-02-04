@@ -16,8 +16,6 @@
 
 package com.android.compatibility.common.util;
 
-import com.android.annotations.Nullable;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -316,7 +314,7 @@ public final class ChecksumReporter implements Serializable {
     }
 
     private static String buildTestId(
-            String suiteName, String caseName, String testName, @Nullable String abi) {
+            String suiteName, String caseName, String testName, String abi) {
         String name = Joiner.on(NAME_SEPARATOR).skipNulls().join(
                 Strings.emptyToNull(suiteName),
                 Strings.emptyToNull(caseName),
