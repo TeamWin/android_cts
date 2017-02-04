@@ -34,8 +34,6 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
 
-import java.io.IOException;
-
 /** Top-level {@link ListActivity} for launching tests and managing results. */
 public class TestListActivity extends AbstractTestListActivity implements View.OnClickListener {
     private static final int CTS_VERIFIER_PERMISSION_REQUEST = 1;
@@ -146,15 +144,10 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
     }
 
     private void handleViewItemSelected() {
-        try {
-            TestResultsReport report = new TestResultsReport(this, mAdapter);
-            Intent intent = new Intent(this, ReportViewerActivity.class);
-            intent.putExtra(ReportViewerActivity.EXTRA_REPORT_CONTENTS, report.getContents());
-            startActivity(intent);
-        } catch (IOException e) {
-            Toast.makeText(this, R.string.test_results_error, Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Couldn't copy test results report", e);
-        }
+        TestResultsReport report = new TestResultsReport(this, mAdapter);
+        Intent intent = new Intent(this, ReportViewerActivity.class);
+        intent.putExtra(ReportViewerActivity.EXTRA_REPORT_CONTENTS, report.getContents());
+        startActivity(intent);
     }
 
     private void handleExportItemSelected() {
