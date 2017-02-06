@@ -59,6 +59,7 @@ public class VulkanFeaturesTest {
     private PackageManager mPm;
     private FeatureInfo mVulkanHardwareLevel = null;
     private FeatureInfo mVulkanHardwareVersion = null;
+    private FeatureInfo mVulkanHardwareCompute = null;
     private JSONObject mVulkanDevices[];
 
     @Before
@@ -76,6 +77,11 @@ public class VulkanFeaturesTest {
                     mVulkanHardwareVersion = feature;
                     if (DEBUG) {
                         Log.d(TAG, feature.name + "=0x" + Integer.toHexString(feature.version));
+                    }
+                } else if (PackageManager.FEATURE_VULKAN_HARDWARE_COMPUTE.equals(feature.name)) {
+                    mVulkanHardwareCompute = feature;
+                    if (DEBUG) {
+                        Log.d(TAG, feature.name + "=" + feature.version);
                     }
                 }
             }
@@ -96,6 +102,9 @@ public class VulkanFeaturesTest {
             assertNull("System feature " + PackageManager.FEATURE_VULKAN_HARDWARE_VERSION +
                        " is supported, but no Vulkan physical devices are available",
                        mVulkanHardwareLevel);
+            assertNull("System feature " + PackageManager.FEATURE_VULKAN_HARDWARE_COMPUTE +
+                       " is supported, but no Vulkan physical devices are available",
+                       mVulkanHardwareCompute);
             return;
         }
         assertNotNull("Vulkan physical devices are available, but system feature " +
@@ -116,20 +125,31 @@ public class VulkanFeaturesTest {
                    " version 0x" + Integer.toHexString(mVulkanHardwareVersion.version) + " is not" +
                    " one of the versions allowed",
                    isHardwareVersionAllowed(mVulkanHardwareVersion.version));
+        if (mVulkanHardwareCompute != null) {
+            assertTrue("System feature " + PackageManager.FEATURE_VULKAN_HARDWARE_COMPUTE +
+                       " version " + mVulkanHardwareCompute.version +
+                       " is not one of the versions allowed",
+                       mVulkanHardwareCompute.version == 0);
+        }
 
         JSONObject bestDevice = null;
         int bestDeviceLevel = -1;
+        int bestComputeLevel = -1;
         int bestDeviceVersion = -1;
         for (JSONObject device : mVulkanDevices) {
             int level = determineHardwareLevel(device);
+            int compute = determineHardwareCompute(device);
             int version = determineHardwareVersion(device);
             if (DEBUG) {
                 Log.d(TAG, device.getJSONObject("properties").getString("deviceName") +
-                    ": level=" + level + " version=0x" + Integer.toHexString(version));
+                    ": level=" + level + " compute=" + compute +
+                    " version=0x" + Integer.toHexString(version));
             }
-            if (level >= bestDeviceLevel && version >= bestDeviceVersion) {
+            if (level >= bestDeviceLevel && compute >= bestComputeLevel &&
+                    version >= bestDeviceVersion) {
                 bestDevice = device;
                 bestDeviceLevel = level;
+                bestComputeLevel = compute;
                 bestDeviceVersion = version;
             }
         }
@@ -144,6 +164,16 @@ public class VulkanFeaturesTest {
             " isn't close enough (same major and minor version, less or equal patch version)" +
             " to best physical device version 0x" + Integer.toHexString(bestDeviceVersion),
             isVersionCompatible(bestDeviceVersion, mVulkanHardwareVersion.version));
+        if (mVulkanHardwareCompute == null) {
+            assertEquals("System feature " + PackageManager.FEATURE_VULKAN_HARDWARE_COMPUTE +
+                " not present, but required features are supported",
+                bestComputeLevel, -1);
+        } else {
+            assertEquals("System feature " + PackageManager.FEATURE_VULKAN_HARDWARE_COMPUTE +
+                " version " + mVulkanHardwareCompute.version +
+                " doesn't match best physical device hardware compute " + bestComputeLevel,
+                bestComputeLevel, mVulkanHardwareCompute.version);
+        }
     }
 
     @Test
@@ -188,6 +218,23 @@ public class VulkanFeaturesTest {
             return 0;
         }
         return 1;
+    }
+
+    private int determineHardwareCompute(JSONObject device) throws JSONException {
+        boolean have16bitStorage = false;
+        boolean haveVariablePointers = false;
+        JSONArray extensions = device.getJSONArray("extensions");
+        for (int i = 0; i < extensions.length(); i++) {
+            String name = extensions.getJSONObject(i).getString("extensionName");
+            if (name.equals("VK_KHR_16bit_storage"))
+                have16bitStorage = true;
+            else if (name.equals("VK_KHR_variable_pointers"))
+                haveVariablePointers = true;
+        }
+        if (!have16bitStorage || !haveVariablePointers) {
+            return -1;
+        }
+        return 0;
     }
 
     private int determineHardwareVersion(JSONObject device) throws JSONException {
