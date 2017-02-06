@@ -494,6 +494,22 @@ public class ResultHandler {
     }
 
     /**
+     * Get the result directory for the given sessionId.
+     */
+    public static File getResultDirectory(File resultsDir, Integer sessionId) {
+        if (sessionId < 0) {
+            throw new IllegalArgumentException(
+                String.format("Invalid session id [%d] ", sessionId));
+        }
+        List<File> allResultDirs = getResultDirectories(resultsDir);
+        if (sessionId >= allResultDirs.size()) {
+            throw new IllegalArgumentException(String.format("Invalid session id [%d], results" +
+                    "directory contains only %d results", sessionId, allResultDirs.size()));
+        }
+        return allResultDirs.get(sessionId);
+    }
+
+    /**
      * Get a list of child directories that contain test invocation results
      * @param resultsDir the root test result directory
      * @return
