@@ -6808,6 +6808,53 @@ public class TextViewTest {
         assertEquals(selection.getSelectionEndIndex(), mTextView.getSelectionEnd());
         // TODO: Test the floating toolbar content.
     }
+    @Test
+    public void testFontResources_setInXmlFamilyName() {
+        mTextView = findTextView(R.id.textview_fontresource_fontfamily);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplefont);
+
+        assertEquals(expected, mTextView.getTypeface());
+    }
+
+    @Test
+    public void testFontResourcesXml_setInXmlFamilyName() {
+        mTextView = findTextView(R.id.textview_fontxmlresource_fontfamily);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplexmlfont);
+
+        assertEquals(expected, mTextView.getTypeface());
+    }
+
+    @Test
+    public void testFontResources_setInXmlStyle() {
+        mTextView = findTextView(R.id.textview_fontresource_style);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplefont);
+
+        assertEquals(expected, mTextView.getTypeface());
+    }
+
+    @Test
+    public void testFontResourcesXml_setInXmlStyle() {
+        mTextView = findTextView(R.id.textview_fontxmlresource_style);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplexmlfont);
+
+        assertEquals(expected, mTextView.getTypeface());
+    }
+
+    @Test
+    public void testFontResources_setInXmlTextAppearance() {
+        mTextView = findTextView(R.id.textview_fontresource_textAppearance);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplefont);
+
+        assertEquals(expected, mTextView.getTypeface());
+    }
+
+    @Test
+    public void testFontResourcesXml_setInXmlTextAppearance() {
+        mTextView = findTextView(R.id.textview_fontxmlresource_textAppearance);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplexmlfont);
+
+        assertEquals(expected, mTextView.getTypeface());
+    }
 
     /**
      * Some TextView attributes require non-fixed width and/or layout height. This function removes

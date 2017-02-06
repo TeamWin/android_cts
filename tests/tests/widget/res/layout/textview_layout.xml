@@ -287,6 +287,48 @@
                 android:autoSizeMaxTextSize="50dp"
                 android:autoSizeStepGranularity="1dp" />
 
+            <TextView
+                android:id="@+id/textview_fontresource_fontfamily"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/samplefont" />
+
+            <TextView
+                android:id="@+id/textview_fontxmlresource_fontfamily"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/samplexmlfont" />
+
+            <TextView
+                android:id="@+id/textview_fontresource_style"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextView_FontResource" />
+
+            <TextView
+                android:id="@+id/textview_fontxmlresource_style"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextView_FontXmlResource" />
+
+            <TextView
+                android:id="@+id/textview_fontresource_textAppearance"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextView_FontResource" />
+
+            <TextView
+                android:id="@+id/textview_fontxmlresource_textAppearance"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextView_FontXmlResource" />
+
         </LinearLayout>
 
 </ScrollView>
