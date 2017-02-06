@@ -81,7 +81,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         channel.setSound(new Uri.Builder().scheme("test").build(),
                 new AudioAttributes.Builder().setUsage(
                         AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED).build());
-        channel.setLights(true);
+        channel.enableLights(true);
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
         mNotificationManager.createNotificationChannel(channel);
