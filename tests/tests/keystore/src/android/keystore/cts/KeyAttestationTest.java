@@ -493,10 +493,26 @@ public class KeyAttestationTest extends AndroidTestCase {
     private void checkAttestationApplicationId(Attestation attestation)
             throws NoSuchAlgorithmException, NameNotFoundException {
         AttestationApplicationId aaid = null;
-        assertNull(attestation.getTeeEnforced().getAttestationApplicationId());
-        aaid = attestation.getSoftwareEnforced().getAttestationApplicationId();
-        assertNotNull(aaid);
-        assertEquals(new AttestationApplicationId(getContext()), aaid);
+        int kmVersion = attestation.getKeymasterVersion();
+        aaid = attestation.getTeeEnforced().getAttestationApplicationId();
+        if (kmVersion >= 3) {
+            // must be TEE enforced and correct
+            assertNotNull(aaid);
+            assertNull(attestation.getSoftwareEnforced().getAttestationApplicationId());
+            assertEquals(new AttestationApplicationId(getContext()), aaid);
+        } else {
+            // may be TEE or SW enforced
+            if (aaid == null) {
+                aaid = attestation.getSoftwareEnforced().getAttestationApplicationId();
+            } else {
+                // if AAID is present in TEE it must not be present in SW.
+                assertNull(attestation.getSoftwareEnforced().getAttestationApplicationId());
+            }
+            // must be correct if present
+            if (aaid != null) {
+                assertEquals(new AttestationApplicationId(getContext()), aaid);
+            }
+        }
     }
 
     private void checkKeyIndependentAttestationInfo(byte[] challenge, int purposes, Date startTime,
