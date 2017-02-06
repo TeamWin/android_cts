@@ -999,6 +999,48 @@ public class FragmentViewTests {
         FragmentTestUtil.assertChildren(innerContainer, fragment2);
     }
 
+    // Popping the backstack with non-optimized fragments should execute the operations together.
+    // When a non-backstack fragment will be raised, it should not be destroyed.
+    @Test
+    public void popToNonBackStackFragment() throws Throwable {
+        FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final SimpleViewFragment fragment1 = new SimpleViewFragment();
+
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1)
+                .commit();
+
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        final SimpleViewFragment fragment2 = new SimpleViewFragment();
+
+        fm.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment2)
+                .addToBackStack("two")
+                .commit();
+
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        final SimpleViewFragment fragment3 = new SimpleViewFragment();
+
+        fm.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment3)
+                .addToBackStack("three")
+                .commit();
+
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+
+        FragmentTestUtil.popBackStackImmediate(mActivityRule, "two",
+                FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        ViewGroup container = (ViewGroup)
+                mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
+
+        FragmentTestUtil.assertChildren(container, fragment1);
+    }
+
     private View findViewById(int viewId) {
         return mActivityRule.getActivity().findViewById(viewId);
     }
@@ -1041,6 +1083,14 @@ public class FragmentViewTests {
                     .commit();
             getChildFragmentManager().executePendingTransactions();
             return view;
+        }
+    }
+
+    public static class SimpleViewFragment extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.text_a, container, false);
         }
     }
 }
