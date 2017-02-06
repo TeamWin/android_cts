@@ -19,9 +19,12 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.sensors.sixdof.Utils.ReportExporter;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -53,6 +56,12 @@ public class StartActivity extends PassFailButtons.Activity {
                 startPhase1();
             }
         });
+
+        // If there is no 6DoF sensor advertised, pass trivially.
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_POSE_6DOF) == null) {
+            StartActivity.this.setTestResultAndFinish(true);
+        }
     }
 
     @Override
