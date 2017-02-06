@@ -131,4 +131,23 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // DISALLOW_UNMUTE_MICROPHONE and DISALLOW_ADJUST_VOLUME can only be set by device owners
         // and profile owners on the primary user.
     }
+
+    /**
+     * Don't require a device for tests that use the network stack on secondary users.
+     */
+    @Override
+    public void testAlwaysOnVpn() throws Exception {
+        super.testAlwaysOnVpn();
+    }
+
+    @Override
+    public void testAlwaysOnVpnLockDown() throws Exception {
+        super.testAlwaysOnVpnLockDown();
+    }
+
+    @Override
+    public void testAlwaysOnVpnPackageUninstalled() throws Exception {
+        super.testAlwaysOnVpnPackageUninstalled();
+    }
+
 }

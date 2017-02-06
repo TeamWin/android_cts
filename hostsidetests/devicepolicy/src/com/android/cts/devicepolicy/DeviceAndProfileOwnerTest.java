@@ -255,6 +255,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState");
     }
 
+    /**
+     * Require a device for tests that use the network stack. Headless Androids running in
+     * data centres might need their network rules un-tampered-with in order to keep the ADB / VNC
+     * connection alive.
+     *
+     * This is only a problem on device owner / profile owner running on USER_SYSTEM, because
+     * network rules for this user will affect UID 0.
+     */
     @RequiresDevice
     public void testAlwaysOnVpn() throws Exception {
         if (!mHasFeature) {
