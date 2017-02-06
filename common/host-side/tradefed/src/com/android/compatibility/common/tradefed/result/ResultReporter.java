@@ -502,6 +502,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                     mBuildHelper.getSuiteBuild(), mResult, mResultDir, startTime,
                     elapsedTime + startTime, mReferenceUrl, getLogUrl(),
                     mBuildHelper.getCommandLineArgs());
+            if (mRetrySessionId != null) {
+                copyRetryFiles(ResultHandler.getResultDirectory(
+                        mBuildHelper.getResultsDir(), mRetrySessionId), mResultDir);
+            }
             File zippedResults = zipResults(mResultDir);
 
             // Create failure report after zip file so extra data is not uploaded
@@ -715,6 +719,33 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 FileUtil.deleteFile(configFiles.get(moduleName));
             } catch (IOException e) {
                 warn("Failed to copy config file for %s to file", moduleName);
+            }
+        }
+    }
+
+    /**
+     * Recursively copy any other files found in the previous session's result directory to the
+     * new result directory, so long as they don't already exist. For example, a "screenshots"
+     * directory generated in a previous session by a passing test will not be generated on retry
+     * unless copied from the old result directory.
+     *
+     * @param oldResultsDir
+     * @param newResultsDir
+     */
+    static void copyRetryFiles(File oldResultsDir, File newResultsDir) {
+        File[] oldFiles = oldResultsDir.listFiles();
+        for (File oldFile : oldFiles) {
+            File newFile = new File (newResultsDir, oldFile.getName());
+            if (!newFile.exists()) {
+                try {
+                    if (oldFile.isDirectory()) {
+                        FileUtil.recursiveCopy(oldFile, newFile);
+                    } else {
+                        FileUtil.copyFile(oldFile, newFile);
+                    }
+                } catch (IOException e) {
+                    warn("Failed to copy file \"%s\" from previous session", oldFile.getName());
+                }
             }
         }
     }
