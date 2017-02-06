@@ -6240,7 +6240,6 @@ public class TextViewTest {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         CtsTouchUtils.emulateTapOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
                 spanDetails.mYPosInside);
-        SystemClock.sleep(ViewConfiguration.getDoubleTapTimeout() + 1);
         verify(spanDetails.mClickableSpan, times(1)).onClick(mTextView);
     }
 
@@ -6249,7 +6248,7 @@ public class TextViewTest {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         CtsTouchUtils.emulateDoubleTapOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
                 spanDetails.mYPosInside);
-        verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
+        verify(spanDetails.mClickableSpan, times(2)).onClick(mTextView);
     }
 
     @Test
@@ -6257,7 +6256,6 @@ public class TextViewTest {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         CtsTouchUtils.emulateTapOnView(mInstrumentation, mTextView, spanDetails.mXPosOutside,
                 spanDetails.mYPosOutside);
-        SystemClock.sleep(ViewConfiguration.getDoubleTapTimeout() + 1);
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
     }
 
