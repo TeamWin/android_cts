@@ -45,7 +45,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutoFillOneDataset() throws Exception {
         enableService();
 
-        final CannedDataset.Builder dataset = new CannedDataset.Builder("The Dude");
+        final CannedDataset.Builder dataset = new CannedDataset.Builder("4815162342", "The Dude");
         mLoginActivity.expectAutoFill(dataset, "dude", "sweet");
 
         InstrumentedAutoFillService.setFillResponse(new CannedFillResponse.Builder()

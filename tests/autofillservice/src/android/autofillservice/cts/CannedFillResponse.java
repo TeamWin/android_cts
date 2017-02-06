@@ -84,23 +84,27 @@ final class CannedFillResponse {
     static class CannedDataset {
 
         final Map<String, AutoFillValue> fields;
+        final String id;
         final String name;
 
         private CannedDataset(Builder builder) {
             fields = builder.mFields;
+            id = builder.mId;
             name = builder.mName;
         }
 
         @Override
         public String toString() {
-            return "CannedDataset: [name=" + name + ", fields=" + fields + "]";
+            return "CannedDataset: [id=" + id + ", name=" + name + ", fields=" + fields + "]";
         }
 
         static class Builder {
             private final Map<String, AutoFillValue> mFields = new HashMap<>();
+            private final String mId;
             private final String mName;
 
-            public Builder(String name) {
+            public Builder(String id, String name) {
+                mId = id;
                 mName = name;
             }
 
