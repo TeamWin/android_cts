@@ -269,19 +269,24 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     private void checkWakelock(String[] parts) {
         assertEquals(20, parts.length);
         assertNotNull(parts[4]);      // wakelock
+
         assertInteger(parts[5]);      // full totalTime
         assertEquals("f", parts[6]);  // full
         long full_count = assertInteger(parts[7]);      // full count
-        assertInteger(parts[8]);      // partial totalTime
-        assertInteger(parts[9]);      // current
-        assertInteger(parts[10]);      // max
+        assertInteger(parts[8]);      // current
+        assertInteger(parts[9]);      // max
+
+        assertInteger(parts[10]);      // partial totalTime
         assertEquals("p", parts[11]);  // partial
         long partial_count = assertInteger(parts[12]);     // partial count
-        assertInteger(parts[13]);     // window totalTime
-        assertInteger(parts[14]);      // current
-        assertInteger(parts[15]);      // max
+        assertInteger(parts[13]);      // current
+        assertInteger(parts[14]);      // max
+
+        assertInteger(parts[15]);     // window totalTime
         assertEquals("w", parts[16]); // window
         long window_count = assertInteger(parts[17]);     // window count
+        assertInteger(parts[18]);      // current
+        assertInteger(parts[19]);     // max
 
         // Sanity checks.
         assertTrue("full wakelock count must be >= 0", full_count >= 0);
