@@ -29,7 +29,7 @@ import android.transition.Explode;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
-import android.transition.Transition.TransitionListenerAdapter;
+import android.transition.TransitionListenerAdapter;
 import android.view.View;
 
 import java.util.List;
