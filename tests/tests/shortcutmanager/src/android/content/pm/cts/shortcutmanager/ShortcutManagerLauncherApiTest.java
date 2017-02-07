@@ -15,11 +15,7 @@
  */
 package android.content.pm.cts.shortcutmanager;
 
-import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_GET_KEY_FIELDS_ONLY;
-import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC;
-import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST;
-import static android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED;
-
+import static android.content.pm.LauncherApps.ShortcutQuery.*;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.assertWith;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.list;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.retryUntil;
@@ -341,5 +337,40 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
 
         assertIconDimensions(icon5, getIconAsLauncher(
                 mLauncherContext1, mPackageContext1.getPackageName(), "ms21", false));
+    }
+
+    public void testGetDynamicShortcutsDoesNotReturnChooserShortcuts() throws Exception {
+        runWithCaller(mPackageContext1, () -> {
+                    assertTrue(getManager().setDynamicShortcuts(list(
+                            // First item has no intent
+                            makeChooserShortcut("s1", 1, false),
+                            // Second has an intent
+                            makeChooserShortcut("s2", 1, true),
+                            makeShortcut("s3"))));
+
+                    assertWith(getManager().getDynamicShortcuts())
+                            .haveIds("s1", "s2", "s3")
+                            .areAllEnabled();
+                });
+
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+
+        runWithCaller(mLauncherContext1, () -> {
+            assertWith(getShortcutsAsLauncher(
+                    FLAG_MATCH_DYNAMIC,
+                    mPackageContext1.getPackageName(),
+                    null,
+                    0,
+                    list()))
+                    .haveIds("s2", "s3");
+
+            assertWith(getShortcutsAsLauncher(
+                    FLAG_MATCH_CHOOSER,
+                    mPackageContext1.getPackageName(),
+                    null,
+                    0,
+                    list()))
+                    .haveIds("s1", "s2");
+        });
     }
 }
