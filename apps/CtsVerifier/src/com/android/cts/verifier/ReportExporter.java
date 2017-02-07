@@ -21,7 +21,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
-import android.os.SystemClock;
 
 import com.android.compatibility.common.util.FileUtil;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -36,6 +35,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -52,11 +52,11 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     private static final String COMMAND_LINE_ARGS = "CtsVerifier";
     private static final String LOG_URL = null;
     private static final String REFERENCE_URL = null;
-    private static final String SUITE_NAME = "ctsverifier";
+    private static final String SUITE_NAME = "CTS_VERIFIER";
     private static final String SUITE_PLAN = "CTSVERIFIER";
     private static final String SUITE_BUILD = "0";
 
-    private static final long START_MS = SystemClock.uptimeMillis();
+    private static final long START_MS = System.currentTimeMillis();
     private static final long END_MS = START_MS;
 
     private static final String REPORT_DIRECTORY = "ctsVerifierReports";
