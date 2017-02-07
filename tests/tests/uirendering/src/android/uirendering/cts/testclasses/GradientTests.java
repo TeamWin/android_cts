@@ -54,6 +54,6 @@ public class GradientTests extends ActivityTestBase {
                         // This means the source color (0x00ffffff) was
                         // properly pre-multiplied
                         0xffff0000
-                }, 10)); // Tolerance set to account for dithering and interpolation
+                }, 20)); // Tolerance set to account for dithering and interpolation
     }
 }
