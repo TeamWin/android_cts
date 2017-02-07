@@ -27,6 +27,7 @@ import android.graphics.BitmapFactory;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvContract;
 import android.media.tv.TvContract.Channels;
+import android.media.tv.TvContract.PreviewPrograms;
 import android.media.tv.TvContract.Programs;
 import android.media.tv.TvContract.Programs.Genres;
 import android.media.tv.TvContract.RecordedPrograms;
@@ -172,42 +173,46 @@ public class TvContractTest extends AndroidTestCase {
 
     private static ContentValues createDummyPreviewProgramValues(long channelId) {
         ContentValues values = new ContentValues();
-        values.put(Programs.COLUMN_CHANNEL_ID, channelId);
-        values.put(Programs.COLUMN_INTERNAL_PROVIDER_ID, "ID-4321");
-        values.put(Programs.COLUMN_PREVIEW_VIDEO_URI, "http://test.com/preview.mp4");
-        values.put(Programs.COLUMN_LAST_PLAYBACK_POSITION_MILLIS, 5000);
-        values.put(Programs.COLUMN_DURATION_MILLIS, 60000);
-        values.put(Programs.COLUMN_APP_LINK_INTENT_URI, "app_link_intent");
-        values.put(Programs.COLUMN_WEIGHT, 100);
-        values.put(Programs.COLUMN_TITLE, "program_title");
-        values.put(Programs.COLUMN_SHORT_DESCRIPTION, "short_description");
-        values.put(Programs.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
-        values.put(Programs.COLUMN_EPISODE_TITLE, "episode_title");
-        values.put(Programs.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
-        values.put(Programs.COLUMN_SEASON_TITLE, "season_title");
-        values.put(Programs.COLUMN_CANONICAL_GENRE, Programs.Genres.encode(
+        values.put(PreviewPrograms.COLUMN_CHANNEL_ID, channelId);
+        values.put(PreviewPrograms.COLUMN_INTERNAL_PROVIDER_ID, "ID-4321");
+        values.put(PreviewPrograms.COLUMN_PREVIEW_VIDEO_URI, "http://test.com/preview.mp4");
+        values.put(PreviewPrograms.COLUMN_LAST_PLAYBACK_POSITION_MILLIS, 5000);
+        values.put(PreviewPrograms.COLUMN_DURATION_MILLIS, 60000);
+        values.put(PreviewPrograms.COLUMN_APP_LINK_INTENT_URI, "app_link_intent");
+        values.put(PreviewPrograms.COLUMN_WEIGHT, 100);
+        values.put(PreviewPrograms.COLUMN_TITLE, "program_title");
+        values.put(PreviewPrograms.COLUMN_SHORT_DESCRIPTION, "short_description");
+        values.put(PreviewPrograms.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
+        values.put(PreviewPrograms.COLUMN_EPISODE_TITLE, "episode_title");
+        values.put(PreviewPrograms.COLUMN_SEASON_DISPLAY_NUMBER , "2B");
+        values.put(PreviewPrograms.COLUMN_SEASON_TITLE, "season_title");
+        values.put(PreviewPrograms.COLUMN_CANONICAL_GENRE, Programs.Genres.encode(
                 Programs.Genres.SPORTS, Programs.Genres.DRAMA));
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
                 "US_TVPG_TV_MA", "US_TVPG_S", "US_TVPG_V");
-        values.put(Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
-        values.put(Programs.COLUMN_TYPE, Programs.TYPE_MOVIE);
-        values.put(Programs.COLUMN_WATCH_NEXT_TYPE, Programs.WATCH_NEXT_TYPE_CONTINUE);
-        values.put(Programs.COLUMN_POSTER_ART_URI, "http://foo.com/artwork.png");
-        values.put(Programs.COLUMN_POSTER_ART_ASPECT_RATIO, Programs.ASPECT_RATIO_2_3);
-        values.put(Programs.COLUMN_THUMBNAIL_URI, "http://foo.com/thumbnail.jpg");
-        values.put(Programs.COLUMN_THUMBNAIL_ASPECT_RATIO, Programs.ASPECT_RATIO_16_9);
-        values.put(Programs.COLUMN_LOGO_URI, "http://foo.com/logo.jpg");
-        values.put(Programs.COLUMN_AVAILABILITY, Programs.AVAILABILITY_AVAILABLE);
-        values.put(Programs.COLUMN_STARTING_PRICE, "10.99 USD");
-        values.put(Programs.COLUMN_OFFER_PRICE, "3.99 USD");
-        values.put(Programs.COLUMN_RELEASE_DATE, "1985");
-        values.put(Programs.COLUMN_ITEM_COUNT, 1);
-        values.put(Programs.COLUMN_LIVE, 0);
-        values.put(Programs.COLUMN_INTERACTION_TYPE, Programs.INTERACTION_TYPE_LIKES);
-        values.put(Programs.COLUMN_INTERACTION_COUNT, 4000);
-        values.put(Programs.COLUMN_AUTHOR, "author_name1");
-        values.put(Programs.COLUMN_REVIEW_RATING_STYLE, Programs.REVIEW_RATING_STYLE_STARS);
-        values.put(Programs.COLUMN_REVIEW_RATING, "4.5");
+        values.put(PreviewPrograms.COLUMN_CONTENT_RATING, rating.flattenToString());
+        values.put(PreviewPrograms.COLUMN_TYPE, PreviewPrograms.TYPE_MOVIE);
+        values.put(PreviewPrograms.COLUMN_WATCH_NEXT_TYPE,
+                PreviewPrograms.WATCH_NEXT_TYPE_CONTINUE);
+        values.put(PreviewPrograms.COLUMN_POSTER_ART_URI, "http://foo.com/artwork.png");
+        values.put(PreviewPrograms.COLUMN_POSTER_ART_ASPECT_RATIO,
+                PreviewPrograms.ASPECT_RATIO_2_3);
+        values.put(PreviewPrograms.COLUMN_THUMBNAIL_URI, "http://foo.com/thumbnail.jpg");
+        values.put(PreviewPrograms.COLUMN_THUMBNAIL_ASPECT_RATIO,
+                PreviewPrograms.ASPECT_RATIO_16_9);
+        values.put(PreviewPrograms.COLUMN_LOGO_URI, "http://foo.com/logo.jpg");
+        values.put(PreviewPrograms.COLUMN_AVAILABILITY, PreviewPrograms.AVAILABILITY_AVAILABLE);
+        values.put(PreviewPrograms.COLUMN_STARTING_PRICE, "10.99 USD");
+        values.put(PreviewPrograms.COLUMN_OFFER_PRICE, "3.99 USD");
+        values.put(PreviewPrograms.COLUMN_RELEASE_DATE, "1985");
+        values.put(PreviewPrograms.COLUMN_ITEM_COUNT, 1);
+        values.put(PreviewPrograms.COLUMN_LIVE, 0);
+        values.put(PreviewPrograms.COLUMN_INTERACTION_TYPE, PreviewPrograms.INTERACTION_TYPE_LIKES);
+        values.put(PreviewPrograms.COLUMN_INTERACTION_COUNT, 4000);
+        values.put(PreviewPrograms.COLUMN_AUTHOR, "author_name1");
+        values.put(PreviewPrograms.COLUMN_REVIEW_RATING_STYLE,
+                PreviewPrograms.REVIEW_RATING_STYLE_STARS);
+        values.put(PreviewPrograms.COLUMN_REVIEW_RATING, "4.5");
 
         return values;
     }
@@ -457,30 +462,61 @@ public class TvContractTest extends AndroidTestCase {
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_THUMBNAIL_URI);
             verifyBlobColumn(cursor, expectedValues, Programs.COLUMN_INTERNAL_PROVIDER_DATA);
             verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_VERSION_NUMBER);
+        }
+    }
 
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_INTERNAL_PROVIDER_ID);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_PREVIEW_VIDEO_URI);
+    private void verifyPreviewProgram(Uri programUri, ContentValues expectedValues,
+            long programId) {
+        try (Cursor cursor = mContentResolver.query(
+                programUri, null, null, null, null)) {
+            assertNotNull(cursor);
+            assertEquals(cursor.getCount(), 1);
+            assertTrue(cursor.moveToNext());
+            assertEquals(programId, cursor.getLong(cursor.getColumnIndex(PreviewPrograms._ID)));
+            verifyLongColumn(cursor, expectedValues, PreviewPrograms.COLUMN_CHANNEL_ID);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_TITLE);
+            verifyStringColumn(cursor, expectedValues,
+                    PreviewPrograms.COLUMN_SEASON_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_SEASON_TITLE);
+            verifyStringColumn(cursor, expectedValues,
+                    PreviewPrograms.COLUMN_EPISODE_DISPLAY_NUMBER);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_EPISODE_TITLE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_CANONICAL_GENRE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_SHORT_DESCRIPTION);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_LONG_DESCRIPTION);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_VIDEO_WIDTH);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_VIDEO_HEIGHT);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AUDIO_LANGUAGE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_CONTENT_RATING);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_POSTER_ART_URI);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_THUMBNAIL_URI);
+            verifyBlobColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERNAL_PROVIDER_DATA);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_VERSION_NUMBER);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERNAL_PROVIDER_ID);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_PREVIEW_VIDEO_URI);
             verifyIntegerColumn(cursor, expectedValues,
-                    Programs.COLUMN_LAST_PLAYBACK_POSITION_MILLIS);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_DURATION_MILLIS);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_APP_LINK_INTENT_URI);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_WEIGHT);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_TYPE);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_WATCH_NEXT_TYPE);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_POSTER_ART_ASPECT_RATIO);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_THUMBNAIL_ASPECT_RATIO);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_LOGO_URI);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_AVAILABILITY);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_STARTING_PRICE);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_OFFER_PRICE);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_RELEASE_DATE);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_ITEM_COUNT);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_LIVE);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_INTERACTION_TYPE);
-            verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_INTERACTION_COUNT);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_AUTHOR);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_REVIEW_RATING_STYLE);
-            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_REVIEW_RATING);
+                    PreviewPrograms.COLUMN_LAST_PLAYBACK_POSITION_MILLIS);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_DURATION_MILLIS);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_APP_LINK_INTENT_URI);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_WEIGHT);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_TYPE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_WATCH_NEXT_TYPE);
+            verifyStringColumn(cursor, expectedValues,
+                    PreviewPrograms.COLUMN_POSTER_ART_ASPECT_RATIO);
+            verifyStringColumn(cursor, expectedValues,
+                    PreviewPrograms.COLUMN_THUMBNAIL_ASPECT_RATIO);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_LOGO_URI);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AVAILABILITY);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_STARTING_PRICE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_OFFER_PRICE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_RELEASE_DATE);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_ITEM_COUNT);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_LIVE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERACTION_TYPE);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERACTION_COUNT);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AUTHOR);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING_STYLE);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING);
         }
     }
 
@@ -562,30 +598,29 @@ public class TvContractTest extends AndroidTestCase {
         }
     }
 
-    public void verifyProgramsTableWithPreviewTypeEntry(Uri programsUri, long channelId) {
+    public void verifyPreviewProgramsTable(Uri previewProgramsUri, long channelId) {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
         // Test: insert
         ContentValues values = createDummyPreviewProgramValues(channelId);
 
-        Uri rowUri = mContentResolver.insert(programsUri, values);
+        Uri rowUri = mContentResolver.insert(previewProgramsUri, values);
         long programId = ContentUris.parseId(rowUri);
-        Uri programUri = TvContract.buildProgramUri(programId);
-        verifyProgram(programUri, values, programId);
+        Uri programUri = TvContract.buildPreviewProgramUri(programId);
+        verifyPreviewProgram(programUri, values, programId);
 
         // Test: update
-        values.put(Programs.COLUMN_EPISODE_TITLE, "Sample title");
-        values.put(Programs.COLUMN_SHORT_DESCRIPTION, "Short description");
-        values.put(Programs.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
+        values.put(PreviewPrograms.COLUMN_EPISODE_TITLE, "Sample title");
+        values.put(PreviewPrograms.COLUMN_SHORT_DESCRIPTION, "Short description");
+        values.put(PreviewPrograms.COLUMN_INTERNAL_PROVIDER_DATA, "Coffee".getBytes());
 
         mContentResolver.update(programUri, values, null, null);
-        verifyProgram(programUri, values, programId);
+        verifyPreviewProgram(programUri, values, programId);
 
         // Test: delete
-        mContentResolver.delete(programsUri, null, null);
-        try (Cursor cursor = mContentResolver.query(
-                programsUri, PROGRAMS_PROJECTION, null, null, null)) {
+        mContentResolver.delete(previewProgramsUri, null, null);
+        try (Cursor cursor = mContentResolver.query(previewProgramsUri, null, null, null, null)) {
             assertEquals(0, cursor.getCount());
         }
     }
@@ -646,7 +681,7 @@ public class TvContractTest extends AndroidTestCase {
                 channelId);
     }
 
-    public void testProgramsTableWithPreviewType() throws Exception {
+    public void testPreviewProgramsTable() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
@@ -655,33 +690,32 @@ public class TvContractTest extends AndroidTestCase {
         Uri channelUri = mContentResolver.insert(mChannelsUri, values);
         long channelId = ContentUris.parseId(channelUri);
 
-        verifyProgramsTableWithPreviewTypeEntry(TvContract.buildProgramsUriForChannel(channelUri),
-                channelId);
+        verifyPreviewProgramsTable(PreviewPrograms.CONTENT_URI, channelId);
     }
 
-    public void testProgramsTableForIllegalAccess() throws Exception {
+    public void testPreviewProgramsTableForIllegalAccess() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
-        // Set-up: add a channel and program.
-        ContentValues values = createDummyChannelValues(mInputId, false);
+        // Set-up: add a channel and preview program.
+        ContentValues values = createDummyChannelValues(mInputId, true);
         Uri channelUri = mContentResolver.insert(mChannelsUri, values);
         long channelId = ContentUris.parseId(channelUri);
-        Uri programsUri = TvContract.buildProgramsUriForChannel(channelId);
-        values = createDummyProgramValues(channelId);
-        mContentResolver.insert(programsUri, values);
+        Uri previewProgramsUri = TvContract.buildPreviewProgramsUriForChannel(channelId);
+        values = createDummyPreviewProgramValues(channelId);
+        Uri previewProgramUri = mContentResolver.insert(previewProgramsUri, values);
 
         values.put("browsable", 1);
         try {
-            mContentResolver.insert(programsUri, values);
+            mContentResolver.insert(previewProgramUri, values);
             fail("'browsable' should not be accessible.");
         } catch (Exception e) {
             // Expected.
         }
 
-        mContentResolver.delete(programsUri, null, null);
+        mContentResolver.delete(previewProgramUri, null, null);
         try (Cursor cursor = mContentResolver.query(
-                programsUri, PROGRAMS_PROJECTION, null, null, null)) {
+                previewProgramUri, PROGRAMS_PROJECTION, null, null, null)) {
             assertEquals(0, cursor.getCount());
         }
     }
