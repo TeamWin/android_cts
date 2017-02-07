@@ -16,6 +16,11 @@
 
 package android.util.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.os.Bundle;
@@ -31,8 +36,12 @@ import org.junit.runner.RunWith;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -535,4 +544,193 @@ public class ArrayMapTest {
         }
         checkEntrySetToArray(testMap);
     }
+
+    /**
+     * The entrySet Iterator allows iteration past its end without throwing
+     * NoSuchElementException. The Entry returned by {@link Iterator#next()}
+     * removes null key / value, but {@link Iterator#remove()} removes the
+     * last actual entry in the map.
+     * This is unusual behavior for {@link Iterator#next()}; this test ensures that
+     * any future change to this behavior is deliberate.
+     */
+    @Test
+    public void testUnusualBehavior_canIteratePastEnd_entrySetIterator() {
+        Map<String, String> map = new ArrayMap<>();
+        map.put("key 1", "value 1");
+        map.put("key 2", "value 2");
+        Set<Map.Entry<String, String>> expectedEntriesToIterate = new HashSet<>(Arrays.asList(
+                entryOf("key 1", "value 1"),
+                entryOf("key 2", "value 2")
+        ));
+        Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
+
+        // Assert iteration over the expected two entries in any order
+        assertTrue(iterator.hasNext());
+        Map.Entry<String, String> firstEntry = copyOf(iterator.next());
+        assertTrue(expectedEntriesToIterate.remove(firstEntry));
+
+        assertTrue(iterator.hasNext());
+        Map.Entry<String, String> secondEntry = copyOf(iterator.next());
+        assertTrue(expectedEntriesToIterate.remove(secondEntry));
+
+        assertFalse(iterator.hasNext());
+
+        // Now to the unusual part:
+
+        // does not throw NoSuchElementException
+        Map.Entry<String, String> beyondEnd = copyOf(iterator.next());
+        assertEquals(entryOf(null, null), beyondEnd);
+        iterator.remove(); // removes secondEntry from the mapping!
+        assertEqualsBothWays(
+                Collections.singletonMap(firstEntry.getKey(), firstEntry.getValue()), map);
+
+        // doing it again removes the previous value again
+        iterator.next();
+        iterator.remove();
+        assertEqualsBothWays(Collections.emptyMap(), map);
+
+        // Trying to do this again yields ArrayIndexOutOfBoundsException
+        iterator.next();
+        try {
+            iterator.remove();
+            fail();
+        } catch (ArrayIndexOutOfBoundsException expected) {
+        }
+
+        // But additional calls to next() are tolerated
+        iterator.next();
+        iterator.next();
+        iterator.next();
+    }
+
+    private static<K, V> Map.Entry<K, V> entryOf(K key, V value) {
+        return new AbstractMap.SimpleEntry<>(key, value);
+    }
+
+    private static<K, V> Map.Entry<K, V> copyOf(Map.Entry<K, V> entry) {
+        return entryOf(entry.getKey(), entry.getValue());
+    }
+
+    @Test
+    public void testUnusualBehavior_canIteratePastEnd_keySetIterator() {
+        Map<String, String> map = new ArrayMap<>();
+        map.put("key 1", "value 1");
+        map.put("key 2", "value 2");
+        Set<String> expectedKeysToIterate = new HashSet<>(Arrays.asList("key 1", "key 2"));
+        Iterator<String> iterator = map.keySet().iterator();
+
+        // Assert iteration over the expected two keys in any order
+        assertTrue(iterator.hasNext());
+        String firstKey = iterator.next();
+        assertTrue(expectedKeysToIterate.remove(firstKey));
+
+        assertTrue(iterator.hasNext());
+        String secondKey = iterator.next();
+        assertTrue(expectedKeysToIterate.remove(secondKey));
+
+        assertFalse(iterator.hasNext());
+
+        // Now to the unusual part:
+
+        // does not throw NoSuchElementException
+        String beyondEnd = iterator.next();
+        assertNull(beyondEnd);
+        iterator.remove(); // removes the second entry!
+
+        String firstValue = firstKey.equals("key 1") ? "value 1" : "value 2";
+        assertEqualsBothWays(Collections.singletonMap(firstKey, firstValue), map);
+
+        // doing it again removes the previous value again
+        iterator.next();
+        iterator.remove();
+        assertEqualsBothWays(Collections.emptyMap(), map);
+
+        // Trying to call next() again yields ArrayIndexOutOfBoundsException
+        // This is different from entrySet(), where this was allowed.
+        try {
+            iterator.next();
+            fail();
+        } catch (ArrayIndexOutOfBoundsException expected) {
+        }
+    }
+
+    @Test
+    public void testUnusualBehavior_canIteratePastEnd_valuesIterator() {
+        Map<String, String> map = new ArrayMap<>();
+        map.put("key 1", "value 1");
+        map.put("key 2", "value 2");
+        Set<String> expectedValuesToIterate = new HashSet<>(Arrays.asList("value 1", "value 2"));
+        Iterator<String> iterator = map.values().iterator();
+
+        // Assert iteration over the expected two values in any order
+        assertTrue(iterator.hasNext());
+        String firstValue = iterator.next();
+        assertTrue(expectedValuesToIterate.remove(firstValue));
+
+        assertTrue(iterator.hasNext());
+        String secondValue = iterator.next();
+        assertTrue(expectedValuesToIterate.remove(secondValue));
+
+        assertFalse(iterator.hasNext());
+
+        // Now to the unusual part:
+
+        // does not throw NoSuchElementException
+        String beyondEnd = iterator.next();
+        assertNull(beyondEnd);
+        iterator.remove(); // removes the second entry!
+        String firstKey = firstValue.equals("value 1") ? "key 1" : "key 2";
+        assertEqualsBothWays(Collections.singletonMap(firstKey, firstValue), map);
+
+        // doing it again removes the previous value again
+        iterator.next();
+        iterator.remove();
+        assertEqualsBothWays(Collections.emptyMap(), map);
+
+        // Trying to call next() again yields ArrayIndexOutOfBoundsException
+        // This is different from entrySet(), where this was allowed.
+        try {
+            iterator.next();
+            fail();
+        } catch (ArrayIndexOutOfBoundsException expected) {
+        }
+    }
+
+    /**
+     * The entrySet Iterator returns itself from each call to {@code next()}.
+     * This is unusual behavior for {@link Iterator#next()}; this test ensures that
+     * any future change to this behavior is deliberate.
+     */
+    @Test
+    public void testUnusualBehavior_eachEntryIsSameAsIterator_entrySetIterator() {
+        Map<String, String> map = new ArrayMap<>();
+        map.put("key 1", "value 1");
+        map.put("key 2", "value 2");
+        Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
+
+        assertSame(iterator, iterator.next());
+        assertSame(iterator, iterator.next());
+    }
+
+    @Test
+    public void testUnusualBehavior_equalsThrowsAfterRemove_entrySetIterator() {
+        Map<String, String> map = new ArrayMap<>();
+        map.put("key 1", "value 1");
+        map.put("key 2", "value 2");
+        Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
+        iterator.next();
+        iterator.remove();
+        try {
+            iterator.equals(iterator);
+            fail();
+        } catch (IllegalStateException expected) {
+        }
+    }
+
+    private static<T> void assertEqualsBothWays(T a, T b) {
+        assertEquals(a, b);
+        assertEquals(b, a);
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
 }

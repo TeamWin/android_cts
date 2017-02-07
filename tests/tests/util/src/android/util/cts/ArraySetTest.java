@@ -19,6 +19,7 @@ package android.util.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -512,5 +513,33 @@ public class ArraySetTest {
         // Create a new Object[] array.
         Object[] objectArray = arraySet.toArray();
         compareArraySetAndRawArray(arraySet, objectArray);
+    }
+
+    @Test
+    public void testUnusualBehavior_canIteratePastEnd() {
+        ArraySet<String> set = new ArraySet<>();
+        set.add("value");
+        Iterator<String> iterator = set.iterator();
+
+        assertTrue(iterator.hasNext());
+        assertEquals("value", iterator.next());
+        assertFalse(iterator.hasNext());
+
+        // Now to the unusual part:
+
+        // does not throw NoSuchElementException
+        String beyondEnd = iterator.next();
+        assertNull(beyondEnd);
+        iterator.remove(); // removes "value"
+        assertEquals(0, set.size());
+        assertFalse(set.iterator().hasNext());
+
+        // Trying to call next() again yields ArrayIndexOutOfBoundsException
+        // This is different from entrySet(), where this was allowed.
+        try {
+            iterator.next();
+            fail();
+        } catch (ArrayIndexOutOfBoundsException expected) {
+        }
     }
 }
