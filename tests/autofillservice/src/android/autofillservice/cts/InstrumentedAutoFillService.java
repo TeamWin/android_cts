@@ -21,11 +21,13 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.CannedFillResponse.Field;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.service.autofill.AutoFillService;
 import android.service.autofill.FillCallback;
 import android.service.autofill.SaveCallback;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
@@ -87,7 +89,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
         final CannedDataset dataset = datasets.get(0);
 
-        final Map<String, AutoFillValue> fields = dataset.fields;
+        final Map<String, Field> fields = dataset.fields;
         if (fields.isEmpty()) {
             callback.onSuccess(responseBuilder.build());
             return;
@@ -143,15 +145,29 @@ public class InstrumentedAutoFillService extends AutoFillService {
         assertWithMessage("Invalid number of fill requests").that(actual).isEqualTo(expected);
     }
 
-    private void fill(Dataset.Builder builder, Map<String, AutoFillValue> fields,
+    private void fill(Dataset.Builder builder, Map<String, Field> fields,
             ViewNode view) {
         final String resourceId = view.getIdEntry();
+        final Field field = fields.get(resourceId);
 
-        final AutoFillValue value = fields.get(resourceId);
-        if (value != null) {
-            final AutoFillId id = view.getAutoFillId();
-            Log.d(TAG, "setting '" + resourceId + "' (" + id + ") to " + value);
-            builder.setValue(id, value);
+        if (field != null) {
+            // Make sure it's sanitized
+            if (field.sanitized) {
+                final CharSequence text = view.getText();
+                if (!TextUtils.isEmpty(text)) {
+                    throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
+                }
+                final AutoFillValue initialValue = view.getAutoFillValue();
+                assertWithMessage("auto-fill value on sanitized field %s: %s", resourceId,
+                        initialValue).that(initialValue).isNull();
+            }
+
+            final AutoFillValue value = field.value;
+            if (value != null) {
+                final AutoFillId id = view.getAutoFillId();
+                Log.d(TAG, "setting '" + resourceId + "' (" + id + ") to " + value);
+                builder.setValue(id, value);
+            }
         }
 
         final int childrenSize = view.getChildCount();
