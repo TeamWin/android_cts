@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.UI_TIMEOUT_SEC;
+import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
 
@@ -44,7 +44,7 @@ abstract class AutoFillServiceTestCase {
 
     @BeforeClass
     public static void setUiBot() throws Exception {
-        sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation(), UI_TIMEOUT_SEC);
+        sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation(), UI_TIMEOUT_MS);
     }
 
     @AfterClass

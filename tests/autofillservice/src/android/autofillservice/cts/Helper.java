@@ -35,9 +35,9 @@ final class Helper {
     static final long FILL_TIMEOUT_MS = 2000;
 
     /**
-     * Timeout (in seconds) for UI operations. Typically used by {@link UiBot}.
+     * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
      */
-    static final int UI_TIMEOUT_SEC = 2;
+    static final int UI_TIMEOUT_MS = 2000;
 
     /**
      * Runs a Shell command, returning a trimmed response.
