@@ -21,17 +21,19 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,8 +62,8 @@ public class AffiliationTest {
     }
 
     @Test
-    public void testSetLockTaskThrowsExceptionIfUnaffiliated() {
-        checkSetLockTaskThrows();
+    public void testLockTaskMethodsThrowExceptionIfUnaffiliated() {
+        checkLockTaskMethodsThrow();
     }
 
     /** Assumes that the calling user is already affiliated before calling this method */
@@ -69,6 +71,7 @@ public class AffiliationTest {
     public void testSetLockTaskPackagesClearedIfUserBecomesUnaffiliated() {
         final String[] packages = {"package1", "package2"};
         mDevicePolicyManager.setLockTaskPackages(mAdminComponent, packages);
+        assertArrayEquals(packages, mDevicePolicyManager.getLockTaskPackages(mAdminComponent));
         assertTrue(mDevicePolicyManager.isLockTaskPermitted("package1"));
         assertFalse(mDevicePolicyManager.isLockTaskPermitted("package3"));
 
@@ -77,11 +80,12 @@ public class AffiliationTest {
         try {
             // Clearing affiliation ids for this user. Lock task methods unavailable.
             setAffiliationIds(Collections.<String>emptyList());
-            checkSetLockTaskThrows();
+            checkLockTaskMethodsThrow();
             assertFalse(mDevicePolicyManager.isLockTaskPermitted("package1"));
 
             // Affiliating the user again. Previously set packages have been cleared.
             setAffiliationIds(previousAffiliationIds);
+            assertEquals(0, mDevicePolicyManager.getLockTaskPackages(mAdminComponent).length);
             assertFalse(mDevicePolicyManager.isLockTaskPermitted("package1"));
         } finally {
             mDevicePolicyManager.setAffiliationIds(mAdminComponent, previousAffiliationIds);
@@ -93,10 +97,15 @@ public class AffiliationTest {
         assertEquals(ids, mDevicePolicyManager.getAffiliationIds(mAdminComponent));
     }
 
-    private void checkSetLockTaskThrows() {
+    private void checkLockTaskMethodsThrow() {
         try {
             mDevicePolicyManager.setLockTaskPackages(mAdminComponent, new String[0]);
             fail("setLockTaskPackages did not throw expected SecurityException");
+        } catch (SecurityException expected) {
+        }
+        try {
+            mDevicePolicyManager.getLockTaskPackages(mAdminComponent);
+            fail("getLockTaskPackages did not throw expected SecurityException");
         } catch (SecurityException expected) {
         }
     }
