@@ -21,42 +21,39 @@ import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
+import android.view.autofill.AutoFillValue;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 @SmallTest
 public class LoginActivityTest extends AutoFillServiceTestCase {
-    private static final boolean FALSE = false;
 
-    @Rule
+    // TODO(b/33197203): fix logic so it can use @Rule...
+    // Cannot use @Rule because must set service before launching activity
     public final ActivityTestRule<LoginActivity> mActivityRule =
         new ActivityTestRule<LoginActivity>(LoginActivity.class);
 
     private LoginActivity mLoginActivity;
 
-    @Before
-    public void setActivity() {
-        mLoginActivity = mActivityRule.getActivity();
-    }
-
     @Test
     public void testAutoFillOneDataset() throws Exception {
         enableService();
 
-        final CannedDataset.Builder dataset = new CannedDataset.Builder("4815162342", "The Dude");
-        mLoginActivity.expectAutoFill(dataset, "dude", "sweet");
+        final CannedDataset.Builder dataset = new CannedDataset.Builder("4815162342", "The Dude")
+                .setField(ID_USERNAME, AutoFillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutoFillValue.forText("sweet"));
 
         InstrumentedAutoFillService.setFillResponse(new CannedFillResponse.Builder()
                 .addDataset(dataset.build())
                 .build());
 
-        sUiBot.triggerImeByRelativeId(ID_USERNAME);
+
+        mLoginActivity = mActivityRule.launchActivity(null);
+        mLoginActivity.expectAutoFill("dude", "sweet");
 
         // TODO(b/33197203): Add this logic back in the test.
         // Make sure tapping on other fields from the dataset does not trigger it again
-        if (FALSE) {
+        if (false) {
             sUiBot.tapByRelativeId(ID_PASSWORD);
             sUiBot.tapByRelativeId(ID_USERNAME);
         }

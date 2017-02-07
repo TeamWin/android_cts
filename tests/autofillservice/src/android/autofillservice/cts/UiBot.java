@@ -90,10 +90,12 @@ final class UiBot {
      */
     private UiObject2 waitForObject(BySelector selector) {
         final boolean gotIt = mDevice.wait(Until.hasObject(selector), mTimeout);
-        assertWithMessage("object for '%s' not found", selector).that(gotIt).isTrue();
+        assertWithMessage("object for '%s' not found in %s ms", selector, mTimeout).that(gotIt)
+                .isTrue();
 
         final UiObject2 uiObject = mDevice.findObject(selector);
-        assertWithMessage("object for '%s' null", selector).that(uiObject).isNotNull();
+        assertWithMessage("object for '%s' null in %s ms", selector, mTimeout).that(uiObject)
+                .isNotNull();
         return uiObject;
     }
 }
