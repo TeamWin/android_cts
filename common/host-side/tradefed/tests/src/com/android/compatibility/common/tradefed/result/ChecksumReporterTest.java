@@ -26,6 +26,8 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -34,6 +36,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Unit tests for {@link ChecksumReporter}
+ */
 public class ChecksumReporterTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
@@ -81,8 +86,10 @@ public class ChecksumReporterTest extends TestCase {
         setter.setOptionValue("plan", SUITE_PLAN);
         setter.setOptionValue("dynamic-config-url", "");
         mBuildInfo = provider.getBuild();
+        IInvocationContext context = new InvocationContext();
+        context.addDeviceBuildInfo("fakeDevice", mBuildInfo);
 
-        resultReporter.invocationStarted(mBuildInfo);
+        resultReporter.invocationStarted(context);
         mInvocationResult = resultReporter.getResult();
         mModuleResult = mInvocationResult.getOrCreateModule("Module-1");
         mModuleResult.setDone(true);

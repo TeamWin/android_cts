@@ -17,8 +17,8 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.ddmlib.testrunner.TestIdentifier;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.util.AbiUtils;
 
 import junit.framework.TestCase;
@@ -43,7 +43,7 @@ public class ConsoleReporterTest extends TestCase {
             "at four.big.insects.Marley.sing(Marley.java:10)";
 
     private ConsoleReporter mReporter;
-    private IBuildInfo mBuildInfo;
+    private IInvocationContext mContext;
 
     @Override
     public void setUp() throws Exception {
@@ -58,7 +58,7 @@ public class ConsoleReporterTest extends TestCase {
     }
 
     public void testResultReporting_singleModule() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 3);
         runTests();
 
@@ -73,7 +73,7 @@ public class ConsoleReporterTest extends TestCase {
     }
 
     public void testResultReporting_multipleModules() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 3);
         runTests();
 
