@@ -6801,6 +6801,8 @@ public class TextViewTest {
         Point offset = getCenterPositionOfTextAt(mTextView, startIndex, endIndex);
         CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTextView, offset.x, offset.y);
         PollingCheck.waitFor(mTextView::hasSelection);
+        // Wait for smart selection. It times out after about 200ms.
+        SystemClock.sleep(300);
 
         TextSelection selection = tcm.getDefaultTextClassifier()
                 .suggestSelection(text, startIndex, endIndex);
