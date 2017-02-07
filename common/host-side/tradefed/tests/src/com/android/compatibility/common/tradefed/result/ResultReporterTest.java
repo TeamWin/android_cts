@@ -152,6 +152,7 @@ public class ResultReporterTest extends TestCase {
         TestIdentifier test3 = new TestIdentifier(CLASS, METHOD_3);
         mReporter.testStarted(test3);
         mReporter.testFailed(test3, STACK_TRACE);
+        mReporter.testEnded(test3, new HashMap<String, String>());
         mReporter.testRunEnded(10, new HashMap<String, String>());
         mReporter.invocationEnded(10);
         IInvocationResult result = mReporter.getResult();
