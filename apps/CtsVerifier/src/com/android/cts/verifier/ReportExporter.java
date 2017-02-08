@@ -49,17 +49,17 @@ import java.util.zip.ZipOutputStream;
  */
 class ReportExporter extends AsyncTask<Void, Void, String> {
 
-    private static final String COMMAND_LINE_ARGS = "";
+    private static final String COMMAND_LINE_ARGS = "CtsVerifier";
     private static final String LOG_URL = null;
     private static final String REFERENCE_URL = null;
-    private static final String SUITE_NAME = "SuiteName";
-    private static final String SUITE_PLAN = "verifier";
-    private static final String SUITE_BUILD = "";
+    private static final String SUITE_NAME = "CTS_VERIFIER";
+    private static final String SUITE_PLAN = "CTSVERIFIER";
+    private static final String SUITE_BUILD = "0";
 
     private static final long START_MS = System.currentTimeMillis();
     private static final long END_MS = START_MS;
 
-    private static final String REPORT_DIRECTORY = "verifierResults";
+    private static final String REPORT_DIRECTORY = "ctsVerifierReports";
     private static final String ZIP_EXTENSION = ".zip";
 
     protected static final Logger LOG = Logger.getLogger(ReportExporter.class.getName());
@@ -90,21 +90,17 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File verifierReportsDir = new File(externalStorageDirectory, REPORT_DIRECTORY);
         verifierReportsDir.mkdirs();
-
-        String suiteName = Version.getMetadata(mContext, SUITE_NAME);
         // create a temporary directory for this particular report
-        File tempDir = new File(verifierReportsDir, getReportName(suiteName));
+        File tempDir = new File(verifierReportsDir, getReportName());
         tempDir.mkdirs();
 
         // create a File object for a report ZIP file
-        File reportZipFile = new File(
-                verifierReportsDir, getReportName(suiteName) + ZIP_EXTENSION);
+        File reportZipFile = new File(verifierReportsDir, getReportName() + ZIP_EXTENSION);
 
         try {
             // Serialize the report
             String versionName = Version.getVersionName(mContext);
-
-            ResultHandler.writeResults(suiteName, versionName, SUITE_PLAN, SUITE_BUILD,
+            ResultHandler.writeResults(SUITE_NAME, versionName, SUITE_PLAN, SUITE_BUILD,
                     result, tempDir, START_MS, END_MS, REFERENCE_URL, LOG_URL,
                     COMMAND_LINE_ARGS);
 
@@ -148,11 +144,11 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
         }
     }
 
-    private String getReportName(String suiteName) {
+    private String getReportName() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd_HH.mm.ss", Locale.ENGLISH);
         String date = dateFormat.format(new Date());
-        return String.format( "%s-%s-%s-%s-%s-%s",
-                date, suiteName, Build.MANUFACTURER, Build.PRODUCT, Build.DEVICE, Build.ID);
+        return String.format( "%s-%s-%s-%s-%s",
+                date, Build.MANUFACTURER, Build.PRODUCT, Build.DEVICE, Build.ID);
     }
 
     @Override
