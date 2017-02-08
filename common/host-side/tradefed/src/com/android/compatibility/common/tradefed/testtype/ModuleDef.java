@@ -27,6 +27,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.ITargetCleaner;
 import com.android.tradefed.targetprep.ITargetPreparer;
@@ -218,8 +219,6 @@ public class ModuleDef implements IModuleDef {
      */
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
-        IModuleListener moduleListener = new ModuleListener(this, listener);
-
         CLog.d("Running module %s", toString());
         // Run DynamicConfigPusher setup once more, in case cleaner has previously
         // removed dynamic config file from the target (see b/32877809)
@@ -242,7 +241,11 @@ public class ModuleDef implements IModuleDef {
             ((IDeviceTest) mTest).setDevice(mDevice);
         }
 
-        mTest.run(moduleListener);
+        IModuleListener moduleListener = new ModuleListener(this, listener);
+        // Guarantee events testRunStarted and testRunEnded in case underlying test runner does not
+        ModuleFinisher moduleFinisher = new ModuleFinisher(moduleListener);
+        mTest.run(moduleFinisher);
+        moduleFinisher.finish();
 
         // Tear down
         for (ITargetCleaner cleaner : mCleaners) {
@@ -317,5 +320,38 @@ public class ModuleDef implements IModuleDef {
     @Override
     public void setCollectTestsOnly(boolean collectTestsOnly) {
         ((ITestCollector) mTest).setCollectTestsOnly(collectTestsOnly);
+    }
+
+    /*
+     * ResultForwarder that tracks whether method testRunStarted() has been called for its
+     * listener. If not, invoking finish() will call testRunStarted with 0 tests for this module,
+     * as well as testRunEnded with 0 ms elapsed.
+     */
+    private class ModuleFinisher extends ResultForwarder {
+
+        private boolean mFinished;
+        private ITestInvocationListener mListener;
+
+        public ModuleFinisher(ITestInvocationListener listener) {
+            super(listener);
+            mListener = listener;
+            mFinished = false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void testRunStarted(String name, int numTests) {
+            mListener.testRunStarted(name, numTests);
+            mFinished = true;
+        }
+
+        public void finish() {
+            if (!mFinished) {
+                mListener.testRunStarted(mId, 0);
+                mListener.testRunEnded(0, Collections.emptyMap());
+            }
+        }
     }
 }
