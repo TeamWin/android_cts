@@ -21,6 +21,7 @@ import static junit.framework.TestCase.fail;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -43,46 +44,48 @@ import java.util.regex.Pattern;
 @RunWith(AndroidJUnit4.class)
 public class ProcStatsTest {
     private static final String TAG = "ProcStatsTest";
+    private static final String HELPER_PACKAGE = "com.android.server.cts.procstatshelper";
 
     @After
     public void tearDown() {
         runCommand("dumpsys procstats --stop-pretend-screen", "^$");
     }
 
+    private static final Intent buildIntent(String component) {
+        return new Intent()
+                .setComponent(ComponentName.unflattenFromString(component));
+    }
+
     @Test
     public void testLaunchApp() throws Exception {
 
-        InstrumentationRegistry.getContext().startActivity(new Intent()
-                .setComponent(ComponentName.unflattenFromString(
-                        "com.android.server.cts.procstatshelper/.MainActivity")));
+        InstrumentationRegistry.getContext().startActivity(
+                buildIntent(HELPER_PACKAGE + "/.MainActivity"));
 
-        Thread.sleep(3000);
+        Thread.sleep(4000);
 
-        InstrumentationRegistry.getContext().startService(new Intent()
-                .setComponent(ComponentName.unflattenFromString(
-                        "com.android.server.cts.procstatshelper/.ProcStatsHelperServiceMain")));
+        InstrumentationRegistry.getContext().startService(
+                buildIntent(HELPER_PACKAGE + "/.ProcStatsHelperServiceMain"));
 
-        Thread.sleep(3000);
-
-        InstrumentationRegistry.getContext().startService(new Intent()
-                .setComponent(ComponentName.unflattenFromString(
-                        "com.android.server.cts.procstatshelper/.ProcStatsHelperServiceSub")));
-
-        Thread.sleep(3000);
+        Thread.sleep(4000);
 
         // Now run something with the screen off.
         runCommand("dumpsys procstats --pretend-screen-off", "^$");
 
-        InstrumentationRegistry.getContext().startActivity(new Intent()
-                .setComponent(ComponentName.unflattenFromString(
-                        "com.android.server.cts.procstatshelper/.MainActivity")));
+        InstrumentationRegistry.getContext().startActivity(
+                buildIntent(HELPER_PACKAGE + "/.MainActivity"));
 
-        Thread.sleep(3000);
+        Thread.sleep(4000);
+
+        InstrumentationRegistry.getContext().startService(
+                buildIntent(HELPER_PACKAGE + "/.ProcStatsHelperServiceSub"));
+
+        Thread.sleep(4000);
 
         // run "dumpsys meminfo" to update the PSS stats.
-        runCommand("dumpsys meminfo com.android.server.cts.procstatshelper",
+        runCommand("dumpsys meminfo " + HELPER_PACKAGE,
                 "MEMINFO in pid");
-        runCommand("dumpsys meminfo com.android.server.cts.procstatshelper:proc2",
+        runCommand("dumpsys meminfo " + HELPER_PACKAGE + ":proc2",
                 "MEMINFO in pid");
     }
 

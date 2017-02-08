@@ -114,6 +114,13 @@ public class BaseDumpsysTest extends DeviceTestCase implements IBuildReceiver {
         }
     }
 
+    protected static void assertLesserOrEqual(String lesser, String greater) {
+        final long lLesser = assertNonNegativeInteger(lesser);
+        final long lGreater = assertNonNegativeInteger(greater);
+
+        assertTrue("[" + lesser + "] <= [" + greater + "]", lLesser <= lGreater);
+    }
+
     protected static double assertDouble(String input) {
         try {
             return Double.parseDouble(input);
