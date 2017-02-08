@@ -1169,7 +1169,7 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         void setUp() {
             updatedChannel.setVibrationPattern(new long[] {467, 2478, 24738});
             updatedChannel.setSound(new Uri.Builder().appendPath("sound").build(), null);
-            updatedChannel.setLights(true);
+            updatedChannel.enableLights(true);
             updatedChannel.enableVibration(true);
             updatedChannel.setBypassDnd(true);
             updatedChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);

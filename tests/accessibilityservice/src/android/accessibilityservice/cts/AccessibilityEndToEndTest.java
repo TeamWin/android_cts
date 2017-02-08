@@ -339,7 +339,7 @@ public class AccessibilityEndToEndTest extends
         try {
             // create the notification to send
             channel.enableVibration(true);
-            channel.setLights(true);
+            channel.enableLights(true);
             channel.setBypassDnd(true);
             notificationManager.createNotificationChannel(channel);
             NotificationChannel created =

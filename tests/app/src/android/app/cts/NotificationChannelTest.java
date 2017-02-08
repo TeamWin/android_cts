@@ -19,6 +19,7 @@ package android.app.cts;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Parcel;
@@ -52,6 +53,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertTrue(channel.canShowBadge());
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
         assertEquals(null, channel.getGroup());
+        assertTrue(channel.getLightColor() == 0);
     }
 
     public void testWriteToParcel() {
@@ -67,10 +69,18 @@ public class NotificationChannelTest extends AndroidTestCase {
     public void testLights() {
         NotificationChannel channel =
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setLights(true);
+        channel.enableLights(true);
         assertTrue(channel.shouldShowLights());
-        channel.setLights(false);
+        channel.enableLights(false);
         assertFalse(channel.shouldShowLights());
+    }
+
+    public void testLightColor() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setLightColor(Color.RED);
+        assertFalse(channel.shouldShowLights());
+        assertEquals(Color.RED, channel.getLightColor());
     }
 
     public void testVibration() {
