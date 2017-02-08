@@ -1039,6 +1039,9 @@ public class FragmentViewTests {
                 mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
 
         FragmentTestUtil.assertChildren(container, fragment1);
+        assertEquals(2, fragment1.onCreateViewCount);
+        assertEquals(1, fragment2.onCreateViewCount);
+        assertEquals(1, fragment3.onCreateViewCount);
     }
 
     private View findViewById(int viewId) {
@@ -1087,9 +1090,12 @@ public class FragmentViewTests {
     }
 
     public static class SimpleViewFragment extends Fragment {
+        public int onCreateViewCount;
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
+            onCreateViewCount++;
             return inflater.inflate(R.layout.text_a, container, false);
         }
     }
