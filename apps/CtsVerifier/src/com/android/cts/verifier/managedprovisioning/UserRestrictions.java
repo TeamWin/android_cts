@@ -207,6 +207,10 @@ public class UserRestrictions {
                 return pm.hasSystemFeature(PackageManager.FEATURE_NFC);
             case UserManager.DISALLOW_SHARE_LOCATION:
                 return pm.hasSystemFeature(PackageManager.FEATURE_LOCATION);
+            case UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+            case UserManager.DISALLOW_CONFIG_CREDENTIALS:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             default:
                 return true;
         }
