@@ -25,6 +25,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -33,9 +34,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -60,7 +58,7 @@ public class ResultHandler {
     private static final String TYPE = "org.kxml2.io.KXmlParser,org.kxml2.io.KXmlSerializer";
     private static final String NS = null;
     private static final String RESULT_FILE_VERSION = "5.0";
-    /* package */ static final String TEST_RESULT_FILE_NAME = "test_result.xml";
+    public static final String TEST_RESULT_FILE_NAME = "test_result.xml";
     private static final String FAILURE_REPORT_NAME = "test_result_failures.html";
     private static final String FAILURE_XSL_FILE_NAME = "compatibility_failures.xsl";
 
@@ -182,7 +180,8 @@ public class ResultHandler {
                     parser.require(XmlPullParser.START_TAG, NS, MODULE_TAG);
                     String name = parser.getAttributeValue(NS, NAME_ATTR);
                     String abi = parser.getAttributeValue(NS, ABI_ATTR);
-                    String moduleId = AbiUtils.createId(abi, name);
+                    // TODO: use AbiUtils#createId when available for use
+                    String moduleId = String.format("%s %s", abi, name);
                     boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
                     IModuleResult module = invocation.getOrCreateModule(moduleId);
                     module.initializeDone(done);
@@ -449,18 +448,22 @@ public class ResultHandler {
                 // If the previous run has an invalid checksum file,
                 // copy it into current results folder for future troubleshooting
                 File retryDirectory = invocationResult.getRetryDirectory();
-                Path retryChecksum = FileSystems.getDefault().getPath(
-                        retryDirectory.getAbsolutePath(), ChecksumReporter.NAME);
-                if (!retryChecksum.toFile().exists()) {
+                File retryChecksum = new File(retryDirectory, ChecksumReporter.NAME);
+                if (!retryChecksum.exists()) {
                     // if no checksum file, check for a copy from a previous retry
-                    retryChecksum = FileSystems.getDefault().getPath(
-                            retryDirectory.getAbsolutePath(), ChecksumReporter.PREV_NAME);
+                    retryChecksum = new File(retryDirectory, ChecksumReporter.PREV_NAME);
                 }
 
-                if (retryChecksum.toFile().exists()) {
+                if (retryChecksum.exists()) {
                     File checksumCopy = new File(resultDir, ChecksumReporter.PREV_NAME);
-                    try (FileOutputStream stream = new FileOutputStream(checksumCopy)) {
-                        Files.copy(retryChecksum, stream);
+                    try (OutputStream out = new FileOutputStream(checksumCopy);
+                        InputStream in = new FileInputStream(retryChecksum)) {
+                        // Copy the bits from input stream to output stream
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = in.read(buf)) > 0) {
+                            out.write(buf, 0, len);
+                        }
                     } catch (IOException e) {
                         // Do not disrupt the process if there is a problem copying checksum
                     }
