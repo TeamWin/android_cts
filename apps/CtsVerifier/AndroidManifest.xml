@@ -72,8 +72,6 @@
             android:largeHeap="true"
             android:theme="@android:style/Theme.DeviceDefault">
 
-        <meta-data android:name="SuiteName" android:value="CTS_VERIFIER" />
-
         <meta-data android:name="com.google.android.backup.api_key"
                 android:value="AEdPqrEAAAAIbK6ldcOzoeRtQ1u1dFVJ1A7KetRhit-a1Xa82Q" />
 
