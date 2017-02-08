@@ -53,6 +53,8 @@ public class Utils {
     /** Lifecycle Test intent constants */
     public static final String LIFECYCLE_PREFIX = ACTION_PREFIX + "lifecycle_";
     public static final String LIFECYCLE_HASRESUMED = LIFECYCLE_PREFIX + "hasResumed";
+    public static final String LIFECYCLE_HASFOCUS = LIFECYCLE_PREFIX + "hasFocus";
+    public static final String LIFECYCLE_LOSTFOCUS = LIFECYCLE_PREFIX + "lostFocus";
     public static final String LIFECYCLE_ONPAUSE = LIFECYCLE_PREFIX + "onpause";
     public static final String LIFECYCLE_ONSTOP = LIFECYCLE_PREFIX + "onstop";
     public static final String LIFECYCLE_ONDESTROY = LIFECYCLE_PREFIX + "ondestroy";
@@ -84,6 +86,7 @@ public class Utils {
     public static final String DISABLE_CONTEXT = "DISABLE_CONTEXT";
     public static final String FLAG_SECURE = "FLAG_SECURE";
     public static final String LIFECYCLE = "LIFECYCLE";
+    public static final String LIFECYCLE_NOUI = "LIFECYCLE_NOUI";
     public static final String SCREENSHOT = "SCREENSHOT";
     public static final String EXTRA_ASSIST = "EXTRA_ASSIST";
     public static final String VERIFY_CONTENT_VIEW = "VERIFY_CONTENT_VIEW";
@@ -94,6 +97,11 @@ public class Utils {
 
     /** Session intent constants */
     public static final String HIDE_SESSION = "android.intent.action.hide_session";
+
+    /** Lifecycle activity intent constants */
+    /** Session intent constants */
+    public static final String HIDE_LIFECYCLE_ACTIVITY
+            = "android.intent.action.hide_lifecycle_activity";
 
     /** Stub html view to load into WebView */
     public static final String WEBVIEW_HTML_GREETING = "Hello WebView!";
@@ -148,6 +156,7 @@ public class Utils {
             case ASSIST_STRUCTURE:
             case FLAG_SECURE:
             case LIFECYCLE:
+            case LIFECYCLE_NOUI:
             case SCREENSHOT:
             case EXTRA_ASSIST:
             case VERIFY_CONTENT_VIEW:
@@ -177,6 +186,7 @@ public class Utils {
                 return new ComponentName(
                         "android.assist.testapp", "android.assist.testapp.SecureActivity");
             case LIFECYCLE:
+            case LIFECYCLE_NOUI:
                 return new ComponentName(
                         "android.assist.testapp", "android.assist.testapp.LifecycleActivity");
             case SCREENSHOT:

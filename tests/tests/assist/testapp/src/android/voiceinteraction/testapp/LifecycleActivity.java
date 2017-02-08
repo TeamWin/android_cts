@@ -17,17 +17,34 @@
 package android.assist.testapp;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 
 public class LifecycleActivity extends Activity {
     private static final String TAG = "LifecycleActivity";
 
+    private BroadcastReceiver mReceiver;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "LifecycleActivity created");
+        mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (action.equals("android.intent.action.hide_lifecycle_activity")) {
+                    finish();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("android.intent.action.hide_lifecycle_activity");
+        registerReceiver(mReceiver, filter);
     }
 
     @Override
@@ -35,6 +52,17 @@ public class LifecycleActivity extends Activity {
         super.onResume();
         Log.i(TAG, "Activity has resumed");
         sendBroadcast(new Intent("android.intent.action.lifecycle_hasResumed"));
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        Log.i(TAG, "Activity focus changed: " + hasFocus);
+        if (hasFocus) {
+            sendBroadcast(new Intent("android.intent.action.lifecycle_hasFocus"));
+        } else {
+            sendBroadcast(new Intent("android.intent.action.lifecycle_lostFocus"));
+        }
     }
 
     @Override
@@ -55,6 +83,7 @@ public class LifecycleActivity extends Activity {
     protected void onDestroy() {
         Log.i(TAG, "activity was destroyed");
         sendBroadcast(new Intent("android.intent.action.lifecycle_ondestroy"));
+        unregisterReceiver(mReceiver);
         super.onDestroy();
     }
 }
