@@ -34,6 +34,7 @@ public class Poc17_01 extends SecurityTestCase {
    /**
      *  b/32636619
      */
+    @SecurityTest
     public void testPocCVE_2017_0429() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvhost-as-gpu")) {
             enableAdbRoot(getDevice());
