@@ -27,6 +27,8 @@ import com.android.ddmlib.testrunner.TestIdentifier;
 import com.android.tradefed.build.BuildInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
+import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.util.FileUtil;
 
 import junit.framework.TestCase;
@@ -69,6 +71,7 @@ public class MetadataReporterTest extends TestCase {
 
     private MetadataReporter mReporter;
     private IBuildInfo mBuildInfo;
+    private IInvocationContext mContext;
     private CompatibilityBuildHelper mBuildHelper;
 
     private File mRoot = null;
@@ -89,7 +92,8 @@ public class MetadataReporterTest extends TestCase {
         System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
         mBuildInfo = new BuildInfo(BUILD_NUMBER, "", "");
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
+        mContext = new InvocationContext();
+        mContext.addDeviceBuildInfo("fakeDevice", mBuildInfo);
     }
 
     @Override
@@ -99,7 +103,7 @@ public class MetadataReporterTest extends TestCase {
     }
 
     public void testResultReportingFastTests() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 3);
         runFastTests();
 
@@ -111,7 +115,7 @@ public class MetadataReporterTest extends TestCase {
     }
 
     public void testResultReportingSlowTests() throws Exception {
-        mReporter.invocationStarted(mBuildInfo);
+        mReporter.invocationStarted(mContext);
         mReporter.testRunStarted(ID, 3);
         runSlowTests();
 

@@ -28,6 +28,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionCopier;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.result.StubTestInvocationListener;
@@ -82,10 +83,8 @@ public class MetadataReporter extends StubTestInvocationListener implements ISha
      * {@inheritDoc}
      */
     @Override
-    public void invocationStarted(IBuildInfo buildInfo) {
-        if (buildInfo == null) {
-            throw new RuntimeException("buildInfo is null");
-        }
+    public void invocationStarted(IInvocationContext context) {
+        IBuildInfo buildInfo = context.getBuildInfos().get(0);
         synchronized(this) {
             if (mBuildHelper == null) {
                 mBuildHelper = new CompatibilityBuildHelper(buildInfo);
