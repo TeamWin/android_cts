@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.packageinstaller;
+package android.packageinstaller.admin.cts;
 
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
@@ -26,10 +26,9 @@ import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Process;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
-
-import com.android.cts.packageinstaller.ClearDeviceOwnerTest.BasicAdminReceiver;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,13 +39,14 @@ import java.io.OutputStream;
  * Base test case for testing PackageInstaller.
  */
 public class BasePackageInstallTest extends InstrumentationTestCase {
-    protected static final String TEST_APP_LOCATION = "/data/local/tmp/CtsSimpleApp.apk";
-    protected static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
+    protected static final String TEST_APP_LOCATION =
+            "/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp.apk";
+    protected static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
     protected static final int PACKAGE_INSTALLER_TIMEOUT_MS = 60000; // 60 seconds
     private static final String ACTION_INSTALL_COMMIT =
             "com.android.cts.deviceowner.INTENT_PACKAGE_INSTALL_COMMIT";
     protected static final int PACKAGE_INSTALLER_STATUS_UNDEFINED = -1000;
-    public static final String PACKAGE_NAME = BasePackageInstallTest.class.getPackage().getName();
+    public static final String PACKAGE_NAME = SilentPackageInstallTest.class.getPackage().getName();
 
     protected Context mContext;
     protected UiDevice mDevice;
@@ -108,6 +108,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         if (mSession != null) {
             mSession.abandon();
         }
+
         super.tearDown();
     }
 
@@ -131,6 +132,23 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
             assertEquals(PackageInstaller.STATUS_SUCCESS, mCallbackStatus);
         }
         assertTrue(isPackageInstalled(TEST_APP_PKG));
+    }
+
+    protected boolean tryUninstallPackage() throws Exception {
+        assertTrue(isPackageInstalled(TEST_APP_PKG));
+        synchronized (mPackageInstallerTimeoutLock) {
+            mCallbackReceived = false;
+            mCallbackStatus = PACKAGE_INSTALLER_STATUS_UNDEFINED;
+        }
+        mPackageInstaller.uninstall(TEST_APP_PKG, getCommitCallback(0));
+        synchronized (mPackageInstallerTimeoutLock) {
+            try {
+                mPackageInstallerTimeoutLock.wait(PACKAGE_INSTALLER_TIMEOUT_MS);
+            } catch (InterruptedException e) {
+            }
+            assertTrue(mCallbackReceived);
+            return mCallbackStatus == PackageInstaller.STATUS_SUCCESS;
+        }
     }
 
     protected void installPackage(String packageLocation) throws Exception {
@@ -177,5 +195,9 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    protected int getInstallReason(String packageName) {
+        return mPackageManager.getInstallReason(packageName, Process.myUserHandle());
     }
 }
