@@ -423,7 +423,8 @@ public final class CtsTouchUtils {
         int xOnScreen = viewOnScreenXY[0] + view.getWidth() / 2;
         int yOnScreen = viewOnScreenXY[1] + view.getHeight() / 2;
 
-        emulateLongPressOnScreen(instrumentation, xOnScreen, yOnScreen, touchSlop, extraWaitMs);
+        emulateLongPressOnScreen(
+                instrumentation, xOnScreen, yOnScreen, touchSlop, extraWaitMs, true);
     }
 
     /**
@@ -444,7 +445,24 @@ public final class CtsTouchUtils {
         int xOnScreen = viewOnScreenXY[0] + offsetX;
         int yOnScreen = viewOnScreenXY[1] + offsetY;
 
-        emulateLongPressOnScreen(instrumentation, xOnScreen, yOnScreen, touchSlop, 0);
+        emulateLongPressOnScreen(instrumentation, xOnScreen, yOnScreen, touchSlop, 0, true);
+    }
+
+    /**
+     * Emulates a long press then a linear drag gesture between 2 points across the screen.
+     * This is used for drag selection.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param dragStartX Start X of the emulated drag gesture
+     * @param dragStartY Start Y of the emulated drag gesture
+     * @param dragAmountX X amount of the emulated drag gesture
+     * @param dragAmountY Y amount of the emulated drag gesture
+     */
+    public static void emulateLongPressAndDragGesture(Instrumentation instrumentation,
+            int dragStartX, int dragStartY, int dragAmountX, int dragAmountY) {
+        emulateLongPressOnScreen(instrumentation, dragStartX, dragStartY,
+                0 /* touchSlop */, 0 /* extraWaitMs */, false /* upGesture */);
+        emulateDragGesture(instrumentation, dragStartX, dragStartY, dragAmountX, dragAmountY);
     }
 
     /**
@@ -455,16 +473,19 @@ public final class CtsTouchUtils {
      * @param yOnScreen Y position on screen for the "long press"
      * @param extraWaitMs extra duration of emulated long press in milliseconds added
      *        after the system-level "long press" timeout.
+     * @param upGesture whether to include an up event.
      */
     private static void emulateLongPressOnScreen(Instrumentation instrumentation,
-            int xOnScreen, int yOnScreen, int touchSlop, long extraWaitMs) {
+            int xOnScreen, int yOnScreen, int touchSlop, long extraWaitMs, boolean upGesture) {
         final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final long downTime = SystemClock.uptimeMillis();
 
         injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen);
         injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen);
         SystemClock.sleep((long) (ViewConfiguration.getLongPressTimeout() * 1.5f) + extraWaitMs);
-        injectUpEvent(uiAutomation, downTime, false, xOnScreen, yOnScreen);
+        if (upGesture) {
+            injectUpEvent(uiAutomation, downTime, false, xOnScreen, yOnScreen);
+        }
 
         // Wait for the system to process all events in the queue
         instrumentation.waitForIdleSync();
