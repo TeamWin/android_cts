@@ -41,12 +41,17 @@ public class TestUtils {
     // tests in the Telecom2 test package.
     public static String PACKAGE = "android.telecom.cts";
     public static final String COMPONENT = "android.telecom.cts.CtsConnectionService";
+    public static final String SELF_MANAGED_COMPONENT =
+            "android.telecom.cts.CtsSelfManagedConnectionService";
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
     public static final String ACCOUNT_ID = "xtstest_CALL_PROVIDER_ID";
     public static final String REMOTE_ACCOUNT_ID = "xtstest_REMOTE_CALL_PROVIDER_ID";
+    public static final String SELF_MANAGED_ACCOUNT_ID_1 = "ctstest_SELF_MANAGED_ID_1";
+    public static final String SELF_MANAGED_ACCOUNT_ID_2 = "ctstest_SELF_MANAGED_ID_2";
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
     public static final String REMOTE_ACCOUNT_LABEL = "CTSRemoteConnectionService";
+    public static final String SELF_MANAGED_ACCOUNT_LABEL = "CtsSelfManagedConnectionService";
 
     private static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
 
@@ -57,6 +62,8 @@ public class TestUtils {
     private static final String COMMAND_ENABLE = "telecom set-phone-account-enabled ";
 
     private static final String COMMAND_REGISTER_SIM = "telecom register-sim-phone-account ";
+
+    private static final String COMMAND_WAIT_ON_HANDLERS = "telecom wait-on-handlers";
 
     public static final String MERGE_CALLER_NAME = "calls-merged";
     public static final String SWAP_CALLER_NAME = "calls-swapped";
@@ -98,6 +105,10 @@ public class TestUtils {
         executeShellCommand(instrumentation, COMMAND_REGISTER_SIM
                 + component.getPackageName() + "/" + component.getClassName() + " "
                 + handle.getId() + " " + PRIMARY_USER_SN + " " + label + " " + address);
+    }
+
+    public static void waitOnAllHandlers(Instrumentation instrumentation) throws Exception {
+        executeShellCommand(instrumentation, COMMAND_WAIT_ON_HANDLERS);
     }
 
     /**

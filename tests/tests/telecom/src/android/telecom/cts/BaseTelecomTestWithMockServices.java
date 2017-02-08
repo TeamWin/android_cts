@@ -15,8 +15,16 @@
  */
 
 package android.telecom.cts;
-
-import static android.telecom.cts.TestUtils.*;
+import static android.telecom.cts.TestUtils.ACCOUNT_ID;
+import static android.telecom.cts.TestUtils.ACCOUNT_LABEL;
+import static android.telecom.cts.TestUtils.COMPONENT;
+import static android.telecom.cts.TestUtils.PACKAGE;
+import static android.telecom.cts.TestUtils.SELF_MANAGED_ACCOUNT_ID_1;
+import static android.telecom.cts.TestUtils.SELF_MANAGED_ACCOUNT_ID_2;
+import static android.telecom.cts.TestUtils.SELF_MANAGED_ACCOUNT_LABEL;
+import static android.telecom.cts.TestUtils.SELF_MANAGED_COMPONENT;
+import static android.telecom.cts.TestUtils.TAG;
+import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -47,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 /**
  * Base class for Telecom CTS tests that require a {@link CtsConnectionService} and
@@ -59,7 +68,6 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID);
-
     public static final PhoneAccount TEST_PHONE_ACCOUNT = PhoneAccount.builder(
             TEST_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
             .setAddress(Uri.parse("tel:555-TEST"))
@@ -71,6 +79,38 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             .setShortDescription(ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_1 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
+                    SELF_MANAGED_ACCOUNT_ID_1);
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_1 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_HANDLE_1, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("sip:test@test.com"))
+            .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED |
+                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .build();
+
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_2 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
+                    SELF_MANAGED_ACCOUNT_ID_2);
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("sip:test@test.com"))
+            .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED |
+                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
             .build();
 
     private static int sCounter = 5549999;
@@ -101,7 +141,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mContext = getInstrumentation().getContext();
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
 
-        mShouldTestTelecom = shouldTestTelecom(mContext);
+        mShouldTestTelecom = TestUtils.shouldTestTelecom(mContext);
         if (mShouldTestTelecom) {
             mPreviousDefaultDialer = TestUtils.getDefaultDialer(getInstrumentation());
             TestUtils.setDefaultDialer(getInstrumentation(), PACKAGE);
@@ -857,6 +897,27 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
+    /**
+     * Checks all fields of two PhoneAccounts for equality, with the exception of the enabled state.
+     * Should only be called after assertPhoneAccountRegistered when it can be guaranteed
+     * that the PhoneAccount is registered.
+     * @param expected The expected PhoneAccount.
+     * @param actual The actual PhoneAccount.
+     */
+    void assertPhoneAccountEquals(final PhoneAccount expected,
+            final PhoneAccount actual) {
+        assertEquals(expected.getAddress(), actual.getAddress());
+        assertEquals(expected.getAccountHandle(), actual.getAccountHandle());
+        assertEquals(expected.getCapabilities(), actual.getCapabilities());
+        assertTrue(areBundlesEqual(expected.getExtras(), actual.getExtras()));
+        assertEquals(expected.getHighlightColor(), actual.getHighlightColor());
+        assertEquals(expected.getIcon(), actual.getIcon());
+        assertEquals(expected.getLabel(), actual.getLabel());
+        assertEquals(expected.getShortDescription(), actual.getShortDescription());
+        assertEquals(expected.getSubscriptionAddress(), actual.getSubscriptionAddress());
+        assertEquals(expected.getSupportedUriSchemes(), actual.getSupportedUriSchemes());
+    }
+
     void assertPhoneAccountRegistered(final PhoneAccountHandle handle) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
@@ -927,6 +988,24 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "MockInCallService not yet unbound!"
+        );
+    }
+
+    void assertIsInCall(boolean isIncall) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return isIncall;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mTelecomManager.isInCall();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected isInCall to be " + isIncall
         );
     }
 
@@ -1092,6 +1171,39 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                     } catch (InterruptedException ie) {
                         /* ignore */
                     }
+                }
+            }
+        }
+
+        /**
+         * Waits for a predicate to return {@code true} within the specified timeout.  Uses the
+         * {@link #mLock} for this {@link InvokeCounter} to eliminate the need to perform busy-wait.
+         * @param predicate The predicate.
+         * @param timeoutMillis The timeout.
+         */
+        public void waitForPredicate(Predicate predicate, long timeoutMillis) {
+            synchronized (mLock) {
+                mInvokeArgs.clear();
+                long startTimeMillis = SystemClock.uptimeMillis();
+                long elapsedTimeMillis = 0;
+                long remainingTimeMillis = timeoutMillis;
+                Object foundValue = null;
+                boolean wasFound = false;
+                do {
+                    try {
+                        mLock.wait(timeoutMillis);
+                        foundValue = (mInvokeArgs.get(mInvokeArgs.size()-1))[0];
+                        wasFound = predicate.test(foundValue);
+                        elapsedTimeMillis = SystemClock.uptimeMillis() - startTimeMillis;
+                        remainingTimeMillis = timeoutMillis - elapsedTimeMillis;
+                    } catch (InterruptedException ie) {
+                        /* ignore */
+                    }
+                } while (!wasFound && remainingTimeMillis > 0);
+                if (wasFound) {
+                    return;
+                } else if (remainingTimeMillis <= 0) {
+                    fail("Expected value not found within time limit");
                 }
             }
         }
