@@ -421,7 +421,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVolumeDndAffectedStream() throws Exception {
-        if (mUseFixedVolume || mHasVibrator) {
+        if (mUseFixedVolume || mHasVibrator || mIsTelevision) {
             return;
         }
         Utils.toggleNotificationPolicyAccess(
@@ -624,7 +624,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMuteDndAffectedStreams() throws Exception {
-        if (mUseFixedVolume) {
+        if (mUseFixedVolume || mIsTelevision) {
             return;
         }
         int[] streams = { AudioManager.STREAM_RING };
