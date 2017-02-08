@@ -34,6 +34,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(ModuleResultTest.class);
         addTestSuite(MultipartFormTest.class);
         addTestSuite(ReportLogTest.class);
+        addTestSuite(ResultHandlerTest.class);
         addTestSuite(StatTest.class);
         addTestSuite(TestFilterTest.class);
         addTestSuite(TestResultTest.class);
