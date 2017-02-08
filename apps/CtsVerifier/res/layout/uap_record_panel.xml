@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/scrollView"
+    style="@style/RootLayoutPadding">
+
+<LinearLayout android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <include layout="@layout/uap_profile_header"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="@string/uapRecordTestInstructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="@string/audio_uap_record_recordBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/uap_recordRecordBtn"
+            android:nextFocusUp="@+id/fail_button"
+            android:nextFocusDown="@+id/uap_recordRecordLoopBtn"/>
+
+        <Button
+            android:text="@string/audio_uap_record_recordLoopbackBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/uap_recordRecordLoopBtn"
+            android:nextFocusUp="@+id/uap_recordRecordBtn"
+            android:nextFocusDown="@+id/pass_button"/>
+        </LinearLayout>
+
+    <com.android.cts.verifier.audio.audiolib.WaveScopeView
+        android:id="@+id/uap_recordWaveView"
+        android:layout_width="match_parent"
+        android:layout_height="256dp"/>
+
+    <include layout="@layout/pass_fail_buttons"/>
+
+</LinearLayout>
+</ScrollView>
