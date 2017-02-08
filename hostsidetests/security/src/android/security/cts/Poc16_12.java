@@ -59,6 +59,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31799206
      */
+    @SecurityTest
     public void testPocCVE_2016_8426() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvhost-gpu")) {
             AdbUtils.runPoc("CVE-2016-8426", getDevice(), 60);
@@ -68,6 +69,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31799885
      */
+    @SecurityTest
     public void testPocCVE_2016_8427() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvhost-gpu") ||
               containsDriver(getDevice(), "/dev/nvhost-dbg-gpu")) {
@@ -78,6 +80,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31993456
      */
+    @SecurityTest
     public void testPocCVE_2016_8428() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvmap")) {
             AdbUtils.runPoc("CVE-2016-8428", getDevice(), 60);
@@ -87,6 +90,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32160775
      */
+    @SecurityTest
     public void testPocCVE_2016_8429() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvmap")) {
             AdbUtils.runPoc("CVE-2016-8429", getDevice(), 60);
@@ -96,6 +100,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32225180
      */
+    @SecurityTest
     public void testPocCVE_2016_8430() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvhost-vic")) {
             AdbUtils.runPoc("CVE-2016-8430", getDevice(), 60);
@@ -105,6 +110,7 @@ public class Poc16_12 extends SecurityTestCase {
    /**
      *  b/32402179
      */
+    @SecurityTest
     public void testPocCVE_2016_8431() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-8431", getDevice(), 60);
@@ -114,6 +120,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32447738
      */
+    @SecurityTest
     public void testPocCVE_2016_8432() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-8432", getDevice(), 60);
@@ -123,6 +130,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32125137
      */
+    @SecurityTest
     public void testPocCVE_2016_8434() throws Exception {
         if(containsDriver(getDevice(), "/dev/kgsl-3d0")) {
             AdbUtils.runPoc("CVE-2016-8434", getDevice(), 60);
@@ -132,6 +140,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32700935
      */
+    @SecurityTest
     public void testPocCVE_2016_8435() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
@@ -142,6 +151,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31568617
      */
+    @SecurityTest
     public void testPocCVE_2016_9120() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/ion")) {
@@ -153,6 +163,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31225246
      */
+    @SecurityTest
     public void testPocCVE_2016_8412() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/v4l-subdev7")) {
@@ -163,6 +174,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31243641
      */
+    @SecurityTest
     public void testPocCVE_2016_8444() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/v4l-subdev17")) {
@@ -173,6 +185,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31791148
      */
+    @SecurityTest
     public void testPocCVE_2016_8448() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/graphics/fb0")) {
@@ -183,6 +196,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31798848
      */
+    @SecurityTest
     public void testPocCVE_2016_8449() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/dev/tegra_avpchannel")) {
@@ -193,6 +207,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31668540
      */
+    @SecurityTest
     public void testPocCVE_2016_8460() throws Exception {
         if(containsDriver(getDevice(), "/dev/nvmap")) {
             String result = AdbUtils.runPoc("CVE-2016-8460", getDevice(), 60);
@@ -203,6 +218,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32402548
      */
+    @SecurityTest
     public void testPocCVE_2017_0403() throws Exception {
         enableAdbRoot(getDevice());
         AdbUtils.runPoc("CVE-2017-0403", getDevice(), 60);
@@ -211,6 +227,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32510733
      */
+    @SecurityTest
     public void testPocCVE_2017_0404() throws Exception {
         enableAdbRoot(getDevice());
         if(containsDriver(getDevice(), "/proc/asound/version")) {
@@ -221,6 +238,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32178033
      */
+    @SecurityTest
     public void testPocCVE_2016_8451() throws Exception {
         enableAdbRoot(getDevice());
         String command =
@@ -231,6 +249,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/32659848
      */
+    @SecurityTest
     public void testPoc32659848() throws Exception {
         String command =
             "echo 18014398509481980 > /sys/kernel/debug/tracing/buffer_size_kb";
