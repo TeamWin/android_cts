@@ -160,8 +160,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 LAUNCHING_ACTIVITY);
 
         // Launch second activity from app on secondary display without specifying display id.
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                false /* multipleTask */, TEST_ACTIVITY_NAME);
+        getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY_NAME).execute();
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
 
         // Check that activity is launched in focused stack on external display.
@@ -186,8 +185,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 true /* launchInSplitScreen */);
 
         // Launch activity on secondary display from the app on primary display.
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */, false /* multipleTask*/,
-                TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY_NAME)
+                .setDisplayId(newDisplay.mDisplayId).execute();
 
         // Check that activity is launched on external display.
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
@@ -225,8 +224,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Launch activity on primary display and check if it doesn't affect activity on secondary
         // display.
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                false /* multipleTask */, RESIZEABLE_ACTIVITY_NAME);
+        getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
         mAmWmState.waitForValidState(mDevice, RESIZEABLE_ACTIVITY_NAME,
                 FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true /* visible */);
@@ -577,8 +575,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
             throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
-            launchActivityToSide(false /* randomData */, false /* multipleTaskFlag */,
-                    VIRTUAL_DISPLAY_ACTIVITY);
+            getLaunchActivityBuilder().setToSide(true)
+                    .setTargetActivityName(VIRTUAL_DISPLAY_ACTIVITY).execute();
         } else {
             launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
         }

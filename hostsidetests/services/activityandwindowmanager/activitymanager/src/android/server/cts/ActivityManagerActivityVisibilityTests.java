@@ -155,8 +155,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testFinishActivityInNonFocusedStack() throws Exception {
         // Launch two activities in docked stack.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                false /* multipleTaskFlag */, BROADCAST_RECEIVER_ACTIVITY);
+        getLaunchActivityBuilder().setTargetActivityName(BROADCAST_RECEIVER_ACTIVITY).execute();
         mAmWmState.computeState(mDevice, new String[] { BROADCAST_RECEIVER_ACTIVITY });
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
@@ -200,5 +199,76 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // Home must be visible.
         mAmWmState.waitForHomeActivityVisible(mDevice);
         mAmWmState.assertHomeActivityVisible(true /* visible */);
+    }
+
+    /**
+     * Asserts that launching between reorder to front activities exhibits the correct backstack
+     * behavior.
+     */
+    public void testReorderToFrontBackstack() throws Exception {
+        // Start with home on top
+        launchHomeActivity();
+        mAmWmState.assertHomeActivityVisible(true /* visible */);
+
+        // Launch the launching activity to the foreground
+        launchActivity(LAUNCHING_ACTIVITY);
+
+        // Launch the alternate launching activity from launching activity with reorder to front.
+        getLaunchActivityBuilder().setTargetActivityName(ALT_LAUNCHING_ACTIVITY)
+                .setReorderToFront(true).execute();
+
+        // Launch the launching activity from the alternate launching activity with reorder to
+        // front.
+        getLaunchActivityBuilder().setTargetActivityName(LAUNCHING_ACTIVITY)
+                .setLaunchingActivityName(ALT_LAUNCHING_ACTIVITY).setReorderToFront(true)
+                .execute();
+
+        // Press back
+        pressBackButton();
+        mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY);
+
+        // Ensure the alternate launching activity is in focus
+        mAmWmState.assertFocusedActivity("Alt Launching Activity must be focused",
+                LAUNCHING_ACTIVITY);
+    }
+
+    /**
+     * Asserts that the activity focus and history is preserved moving between the activity and
+     * home stack.
+     */
+    public void testReorderToFrontChangingStack() throws Exception {
+        // Start with home on top
+        launchHomeActivity();
+        mAmWmState.assertHomeActivityVisible(true /* visible */);
+
+        // Launch the launching activity to the foreground
+        launchActivity(LAUNCHING_ACTIVITY);
+
+        // Launch the alternate launching activity from launching activity with reorder to front.
+        getLaunchActivityBuilder().setTargetActivityName(ALT_LAUNCHING_ACTIVITY)
+                .setReorderToFront(true).execute();
+
+        // Return home
+        launchHomeActivity();
+        mAmWmState.assertHomeActivityVisible(true /* visible */);
+        // Launch the launching activity from the alternate launching activity with reorder to
+        // front.
+
+        // Bring launching activity back to the foreground
+        launchActivity(LAUNCHING_ACTIVITY);
+        mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY);
+
+        // Ensure the alternate launching activity is still in focus.
+        mAmWmState.assertFocusedActivity("Alt Launching Activity must be focused",
+                ALT_LAUNCHING_ACTIVITY);
+
+        pressBackButton();
+
+        mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY);
+
+        // Ensure launching activity was brought forward.
+        mAmWmState.assertFocusedActivity("Launching Activity must be focused",
+                LAUNCHING_ACTIVITY);
+
     }
 }
