@@ -279,17 +279,22 @@ public class View_FocusHandlingTest {
         assertEquals("single view was not auto-focusable", View.FOCUSABLE_AUTO,
                 view.getFocusable());
         assertFalse("single view unexpectedly hasFocusable", view.hasFocusable());
+        assertFalse("single view unexpectedly hasExplicitFocusable", view.hasExplicitFocusable());
 
         view.setClickable(true);
         assertTrue("single view doesn't hasFocusable", view.hasFocusable());
+        assertFalse("single view unexpectedly hasExplicitFocusable", view.hasExplicitFocusable());
 
         view.setClickable(false);
         assertFalse("single view unexpectedly hasFocusable", view.hasFocusable());
+        assertFalse("single view unexpectedly hasExplicitFocusable", view.hasExplicitFocusable());
 
         view.setFocusable(View.NOT_FOCUSABLE);
         assertFalse("single view unexpectedly hasFocusable", view.hasFocusable());
+        assertFalse("single view unexpectedly hasExplicitFocusable", view.hasExplicitFocusable());
 
         view.setFocusable(View.FOCUSABLE);
         assertTrue("single view doesn't hasFocusable", view.hasFocusable());
+        assertTrue("single view doesn't hasExplicitFocusable", view.hasExplicitFocusable());
     }
 }
