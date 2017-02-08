@@ -41,7 +41,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         final CannedDataset.Builder dataset = new CannedDataset.Builder("4815162342", "The Dude")
                 .setField(ID_USERNAME, AutoFillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutoFillValue.forText("sweet"));
+                .setSanitizedField(ID_PASSWORD, AutoFillValue.forText("sweet"));
 
         InstrumentedAutoFillService.setFillResponse(new CannedFillResponse.Builder()
                 .addDataset(dataset.build())

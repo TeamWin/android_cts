@@ -83,7 +83,7 @@ final class CannedFillResponse {
      */
     static class CannedDataset {
 
-        final Map<String, AutoFillValue> fields;
+        final Map<String, Field> fields;
         final String id;
         final String name;
 
@@ -99,7 +99,7 @@ final class CannedFillResponse {
         }
 
         static class Builder {
-            private final Map<String, AutoFillValue> mFields = new HashMap<>();
+            private final Map<String, Field> mFields = new HashMap<>();
             private final String mId;
             private final String mName;
 
@@ -112,13 +112,41 @@ final class CannedFillResponse {
              * Sets the canned value of a field based on its {@code resourceId}.
              */
             public Builder setField(String resourceId, AutoFillValue value) {
-                mFields.put(resourceId, value);
+                mFields.put(resourceId, new Field(value));
+                return this;
+            }
+
+            /**
+             * Sets a canned value of a field based on its {@code resourceId}, and asserts its
+             * sanitized.
+             */
+            public Builder setSanitizedField(String resourceId, AutoFillValue value) {
+                mFields.put(resourceId, new Field(value, true));
                 return this;
             }
 
             public CannedDataset build() {
                 return new CannedDataset(this);
             }
+        }
+    }
+
+    static class Field  {
+        final boolean sanitized;
+        final AutoFillValue value;
+
+        Field(AutoFillValue value, boolean sanitized) {
+            this.value = value;
+            this.sanitized = sanitized;
+        }
+
+        Field(AutoFillValue value) {
+            this(value, false);
+        }
+
+        @Override
+        public String toString() {
+            return value + (sanitized ? " (sanitized)" : "");
         }
     }
 }
