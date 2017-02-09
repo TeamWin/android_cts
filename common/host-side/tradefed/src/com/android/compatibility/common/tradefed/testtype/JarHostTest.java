@@ -19,7 +19,6 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
-import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
@@ -74,13 +73,9 @@ public class JarHostTest extends HostTest implements IRuntimeHintProvider {
      */
     @Override
     protected HostTest createHostTest(Class<?> classObj) {
-        JarHostTest test = new JarHostTest();
-        OptionCopier.copyOptionsNoThrow(this, test);
-        if (classObj != null) {
-            test.setClassName(classObj.getName());
-        } else {
-            test.mJars.clear();
-        }
+        JarHostTest test = (JarHostTest) super.createHostTest(classObj);
+        // clean the jar option since we are loading directly from classes after.
+        test.mJars = new HashSet<>();
         return test;
     }
 
