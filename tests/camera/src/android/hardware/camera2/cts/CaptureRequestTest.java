@@ -2075,16 +2075,35 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private void digitalZoomTestByCamera(Size previewSize) throws Exception {
         final int ZOOM_STEPS = 15;
         final PointF[] TEST_ZOOM_CENTERS;
+        final float maxZoom = mStaticInfo.getAvailableMaxDigitalZoomChecked();
+        final float ZOOM_ERROR_MARGIN = 0.01f;
+        if (Math.abs(maxZoom - 1.0f) < ZOOM_ERROR_MARGIN) {
+            // It doesn't make much sense to test the zoom if the device effectively supports
+            // no zoom.
+            return;
+        }
 
         final int croppingType = mStaticInfo.getScalerCroppingTypeChecked();
-        if (croppingType ==
-                CameraCharacteristics.SCALER_CROPPING_TYPE_FREEFORM) {
+        if (croppingType == CameraCharacteristics.SCALER_CROPPING_TYPE_FREEFORM) {
+            // Set the four corners in a way that the minimally allowed zoom factor is 2x.
+            float normalizedLeft = 0.25f;
+            float normalizedTop = 0.25f;
+            float normalizedRight = 0.75f;
+            float normalizedBottom = 0.75f;
+            // If the max supported zoom is too small, make sure we at least test the max
+            // Zoom is tested for the four corners.
+            if (maxZoom < 2.0f) {
+                normalizedLeft = 0.5f / maxZoom;
+                normalizedTop = 0.5f / maxZoom;
+                normalizedRight = 1.0f - normalizedLeft;
+                normalizedBottom = 1.0f - normalizedTop;
+            }
             TEST_ZOOM_CENTERS = new PointF[] {
                 new PointF(0.5f, 0.5f),   // Center point
-                new PointF(0.25f, 0.25f), // top left corner zoom, minimal zoom: 2x
-                new PointF(0.75f, 0.25f), // top right corner zoom, minimal zoom: 2x
-                new PointF(0.25f, 0.75f), // bottom left corner zoom, minimal zoom: 2x
-                new PointF(0.75f, 0.75f), // bottom right corner zoom, minimal zoom: 2x
+                new PointF(normalizedLeft, normalizedTop),     // top left corner zoom
+                new PointF(normalizedRight, normalizedTop),    // top right corner zoom
+                new PointF(normalizedLeft, normalizedBottom),  // bottom left corner zoom
+                new PointF(normalizedRight, normalizedBottom), // bottom right corner zoom
             };
 
             if (VERBOSE) {
@@ -2101,7 +2120,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             }
         }
 
-        final float maxZoom = mStaticInfo.getAvailableMaxDigitalZoomChecked();
         final Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
         Rect[] cropRegions = new Rect[ZOOM_STEPS];
         MeteringRectangle[][] expectRegions = new MeteringRectangle[ZOOM_STEPS][];
