@@ -709,9 +709,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
         conn.unbind(WAIT_TIME);
 
-        //cmd = "am kill " + STUB_PACKAGE_NAME;
-        //result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-
         // Wait for uid's process to go away.
         uidGoneListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_GONE,
                 RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
@@ -719,6 +716,14 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
         cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We don't want to wait for the uid to actually go idle, we can force it now.
+        cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // Make sure app is not yet on whitelist
+        cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
         result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
         // We will use this to monitor when the service is running.
@@ -781,9 +786,12 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             conn.waitForDisconnect(WAIT_TIME);
 
         } finally {
+            mContext.stopService(serviceIntent);
             conn.stopMonitoring();
 
             cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND allow";
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
             am.removeOnUidImportanceListener(uidGoneListener);
