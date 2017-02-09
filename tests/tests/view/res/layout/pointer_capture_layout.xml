@@ -20,7 +20,7 @@
               android:layout_height="match_parent"
               android:orientation="vertical">
 
-    <LinearLayout
+    <android.view.cts.PointerCaptureGroup
             android:id="@+id/outer"
             android:orientation="horizontal"
             android:layout_width="wrap_content"
@@ -29,29 +29,29 @@
             android:gravity="center"
             android:background="#eee">
 
-        <LinearLayout
+        <android.view.cts.PointerCaptureGroup
                 android:id="@+id/inner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
                 android:background="#ddd">
 
-            <LinearLayout
+            <android.view.cts.PointerCaptureView
                     android:id="@+id/target"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_margin="20dp"
                     android:background="#bbb"/>
 
-        </LinearLayout>
+        </android.view.cts.PointerCaptureGroup>
 
-        <LinearLayout
+        <android.view.cts.PointerCaptureGroup
                 android:id="@+id/target2"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_margin="40dp"
                 android:background="#bbb"/>
 
-    </LinearLayout>
+    </android.view.cts.PointerCaptureGroup>
 
 </LinearLayout>
