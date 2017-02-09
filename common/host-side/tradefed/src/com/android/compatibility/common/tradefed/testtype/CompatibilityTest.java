@@ -263,7 +263,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             + "If not specified, all configured system status checkers are run.")
     private Set<String> mSystemStatusCheckWhitelist = new HashSet<>();
 
-    private List<ISystemStatusChecker> mListCheckers = null;
+    private List<ISystemStatusChecker> mListCheckers = new ArrayList<>();
 
     @Option(name = "collect-tests-only",
             description = "Only invoke the suite to collect list of applicable test cases. All "

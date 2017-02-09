@@ -52,6 +52,8 @@ import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.TimeUtil;
 import com.android.tradefed.util.ZipUtil;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
@@ -795,9 +797,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     }
 
     /**
-     * For testing
+     * For testing purpose.
      */
-    IInvocationResult getResult() {
+    @VisibleForTesting
+    public IInvocationResult getResult() {
         return mResult;
     }
 }
