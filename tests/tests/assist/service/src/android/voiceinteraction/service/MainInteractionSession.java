@@ -92,6 +92,15 @@ public class MainInteractionSession extends VoiceInteractionSession {
     }
 
     @Override
+    public void onPrepareShow(Bundle args, int showFlags) {
+        if (Utils.LIFECYCLE_NOUI.equals(args.getString(Utils.TESTCASE_TYPE, ""))) {
+            setUiEnabled(false);
+        } else  {
+            setUiEnabled(true);
+        }
+    }
+
+    @Override
     public void onShow(Bundle args, int showFlags) {
         if ((showFlags & SHOW_WITH_ASSIST) == 0) {
             return;
