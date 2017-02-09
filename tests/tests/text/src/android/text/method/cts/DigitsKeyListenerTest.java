@@ -18,7 +18,9 @@ package android.text.method.cts;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
@@ -36,6 +38,8 @@ import com.android.compatibility.common.util.CtsKeyEventUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Locale;
+
 /**
  * Test {@link DigitsKeyListener}.
  */
@@ -45,8 +49,23 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
     @Test
     public void testConstructor() {
         new DigitsKeyListener();
-
         new DigitsKeyListener(true, true);
+        new DigitsKeyListener(true, false);
+        new DigitsKeyListener(false, true);
+        new DigitsKeyListener(false, false);
+
+        new DigitsKeyListener(Locale.US);
+        new DigitsKeyListener(Locale.US, true, true);
+        new DigitsKeyListener(Locale.US, true, false);
+        new DigitsKeyListener(Locale.US, false, true);
+        new DigitsKeyListener(Locale.US, false, false);
+
+        final Locale ir = Locale.forLanguageTag("fa-IR");
+        new DigitsKeyListener(ir);
+        new DigitsKeyListener(ir, true, true);
+        new DigitsKeyListener(ir, true, false);
+        new DigitsKeyListener(ir, false, true);
+        new DigitsKeyListener(ir, false, false);
     }
 
     /*
@@ -399,6 +418,126 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
     }
 
     /*
+     * Check point:
+     * Current accepted characters are U+06F0..U+06F9 for digits, U+066B as decimal separator, '-',
+     * '+'.
+     *
+     * Tests are otherwise identical to the tests in testFilter4().
+     */
+    @Test
+    public void testFilter4_internationalized() {
+        String source = "-\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6";
+        String destString = "dest string without sign and decimal";
+
+        DigitsKeyListener digitsKeyListener =
+                DigitsKeyListener.getInstance(Locale.forLanguageTag("fa-IR"), true, true);
+        SpannableString dest = new SpannableString(destString);
+        assertNull(digitsKeyListener.filter(source, 0, source.length(),
+                dest, 0, dest.length()));
+        assertEquals(destString, dest.toString());
+
+        source = "+\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6";
+        assertNull(digitsKeyListener.filter(source, 0, source.length(),
+                dest, 0, dest.length()));
+        assertEquals(destString, dest.toString());
+
+        source = "-a\u06F1\u066Bb\u06F2c\u06F3d";
+        assertEquals("-\u06F1\u066B\u06F2\u06F3", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 0, dest.length())).toString());
+        assertEquals(destString, dest.toString());
+
+        source = "a\u06F1\u066Bb-\u06F2c+\u06F3d\u066B";
+        assertEquals("\u06F1\u06F2\u06F3\u066B", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 0, dest.length())).toString());
+        assertEquals(destString, dest.toString());
+
+        source = "-\u06F5\u066Ba\u06F1\u066Bb\u06F2c+\u06F3d";
+        assertEquals("-\u06F5\u06F1\u066B\u06F2\u06F3", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 0, dest.length())).toString());
+        assertEquals(destString, dest.toString());
+
+        source = "+\u06F5\u066Ba\u06F1\u066Bb\u06F2c-\u06F3d";
+        assertEquals("+\u06F5\u06F1\u066B\u06F2\u06F3", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 0, dest.length())).toString());
+        assertEquals(destString, dest.toString());
+
+        source = "-\u06F5\u066Ba\u06F1\u066Bb\u06F2c+\u06F3d";
+        Object what = new Object();
+        Spannable spannableSource = new SpannableString(source);
+        spannableSource.setSpan(what, 0, spannableSource.length(), Spanned.SPAN_POINT_POINT);
+        Spanned filtered = (Spanned) digitsKeyListener.filter(spannableSource,
+                0, spannableSource.length(), dest, 0, dest.length());
+        assertEquals("-\u06F5\u06F1\u066B\u06F2\u06F3", filtered.toString());
+        assertEquals(Spanned.SPAN_POINT_POINT, filtered.getSpanFlags(what));
+        assertEquals(0, filtered.getSpanStart(what));
+        assertEquals("-\u06F5\u06F1\u066B\u06F2\u06F3".length(), filtered.getSpanEnd(what));
+
+        assertNull(digitsKeyListener.filter("", 0, 0, dest, 0, dest.length()));
+        assertEquals(destString, dest.toString());
+
+        source = "-\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6";
+        String endDecimal = "\u06F7\u06F8\u06F9\u066B";
+        dest = new SpannableString(endDecimal);
+        assertEquals("-\u06F1\u06F2\u06F3\u06F4\u06F5\u06F6", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 0, dest.length() - 1)).toString());
+        assertEquals(endDecimal, dest.toString());
+
+        String startDecimal = "\u066B\u06F7\u06F8\u06F9";
+        dest = new SpannableString(startDecimal);
+        assertEquals("\u06F1\u06F2\u06F3\u06F4\u06F5\u06F6", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 1, dest.length())).toString());
+        assertEquals(startDecimal, dest.toString());
+
+        source = "+\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6";
+        endDecimal = "\u06F7\u06F8\u06F9\u066B";
+        dest = new SpannableString(endDecimal);
+        assertEquals("+\u06F1\u06F2\u06F3\u06F4\u06F5\u06F6", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 0, dest.length() - 1)).toString());
+        assertEquals(endDecimal, dest.toString());
+
+        startDecimal = "\u066B\u06F7\u06F8\u06F9";
+        dest = new SpannableString(startDecimal);
+        assertEquals("\u06F1\u06F2\u06F3\u06F4\u06F5\u06F6", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 1, dest.length())).toString());
+        assertEquals(startDecimal, dest.toString());
+
+        source = "-\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6";
+        String endSign = "\u06F7\u06F8\u06F9-";
+        dest = new SpannableString(endSign);
+        assertEquals("", (digitsKeyListener.filter(source, 0, source.length(),
+                dest, 0, dest.length() - 1)).toString());
+        assertEquals(endSign, dest.toString());
+
+        endSign = "\u06F7\u06F8\u06F9+";
+        dest = new SpannableString(endSign);
+        assertEquals("", (digitsKeyListener.filter(source, 0, source.length(),
+                dest, 0, dest.length() - 1)).toString());
+        assertEquals(endSign, dest.toString());
+
+        String startSign = "-\u06F7\u06F8\u06F9";
+        dest = new SpannableString(startSign);
+        assertEquals("\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 1, dest.length())).toString());
+        assertEquals(startSign, dest.toString());
+
+        source = "+\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6";
+        dest = new SpannableString(startSign);
+        assertEquals("\u06F1\u06F2\u06F3\u066B\u06F4\u06F5\u06F6", (digitsKeyListener.filter(
+                source, 0, source.length(),
+                dest, 1, dest.length())).toString());
+        assertEquals(startSign, dest.toString());
+    }
+
+    /*
      * Scenario description:
      * Current accepted characters are '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'.
      *  1. Press '-' key and this key could not be accepted.
@@ -611,10 +750,13 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
     public void testGetInstance1() {
         DigitsKeyListener listener1 = DigitsKeyListener.getInstance();
         DigitsKeyListener listener2 = DigitsKeyListener.getInstance();
+        DigitsKeyListener listener3 = DigitsKeyListener.getInstance((Locale) null);
 
         assertNotNull(listener1);
         assertNotNull(listener2);
+        assertNotNull(listener3);
         assertSame(listener1, listener2);
+        assertSame(listener1, listener3);
     }
 
     @Test
@@ -626,12 +768,14 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertNotNull(listener2);
         assertSame(listener1, listener2);
 
-        listener1 = DigitsKeyListener.getInstance(true, false);
-        listener2 = DigitsKeyListener.getInstance(true, false);
+        DigitsKeyListener listener3 = DigitsKeyListener.getInstance(true, false);
+        DigitsKeyListener listener4 = DigitsKeyListener.getInstance(true, false);
 
-        assertNotNull(listener1);
-        assertNotNull(listener2);
-        assertSame(listener1, listener2);
+        assertNotNull(listener3);
+        assertNotNull(listener4);
+        assertSame(listener3, listener4);
+
+        assertNotSame(listener1, listener3);
     }
 
     @Test
@@ -644,7 +788,34 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
     }
 
     @Test
-    public void testGetAcceptedChars() {
+    public void testGetInstance4() {
+        DigitsKeyListener listener1 = DigitsKeyListener.getInstance(Locale.US);
+        DigitsKeyListener listener2 = DigitsKeyListener.getInstance(Locale.US, false, false);
+        assertNotNull(listener1);
+        assertNotNull(listener2);
+        assertSame(listener1, listener2);
+    }
+
+    @Test
+    public void testGetInstance5() {
+        DigitsKeyListener listener1 = DigitsKeyListener.getInstance(Locale.US, false, false);
+        DigitsKeyListener listener2 = DigitsKeyListener.getInstance(Locale.US, true, false);
+        DigitsKeyListener listener3 = DigitsKeyListener.getInstance(Locale.US, false, true);
+        DigitsKeyListener listener4 = DigitsKeyListener.getInstance(Locale.US, true, true);
+        assertNotNull(listener1);
+        assertNotNull(listener2);
+        assertNotNull(listener3);
+        assertNotNull(listener4);
+        assertNotSame(listener1, listener2);
+        assertNotSame(listener1, listener3);
+        assertNotSame(listener1, listener4);
+        assertNotSame(listener2, listener3);
+        assertNotSame(listener2, listener4);
+        assertNotSame(listener3, listener4);
+    }
+
+    @Test
+    public void testGetAcceptedChars1() {
         MockDigitsKeyListener mockDigitsKeyListener = new MockDigitsKeyListener();
 
         final char[][] expected = new char[][] {
@@ -667,7 +838,69 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
     }
 
     @Test
-    public void testGetInputType() {
+    public void testGetAcceptedChars2() {
+        final Locale irLocale = Locale.forLanguageTag("fa-IR");
+        final char irDecimalSeparator = '\u066B';
+        final char usDecimalSeparator = '.';
+        final char[] irDigits = {
+            '\u06F0', '\u06F1', '\u06F2', '\u06F3', '\u06F4',
+            '\u06F5', '\u06F6', '\u06F7', '\u06F8', '\u06F9'
+        };
+        final char[] irSigns = {
+            '+', '-', '\u2212',
+        };
+        final char[] asciiDigits = {
+            '0', '1', '2', '3', '4',
+            '5', '6', '7', '8', '9'
+        };
+
+        MockDigitsKeyListener mockDigitsKeyListener = new MockDigitsKeyListener(irLocale);
+        String acceptedChars = new String(mockDigitsKeyListener.getAcceptedChars());
+        for (int i = 0; i < irDigits.length; i++) {
+            assertNotEquals(-1, acceptedChars.indexOf(irDigits[i]));
+        }
+        for (int i = 0; i < irSigns.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(irSigns[i]));
+        }
+        assertEquals(-1, acceptedChars.indexOf(irDecimalSeparator));
+        for (int i = 0; i < asciiDigits.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(asciiDigits[i]));
+        }
+        assertEquals(-1, acceptedChars.indexOf(usDecimalSeparator));
+
+        mockDigitsKeyListener = new MockDigitsKeyListener(
+                irLocale, false /* sign */, true /* decimal */);
+        acceptedChars = new String(mockDigitsKeyListener.getAcceptedChars());
+        for (int i = 0; i < irDigits.length; i++) {
+            assertNotEquals(-1, acceptedChars.indexOf(irDigits[i]));
+        }
+        for (int i = 0; i < irSigns.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(irSigns[i]));
+        }
+        assertNotEquals(-1, acceptedChars.indexOf(irDecimalSeparator));
+        for (int i = 0; i < asciiDigits.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(asciiDigits[i]));
+        }
+        assertEquals(-1, acceptedChars.indexOf(usDecimalSeparator));
+
+        mockDigitsKeyListener = new MockDigitsKeyListener(
+                irLocale, true /* sign */, true /* decimal */);
+        acceptedChars = new String(mockDigitsKeyListener.getAcceptedChars());
+        for (int i = 0; i < irDigits.length; i++) {
+            assertNotEquals(acceptedChars, -1, acceptedChars.indexOf(irDigits[i]));
+        }
+        for (int i = 0; i < irSigns.length; i++) {
+            assertNotEquals(-1, acceptedChars.indexOf(irSigns[i]));
+        }
+        assertNotEquals(-1, acceptedChars.indexOf(irDecimalSeparator));
+        for (int i = 0; i < asciiDigits.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(asciiDigits[i]));
+        }
+        assertEquals(-1, acceptedChars.indexOf(usDecimalSeparator));
+    }
+
+    @Test
+    public void testGetInputType1() {
         DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(false, false);
         int expected = InputType.TYPE_CLASS_NUMBER;
         assertEquals(expected, digitsKeyListener.getInputType());
@@ -689,6 +922,30 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertEquals(expected, digitsKeyListener.getInputType());
     }
 
+    @Test
+    public void testGetInputType2() {
+        final Locale irLocale = Locale.forLanguageTag("fa-IR");
+        DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(irLocale, false, false);
+        int expected = InputType.TYPE_CLASS_NUMBER;
+        assertEquals(expected, digitsKeyListener.getInputType());
+
+        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, true, false);
+        expected = InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_FLAG_SIGNED;
+        assertEquals(expected, digitsKeyListener.getInputType());
+
+        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, false, true);
+        expected = InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL;
+        assertEquals(expected, digitsKeyListener.getInputType());
+
+        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, true, true);
+        expected = InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_FLAG_SIGNED
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL;
+        assertEquals(expected, digitsKeyListener.getInputType());
+    }
+
     /**
      * A mocked {@link android.text.method.DigitsKeyListener} for testing purposes.
      *
@@ -696,12 +953,20 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
      * {@link android.text.method.DigitsKeyListener#getAcceptedChars()}.
      */
     private class MockDigitsKeyListener extends DigitsKeyListener {
-        public MockDigitsKeyListener() {
+        MockDigitsKeyListener() {
             super();
         }
 
-        public MockDigitsKeyListener(boolean sign, boolean decimal) {
+        MockDigitsKeyListener(boolean sign, boolean decimal) {
             super(sign, decimal);
+        }
+
+        MockDigitsKeyListener(Locale locale) {
+            super(locale);
+        }
+
+        MockDigitsKeyListener(Locale locale, boolean sign, boolean decimal) {
+            super(locale, sign, decimal);
         }
 
         @Override
