@@ -21,7 +21,9 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
 
-LOCAL_SRC_FILES := ../app/src/android/app/stubs/LocalService.java
+LOCAL_SRC_FILES := \
+    ../app/src/android/app/stubs/LocalService.java \
+    $(call all-java-files-under, src) \
 
 LOCAL_SDK_VERSION := current
 

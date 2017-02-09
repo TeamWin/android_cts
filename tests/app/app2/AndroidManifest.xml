@@ -16,8 +16,12 @@
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
        package="com.android.app2">
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <application>
         <service android:name="android.app.stubs.LocalService"
-            android:exported="true"/>
+                 android:exported="true"/>
+        <service android:name=".AlertWindowService"
+                 android:exported="true"/>
     </application>
 </manifest>
