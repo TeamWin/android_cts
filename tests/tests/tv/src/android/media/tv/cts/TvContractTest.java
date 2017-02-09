@@ -102,6 +102,7 @@ public class TvContractTest extends AndroidTestCase {
     private static final String WHITE_SPACES = " \r \n \t \f ";
 
     private static final String PARAM_CANONICAL_GENRE = "canonical_genre";
+    private static final String NON_EXISTING_COLUMN_NAME = "non_existing_column";
 
     private String mInputId;
     private ContentResolver mContentResolver;
@@ -306,6 +307,21 @@ public class TvContractTest extends AndroidTestCase {
         }
     }
 
+    private void verifyNonExistingColumn(Uri channelUri, long channelId) {
+        String[] projection = {
+                Channels._ID,
+                NON_EXISTING_COLUMN_NAME
+        };
+        try (Cursor cursor = mContentResolver.query(channelUri, projection, null, null, null)) {
+            assertNotNull(cursor);
+            assertEquals(cursor.getCount(), 1);
+            assertTrue(cursor.moveToNext());
+            assertEquals(channelId, cursor.getLong(0));
+            assertNull(cursor.getString(1));
+            assertEquals(0, cursor.getInt(1));
+        }
+    }
+
     public void testChannelsTable() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
@@ -380,6 +396,31 @@ public class TvContractTest extends AndroidTestCase {
             // Expected.
         }
 
+        mContentResolver.delete(mChannelsUri, null, null);
+        try (Cursor cursor = mContentResolver.query(
+                mChannelsUri, CHANNELS_PROJECTION, null, null, null)) {
+            assertEquals(0, cursor.getCount());
+        }
+    }
+
+    public void testChannelsTableForNonExistingColumns() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        ContentValues values = createDummyChannelValues(mInputId, false);
+        values.put(NON_EXISTING_COLUMN_NAME, "dummy value");
+        Uri rowUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(rowUri);
+        Uri channelUri = TvContract.buildChannelUri(channelId);
+        verifyChannel(channelUri, values, channelId);
+        verifyNonExistingColumn(channelUri, channelId);
+
+        // Test: update
+        mContentResolver.update(channelUri, values, null, null);
+        verifyChannel(channelUri, values, channelId);
+        verifyNonExistingColumn(channelUri, channelId);
+
+        // Test: delete
         mContentResolver.delete(mChannelsUri, null, null);
         try (Cursor cursor = mContentResolver.query(
                 mChannelsUri, CHANNELS_PROJECTION, null, null, null)) {
