@@ -161,6 +161,9 @@
                 android:resource="@xml/merge" />
         </activity>
 
+        <activity android:name="android.view.cts.MenuTestActivity"
+                  android:label="MenuTestActivity" />
+
         <activity android:name="android.view.cts.ActionModeCtsActivity"
             android:label="ActionModeCtsActivity">
         </activity>
