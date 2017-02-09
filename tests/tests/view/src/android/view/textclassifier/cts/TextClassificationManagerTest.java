@@ -53,6 +53,8 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testSmartSelection() {
+        if (isTextClassifierDisabled()) return;
+
         String text = "Contact me at droid@email.com";
         String selected = "droid";
         String suggested = "droid@email.com";
@@ -67,6 +69,8 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testTextClassificationResult() {
+        if (isTextClassifierDisabled()) return;
+
         String text = "Contact me at droid@email.com";
         String classifiedText = "droid@email.com";
         int startIndex = text.indexOf(classifiedText);
@@ -76,6 +80,8 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testLanguageDetection() {
+        if (isTextClassifierDisabled()) return;
+
         String text = "This is english text";
         assertThat(mTcm.detectLanguages(text), isDetectedLanguage("en"));
 
@@ -84,6 +90,10 @@ public class TextClassificationManagerTest {
 
         text = "これは日本語テキストです";
         assertThat(mTcm.detectLanguages(text), isDetectedLanguage("ja"));
+    }
+
+    private boolean isTextClassifierDisabled() {
+        return mClassifier == TextClassifier.NO_OP;
     }
 
     private static Matcher<TextSelection> isTextSelection(
