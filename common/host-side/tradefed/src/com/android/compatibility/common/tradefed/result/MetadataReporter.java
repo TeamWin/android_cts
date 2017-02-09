@@ -16,23 +16,15 @@
 
 package com.android.compatibility.common.tradefed.result;
 
-import com.android.json.stream.JsonWriter;
-
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
-import com.android.compatibility.common.util.ResultHandler;
 import com.android.ddmlib.testrunner.TestIdentifier;
+import com.android.json.stream.JsonWriter;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
-import com.android.tradefed.config.Option.Importance;
-import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
 import com.android.tradefed.result.StubTestInvocationListener;
-import com.android.tradefed.util.FileUtil;
-import com.android.tradefed.util.TimeUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -51,14 +43,9 @@ public class MetadataReporter extends StubTestInvocationListener implements ISha
     @Option(name = "include-failure-time", description = "Include timing about tests that failed.")
     private boolean mIncludeFailures = false;
 
-    @Option(name = "min-test-duration-sec", description = "Ignore test durations less than this.")
-    private int mMinTestDurationSec = 2;
-
-    @Option(name = CompatibilityTest.RETRY_OPTION,
-            shortName = 'r',
-            description = "retry a previous session.",
-            importance = Importance.IF_UNSET)
-    private Integer mRetrySessionId = null;
+    @Option(name = "min-test-duration", description = "Ignore test durations less than this.",
+            isTimeVal = true)
+    private long mMinTestDuration = 2 * 1000;
 
     private static final String METADATA_DIR = "metadata";
     private CompatibilityBuildHelper mBuildHelper;
@@ -145,17 +132,17 @@ public class MetadataReporter extends StubTestInvocationListener implements ISha
      */
     @Override
     public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
-        long duration = (System.currentTimeMillis() - mStartTime) / 1000;
+        long duration = System.currentTimeMillis() - mStartTime;
         if (mTestFailed && !mIncludeFailures) {
             return;
         }
-        if (duration < mMinTestDurationSec) {
+        if (duration < mMinTestDuration) {
             return;
         }
 
         TestMetadata metadata = new TestMetadata();
         metadata.testId = buildTestId(test);
-        metadata.seconds = duration;
+        metadata.seconds = duration / 1000; // convert to second for reporting
         mTestMetadata.add(metadata);
     }
 
