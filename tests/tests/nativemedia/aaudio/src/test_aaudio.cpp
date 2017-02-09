@@ -33,12 +33,14 @@
 TEST(test_aaudio, aaudio_stream_builder) {
     const aaudio_sample_rate_t requestedSampleRate1 = 48000;
     const aaudio_sample_rate_t requestedSampleRate2 = 44100;
+    const aaudio_size_frames_t requestedBufferCapacity = 8764;
     const int32_t requestedSamplesPerFrame = 2;
     const aaudio_audio_format_t requestedDataFormat = AAUDIO_FORMAT_PCM16;
 
     aaudio_sample_rate_t sampleRate = -1;
     int32_t samplesPerFrame = -1;
     aaudio_audio_format_t actualDataFormat;
+    aaudio_size_frames_t actualBufferCapacity = -1;
     AAudioStreamBuilder aaudioBuilder1;
     AAudioStreamBuilder aaudioBuilder2;
 
@@ -51,6 +53,8 @@ TEST(test_aaudio, aaudio_stream_builder) {
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSamplesPerFrame(aaudioBuilder1,
             requestedSamplesPerFrame));
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setFormat(aaudioBuilder1, requestedDataFormat));
+    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setBufferCapacity(aaudioBuilder1,
+              requestedBufferCapacity));
 
     // Check to make sure builder saved the properties.
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getSampleRate(aaudioBuilder1, &sampleRate));
@@ -61,6 +65,10 @@ TEST(test_aaudio, aaudio_stream_builder) {
 
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getFormat(aaudioBuilder1, &actualDataFormat));
     EXPECT_EQ(requestedDataFormat, actualDataFormat);
+
+    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getBufferCapacity(aaudioBuilder1,
+                                                              &actualBufferCapacity));
+    EXPECT_EQ(requestedBufferCapacity, actualBufferCapacity);
 
     result = AAudioStreamBuilder_getSampleRate(0x0BADCAFE, &sampleRate); // ridiculous token
     EXPECT_EQ(AAUDIO_ERROR_INVALID_HANDLE, result);
