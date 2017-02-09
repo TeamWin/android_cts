@@ -39,6 +39,12 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
     }
 
     @Override
+    public void onMovedToDisplay(int displayId) {
+        super.onMovedToDisplay(displayId);
+        Log.i(getTag(), "onMovedToDisplay");
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(getTag(), "onDestroy");

@@ -27,6 +27,7 @@ public class ResizeableActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        setContentView(R.layout.resizeable_activity);
         dumpDisplaySize(getResources().getConfiguration());
     }
 

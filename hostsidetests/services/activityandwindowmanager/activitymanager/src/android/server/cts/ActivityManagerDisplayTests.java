@@ -252,7 +252,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertNotFocusedStack("Focused stack must be on secondary display",
                 FULLSCREEN_WORKSPACE_STACK_ID);
 
-        // Launch other activity with different uid and check it is launched on primary display.
+        // Move activity from secondary display to primary.
         moveActivityToStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertFocusedActivity("Focus must be on moved activity", TEST_ACTIVITY_NAME);
@@ -678,6 +678,54 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final boolean heightUpdated = updatedSize.metricsHeight < initialSize.metricsHeight;
         assertTrue("Either width or height must be updated after split-screen resize",
                 widthUpdated ^ heightUpdated);
+    }
+
+    /**
+     * Tests that when activities that handle configuration changes are moved between displays,
+     * they receive onMovedToDisplay and onConfigurationChanged callbacks.
+     */
+    public void testOnMovedToDisplayCallback() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                RESIZEABLE_ACTIVITY_NAME);
+
+        clearLogcat();
+        moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
+        mAmWmState.assertFocusedActivity("Focus must be on moved activity",
+                RESIZEABLE_ACTIVITY_NAME);
+        mAmWmState.assertFocusedStack("Focus must return to primary display",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Check if client received the callbacks.
+        assertMovedToDisplay(RESIZEABLE_ACTIVITY_NAME);
+        assertMovedToDisplay("LifecycleLogView");
+    }
+
+    /** Assert that component received onMovedToDisplay and onConfigurationChanged callbacks. */
+    private void assertMovedToDisplay(String componentName) throws Exception {
+        final ActivityLifecycleCounts lifecycleCounts
+                = new ActivityLifecycleCounts(componentName);
+        if (lifecycleCounts.mDestroyCount != 0) {
+            fail(componentName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    + " time(s), wasn't expecting any");
+        } else if (lifecycleCounts.mCreateCount != 0) {
+            fail(componentName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    + " time(s), wasn't expecting any");
+        } else if (lifecycleCounts.mConfigurationChangedCount != 1) {
+            fail(componentName + " has received "
+                    + lifecycleCounts.mConfigurationChangedCount
+                    + " onConfigurationChanged() calls, expecting " + 1);
+        } else if (lifecycleCounts.mMovedToDisplayCount != 1) {
+            fail(componentName + " has received "
+                    + lifecycleCounts.mMovedToDisplayCount
+                    + " onMovedToDisplay() calls, expecting " + 1);
+        }
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
