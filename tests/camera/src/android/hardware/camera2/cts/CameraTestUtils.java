@@ -1662,7 +1662,7 @@ public class CameraTestUtils extends Assert {
         }
 
         if (zoomFactor < minEffectiveZoom) {
-            Log.w(TAG, "Requested zoomFactor " + zoomFactor + " > minimal zoomable factor "
+            Log.w(TAG, "Requested zoomFactor " + zoomFactor + " < minimal zoomable factor "
                     + minEffectiveZoom + ". It will be overwritten by " + minEffectiveZoom);
             zoomFactor = minEffectiveZoom;
         }
