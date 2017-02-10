@@ -24,14 +24,14 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_C_INCLUDES := \
-    frameworks/av/media/liboboe/include
+    frameworks/av/media/libaaudio/include
 
 LOCAL_SRC_FILES := \
     src/test_aaudio.cpp
 
 LOCAL_SHARED_LIBRARIES := \
+    libaaudio \
     liblog \
-    liboboe \
     libutils
 
 LOCAL_STATIC_LIBRARIES := \
