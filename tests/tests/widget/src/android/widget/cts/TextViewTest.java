@@ -6276,48 +6276,6 @@ public class TextViewTest {
         verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
     }
 
-    @Test
-    public void testClickableSpanOnClickDragInsideFromOutside() throws Throwable {
-        ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        final int[] viewOnScreenXY = new int[2];
-        mTextView.getLocationOnScreen(viewOnScreenXY);
-
-        SparseArray<Point> swipeCoordinates = new SparseArray<>();
-        swipeCoordinates.put(0, new Point(viewOnScreenXY[0] + spanDetails.mXPosOutside,
-                viewOnScreenXY[1] + spanDetails.mYPosOutside));
-        swipeCoordinates.put(1, new Point(viewOnScreenXY[0] + spanDetails.mXPosInside,
-                viewOnScreenXY[1] + spanDetails.mYPosInside));
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, swipeCoordinates);
-        verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
-    }
-
-    @Test
-    public void testClickableSpanOnClickDragInsideOutsideInside() throws Throwable {
-        ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        final int[] viewOnScreenXY = new int[2];
-        mTextView.getLocationOnScreen(viewOnScreenXY);
-
-        // Drag outside from within the clickable span and come back within the clickable span
-        // (without lifting the finger)
-        SparseArray<Point> swipeCoordinates = new SparseArray<>();
-        swipeCoordinates.put(0, new Point(viewOnScreenXY[0] + spanDetails.mXPosInside,
-                viewOnScreenXY[1] + spanDetails.mYPosInside));
-        swipeCoordinates.put(1, new Point(viewOnScreenXY[0] + spanDetails.mXPosOutside,
-                viewOnScreenXY[1] + spanDetails.mYPosOutside));
-        swipeCoordinates.put(2, new Point(viewOnScreenXY[0] + spanDetails.mXPosInside,
-                viewOnScreenXY[1] + spanDetails.mYPosInside));
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, swipeCoordinates);
-        verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
-    }
-
-    @Test
-    public void testClickableSpanOnClickLongPress() throws Throwable {
-        ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
-        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTextView, spanDetails.mXPosInside,
-                spanDetails.mYPosInside);
-        verify(spanDetails.mClickableSpan, never()).onClick(mTextView);
-    }
-
     @UiThreadTest
     @Test
     public void testOnInitializeA11yNodeInfo_populatesHintTextProperly() {

@@ -265,8 +265,8 @@ public class LinkMovementMethodTest {
 
         // release on first line
         verify(mClickable0, never()).onClick(any());
-        assertFalse(releaseOnLine(0));
-        verify(mClickable0, never()).onClick(any());
+        assertTrue(releaseOnLine(0));
+        verify(mClickable0, times(1)).onClick(any());
 
         // press on second line (unclickable)
         assertSelectClickableLeftToRight(mSpannable, mClickable0);
@@ -280,13 +280,13 @@ public class LinkMovementMethodTest {
 
         // release on last line
         verify(mClickable1, never()).onClick(any());
-        assertFalse(releaseOnLine(2));
-        verify(mClickable1, never()).onClick(any());
+        assertTrue(releaseOnLine(2));
+        verify(mClickable1, times(1)).onClick(any());
 
         // release on second line (unclickable)
         assertSelectClickableLeftToRight(mSpannable, mClickable1);
         // just clear selection
-        pressOnLine(1);
+        releaseOnLine(1);
         assertSelection(mSpannable, -1);
     }
 
