@@ -240,6 +240,19 @@ class ActivityManagerState {
         return mStacks.size();
     }
 
+    boolean containsActivity(String activityName) {
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(activityName)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     boolean isActivityVisible(String activityName) {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {

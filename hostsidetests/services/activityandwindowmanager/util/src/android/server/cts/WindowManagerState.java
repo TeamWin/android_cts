@@ -443,6 +443,16 @@ public class WindowManagerState {
         return false;
     }
 
+    /** Check if there exists a window record with matching windowName. */
+    boolean containsWindow(String windowName) {
+        for (WindowState window : mWindowStates) {
+            if (window.getName().equals(windowName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Check if at least one window which matches provided window name is visible. */
     boolean isWindowVisible(String windowName) {
         for (WindowState window : mWindowStates) {
