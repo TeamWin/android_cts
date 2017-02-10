@@ -278,11 +278,11 @@
                 android:layout_height="wrap_content"/>
 
             <TextView
-                android:id="@+id/textview_autosize_xy"
+                android:id="@+id/textview_autosize_uniform"
                 android:layout_width="100dp"
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
-                android:autoSizeText="xy"
+                android:autoSizeText="uniform"
                 android:autoSizeMinTextSize="2px"
                 android:autoSizeMaxTextSize="50dp"
                 android:autoSizeStepGranularity="1dp" />
@@ -330,20 +330,20 @@
                 android:textAppearance="@style/TextView_FontXmlResource" />
 
             <TextView
-                android:id="@+id/textview_autosize_xy_predef_sizes"
+                android:id="@+id/textview_autosize_uniform_predef_sizes"
                 android:layout_width="100dp"
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
-                android:autoSizeText="xy"
-                android:autoSizeStepSizeSet="@array/auto_size_predefined_sizes" />
+                android:autoSizeText="uniform"
+                android:autoSizePresetSizes="@array/auto_size_predefined_sizes" />
 
             <TextView
-                android:id="@+id/textview_autosize_xy_predef_sizes_redundant_values"
+                android:id="@+id/textview_autosize_uniform_predef_sizes_redundant_values"
                 android:layout_width="100dp"
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
-                android:autoSizeText="xy"
-                android:autoSizeStepSizeSet="@array/auto_size_predefined_sizes_redundant_values" />
+                android:autoSizeText="uniform"
+                android:autoSizePresetSizes="@array/auto_size_predefined_sizes_redundant_values" />
         </LinearLayout>
 
 </ScrollView>
