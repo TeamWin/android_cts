@@ -80,15 +80,17 @@ public class SeccompTest extends AndroidTestCase {
         }
 
         final String[] tests = {
-            "global.mode_strict_support",
-            "global.mode_strict_cannot_call_prctl",
+            /* "global.mode_strict_support", // all Android processes already have seccomp filter */
+            /* "global.mode_strict_cannot_call_prctl", // all Android processes already have seccomp
+             * filter */
             "global.no_new_privs_support",
             "global.mode_filter_support",
             /* "global.mode_filter_without_nnp", // all Android processes already have nnp */
             "global.filter_size_limits",
             "global.filter_chain_limits",
             "global.mode_filter_cannot_move_to_strict",
-            "global.mode_filter_get_seccomp",
+            /* "global.mode_filter_get_seccomp", // all Android processes already have seccomp
+             * filter */
             "global.ALLOW_all",
             "global.empty_prog",
             "global.unknown_ret_is_kill_inside",
