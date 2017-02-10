@@ -23,8 +23,6 @@
     <application>
         <activity android:name=".MainActivity"
             android:exported="true" />
-        <activity android:name=".FlashingActivity"
-            android:exported="true" />
         <service android:name=".ProcStatsHelperServiceMain"
             android:exported="true" />
         <service android:name=".ProcStatsHelperServiceSub" android:process=":proc2"

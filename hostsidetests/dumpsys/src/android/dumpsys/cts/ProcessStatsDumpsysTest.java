@@ -22,6 +22,8 @@ import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Test to check the format of the dumps of the processstats test.
@@ -33,7 +35,16 @@ public class ProcessStatsDumpsysTest extends BaseDumpsysTest {
     private static final String DEVICE_SIDE_HELPER_APK = "CtsProcStatsHelperApp.apk";
     private static final String DEVICE_SIDE_HELPER_PACKAGE = "com.android.server.cts.procstatshelper";
 
-    private static final boolean UNINSTALL_APPS_AFTER_TESTS = true; // DON'T SUBMIT WITH TRUE
+    /**
+     * Maximum allowance scale factor when checking a duration time.
+     *
+     * If [actual value] > [expected value] * {@link #DURATION_TIME_MAX_FACTOR},
+     * then the test fails.
+     *
+     * Because the run duration time may include the process startup time, we need a rather big
+     * allowance.
+     */
+    private static final double DURATION_TIME_MAX_FACTOR = 2;
 
     /**
      * Tests the output of "dumpsys procstats -c". This is a proxy for testing "dumpsys procstats
@@ -63,6 +74,17 @@ public class ProcessStatsDumpsysTest extends BaseDumpsysTest {
         checkProcStateOutput(procstats.substring(sep3h), /*checkAvg=*/ false);
     }
 
+    private static String[] commaSplit(String line) {
+        if (line.endsWith(",")) {
+            line = line + " ";
+        }
+        final String[] values = line.split(",");
+        if (" ".equals(values[values.length - 1])) {
+            values[values.length - 1] = "";
+        }
+        return values;
+    }
+
     private void checkProcStateOutput(String text, boolean checkAvg) throws Exception {
         final Set<String> seenTags = new HashSet<>();
 
@@ -76,11 +98,7 @@ public class ProcessStatsDumpsysTest extends BaseDumpsysTest {
                 }
                 CLog.d("Checking line: " + line);
 
-                // extra space to make sure last column shows up.
-                if (line.endsWith(",")) {
-                    line = line + " ";
-                }
-                String[] parts = line.split(",");
+                String[] parts = commaSplit(line);
                 seenTags.add(parts[0]);
 
                 switch (parts[0]) {
@@ -135,16 +153,20 @@ public class ProcessStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkPeriod(String[] parts) {
-        assertTrue("Expected 5 or 6, found: " + parts.length,
-                parts.length == 5 || parts.length == 6);
+        assertTrue("Length should be >= 5, found: " + parts.length,
+                parts.length >= 5);
         assertNotNull(parts[1]); // date
-        assertNonNegativeInteger(parts[2]); // start time (msec)
-        assertNonNegativeInteger(parts[3]); // end time (msec)
-
-        // TODO Check the values.
-        assertNotNull(parts[4]); // status
-        if (parts.length == 6) {
-            assertNotNull(parts[5]); // swapped-out-pss
+        assertLesserOrEqual(parts[2], parts[3]); // start time and end time (msec)
+        for (int i = 4; i < parts.length; i++) {
+            switch (parts[i]) {
+                case "shutdown":
+                case "sysprops":
+                case "complete":
+                case "partial":
+                case "swapped-out-pss":
+                    continue;
+            }
+            fail("Invalid value '" + parts[i] + "' found.");
         }
     }
 
@@ -296,28 +318,169 @@ public class ProcessStatsDumpsysTest extends BaseDumpsysTest {
         }
     }
 
+    /**
+     * Find the first line with the prefix, and return the rest of the line.
+     */
+    private static String findLine(String prefix, String[] lines) {
+        for (String line : lines) {
+            if (line.startsWith(prefix)) {
+                CLog.d("Found line: " + line);
+                return line.substring(prefix.length());
+            }
+        }
+        fail("Line with prefix '" + prefix + "' not found.");
+        return null;
+    }
+
+    private static long getTagValueSum(String[] parts, String tagRegex) {
+        final Pattern tagPattern = Pattern.compile("^" + tagRegex + "\\:");
+
+        boolean found = false;
+        long sum = 0;
+        for (int i = 0; i < parts.length; i++){
+            final String part = parts[i];
+            final Matcher m = tagPattern.matcher(part);
+            if (!m.find()) {
+                continue;
+            }
+            // Extract the rest of the part and parse as a long.
+            sum += assertInteger(parts[i].substring(m.end(0)));
+            found = true;
+        }
+        assertTrue("Tag '" + tagRegex + "' not found.", found);
+        return sum;
+    }
+
+    private static void assertTagValueLessThan(String[] parts, String tagRegex,
+            long expectedMax) {
+        final long sum = getTagValueSum(parts, tagRegex);
+
+        assertTrue("Total values for '" + tagRegex
+                + "' expected to be <= (" + expectedMax + ") but was: "
+                + sum, sum <= expectedMax);
+    }
+
+    private static void assertTagValueSumAbout(String[] parts, String tagRegex,
+            long expectedValue) {
+        final long sum = getTagValueSum(parts, tagRegex);
+
+        assertTrue("Total values for '" + tagRegex
+                + "' expected to be >= " + expectedValue + " but was: "
+                + sum, sum >= expectedValue);
+        assertTrue("Total values for '" + tagRegex
+                + "' expected to be <= (" + expectedValue + ") * "
+                + DURATION_TIME_MAX_FACTOR + " but was: "
+                + sum, sum <= (expectedValue * DURATION_TIME_MAX_FACTOR));
+    }
+
     private void checkWithProcStatsApp() throws Exception {
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
         getDevice().uninstallPackage(DEVICE_SIDE_HELPER_PACKAGE);
-        installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
 
+        final long startNs = System.nanoTime();
+
+        installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
         installPackage(DEVICE_SIDE_HELPER_APK, /* grantPermissions= */ true);
 
         final int helperAppUid = Integer.parseInt(execCommandAndGetFirstGroup(
                 "dumpsys package " + DEVICE_SIDE_HELPER_PACKAGE, "userId=(\\d+)"));
-        CLog.i("Helper app UID: " + helperAppUid);
+        final String uid = String.valueOf(helperAppUid);
+
+        CLog.i("Start: Helper app UID: " + helperAppUid);
 
         try {
             // Run the device side test which makes some network requests.
             runDeviceTests(DEVICE_SIDE_TEST_PACKAGE,
                     "com.android.server.cts.procstats.ProcStatsTest", "testLaunchApp");
         } finally {
-            if (UNINSTALL_APPS_AFTER_TESTS) {
-                getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
-                getDevice().uninstallPackage(DEVICE_SIDE_HELPER_PACKAGE);
-            }
+            getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
+            getDevice().uninstallPackage(DEVICE_SIDE_HELPER_PACKAGE);
         }
+        final long finishNs = System.nanoTime();
+        CLog.i("Finish: Took " + ((finishNs - startNs) / 1000000) + " ms");
 
-        // TODO Check all the lines related to the helper.
+        // The total running duration should be less than this, since we've uninstalled the app.
+        final long maxRunTime = (finishNs - startNs) / 1000000;
+
+        // Get the current procstats.
+        final String procstats = mDevice.executeShellCommand("dumpsys procstats -c --current");
+        assertNotNull(procstats);
+        assertTrue(procstats.length() > 0);
+
+        final String[] lines = procstats.split("\n");
+
+        // Start checking.
+        String parts[] = commaSplit(findLine(
+                "pkgproc,com.android.server.cts.procstatshelper,$U,32123,,".replace("$U", uid),
+                lines));
+        assertTagValueSumAbout(parts, "0.t", 2000); // Screen off, foreground activity.
+        assertTagValueSumAbout(parts, "1.t", 2000); // Screen on, foreground activity.
+        assertTagValueSumAbout(parts, "1.f", 1000); // Screen on, foreground service.
+        assertTagValueSumAbout(parts, "1.s", 500); // Screen on, background service.
+        assertTagValueLessThan(parts, "...", maxRunTime); // total time.
+
+//      We can't really assert there's always "pss".  If there is, then we do check the format in
+//      checkProcStateOutput().
+//        parts = commaSplit(findLine(
+//                "pkgpss,com.android.server.cts.procstatshelper,$U,32123,,".replace("$U", uid),
+//                lines));
+
+        parts = commaSplit(findLine(
+                ("pkgproc,com.android.server.cts.procstatshelper,$U,32123,"
+                + "com.android.server.cts.procstatshelper:proc2,").replace("$U", uid),
+                lines));
+
+        assertTagValueSumAbout(parts, "0.f", 1000); // Screen off, foreground service.
+        assertTagValueSumAbout(parts, "0.s", 500); // Screen off, background service.
+
+        assertTagValueLessThan(parts, "...", maxRunTime); // total time.
+
+//      We can't really assert there's always "pss".  If there is, then we do check the format in
+//      checkProcStateOutput().
+//        parts = commaSplit(findLine(
+//                ("pkgpss,com.android.server.cts.procstatshelper,$U,32123,"
+//                + "com.android.server.cts.procstatshelper:proc2,").replace("$U", uid),
+//                lines));
+
+        parts = commaSplit(findLine(
+                ("pkgsvc-run,com.android.server.cts.procstatshelper,$U,32123,"
+                + ".ProcStatsHelperServiceMain,").replace("$U", uid),
+                lines));
+
+        assertTagValueSumAbout(parts, "1.", 1500); // Screen on, running.
+
+        parts = commaSplit(findLine(
+                ("pkgsvc-start,com.android.server.cts.procstatshelper,$U,32123,"
+                + ".ProcStatsHelperServiceMain,").replace("$U", uid),
+                lines));
+
+        assertTagValueSumAbout(parts, "1.", 1500); // Screen on, running.
+
+//      Dose it always exist?
+//        parts = commaSplit(findLine(
+//                ("pkgsvc-exec,com.android.server.cts.procstatshelper,$U,32123,"
+//                + ".ProcStatsHelperServiceMain,").replace("$U", uid),
+//                lines));
+
+        parts = commaSplit(findLine(
+                ("pkgsvc-run,com.android.server.cts.procstatshelper,$U,32123,"
+                + ".ProcStatsHelperServiceSub,").replace("$U", uid),
+                lines));
+
+        assertTagValueSumAbout(parts, "0.", 1500); // Screen off, running.
+
+        parts = commaSplit(findLine(
+                ("pkgsvc-start,com.android.server.cts.procstatshelper,$U,32123,"
+                + ".ProcStatsHelperServiceSub,").replace("$U", uid),
+                lines));
+
+        assertTagValueSumAbout(parts, "0.", 1500); // Screen off, running.
+
+//      Dose it always exist?
+//        parts = commaSplit(findLine(
+//                ("pkgsvc-exec,com.android.server.cts.procstatshelper,$U,32123,"
+//                + ".ProcStatsHelperServiceSub,").replace("$U", uid),
+//                lines));
+
     }
 }

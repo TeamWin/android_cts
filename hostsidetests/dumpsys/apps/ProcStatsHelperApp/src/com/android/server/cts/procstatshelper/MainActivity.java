@@ -23,7 +23,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
-        // Close in 1 second.
-        new Handler().postDelayed(() -> finish(), 1000);
+        new Handler().postDelayed(() -> finish(), 2000);
     }
 }
