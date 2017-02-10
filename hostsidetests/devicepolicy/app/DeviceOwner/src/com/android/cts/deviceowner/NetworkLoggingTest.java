@@ -50,7 +50,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             "google.pl"
     };
 
-    private static final int MAX_VISITING_WEBPAGES_ITERATIONS = 100; // ~1500 events
+    private static final int MAX_VISITING_WEBPAGES_ITERATIONS = 100; // >1500 events
     // note: make sure URL_LIST has at least 10 urls in it to generate enough network traffic
     private static final String[] LOGGED_URLS_LIST = {
             "example.com",
@@ -63,6 +63,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             "google.com.br",
             "google.com.tr",
             "google.co.uk",
+            "google.de"
     };
 
     private final BroadcastReceiver mNetworkLogsReceiver = new BroadcastReceiver() {
@@ -203,9 +204,8 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
                     }
                     // verify that as many IP addresses were logged as were reported (max 10)
                     String[] ips = dnsEvent.getIpAddresses();
-                    assertTrue(ips.length >= 1 && ips.length <= MAX_IP_ADDRESSES_LOGGED);
-                    assertEquals((dnsEvent.getIpAddressesCount() > MAX_IP_ADDRESSES_LOGGED
-                            ? MAX_IP_ADDRESSES_LOGGED : dnsEvent.getIpAddressesCount()),
+                    assertTrue(ips.length <= MAX_IP_ADDRESSES_LOGGED);
+                    assertEquals(Math.min(MAX_IP_ADDRESSES_LOGGED, dnsEvent.getIpAddressesCount()),
                             ips.length);
                     // verify the IP addresses are valid IPv4 or IPv6 addresses
                     for (String ipAddress : ips) {
