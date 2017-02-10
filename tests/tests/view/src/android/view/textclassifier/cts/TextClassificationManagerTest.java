@@ -68,14 +68,43 @@ public class TextClassificationManagerTest {
     }
 
     @Test
+    public void testSmartSelection_url() {
+        if (isTextClassifierDisabled()) return;
+
+        String text = "Visit http://www.android.com for more information";
+        String selected = "http";
+        String suggested = "http://www.android.com";
+        int startIndex = text.indexOf(selected);
+        int endIndex = startIndex + selected.length();
+        int smartStartIndex = text.indexOf(suggested);
+        int smartEndIndex = smartStartIndex + suggested.length();
+
+        assertThat(mClassifier.suggestSelection(text, startIndex, endIndex),
+                isTextSelection(smartStartIndex, smartEndIndex, TextClassifier.TYPE_URL));
+    }
+
+    @Test
     public void testTextClassificationResult() {
         if (isTextClassifierDisabled()) return;
 
         String text = "Contact me at droid@email.com";
         String classifiedText = "droid@email.com";
         int startIndex = text.indexOf(classifiedText);
-        assertThat(mClassifier.getTextClassificationResult(text, startIndex, text.length()),
+        int endIndex = startIndex + classifiedText.length();
+        assertThat(mClassifier.getTextClassificationResult(text, startIndex, endIndex),
                 isTextClassificationResult(classifiedText, TextClassifier.TYPE_EMAIL));
+    }
+
+    @Test
+    public void testTextClassificationResult_url() {
+        if (isTextClassifierDisabled()) return;
+
+        String text = "Visit http://www.android.com for more information";
+        String classifiedText = "http://www.android.com";
+        int startIndex = text.indexOf(classifiedText);
+        int endIndex = startIndex + classifiedText.length();
+        assertThat(mClassifier.getTextClassificationResult(text, startIndex, endIndex),
+                isTextClassificationResult(classifiedText, TextClassifier.TYPE_URL));
     }
 
     @Test
