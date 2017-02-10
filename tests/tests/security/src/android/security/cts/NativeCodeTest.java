@@ -27,14 +27,6 @@ public class NativeCodeTest extends TestCase {
     }
 
     @SecurityTest
-    public void testVroot() throws Exception {
-        assertTrue("Device is vulnerable to CVE-2013-6282. Please apply security patch at "
-                   + "https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/"
-                   + "commit/arch/arm/include/asm/uaccess.h?id="
-                   + "8404663f81d212918ff85f493649a7991209fa04", doVrootTest());
-    }
-
-    @SecurityTest
     public void testPerfEvent() throws Exception {
         assertFalse("Device is vulnerable to CVE-2013-2094. Please apply security patch "
                     + "at http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/"
@@ -113,16 +105,6 @@ public class NativeCodeTest extends TestCase {
      * Credit: https://github.com/deater/perf_event_tests/blob/master/exploits/arm_perf_exploit.c
      */
     private static native boolean doPerfEventTest2();
-
-    /**
-     * ANDROID-11234878 / CVE-2013-6282
-     *
-     * Returns true if the device is patched against the vroot vulnerability, false otherwise.
-     *
-     * The following patch addresses this bug:
-     * https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/arch/arm/include/asm/uaccess.h?id=8404663f81d212918ff85f493649a7991209fa04
-     */
-    private static native boolean doVrootTest();
 
     @SecurityTest
     public void testCVE20141710() throws Exception {
