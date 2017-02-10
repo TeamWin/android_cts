@@ -30,6 +30,7 @@ import android.util.Log;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * This is the official ConnectionService for Telecom's CTS App. Since telecom requires that a
@@ -54,13 +55,13 @@ public class CtsConnectionService extends ConnectionService {
     private static ConnectionService sConnectionService;
     // This is the connection service registered with Telecom
     private static ConnectionService sTelecomConnectionService;
-    private static boolean mIsServiceBound = false;
+    private static boolean sIsBound = false;
+    private static CountDownLatch sServiceUnBoundLatch = new CountDownLatch(1);
 
     public CtsConnectionService() throws Exception {
         super();
         sTelecomConnectionService = this;
-        // Cant override the onBind method for ConnectionService, so reset it here.
-        mIsServiceBound = true;
+        sIsBound = true;
     }
 
     private static Object sLock = new Object();
@@ -177,16 +178,21 @@ public class CtsConnectionService extends ConnectionService {
     @Override
     public boolean onUnbind(Intent intent) {
         Log.i(LOG_TAG, "Service has been unbound");
-        assertTrue(mIsServiceBound);
-        mIsServiceBound = false;
+        sServiceUnBoundLatch.countDown();
+        sIsBound = false;
         return super.onUnbind(intent);
-    }
-
-    public static boolean isServiceBound() {
-        return mIsServiceBound;
     }
 
     public static boolean isServiceRegisteredToTelecom() {
         return sTelecomConnectionService != null;
+    }
+
+    public static boolean isBound() {
+        return sIsBound;
+    }
+
+    public static boolean waitForUnBinding() {
+        sServiceUnBoundLatch = TestUtils.waitForLock(sServiceUnBoundLatch);
+        return sServiceUnBoundLatch != null;
     }
 }
