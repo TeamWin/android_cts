@@ -87,10 +87,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         // Launch our own activity to side in case Recents (or other activity to side) doesn't
         // support rotation.
-        launchActivityToSide(false /* randomData */, false /* multipleTask */, TEST_ACTIVITY_NAME);
+        getLaunchActivityBuilder().setToSide(true).setTargetActivityName(TEST_ACTIVITY_NAME)
+                .execute();
         // Launch target activity in docked stack.
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                false /* multipleTask */, RESIZEABLE_ACTIVITY_NAME);
+        getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
 
@@ -105,8 +105,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         setDeviceRotation(0);
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
-        launchActivityToSide(false /* randomData */, false /* multipleTaskFlag */,
-                RESIZEABLE_ACTIVITY_NAME);
+        getLaunchActivityBuilder().setToSide(true).setTargetActivityName(RESIZEABLE_ACTIVITY_NAME)
+                .execute();
         final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
                 FULLSCREEN_WORKSPACE_STACK_ID);
 
@@ -237,14 +237,14 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Launch activities that request orientations and check that device doesn't rotate.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
 
-        launchActivityToSide(false /* randomData */, true /* multipleTaskFlag */, activity);
+        getLaunchActivityBuilder().setToSide(true).setMultipleTask(true)
+                .setTargetActivityName(activity).execute();
         mAmWmState.computeState(mDevice, new String[] {activity});
         mAmWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",
                 orientation, mAmWmState.getWmState().getRotation());
 
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                true /* multipleTask */, activity);
+        getLaunchActivityBuilder().setMultipleTask(true).setTargetActivityName(activity).execute();
         mAmWmState.computeState(mDevice, new String[] {activity});
         mAmWmState.assertVisibility(activity, true /* visible */);
         assertEquals("Split-screen apps shouldn't influence device orientation",

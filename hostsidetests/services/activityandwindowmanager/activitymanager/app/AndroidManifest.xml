@@ -68,7 +68,12 @@
         <activity android:name=".LaunchingActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
-                android:taskAffinity="nobody.but.LaunchToSideActivity"
+                android:taskAffinity="nobody.but.LaunchingActivity"
+        />
+        <activity android:name=".AltLaunchingActivity"
+                android:resizeableActivity="true"
+                android:exported="true"
+                android:taskAffinity="nobody.but.LaunchingActivity"
         />
         <activity android:name=".PipActivity"
                 android:resizeableActivity="false"

@@ -24,8 +24,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     public void testAnimationBackground_duringAnimation() throws Exception {
         launchActivity(LAUNCHING_ACTIVITY);
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                false /* multipleTask */, "AnimationTestActivity");
+        getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
 
         // Make sure we are in the middle of the animation.
         Thread.sleep(250);
@@ -37,8 +36,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     public void testAnimationBackground_gone() throws Exception {
         launchActivity(LAUNCHING_ACTIVITY);
-        launchActivityFromLaunching(false /* toSide */, false /* randomData */,
-                false /* multipleTask */, "AnimationTestActivity");
+        getLaunchActivityBuilder().setTargetActivityName("AnimationTestActivity").execute();
         mAmWmState.computeState(mDevice, new String[] { "AnimationTestActivity "});
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
                 .getStack(FULLSCREEN_WORKSPACE_STACK_ID)

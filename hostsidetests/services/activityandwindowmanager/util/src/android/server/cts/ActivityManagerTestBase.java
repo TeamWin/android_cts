@@ -91,6 +91,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             "am stack move-top-activity-to-pinned-stack 1 0 0 500 500";
 
     static final String LAUNCHING_ACTIVITY = "LaunchingActivity";
+    static final String ALT_LAUNCHING_ACTIVITY = "AltLaunchingActivity";
     static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
 
     /** Broadcast shell command for finishing {@link BroadcastReceiverActivity}. */
@@ -247,8 +248,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected String executeShellCommand(String command) throws DeviceNotAvailableException {
+        return executeShellCommand(mDevice, command);
+    }
+
+    protected static String executeShellCommand(ITestDevice device, String command)
+            throws DeviceNotAvailableException {
         log("adb shell " + command);
-        return mDevice.executeShellCommand(command);
+        return device.executeShellCommand(command);
     }
 
     protected void executeShellCommand(String command, CollectingOutputReceiver outputReceiver)
@@ -308,12 +314,6 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
-    protected void launchActivityFromLaunching(boolean toSide, boolean randomData,
-            boolean multipleTask, String targetActivityName) throws Exception {
-        launchActivityFromLaunching(toSide, randomData, multipleTask, targetActivityName,
-                INVALID_DISPLAY_ID);
-    }
-
     /**
      * Launch specific target activity. It uses existing instance of {@link #LAUNCHING_ACTIVITY}, so
      * that one should be started first.
@@ -367,8 +367,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected void launchActivityToSide(boolean randomData, boolean multipleTaskFlag,
             String targetActivity) throws Exception {
         final String activityToLaunch = targetActivity != null ? targetActivity : "TestActivity";
-        launchActivityFromLaunching(true /* toSide */, randomData, multipleTaskFlag,
-                activityToLaunch);
+        getLaunchActivityBuilder().setToSide(true).setRandomData(randomData)
+                .setMultipleTask(multipleTaskFlag).setTargetActivityName(activityToLaunch)
+                .execute();
 
         mAmWmState.waitForValidState(mDevice, activityToLaunch, FULLSCREEN_WORKSPACE_STACK_ID);
     }
@@ -772,5 +773,93 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void stopTestCase() throws Exception {
         executeShellCommand("am force-stop " + componentName);
+    }
+
+    protected LaunchActivityBuilder getLaunchActivityBuilder() {
+        return new LaunchActivityBuilder(mAmWmState, mDevice);
+    }
+
+    protected static class LaunchActivityBuilder {
+        private final ActivityAndWindowManagersState mAmWmState;
+        private final ITestDevice mDevice;
+
+        private String mTargetActivityName;
+        private boolean mToSide;
+        private boolean mRandomData;
+        private boolean mMultipleTask;
+        private int mDisplayId = INVALID_DISPLAY_ID;
+        private String mLaunchingActivityName = LAUNCHING_ACTIVITY;
+        private boolean mReorderToFront;
+
+        public LaunchActivityBuilder(ActivityAndWindowManagersState amWmState,
+                                     ITestDevice device) {
+            mAmWmState = amWmState;
+            mDevice = device;
+        }
+
+        public LaunchActivityBuilder setToSide(boolean toSide) {
+            mToSide = toSide;
+            return this;
+        }
+
+        public LaunchActivityBuilder setRandomData(boolean randomData) {
+            mRandomData = randomData;
+            return this;
+        }
+
+        public LaunchActivityBuilder setMultipleTask(boolean multipleTask) {
+            mMultipleTask = multipleTask;
+            return this;
+        }
+
+        public LaunchActivityBuilder setReorderToFront(boolean reorderToFront) {
+            mReorderToFront = reorderToFront;
+            return this;
+        }
+
+        public LaunchActivityBuilder setTargetActivityName(String name) {
+            mTargetActivityName = name;
+            return this;
+        }
+
+        public LaunchActivityBuilder setDisplayId(int id) {
+            mDisplayId = id;
+            return this;
+        }
+
+        public LaunchActivityBuilder setLaunchingActivityName(String name) {
+            mLaunchingActivityName = name;
+            return this;
+        }
+
+        public void execute() throws Exception {
+            StringBuilder commandBuilder = new StringBuilder(getAmStartCmd(mLaunchingActivityName));
+            commandBuilder.append(" -f 0x20000000");
+
+            // Add a flag to ensure we actually mean to launch an activity.
+            commandBuilder.append(" --ez launch_activity true");
+
+            if (mToSide) {
+                commandBuilder.append(" --ez launch_to_the_side true");
+            }
+            if (mRandomData) {
+                commandBuilder.append(" --ez random_data true");
+            }
+            if (mMultipleTask) {
+                commandBuilder.append(" --ez multiple_task true");
+            }
+            if (mReorderToFront) {
+                commandBuilder.append(" --ez reorder_to_front true");
+            }
+            if (mTargetActivityName != null) {
+                commandBuilder.append(" --es target_activity ").append(mTargetActivityName);
+            }
+            if (mDisplayId != INVALID_DISPLAY_ID) {
+                commandBuilder.append(" --ei display_id ").append(mDisplayId);
+            }
+            executeShellCommand(mDevice, commandBuilder.toString());
+
+            mAmWmState.waitForValidState(mDevice, mTargetActivityName);
+        }
     }
 }

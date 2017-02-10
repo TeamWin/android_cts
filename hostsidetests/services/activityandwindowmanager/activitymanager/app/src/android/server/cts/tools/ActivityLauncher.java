@@ -19,6 +19,7 @@ package android.server.cts.tools;
 import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
@@ -34,9 +35,10 @@ public class ActivityLauncher {
     private static final String TAG = ActivityLauncher.class.getSimpleName();
 
     public static void launchActivityFromExtras(final Context context, Bundle extras) {
-        if (extras == null) {
-            extras = new Bundle();
+        if (extras == null || extras.getBoolean("launch_activity")) {
+            return;
         }
+
         Log.i(TAG, "launchActivityFromExtras: extras=" + extras);
 
         final Intent newIntent = new Intent();
@@ -65,6 +67,10 @@ public class ActivityLauncher {
         }
         if (extras.getBoolean("new_task")) {
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        }
+
+        if (extras.getBoolean("reorder_to_front")) {
+            newIntent.addFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
         }
 
         ActivityOptions options = null;
