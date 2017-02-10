@@ -23,9 +23,9 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.util.ArrayMap;
 
-import java.util.ArrayList;
-
 import com.android.cts.verifier.R;
+
+import java.util.ArrayList;
 
 public class UserRestrictions {
     private static final String[] RESTRICTION_IDS = new String[] {
@@ -199,6 +199,9 @@ public class UserRestrictions {
                     isCellBroadcastAppLinkEnabled = false;  // CMAS app not installed
                 }
                 return isCellBroadcastAppLinkEnabled;
+            case UserManager.DISALLOW_FUN:
+                // Easter egg is not available on watch
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS:
                 return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
             case UserManager.DISALLOW_CONFIG_WIFI:
