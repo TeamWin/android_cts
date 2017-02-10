@@ -16,7 +16,6 @@
 
 package com.android.compatibility.common.util;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -257,28 +256,46 @@ public class WidgetTestUtils {
     public static void runOnMainAndLayoutSync(@NonNull final ActivityTestRule activityTestRule,
             @Nullable final Runnable runner, boolean forceLayout)
             throws Throwable {
+        runOnMainAndLayoutSync(activityTestRule,
+                activityTestRule.getActivity().getWindow().getDecorView(), runner, forceLayout);
+    }
+
+    /**
+     * Runs the specified Runnable on the main thread and ensures that the specified view is
+     * laid out before returning.
+     *
+     * @param activityTestRule the activity test rule used to run the test
+     * @param view The view
+     * @param runner the runnable to run on the main thread. {@code null} is
+     * allowed, and simply means that there no runnable is required.
+     * @param forceLayout true if there should be an explicit call to requestLayout(),
+     * false otherwise
+     */
+    public static void runOnMainAndLayoutSync(@NonNull final ActivityTestRule activityTestRule,
+            @NonNull final View view, @Nullable final Runnable runner, boolean forceLayout)
+            throws Throwable {
+        final View rootView = view.getRootView();
+
         final CountDownLatch latch = new CountDownLatch(1);
 
         activityTestRule.runOnUiThread(() -> {
             final OnGlobalLayoutListener listener = new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    activityTestRule.getActivity().getWindow().getDecorView().
-                            getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     // countdown immediately since the layout we were waiting on has happened
                     latch.countDown();
                 }
             };
 
-            activityTestRule.getActivity().getWindow().getDecorView().
-                    getViewTreeObserver().addOnGlobalLayoutListener(listener);
+            rootView.getViewTreeObserver().addOnGlobalLayoutListener(listener);
 
             if (runner != null) {
                 runner.run();
             }
 
             if (forceLayout) {
-                activityTestRule.getActivity().getWindow().getDecorView().requestLayout();
+                rootView.requestLayout();
             }
         });
 
