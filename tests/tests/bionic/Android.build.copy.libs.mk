@@ -66,6 +66,7 @@ my_bionic_testlib_files := \
   libtest_empty.so \
   libtest_init_fini_order_child.so \
   libtest_init_fini_order_grand_child.so \
+  libtest_init_fini_order_root2.so \
   libtest_init_fini_order_root.so \
   libtest_nodelete_1.so \
   libtest_nodelete_2.so \
