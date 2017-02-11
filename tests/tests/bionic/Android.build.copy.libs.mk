@@ -109,6 +109,7 @@ my_bionic_testlib_files := \
   private_namespace_libs/libnstest_root_not_isolated.so \
   private_namespace_libs/libnstest_root.so \
   public_namespace_libs/libnstest_public.so \
+  public_namespace_libs/libnstest_public_internal.so \
 
 # These libraries are not built for mips.
 my_bionic_testlib_files_non_mips := \
