@@ -22,6 +22,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.animation.Animator;
@@ -39,6 +41,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 public class AnimatorSetTest {
     private AnimationActivity mActivity;
     private AnimatorSet mAnimatorSet;
+    private float mPreviousDurationScale = 1.0f;
     private long mDuration = 1000;
     private Object object;
     private ObjectAnimator yAnimator;
@@ -71,9 +75,16 @@ public class AnimatorSetTest {
     public void setup() {
         InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
         mActivity = mActivityRule.getActivity();
+        mPreviousDurationScale = ValueAnimator.getDurationScale();
+        ValueAnimator.setDurationScale(1.0f);
         object = mActivity.view.newBall;
         yAnimator = getYAnimator(object);
         xAnimator = getXAnimator(object);
+    }
+
+    @After
+    public void tearDown() {
+        ValueAnimator.setDurationScale(mPreviousDurationScale);
     }
 
     @Test
@@ -381,6 +392,145 @@ public class AnimatorSetTest {
         assertEquals(mAnimatorSet.getStartDelay(), 10);
     }
 
+    /**
+     * This test sets up an AnimatorSet with start delay. One of the child animators also has
+     * start delay. We then verify that start delay was handled correctly on both AnimatorSet
+     * and individual animator level.
+     */
+    @Test
+    public void testReverseWithStartDelay() throws Throwable {
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 1f);
+        a1.setDuration(200);
+        Animator.AnimatorListener listener1 = mock(AnimatorListenerAdapter.class);
+        a1.addListener(listener1);
+
+        ValueAnimator a2 = ValueAnimator.ofFloat(1f, 2f);
+        a2.setDuration(200);
+        // Set start delay on a2 so that the delay is passed 100ms after a1 is finished.
+        a2.setStartDelay(300);
+        Animator.AnimatorListener listener = mock(AnimatorListenerAdapter.class);
+        a2.addListener(listener);
+
+        a2.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation, boolean inReverse) {
+                assertTrue(inReverse);
+                // By the time a2 finishes reversing, a1 should not have started.
+                assertFalse(a1.isStarted());
+            }
+        });
+
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(a1, a2);
+        set.setStartDelay(1000);
+        Animator.AnimatorListener setListener = mock(AnimatorListenerAdapter.class);
+        set.addListener(setListener);
+        mActivityRule.runOnUiThread(() -> {
+            set.reverse();
+            assertTrue(a2.isStarted());
+            assertTrue(a2.isRunning());
+        });
+
+        // a2 should finish 200ms after reverse started
+        verify(listener, within(300)).onAnimationEnd(a2, true);
+        // When a2 finishes, a1 should not have started yet
+        verify(listener1, never()).onAnimationStart(a1, true);
+
+        // The whole set should finish within 500ms, i.e. 300ms after a2 is finished. This verifies
+        // that the AnimatorSet didn't mistakenly use its start delay in the reverse run.
+        verify(setListener, within(400)).onAnimationEnd(set, true);
+        verify(listener1, times(1)).onAnimationEnd(a1, true);
+
+    }
+
+    /**
+     * Test that duration scale is handled correctly in the AnimatorSet.
+     */
+    @Test
+    public void testZeroDurationScale() throws Throwable {
+        ValueAnimator.setDurationScale(0);
+
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 1f);
+        a1.setDuration(200);
+        Animator.AnimatorListener listener1 = mock(AnimatorListenerAdapter.class);
+        a1.addListener(listener1);
+
+        ValueAnimator a2 = ValueAnimator.ofFloat(1f, 2f);
+        a2.setDuration(200);
+        // Set start delay on a2 so that the delay is passed 100ms after a1 is finished.
+        a2.setStartDelay(300);
+        Animator.AnimatorListener listener2 = mock(AnimatorListenerAdapter.class);
+        a2.addListener(listener2);
+
+        AnimatorSet set = new AnimatorSet();
+        set.playSequentially(a1, a2);
+        set.setStartDelay(1000);
+        Animator.AnimatorListener setListener = mock(AnimatorListenerAdapter.class);
+        set.addListener(setListener);
+
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+        });
+        verify(setListener, within(100)).onAnimationEnd(set, false);
+        verify(listener1, times(1)).onAnimationEnd(a1, false);
+        verify(listener2, times(1)).onAnimationEnd(a2, false);
+    }
+
+    /**
+     * Test that non-zero duration scale is handled correctly in the AnimatorSet.
+     */
+    @Test
+    public void testDurationScale() throws Throwable {
+        // Change the duration scale to 3
+        ValueAnimator.setDurationScale(3f);
+
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 1f);
+        a1.setDuration(100);
+        Animator.AnimatorListener listener1 = mock(AnimatorListenerAdapter.class);
+        a1.addListener(listener1);
+
+        ValueAnimator a2 = ValueAnimator.ofFloat(1f, 2f);
+        a2.setDuration(100);
+        // Set start delay on a2 so that the delay is passed 100ms after a1 is finished.
+        a2.setStartDelay(200);
+        Animator.AnimatorListener listener2 = mock(AnimatorListenerAdapter.class);
+        a2.addListener(listener2);
+
+        AnimatorSet set = new AnimatorSet();
+        set.playSequentially(a1, a2);
+        Animator.AnimatorListener setListener = mock(AnimatorListenerAdapter.class);
+        set.addListener(setListener);
+        set.setStartDelay(200);
+
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+        });
+
+        // Sleep for part of the start delay and check that no child animator has started, to verify
+        // that the duration scale has been properly scaled.
+        SystemClock.sleep(400);
+        // start delay of the set should be scaled to 600ms
+        verify(listener1, never()).onAnimationStart(a1, false);
+        verify(listener2, never()).onAnimationStart(a2, false);
+
+        verify(listener1, within(400)).onAnimationStart(a1, false);
+        // Sleep for part of a2's start delay and verify that a2 is still in the delayed stage. This
+        // is to make sure child animator's start delay is also properly scaled.
+        SystemClock.sleep(400);
+        assertTrue(a2.isStarted());
+        assertFalse(a2.isRunning());
+
+        // Sleep past the start delay
+        SystemClock.sleep(350);
+        assertTrue(a2.isRunning());
+
+        // Verify that the AnimatorSet has finished within 1650ms since the start of the animation.
+        // The duration of the set is 500ms, duration scale = 3.
+        verify(setListener, within(500)).onAnimationEnd(set, false);
+        verify(listener1, times(1)).onAnimationEnd(a1, false);
+        verify(listener2, times(1)).onAnimationEnd(a2, false);
+    }
+
     @Test
     public void testGetChildAnimations() throws Throwable {
         Animator[] animatorArray = { xAnimator, yAnimator };
@@ -613,6 +763,42 @@ public class AnimatorSetTest {
         assertEquals(180f, (Float) a2.getAnimatedValue(), EPSILON);
         assertEquals(120f, (Float) a3.getAnimatedValue(), EPSILON);
 
+    }
+
+    /**
+     * This test verifies that getCurrentPlayTime() returns the right value.
+     */
+    @Test
+    public void testGetCurrentPlayTime() throws Throwable {
+        // Setup an AnimatorSet with start delay
+        final AnimatorSet set = new AnimatorSet();
+        final ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f).setDuration(300);
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation, boolean inReverse) {
+                assertFalse(inReverse);
+                assertTrue(set.getCurrentPlayTime() >= 200);
+            }
+        });
+        set.play(anim);
+        set.setStartDelay(100);
+
+        Animator.AnimatorListener setListener = mock(AnimatorListenerAdapter.class);
+        set.addListener(setListener);
+
+        // Set a seek time and verify, before start
+        set.setCurrentPlayTime(20);
+        assertEquals(20, set.getCurrentPlayTime());
+
+        // Now start() should start right away from the seeked position, skipping the delay.
+        mActivityRule.runOnUiThread(() -> {
+            set.setCurrentPlayTime(200);
+            set.start();
+            assertEquals(200, set.getCurrentPlayTime());
+        });
+
+        // When animation is seeked to 200ms, it should take another 100ms to end.
+        verify(setListener, within(200)).onAnimationEnd(set, false);
     }
 
     @Test
