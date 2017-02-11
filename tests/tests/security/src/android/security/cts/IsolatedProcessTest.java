@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.platform.test.annotations.SecurityTest;
 import android.security.cts.IIsolatedService;
 import android.security.cts.IsolatedService;
 import android.test.AndroidTestCase;
@@ -30,6 +31,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import junit.framework.Assert;
 
+@SecurityTest
 public class IsolatedProcessTest extends AndroidTestCase {
     static final String TAG = IsolatedProcessTest.class.getSimpleName();
 

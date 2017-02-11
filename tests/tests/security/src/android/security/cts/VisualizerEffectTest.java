@@ -29,6 +29,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+
+@SecurityTest
 public class VisualizerEffectTest extends AndroidTestCase {
     private String TAG = "VisualizerEffectTest";
     @Override

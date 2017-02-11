@@ -17,9 +17,12 @@ package android.security.cts;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.platform.test.annotations.SecurityTest;
+import android.test.AndroidTestCase;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
+@SecurityTest
 public class STKFrameworkTest extends AndroidTestCase {
     private boolean mHasTelephony;
 

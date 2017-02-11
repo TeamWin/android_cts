@@ -19,6 +19,7 @@ package android.security.cts;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Equalizer;
 import android.media.MediaPlayer;
+import android.platform.test.annotations.SecurityTest;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -27,6 +28,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+@SecurityTest
 public class EffectBundleTest extends InstrumentationTestCase {
     private static final String TAG = "EffectBundleTest";
     private static final int[] INVALID_BAND_ARRAY = {Integer.MIN_VALUE, -10000, -100, -2, -1};

@@ -23,6 +23,7 @@ import android.media.MediaPlayer;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -37,6 +38,7 @@ import java.io.RandomAccessFile;
 
 import android.security.cts.R;
 
+@SecurityTest
 public class MediaServerCrashTest extends AndroidTestCase {
     private static final String TAG = "MediaServerCrashTest";
 

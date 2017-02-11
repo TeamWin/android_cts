@@ -18,6 +18,7 @@ package android.security.cts;
 
 import com.android.compatibility.common.util.PropertyUtil;
 
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
@@ -29,6 +30,7 @@ import java.io.FileReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SecurityTest
 public class EncryptionTest extends AndroidTestCase {
 
     static {

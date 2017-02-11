@@ -25,6 +25,7 @@ import java.io.InputStream;
 
 import android.security.cts.R;
 
+@SecurityTest
 public class ZeroHeightTiffTest extends AndroidTestCase {
     /**
      * Verifies that the device fails to decode a zero height tiff file.
