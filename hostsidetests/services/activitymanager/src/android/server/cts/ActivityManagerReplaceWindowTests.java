@@ -47,6 +47,11 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
     }
 
     private void testReplaceWindow_Dock(boolean relaunch) throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(INFO, "Skipping test: no split multi window support");
+            return;
+        }
+
         final String activityName =
                 relaunch ? SLOW_CREATE_ACTIVITY_NAME : NO_RELAUNCH_ACTIVITY_NAME;
         final String windowName = getWindowName(activityName);
