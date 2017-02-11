@@ -43,7 +43,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x2a43578dl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x4176ec542a43578dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testLogFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4dd9a49l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xd3cba12c04dd9a49l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testLogFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xfaf8bb27l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd3cd6a46faf8bb27l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testLogFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf113dc05l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd3cf3361f113dc05l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testLogFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x35076dfl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x1f92526c035076dfl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testLogHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x97619ec9l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x7d45e0797619ec9l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testLogHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xf66963bdl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x7d468a8f66963bdl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testLogHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestLog extends RSBaseCompute {
     }
 
     private void checkLogHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x557128b1l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x7d4734a557128b1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testLogHalf4Half4(inV, out);

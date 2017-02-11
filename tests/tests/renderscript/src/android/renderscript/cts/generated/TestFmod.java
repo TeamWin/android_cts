@@ -44,8 +44,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodFloatFloatFloat() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xdcc790e8l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x4b044e1l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xed70b65ddcc790e8l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xeff8dc0a04b044e1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -123,8 +123,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodFloat2Float2Float2() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xebd95a82l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xdc295e2bl, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x84bcef91ebd95a82l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xb582050adc295e2bl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -202,8 +202,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodFloat3Float3Float3() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x8ea54683l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xaf04f164l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x604b98cb8ea54683l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x7ee64653af04f164l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -281,8 +281,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodFloat4Float4Float4() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x31713284l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x81e0849dl, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3bda420531713284l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x484a879c81e0849dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -368,8 +368,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodHalfHalfHalf() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x9b7bf563l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x699a0144l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xae3e08be9b7bf563l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x7af0d8cb699a0144l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -452,8 +452,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodHalf2Half2Half2() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xe67736bdl, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xfa55044el, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xb52d0395e67736bdl, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x8f0295c7fa55044el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -536,8 +536,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodHalf3Half3Half3() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x31e9672cl, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xe614d605l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6fcbd4a531e9672cl, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x74168d3fe614d605l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -620,8 +620,8 @@ public class TestFmod extends RSBaseCompute {
     }
 
     private void checkFmodHalf4Half4Half4() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x7d5b979bl, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xd1d4a7bcl, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x2a6aa5b47d5b979bl, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x592a84b7d1d4a7bcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);

@@ -43,7 +43,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x95badeadl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x3b3c924b95badeadl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testFloorFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x372c9069l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xd8575933372c9069l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testFloorFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x2d47b147l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd859224e2d47b147l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testFloorFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x2362d225l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd85aeb692362d225l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testFloorFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x56dc16ffl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x872196e856dc16ffl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testFloorHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x2d925e9l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x19a03ff02d925e9l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testFloorHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x61e0eaddl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x19a0ea061e0eaddl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testFloorHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestFloor extends RSBaseCompute {
     }
 
     private void checkFloorHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xc0e8afd1l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x19a1941c0e8afd1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testFloorHalf4Half4(inV, out);

@@ -44,8 +44,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piFloatFloatFloat() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x694fc108l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x853dc01l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xc2172a04694fc108l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xd63229f70853dc01l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -123,8 +123,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piFloat2Float2Float2() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x8853bce2l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xc19e58bl, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x305d06618853bce2l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4cc6c68c0c19e58bl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -202,8 +202,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piFloat3Float3Float3() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x2b1fa8e3l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xdef578c4l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xbebaf9b2b1fa8e3l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x162b07d4def578c4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -281,8 +281,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piFloat4Float4Float4() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xcdeb94e4l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xb1d10bfdl, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xe77a58d4cdeb94e4l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xdf8f491db1d10bfdl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -368,8 +368,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piHalfHalfHalf() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x474bf8c3l, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x5b0261a4l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xbaef3471474bf8c3l, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x269576465b0261a4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -452,8 +452,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piHalf2Half2Half2() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x72ff66ddl, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xfdf89b6el, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x89d3773c72ff66ddl, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x753be3b4fdf89b6el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -536,8 +536,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piHalf3Half3Half3() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xbe71974cl, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xe9b86d25l, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x4472484bbe71974cl, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5a4fdb2ce9b86d25l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);
@@ -620,8 +620,8 @@ public class TestNativeAtan2pi extends RSBaseCompute {
     }
 
     private void checkNativeAtan2piHalf4Half4Half4() {
-        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x9e3c7bbl, false);
-        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xd5783edcl, false);
+        Allocation inNumerator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xff11195b09e3c7bbl, false);
+        Allocation inDenominator = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x3f63d2a4d5783edcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInDenominator(inDenominator);

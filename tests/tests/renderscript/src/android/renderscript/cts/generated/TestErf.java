@@ -43,7 +43,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xa3951fb8l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xccfbfd30a3951fb8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testErfFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x448c58dcl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x87e26994448c58dcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testErfFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x3aa779bal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x87e432af3aa779bal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testErfFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x30c29a98l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x87e5fbca30c29a98l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testErfFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x9cc93d62l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x8a64fb349cc93d62l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testErfHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x10b366f4l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x93596ee410b366f4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testErfHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6fbb2be8l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x935979856fbb2be8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testErfHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestErf extends RSBaseCompute {
     }
 
     private void checkErfHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xcec2f0dcl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x93598426cec2f0dcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testErfHalf4Half4(inV, out);

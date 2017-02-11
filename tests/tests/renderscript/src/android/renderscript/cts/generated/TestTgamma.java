@@ -43,7 +43,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xeda55486l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x5c02c6a0eda55486l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testTgammaFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x3399bcbal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x8fe7559b3399bcbal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testTgammaFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x29b4dd98l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x8fe91eb629b4dd98l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testTgammaFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x1fcffe76l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x8feae7d11fcffe76l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testTgammaFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xcaee5aa0l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xee05096fcaee5aa0l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testTgammaHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5ac39bc2l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x226038545ac39bc2l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testTgammaHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb9cb60b6l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x226042f5b9cb60b6l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testTgammaHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestTgamma extends RSBaseCompute {
     }
 
     private void checkTgammaHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x18d325aal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x22604d9718d325aal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testTgammaHalf4Half4(inV, out);

@@ -43,7 +43,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Float2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4e1f6ac6l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xfb5215c44e1f6ac6l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Float2Float2(inV, out);
@@ -112,7 +112,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Float3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x443a8ba4l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xfb53dedf443a8ba4l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Float3Float3(inV, out);
@@ -181,7 +181,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Float4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3a55ac82l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xfb55a7fa3a55ac82l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Float4Float4(inV, out);
@@ -255,7 +255,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x1f489286l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x5861e2161f489286l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Char2Float2(inV, out);
@@ -324,7 +324,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x1563b364l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x5863ab311563b364l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Char3Float3(inV, out);
@@ -393,7 +393,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xb7ed442l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x5865744c0b7ed442l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Char4Float4(inV, out);
@@ -467,7 +467,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xbb20ac31l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7d30021dbb20ac31l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Uchar2Float2(inV, out);
@@ -536,7 +536,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xb13bcd0fl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7d31cb38b13bcd0fl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Uchar3Float3(inV, out);
@@ -605,7 +605,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xa756ededl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7d339453a756ededl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Uchar4Float4(inV, out);
@@ -679,7 +679,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0xff219172l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x94ca184eff219172l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Short2Float2(inV, out);
@@ -748,7 +748,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xf53cb250l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x94cbe169f53cb250l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Short3Float3(inV, out);
@@ -817,7 +817,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xeb57d32el, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x94cdaa84eb57d32el, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Short4Float4(inV, out);
@@ -891,7 +891,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x2c6de12bl, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xc36979962c6de12bl, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Ushort2Float2(inV, out);
@@ -960,7 +960,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x22890209l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xc36b42b122890209l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Ushort3Float3(inV, out);
@@ -1029,7 +1029,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x18a422e7l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xc36d0bcc18a422e7l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Ushort4Float4(inV, out);
@@ -1103,7 +1103,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x7402bfc5l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x2a52c7eb7402bfc5l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Int2Float2(inV, out);
@@ -1172,7 +1172,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x6a1de0a3l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x2a5491066a1de0a3l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Int3Float3(inV, out);
@@ -1241,7 +1241,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x60390181l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x2a565a2160390181l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Int4Float4(inV, out);
@@ -1315,7 +1315,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x684cc46l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xd1e081390684cc46l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Uint2Float2(inV, out);
@@ -1384,7 +1384,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xfc9fed24l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xd1e24a53fc9fed24l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Uint3Float3(inV, out);
@@ -1453,7 +1453,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xf2bb0e02l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xd1e4136ef2bb0e02l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Uint4Float4(inV, out);
@@ -1527,7 +1527,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Char2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x29789662l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x239cb25829789662l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Float2Char2(inV, out);
@@ -1595,7 +1595,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Char3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x88805b56l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x239cbcf988805b56l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Float3Char3(inV, out);
@@ -1663,7 +1663,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Char4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xe788204al, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x239cc79ae788204al, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Float4Char4(inV, out);
@@ -1736,7 +1736,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd5086da2l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd8618777d5086da2l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Char2Char2(inV, out);
@@ -1804,7 +1804,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x34103296l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xd861921934103296l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Char3Char3(inV, out);
@@ -1872,7 +1872,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x9317f78al, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd8619cba9317f78al, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Char4Char4(inV, out);
@@ -1945,7 +1945,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x678a7a23l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7fef40c5678a7a23l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Uchar2Char2(inV, out);
@@ -2013,7 +2013,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xc6923f17l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7fef4b66c6923f17l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Uchar3Char3(inV, out);
@@ -2081,7 +2081,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x259a040bl, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7fef5608259a040bl, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Uchar4Char4(inV, out);
@@ -2154,7 +2154,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x15c60866l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x68ab650215c60866l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Short2Char2(inV, out);
@@ -2222,7 +2222,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x74cdcd5al, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x68ab6fa374cdcd5al, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Short3Char3(inV, out);
@@ -2290,7 +2290,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xd3d5924el, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x68ab7a44d3d5924el, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Short4Char4(inV, out);
@@ -2363,7 +2363,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xb19e2211l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x8d798509b19e2211l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Ushort2Char2(inV, out);
@@ -2431,7 +2431,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x10a5e705l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x8d798fab10a5e705l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Ushort3Char3(inV, out);
@@ -2499,7 +2499,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x6fadabf9l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x8d799a4c6fadabf9l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Ushort4Char4(inV, out);
@@ -2572,7 +2572,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x364256dfl, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xd74f5147364256dfl, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Int2Char2(inV, out);
@@ -2640,7 +2640,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x954a1bd3l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xd74f5be8954a1bd3l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Int3Char3(inV, out);
@@ -2708,7 +2708,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xf451e0c7l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xd74f6689f451e0c7l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Int4Char4(inV, out);
@@ -2781,7 +2781,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x33b67ae2l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xe71d083133b67ae2l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Uint2Char2(inV, out);
@@ -2849,7 +2849,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x92be3fd6l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe71d12d292be3fd6l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Uint3Char3(inV, out);
@@ -2917,7 +2917,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xf1c604cal, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xe71d1d73f1c604cal, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Uint4Char4(inV, out);
@@ -2990,7 +2990,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Uchar2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xfac15b79l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xfb52b2f4fac15b79l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Float2Uchar2(inV, out);
@@ -3058,7 +3058,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Uchar3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf0dc7c57l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xfb547c0ff0dc7c57l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Float3Uchar3(inV, out);
@@ -3126,7 +3126,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Uchar4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xe6f79d35l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xfb56452ae6f79d35l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Float4Uchar4(inV, out);
@@ -3199,7 +3199,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xcbea8339l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x58627f46cbea8339l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Char2Uchar2(inV, out);
@@ -3267,7 +3267,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xc205a417l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x58644861c205a417l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Char3Uchar3(inV, out);
@@ -3335,7 +3335,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xb820c4f5l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x5866117cb820c4f5l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Char4Uchar4(inV, out);
@@ -3408,7 +3408,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x67c29ce4l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7d309f4e67c29ce4l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Uchar2Uchar2(inV, out);
@@ -3476,7 +3476,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x5dddbdc2l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7d3268695dddbdc2l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Uchar3Uchar3(inV, out);
@@ -3544,7 +3544,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x53f8dea0l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7d34318453f8dea0l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Uchar4Uchar4(inV, out);
@@ -3617,7 +3617,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0xabc38225l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x94cab57fabc38225l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Short2Uchar2(inV, out);
@@ -3685,7 +3685,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xa1dea303l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x94cc7e9aa1dea303l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Short3Uchar3(inV, out);
@@ -3753,7 +3753,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x97f9c3e1l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x94ce47b597f9c3e1l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Short4Uchar4(inV, out);
@@ -3826,7 +3826,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xd90fd1del, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xc36a16c6d90fd1del, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Ushort2Uchar2(inV, out);
@@ -3894,7 +3894,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xcf2af2bcl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xc36bdfe1cf2af2bcl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Ushort3Uchar3(inV, out);
@@ -3962,7 +3962,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xc546139al, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xc36da8fcc546139al, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Ushort4Uchar4(inV, out);
@@ -4035,7 +4035,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x20a4b078l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x2a53651c20a4b078l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Int2Uchar2(inV, out);
@@ -4103,7 +4103,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x16bfd156l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x2a552e3716bfd156l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Int3Uchar3(inV, out);
@@ -4171,7 +4171,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xcdaf234l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x2a56f7520cdaf234l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Int4Uchar4(inV, out);
@@ -4244,7 +4244,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xb326bcf9l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xd1e11e69b326bcf9l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Uint2Uchar2(inV, out);
@@ -4312,7 +4312,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xa941ddd7l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xd1e2e784a941ddd7l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Uint3Uchar3(inV, out);
@@ -4380,7 +4380,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x9f5cfeb5l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xd1e4b09f9f5cfeb5l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Uint4Uchar4(inV, out);
@@ -4453,7 +4453,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Short2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x8fcf2692l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xfb529ef98fcf2692l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Float2Short2(inV, out);
@@ -4521,7 +4521,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Short3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x85ea4770l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xfb54681485ea4770l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Float3Short3(inV, out);
@@ -4589,7 +4589,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Short4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x7c05684el, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xfb56312f7c05684el, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Float4Short4(inV, out);
@@ -4662,7 +4662,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x60f84e52l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x58626b4b60f84e52l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Char2Short2(inV, out);
@@ -4730,7 +4730,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x57136f30l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x5864346657136f30l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Char3Short3(inV, out);
@@ -4798,7 +4798,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x4d2e900el, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x5865fd814d2e900el, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Char4Short4(inV, out);
@@ -4871,7 +4871,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xfcd067fdl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7d308b52fcd067fdl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Uchar2Short2(inV, out);
@@ -4939,7 +4939,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xf2eb88dbl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7d32546df2eb88dbl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Uchar3Short3(inV, out);
@@ -5007,7 +5007,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xe906a9b9l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7d341d88e906a9b9l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Uchar4Short4(inV, out);
@@ -5080,7 +5080,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x40d14d3el, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x94caa18440d14d3el, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Short2Short2(inV, out);
@@ -5148,7 +5148,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x36ec6e1cl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x94cc6a9f36ec6e1cl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Short3Short3(inV, out);
@@ -5216,7 +5216,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x2d078efal, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x94ce33ba2d078efal, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Short4Short4(inV, out);
@@ -5289,7 +5289,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x6e1d9cf7l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xc36a02cb6e1d9cf7l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Ushort2Short2(inV, out);
@@ -5357,7 +5357,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x6438bdd5l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xc36bcbe66438bdd5l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Ushort3Short3(inV, out);
@@ -5425,7 +5425,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x5a53deb3l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xc36d95015a53deb3l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Ushort4Short4(inV, out);
@@ -5498,7 +5498,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xb5b27b91l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x2a535120b5b27b91l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Int2Short2(inV, out);
@@ -5566,7 +5566,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xabcd9c6fl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x2a551a3babcd9c6fl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Int3Short3(inV, out);
@@ -5634,7 +5634,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xa1e8bd4dl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x2a56e356a1e8bd4dl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Int4Short4(inV, out);
@@ -5707,7 +5707,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x48348812l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xd1e10a6e48348812l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Uint2Short2(inV, out);
@@ -5775,7 +5775,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x3e4fa8f0l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xd1e2d3893e4fa8f0l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Uint3Short3(inV, out);
@@ -5843,7 +5843,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x346ac9cel, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xd1e49ca4346ac9cel, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Uint4Short4(inV, out);
@@ -5916,7 +5916,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Ushort2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xb708416fl, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x36e4b950b708416fl, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Float2Ushort2(inV, out);
@@ -5984,7 +5984,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Ushort3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd63d29bl, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x373180d80d63d29bl, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Float3Ushort3(inV, out);
@@ -6052,7 +6052,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Ushort4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x63bf63c7l, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x377e485f63bf63c7l, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Float4Ushort4(inV, out);
@@ -6125,7 +6125,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd8f1eeafl, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd88c0b0ed8f1eeafl, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Char2Ushort2(inV, out);
@@ -6193,7 +6193,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x2f4d7fdbl, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xd8d8d2962f4d7fdbl, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Char3Ushort3(inV, out);
@@ -6261,7 +6261,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x85a91107l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd9259a1d85a91107l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Char4Ushort4(inV, out);
@@ -6334,7 +6334,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x63e3e68l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x72b6c56063e3e68l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Uchar2Ushort2(inV, out);
@@ -6402,7 +6402,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x5c99cf94l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x77833dd5c99cf94l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Uchar3Ushort3(inV, out);
@@ -6470,7 +6470,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xb2f560c0l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7c4fb64b2f560c0l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Uchar4Ushort4(inV, out);
@@ -6543,7 +6543,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x7264c053l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0xfe0d269c7264c053l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Short2Ushort2(inV, out);
@@ -6611,7 +6611,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xc8c0517fl, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xfe59ee23c8c0517fl, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Short3Ushort3(inV, out);
@@ -6679,7 +6679,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x1f1be2abl, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xfea6b5ab1f1be2abl, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Short4Ushort4(inV, out);
@@ -6752,7 +6752,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xe362466l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xd2d27d910e362466l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Ushort2Ushort2(inV, out);
@@ -6820,7 +6820,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x6491b592l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xd31f45186491b592l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Ushort3Ushort3(inV, out);
@@ -6888,7 +6888,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xbaed46bel, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xd36c0c9fbaed46bel, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Ushort4Ushort4(inV, out);
@@ -6961,7 +6961,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x14378844l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x1c02a5e414378844l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Int2Ushort2(inV, out);
@@ -7029,7 +7029,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x6a931970l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x1c4f6d6b6a931970l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Int3Ushort3(inV, out);
@@ -7097,7 +7097,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xc0eeaa9cl, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x1c9c34f2c0eeaa9cl, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Int4Ushort4(inV, out);
@@ -7170,7 +7170,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xb00fa1efl, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x40d0c5ebb00fa1efl, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Uint2Ushort2(inV, out);
@@ -7238,7 +7238,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x66b331bl, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x411d8d73066b331bl, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Uint3Ushort3(inV, out);
@@ -7306,7 +7306,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x5cc6c447l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x416a54fa5cc6c447l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Uint4Ushort4(inV, out);
@@ -7379,7 +7379,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Int2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xc069dd5dl, -2.1474835210000000000e+09, 2.1474835200000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x8fb63fb7c069dd5dl, -2.1474835210000000000e+09, 2.1474835200000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Float2Int2(inV, out);
@@ -7447,7 +7447,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Int3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xa11ed93l, -2.1474835210000000000e+09, 2.1474835200000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x8fb63ff70a11ed93l, -2.1474835210000000000e+09, 2.1474835200000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Float3Int3(inV, out);
@@ -7515,7 +7515,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Int4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x53b9fdc9l, -2.1474835210000000000e+09, 2.1474835200000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x8fb6403653b9fdc9l, -2.1474835210000000000e+09, 2.1474835200000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Float4Int4(inV, out);
@@ -7588,7 +7588,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x94c6831dl, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x880244ac94c6831dl, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Char2Int2(inV, out);
@@ -7656,7 +7656,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xde6e9353l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x880244ebde6e9353l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Char3Int3(inV, out);
@@ -7724,7 +7724,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x2816a389l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x8802452b2816a389l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Char4Int4(inV, out);
@@ -7797,7 +7797,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x923aa720l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x97cffb96923aa720l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Uchar2Int2(inV, out);
@@ -7865,7 +7865,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xdbe2b756l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x97cffbd5dbe2b756l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Uchar3Int3(inV, out);
@@ -7933,7 +7933,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x258ac78cl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x97cffc15258ac78cl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Uchar4Int4(inV, out);
@@ -8006,7 +8006,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x252a2d69l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x85693203252a2d69l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Short2Int2(inV, out);
@@ -8074,7 +8074,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x6ed23d9fl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x856932426ed23d9fl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Short3Int3(inV, out);
@@ -8142,7 +8142,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xb87a4dd5l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x85693281b87a4dd5l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Short4Int4(inV, out);
@@ -8215,7 +8215,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xb7ac39eal, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x2cf6eb50b7ac39eal, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Ushort2Int2(inV, out);
@@ -8283,7 +8283,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x1544a20l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x2cf6eb9001544a20l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Ushort3Int3(inV, out);
@@ -8351,7 +8351,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x4afc5a56l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x2cf6ebcf4afc5a56l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Ushort4Int4(inV, out);
@@ -8424,7 +8424,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x49a42354l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x501d84049a42354l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Int2Int2(inV, out);
@@ -8492,7 +8492,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x934c338al, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x501d87f934c338al, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Int3Int3(inV, out);
@@ -8560,7 +8560,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xdcf443c0l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x501d8bedcf443c0l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Int4Int4(inV, out);
@@ -8633,7 +8633,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x3daccaddl, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x70899b043daccaddl, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Uint2Int2(inV, out);
@@ -8701,7 +8701,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x8754db13l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x70899b438754db13l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Uint3Int3(inV, out);
@@ -8769,7 +8769,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xd0fceb49l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x70899b82d0fceb49l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Uint4Int4(inV, out);
@@ -8842,7 +8842,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Uint2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x424dca22l, 0.0000000000000000000e+00, 4.2949670400000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x239cb6cd424dca22l, 0.0000000000000000000e+00, 4.2949670400000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Float2Uint2(inV, out);
@@ -8910,7 +8910,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Uint3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xa1558f16l, 0.0000000000000000000e+00, 4.2949670400000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x239cc16ea1558f16l, 0.0000000000000000000e+00, 4.2949670400000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Float3Uint3(inV, out);
@@ -8978,7 +8978,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Uint4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x5d540al, 0.0000000000000000000e+00, 4.2949670400000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x239ccc10005d540al, 0.0000000000000000000e+00, 4.2949670400000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Float4Uint4(inV, out);
@@ -9051,7 +9051,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xeddda162l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd8618beceddda162l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Char2Uint2(inV, out);
@@ -9119,7 +9119,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x4ce56656l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xd861968e4ce56656l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Char3Uint3(inV, out);
@@ -9187,7 +9187,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xabed2b4al, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd861a12fabed2b4al, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Char4Uint4(inV, out);
@@ -9260,7 +9260,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x805fade3l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7fef453a805fade3l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Uchar2Uint2(inV, out);
@@ -9328,7 +9328,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xdf6772d7l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7fef4fdbdf6772d7l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Uchar3Uint3(inV, out);
@@ -9396,7 +9396,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x3e6f37cbl, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7fef5a7d3e6f37cbl, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Uchar4Uint4(inV, out);
@@ -9469,7 +9469,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x2e9b3c26l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x68ab69772e9b3c26l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Short2Uint2(inV, out);
@@ -9537,7 +9537,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x8da3011al, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x68ab74188da3011al, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Short3Uint3(inV, out);
@@ -9605,7 +9605,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xecaac60el, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x68ab7eb9ecaac60el, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Short4Uint4(inV, out);
@@ -9678,7 +9678,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xca7355d1l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x8d79897eca7355d1l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Ushort2Uint2(inV, out);
@@ -9746,7 +9746,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x297b1ac5l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x8d799420297b1ac5l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Ushort3Uint3(inV, out);
@@ -9814,7 +9814,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x8882dfb9l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x8d799ec18882dfb9l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Ushort4Uint4(inV, out);
@@ -9887,7 +9887,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x4f178a9fl, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xd74f55bc4f178a9fl, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Int2Uint2(inV, out);
@@ -9955,7 +9955,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xae1f4f93l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xd74f605dae1f4f93l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Int3Uint3(inV, out);
@@ -10023,7 +10023,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xd271487l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xd74f6aff0d271487l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Int4Uint4(inV, out);
@@ -10096,7 +10096,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x4c8baea2l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xe71d0ca64c8baea2l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Uint2Uint2(inV, out);
@@ -10164,7 +10164,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xab937396l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe71d1747ab937396l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Uint3Uint3(inV, out);
@@ -10232,7 +10232,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xa9b388al, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xe71d21e90a9b388al, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Uint4Uint4(inV, out);
@@ -10305,7 +10305,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Double2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x3902786el, -8.5390423905960001625e+307, 8.5390423905960001625e+307);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x345b4a823902786el, -8.5390423905960001625e+307, 8.5390423905960001625e+307);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Double2Double2(inV, out);
@@ -10374,7 +10374,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Double3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x8f5e099al, -8.5390423905960001625e+307, 8.5390423905960001625e+307);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x34a812098f5e099al, -8.5390423905960001625e+307, 8.5390423905960001625e+307);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Double3Double3(inV, out);
@@ -10443,7 +10443,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Double4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xe5b99ac6l, -8.5390423905960001625e+307, 8.5390423905960001625e+307);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x34f4d990e5b99ac6l, -8.5390423905960001625e+307, 8.5390423905960001625e+307);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Double4Double4(inV, out);
@@ -10517,7 +10517,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x4c70299bl, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x7b7807124c70299bl, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Long2Double2(inV, out);
@@ -10586,7 +10586,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xa2cbbac7l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x7bc4ce99a2cbbac7l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Long3Double3(inV, out);
@@ -10655,7 +10655,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xf9274bf3l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x7c119620f9274bf3l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Long4Double4(inV, out);
@@ -10729,7 +10729,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x79bc7954l, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0xaa17685979bc7954l, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Ulong2Double2(inV, out);
@@ -10798,7 +10798,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xd0180a80l, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xaa642fe0d0180a80l, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Ulong3Double3(inV, out);
@@ -10867,7 +10867,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x26739bacl, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xaab0f76826739bacl, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Ulong4Double4(inV, out);
@@ -10941,7 +10941,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Long2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x430cbe95l, -9.2233720368547747840e+18, 9.2233720368547747840e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xcbf84dc0430cbe95l, -9.2233720368547747840e+18, 9.2233720368547747840e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Double2Long2(inV, out);
@@ -11009,7 +11009,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Long3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xa2148389l, -9.2233720368547747840e+18, 9.2233720368547747840e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xcbf85861a2148389l, -9.2233720368547747840e+18, 9.2233720368547747840e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Double3Long3(inV, out);
@@ -11077,7 +11077,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Long4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x11c487dl, -9.2233720368547747840e+18, 9.2233720368547747840e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xcbf86303011c487dl, -9.2233720368547747840e+18, 9.2233720368547747840e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Double4Long4(inV, out);
@@ -11150,7 +11150,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xc81d242al, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xb570c607c81d242al, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Long2Long2(inV, out);
@@ -11218,7 +11218,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x2724e91el, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xb570d0a92724e91el, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Long3Long3(inV, out);
@@ -11286,7 +11286,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x862cae12l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xb570db4a862cae12l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Long4Long4(inV, out);
@@ -11359,7 +11359,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5a9f30abl, false, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5cfe7f555a9f30abl, false, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Ulong2Long2(inV, out);
@@ -11427,7 +11427,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xb9a6f59fl, false, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x5cfe89f6b9a6f59fl, false, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Ulong3Long3(inV, out);
@@ -11495,7 +11495,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x18aeba93l, false, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5cfe949818aeba93l, false, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Ulong4Long4(inV, out);
@@ -11568,7 +11568,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Ulong2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x7e12ff5el, 0.0000000000000000000e+00, 1.8446744073709549568e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x42b56e3b7e12ff5el, 0.0000000000000000000e+00, 1.8446744073709549568e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Double2Ulong2(inV, out);
@@ -11636,7 +11636,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Ulong3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x742e203cl, 0.0000000000000000000e+00, 1.8446744073709549568e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x42b73756742e203cl, 0.0000000000000000000e+00, 1.8446744073709549568e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Double3Ulong3(inV, out);
@@ -11704,7 +11704,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Ulong4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x6a49411al, 0.0000000000000000000e+00, 1.8446744073709549568e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x42b900716a49411al, 0.0000000000000000000e+00, 1.8446744073709549568e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Double4Ulong4(inV, out);
@@ -11777,7 +11777,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xd7d40f65l, false, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x79f1a23ed7d40f65l, false, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Long2Ulong2(inV, out);
@@ -11845,7 +11845,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xcdef3043l, false, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x79f36b59cdef3043l, false, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Long3Ulong3(inV, out);
@@ -11913,7 +11913,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xc40a5121l, false, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x79f53474c40a5121l, false, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Long4Ulong4(inV, out);
@@ -11986,7 +11986,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x73ac2910l, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x9ebfc24673ac2910l, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Ulong2Ulong2(inV, out);
@@ -12054,7 +12054,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x69c749eel, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x9ec18b6169c749eel, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Ulong3Ulong3(inV, out);
@@ -12122,7 +12122,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5fe26accl, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x9ec3547c5fe26accl, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Ulong4Ulong4(inV, out);
@@ -12195,7 +12195,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Float2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x7d6d9a2dl, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x42b4cec67d6d9a2dl, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Double2Float2(inV, out);
@@ -12264,7 +12264,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Float3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x7388bb0bl, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x42b697e17388bb0bl, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Double3Float3(inV, out);
@@ -12333,7 +12333,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Float4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x69a3dbe9l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x42b860fc69a3dbe9l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Double4Float4(inV, out);
@@ -12407,7 +12407,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xd72eaa34l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x79f102c9d72eaa34l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Long2Float2(inV, out);
@@ -12476,7 +12476,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xcd49cb12l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x79f2cbe4cd49cb12l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Long3Float3(inV, out);
@@ -12545,7 +12545,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xc364ebf0l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x79f494ffc364ebf0l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Long4Float4(inV, out);
@@ -12619,7 +12619,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Float2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x7306c3dfl, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x9ebf22d17306c3dfl, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Ulong2Float2(inV, out);
@@ -12688,7 +12688,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Float3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x6921e4bdl, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x9ec0ebec6921e4bdl, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Ulong3Float3(inV, out);
@@ -12757,7 +12757,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Float4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5f3d059bl, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x9ec2b5075f3d059bl, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Ulong4Float4(inV, out);
@@ -12831,7 +12831,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Char2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xef094a17l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xcbf84b7bef094a17l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Double2Char2(inV, out);
@@ -12899,7 +12899,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Char3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x4e110f0bl, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xcbf8561d4e110f0bl, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Double3Char3(inV, out);
@@ -12967,7 +12967,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Char4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xad18d3ffl, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xcbf860bead18d3ffl, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Double4Char4(inV, out);
@@ -13040,7 +13040,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x7419afacl, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xb570c3c37419afacl, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Long2Char2(inV, out);
@@ -13108,7 +13108,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xd32174a0l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xb570ce64d32174a0l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Long3Char3(inV, out);
@@ -13176,7 +13176,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x32293994l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xb570d90632293994l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Long4Char4(inV, out);
@@ -13249,7 +13249,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Char2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x69bbc2dl, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5cfe7d11069bbc2dl, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Ulong2Char2(inV, out);
@@ -13317,7 +13317,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Char3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x65a38121l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x5cfe87b265a38121l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Ulong3Char3(inV, out);
@@ -13385,7 +13385,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Char4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xc4ab4615l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5cfe9253c4ab4615l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Ulong4Char4(inV, out);
@@ -13458,7 +13458,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Uchar2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x2a0f8ae0l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x42b56bf72a0f8ae0l, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Double2Uchar2(inV, out);
@@ -13526,7 +13526,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Uchar3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x202aabbel, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x42b73512202aabbel, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Double3Uchar3(inV, out);
@@ -13594,7 +13594,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Uchar4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x1645cc9cl, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x42b8fe2d1645cc9cl, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Double4Uchar4(inV, out);
@@ -13667,7 +13667,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x83d09ae7l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x79f19ffa83d09ae7l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Long2Uchar2(inV, out);
@@ -13735,7 +13735,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x79ebbbc5l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x79f3691579ebbbc5l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Long3Uchar3(inV, out);
@@ -13803,7 +13803,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x7006dca3l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x79f532307006dca3l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Long4Uchar4(inV, out);
@@ -13876,7 +13876,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Uchar2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x1fa8b492l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x9ebfc0021fa8b492l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Ulong2Uchar2(inV, out);
@@ -13944,7 +13944,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Uchar3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x15c3d570l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x9ec1891d15c3d570l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Ulong3Uchar3(inV, out);
@@ -14012,7 +14012,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Uchar4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xbdef64el, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x9ec352380bdef64el, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Ulong4Uchar4(inV, out);
@@ -14085,7 +14085,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Short2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xbf1d55f9l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x42b557fbbf1d55f9l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Double2Short2(inV, out);
@@ -14153,7 +14153,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Short3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xb53876d7l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x42b72116b53876d7l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Double3Short3(inV, out);
@@ -14221,7 +14221,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Short4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xab5397b5l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x42b8ea31ab5397b5l, -3.2768000000000000000e+04, 3.2767000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Double4Short4(inV, out);
@@ -14294,7 +14294,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x18de6600l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x79f18bff18de6600l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Long2Short2(inV, out);
@@ -14362,7 +14362,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xef986del, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x79f3551a0ef986del, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Long3Short3(inV, out);
@@ -14430,7 +14430,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x514a7bcl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x79f51e350514a7bcl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Long4Short4(inV, out);
@@ -14503,7 +14503,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Short2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0xb4b67fabl, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x9ebfac06b4b67fabl, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Ulong2Short2(inV, out);
@@ -14571,7 +14571,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Short3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xaad1a089l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x9ec17521aad1a089l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Ulong3Short3(inV, out);
@@ -14639,7 +14639,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Short4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xa0ecc167l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x9ec33e3ca0ecc167l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Ulong4Short4(inV, out);
@@ -14712,7 +14712,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Ushort2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xa92a37bcl, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x3479ccaea92a37bcl, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Double2Ushort2(inV, out);
@@ -14780,7 +14780,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Ushort3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xff85c8e8l, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x34c69435ff85c8e8l, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Double3Ushort3(inV, out);
@@ -14848,7 +14848,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Ushort4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x55e15a14l, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x35135bbd55e15a14l, 0.0000000000000000000e+00, 6.5535000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Double4Ushort4(inV, out);
@@ -14921,7 +14921,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xbc97e8e9l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x7b96893ebc97e8e9l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Long2Ushort2(inV, out);
@@ -14989,7 +14989,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x12f37a15l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x7be350c612f37a15l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Long3Ushort3(inV, out);
@@ -15057,7 +15057,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x694f0b41l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x7c30184d694f0b41l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Long4Ushort4(inV, out);
@@ -15130,7 +15130,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Ushort2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0xe9e438a2l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0xaa35ea85e9e438a2l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Ulong2Ushort2(inV, out);
@@ -15198,7 +15198,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Ushort3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x403fc9cel, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xaa82b20d403fc9cel, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Ulong3Ushort3(inV, out);
@@ -15266,7 +15266,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Ushort4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x969b5afal, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xaacf7994969b5afal, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Ulong4Ushort4(inV, out);
@@ -15339,7 +15339,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Int2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xcaf628fcl, -2.1474836480000000000e+09, 2.1474836470000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xa57cd81dcaf628fcl, -2.1474836480000000000e+09, 2.1474836470000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Double2Int2(inV, out);
@@ -15407,7 +15407,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Int3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x149e3932l, -2.1474836480000000000e+09, 2.1474836470000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xa57cd85d149e3932l, -2.1474836480000000000e+09, 2.1474836470000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Double3Int3(inV, out);
@@ -15475,7 +15475,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Int4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x5e464968l, -2.1474836480000000000e+09, 2.1474836470000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xa57cd89c5e464968l, -2.1474836480000000000e+09, 2.1474836470000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Double4Int4(inV, out);
@@ -15548,7 +15548,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xe5deba3bl, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xfe441c66e5deba3bl, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Long2Int2(inV, out);
@@ -15616,7 +15616,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x2f86ca71l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xfe441ca62f86ca71l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Long3Int3(inV, out);
@@ -15684,7 +15684,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x792edaa7l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xfe441ce5792edaa7l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Long4Int4(inV, out);
@@ -15757,7 +15757,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Int2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0xe352de3el, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0xe11d350e352de3el, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Ulong2Int2(inV, out);
@@ -15825,7 +15825,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Int3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x2cfaee74l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xe11d3902cfaee74l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Ulong3Int3(inV, out);
@@ -15893,7 +15893,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Int4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x76a2feaal, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xe11d3cf76a2feaal, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Ulong4Int4(inV, out);
@@ -15966,7 +15966,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Uint2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x7de7dd7l, 0.0000000000000000000e+00, 4.2949672950000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xcbf84ff107de7dd7l, 0.0000000000000000000e+00, 4.2949672950000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Double2Uint2(inV, out);
@@ -16034,7 +16034,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Uint3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0x66e642cbl, 0.0000000000000000000e+00, 4.2949672950000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xcbf85a9266e642cbl, 0.0000000000000000000e+00, 4.2949672950000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Double3Uint3(inV, out);
@@ -16102,7 +16102,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Uint4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xc5ee07bfl, 0.0000000000000000000e+00, 4.2949672950000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xcbf86533c5ee07bfl, 0.0000000000000000000e+00, 4.2949672950000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Double4Uint4(inV, out);
@@ -16175,7 +16175,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0x8ceee36cl, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xb570c8388ceee36cl, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Long2Uint2(inV, out);
@@ -16243,7 +16243,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xebf6a860l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xb570d2d9ebf6a860l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Long3Uint3(inV, out);
@@ -16311,7 +16311,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x4afe6d54l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xb570dd7b4afe6d54l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Long4Uint4(inV, out);
@@ -16384,7 +16384,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Uint2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x1f70efedl, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5cfe81861f70efedl, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Ulong2Uint2(inV, out);
@@ -16452,7 +16452,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Uint3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x7e78b4e1l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x5cfe8c277e78b4e1l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Ulong3Uint3(inV, out);
@@ -16520,7 +16520,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Uint4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0xdd8079d5l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5cfe96c8dd8079d5l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Ulong4Uint4(inV, out);
@@ -16593,7 +16593,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Double2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x46e08221l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x36c6372446e08221l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Float2Double2(inV, out);
@@ -16662,7 +16662,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Double3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x9d3c134dl, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x3712feab9d3c134dl, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Float3Double3(inV, out);
@@ -16731,7 +16731,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Double4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf397a479l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x375fc632f397a479l, -1.6163412428744576259e+38, 1.6163412428744576259e+38);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Float4Double4(inV, out);
@@ -16805,7 +16805,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x68ca2f61l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd86d88e268ca2f61l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Char2Double2(inV, out);
@@ -16874,7 +16874,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xbf25c08dl, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xd8ba5069bf25c08dl, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Char3Double3(inV, out);
@@ -16943,7 +16943,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x158151b9l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd90717f1158151b9l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Char4Double4(inV, out);
@@ -17017,7 +17017,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x96167f1al, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x70cea2996167f1al, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Uchar2Double2(inV, out);
@@ -17086,7 +17086,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xec721046l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x759b1b0ec721046l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Uchar3Double3(inV, out);
@@ -17155,7 +17155,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x42cda172l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7a6793842cda172l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Uchar4Double4(inV, out);
@@ -17229,7 +17229,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x23d0105l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0xfdeea470023d0105l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Short2Double2(inV, out);
@@ -17298,7 +17298,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x58989231l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xfe3b6bf758989231l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Short3Double3(inV, out);
@@ -17367,7 +17367,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xaef4235dl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xfe88337eaef4235dl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Short4Double4(inV, out);
@@ -17441,7 +17441,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x9e0e6518l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xd2b3fb649e0e6518l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Ushort2Double2(inV, out);
@@ -17510,7 +17510,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xf469f644l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xd300c2ebf469f644l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Ushort3Double3(inV, out);
@@ -17579,7 +17579,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x4ac58770l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xd34d8a734ac58770l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Ushort4Double4(inV, out);
@@ -17653,7 +17653,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xa40fc8f6l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x1be423b7a40fc8f6l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Int2Double2(inV, out);
@@ -17722,7 +17722,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xfa6b5a22l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x1c30eb3efa6b5a22l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Int3Double3(inV, out);
@@ -17791,7 +17791,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x50c6eb4el, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x1c7db2c650c6eb4el, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Int4Double4(inV, out);
@@ -17865,7 +17865,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Double2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x3fe7e2a1l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x40b243bf3fe7e2a1l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Uint2Double2(inV, out);
@@ -17934,7 +17934,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Double3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x964373cdl, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x40ff0b46964373cdl, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Uint3Double3(inV, out);
@@ -18003,7 +18003,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Double4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xec9f04f9l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x414bd2cdec9f04f9l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Uint4Double4(inV, out);
@@ -18077,7 +18077,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Long2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x7d7c0ae0l, -9.2233714870989619200e+18, 9.2233714870989619200e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x239cb49c7d7c0ae0l, -9.2233714870989619200e+18, 9.2233714870989619200e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Float2Long2(inV, out);
@@ -18145,7 +18145,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Long3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xdc83cfd4l, -9.2233714870989619200e+18, 9.2233714870989619200e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x239cbf3ddc83cfd4l, -9.2233714870989619200e+18, 9.2233714870989619200e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Float3Long3(inV, out);
@@ -18213,7 +18213,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Long4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3b8b94c8l, -9.2233714870989619200e+18, 9.2233714870989619200e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x239cc9df3b8b94c8l, -9.2233714870989619200e+18, 9.2233714870989619200e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Float4Long4(inV, out);
@@ -18286,7 +18286,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x290be220l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd86189bc290be220l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Char2Long2(inV, out);
@@ -18354,7 +18354,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x8813a714l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xd861945d8813a714l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Char3Long3(inV, out);
@@ -18422,7 +18422,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xe71b6c08l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd8619efee71b6c08l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Char4Long4(inV, out);
@@ -18495,7 +18495,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xbb8deea1l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7fef4309bb8deea1l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Uchar2Long2(inV, out);
@@ -18563,7 +18563,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x1a95b395l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7fef4dab1a95b395l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Uchar3Long3(inV, out);
@@ -18631,7 +18631,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x799d7889l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7fef584c799d7889l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Uchar4Long4(inV, out);
@@ -18704,7 +18704,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x69c97ce4l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x68ab674669c97ce4l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Short2Long2(inV, out);
@@ -18772,7 +18772,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xc8d141d8l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x68ab71e7c8d141d8l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Short3Long3(inV, out);
@@ -18840,7 +18840,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x27d906ccl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x68ab7c8927d906ccl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Short4Long4(inV, out);
@@ -18913,7 +18913,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x5a1968fl, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x8d79874e05a1968fl, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Ushort2Long2(inV, out);
@@ -18981,7 +18981,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x64a95b83l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x8d7991ef64a95b83l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Ushort3Long3(inV, out);
@@ -19049,7 +19049,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xc3b12077l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x8d799c90c3b12077l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Ushort4Long4(inV, out);
@@ -19122,7 +19122,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x8a45cb5dl, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xd74f538b8a45cb5dl, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Int2Long2(inV, out);
@@ -19190,7 +19190,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xe94d9051l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xd74f5e2ce94d9051l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Int3Long3(inV, out);
@@ -19258,7 +19258,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x48555545l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xd74f68ce48555545l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Int4Long4(inV, out);
@@ -19331,7 +19331,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Long2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x87b9ef60l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xe71d0a7587b9ef60l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Uint2Long2(inV, out);
@@ -19399,7 +19399,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Long3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe6c1b454l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe71d1516e6c1b454l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Uint3Long3(inV, out);
@@ -19467,7 +19467,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Long4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x45c97948l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xe71d1fb845c97948l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Uint4Long4(inV, out);
@@ -19540,7 +19540,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Ulong2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4ec4cff7l, 0.0000000000000000000e+00, 1.8446742974197923840e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xfb52b5394ec4cff7l, 0.0000000000000000000e+00, 1.8446742974197923840e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Float2Ulong2(inV, out);
@@ -19608,7 +19608,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Ulong3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x44dff0d5l, 0.0000000000000000000e+00, 1.8446742974197923840e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xfb547e5444dff0d5l, 0.0000000000000000000e+00, 1.8446742974197923840e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Float3Ulong3(inV, out);
@@ -19676,7 +19676,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Ulong4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3afb11b3l, 0.0000000000000000000e+00, 1.8446742974197923840e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xfb56476f3afb11b3l, 0.0000000000000000000e+00, 1.8446742974197923840e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Float4Ulong4(inV, out);
@@ -19749,7 +19749,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x1fedf7b7l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x5862818b1fedf7b7l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Char2Ulong2(inV, out);
@@ -19817,7 +19817,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x16091895l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x58644aa616091895l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Char3Ulong3(inV, out);
@@ -19885,7 +19885,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xc243973l, false, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x586613c10c243973l, false, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Char4Ulong4(inV, out);
@@ -19958,7 +19958,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xbbc61162l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7d30a192bbc61162l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Uchar2Ulong2(inV, out);
@@ -20026,7 +20026,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xb1e13240l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7d326aadb1e13240l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Uchar3Ulong3(inV, out);
@@ -20094,7 +20094,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xa7fc531el, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7d3433c8a7fc531el, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Uchar4Ulong4(inV, out);
@@ -20167,7 +20167,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0xffc6f6a3l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x94cab7c3ffc6f6a3l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Short2Ulong2(inV, out);
@@ -20235,7 +20235,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xf5e21781l, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x94cc80def5e21781l, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Short3Ulong3(inV, out);
@@ -20303,7 +20303,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xebfd385fl, false, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x94ce49f9ebfd385fl, false, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Short4Ulong4(inV, out);
@@ -20376,7 +20376,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x2d13465cl, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xc36a190b2d13465cl, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Ushort2Ulong2(inV, out);
@@ -20444,7 +20444,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x232e673al, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0xc36be226232e673al, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Ushort3Ulong3(inV, out);
@@ -20512,7 +20512,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x19498818l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xc36dab4119498818l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Ushort4Ulong4(inV, out);
@@ -20585,7 +20585,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x74a824f6l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x2a53676074a824f6l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Int2Ulong2(inV, out);
@@ -20653,7 +20653,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x6ac345d4l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x2a55307b6ac345d4l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Int3Ulong3(inV, out);
@@ -20721,7 +20721,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x60de66b2l, false, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x2a56f99660de66b2l, false, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Int4Ulong4(inV, out);
@@ -20794,7 +20794,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Ulong2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0x72a3177l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xd1e120ae072a3177l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Uint2Ulong2(inV, out);
@@ -20862,7 +20862,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Ulong3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xfd455255l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xd1e2e9c8fd455255l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Uint3Ulong3(inV, out);
@@ -20930,7 +20930,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Ulong4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xf3607333l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xd1e4b2e3f3607333l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Uint4Ulong4(inV, out);
@@ -21004,7 +21004,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Half2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x77294e2el, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5613b69077294e2el, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Half2Half2(inV, out);
@@ -21077,7 +21077,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Half3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xd6311322l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5613c131d6311322l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Half3Half3(inV, out);
@@ -21150,7 +21150,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Half4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x3538d816l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5613cbd33538d816l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Half4Half4(inV, out);
@@ -21229,7 +21229,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Float2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xbbc7b5dbl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x754f97bdbbc7b5dbl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testConvertFloat2Half2Float2(inV, out);
@@ -21299,7 +21299,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Float3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb1e2d6b9l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x755160d8b1e2d6b9l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testConvertFloat3Half3Float3(inV, out);
@@ -21369,7 +21369,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Float4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa7fdf797l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x755329f3a7fdf797l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testConvertFloat4Half4Float4(inV, out);
@@ -21445,7 +21445,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Double2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xb2251ea8l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xb45b0c09b2251ea8l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 2), INPUTSIZE);
             script.forEach_testConvertDouble2Half2Double2(inV, out);
@@ -21515,7 +21515,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Double3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x880afd4l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb4a7d3910880afd4l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 3), INPUTSIZE);
             script.forEach_testConvertDouble3Half3Double3(inV, out);
@@ -21585,7 +21585,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Double4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5edc4100l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb4f49b185edc4100l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_64, 4), INPUTSIZE);
             script.forEach_testConvertDouble4Half4Double4(inV, out);
@@ -21661,7 +21661,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Char2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf6709821l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5613b55df6709821l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertChar2Half2Char2(inV, out);
@@ -21730,7 +21730,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Char3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x55785d15l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5613bfff55785d15l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertChar3Half3Char3(inV, out);
@@ -21799,7 +21799,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Char4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb4802209l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5613caa0b4802209l, -1.2800000000000000000e+02, 1.2700000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertChar4Half4Char4(inV, out);
@@ -21874,7 +21874,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Uchar2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x6869a68el, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x755034ee6869a68el, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testConvertUchar2Half2Uchar2(inV, out);
@@ -21943,7 +21943,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Uchar3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5e84c76cl, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x7551fe095e84c76cl, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testConvertUchar3Half3Uchar3(inV, out);
@@ -22012,7 +22012,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Uchar4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x549fe84al, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x7553c724549fe84al, 0.0000000000000000000e+00, 2.5500000000000000000e+02);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testConvertUchar4Half4Uchar4(inV, out);
@@ -22087,7 +22087,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Short2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xfd7771a7l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x755020f2fd7771a7l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertShort2Half2Short2(inV, out);
@@ -22156,7 +22156,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Short3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xf3929285l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x7551ea0df3929285l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertShort3Half3Short3(inV, out);
@@ -22225,7 +22225,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Short4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe9adb363l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x7553b328e9adb363l, -3.2753000000000000000e+04, 3.2752000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertShort4Half4Short4(inV, out);
@@ -22300,7 +22300,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Ushort2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x224cddf6l, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xb4798e36224cddf6l, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testConvertUshort2Half2Ushort2(inV, out);
@@ -22369,7 +22369,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Ushort3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x78a86f22l, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb4c655bd78a86f22l, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testConvertUshort3Half3Ushort3(inV, out);
@@ -22438,7 +22438,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Ushort4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xcf04004el, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb5131d44cf04004el, 0.0000000000000000000e+00, 6.5504000000000000000e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testConvertUshort4Half4Ushort4(inV, out);
@@ -22513,7 +22513,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Int2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xdcfe841al, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xc677873adcfe841al, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertInt2Half2Int2(inV, out);
@@ -22582,7 +22582,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Int3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x26a69450l, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xc677877a26a69450l, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertInt3Half3Int3(inV, out);
@@ -22651,7 +22651,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Int4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x704ea486l, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xc67787b9704ea486l, -2.1464350730000000000e+09, 2.1464350720000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertInt4Half4Int4(inV, out);
@@ -22726,7 +22726,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Uint2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf45cbe1l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5613b9d30f45cbe1l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testConvertUint2Half2Uint2(inV, out);
@@ -22795,7 +22795,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Uint3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6e4d90d5l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5613c4746e4d90d5l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testConvertUint3Half3Uint3(inV, out);
@@ -22864,7 +22864,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Uint4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xcd5555c9l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5613cf15cd5555c9l, 0.0000000000000000000e+00, 4.2928701440000000000e+09);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testConvertUint4Half4Uint4(inV, out);
@@ -22939,7 +22939,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Long2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x4a740c9fl, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5613b7a24a740c9fl, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertLong2Half2Long2(inV, out);
@@ -23008,7 +23008,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Long3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xa97bd193l, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x5613c243a97bd193l, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertLong3Half3Long3(inV, out);
@@ -23077,7 +23077,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Long4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x8839687l, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5613cce508839687l, -9.2188684372274053120e+18, 9.2188684372274053120e+18);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertLong4Half4Long4(inV, out);
@@ -23152,7 +23152,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf2Ulong2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xbc6d1b0cl, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x75503732bc6d1b0cl, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.forEach_testConvertUlong2Half2Ulong2(inV, out);
@@ -23221,7 +23221,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf3Ulong3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb2883beal, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x7552004db2883beal, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.forEach_testConvertUlong3Half3Ulong3(inV, out);
@@ -23290,7 +23290,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertHalf4Ulong4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa8a35cc8l, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x7553c968a8a35cc8l, 0.0000000000000000000e+00, 1.8437736874454810624e+19);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.forEach_testConvertUlong4Half4Ulong4(inV, out);
@@ -23364,7 +23364,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat2Half2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xaa314c6fl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x239cb38aaa314c6fl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Float2Half2(inV, out);
@@ -23436,7 +23436,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat3Half3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x9391163l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x239cbe2c09391163l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Float3Half3(inV, out);
@@ -23508,7 +23508,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertFloat4Half4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x6840d657l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x239cc8cd6840d657l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Float4Half4(inV, out);
@@ -23585,7 +23585,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble2Half2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0x6fc20024l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 2, 0xcbf84cae6fc20024l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Double2Half2(inV, out);
@@ -23657,7 +23657,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble3Half3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xcec9c518l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 3, 0xcbf8574fcec9c518l, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Double3Half3(inV, out);
@@ -23729,7 +23729,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertDouble4Half4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0x2dd18a0cl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_64, 4, 0xcbf861f12dd18a0cl, -3.1129599999999998545e+04, 3.1129599999999998545e+04);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Double4Half4(inV, out);
@@ -23806,7 +23806,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x55c123afl, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 2, 0xd86188aa55c123afl, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Char2Half2(inV, out);
@@ -23878,7 +23878,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xb4c8e8a3l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xd861934bb4c8e8a3l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Char3Half3(inV, out);
@@ -23950,7 +23950,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertChar4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0x13d0ad97l, true, 7);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd8619ded13d0ad97l, true, 7);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Char4Half4(inV, out);
@@ -24027,7 +24027,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xe8433030l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0x7fef41f7e8433030l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Uchar2Half2(inV, out);
@@ -24099,7 +24099,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x474af524l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x7fef4c99474af524l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Uchar3Half3(inV, out);
@@ -24171,7 +24171,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUchar4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xa652ba18l, false, 8);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7fef573aa652ba18l, false, 8);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Uchar4Half4(inV, out);
@@ -24248,7 +24248,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x967ebe73l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x68ab6634967ebe73l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Short2Half2(inV, out);
@@ -24320,7 +24320,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0xf5868367l, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x68ab70d5f5868367l, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Short3Half3(inV, out);
@@ -24392,7 +24392,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertShort4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x548e485bl, true, 15);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x68ab7b77548e485bl, true, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Short4Half4(inV, out);
@@ -24469,7 +24469,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x3256d81el, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x8d79863c3256d81el, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Ushort2Half2(inV, out);
@@ -24541,7 +24541,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x915e9d12l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x8d7990dd915e9d12l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Ushort3Half3(inV, out);
@@ -24613,7 +24613,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUshort4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xf0666206l, false, 16);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0x8d799b7ef0666206l, false, 16);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Ushort4Half4(inV, out);
@@ -24690,7 +24690,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xb6fb0cecl, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xd74f5279b6fb0cecl, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Int2Half2(inV, out);
@@ -24762,7 +24762,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x1602d1e0l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xd74f5d1b1602d1e0l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Int3Half3(inV, out);
@@ -24834,7 +24834,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertInt4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x750a96d4l, true, 31);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xd74f67bc750a96d4l, true, 31);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Int4Half4(inV, out);
@@ -24911,7 +24911,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xb46f30efl, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xe71d0963b46f30efl, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Uint2Half2(inV, out);
@@ -24983,7 +24983,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x1376f5e3l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe71d14051376f5e3l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Uint3Half3(inV, out);
@@ -25055,7 +25055,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUint4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x727ebad7l, false, 32);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xe71d1ea6727ebad7l, false, 32);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Uint4Half4(inV, out);
@@ -25132,7 +25132,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xf4d265b9l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xb570c4f5f4d265b9l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Long2Half2(inV, out);
@@ -25204,7 +25204,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x53da2aadl, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xb570cf9753da2aadl, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Long3Half3(inV, out);
@@ -25276,7 +25276,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertLong4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xb2e1efa1l, true, 63);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.SIGNED_64, 4, 0xb570da38b2e1efa1l, true, 63);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Long4Half4(inV, out);
@@ -25353,7 +25353,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong2Half2() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x8754723al, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5cfe7e438754723al, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testConvertHalf2Ulong2Half2(inV, out);
@@ -25425,7 +25425,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong3Half3() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xe65c372el, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x5cfe88e4e65c372el, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testConvertHalf3Ulong3Half3(inV, out);
@@ -25497,7 +25497,7 @@ public class TestConvert extends RSBaseCompute {
     }
 
     private void checkConvertUlong4Half4() {
-        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x4563fc22l, false, 64);
+        Allocation inV = createRandomIntegerAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5cfe93864563fc22l, false, 64);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testConvertHalf4Ulong4Half4(inV, out);
