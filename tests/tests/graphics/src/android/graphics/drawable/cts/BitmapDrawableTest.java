@@ -513,21 +513,28 @@ public class BitmapDrawableTest {
         BitmapDrawable d1 = (BitmapDrawable) resources.getDrawable(R.drawable.testimage);
         BitmapDrawable d2 = (BitmapDrawable) resources.getDrawable(R.drawable.testimage);
         BitmapDrawable d3 = (BitmapDrawable) resources.getDrawable(R.drawable.testimage);
+        int restoreAlpha = d1.getAlpha();
 
-        d1.setAlpha(100);
-        assertEquals(100, d1.getPaint().getAlpha());
-        assertEquals(100, d2.getPaint().getAlpha());
-        assertEquals(100, d3.getPaint().getAlpha());
+        try {
+            // verify bad behavior - modify before mutate pollutes other drawables
+            d1.setAlpha(100);
+            assertEquals(100, d1.getPaint().getAlpha());
+            assertEquals(100, d2.getPaint().getAlpha());
+            assertEquals(100, d3.getPaint().getAlpha());
 
-        d1.mutate();
-        d1.setAlpha(200);
-        assertEquals(200, d1.getPaint().getAlpha());
-        assertEquals(100, d2.getPaint().getAlpha());
-        assertEquals(100, d3.getPaint().getAlpha());
-        d2.setAlpha(50);
-        assertEquals(200, d1.getPaint().getAlpha());
-        assertEquals(50, d2.getPaint().getAlpha());
-        assertEquals(50, d3.getPaint().getAlpha());
+            d1.mutate();
+            d1.setAlpha(200);
+            assertEquals(200, d1.getPaint().getAlpha());
+            assertEquals(100, d2.getPaint().getAlpha());
+            assertEquals(100, d3.getPaint().getAlpha());
+            d2.setAlpha(50);
+            assertEquals(200, d1.getPaint().getAlpha());
+            assertEquals(50, d2.getPaint().getAlpha());
+            assertEquals(50, d3.getPaint().getAlpha());
+        } finally {
+            // restore externally visible state, since other tests may use the drawable
+            resources.getDrawable(R.drawable.testimage).setAlpha(restoreAlpha);
+        }
     }
 
     private static final int[] DENSITY_VALUES = new int[] {
