@@ -19,4 +19,16 @@
         <item>com.android.cts.verifier.notifications.NotificationAttentionManagementVerifierActivity</item>
         <item>com.android.cts.verifier.notifications.NotificationListenerVerifierActivity</item>
     </string-array>
+
+    <string name="device_owner_device_admin_visible_info">
+        Please press the Go button to open Settings, navigate to:\n
+          1. Personalization\n
+          2. Device administration\n
+        Confirm that:\n
+        \n
+        - \"CTS Verifier\" exists and is activated.\n
+        - \"CTS Verifier\" cannot be disabled.\n
+        \n
+        Swipe left to return to this page.
+    </string>
 </resources>

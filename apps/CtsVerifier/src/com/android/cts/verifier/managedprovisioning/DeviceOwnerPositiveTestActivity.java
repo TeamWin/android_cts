@@ -143,12 +143,21 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         .putExtra(EXTRA_TEST_ID, getIntent().getStringExtra(EXTRA_TEST_ID))));
 
         // device admin settings
-        adapter.add(createInteractiveTestItem(this, DEVICE_ADMIN_SETTINGS_ID,
-                R.string.device_owner_device_admin_visible,
-                R.string.device_owner_device_admin_visible_info,
-                new ButtonInfo(
-                        R.string.device_owner_settings_go,
-                        new Intent(Settings.ACTION_SECURITY_SETTINGS))));
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            adapter.add(createInteractiveTestItem(this, DEVICE_ADMIN_SETTINGS_ID,
+                    R.string.device_owner_device_admin_visible,
+                    R.string.device_owner_device_admin_visible_info,
+                    new ButtonInfo(
+                            R.string.device_owner_settings_go,
+                            new Intent(Settings.ACTION_SETTINGS))));
+        } else {
+            adapter.add(createInteractiveTestItem(this, DEVICE_ADMIN_SETTINGS_ID,
+                    R.string.device_owner_device_admin_visible,
+                    R.string.device_owner_device_admin_visible_info,
+                    new ButtonInfo(
+                            R.string.device_owner_settings_go,
+                            new Intent(Settings.ACTION_SECURITY_SETTINGS))));
+        }
 
         PackageManager packageManager = getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
