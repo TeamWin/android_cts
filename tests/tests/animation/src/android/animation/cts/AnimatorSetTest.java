@@ -847,6 +847,31 @@ public class AnimatorSetTest {
 
     }
 
+    /**
+     * This test sets up an AnimatorSet that contains two sequential animations. The first animation
+     * is infinite, the second animation therefore has an infinite start time. This test verifies
+     * that the infinite start time is handled correctly.
+     */
+    @Test
+    public void testInfiniteStartTime() throws Throwable {
+        ValueAnimator a1 = ValueAnimator.ofFloat(0f, 1f);
+        a1.setRepeatCount(ValueAnimator.INFINITE);
+        ValueAnimator a2 = ValueAnimator.ofFloat(0f, 1f);
+
+        AnimatorSet set = new AnimatorSet();
+        set.playSequentially(a1, a2);
+
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+        });
+
+        assertEquals(Animator.DURATION_INFINITE, set.getTotalDuration());
+
+        mActivityRule.runOnUiThread(() -> {
+            set.end();
+        });
+    }
+
     static class TargetObj {
         public float value = 0;
 
