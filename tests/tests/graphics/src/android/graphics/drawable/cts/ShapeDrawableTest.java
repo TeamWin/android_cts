@@ -190,7 +190,7 @@ public class ShapeDrawableTest {
         assertEquals(0, padding.bottom);
     }
 
-    @Test
+    @Test(expected=NullPointerException.class)
     public void testGetPaddingNull() {
         ShapeDrawable shapeDrawable = new ShapeDrawable();
         shapeDrawable.getPadding(null);
