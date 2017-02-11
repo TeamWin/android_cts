@@ -16,6 +16,14 @@
 
 package android.widget.cts;
 
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -43,13 +51,6 @@ import android.widget.PopupWindow;
 import android.widget.PopupWindow.OnDismissListener;
 import android.widget.TextView;
 import android.widget.cts.R;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class PopupWindowTest extends
         ActivityInstrumentationTestCase2<PopupWindowCtsActivity> {
@@ -772,7 +773,19 @@ public class PopupWindowTest extends
                 WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM & p.flags);
     }
 
-    public void testEnterExitTransition() {
+    public void testEnterExitTransitionAsDropDown() throws Throwable {
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        verifyEnterExitTransition(
+                () -> mPopupWindow.showAsDropDown(anchorView, 0, 0));
+    }
+
+    public void testEnterExitTransitionAtLocation() throws Throwable {
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        verifyEnterExitTransition(
+                () -> mPopupWindow.showAtLocation(anchorView, Gravity.BOTTOM, 0, 0));
+    }
+
+    private void verifyEnterExitTransition(Runnable showRunnable) throws Throwable {
         TransitionListener enterListener = mock(TransitionListener.class);
         Transition enterTransition = new BaseTransition();
         enterTransition.addListener(enterListener);
@@ -791,8 +804,7 @@ public class PopupWindowTest extends
         verify(exitListener, never()).onTransitionStart(any(Transition.class));
         verify(dismissListener, never()).onDismiss();
 
-        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
-        mInstrumentation.runOnMainSync(() -> mPopupWindow.showAsDropDown(anchorView, 0, 0));
+        mInstrumentation.runOnMainSync(showRunnable);
         mInstrumentation.waitForIdleSync();
         verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
         verify(exitListener, never()).onTransitionStart(any(Transition.class));
@@ -1067,6 +1079,30 @@ public class PopupWindowTest extends
 
         assertEquals(LayoutParams.WRAP_CONTENT, p.width);
         assertEquals(LayoutParams.MATCH_PARENT, p.height);
+    }
+
+    public void testPositionAfterParentScroll() {
+        View.OnScrollChangeListener scrollChangeListener = mock(
+                View.OnScrollChangeListener.class);
+
+        getInstrumentation().runOnMainSync(() -> {
+            mActivity.setContentView(R.layout.popup_window_scrollable);
+
+            View anchor = mActivity.findViewById(R.id.anchor_upper);
+            PopupWindow window = createPopupWindow();
+            window.showAsDropDown(anchor);
+        });
+
+        getInstrumentation().runOnMainSync(() -> {
+            View parent = mActivity.findViewById(R.id.main_container);
+            parent.scrollBy(0, 500);
+            parent.setOnScrollChangeListener(scrollChangeListener);
+        });
+
+        getInstrumentation().waitForIdleSync();
+
+        verify(scrollChangeListener, never()).onScrollChange(
+                any(View.class), anyInt(), anyInt(), anyInt(), anyInt());
     }
 
     private static class BaseTransition extends Transition {
