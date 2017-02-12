@@ -28,10 +28,14 @@ import static com.android.cts.storageapp.Utils.makeUniqueFile;
 import static com.android.cts.storageapp.Utils.useSpace;
 
 import android.content.Context;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
+import android.system.Os;
 import android.test.InstrumentationTestCase;
 
 import java.io.File;
+import java.io.FileDescriptor;
 
 /**
  * Client app for verifying storage behaviors.
@@ -82,6 +86,30 @@ public class StorageTest extends InstrumentationTestCase {
             assertTrue("Apps must have at least 10MB external quota",
                     sm.getExternalCacheQuotaBytes() > 10 * MB_IN_BYTES);
         }
+    }
+
+    public void testVerifyAllocateApi() throws Exception {
+        final StorageManager sm = getContext().getSystemService(StorageManager.class);
+
+        final File filesDir = getContext().getFilesDir();
+        assertTrue("Files bytes must be at least usable space",
+                sm.getAllocatableBytes(filesDir, 0) >= filesDir.getUsableSpace());
+
+        // Should always be able to allocate 1MB indirectly
+        sm.allocateBytes(filesDir, 1 * MB_IN_BYTES, 0);
+
+        // Should always be able to allocate 1MB directly
+        final File filesFile = makeUniqueFile(filesDir);
+        assertEquals(0L, filesFile.length());
+        try (ParcelFileDescriptor pfd = ParcelFileDescriptor.open(filesFile,
+                ParcelFileDescriptor.parseMode("rwt"))) {
+            sm.allocateBytes(pfd.getFileDescriptor(), 1 * MB_IN_BYTES, 0);
+        }
+        assertEquals(1 * MB_IN_BYTES, filesFile.length());
+
+        final File extDir = Environment.getExternalStorageDirectory();
+        assertTrue("External bytes must be at least usable space",
+                sm.getAllocatableBytes(extDir, 0) >= extDir.getUsableSpace());
     }
 
     public void testBehaviorNormal() throws Exception {

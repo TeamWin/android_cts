@@ -83,6 +83,10 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         runDeviceTests(PKG_A, CLASS, "testVerifyQuotaApi");
     }
 
+    public void testVerifyAppAllocate() throws Exception {
+        runDeviceTests(PKG_A, CLASS, "testVerifyAllocateApi");
+    }
+
     public void testVerifyStats() throws Exception {
         runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats");
     }
