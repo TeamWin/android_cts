@@ -29,6 +29,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctsdeviceutil \
     ctstestrunner \
     services.core \
+    junit \
+    legacy-android-test \
 
 
 # Use multi-dex as the compatibility-common-util-devicesidelib dependency
