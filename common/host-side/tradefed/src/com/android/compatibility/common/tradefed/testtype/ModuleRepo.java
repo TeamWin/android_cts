@@ -444,7 +444,7 @@ public class ModuleRepo implements IModuleRepo {
         Collections.sort(mNonTokenModules, new ExecutionOrderComparator());
         List<IModuleDef> modules = getShard(mNonTokenModules, shardIndex, mTotalShards);
         if (modules == null) {
-            return new ArrayList<IModuleDef>();
+            modules = new ArrayList<IModuleDef>();
         }
         long estimatedTime = 0;
         for (IModuleDef def : modules) {

@@ -17,7 +17,6 @@
 package com.android.compatibility.common.tradefed.testtype;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -225,6 +224,22 @@ public class ModuleRepoTest extends TestCase {
     }
 
     /**
+     * Test running with only token modules.
+     */
+    public void testGetModules_onlyTokenModules() throws Exception {
+        Set<String> includes = new HashSet<>();
+        includes.add(MODULE_NAME_C);
+        mRepo.initialize(1, null, mTestsDir, ABIS, new ArrayList<String>(), TEST_ARGS, MODULE_ARGS,
+                includes, EXCLUDES, mMockBuildInfo);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        assertEquals("Wrong number of tokens", 2, mRepo.getTokenModules().size());
+        assertEquals("Wrong number of tokens", 0, mRepo.getNonTokenModules().size());
+        List<IModuleDef> modules = mRepo.getModules(SERIAL1, 0);
+        assertNotNull(modules);
+        assertEquals(2, modules.size());
+    }
+
+    /**
      * Test sharding with 4 shards of the 6 non token modules.
      */
     public void testGetModulesSharded_uneven() throws Exception {
@@ -286,6 +301,7 @@ public class ModuleRepoTest extends TestCase {
         Set<String> excludeFilters = new HashSet<>();
         excludeFilters.add(MODULE_NAME_A);
         excludeFilters.add(MODULE_NAME_B);
+        excludeFilters.add(MODULE_NAME_C);
         mRepo.initialize(1, null, mTestsDir, ABIS, DEVICE_TOKENS, TEST_ARGS, MODULE_ARGS,
                 includeFilters, excludeFilters, mMockBuildInfo);
         List<IModuleDef> modules = mRepo.getModules(SERIAL1, 0);
