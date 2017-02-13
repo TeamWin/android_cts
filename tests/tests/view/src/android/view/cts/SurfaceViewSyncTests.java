@@ -281,7 +281,7 @@ public class SurfaceViewSyncTests {
     public void testSurfaceViewSmallScale() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
-                new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
+                new FrameLayout.LayoutParams(320, 240, Gravity.LEFT | Gravity.TOP),
                 sSmallScaleAnimationFactory,
                 (blackishPixelCount, width, height) -> blackishPixelCount == 0));
     }
