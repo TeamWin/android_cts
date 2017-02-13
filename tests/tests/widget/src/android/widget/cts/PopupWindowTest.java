@@ -61,6 +61,8 @@ import android.widget.PopupWindow;
 import android.widget.PopupWindow.OnDismissListener;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1320,6 +1322,59 @@ public class PopupWindowTest {
 
         verify(scrollChangeListener, never()).onScrollChange(
                 any(View.class), anyInt(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testPositionAfterAnchorRemoval() throws Throwable {
+        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        showPopup(R.id.anchor_middle);
+
+        final ViewGroup container = (ViewGroup) mActivity.findViewById(R.id.main_container);
+        final View anchor = mActivity.findViewById(R.id.anchor_middle);
+        final LayoutParams anchorLayoutParams = anchor.getLayoutParams();
+
+        final int[] originalLocation = mPopupWindow.getContentView().getLocationOnScreen();
+
+        final int deltaX = 30;
+        final int deltaY = 20;
+
+        // Scroll the container, the popup should move along with the anchor.
+        WidgetTestUtils.runOnMainAndLayoutSync(
+                mActivityRule,
+                mPopupWindow.getContentView().getRootView(),
+                () -> container.scrollBy(deltaX, deltaY),
+                false  /* force layout */);
+        assertPopupLocation(originalLocation, deltaX, deltaY);
+
+        // Detach the anchor, the popup should stay in the same location.
+        WidgetTestUtils.runOnMainAndLayoutSync(
+                mActivityRule,
+                mActivity.getWindow().getDecorView(),
+                () -> container.removeView(anchor),
+                false  /* force layout */);
+        assertPopupLocation(originalLocation, deltaX, deltaY);
+
+        // Scroll the container while the anchor is detached, the popup should not move.
+        WidgetTestUtils.runOnMainAndLayoutSync(
+                mActivityRule,
+                mActivity.getWindow().getDecorView(),
+                () -> container.scrollBy(deltaX, deltaY),
+                true  /* force layout */);
+        assertPopupLocation(originalLocation, deltaX, deltaY);
+
+        // Re-attach the anchor, the popup should snap back to the new anchor location.
+        WidgetTestUtils.runOnMainAndLayoutSync(
+                mActivityRule,
+                mPopupWindow.getContentView().getRootView(),
+                () -> container.addView(anchor, anchorLayoutParams),
+                false  /* force layout */);
+        assertPopupLocation(originalLocation, deltaX * 2, deltaY * 2);
+    }
+
+    private void assertPopupLocation(int[] originalLocation, int deltaX, int deltaY) {
+        final int[] actualLocation = mPopupWindow.getContentView().getLocationOnScreen();
+        assertEquals(originalLocation[0] - deltaX, actualLocation[0]);
+        assertEquals(originalLocation[1] - deltaY, actualLocation[1]);
     }
 
     private static class BaseTransition extends Transition {
