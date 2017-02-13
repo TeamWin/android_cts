@@ -101,7 +101,7 @@ public class TrustedVoiceHostTest extends DeviceTestCase {
             getDevice().executeShellCommand(START_COMMAND);
             // Dump logcat.
             String logs = getDevice().executeAdbCommand(
-                    "logcat", "-v", "brief", "-d", CLASS + ":I", "*S");
+                    "logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
             // Search for string.
             in = new Scanner(logs);
             String testString = "";
