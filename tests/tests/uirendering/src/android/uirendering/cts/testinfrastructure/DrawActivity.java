@@ -121,9 +121,6 @@ public class DrawActivity extends Activity {
                 case LAYOUT_MSG: {
                     stub.setLayoutResource(message.arg1);
                     mView = stub.inflate();
-
-                    // temporary hack to accomodate webview that may be contained in layout
-                    drawCountDelay = 10;
                 } break;
 
                 case CANVAS_MSG: {
