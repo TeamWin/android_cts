@@ -328,6 +328,40 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 VIRTUAL_DISPLAY_ACTIVITY);
     }
 
+    /**
+     * Tests that input events on the primary display take focus from the virtual display.
+     */
+    public void testStackFocusSwitchOnTouchEvent() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+
+        mAmWmState.computeState(mDevice, new String[] {VIRTUAL_DISPLAY_ACTIVITY});
+        mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
+                VIRTUAL_DISPLAY_ACTIVITY);
+
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.assertFocusedActivity("Activity launched on secondary display must be focused",
+                TEST_ACTIVITY_NAME);
+
+        String displaySize = executeShellCommand("wm size").trim();
+        Pattern pattern = Pattern.compile("Physical size: (\\d+)x(\\d+)");
+        Matcher matcher = pattern.matcher(displaySize);
+        if (matcher.matches()) {
+            int width = Integer.parseInt(matcher.group(1));
+            int height = Integer.parseInt(matcher.group(2));
+
+            executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
+        } else {
+            throw new RuntimeException("Couldn't find display size \"" + displaySize + "\"");
+        }
+
+        mAmWmState.computeState(mDevice, new String[] {VIRTUAL_DISPLAY_ACTIVITY});
+        mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
+                VIRTUAL_DISPLAY_ACTIVITY);
+    }
+
     /** Test that system is allowed to launch on secondary displays. */
     public void testPermissionLaunchFromSystem() throws Exception {
         // Create new virtual display.
