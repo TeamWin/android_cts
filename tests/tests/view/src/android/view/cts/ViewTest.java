@@ -101,6 +101,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import com.android.compatibility.common.util.CtsMouseUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.internal.view.menu.ContextMenuBuilder;
@@ -3486,6 +3487,21 @@ public class ViewTest {
         assertFalse(mockView.isFocused());
         assertTrue(fitWindowsView.isFocused());
         assertFalse(mockView.isInTouchMode());
+        assertFalse(fitWindowsView.isInTouchMode());
+
+        // Mouse events should not trigger touch mode.
+        final MotionEvent event =
+                CtsMouseUtil.obtainMouseEvent(MotionEvent.ACTION_SCROLL, mockView, 0, 0);
+        mInstrumentation.sendPointerSync(event);
+        assertFalse(fitWindowsView.isInTouchMode());
+
+        event.setAction(MotionEvent.ACTION_DOWN);
+        mInstrumentation.sendPointerSync(event);
+        assertFalse(fitWindowsView.isInTouchMode());
+
+        // Stylus events should not trigger touch mode.
+        event.setSource(InputDevice.SOURCE_STYLUS);
+        mInstrumentation.sendPointerSync(event);
         assertFalse(fitWindowsView.isInTouchMode());
     }
 
