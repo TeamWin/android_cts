@@ -16,9 +16,10 @@
 
 package android.text.method.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
 import android.support.test.filters.MediumTest;
@@ -33,35 +34,92 @@ import com.android.compatibility.common.util.CtsKeyEventUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Locale;
+
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TimeKeyListenerTest extends KeyListenerTestCase {
     @Test
     public void testConstructor() {
+        // deprecated empty constructor
         new TimeKeyListener();
+
+        // newer constructor that takes locales
+        new TimeKeyListener(null); // fallback to old behavior
+        new TimeKeyListener(Locale.US);
+        new TimeKeyListener(Locale.forLanguageTag("fa-IR"));
     }
 
     @Test
     public void testGetInstance() {
-        TimeKeyListener listener1 = TimeKeyListener.getInstance();
-        TimeKeyListener listener2 = TimeKeyListener.getInstance();
+        final TimeKeyListener emptyListener1 = TimeKeyListener.getInstance();
+        final TimeKeyListener emptyListener2 = TimeKeyListener.getInstance();
+        final TimeKeyListener nullListener = TimeKeyListener.getInstance(null);
 
-        assertNotNull(listener1);
-        assertNotNull(listener2);
-        assertSame(listener1, listener2);
+        assertNotNull(emptyListener1);
+        assertNotNull(emptyListener2);
+        assertNotNull(nullListener);
+        assertSame(emptyListener1, emptyListener2);
+        assertSame(emptyListener1, nullListener);
+
+        final TimeKeyListener usListener1 = TimeKeyListener.getInstance(Locale.US);
+        final TimeKeyListener usListener2 = TimeKeyListener.getInstance(new Locale("en", "US"));
+        final TimeKeyListener irListener = TimeKeyListener.getInstance(
+                Locale.forLanguageTag("fa-IR"));
+
+        assertNotNull(usListener1);
+        assertNotNull(usListener2);
+        assertNotNull(irListener);
+        assertSame(usListener1, usListener2);
+        assertNotSame(usListener1, irListener);
+        assertNotSame(usListener1, nullListener);
     }
 
     @Test
     public void testGetAcceptedChars() {
-        MockTimeKeyListener mockTimeKeyListener = new MockTimeKeyListener();
-        assertArrayEquals(TimeKeyListener.CHARACTERS, mockTimeKeyListener.getAcceptedChars());
+        assertNotNull(TimeKeyListener.CHARACTERS);
+
+        final MockTimeKeyListener mockTimeKeyListener = new MockTimeKeyListener();
+        assertSame(TimeKeyListener.CHARACTERS, mockTimeKeyListener.getAcceptedChars());
+
+        final MockTimeKeyListener usMockTimeKeyListener = new MockTimeKeyListener(Locale.US);
+        assertNotSame(TimeKeyListener.CHARACTERS, usMockTimeKeyListener.getAcceptedChars());
+
+        MockTimeKeyListener irMockTimeKeyListener = new MockTimeKeyListener(
+                Locale.forLanguageTag("fa-IR"));
+        final String acceptedChars = new String(irMockTimeKeyListener.getAcceptedChars());
+        // Make sure all these chararacters are accepted.
+        final char[] expectedChars = {
+            '\u06F0', '\u06F1', '\u06F2', '\u06F3', '\u06F4',
+            '\u06F5', '\u06F6', '\u06F7', '\u06F8', '\u06F9',
+            ':'
+        };
+        for (int i = 0; i < expectedChars.length; i++) {
+            assertNotEquals(-1, acceptedChars.indexOf(expectedChars[i]));
+        }
+        // Make sure all these chararacters are not accepted.
+        final char[] unexpectedChars = {
+            '0', '1', '2', '3', '4',
+            '5', '6', '7', '8', '9'
+        };
+        for (int i = 0; i < unexpectedChars.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(unexpectedChars[i]));
+        }
+
     }
 
     @Test
     public void testGetInputType() {
-        TimeKeyListener listener = TimeKeyListener.getInstance();
-        int expected = InputType.TYPE_CLASS_DATETIME
+        final int expected = InputType.TYPE_CLASS_DATETIME
                 | InputType.TYPE_DATETIME_VARIATION_TIME;
+
+        TimeKeyListener listener = TimeKeyListener.getInstance();
+        assertEquals(expected, listener.getInputType());
+
+        listener = TimeKeyListener.getInstance(Locale.US);
+        assertEquals(expected, listener.getInputType());
+
+        listener = TimeKeyListener.getInstance(Locale.forLanguageTag("fa-IR"));
         assertEquals(expected, listener.getInputType());
     }
 
@@ -136,6 +194,14 @@ public class TimeKeyListenerTest extends KeyListenerTestCase {
      * {@link android.text.method.TimeKeyListener#getAcceptedChars()}.
      */
     private class MockTimeKeyListener extends TimeKeyListener {
+        MockTimeKeyListener() {
+            super();
+        }
+
+        MockTimeKeyListener(Locale locale) {
+            super(locale);
+        }
+
         @Override
         protected char[] getAcceptedChars() {
             return super.getAcceptedChars();

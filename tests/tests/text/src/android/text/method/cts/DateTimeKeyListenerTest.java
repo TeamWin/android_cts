@@ -16,9 +16,10 @@
 
 package android.text.method.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
 import android.support.test.filters.MediumTest;
@@ -33,6 +34,8 @@ import com.android.compatibility.common.util.CtsKeyEventUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Locale;
+
 /**
  * Test {@link android.text.method.DateTimeKeyListener}.
  */
@@ -41,33 +44,86 @@ import org.junit.runner.RunWith;
 public class DateTimeKeyListenerTest extends KeyListenerTestCase {
     @Test
     public void testConstructor() {
+        // deprecated empty constructor
         new DateTimeKeyListener();
+
+        // newer constructor that takes locales
+        new DateTimeKeyListener(null); // fallback to old behavior
+        new DateTimeKeyListener(Locale.US);
+        new DateTimeKeyListener(Locale.forLanguageTag("fa-IR"));
     }
 
     @Test
     public void testGetInstance() {
-        DateTimeKeyListener listener1 = DateTimeKeyListener.getInstance();
-        DateTimeKeyListener listener2 = DateTimeKeyListener.getInstance();
+        final DateTimeKeyListener emptyListener1 = DateTimeKeyListener.getInstance();
+        final DateTimeKeyListener emptyListener2 = DateTimeKeyListener.getInstance();
+        final DateTimeKeyListener nullListener = DateTimeKeyListener.getInstance(null);
 
-        assertNotNull(listener1);
-        assertNotNull(listener2);
-        assertSame(listener1, listener2);
+        assertNotNull(emptyListener1);
+        assertNotNull(emptyListener2);
+        assertNotNull(nullListener);
+        assertSame(emptyListener1, emptyListener2);
+        assertSame(emptyListener1, nullListener);
+
+        final DateTimeKeyListener usListener1 = DateTimeKeyListener.getInstance(Locale.US);
+        final DateTimeKeyListener usListener2 = DateTimeKeyListener.getInstance(
+                new Locale("en", "US"));
+        final DateTimeKeyListener irListener = DateTimeKeyListener.getInstance(
+                Locale.forLanguageTag("fa-IR"));
+
+        assertNotNull(usListener1);
+        assertNotNull(usListener2);
+        assertNotNull(irListener);
+        assertSame(usListener1, usListener2);
+        assertNotSame(usListener1, irListener);
+        assertNotSame(usListener1, nullListener);
     }
 
     @Test
     public void testGetAcceptedChars() {
-        MockDateTimeKeyListener mockDateTimeKeyListener = new MockDateTimeKeyListener();
+        assertNotNull(DateTimeKeyListener.CHARACTERS);
 
-        assertArrayEquals(DateTimeKeyListener.CHARACTERS,
-                mockDateTimeKeyListener.getAcceptedChars());
+        final MockDateTimeKeyListener emptyMockDateTimeKeyListener = new MockDateTimeKeyListener();
+        assertSame(DateTimeKeyListener.CHARACTERS, emptyMockDateTimeKeyListener.getAcceptedChars());
+
+        final MockDateTimeKeyListener usMockDateTimeKeyListener =
+                new MockDateTimeKeyListener(Locale.US);
+        assertNotSame(DateTimeKeyListener.CHARACTERS, usMockDateTimeKeyListener.getAcceptedChars());
+
+        MockDateTimeKeyListener irMockDateTimeKeyListener = new MockDateTimeKeyListener(
+                Locale.forLanguageTag("fa-IR"));
+        final String acceptedChars = new String(irMockDateTimeKeyListener.getAcceptedChars());
+        // Make sure all these chararacters are accepted.
+        final char[] expectedChars = {
+            '\u06F0', '\u06F1', '\u06F2', '\u06F3', '\u06F4',
+            '\u06F5', '\u06F6', '\u06F7', '\u06F8', '\u06F9',
+            '/', ':'
+        };
+        for (int i = 0; i < expectedChars.length; i++) {
+            assertNotEquals(-1, acceptedChars.indexOf(expectedChars[i]));
+        }
+        // Make sure all these chararacters are not accepted.
+        final char[] unexpectedChars = {
+            '0', '1', '2', '3', '4',
+            '5', '6', '7', '8', '9'
+        };
+        for (int i = 0; i < unexpectedChars.length; i++) {
+            assertEquals(-1, acceptedChars.indexOf(unexpectedChars[i]));
+        }
     }
 
     @Test
     public void testGetInputType() {
-        DateTimeKeyListener listener = DateTimeKeyListener.getInstance();
-
-        int expected = InputType.TYPE_CLASS_DATETIME
+        final int expected = InputType.TYPE_CLASS_DATETIME
                 | InputType.TYPE_DATETIME_VARIATION_NORMAL;
+
+        DateTimeKeyListener listener = DateTimeKeyListener.getInstance();
+        assertEquals(expected, listener.getInputType());
+
+        listener = DateTimeKeyListener.getInstance(Locale.US);
+        assertEquals(expected, listener.getInputType());
+
+        listener = DateTimeKeyListener.getInstance(Locale.forLanguageTag("fa-IR"));
         assertEquals(expected, listener.getInputType());
     }
 
@@ -79,7 +135,7 @@ public class DateTimeKeyListenerTest extends KeyListenerTestCase {
      * 4. Press 'p' key if it is producible
      * 5. Press 'm' key if it is producible
      * 6. Press an unaccepted key if it exists. and this key will not be accepted.
-     * 7. Remove DateKeyListener and Press '1' key, this key will not be accepted
+     * 7. Remove DateTimeKeyListener and Press '1' key, this key will not be accepted
      */
     @Test
     public void testDateTimeKeyListener() {
@@ -143,6 +199,14 @@ public class DateTimeKeyListenerTest extends KeyListenerTestCase {
      * {@link android.text.method.DateTimeKeyListener#getAcceptedChars()}.
      */
     private class MockDateTimeKeyListener extends DateTimeKeyListener {
+        MockDateTimeKeyListener() {
+            super();
+        }
+
+        MockDateTimeKeyListener(Locale locale) {
+            super(locale);
+        }
+
         @Override
         protected char[] getAcceptedChars() {
             return super.getAcceptedChars();
