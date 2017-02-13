@@ -28,12 +28,13 @@ import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 /**
  * Activity that is able to create and destroy a virtual display.
  */
-public class VirtualDisplayActivity extends Activity {
+public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Callback {
     private static final String TAG = "VirtualDisplayActivity";
 
     private static final int DEFAULT_DENSITY_DPI = 160;
@@ -44,6 +45,7 @@ public class VirtualDisplayActivity extends Activity {
 
     private DisplayManager mDisplayManager;
     private VirtualDisplay mVirtualDisplay;
+    private int mDensityDpi = DEFAULT_DENSITY_DPI;
 
     private Surface mSurface;
     private SurfaceView mSurfaceView;
@@ -54,6 +56,7 @@ public class VirtualDisplayActivity extends Activity {
         setContentView(R.layout.virtual_display_layout);
 
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
+        mSurfaceView.getHolder().addCallback(this);
         mSurface = mSurfaceView.getHolder().getSurface();
 
         mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
@@ -88,7 +91,7 @@ public class VirtualDisplayActivity extends Activity {
         if (mVirtualDisplay == null) {
             final int width = mSurfaceView.getWidth();
             final int height = mSurfaceView.getHeight();
-            final int densityDpi = extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
+            mDensityDpi = extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
             int flags = 0;
 
             final boolean canShowWithInsecureKeyguard
@@ -103,11 +106,11 @@ public class VirtualDisplayActivity extends Activity {
             }
 
             Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "
-                    + densityDpi + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
+                    + mDensityDpi + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
                     + ", publicDisplay=" + publicDisplay);
             try {
                 mVirtualDisplay = mDisplayManager.createVirtualDisplay("VirtualDisplay", width,
-                        height, densityDpi, mSurface, flags);
+                        height, mDensityDpi, mSurface, flags);
             } catch (IllegalArgumentException e) {
                 // This is expected when trying to create show-when-locked public display.
             }
@@ -120,5 +123,20 @@ public class VirtualDisplayActivity extends Activity {
             mVirtualDisplay.release();
             mVirtualDisplay = null;
         }
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
+        if (mVirtualDisplay != null) {
+            mVirtualDisplay.resize(width, height, mDensityDpi);
+        }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
     }
 }

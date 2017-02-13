@@ -562,13 +562,14 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     /** Check task bounds when docked to top/left. */
-    void assertDockedTaskBounds(int taskSize, String activityName) {
+    void assertDockedTaskBounds(int taskWidth, int taskHeight, String activityName) {
         // Task size can be affected by default minimal size.
         int defaultMinimalTaskSize = defaultMinimalTaskSize(
                 mAmState.getStackById(ActivityManagerTestBase.DOCKED_STACK_ID).mDisplayId);
-        int targetSize = Math.max(taskSize, defaultMinimalTaskSize);
+        int targetWidth = Math.max(taskWidth, defaultMinimalTaskSize);
+        int targetHeight = Math.max(taskHeight, defaultMinimalTaskSize);
 
-        assertEquals(new Rectangle(0, 0, targetSize, targetSize),
+        assertEquals(new Rectangle(0, 0, targetWidth, targetHeight),
                 mAmState.getTaskByActivityName(activityName).getBounds());
     }
 

@@ -35,7 +35,7 @@ public class ActivityLauncher {
     private static final String TAG = ActivityLauncher.class.getSimpleName();
 
     public static void launchActivityFromExtras(final Context context, Bundle extras) {
-        if (extras == null || extras.getBoolean("launch_activity")) {
+        if (extras == null || !extras.getBoolean("launch_activity")) {
             return;
         }
 

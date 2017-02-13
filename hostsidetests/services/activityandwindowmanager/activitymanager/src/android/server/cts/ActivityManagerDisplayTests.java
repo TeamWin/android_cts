@@ -18,6 +18,7 @@ package android.server.cts;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -47,6 +48,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     private static final int INVALID_DENSITY_DPI = -1;
     private static final int CUSTOM_DENSITY_DPI = 222;
+    private static final int SIZE_VALUE_SHIFT = 50;
 
     /** Temp storage used for parsing. */
     private final LinkedList<String> mDumpLines = new LinkedList<>();
@@ -583,6 +585,65 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Check activity logs.
         assertActivityDestroyed(TEST_ACTIVITY_NAME);
         assertActivityDestroyed(RESIZEABLE_ACTIVITY_NAME);
+    }
+
+    /**
+     * Test that the update of display metrics updates all its content.
+     */
+    public void testDisplayResize() throws Exception {
+        // Start launching activity.
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+
+        mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY, DOCKED_STACK_ID);
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                true /* launchInSplitScreen */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+
+        // Launch a resizeable activity on new secondary display.
+        clearLogcat();
+        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
+        mAmWmState.assertFocusedActivity("Launched activity must be focused",
+                RESIZEABLE_ACTIVITY_NAME);
+
+        // Grab reported sizes and compute new with slight size change.
+        final ReportedSizes initialSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME);
+        final Rectangle initialBounds
+                = mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds();
+        final Rectangle newBounds = new Rectangle(initialBounds.x, initialBounds.y,
+                initialBounds.width + SIZE_VALUE_SHIFT, initialBounds.height + SIZE_VALUE_SHIFT);
+
+        // Resize the docked stack, so that activity with virtual display will also be resized.
+        clearLogcat();
+        resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
+        mAmWmState.computeState(mDevice, new String[] {RESIZEABLE_ACTIVITY_NAME, LAUNCHING_ACTIVITY,
+                VIRTUAL_DISPLAY_ACTIVITY}, false /* compareTaskAndStackBounds */);
+        mAmWmState.assertDockedTaskBounds(newBounds.width, newBounds.height,
+                LAUNCHING_ACTIVITY);
+        mAmWmState.assertContainsStack("Must contain docked stack", DOCKED_STACK_ID);
+        mAmWmState.assertContainsStack("Must contain fullscreen stack",
+                FULLSCREEN_WORKSPACE_STACK_ID);
+        assertEquals(new Rectangle(0, 0, newBounds.width, newBounds.height),
+                mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds());
+        mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true);
+
+        // Check if activity in virtual display was resized properly.
+        assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY_NAME, 0 /* numRelaunch */,
+                1 /* numConfigChange */);
+
+        final ReportedSizes updatedSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME);
+        assertTrue(updatedSize.widthDp <= initialSize.widthDp);
+        assertTrue(updatedSize.heightDp <= initialSize.heightDp);
+        assertTrue(updatedSize.displayWidth <= initialSize.displayWidth);
+        assertTrue(updatedSize.displayHeight <= initialSize.displayHeight);
+        final boolean widthUpdated = updatedSize.metricsWidth < initialSize.metricsWidth;
+        final boolean heightUpdated = updatedSize.metricsHeight < initialSize.metricsHeight;
+        assertTrue("Either width or height must be updated after split-screen resize",
+                widthUpdated ^ heightUpdated);
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
