@@ -55,7 +55,7 @@ abstract class AutoFillServiceTestCase {
 
     @Before
     public void resetServiceState() {
-        InstrumentedAutoFillService.resetNumberFillRequests();
+        InstrumentedAutoFillService.resetFillReplier();
     }
 
     /**
