@@ -430,8 +430,9 @@ public class ListPopupWindowTest {
     private void verifyDismissalViaTouch(boolean setupAsModal) throws Throwable {
         // Register a click listener on the top-level container
         final View mainContainer = mActivity.findViewById(R.id.main_container);
-        View.OnClickListener mockContainerClickListener = mock(View.OnClickListener.class);
-        mainContainer.setOnClickListener(mockContainerClickListener);
+        final View.OnClickListener mockContainerClickListener = mock(View.OnClickListener.class);
+        mActivityRule.runOnUiThread(() ->
+                mainContainer.setOnClickListener(mockContainerClickListener));
 
         // Configure a list popup window with requested modality
         mPopupWindowBuilder = new Builder().setModal(setupAsModal).withDismissListener();
@@ -751,10 +752,13 @@ public class ListPopupWindowTest {
 
         // Get the anchor view and configure it with ListPopupWindow's drag-to-open listener
         final View anchor = mActivity.findViewById(mPopupWindowBuilder.mAnchorId);
-        View.OnTouchListener dragListener = mPopupWindow.createDragToOpenListener(anchor);
-        anchor.setOnTouchListener(dragListener);
-        // And also configure it to show the popup window on click
-        anchor.setOnClickListener((View view) -> mPopupWindow.show());
+        final View.OnTouchListener dragListener = mPopupWindow.createDragToOpenListener(anchor);
+        mActivityRule.runOnUiThread(() -> {
+            anchor.setOnTouchListener(dragListener);
+            // And also configure it to show the popup window on click
+            anchor.setOnClickListener((View view) -> mPopupWindow.show());
+        });
+        mInstrumentation.waitForIdleSync();
 
         // Get the height of a row item in our popup window
         final int popupRowHeight = mActivity.getResources().getDimensionPixelSize(
