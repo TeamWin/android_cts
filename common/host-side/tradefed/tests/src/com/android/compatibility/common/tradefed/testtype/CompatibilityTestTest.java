@@ -292,4 +292,30 @@ public class CompatibilityTestTest extends TestCase {
         mTest.run(mMockListener);
         EasyMock.verify(mMockDevice, mMockListener);
     }
+
+    /**
+     * Test {@link CompatibilityTest#checkSystemStatusBlackAndWhiteList()} correctly throws
+     * if a system status is invalid.
+     */
+    public void testCheckSystemStatus_throw() throws Exception {
+        OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("system-status-check-whitelist", "com.does.not.exit");
+        try {
+            mTest.checkSystemStatusBlackAndWhiteList();
+            fail("should have thrown an exception");
+        } catch (RuntimeException expected) {
+            // expected.
+        }
+    }
+
+    /**
+     * Test {@link CompatibilityTest#checkSystemStatusBlackAndWhiteList()} does not throw
+     * if a system status is valid.
+     */
+    public void testCheckSystemStatus_pass() throws Exception {
+        OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("skip-system-status-check",
+                "com.android.tradefed.suite.checker.KeyguardStatusChecker");
+        mTest.checkSystemStatusBlackAndWhiteList();
+    }
 }
