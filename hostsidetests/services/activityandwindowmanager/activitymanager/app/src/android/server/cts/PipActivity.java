@@ -36,7 +36,9 @@ import android.view.WindowManager;
 
 import java.util.Collections;
 
-public class PipActivity extends Activity {
+public class PipActivity extends AbstractLifecycleLogActivity {
+
+    private static final String TAG = "PipActivity";
 
     // Intent action that this activity dynamically registers to enter picture-in-picture
     private static final String ACTION_ENTER_PIP = "android.server.cts.PipActivity.enter_pip";
@@ -209,5 +211,10 @@ public class PipActivity extends Activity {
         intent.putExtra(EXTRA_ENTER_PIP, "true");
         intent.putExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
         caller.startActivity(intent);
+    }
+
+    @Override
+    protected String getTag() {
+        return TAG;
     }
 }
