@@ -801,36 +801,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
-    public void testDefaultProcessInstrumentation() throws Exception {
-        String cmd = "am instrument -w android.app.cts/.DefaultProcessInstrumentation";
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true" +
-                "\nINSTRUMENTATION_CODE: -1\n", result);
-    }
-
-    public void testAltProcessInstrumentation() throws Exception {
-        String cmd = "am instrument -w android.app.cts/.AltProcessInstrumentation";
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + ":other=true" +
-                "\nINSTRUMENTATION_CODE: -1\n", result);
-    }
-
-    public void testWildcardProcessInstrumentation() throws Exception {
-        String cmd = "am instrument -w android.app.cts/.WildcardProcessInstrumentation";
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true" +
-                "\nINSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + ":receiver=true" +
-                "\nINSTRUMENTATION_CODE: -1\n", result);
-    }
-
-    public void testMultiProcessInstrumentation() throws Exception {
-        String cmd = "am instrument -w android.app.cts/.MultiProcessInstrumentation";
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-        assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true" +
-                "\nINSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + ":other=true" +
-                "\nINSTRUMENTATION_CODE: -1\n", result);
-    }
-
     /**
      * Verify that the TimeTrackingAPI works properly when starting and ending an activity.
      */
