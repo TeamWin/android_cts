@@ -16,6 +16,7 @@
 package android.jobscheduler.cts;
 
 import android.annotation.TargetApi;
+import android.app.Instrumentation;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,12 +24,13 @@ import android.content.Intent;
 import android.jobscheduler.MockJobService;
 import android.jobscheduler.TriggerContentJobService;
 import android.test.AndroidTestCase;
+import android.test.InstrumentationTestCase;
 
 /**
  * Common functionality from which the other test case classes derive.
  */
 @TargetApi(21)
-public abstract class ConstraintTest extends AndroidTestCase {
+public abstract class ConstraintTest extends InstrumentationTestCase {
     /** Force the scheduler to consider the device to be on stable charging. */
     private static final Intent EXPEDITE_STABLE_CHARGING =
             new Intent("com.android.server.task.controllers.BatteryController.ACTION_CHARGING_STABLE");
@@ -42,6 +44,18 @@ public abstract class ConstraintTest extends AndroidTestCase {
     static ComponentName kJobServiceComponent;
     static ComponentName kTriggerContentServiceComponent;
     JobScheduler mJobScheduler;
+
+    Context mContext;
+
+    @Override
+    public void injectInstrumentation(Instrumentation instrumentation) {
+        super.injectInstrumentation(instrumentation);
+        mContext = instrumentation.getContext();
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
 
     @Override
     public void setUp() throws Exception {
