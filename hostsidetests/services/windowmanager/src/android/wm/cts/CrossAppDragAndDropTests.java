@@ -42,6 +42,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private static final String AM_FORCE_STOP = "am force-stop ";
     private static final String AM_MOVE_TASK = "am stack movetask ";
+    private static final String AM_RESIZE_TASK = "am task resize ";
     private static final String AM_REMOVE_STACK = "am stack remove ";
     private static final String AM_START_N = "am start -n ";
     private static final String AM_STACK_LIST = "am stack list";
@@ -86,6 +87,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String RESULT_OK = "OK";
     private static final String RESULT_EXCEPTION = "Exception";
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
+
+    private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
+            "am supports-split-screen-multiwindow";
 
     private ITestDevice mDevice;
 
@@ -133,6 +137,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private String getMoveTaskCommand(int taskId, int stackId) throws Exception {
         return AM_MOVE_TASK + taskId + " " + stackId + " true";
+    }
+
+    private String getResizeTaskCommand(int taskId, Point topLeft, Point bottomRight)
+            throws Exception {
+        return AM_RESIZE_TASK + taskId + " " + topLeft.x + " " + topLeft.y + " " + bottomRight.x
+                + " " + bottomRight.y;
     }
 
     private String getComponentName(String packageName, String activityName) {
@@ -183,6 +193,24 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         executeShellCommand(getStartCommand(componentName, mode) + " --stack "
                 + FULLSCREEN_WORKSPACE_STACK_ID);
         waitForResume(packageName, activityName);
+    }
+
+    /**
+     * @param displaySize size of the display
+     * @param leftSide {@code true} to launch the app taking up the left half of the display,
+     *         {@code false} to launch the app taking up the right half of the display.
+     */
+    private void launchFreeformActivity(String packageName, String activityName, String mode,
+            Point displaySize, boolean leftSide) throws Exception{
+        clearLogs();
+        final String componentName = getComponentName(packageName, activityName);
+        executeShellCommand(getStartCommand(componentName, mode) + " --stack "
+                + FREEFORM_WORKSPACE_STACK_ID);
+        waitForResume(packageName, activityName);
+        Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
+        Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);
+        executeShellCommand(getResizeTaskCommand(getActivityTaskId(componentName), topLeft,
+                bottomRight));
     }
 
     private void waitForResume(String packageName, String activityName) throws Exception {
@@ -257,6 +285,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return -1;
     }
 
+    private Point getDisplaySize() throws Exception {
+        final String output = executeShellCommand("wm size");
+        final String[] sizes = output.split(" ")[2].split("x");
+        return new Point(Integer.valueOf(sizes[0].trim()), Integer.valueOf(sizes[1].trim()));
+    }
+
     private Point getWindowCenter(String name) throws Exception {
         Point p1 = new Point();
         Point p2 = new Point();
@@ -301,14 +335,30 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return output;
     }
 
-    private void doTestDragAndDrop(String sourceMode, String targetMode, String expectedDropResult)
+    /**
+     * @return {@code true} if the device supports a certain multi-window mode that allows the
+     *         test to run, {@code false} if it does not and the test should be skipped.
+     */
+    private boolean doTestDragAndDrop(String sourceMode, String targetMode,
+            String expectedDropResult)
             throws Exception {
         if (!supportsDragAndDrop()) {
-            return;
+            return false;
         }
 
-        launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
-        launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
+        if (supportsSplitScreenMultiWindow()) {
+            launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
+            launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
+        } else if (supportsFreeformMultiWindow()) {
+            // Fallback to try to launch two freeform windows side by side.
+            Point displaySize = getDisplaySize();
+            launchFreeformActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode,
+                    displaySize, true /* leftSide */);
+            launchFreeformActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode,
+                    displaySize, false /* leftSide */);
+        } else {
+            return false;
+        }
 
         clearLogs();
 
@@ -319,6 +369,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
         mResults = getLogResults(TARGET_LOG_TAG);
         assertResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
+        return true;
     }
 
     private void assertResult(String resultKey, String expectedResult) throws Exception {
@@ -341,25 +392,41 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return !mDevice.hasFeature("feature:android.hardware.type.watch");
     }
 
+    private boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
+        return !executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW).startsWith("false");
+    }
+
+    private boolean supportsFreeformMultiWindow() throws DeviceNotAvailableException {
+        return mDevice.hasFeature("feature:android.software.freeform_window_management");
+    }
+
     public void testCancelSoon() throws Exception {
-        doTestDragAndDrop(CANCEL_SOON, REQUEST_NONE, null);
+        if (!doTestDragAndDrop(CANCEL_SOON, REQUEST_NONE, null)) {
+            return;
+        }
         assertResult(RESULT_KEY_DRAG_STARTED, RESULT_OK);
         assertResult(RESULT_KEY_EXTRAS, RESULT_OK);
     }
 
     public void testDisallowGlobal() throws Exception {
-        doTestDragAndDrop(DISALLOW_GLOBAL, REQUEST_NONE, null);
+        if (!doTestDragAndDrop(DISALLOW_GLOBAL, REQUEST_NONE, null)) {
+            return;
+        }
         assertResult(RESULT_KEY_DRAG_STARTED, null);
     }
 
     public void testDisallowGlobalBelowSdk24() throws Exception {
         mTargetPackageName = TARGET_23_PACKAGE_NAME;
-        doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, null);
+        if (!doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, null)) {
+            return;
+        }
         assertResult(RESULT_KEY_DRAG_STARTED, null);
     }
 
     public void testGrantNoneRequestNone() throws Exception {
-        doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, RESULT_EXCEPTION);
+        if (!doTestDragAndDrop(GRANT_NONE, REQUEST_NONE, RESULT_EXCEPTION)) {
+            return;
+        }
         assertResult(RESULT_KEY_DRAG_STARTED, RESULT_OK);
         assertResult(RESULT_KEY_EXTRAS, RESULT_OK);
     }
