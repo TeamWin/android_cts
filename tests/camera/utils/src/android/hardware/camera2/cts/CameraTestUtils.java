@@ -800,6 +800,35 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Try configure a new camera session with output configurations.
+     *
+     * @param camera The CameraDevice to be configured.
+     * @param outputs The OutputConfiguration list that is used for camera output.
+     * @param listener The callback CameraDevice will notify when capture results are available.
+     */
+    public static CameraCaptureSession tryConfigureCameraSessionWithConfig(CameraDevice camera,
+            List<OutputConfiguration> outputs,
+            CameraCaptureSession.StateCallback listener, Handler handler)
+            throws CameraAccessException {
+        BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
+        camera.createCaptureSessionByOutputConfigurations(outputs, sessionListener, handler);
+
+        Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
+                                   BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
+        int state = sessionListener.getStateWaiter().waitForAnyOfStates(
+                Arrays.asList(sessionStates), SESSION_CONFIGURE_TIMEOUT_MS);
+
+        CameraCaptureSession session = null;
+        if (state == BlockingSessionCallback.SESSION_READY) {
+            session = sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+            assertFalse("Camera session should not be a reprocessable session",
+                    session.isReprocessable());
+        }
+        return session;
+    }
+
+
+    /**
      * Configure a new camera session with output surfaces.
      *
      * @param camera The CameraDevice to be configured.
