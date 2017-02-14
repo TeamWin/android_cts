@@ -203,4 +203,9 @@ public class TypefaceTest extends AndroidTestCase {
         float widthCustomTypeface = p.measureText(testString);
         assertEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
     }
+
+    public void testBadFont() {
+        Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), "ft45987.ttf");
+        assertNotNull(typeface);
+    }
 }
