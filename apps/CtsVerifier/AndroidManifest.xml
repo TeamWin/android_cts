@@ -1429,6 +1429,16 @@
                        android:value="android.hardware.sensor.compass" />
         </activity>
 
+        <activity android:name=".sensors.OffBodySensorTestActivity"
+            android:label="@string/snsr_offbody_sensor_test">
+            <receiver android:name="com.android.cts.verifier.sensors.OffBodySensorTestActivity$AlarmReceiver"></receiver>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
+        </activity>
+
         <activity
             android:name=".sensors.RVCVXCheckTestActivity"
             android:keepScreenOn="true"
@@ -2051,6 +2061,9 @@
         </receiver>
 
         <receiver android:name="com.android.cts.verifier.sensors.SignificantMotionTestActivity$AlarmReceiver">
+        </receiver>
+
+        <receiver android:name="com.android.cts.verifier.sensors.OffBodySensorTestActivity$AlarmReceiver">
         </receiver>
 
         <activity
