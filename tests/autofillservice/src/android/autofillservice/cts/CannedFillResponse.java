@@ -16,6 +16,8 @@
 package android.autofillservice.cts;
 
 import android.app.assist.AssistStructure;
+import android.service.autofill.Dataset;
+import android.service.autofill.FillResponse;
 import android.view.autofill.AutoFillValue;
 
 import java.util.ArrayList;
@@ -24,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Helper class used to produce a {@link android.service.autofill.FillResponse} based on
- * expected fields that should be present in the {@link AssistStructure}.
+ * Helper class used to produce a {@link FillResponse} based on expected fields that should be
+ * present in the {@link AssistStructure}.
  *
  * <p>Typical usage:
  *
@@ -65,7 +67,7 @@ final class CannedFillResponse {
     }
 
     /**
-     * Helper class used to produce a {@link android.service.autofill.Dataset} based on expected fields that should be
+     * Helper class used to produce a {@link Dataset} based on expected fields that should be
      * present in the {@link AssistStructure}.
      *
      * <p>Typical usage:
@@ -81,7 +83,7 @@ final class CannedFillResponse {
      */
     static class CannedDataset {
 
-        final Map<String, Field> fields;
+        final Map<String, AutoFillValue> fields;
         final String name;
 
         private CannedDataset(Builder builder) {
@@ -95,7 +97,7 @@ final class CannedFillResponse {
         }
 
         static class Builder {
-            private final Map<String, Field> mFields = new HashMap<>();
+            private final Map<String, AutoFillValue> mFields = new HashMap<>();
             private final String mName;
 
             public Builder(String name) {
@@ -106,41 +108,13 @@ final class CannedFillResponse {
              * Sets the canned value of a field based on its {@code resourceId}.
              */
             public Builder setField(String resourceId, AutoFillValue value) {
-                mFields.put(resourceId, new Field(value));
-                return this;
-            }
-
-            /**
-             * Sets a canned value of a field based on its {@code resourceId}, and asserts its
-             * sanitized.
-             */
-            public Builder setSanitizedField(String resourceId, AutoFillValue value) {
-                mFields.put(resourceId, new Field(value, true));
+                mFields.put(resourceId, value);
                 return this;
             }
 
             public CannedDataset build() {
                 return new CannedDataset(this);
             }
-        }
-    }
-
-    static class Field  {
-        final boolean sanitized;
-        final AutoFillValue value;
-
-        Field(AutoFillValue value, boolean sanitized) {
-            this.value = value;
-            this.sanitized = sanitized;
-        }
-
-        Field(AutoFillValue value) {
-            this(value, false);
-        }
-
-        @Override
-        public String toString() {
-            return value + (sanitized ? " (sanitized)" : "");
         }
     }
 }

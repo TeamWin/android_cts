@@ -16,9 +16,15 @@
 
 package android.autofillservice.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.app.assist.AssistStructure;
+import android.app.assist.AssistStructure.ViewNode;
+import android.app.assist.AssistStructure.WindowNode;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.autofill.AutoFillValue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -52,6 +58,65 @@ final class Helper {
         } catch (Exception e) {
             throw new RuntimeException("Command '" + command + "' failed: ", e);
         }
+    }
+
+    /**
+     * Gets a node give its Android resource id, or {@code null} if not found.
+     */
+    static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
+        Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
+        final int nodes = structure.getWindowNodeCount();
+        for (int i = 0; i < nodes; i++) {
+            final WindowNode windowNode = structure.getWindowNodeAt(i);
+            final ViewNode rootNode = windowNode.getRootViewNode();
+            final ViewNode node = findNodeByResourceId(rootNode, resourceId);
+            if (node != null) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node give its Android resource id, or {@code null} if not found.
+     */
+    static ViewNode findNodeByResourceId(ViewNode node, String resourceId) {
+        if (resourceId.equals(node.getIdEntry())) {
+            return node;
+        }
+        final int childrenSize = node.getChildCount();
+        if (childrenSize > 0) {
+            for (int i = 0; i < childrenSize; i++) {
+                final ViewNode found = findNodeByResourceId(node.getChildAt(i), resourceId);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Asserts a text-base node is sanitized.
+     */
+    static void assertTextIsSanitized(ViewNode node) {
+      final CharSequence text = node.getText();
+      final String resourceId = node.getIdEntry();
+      if (!TextUtils.isEmpty(text)) {
+        throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
+      }
+      final AutoFillValue initialValue = node.getAutoFillValue();
+      assertWithMessage("auto-fill value on sanitized field %s: %s", resourceId,
+              initialValue).that(initialValue).isNull();
+    }
+
+    /**
+     * Asserts a text-base node exists and is sanitized.
+     */
+    static void assertTextIsSanitized(AssistStructure structure, String resourceId) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
+        assertTextIsSanitized(node);
     }
 
     private Helper() {

@@ -19,6 +19,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     android:orientation="vertical" >
 
     <LinearLayout
@@ -51,8 +53,8 @@
             android:id="@+id/password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="TopSecret"
-            android:inputType="textPassword" />
+            android:inputType="textPassword"
+            android:text="TopSecret" />
     </LinearLayout>
 
     <LinearLayout
