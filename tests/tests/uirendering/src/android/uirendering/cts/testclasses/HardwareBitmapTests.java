@@ -70,7 +70,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
                     HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
-                R.drawable.golden_robot, new ExactComparer()));
+                R.drawable.golden_robot, new MSSIMComparer(0.95)));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
             ninePatch.setBounds(0, 0, width, height);
             ninePatch.draw(canvas);
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
-                R.drawable.golden_hardwaretest_ninepatch, new ExactComparer()));
+                R.drawable.golden_hardwaretest_ninepatch, new MSSIMComparer(0.95)));
     }
 
     @Test
