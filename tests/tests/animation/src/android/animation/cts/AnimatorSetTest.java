@@ -531,6 +531,33 @@ public class AnimatorSetTest {
         verify(listener2, times(1)).onAnimationEnd(a2, false);
     }
 
+    /**
+     * This test sets up 10 animators playing together. We expect the start time for all animators
+     * to be the same.
+     */
+    @Test
+    public void testMultipleAnimatorsPlayTogether() throws Throwable {
+        Animator[] animators = new Animator[10];
+        for (int i = 0; i < 10; i++) {
+            animators[i] = ValueAnimator.ofFloat(0f, 1f);
+        }
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(animators);
+        set.setStartDelay(80);
+
+        Animator.AnimatorListener setListener = mock(AnimatorListenerAdapter.class);
+        set.addListener(setListener);
+        mActivityRule.runOnUiThread(() -> {
+            set.start();
+        });
+        SystemClock.sleep(150);
+        for (int i = 0; i < 10; i++) {
+            assertTrue(animators[i].isRunning());
+        }
+
+        verify(setListener, within(400)).onAnimationEnd(set, false);
+    }
+
     @Test
     public void testGetChildAnimations() throws Throwable {
         Animator[] animatorArray = { xAnimator, yAnimator };
