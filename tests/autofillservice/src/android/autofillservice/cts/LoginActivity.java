@@ -125,7 +125,8 @@ public class LoginActivity extends Activity {
 
     /**
      * Asserts the activity was auto-filled with the values passed to
-     * {@link #expectAutoFill(String, String)}.
+     * {@link #expectAutoFill(android.autofillservice.cts.CannedFillResponse.CannedDataset.Builder,
+     * String, String)}.
      */
     void assertAutoFilled() throws Exception {
         assertWithMessage("expectAutoFill() not called").that(mAutoFillExpectation).isNotNull();
@@ -133,24 +134,6 @@ public class LoginActivity extends Activity {
                 mAutoFillExpectation.usernameLatch, mAutoFillExpectation.expectedUsername);
         assertField("password", mPasswordEditText,
                 mAutoFillExpectation.passwordLatch, mAutoFillExpectation.expectedPassword);
-    }
-
-    /**
-     * Visits the {@code username} in the UiThread.
-     */
-    void onUsername(ViewVisitor<EditText> v) {
-        runOnUiThread(() -> {
-            v.visit(mUsernameEditText);
-        });
-    }
-
-    /**
-     * Visits the {@code username} in the UiThread.
-     */
-    void onPassword(ViewVisitor<EditText> v) {
-        runOnUiThread(() -> {
-            v.visit(mPasswordEditText);
-        });
     }
 
     /**
