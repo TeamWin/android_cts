@@ -1579,7 +1579,7 @@ public class ItsService extends Service implements SensorEventListener {
                                 mSocketQueueQuota.release(img.length);
                                 mSocketQueueQuota.acquire(statsImgSize);
                             }
-                            ByteBuffer bBuf = ByteBuffer.allocateDirect(statsImgSize);
+                            ByteBuffer bBuf = ByteBuffer.allocate(statsImgSize);
                             bBuf.order(ByteOrder.nativeOrder());
                             FloatBuffer fBuf = bBuf.asFloatBuffer();
                             fBuf.put(stats);
