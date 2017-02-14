@@ -311,7 +311,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
                 FULLSCREEN_WORKSPACE_STACK_ID);
         assertEquals(new Rectangle(0, 0, STACK_SIZE, STACK_SIZE),
                 mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds());
-        mAmWmState.assertDockedTaskBounds(TASK_SIZE, DOCKED_ACTIVITY_NAME);
+        mAmWmState.assertDockedTaskBounds(TASK_SIZE, TASK_SIZE, DOCKED_ACTIVITY_NAME);
         mAmWmState.assertVisibility(DOCKED_ACTIVITY_NAME, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY_NAME, true);
     }
