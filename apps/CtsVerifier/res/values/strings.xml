@@ -892,7 +892,7 @@
     <string name="snsr_event_time">Sensor(%5$s). Event timestamp expected to be synchronized with SystemClock.elapsedRealtimeNanos(). Event received at=%1$d. Event timestamp=%2$d. Delta=%3$d. Threshold=%4$d.</string>
 
     <!-- Sensor Batching -->
-    <string name="snsr_batch_test">Sensor Batching Tests</string>
+    <string name="snsr_batch_test">Sensor Batching Manual Tests</string>
     <string name="snsr_batching_walking_needed">Once the test begins, you will have to take the
         device in your hand and walk.</string>
 
