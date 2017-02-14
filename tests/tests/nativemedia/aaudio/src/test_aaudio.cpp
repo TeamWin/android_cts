@@ -178,7 +178,7 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_getSharingMode(aaudioStream, &actualSharingMode));
     ASSERT_TRUE(actualSharingMode == AAUDIO_SHARING_MODE_EXCLUSIVE
-                || actualSharingMode == AAUDIO_SHARING_MODE_LEGACY);
+                || actualSharingMode == AAUDIO_SHARING_MODE_SHARED);
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_getFormat(aaudioStream, &actualDataFormat));
     EXPECT_NE(AAUDIO_FORMAT_INVALID, actualDataFormat);
@@ -248,9 +248,9 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
         ASSERT_GT(aaudioFramesRead2, aaudioFramesRead1);
         ASSERT_LE(aaudioFramesRead2, aaudioFramesWritten);
 
-        // TODO why is legacy so inaccurate?
+        // TODO why is AudioTrack path so inaccurate?
         const double rateTolerance = 200.0; // arbitrary tolerance for sample rate
-        if (requestedSharingMode != AAUDIO_SHARING_MODE_LEGACY) {
+        if (requestedSharingMode != AAUDIO_SHARING_MODE_SHARED) {
             // Calculate approximate sample rate and compare with stream rate.
             double seconds = (endTime - beginTime) / (double) AAUDIO_NANOS_PER_SECOND;
             double measuredRate = (aaudioFramesRead2 - aaudioFramesRead1) / seconds;
@@ -308,9 +308,9 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     free(data);
 }
 
-// Test Writing to an AAudioStream using LEGACY sharing mode.
-TEST(test_aaudio, aaudio_stream_legacy) {
-    runtest_aaudio_stream(AAUDIO_SHARING_MODE_LEGACY);
+// Test Writing to an AAudioStream using SHARED mode.
+TEST(test_aaudio, aaudio_stream_shared) {
+    runtest_aaudio_stream(AAUDIO_SHARING_MODE_SHARED);
 }
 
 /* TODO Enable exclusive mode test.
