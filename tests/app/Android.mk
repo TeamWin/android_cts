@@ -25,7 +25,9 @@ LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common voip-common org.apa
 
 LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner ctstestserver mockito-target-minus-junit4 android-support-test
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := \
+    $(call all-java-files-under, src) \
+    $(call all-java-files-under, app2/src) \
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
