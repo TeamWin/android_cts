@@ -46,21 +46,25 @@ public class ActivityKeyboardShortcutsTest
         mMenu = new PopupMenu(mActivity, null).getMenu();
     }
 
+    /**
+     * Tests that requestShowKeyboardShortcuts fetches app specific shortcuts even when triggered
+     * from an overflow menu (options menu in the test)
+     */
     public void testRequestShowKeyboardShortcuts() throws InterruptedException {
-        // GIVEN an activity with open options menu
+        // Open activity's options menu
         mActivity.openOptionsMenu();
         mActivity.waitForMenuToBeOpen();
 
-        // WHEN keyboard shortcuts are requested
+        // Request keyboard shortcuts
         mActivity.requestShowKeyboardShortcuts();
         mActivity.waitForKeyboardShortcutsToBeRequested();
 
-        // THEN the activity's onProvideKeyboardShortcuts should be
+        // Close the shortcuts helper
+        mActivity.dismissKeyboardShortcutsHelper();
+
+        // THEN the activity's onProvideKeyboardShortcuts should have been
         // triggered to get app specific shortcuts
         assertTrue(mActivity.onProvideKeyboardShortcutsCalled());
-
-        // FINALLY close the shortcuts helper
-        mActivity.dismissKeyboardShortcutsHelper();
     }
 
     public void testOnProvideKeyboardShortcuts() {
