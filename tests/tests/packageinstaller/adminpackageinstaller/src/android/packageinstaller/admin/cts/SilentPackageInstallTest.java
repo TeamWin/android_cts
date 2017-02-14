@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.packageinstaller;
+package android.packageinstaller.admin.cts;
 
 /**
  * This class tests silent package install and uninstall by a device owner.

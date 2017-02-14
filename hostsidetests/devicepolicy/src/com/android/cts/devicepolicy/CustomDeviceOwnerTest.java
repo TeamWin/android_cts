@@ -38,15 +38,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
-    private static final String TEST_APP_APK = "CtsSimpleApp.apk";
-    private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
-    private static final String TEST_APP_LOCATION = "/data/local/tmp/";
-
-    private static final String PACKAGE_INSTALLER_PKG = "com.android.cts.packageinstaller";
-    private static final String PACKAGE_INSTALLER_APK = "CtsPackageInstallerApp.apk";
-    private static final String PACKAGE_INSTALLER_ADMIN_COMPONENT =
-            PACKAGE_INSTALLER_PKG + "/" + ".ClearDeviceOwnerTest$BasicAdminReceiver";
-
     private static final String ACCOUNT_MANAGEMENT_PKG
             = "com.android.cts.devicepolicy.accountmanagement";
     protected static final String ACCOUNT_MANAGEMENT_APK
@@ -131,32 +122,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    public void testSilentPackageInstall() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        final File apk = buildHelper.getTestFile(TEST_APP_APK);
-        try {
-            // Install the test and prepare the test apk.
-            installAppAsUser(PACKAGE_INSTALLER_APK, mPrimaryUserId);
-            assertTrue(setDeviceOwner(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId,
-                    /*expectFailure*/ false));
-
-            getDevice().uninstallPackage(TEST_APP_PKG);
-            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
-            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG,
-                    PACKAGE_INSTALLER_PKG + ".SilentPackageInstallTest", mPrimaryUserId);
-        } finally {
-            assertTrue("Failed to remove device owner.",
-                    removeAdmin(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId));
-            String command = "rm " + TEST_APP_LOCATION + apk.getName();
-            String commandOutput = getDevice().executeShellCommand(command);
-            getDevice().uninstallPackage(TEST_APP_PKG);
-            getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
-        }
-    }
-
     public void testIsProvisioningAllowed() throws Exception {
         // Must install the apk since the test runs in the DO apk.
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
@@ -168,32 +133,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
                     "testIsProvisioningAllowedFalse", /* deviceOwnerUserId */ 0);
         } finally {
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-        }
-    }
-
-    public void testInstallReason() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        final File apk = buildHelper.getTestFile(TEST_APP_APK);
-        try {
-            // Install the test and prepare the test apk.
-            installAppAsUser(PACKAGE_INSTALLER_APK, mPrimaryUserId);
-            assertTrue(setDeviceOwner(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId,
-                    /*expectFailure*/ false));
-
-            getDevice().uninstallPackage(TEST_APP_PKG);
-            assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
-            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG,
-                    PACKAGE_INSTALLER_PKG + ".InstallReasonTest", mPrimaryUserId);
-        } finally {
-            assertTrue("Failed to remove device owner.",
-                    removeAdmin(PACKAGE_INSTALLER_ADMIN_COMPONENT, mPrimaryUserId));
-            final String command = "rm " + TEST_APP_LOCATION + apk.getName();
-            final String commandOutput = getDevice().executeShellCommand(command);
-            getDevice().uninstallPackage(TEST_APP_PKG);
-            getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
         }
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.packageinstaller;
+package android.packageinstaller.admin.cts;
 
 import android.content.pm.PackageManager;
 
