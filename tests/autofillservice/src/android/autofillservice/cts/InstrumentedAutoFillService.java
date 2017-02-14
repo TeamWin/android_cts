@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.autofillservice.cts;
+
+import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.app.assist.AssistStructure.WindowNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.CannedFillResponse.Field;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.service.autofill.AutoFillService;
 import android.service.autofill.FillCallback;
 import android.service.autofill.SaveCallback;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
 import android.view.autofill.Dataset;
 import android.view.autofill.FillResponse;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,10 +48,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     private static final String TAG = "InstrumentedAutoFillService";
 
-    private static final AtomicReference<CannedFillResponse> sCannedFillResponse =
-            new AtomicReference<>();
-
-    private static AtomicInteger sNumberFillRequests = new AtomicInteger(0);
+    private static final AtomicReference<FillReplier> sFillReplier = new AtomicReference<>();
 
     // TODO(b/33197203, b/33802548): add tests for onConnected() / onDisconnected() and/or remove
     // overriden methods below that are only logging their calls.
@@ -67,48 +66,10 @@ public class InstrumentedAutoFillService extends AutoFillService {
     @Override
     public void onFillRequest(AssistStructure structure, Bundle data,
             CancellationSignal cancellationSignal, FillCallback callback) {
-        final int requestNumber = sNumberFillRequests.incrementAndGet();
-        final CannedFillResponse cannedResponse = sCannedFillResponse.getAndSet(null);
-        Log.v(TAG, "onFillRequest(#" + requestNumber + "): cannedResponse = " + cannedResponse);
+        final FillReplier replier = sFillReplier.getAndSet(null);
+        assertWithMessage("FillReplier not set").that(replier).isNotNull();
 
-        assertWithMessage("CancelationSignal is null").that(cancellationSignal).isNotNull();
-
-        if (cannedResponse == null) {
-            callback.onSuccess(null);
-            return;
-        }
-        final FillResponse.Builder responseBuilder = new FillResponse.Builder("4815162342");
-        final List<CannedDataset> datasets = cannedResponse.datasets;
-
-        if (datasets.isEmpty()) {
-            callback.onSuccess(responseBuilder.build());
-            return;
-        }
-
-        assertWithMessage("multiple datasets not supported yet").that(datasets).hasSize(1);
-
-        final CannedDataset dataset = datasets.get(0);
-
-        final Map<String, Field> fields = dataset.fields;
-        if (fields.isEmpty()) {
-            callback.onSuccess(responseBuilder.build());
-            return;
-        }
-
-        final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.id, dataset.name);
-
-        Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
-        final int nodes = structure.getWindowNodeCount();
-        for (int i = 0; i < nodes; i++) {
-            final WindowNode node = structure.getWindowNodeAt(i);
-            final ViewNode view = node.getRootViewNode();
-            fill(datasetBuilder, fields, view);
-        }
-
-        final FillResponse fillResponse =
-                responseBuilder.addDataset(datasetBuilder.build()).build();
-        Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
-        callback.onSuccess(fillResponse);
+        replier.onFillRequest(structure, data, cancellationSignal, callback);
     }
 
     @Override
@@ -117,64 +78,147 @@ public class InstrumentedAutoFillService extends AutoFillService {
     }
 
     /**
-     * Sets the response returned by the service in the next
-     * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} call.
+     * Sets the {@link FillReplier} for the
+     * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} calls.
      */
-    static void setFillResponse(CannedFillResponse response) {
-        final boolean ok = sCannedFillResponse.compareAndSet(null, response);
+    public static void setFillReplier(FillReplier replier) {
+        final boolean ok = sFillReplier.compareAndSet(null, replier);
         if (!ok) {
-            throw new IllegalStateException("already set: " + sCannedFillResponse.get());
+            throw new IllegalStateException("already set: " + sFillReplier.get());
+        }
+    }
+
+    public static void resetFillReplier() {
+        sFillReplier.set(null);
+    }
+
+    /**
+     * POJO representation of the contents of a
+     * {@link AutoFillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
+     * android.os.CancellationSignal, android.service.autofill.FillCallback)}
+     * that can be asserted at the end of a test case.
+     */
+    static final class Request {
+        final AssistStructure structure;
+        final Bundle data;
+        final CancellationSignal cancellationSignal;
+        final FillCallback callback;
+
+        private Request(AssistStructure structure, Bundle data,
+                CancellationSignal cancellationSignal, FillCallback callback) {
+            this.structure = structure;
+            this.data = data;
+            this.cancellationSignal = cancellationSignal;
+            this.callback = callback;
         }
     }
 
     /**
-     * Resets the number of requests to {@link #onFillRequest(AssistStructure, Bundle,
-     * CancellationSignal, FillCallback)} so it can be verified by
-     * {@link #assertNumberFillRequests(int)}.
+     * Object used to answer a
+     * {@link AutoFillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
+     * android.os.CancellationSignal, android.service.autofill.FillCallback)}
+     * on behalf of a unit test method.
      */
-    static void resetNumberFillRequests() {
-        sNumberFillRequests.set(0);
-    }
+    static final class FillReplier {
 
-    /**
-     * Asserts the number of calls to {@link #onFillRequest(AssistStructure, Bundle,
-     * CancellationSignal, FillCallback)} since the last call to {@link #resetNumberFillRequests()}.
-     */
-    static void assertNumberFillRequests(int expected) {
-        final int actual = sNumberFillRequests.get();
-        assertWithMessage("Invalid number of fill requests").that(actual).isEqualTo(expected);
-    }
+        private AtomicInteger mNumberFillRequests = new AtomicInteger(0);
+        private final Queue<CannedFillResponse> mResponses = new LinkedList<>();
+        private final Queue<Request> mRequests = new LinkedList<>();
 
-    private void fill(Dataset.Builder builder, Map<String, Field> fields,
-            ViewNode view) {
-        final String resourceId = view.getIdEntry();
-        final Field field = fields.get(resourceId);
+        /**
+         * Sets the expectation for the next {@code onFillRequest} as {@link FillResponse} with just
+         * one {@link Dataset}.
+         */
+        FillReplier addResponse(CannedDataset dataset) {
+            return addResponse(new CannedFillResponse.Builder()
+                    .addDataset(dataset)
+                    .build());
+        }
 
-        if (field != null) {
-            // Make sure it's sanitized
-            if (field.sanitized) {
-                final CharSequence text = view.getText();
-                if (!TextUtils.isEmpty(text)) {
-                    throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
-                }
-                final AutoFillValue initialValue = view.getAutoFillValue();
-                assertWithMessage("auto-fill value on sanitized field %s: %s", resourceId,
-                        initialValue).that(initialValue).isNull();
+        /**
+         * Sets the expectation for the next {@code onFillRequest}.
+         */
+        FillReplier addResponse(CannedFillResponse response) {
+            mResponses.add(response);
+            return this;
+        }
+
+        /**
+         * Gets the next request, in the order received.
+         *
+         * <p>Typically called at the end of a test case, to assert the initial request.
+         */
+        Request getNextRequest() {
+            return mRequests.remove();
+        }
+
+        /**
+         * Resets the number of requests to
+         * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} so it
+         * can be verified by {@link #assertNumberFillRequests(int)}.
+         */
+        void resetNumberFillRequests() {
+            mNumberFillRequests.set(0);
+        }
+
+        /**
+         * Asserts the number of calls to
+         * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} since
+         * the last call to {@link #resetNumberFillRequests()}.
+         */
+        void assertNumberFillRequests(int expected) {
+            final int actual = mNumberFillRequests.get();
+            assertWithMessage("Invalid number of fill requests").that(actual).isEqualTo(expected);
+        }
+
+        private void onFillRequest(AssistStructure structure,
+                @SuppressWarnings("unused") Bundle data, CancellationSignal cancellationSignal,
+                FillCallback callback) {
+
+            mRequests.add(new Request(structure, data, cancellationSignal, callback));
+
+            final CannedFillResponse response = mResponses.remove();
+
+            final int requestNumber = mNumberFillRequests.incrementAndGet();
+            Log.v(TAG, "onFillRequest(#" + requestNumber + ")");
+
+            if (response == null) {
+                callback.onSuccess(null);
+                return;
+            }
+            final FillResponse.Builder responseBuilder = new FillResponse.Builder("4815162342");
+            final List<CannedDataset> datasets = response.datasets;
+
+            if (datasets.isEmpty()) {
+                callback.onSuccess(responseBuilder.build());
+                return;
             }
 
-            final AutoFillValue value = field.value;
-            if (value != null) {
-                final AutoFillId id = view.getAutoFillId();
+            assertWithMessage("multiple datasets not supported yet").that(datasets).hasSize(1);
+
+            final CannedDataset dataset = datasets.get(0);
+
+            final Map<String, AutoFillValue> fields = dataset.fields;
+            if (fields.isEmpty()) {
+                callback.onSuccess(responseBuilder.build());
+                return;
+            }
+
+            final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.id, dataset.name);
+            for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
+                final String resourceId = entry.getKey();
+                final ViewNode node = findNodeByResourceId(structure, resourceId);
+                assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
+                final AutoFillId id = node.getAutoFillId();
+                final AutoFillValue value = entry.getValue();
                 Log.d(TAG, "setting '" + resourceId + "' (" + id + ") to " + value);
-                builder.setValue(id, value);
+                datasetBuilder.setValue(id, value);
             }
-        }
 
-        final int childrenSize = view.getChildCount();
-        if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                fill(builder, fields, view.getChildAt(i));
-            }
+            final FillResponse fillResponse = responseBuilder.addDataset(datasetBuilder.build())
+                    .build();
+            Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
+            callback.onSuccess(fillResponse);
         }
     }
 }
