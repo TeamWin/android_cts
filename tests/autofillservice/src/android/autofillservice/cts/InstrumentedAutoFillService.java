@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -38,7 +40,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -48,7 +52,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     private static final String TAG = "InstrumentedAutoFillService";
 
-    private static final AtomicReference<FillReplier> sFillReplier = new AtomicReference<>();
+    private static final AtomicReference<Replier> sReplier = new AtomicReference<>();
 
     // TODO(b/33197203, b/33802548): add tests for onConnected() / onDisconnected() and/or remove
     // overriden methods below that are only logging their calls.
@@ -66,30 +70,32 @@ public class InstrumentedAutoFillService extends AutoFillService {
     @Override
     public void onFillRequest(AssistStructure structure, Bundle data,
             CancellationSignal cancellationSignal, FillCallback callback) {
-        final FillReplier replier = sFillReplier.getAndSet(null);
-        assertWithMessage("FillReplier not set").that(replier).isNotNull();
-
+        final Replier replier = sReplier.getAndSet(null);
+        assertWithMessage("Replier not set").that(replier).isNotNull();
         replier.onFillRequest(structure, data, cancellationSignal, callback);
     }
 
     @Override
     public void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
-        Log.v(TAG, "onSaveRequest()");
+        final Replier replier = sReplier.getAndSet(null);
+        assertWithMessage("Replier not set").that(replier).isNotNull();
+        replier.onSaveRequest(structure, data, callback);
     }
 
     /**
-     * Sets the {@link FillReplier} for the
-     * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} calls.
+     * Sets the {@link Replier} for the
+     * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} and
+     * {@link #onSaveRequest(AssistStructure, Bundle, SaveCallback)} calls.
      */
-    public static void setFillReplier(FillReplier replier) {
-        final boolean ok = sFillReplier.compareAndSet(null, replier);
+    public static void setReplier(Replier replier) {
+        final boolean ok = sReplier.compareAndSet(null, replier);
         if (!ok) {
-            throw new IllegalStateException("already set: " + sFillReplier.get());
+            throw new IllegalStateException("already set: " + sReplier.get());
         }
     }
 
     public static void resetFillReplier() {
-        sFillReplier.set(null);
+        sReplier.set(null);
     }
 
     /**
@@ -98,17 +104,34 @@ public class InstrumentedAutoFillService extends AutoFillService {
      * android.os.CancellationSignal, android.service.autofill.FillCallback)}
      * that can be asserted at the end of a test case.
      */
-    static final class Request {
+    static final class FillRequest {
         final AssistStructure structure;
         final Bundle data;
         final CancellationSignal cancellationSignal;
         final FillCallback callback;
 
-        private Request(AssistStructure structure, Bundle data,
+        private FillRequest(AssistStructure structure, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback) {
             this.structure = structure;
             this.data = data;
             this.cancellationSignal = cancellationSignal;
+            this.callback = callback;
+        }
+    }
+
+    /**
+     * POJO representation of the contents of a
+     * {@link AutoFillService#onSaveRequest(AssistStructure, Bundle, SaveCallback)}
+     * that can be asserted at the end of a test case.
+     */
+    static final class SaveRequest {
+        final AssistStructure structure;
+        final Bundle data;
+        final SaveCallback callback;
+
+        private SaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+            this.structure = structure;
+            this.data = data;
             this.callback = callback;
         }
     }
@@ -119,17 +142,17 @@ public class InstrumentedAutoFillService extends AutoFillService {
      * android.os.CancellationSignal, android.service.autofill.FillCallback)}
      * on behalf of a unit test method.
      */
-    static final class FillReplier {
+    static final class Replier {
 
-        private AtomicInteger mNumberFillRequests = new AtomicInteger(0);
         private final Queue<CannedFillResponse> mResponses = new LinkedList<>();
-        private final Queue<Request> mRequests = new LinkedList<>();
+        private final BlockingQueue<FillRequest> mFillRequests = new LinkedBlockingQueue<>();
+        private final BlockingQueue<SaveRequest> mSaveRequests = new LinkedBlockingQueue<>();
 
         /**
          * Sets the expectation for the next {@code onFillRequest} as {@link FillResponse} with just
          * one {@link Dataset}.
          */
-        FillReplier addResponse(CannedDataset dataset) {
+        Replier addResponse(CannedDataset dataset) {
             return addResponse(new CannedFillResponse.Builder()
                     .addDataset(dataset)
                     .build());
@@ -138,49 +161,63 @@ public class InstrumentedAutoFillService extends AutoFillService {
         /**
          * Sets the expectation for the next {@code onFillRequest}.
          */
-        FillReplier addResponse(CannedFillResponse response) {
+        Replier addResponse(CannedFillResponse response) {
             mResponses.add(response);
             return this;
         }
 
         /**
-         * Gets the next request, in the order received.
+         * Gets the next fill request, in the order received.
          *
          * <p>Typically called at the end of a test case, to assert the initial request.
          */
-        Request getNextRequest() {
-            return mRequests.remove();
+        FillRequest getNextFillRequest() throws InterruptedException {
+            final FillRequest request = mFillRequests.poll(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            if (request == null) {
+                throw new AssertionError("onFill() not called in " + FILL_TIMEOUT_MS + " ms");
+            }
+            return request;
         }
 
         /**
-         * Resets the number of requests to
-         * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} so it
-         * can be verified by {@link #assertNumberFillRequests(int)}.
+         * Asserts the total number of {@link AutoFillService#onFillRequest(AssistStructure, Bundle,
+         * CancellationSignal, FillCallback)}, minus those returned by
+         * {@link #getNextFillRequest()}.
          */
-        void resetNumberFillRequests() {
-            mNumberFillRequests.set(0);
+        void assertNumberUnhandledFillRequests(int expected) {
+            assertWithMessage("Invalid number of fill requests").that(mFillRequests.size())
+                    .isEqualTo(expected);
         }
 
         /**
-         * Asserts the number of calls to
-         * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} since
-         * the last call to {@link #resetNumberFillRequests()}.
+         * Gets the next save request, in the order received.
+         *
+         * <p>Typically called at the end of a test case, to assert the initial request.
          */
-        void assertNumberFillRequests(int expected) {
-            final int actual = mNumberFillRequests.get();
-            assertWithMessage("Invalid number of fill requests").that(actual).isEqualTo(expected);
+        SaveRequest getNextSaveRequest() throws InterruptedException {
+            final SaveRequest request = mSaveRequests.poll(SAVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            if (request == null) {
+                throw new AssertionError("onSave() not called in " + SAVE_TIMEOUT_MS + " ms");
+            }
+            return request;
+        }
+
+        /**
+         * Asserts the total number of {@link AutoFillService#onSaveRequest(AssistStructure,
+         * Bundle, SaveCallback)} minus those returned by {@link #getNextSaveRequest()}.
+         */
+        void assertNumberUnhandledSaveRequests(int expected) {
+            assertWithMessage("Invalid number of save requests").that(mSaveRequests.size())
+                    .isEqualTo(expected);
         }
 
         private void onFillRequest(AssistStructure structure,
                 @SuppressWarnings("unused") Bundle data, CancellationSignal cancellationSignal,
                 FillCallback callback) {
 
-            mRequests.add(new Request(structure, data, cancellationSignal, callback));
+            mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
 
             final CannedFillResponse response = mResponses.remove();
-
-            final int requestNumber = mNumberFillRequests.incrementAndGet();
-            Log.v(TAG, "onFillRequest(#" + requestNumber + ")");
 
             if (response == null) {
                 callback.onSuccess(null);
@@ -188,37 +225,54 @@ public class InstrumentedAutoFillService extends AutoFillService {
             }
             final FillResponse.Builder responseBuilder = new FillResponse.Builder();
             final List<CannedDataset> datasets = response.datasets;
+            final String[] savableIds = response.savableIds;
 
-            if (datasets.isEmpty()) {
+            if (datasets.isEmpty() && savableIds == null) {
                 callback.onSuccess(responseBuilder.build());
                 return;
             }
 
-            assertWithMessage("multiple datasets not supported yet").that(datasets).hasSize(1);
+            if (!datasets.isEmpty()) {
+                assertWithMessage("multiple datasets not supported yet").that(datasets).hasSize(1);
 
-            final CannedDataset dataset = datasets.get(0);
+                final CannedDataset dataset = datasets.get(0);
 
-            final Map<String, AutoFillValue> fields = dataset.fields;
-            if (fields.isEmpty()) {
-                callback.onSuccess(responseBuilder.build());
-                return;
+                final Map<String, AutoFillValue> fields = dataset.fields;
+                if (fields.isEmpty()) {
+                    callback.onSuccess(responseBuilder.build());
+                    return;
+                }
+
+                final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.name);
+                for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
+                    final String resourceId = entry.getKey();
+                    final ViewNode node = findNodeByResourceId(structure, resourceId);
+                    assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
+                    final AutoFillId id = node.getAutoFillId();
+                    final AutoFillValue value = entry.getValue();
+                    Log.d(TAG, "setting '" + resourceId + "' (" + id + ") to " + value);
+                    datasetBuilder.setValue(id, value);
+                }
+                responseBuilder.addDataset(datasetBuilder.build());
             }
 
-            final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.name);
-            for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
-                final String resourceId = entry.getKey();
-                final ViewNode node = findNodeByResourceId(structure, resourceId);
-                assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
-                final AutoFillId id = node.getAutoFillId();
-                final AutoFillValue value = entry.getValue();
-                Log.d(TAG, "setting '" + resourceId + "' (" + id + ") to " + value);
-                datasetBuilder.setValue(id, value);
+            if (savableIds != null) {
+                for (String resourceId : savableIds) {
+                    final ViewNode node = findNodeByResourceId(structure, resourceId);
+                    final AutoFillId id = node.getAutoFillId();
+                    Log.d(TAG, "mapping savable id: '" + resourceId + "' to " + id);
+                    responseBuilder.addSavableFields(id);
+                }
             }
 
-            final FillResponse fillResponse = responseBuilder.addDataset(datasetBuilder.build())
-                    .build();
+            final FillResponse fillResponse = responseBuilder.build();
             Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
             callback.onSuccess(fillResponse);
+        }
+
+        private void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+            Log.d(TAG, "onSaveRequest()");
+            mSaveRequests.offer(new SaveRequest(structure, data, callback));
         }
     }
 }
