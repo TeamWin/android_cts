@@ -263,7 +263,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
             + "If not specified, all configured system status checkers are run.")
     private Set<String> mSystemStatusCheckWhitelist = new HashSet<>();
 
-    private List<ISystemStatusChecker> mListCheckers = null;
+    private List<ISystemStatusChecker> mListCheckers = new ArrayList<>();
 
     @Option(name = "collect-tests-only",
             description = "Only invoke the suite to collect list of applicable test cases. All "
@@ -333,6 +333,19 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
     @Override
     public void run(ITestInvocationListener listener) throws DeviceNotAvailableException {
         try {
+            List<ISystemStatusChecker> checkers = new ArrayList<>();
+            // Get system status checkers
+            if (mSkipAllSystemStatusCheck) {
+                CLog.d("Skipping system status checkers");
+            } else {
+                checkSystemStatusBlackAndWhiteList();
+                for (ISystemStatusChecker checker : mListCheckers) {
+                    if(shouldIncludeSystemStatusChecker(checker)) {
+                        checkers.add(checker);
+                    }
+                }
+            }
+
             // FIXME: Each shard will do a full initialization which is not optimal. Need a way
             // to be more specific on what to initialize.
             List<IModuleDef> modules;
@@ -384,18 +397,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 CLog.logAndDisplay(LogLevel.INFO, "\"--skip-connectivity-check\" is deprecated, "
                         + "please use \"--skip-system-status-check %s\" instead", clazz);
                 mSystemStatusCheckBlacklist.add(clazz);
-            }
-
-            List<ISystemStatusChecker> checkers = new ArrayList<>();
-            // Get system status checkers
-            if (mSkipAllSystemStatusCheck) {
-                CLog.d("Skipping system status checkers");
-            } else {
-                for (ISystemStatusChecker checker : mListCheckers) {
-                    if(shouldIncludeSystemStatusChecker(checker)) {
-                        checkers.add(checker);
-                    }
-                }
             }
 
             // Set values and run preconditions
@@ -548,6 +549,32 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     protected Set<String> getAbisForBuildTargetArch() {
         return AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+    }
+
+    /**
+     * Check that the system status checker specified by option are valid.
+     */
+    protected void checkSystemStatusBlackAndWhiteList() {
+        for (String checker : mSystemStatusCheckWhitelist) {
+            try {
+                Class.forName(checker);
+            } catch (ClassNotFoundException e) {
+                ConfigurationException ex = new ConfigurationException(
+                        String.format("--system-status-check-whitelist must contains valid class, "
+                                + "%s was not found", checker), e);
+                throw new RuntimeException(ex);
+            }
+        }
+        for (String checker : mSystemStatusCheckBlacklist) {
+            try {
+                Class.forName(checker);
+            } catch (ClassNotFoundException e) {
+                ConfigurationException ex = new ConfigurationException(
+                        String.format("--skip-system-status-check must contains valid class, "
+                                + "%s was not found", checker), e);
+                throw new RuntimeException(ex);
+            }
+        }
     }
 
     /**
