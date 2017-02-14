@@ -25,14 +25,14 @@ import android.autofillservice.cts.CannedFillResponse.Field;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.service.autofill.AutoFillService;
+import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
+import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
-import android.view.autofill.Dataset;
-import android.view.autofill.FillResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -77,7 +77,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
             callback.onSuccess(null);
             return;
         }
-        final FillResponse.Builder responseBuilder = new FillResponse.Builder("4815162342");
+        final FillResponse.Builder responseBuilder = new FillResponse.Builder();
         final List<CannedDataset> datasets = cannedResponse.datasets;
 
         if (datasets.isEmpty()) {
@@ -95,7 +95,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
             return;
         }
 
-        final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.id, dataset.name);
+        final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.name);
 
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
         final int nodes = structure.getWindowNodeCount();

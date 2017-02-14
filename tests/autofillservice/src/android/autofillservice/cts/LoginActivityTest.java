@@ -39,7 +39,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutoFillOneDataset() throws Exception {
         enableService();
 
-        final CannedDataset.Builder dataset = new CannedDataset.Builder("4815162342", "The Dude")
+        final CannedDataset.Builder dataset = new CannedDataset.Builder("The Dude")
                 .setField(ID_USERNAME, AutoFillValue.forText("dude"))
                 .setSanitizedField(ID_PASSWORD, AutoFillValue.forText("sweet"));
 

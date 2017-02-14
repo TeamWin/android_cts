@@ -17,8 +17,6 @@ package android.autofillservice.cts;
 
 import android.app.assist.AssistStructure;
 import android.view.autofill.AutoFillValue;
-import android.view.autofill.Dataset;
-import android.view.autofill.FillResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Helper class used to produce a {@link FillResponse} based on expected fields that should be
- * present in the {@link AssistStructure}.
+ * Helper class used to produce a {@link android.service.autofill.FillResponse} based on
+ * expected fields that should be present in the {@link AssistStructure}.
  *
  * <p>Typical usage:
  *
@@ -67,7 +65,7 @@ final class CannedFillResponse {
     }
 
     /**
-     * Helper class used to produce a {@link Dataset} based on expected fields that should be
+     * Helper class used to produce a {@link android.service.autofill.Dataset} based on expected fields that should be
      * present in the {@link AssistStructure}.
      *
      * <p>Typical usage:
@@ -84,27 +82,23 @@ final class CannedFillResponse {
     static class CannedDataset {
 
         final Map<String, Field> fields;
-        final String id;
         final String name;
 
         private CannedDataset(Builder builder) {
             fields = builder.mFields;
-            id = builder.mId;
             name = builder.mName;
         }
 
         @Override
         public String toString() {
-            return "CannedDataset: [id=" + id + ", name=" + name + ", fields=" + fields + "]";
+            return "CannedDataset: [name=" + name + ", fields=" + fields + "]";
         }
 
         static class Builder {
             private final Map<String, Field> mFields = new HashMap<>();
-            private final String mId;
             private final String mName;
 
-            public Builder(String id, String name) {
-                mId = id;
+            public Builder(String name) {
                 mName = name;
             }
 
