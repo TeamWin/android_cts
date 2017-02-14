@@ -26,6 +26,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
+
 LOCAL_PACKAGE_NAME := CtsAccountManagerTestCases
 
 LOCAL_SDK_VERSION := current

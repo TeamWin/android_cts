@@ -32,6 +32,7 @@ import android.os.RemoteException;
 import android.test.AndroidTestCase;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * Tests for AccountManager and AbstractAccountAuthenticator related behavior using {@link
@@ -97,7 +98,7 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
                     null); // handler
             fail("Expecting a OperationCanceledException.");
         } catch (SecurityException expected) {
-            
+
         }
     }
 
@@ -186,21 +187,72 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
 
     public void setAuthToken() {
         try {
-            mAccountManager.setAuthToken(
-                    Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
-                    "tokenType",
+            mAccountManager.setAuthToken(Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS, "tokenType",
                     "token");
             fail("setAuthToken should just barf if the caller isn't permitted.");
-        } catch (SecurityException expected) {}
+        } catch (SecurityException expected) {
+        }
     }
 
     public void testPeekAuthToken() {
         try {
-            mAccountManager.peekAuthToken(
-                    Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
+            mAccountManager.peekAuthToken(Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
                     "tokenType");
             fail("peekAuthToken should just barf if the caller isn't permitted.");
-        } catch (SecurityException expected) {}
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testSetAccountVisibility()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        try {
+            mAccountManager.setAccountVisibility(Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
+                    "some", AccountManager.VISIBILITY_VISIBLE);
+            fail("setAccountVisibility should just barf if the caller isn't permitted.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testGetAccountVisibility()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        try {
+            mAccountManager.getAccountVisibility(Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
+                    "some.example");
+            fail("getAccountVisibility should just barf if the caller isn't permitted.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testGetAccountsAndVisibilityForPackage()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        try {
+            mAccountManager.getAccountsAndVisibilityForPackage("some.package",
+                    Fixtures.TYPE_STANDARD_UNAFFILIATED);
+            fail("getAccountsAndVisibilityForPackage should just barf if the caller isn't permitted.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testGetPackagesAndVisibilityForAccount()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        try {
+            mAccountManager.getPackagesAndVisibilityForAccount(
+                    Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS);
+            fail("getRequestingUidsForType should just barf if the caller isn't permitted.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testAddAccountExplicitlyVisthVisibilityMap()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        try {
+            mAccountManager.addAccountExplicitly(Fixtures.ACCOUNT_UNAFFILIATED_FIXTURE_SUCCESS,
+                    "shouldn't matter", // password
+                    null, // bundle
+                    new HashMap<String, Integer>()); // visibility;
+            fail("addAccountExplicitly should just barf if the caller isn't permitted.");
+        } catch (SecurityException expected) {
+        }
     }
 
     public void testGetAccounts() {
@@ -209,8 +261,7 @@ public class AccountManagerUnaffiliatedAuthenticatorTests extends AndroidTestCas
     }
 
     public void testGetAccountsByType() {
-        Account[] accounts = mAccountManager.getAccountsByType(
-                Fixtures.TYPE_STANDARD_UNAFFILIATED);
+        Account[] accounts = mAccountManager.getAccountsByType(Fixtures.TYPE_STANDARD_UNAFFILIATED);
         assertEquals(0, accounts.length);
     }
 
