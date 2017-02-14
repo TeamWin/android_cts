@@ -139,6 +139,7 @@ $(verifier-zip) : $(call intermediates-dir-for,APPS,CtsVerifier)/package.apk | $
 		$(hide) $(ACP) -fp $< $(verifier-dir)/CtsVerifier.apk
 		$(ACP) -fp $(notification-bot) $(verifier-dir)/NotificationBot.apk
 		$(ACP) -fp $(permission-app) $(verifier-dir)/CtsPermissionApp.apk
+		$(ACP) -fp $(usb-companion) $(verifier-dir)/CtsVerifierUSBCompanion.apk
 		$(hide) $(ACP) -fpr $(HOST_OUT)/CameraITS $(verifier-dir)
 		$(hide) cd $(cts-dir) && zip -rq $(verifier-dir-name) $(verifier-dir-name)
 
