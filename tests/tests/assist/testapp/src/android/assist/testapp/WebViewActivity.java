@@ -17,7 +17,9 @@
 package android.assist.testapp;
 
 import android.app.Activity;
+import android.assist.common.MyWebView;
 import android.assist.common.Utils;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -35,14 +37,14 @@ public class WebViewActivity extends Activity {
         Log.i(TAG, "TestApp created");
         mTestCaseName = getIntent().getStringExtra(Utils.TESTCASE_TYPE);
         setContentView(R.layout.webview);
-        WebView webview = (WebView) findViewById(R.id.webview);
+        MyWebView webview = (MyWebView) findViewById(R.id.webview);
         webview.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url){
                 sendBroadcast(new Intent(Utils.APP_3P_HASRESUMED));
             }
         });
-        webview.loadData(Utils.WEBVIEW_HTML, "text/html", "UTF-8");
+        webview.myLoadData(Utils.WEBVIEW_HTML_URL, Utils.WEBVIEW_HTML, "text/html", "UTF-8");
         //webview.loadUrl(
         //        "https://android-developers.blogspot.com/2015/08/m-developer-preview-3-final-sdk.html");
     }

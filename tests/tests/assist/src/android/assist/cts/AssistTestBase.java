@@ -378,6 +378,27 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     }
 
     /**
+     * Return true if the expected URL is found in the WebView, else fail.
+     */
+    protected void verifyAssistStructureHasUrl(String url) {
+        assertTrue(traverseWebViewForUrl(
+                mAssistStructure.getWindowNodeAt(0).getRootViewNode(), url));
+    }
+
+    private boolean traverseWebViewForUrl(ViewNode parentNode, String url) {
+        if (parentNode.getUrl() != null
+                && parentNode.getUrl().toString().equals(url)) {
+            return true;
+        }
+        for (int i = parentNode.getChildCount() - 1; i >= 0; i--) {
+            if (traverseWebViewForUrl(parentNode.getChildAt(i), url)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Compare view properties of the view hierarchy with that reported in the assist structure.
      */
     private void verifyViewProperties(View parentView, ViewNode parentNode) {
