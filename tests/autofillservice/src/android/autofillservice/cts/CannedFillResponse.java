@@ -16,11 +16,13 @@
 package android.autofillservice.cts;
 
 import android.app.assist.AssistStructure;
+import android.autofillservice.cts.CannedFillResponse.CannedDataset.Builder;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.view.autofill.AutoFillValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,23 +45,36 @@ import java.util.Map;
 final class CannedFillResponse {
 
     final List<CannedDataset> datasets;
+    final String[] savableIds;
 
     private CannedFillResponse(Builder builder) {
         datasets = builder.mDatasets;
+        savableIds = builder.mSavableIds;
     }
 
     @Override
     public String toString() {
-        return "CannedFillResponse: [datasets=" + datasets + "]";
+        return "CannedFillResponse: [datasets=" + datasets + ", savableIds="
+                + Arrays.toString(savableIds) + "]";
     }
 
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
+        private String[] mSavableIds;
 
         public Builder addDataset(CannedDataset dataset) {
             mDatasets.add(dataset);
             return this;
         }
+
+        /**
+         * Sets the savable ids based on they {@code resourceId}.
+         */
+        public Builder setSavableIds(String... ids) {
+            mSavableIds = ids;
+            return this;
+        }
+
 
         public CannedFillResponse build() {
             return new CannedFillResponse(this);

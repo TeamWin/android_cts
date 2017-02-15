@@ -41,6 +41,11 @@ final class Helper {
     static final long FILL_TIMEOUT_MS = 2000;
 
     /**
+     * Timeout (in milliseconds) for expected save requests.
+     */
+    static final long SAVE_TIMEOUT_MS = 2000;
+
+    /**
      * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
      */
     static final int UI_TIMEOUT_MS = 2000;
@@ -108,6 +113,16 @@ final class Helper {
       final AutoFillValue initialValue = node.getAutoFillValue();
       assertWithMessage("auto-fill value on sanitized field %s: %s", resourceId,
               initialValue).that(initialValue).isNull();
+    }
+
+    /**
+     * Asserts the contents of a text-based node.
+     */
+    static void assertText(ViewNode node, String expectedValue) {
+        assertWithMessage("wrong text on %s", node).that(node.getText().toString())
+                .isEqualTo(expectedValue);
+        assertWithMessage("wrong auto-fill value on %s", node).that(node.getAutoFillValue())
+                .isEqualTo(AutoFillValue.forText(expectedValue));
     }
 
     /**

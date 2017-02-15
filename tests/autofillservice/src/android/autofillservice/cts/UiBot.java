@@ -22,10 +22,7 @@ import android.app.Instrumentation;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 
@@ -58,29 +55,14 @@ final class UiBot {
     }
 
     /**
-     * Triggers IME by tapping a given field.
+     * Taps an option in the save snackbar.
      *
-     * @param id resource id, without the {@code +id} prefix
+     * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
      */
-    void triggerImeByRelativeId(String id) throws UiObjectNotFoundException {
-        Log.v(TAG, "triggerImeByRelativeId(): " + id);
-        final String fullId = mPackageName + ":id/" + id;
-        final UiObject field = mDevice.findObject(new UiSelector().resourceId(fullId));
-        final boolean clicked = field.clickAndWaitForNewWindow();
-        assertWithMessage("Failed to tap object with id '%s'", fullId).that(clicked).isTrue();
-    }
-
-    /**
-     * Taps a given UI object.
-     *
-     * @param id resource id, without the {@code +id} prefix
-     */
-    void tapByRelativeId(String id) throws UiObjectNotFoundException {
-        Log.v(TAG, "tapFieldByRelativeId(): " + id);
-        final String fullId = mPackageName + ":id/" + id;
-        final UiObject field = mDevice.findObject(new UiSelector().resourceId(fullId));
-        final boolean clicked = field.click();
-        assertWithMessage("Failed to tap object with id '%s'", fullId).that(clicked).isTrue();
+    void saveForAutofill(boolean yesDoIt) {
+        final String id = yesDoIt ? "autofill_save_yes" : "autofill_save_no";
+        final UiObject2 button = waitForObject(By.res("android", id));
+        button.click();
     }
 
     /**

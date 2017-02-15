@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -49,9 +50,14 @@ import java.util.concurrent.TimeUnit;
 public class LoginActivity extends Activity {
 
     private static final String TAG = "LoginActivity";
+    private static String WELCOME_TEMPLATE = "Welcome to the new activity, %s!";
+    private static final long LOGIN_TIMEOUT_MS = 1000;
 
+    static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
     static final String ID_USERNAME = "username";
     static final String ID_PASSWORD = "password";
+    static final String ID_LOGIN = "login";
+    static final String ID_OUTPUT = "output";
 
     private EditText mUsernameEditText;
     private EditText mPasswordEditText;
@@ -59,6 +65,17 @@ public class LoginActivity extends Activity {
     private Button mLoginButton;
     private Button mClearButton;
     private AutoFillExpectation mAutoFillExpectation;
+
+    // State used to synchronously get the result of a login attempt.
+    private CountDownLatch mLoginLatch;
+    private String mLoginMessage;
+
+    /**
+     * Gets the expected welcome message for a given username.
+     */
+    static String getWelcomeMessage(String username) {
+        return String.format(WELCOME_TEMPLATE,  username);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,15 +117,32 @@ public class LoginActivity extends Activity {
     /**
      * Emulates a login action.
      */
-    // TODO(b/33197203): check if username / password matches and either show error message
-    // or redirect to a welcome 'user' page
     private void login() {
-        final StringBuilder buffer = new StringBuilder();
-        buffer.append("Username:").append(mUsernameEditText.getText()).append(":\n");
-        buffer.append("Password:").append(mPasswordEditText.getText()).append(":\n");
-        final String output = buffer.toString();
-        Log.d(TAG, "login(): " + output);
-        mOutput.setText(output);
+        final String username = mUsernameEditText.getText().toString();
+        final String password = mPasswordEditText.getText().toString();
+        final boolean valid = username.equals(password);
+
+        if (valid) {
+            Log.d(TAG, "login ok: " + username);
+            finish();
+            final Intent intent = new Intent(this, WelcomeActivity.class);
+            final String message = getWelcomeMessage(username);
+            intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, message);
+            setLoginMessage(message);
+            startActivity(intent);
+        } else {
+            Log.d(TAG, "login failed: " + AUTHENTICATION_MESSAGE);
+            mOutput.setText(AUTHENTICATION_MESSAGE);
+            setLoginMessage(AUTHENTICATION_MESSAGE);
+        }
+    }
+
+    private void setLoginMessage(String message) {
+        Log.d(TAG, "setLoginMessage(): " + message);
+        if (mLoginLatch != null) {
+            mLoginMessage = message;
+            mLoginLatch.countDown();
+        }
     }
 
     /**
@@ -145,12 +179,26 @@ public class LoginActivity extends Activity {
     }
 
     /**
-     * Visits the {@code username} in the UiThread.
+     * Visits the {@code password} in the UiThread.
      */
     void onPassword(ViewVisitor<EditText> v) {
         runOnUiThread(() -> {
             v.visit(mPasswordEditText);
         });
+    }
+
+    /**
+     * Taps the login button in the UI thread.
+     */
+    String tapLogin() throws Exception {
+        mLoginLatch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            mLoginButton.performClick();
+        });
+        boolean called = mLoginLatch.await(LOGIN_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertWithMessage("Timeout (%s ms) waiting for login", LOGIN_TIMEOUT_MS)
+                .that(called).isTrue();
+        return mLoginMessage;
     }
 
     /**
