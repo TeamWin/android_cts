@@ -19,9 +19,14 @@ package com.android.server.cts;
 import android.service.notification.NotificationRecordProto;
 import android.service.notification.NotificationServiceDumpProto;
 import android.service.notification.State;
+import android.service.notification.ZenMode;
+import android.service.notification.ZenModeProto;
 
 /**
  * Test to check that the notification service properly outputs its dump state.
+ *
+ * make -j32 CtsIncidentHostTestCases
+ * cts-tradefed run singleCommand cts-dev -d --module CtsIncidentHostTestCases
  */
 public class NotificationTest extends ProtoDumpTestCase {
     /**
@@ -49,9 +54,23 @@ public class NotificationTest extends ProtoDumpTestCase {
                 record.getCanShowLight();
                 record.getGroupKey();
             }
+            assertTrue(State.SNOOZED != record.getState());
         }
 
         assertTrue(found);
+    }
+
+    // Tests default state: zen mode off, no suppressors
+    public void testZenMode() throws Exception {
+        final NotificationServiceDumpProto dump = getDump(NotificationServiceDumpProto.parser(),
+                "dumpsys notification --proto");
+        ZenModeProto zenProto = dump.getZen();
+
+        assertEquals(ZenMode.ZEN_MODE_OFF, zenProto.getZenMode());
+        assertEquals(0, zenProto.getEnabledActiveConditionsCount());
+        assertEquals(0, zenProto.getSuppressedEffects());
+        assertEquals(0, zenProto.getSuppressorsCount());
+        zenProto.getPolicy();
     }
 }
 
