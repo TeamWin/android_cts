@@ -16,20 +16,17 @@
 
 package android.assist.testapp;
 
-import android.assist.common.Utils;
-
 import android.app.Activity;
+import android.assist.common.Utils;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
-import java.lang.Override;
-
-public class WebViewActivity extends Activity {
-    static final String TAG = "WebViewActivity";
+public class TestApp extends Activity {
+    static final String TAG = "TestApp";
 
     private String mTestCaseName;
 
@@ -38,16 +35,33 @@ public class WebViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "TestApp created");
         mTestCaseName = getIntent().getStringExtra(Utils.TESTCASE_TYPE);
-        setContentView(R.layout.webview);
-        WebView webview = (WebView) findViewById(R.id.webview);
-        webview.setWebViewClient(new WebViewClient() {
+        switch (mTestCaseName) {
+            case Utils.LARGE_VIEW_HIERARCHY:
+                setContentView(R.layout.multiple_text_views);
+                return;
+            default:
+                setContentView(R.layout.test_app);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.i(TAG, "TestApp has resumed");
+        final View layout = findViewById(android.R.id.content);
+        ViewTreeObserver vto = layout.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
             @Override
-            public void onPageFinished(WebView view, String url){
+            public void onGlobalLayout() {
+                layout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 sendBroadcast(new Intent(Utils.APP_3P_HASRESUMED));
             }
         });
-        webview.loadData(Utils.WEBVIEW_HTML, "text/html", "UTF-8");
-        //webview.loadUrl(
-        //        "https://android-developers.blogspot.com/2015/08/m-developer-preview-3-final-sdk.html");
     }
+
+    public void onEnterAnimationComplete() {
+        Log.i(TAG, "TestApp onEnterAnimationComplete ");
+        sendBroadcast(new Intent(Utils.APP_3P_HASDRAWED));
+    }
+
 }

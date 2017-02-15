@@ -16,43 +16,31 @@
 
 package android.assist.cts;
 
-import com.android.compatibility.common.util.SystemUtil;
-
-import android.assist.cts.TestStartActivity;
-import android.assist.common.Utils;
-
 import android.app.ActivityManager;
 import android.app.assist.AssistContent;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.app.assist.AssistStructure.WindowNode;
+import android.assist.common.Utils;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
-import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.accessibility.AccessibilityNodeInfo;
 import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.lang.Math;
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

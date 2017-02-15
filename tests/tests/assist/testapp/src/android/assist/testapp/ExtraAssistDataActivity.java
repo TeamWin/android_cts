@@ -22,11 +22,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.Override;
-
 /**
  * Test the onProvideAssistData and onProvideAssistContent methods activities may override to
  * provide extra information to the assistant. Verify that the data passed from the activity matches
