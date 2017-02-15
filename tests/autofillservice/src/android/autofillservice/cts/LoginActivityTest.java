@@ -22,6 +22,7 @@ import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.ID_PASSWORD;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -229,6 +230,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Sanity check: make sure service was called just once.
         replier.assertNumberUnhandledFillRequests(0);
         replier.assertNumberUnhandledSaveRequests(0);
+    }
+
+    @Test
+    public void testAutoFillOneDatasetAndSaveWhenFlagSecure() throws Exception {
+        mLoginActivity.setFlags(FLAG_SECURE);
+        testAutoFillOneDatasetAndSave();
+    }
+
+    @Test
+    public void testAutoFillOneDatasetWhenFlagSecure() throws Exception {
+        mLoginActivity.setFlags(FLAG_SECURE);
+        testAutoFillOneDataset();
     }
 
     /*
