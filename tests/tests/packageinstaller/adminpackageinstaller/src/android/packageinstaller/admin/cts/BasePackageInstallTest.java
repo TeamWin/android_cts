@@ -154,6 +154,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
     protected void installPackage(String packageLocation) throws Exception {
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
                 PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        params.setAppPackageName(TEST_APP_PKG);
         int sessionId = mPackageInstaller.createSession(params);
         mSession = mPackageInstaller.openSession(sessionId);
 
