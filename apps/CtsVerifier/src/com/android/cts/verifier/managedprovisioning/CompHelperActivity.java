@@ -36,22 +36,27 @@ public class CompHelperActivity extends Activity {
     // Set always-on VPN.
     public static final String ACTION_SET_ALWAYS_ON_VPN
             = "com.android.cts.verifier.managedprovisioning.COMP_SET_ALWAYS_ON_VPN";
+    // Set the number of login failures after which the managed profile is wiped.
+    public static final String ACTION_SET_MAXIMUM_PASSWORD_ATTEMPTS
+            = "com.android.cts.verifier.managedprovisioning.COMP_SET_MAXIMUM_PASSWORD_ATTEMPTS";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        final ComponentName admin = CompDeviceAdminTestReceiver.getReceiverComponentName();
         final DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(
                 Context.DEVICE_POLICY_SERVICE);
 
         final String action = getIntent().getAction();
         if (ACTION_SET_ALWAYS_ON_VPN.equals(action)) {
             try {
-                dpm.setAlwaysOnVpnPackage(CompDeviceAdminTestReceiver.getReceiverComponentName(),
-                        getPackageName(), false /* lockdownEnabled */);
+                dpm.setAlwaysOnVpnPackage(admin, getPackageName(), false /* lockdownEnabled */);
             } catch (Exception e) {
                 Log.e(TAG, "Unable to set always-on VPN", e);
             }
+        } else if (ACTION_SET_MAXIMUM_PASSWORD_ATTEMPTS.equals(action)) {
+            dpm.setMaximumFailedPasswordsForWipe(admin, 100);
         }
         finish();
     }
