@@ -268,4 +268,10 @@ public class TypefaceTest {
         assertNotSame("Different font asset should return different Typeface object",
                 typeface3, typeface4);
     }
+
+    @Test
+    public void testBadFont() {
+        Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "ft45987.ttf");
+        assertNotNull(typeface);
+    }
 }
