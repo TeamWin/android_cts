@@ -657,6 +657,33 @@ public class TvContractTest extends AndroidTestCase {
                 channelId);
     }
 
+    public void testProgramsTableForIllegalAccess() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        // Set-up: add a channel and program.
+        ContentValues values = createDummyChannelValues(mInputId, false);
+        Uri channelUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(channelUri);
+        Uri programsUri = TvContract.buildProgramsUriForChannel(channelId);
+        values = createDummyProgramValues(channelId);
+        mContentResolver.insert(programsUri, values);
+
+        values.put("browsable", 1);
+        try {
+            mContentResolver.insert(programsUri, values);
+            fail("'browsable' should not be accessible.");
+        } catch (Exception e) {
+            // Expected.
+        }
+
+        mContentResolver.delete(programsUri, null, null);
+        try (Cursor cursor = mContentResolver.query(
+                programsUri, PROGRAMS_PROJECTION, null, null, null)) {
+            assertEquals(0, cursor.getCount());
+        }
+    }
+
     private void verifyOverlap(long startMillis, long endMillis, int expectedCount,
             long channelId, Uri channelUri) {
         try (Cursor cursor = mContentResolver.query(TvContract.buildProgramsUriForChannel(
