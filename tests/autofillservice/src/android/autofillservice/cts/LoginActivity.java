@@ -20,7 +20,6 @@ import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -28,7 +27,6 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.autofill.AutoFillValue;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -199,6 +197,16 @@ public class LoginActivity extends Activity {
         assertWithMessage("Timeout (%s ms) waiting for login", LOGIN_TIMEOUT_MS)
                 .that(called).isTrue();
         return mLoginMessage;
+    }
+
+    /**
+     * Sets the window flags.
+     */
+    void setFlags(int flags) {
+        Log.d(TAG, "setFlags():" + flags);
+        runOnUiThread(() -> {
+            getWindow().setFlags(flags, flags);
+        });
     }
 
     /**
