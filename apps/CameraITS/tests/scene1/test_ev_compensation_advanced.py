@@ -41,6 +41,12 @@ def main():
                              its.caps.per_frame_control(props) and
                              its.caps.ev_compensation(props))
 
+        debug = its.caps.debug_mode()
+        if debug:
+            fmt = its.objects.get_largest_yuv_format(props)
+        else:
+            fmt = its.objects.get_smallest_yuv_format(props)
+
         ev_compensation_range = props['android.control.aeCompensationRange']
         range_min = ev_compensation_range[0]
         range_max = ev_compensation_range[1]
@@ -69,7 +75,7 @@ def main():
             req["android.tonemap.curveRed"] = [0.0,0.0, 1.0,1.0]
             req["android.tonemap.curveGreen"] = [0.0,0.0, 1.0,1.0]
             req["android.tonemap.curveBlue"] = [0.0,0.0, 1.0,1.0]
-            caps = cam.do_capture([req]*THREASH_CONVERGE_FOR_EV)
+            caps = cam.do_capture([req]*THREASH_CONVERGE_FOR_EV, fmt)
 
             for cap in caps:
                 if (cap['metadata']['android.control.aeState'] == LOCKED):
