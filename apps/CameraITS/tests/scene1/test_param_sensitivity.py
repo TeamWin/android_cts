@@ -39,6 +39,12 @@ def main():
         its.caps.skip_unless(its.caps.compute_target_exposure(props) and
                              its.caps.per_frame_control(props))
 
+        debug = its.caps.debug_mode()
+        if debug:
+            fmt = its.objects.get_largest_yuv_format(props)
+        else:
+            fmt = its.objects.get_smallest_yuv_format(props)
+
         expt,_ = its.target.get_target_exposure_combos(cam)["midSensitivity"]
         sens_range = props['android.sensor.info.sensitivityRange']
         sens_step = (sens_range[1] - sens_range[0]) / float(NUM_STEPS-1)
@@ -46,7 +52,7 @@ def main():
 
         for s in sensitivities:
             req = its.objects.manual_capture_request(s, expt)
-            cap = cam.do_capture(req)
+            cap = cam.do_capture(req, fmt)
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(
                     img, "%s_iso=%04d.jpg" % (NAME, s))
