@@ -80,7 +80,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final FillRequest request = replier.getNextFillRequest();
         assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
         assertTextIsSanitized(request.structure, ID_PASSWORD);
-    }
+
+        // Sanity check: make sure initial focus was properly set.
+        assertWithMessage("Username node is not focused").that(
+                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
+        assertWithMessage("Password node is focused").that(
+                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+}
 
     @Test
     public void testAutoFillOneDatasetAndMoveFocusAround() throws Exception {
