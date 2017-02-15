@@ -16,7 +16,9 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.IGNORE_DANGLING_SESSIONS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
@@ -52,19 +54,25 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     private static final String TAG = "InstrumentedAutoFillService";
 
+    private static final String STATE_CONNECTED = "CONNECTED";
+    private static final String STATE_DISCONNECTED = "DISCONNECTED";
+
     private static final AtomicReference<Replier> sReplier = new AtomicReference<>();
+    private static final BlockingQueue<String> sConnectionStates = new LinkedBlockingQueue<>();
 
     // TODO(b/33197203, b/33802548): add tests for onConnected() / onDisconnected() and/or remove
     // overriden methods below that are only logging their calls.
 
     @Override
     public void onConnected() {
-        Log.v(TAG, "onConnected()");
+        Log.v(TAG, "onConnected(): " + sConnectionStates);
+        sConnectionStates.offer(STATE_CONNECTED);
     }
 
     @Override
     public void onDisconnected() {
-        Log.v(TAG, "onDisconnected()");
+        Log.v(TAG, "onDisconnected(): " + sConnectionStates);
+        sConnectionStates.offer(STATE_DISCONNECTED);
     }
 
     @Override
@@ -83,19 +91,44 @@ public class InstrumentedAutoFillService extends AutoFillService {
     }
 
     /**
+     * Waits until {@link #onConnected()} is called, or fails if it times out.
+     */
+    static void waitUntilConnected() throws InterruptedException {
+        final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        if (state == null) {
+            throw new AssertionError("not connected inin " + CONNECTION_TIMEOUT_MS + " ms");
+        }
+        assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_CONNECTED);
+    }
+
+    /**
+     * Waits until {@link #onDisconnected()} is called, or fails if it times out.
+     */
+    static void waitUntilDisconnected() throws InterruptedException {
+        if (IGNORE_DANGLING_SESSIONS) return;
+
+        final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        if (state == null) {
+            throw new AssertionError("not disconnected inin " + CONNECTION_TIMEOUT_MS + " ms");
+        }
+        assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_DISCONNECTED);
+    }
+
+    /**
      * Sets the {@link Replier} for the
      * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} and
      * {@link #onSaveRequest(AssistStructure, Bundle, SaveCallback)} calls.
      */
-    public static void setReplier(Replier replier) {
+    static void setReplier(Replier replier) {
         final boolean ok = sReplier.compareAndSet(null, replier);
         if (!ok) {
             throw new IllegalStateException("already set: " + sReplier.get());
         }
     }
 
-    public static void resetFillReplier() {
+    static void resetStaticState() {
         sReplier.set(null);
+        sConnectionStates.clear();
     }
 
     /**
