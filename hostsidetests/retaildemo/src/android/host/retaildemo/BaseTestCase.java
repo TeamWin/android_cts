@@ -119,17 +119,30 @@ public class BaseTestCase extends DeviceTestCase implements IBuildReceiver {
         updateTimeoutValue("warning_dialog_timeout_ms", timeoutMs);
     }
 
+    /**
+     * Adds a new timeout constant, if it does not already exist, or updates the existing constant.
+     */
     private void updateTimeoutValue(String constant, long timeoutMs)
             throws DeviceNotAvailableException {
-        final String constantsValue = getRetailDemoModeConstants();
-        final String[] constants = constantsValue.split(",");
-        for (int i = 0; i < constants.length; ++i) {
-            if (constants[i].startsWith(constant)) {
-                constants[i] = constant + "=" + timeoutMs;
-                break;
-            }
+        final String newConstant = constant + "=" + timeoutMs;
+        final String currentConstants = getRetailDemoModeConstants();
+        if (currentConstants == null) {
+            setRetailDemoModeConstants(newConstant);
+            return;
         }
-        setRetailDemoModeConstants(String.join(",", constants));
+
+        if (currentConstants.contains(constant)) {
+            final String[] constants = currentConstants.split(",");
+            for (int i = 0; i < constants.length; ++i) {
+                if (constants[i].startsWith(constant)) {
+                    constants[i] = newConstant;
+                    break;
+                }
+            }
+            setRetailDemoModeConstants(String.join(",", constants));
+        } else {
+            setRetailDemoModeConstants(currentConstants + "," + newConstant);
+        }
     }
 
     protected void setRetailDemoModeConstants(String constants)
@@ -139,10 +152,16 @@ public class BaseTestCase extends DeviceTestCase implements IBuildReceiver {
     }
 
     protected String getRetailDemoModeConstants() throws DeviceNotAvailableException {
-        return getDevice().executeShellCommand("settings get global retail_demo_mode_constants");
+        final String rawOutput = getDevice().executeShellCommand(
+                "settings get global retail_demo_mode_constants");
+        if (rawOutput != null) {
+            final String existingConstants = rawOutput.trim();
+            return existingConstants.equals("null") ? null : existingConstants;
+        }
+        return null;
     }
 
-    protected Integer getDemoUserId(ArrayList<Integer> existingDemoUsers)
+    protected Integer getNewDemoUserId(ArrayList<Integer> existingDemoUsers)
             throws DeviceNotAvailableException {
         ArrayList<String[]> users = tokenizeListUsers();
         if (users == null) {

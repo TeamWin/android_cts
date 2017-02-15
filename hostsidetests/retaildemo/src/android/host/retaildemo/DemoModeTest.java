@@ -16,19 +16,9 @@
 package android.host.retaildemo;
 
 public class DemoModeTest extends BaseTestCase {
+
     public void testIsDemoUser_inPrimaryUser() throws Exception {
         assertTrue(runDeviceTestsAsUser(
                 ".DemoUserTest", "testIsDemoUser_failure", getDevice().getPrimaryUserId()));
-    }
-
-    public void testIsDemoUser_inDemoUser() throws Exception {
-        if (!mSupportsMultiUser) {
-            return;
-        }
-        final int demoUserId = createDemoUser();
-        getDevice().startUser(demoUserId);
-        installAppAsUser(RETAIL_DEMO_TEST_APK, demoUserId);
-        assertTrue(runDeviceTestsAsUser(
-                ".DemoUserTest", "testIsDemoUser_success", demoUserId));
     }
 }

@@ -20,9 +20,11 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import java.util.ArrayList;
 
 public class DemoModeUiAutomationHostTest extends BaseTestCase {
-    private static final int USER_INACTIVITY_TIMEOUT_MS = 120 * 1000; // 2 min
 
-    private static final int TIMEOUT_DEMO_USER_START_MS = 2000; // 2 sec
+    private static final int USER_INACTIVITY_TIMEOUT_MS = 120 * 1000; // 2 min
+    private static final int USER_INACTIVITY_TIMEOUT_SHORT_MS = 15000; // 15 sec
+
+    private static final int TIMEOUT_DEMO_USER_START_MS = 10000; // 10 sec
     private static final int CHECK_INTERVAL_DEMO_USER_START_MS = 200; // 0.2 sec
 
     private static final int TIMEOUT_DEMO_USER_UNLOCK_MS = 4000; // 4 sec
@@ -31,7 +33,14 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
     private static final int TIMEOUT_SCREEN_TURN_ON_ATTRACT_LOOP_MS = 1000; // 1 sec
     private static final int TIMEOUT_SCREEN_TURN_ON_DEMO_SESSION_MS = 4000; // 4 sec
 
+    private static final int RESET_STATE_DELAY_MS = 4000; // 4 sec
+
+    /* User id to return to at the end of the test. */
     private int mStartUserId;
+
+    /* User id to compare during the test. */
+    private int mTestUserId;
+
     private String mStartRetailDemoModeConstants;
     private ArrayList<Integer> existingDemoUsers;
     private Integer mCurrentDemoUserId;
@@ -43,11 +52,19 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
             return;
         }
         mStartUserId = getDevice().getCurrentUser();
+        // The demo user hasn't been created yet, so for now our comparison id is the starting user.
+        mTestUserId = mStartUserId;
         existingDemoUsers = new ArrayList<>();
         // Increase the inactivity timeout so that the demo session is not reset during the test.
         mStartRetailDemoModeConstants = getRetailDemoModeConstants();
         setUserInactivityTimeoutMs(USER_INACTIVITY_TIMEOUT_MS);
         enableDemoMode(true);
+    }
+
+    public void testIsDemoUser_inDemoUser() throws Exception {
+        initializeDemoUser();
+        assertTrue(runDeviceTestsAsUser(
+                ".DemoUserTest", "testIsDemoUser_success", mTestUserId));
     }
 
     public void testResetNotification() throws Exception {
@@ -70,15 +87,15 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
         if (!mSupportsMultiUser) {
             return;
         }
+        // Reset timeouts while still User 0
+        setUserInactivityTimeoutMs(USER_INACTIVITY_TIMEOUT_SHORT_MS);
+        setWarningDialogTimeoutMs(0);
         initializeDemoUser();
         executeDeviceTest("RetailDemoPkg is not launched", "testRetailDemoPkgLaunched");
-        final long timeoutMs = 15 * 1000; // 15 sec
-        setUserInactivityTimeoutMs(timeoutMs);
-        setWarningDialogTimeoutMs(0);
+        turnScreenOnIfNeeded();
         getDevice().executeShellCommand("input tap 1 1"); // Tap to enter demo session.
         getDevice().executeShellCommand("input keyevent 3"); // Tap home (any user activity is ok)
-        Thread.sleep(timeoutMs);
-
+        Thread.sleep(USER_INACTIVITY_TIMEOUT_SHORT_MS);
         if (!awaitDemoSessionStart()) {
             fail("Demo session is not recreated.");
         }
@@ -118,8 +135,9 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
         }
         initializeDemoUser();
         executeDeviceTest("RetailDemoPkg is not launched", "testRetailDemoPkgLaunched");
-        getDevice().executeShellCommand("input tap 1 1"); // Tap to enter demo session.
-        getDevice().executeShellCommand("input keyevent 26"); // Turn off the screen.
+        turnScreenOnIfNeeded();
+        // Turn screen back off to send the screen off broadcast.
+        getDevice().executeShellCommand("input keyevent 26");
         // Wait for the screen to turn on.
         Thread.sleep(TIMEOUT_SCREEN_TURN_ON_DEMO_SESSION_MS);
         // Verify that the screen is turned on.
@@ -133,7 +151,8 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
             return;
         }
         enableDemoMode(false);
-        Thread.sleep(2000 /* 2 sec */); // Wait for the setting to be persisted.
+        // Wait for the setting to be persisted.
+        Thread.sleep(RESET_STATE_DELAY_MS);
         getDevice().switchUser(mStartUserId);
         setRetailDemoModeConstants(mStartRetailDemoModeConstants);
         super.tearDown();
@@ -149,6 +168,7 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
         if (!awaitDemoUserUnlock()) {
             fail("Demo user is not unlocked");
         }
+        mTestUserId = getDevice().getCurrentUser();
     }
 
     private boolean awaitDemoUserUnlock()
@@ -164,16 +184,24 @@ public class DemoModeUiAutomationHostTest extends BaseTestCase {
     private boolean awaitDemoSessionStart()
             throws InterruptedException, DeviceNotAvailableException {
         final long endTime = System.currentTimeMillis() + TIMEOUT_DEMO_USER_START_MS;
-        while (mStartUserId == getDevice().getCurrentUser()
+        while (mTestUserId == getDevice().getCurrentUser()
                 && System.currentTimeMillis() < endTime) {
             Thread.sleep(CHECK_INTERVAL_DEMO_USER_START_MS);
         }
-        mCurrentDemoUserId = getDemoUserId(existingDemoUsers);
+        mCurrentDemoUserId = getNewDemoUserId(existingDemoUsers);
         if (mCurrentDemoUserId != null) {
             existingDemoUsers.add(mCurrentDemoUserId);
             return true;
         }
         return false;
+    }
+
+    private void turnScreenOnIfNeeded() throws Exception {
+        try {
+            executeDeviceTest("Screen is off", "testScreenIsInteractive");
+        } catch (AssertionError e) {
+            getDevice().executeShellCommand("input keyevent 26");
+        }
     }
 
     private void executeDeviceTest(String msg, String testMethodName) throws Exception {
