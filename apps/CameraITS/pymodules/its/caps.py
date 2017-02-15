@@ -447,6 +447,18 @@ def fixed_focus(props):
         props["android.lens.info.minimumFocusDistance"] == 0
 
 
+def debug_mode():
+    """Returns True/False for whether test is run in debug mode.
+
+    Returns:
+        Boolean.
+    """
+    for s in sys.argv[1:]:
+        if s[:6] == "debug=" and s[6:] == "True":
+            return True
+    return False
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """

@@ -37,10 +37,16 @@ def main():
         its.caps.skip_unless(its.caps.compute_target_exposure(props) and
                              its.caps.per_frame_control(props))
 
+        debug = its.caps.debug_mode()
+        if debug:
+            fmt = its.objects.get_largest_yuv_format(props)
+        else:
+            fmt = its.objects.get_smallest_yuv_format(props)
+
         e,s = its.target.get_target_exposure_combos(cam)["midExposureTime"]
         for i,e_mult in enumerate([0.8, 0.9, 1.0, 1.1, 1.2]):
             req = its.objects.manual_capture_request(s, e * e_mult, 0.0, True, props)
-            cap = cam.do_capture(req)
+            cap = cam.do_capture(req, fmt)
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(
                     img, "%s_frame%d.jpg" % (NAME, i))
