@@ -51,6 +51,12 @@ def main():
         its.caps.skip_unless(its.caps.compute_target_exposure(props) and
                              its.caps.per_frame_control(props))
 
+        debug = its.caps.debug_mode()
+        if debug:
+            fmt = its.objects.get_largest_yuv_format(props)
+        else:
+            fmt = its.objects.get_smallest_yuv_format(props)
+
         e,s = its.target.get_target_exposure_combos(cam)["minSensitivity"]
         s_e_product = s*e
         expt_range = props['android.sensor.info.exposureTimeRange']
@@ -64,7 +70,7 @@ def main():
             print "Testing s:", s_test, "e:", e_test
             req = its.objects.manual_capture_request(
                     s_test, e_test, 0.0, True, props)
-            cap = cam.do_capture(req)
+            cap = cam.do_capture(req, fmt)
             s_res = cap["metadata"]["android.sensor.sensitivity"]
             e_res = cap["metadata"]["android.sensor.exposureTime"]
             assert(0 <= s_test - s_res < s_test * THRESHOLD_ROUND_DOWN_GAIN)
