@@ -15,12 +15,11 @@
  */
 package android.assist.common;
 
-import android.R;
 import android.content.ComponentName;
 import android.os.Bundle;
 
-import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 public class Utils {

@@ -15,19 +15,13 @@
  */
 package android.assist.testapp;
 
-import android.assist.common.Utils;
-
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.assist.common.Utils;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-
-import java.lang.Override;
 
 public class ScreenshotActivity extends Activity {
     static final String TAG = "ScreenshotActivity";

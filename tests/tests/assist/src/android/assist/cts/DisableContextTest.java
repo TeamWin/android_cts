@@ -16,25 +16,10 @@
 
 package android.assist.cts;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import android.assist.common.Utils;
-
-import android.app.Activity;
-import android.app.assist.AssistContent;
-import android.app.assist.AssistStructure;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Bundle;
-import android.provider.Settings;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-import java.lang.Override;
-import java.util.concurrent.CountDownLatch;
+import com.android.compatibility.common.util.SystemUtil;
 
 /** Test we receive proper assist data when context is disabled or enabled */
 
