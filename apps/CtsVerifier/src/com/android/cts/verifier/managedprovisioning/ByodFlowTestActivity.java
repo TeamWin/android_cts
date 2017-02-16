@@ -114,7 +114,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         mPrepareTestButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                startByodProvisioning();
+                Utils.provisionManagedProfile(ByodFlowTestActivity.this, mAdminReceiverComponent,
+                        REQUEST_MANAGED_PROVISIONING);
             }
         });
 
@@ -386,7 +387,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
-                PolicyTransparencyTestListActivity.EXTRA_IS_DEVICE_OWNER, false);
+                PolicyTransparencyTestListActivity.EXTRA_MODE,
+                PolicyTransparencyTestListActivity.MODE_PROFILE_OWNER);
         policyTransparencyTestIntent.putExtra(
                 PolicyTransparencyTestActivity.EXTRA_TEST_ID, "BYOD_PolicyTransparency");
         mPolicyTransparencyTest = TestListItem.newTest(this,
@@ -583,18 +585,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         }
     }
 
-    private void startByodProvisioning() {
-        Intent sending = new Intent(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
-        sending.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-                mAdminReceiverComponent);
-
-        if (sending.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(sending, REQUEST_MANAGED_PROVISIONING);
-        } else {
-            showToast(R.string.provisioning_byod_disabled);
-        }
-    }
-
     private void queryProfileOwner(boolean showToast) {
         try {
             Intent intent = new Intent(ByodHelperActivity.ACTION_QUERY_PROFILE_OWNER);
@@ -604,7 +594,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             Log.d(TAG, "queryProfileOwner: ActivityNotFoundException", e);
             setTestResult(mProfileOwnerInstalled, TestResult.TEST_RESULT_FAILED);
             if (showToast) {
-                showToast(R.string.provisioning_byod_no_activity);
+                Utils.showToast(this, R.string.provisioning_byod_no_activity);
             }
         }
     }
@@ -622,7 +612,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             setHandleIntentActivityEnabledSetting(PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
             Log.d(TAG, "checkIntentFilters: ActivityNotFoundException", e);
             setTestResult(mIntentFiltersTest, TestResult.TEST_RESULT_FAILED);
-            showToast(R.string.provisioning_byod_no_activity);
+            Utils.showToast(this, R.string.provisioning_byod_no_activity);
         }
     }
 

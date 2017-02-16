@@ -34,23 +34,29 @@ import java.util.ArrayList;
 
 /**
  * Test class to verify transparency for policies enforced by device/profile owner.
- * Expects to be passed an extra: {@link PolicyTransparencyTestActivity#EXTRA_TEST_ID} to identify
- * which test in the calling activity should be updated.
  */
 public class PolicyTransparencyTestListActivity extends PassFailButtons.TestListActivity
         implements View.OnClickListener {
     public static final String ACTION_CHECK_POLICY_TRANSPARENCY =
             "com.android.cts.verifier.managedprovisioning.action.CHECK_POLICY_TRANSPARENCY";
-    public static final String EXTRA_IS_DEVICE_OWNER =
-            "com.android.cts.verifier.managedprovisioning.extra.IS_DEVICE_OWNER";
 
-    // Pairs of:
-    // - An intent to start PolicyTransparencyTestActivity
-    // - a label to show the user.
-    // These contain all the policies except for the user restriction ones
+    public static final String EXTRA_MODE =
+            "com.android.cts.verifier.managedprovisioning.extra.mode";
+
+    public static final int MODE_DEVICE_OWNER = 1;
+    public static final int MODE_PROFILE_OWNER = 2;
+    public static final int MODE_COMP = 3;
+
+    /**
+     * Pairs of:
+     * <ul>
+     *   <li>An intent to start {@link PolicyTransparencyTestActivity}
+     *   <li>a label to show the user.
+     * </ul>
+     * These contain all the policies except for the user restriction ones.
+     */
     private static final Pair<Intent, Integer>[] POLICIES;
     static {
-        // names of the tests
         final String[] policyTests = new String[] {
             PolicyTransparencyTestActivity.TEST_CHECK_AUTO_TIME_REQUIRED,
             PolicyTransparencyTestActivity.TEST_CHECK_KEYGURAD_UNREDACTED_NOTIFICATION,
@@ -94,7 +100,6 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         }
     }
 
-    // List of names of test that are also valid for PO
     private static final ArrayList<String> ALSO_VALID_FOR_PO = new ArrayList<String>();
     static {
         ALSO_VALID_FOR_PO.add(
@@ -102,7 +107,7 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         ALSO_VALID_FOR_PO.add(PolicyTransparencyTestActivity.TEST_CHECK_PERMITTED_INPUT_METHOD);
     }
 
-    private boolean mIsDeviceOwner;
+    private int mMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,7 +118,14 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
         setPassFailButtonClickListeners();
         setSupportMsgButtonClickListeners();
 
-        mIsDeviceOwner = getIntent().getBooleanExtra(EXTRA_IS_DEVICE_OWNER, false);
+        if (!getIntent().hasExtra(EXTRA_MODE)) {
+            throw new RuntimeException("PolicyTransparencyTestListActivity started without extra "
+                    + EXTRA_MODE);
+        }
+        mMode = getIntent().getIntExtra(EXTRA_MODE, MODE_DEVICE_OWNER);
+        if (mMode != MODE_DEVICE_OWNER && mMode != MODE_PROFILE_OWNER && mMode != MODE_COMP) {
+            throw new RuntimeException("Unknown mode " + mMode);
+        }
 
         final ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
         addTestsToAdapter(adapter);
@@ -128,31 +140,47 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     }
 
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
-        for (String restriction : UserRestrictions.getUserRestrictions()) {
+        for (String restriction :
+                UserRestrictions.getUserRestrictionsForPolicyTransparency(mMode)) {
             final Intent intent = UserRestrictions.getUserRestrictionTestIntent(this, restriction);
-            if (!UserRestrictions.isRestrictionValid(this, restriction) ||
-                    (!mIsDeviceOwner && !UserRestrictions.isValidForPO(restriction))) {
+            if (!UserRestrictions.isRestrictionValid(this, restriction)) {
                 continue;
             }
             final String title = UserRestrictions.getRestrictionLabel(this, restriction);
-            String testId = (mIsDeviceOwner ? "DO_" : "PO_") + title;
+            String testId = getTestId(title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, testId);
             adapter.add(TestListItem.newTest(title, testId, intent, null));
         }
-
+        if (mMode == MODE_COMP) {
+            // no other policies for COMP
+            return;
+        }
         for (Pair<Intent, Integer> policy : POLICIES) {
             final Intent intent = policy.first;
             String test = intent.getStringExtra(PolicyTransparencyTestActivity.EXTRA_TEST);
-            if (!isPolicyValid(test) ||
-                    (!mIsDeviceOwner && !ALSO_VALID_FOR_PO.contains(test))) {
+            if (!isPolicyValid(test)) {
+                continue;
+            }
+            if (mMode == MODE_PROFILE_OWNER && !ALSO_VALID_FOR_PO.contains(test)) {
                 continue;
             }
             final String title = getString(policy.second);
-            String testId = (mIsDeviceOwner ? "DO_" : "PO_") + title;
+            String testId = getTestId(title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TITLE, title);
             intent.putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, testId);
             adapter.add(TestListItem.newTest(title, testId, intent, null));
         }
+    }
+
+    private String getTestId(String title) {
+        if (mMode == MODE_DEVICE_OWNER) {
+            return "DO_" + title;
+        } else if (mMode == MODE_PROFILE_OWNER) {
+            return "PO_" + title;
+        } else if (mMode == MODE_COMP){
+            return "COMP_" + title;
+        }
+        throw new RuntimeException("Unknown mode " + mMode);
     }
 
     private boolean isPolicyValid(String test) {
@@ -194,9 +222,9 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
     public void finish() {
         super.finish();
         final Intent intent = new Intent(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
-        intent.putExtra(CommandReceiverActivity.EXTRA_COMMAND, mIsDeviceOwner
-                ? CommandReceiverActivity.COMMAND_DEVICE_OWNER_CLEAR_POLICIES
-                : CommandReceiverActivity.COMMAND_PROFILE_OWNER_CLEAR_POLICIES);
+        intent.putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                CommandReceiverActivity.COMMAND_CLEAR_POLICIES);
+        intent.putExtra(PolicyTransparencyTestListActivity.EXTRA_MODE, mMode);
         startActivity(intent);
     }
 }

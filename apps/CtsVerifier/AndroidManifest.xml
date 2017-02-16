@@ -2338,6 +2338,11 @@
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
         </activity>
 
+        <activity android:name=".managedprovisioning.CompTestActivity"
+                android:launchMode="singleTask"
+                android:label="@string/comp_test">
+        </activity>
+
         <activity android:name=".managedprovisioning.ByodProvisioningTestActivity"
                 android:label="@string/provisioning_tests_byod">
             <intent-filter>

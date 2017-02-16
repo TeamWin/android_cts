@@ -269,8 +269,10 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
     @Override
     public void finish() {
         super.finish();
-        startActivity(buildCommandIntent(
-                CommandReceiverActivity.COMMAND_DEVICE_OWNER_CLEAR_POLICIES));
+        Intent intent = buildCommandIntent(CommandReceiverActivity.COMMAND_CLEAR_POLICIES)
+                .putExtra(PolicyTransparencyTestListActivity.EXTRA_MODE,
+                        PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER);
+        startActivity(intent);
         startActivity(buildCommandIntent(CommandReceiverActivity.COMMAND_REMOVE_MANAGED_PROFILE));
         setManagedProfileActivityEnabled(false);
     }
