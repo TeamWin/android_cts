@@ -105,6 +105,7 @@ public class WebViewTest extends AssistTestBase {
         verifyAssistDataNullness(false, false, false, false);
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
                 false /*FLAG_SECURE set*/);
+        verifyAssistStructureHasUrl(Utils.WEBVIEW_HTML_URL);
     }
 
     private class WebViewTestBroadcastReceiver extends BroadcastReceiver {
