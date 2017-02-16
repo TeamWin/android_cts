@@ -28,10 +28,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Looper;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.telecom.PhoneAccount;
@@ -47,6 +49,7 @@ import android.util.Log;
 import com.android.compatibility.common.util.TestThread;
 import com.android.internal.telephony.PhoneConstants;
 
+import dalvik.annotation.TestTarget;
 import java.util.regex.Pattern;
 import org.junit.After;
 import org.junit.Before;
@@ -188,13 +191,13 @@ public class TelephonyManagerTest {
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
-
         TelecomManager telecomManager = (TelecomManager) getContext()
-            .getSystemService(Context.TELECOM_SERVICE);
+                .getSystemService(Context.TELECOM_SERVICE);
         PhoneAccountHandle defaultAccount = telecomManager
-            .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+                .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
         mTelephonyManager.getVoicemailRingtoneUri(defaultAccount);
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
+        mTelephonyManager.getCarrierConfig();
     }
 
     @Test
@@ -475,17 +478,6 @@ public class TelephonyManagerTest {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
-    }
-
-    @Test
-    public void testGetCarrierConfig() {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        CarrierConfigManager carrierConfigManager =
-                getContext().getSystemService(CarrierConfigManager.class);
-        assertEquals(mTelephonyManager.getCarrierConfig(), carrierConfigManager.getConfig());
     }
 
     /**
