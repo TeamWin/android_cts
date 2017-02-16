@@ -83,7 +83,7 @@ final class Helper {
     }
 
     /**
-     * Dump the assist structure in the log.
+     * Dump the assist structure on {@link System#out}.
      */
     static void dumpStructure(String message, AssistStructure structure) {
         final StringBuffer buffer = new StringBuffer(message)
@@ -94,7 +94,7 @@ final class Helper {
             final WindowNode windowNode = structure.getWindowNodeAt(i);
             dump(buffer, windowNode.getRootViewNode(), " ", 0);
         }
-        Log.i(TAG, buffer.toString());
+        System.out.println(buffer.toString());
     }
 
     private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {
@@ -195,6 +195,27 @@ final class Helper {
         } else {
             assertWithMessage("node %s should not have AutoFillValue", node).that(value).isNull();
         }
+    }
+
+    /**
+     * Asserts the auto-fill value of a list-based node.
+     */
+    static void assertListValue(ViewNode node, int expectedIndex) {
+        final AutoFillValue value = node.getAutoFillValue();
+        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+        assertWithMessage("wrong auto-fill value on %s", node).that(value.getListValue())
+                .isEqualTo(expectedIndex);
+    }
+
+    /**
+     * Asserts the auto-fill value of a toggle-based node.
+     *
+     */
+    static void assertToggleValue(ViewNode node, boolean expectedToggle) {
+        final AutoFillValue value = node.getAutoFillValue();
+        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+        assertWithMessage("wrong auto-fill value on %s", node).that(value.getToggleValue())
+                .isEqualTo(expectedToggle);
     }
 
     /**
