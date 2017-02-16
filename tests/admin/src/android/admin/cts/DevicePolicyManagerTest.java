@@ -834,4 +834,56 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         intent = mDevicePolicyManager.createAdminSupportIntent(UserManager.DISALLOW_ADJUST_VOLUME);
         assertNull(intent);
     }
+
+    public void testSetResetPasswordToken_failIfNotDeviceOrProfileOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetResetPasswordToken_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.setResetPasswordToken(mComponent, new byte[32]);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testClearResetPasswordToken_failIfNotDeviceOrProfileOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testClearResetPasswordToken_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.clearResetPasswordToken(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testIsResetPasswordTokenActive_failIfNotDeviceOrProfileOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testIsResetPasswordTokenActive_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.isResetPasswordTokenActive(mComponent);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testResetPasswordWithToken_failIfNotDeviceOrProfileOwner() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testResetPasswordWithToken_failIfNotDeviceOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.resetPasswordWithToken(mComponent, "1234", new byte[32], 0);
+            fail("did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
 }
