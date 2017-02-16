@@ -24,6 +24,7 @@ import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
@@ -31,6 +32,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.os.Bundle;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutoFillValue;
@@ -135,9 +137,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectation.
-        replier.addResponse(new CannedDataset.Builder("The Dude")
-                .setField(ID_USERNAME, AutoFillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+        final Bundle extras = new Bundle();
+        extras.putString("numbers", "4815162342");
+
+        replier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder("The Dude")
+                        .setField(ID_USERNAME, AutoFillValue.forText("dude"))
+                        .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                        .build())
+                .setExtras(extras)
                 .build());
 
         mLoginActivity.expectAutoFill("dude", "sweet");
@@ -176,6 +184,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertText(username, "dude");
         final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
         assertText(password, "dude");
+
+        // Make sure extras were passed back on onSave()
+        assertThat(saveRequest.data).isNotNull();
+        final String extraValue = saveRequest.data.getString("numbers");
+        assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
 
         // Sanity check: make sure service was called just once.
         replier.assertNumberUnhandledFillRequests(1);

@@ -265,6 +265,12 @@ public class InstrumentedAutoFillService extends AutoFillService {
                 }
             }
 
+            final Bundle extras = response.extras;
+
+            if (extras != null) {
+                responseBuilder.setExtras(extras);
+            }
+
             final FillResponse fillResponse = responseBuilder.build();
             Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
             callback.onSuccess(fillResponse);
