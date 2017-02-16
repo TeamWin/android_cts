@@ -145,6 +145,7 @@ public class TvContractTest extends AndroidTestCase {
     private static ContentValues createDummyChannelValues(String inputId, boolean preview) {
         ContentValues values = new ContentValues();
         values.put(Channels.COLUMN_INPUT_ID, inputId);
+        values.put(Channels.COLUMN_INTERNAL_PROVIDER_ID, "ID-4321");
         values.put(Channels.COLUMN_TYPE, preview ? Channels.TYPE_PREVIEW : Channels.TYPE_OTHER);
         values.put(Channels.COLUMN_SERVICE_TYPE, Channels.SERVICE_TYPE_AUDIO_VIDEO);
         values.put(Channels.COLUMN_DISPLAY_NUMBER, "1");
@@ -302,6 +303,7 @@ public class TvContractTest extends AndroidTestCase {
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_NETWORK_AFFILIATION);
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_DESCRIPTION);
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_VIDEO_FORMAT);
+            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_INTERNAL_PROVIDER_ID);
             verifyBlobColumn(cursor, expectedValues, Channels.COLUMN_INTERNAL_PROVIDER_DATA);
             verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_VERSION_NUMBER);
         }
