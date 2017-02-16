@@ -577,7 +577,10 @@ class ItsSession(object):
         channel is computed, and the do_capture call returns two 4-element float
         images of dimensions (rawWidth / gridWidth, rawHeight / gridHeight),
         concatenated back-to-back, where the first iamge contains the 4-channel
-        means and the second contains the 4-channel variances.
+        means and the second contains the 4-channel variances. Note that only
+        pixels in the active array crop region are used; pixels outside this
+        region (for example optical black rows) are cropped out before the
+        gridding and statistics computation is performed.
 
         For the rawStats format, if the gridWidth is not provided then the raw
         image width is used as the default, and similarly for gridHeight. With
