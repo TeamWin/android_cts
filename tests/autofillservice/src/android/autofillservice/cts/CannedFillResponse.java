@@ -17,6 +17,8 @@ package android.autofillservice.cts;
 
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset.Builder;
+import android.os.Bundle;
+import android.service.autofill.AutoFillService;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.view.autofill.AutoFillValue;
@@ -46,10 +48,12 @@ final class CannedFillResponse {
 
     final List<CannedDataset> datasets;
     final String[] savableIds;
+    final Bundle extras;
 
     private CannedFillResponse(Builder builder) {
         datasets = builder.mDatasets;
         savableIds = builder.mSavableIds;
+        extras = builder.mExtras;
     }
 
     @Override
@@ -61,6 +65,7 @@ final class CannedFillResponse {
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
         private String[] mSavableIds;
+        private Bundle mExtras;
 
         public Builder addDataset(CannedDataset dataset) {
             mDatasets.add(dataset);
@@ -75,6 +80,14 @@ final class CannedFillResponse {
             return this;
         }
 
+        /**
+         * Sets the extra passed to {@link
+         * android.service.autofill.FillResponse.Builder#setExtras(Bundle)}.
+         */
+        public Builder setExtras(Bundle data) {
+            mExtras = data;
+            return this;
+        }
 
         public CannedFillResponse build() {
             return new CannedFillResponse(this);
