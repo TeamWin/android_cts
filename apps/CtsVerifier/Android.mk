@@ -36,7 +36,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                ctsverifier-opencv \
                                core-tests-support \
                                android-support-v4  \
-                               mockito-target \
+                               mockito-target-minus-junit4 \
                                mockwebserver \
                                compatibility-device-util \
 
