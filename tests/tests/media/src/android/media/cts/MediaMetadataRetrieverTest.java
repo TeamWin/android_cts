@@ -81,6 +81,22 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         return ds;
     }
 
+    protected TestMediaDataSource getFaultyDataSource(int resid, boolean throwing) {
+        TestMediaDataSource ds = null;
+        try {
+            AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
+            ds = TestMediaDataSource.fromAssetFd(afd);
+            if (throwing) {
+                ds.throwFromReadAt();
+            } else {
+                ds.returnFromReadAt(-2);
+            }
+        } catch (Exception e) {
+            fail("Unable to open file");
+        }
+        return ds;
+    }
+
     public void test3gppMetadata() {
         setDataSourceCallback(R.raw.testvideo);
 
@@ -171,15 +187,23 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testRetrieveFailsIfMediaDataSourceThrows() throws Exception {
-        TestMediaDataSource dataSource = setDataSourceCallback(R.raw.testvideo);
-        dataSource.throwFromReadAt();
-        assertTrue(mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) == null);
+        TestMediaDataSource ds = getFaultyDataSource(R.raw.testvideo, true /* throwing */);
+        try {
+            mRetriever.setDataSource(ds);
+            fail("Failed to throw exceptions");
+        } catch (RuntimeException e) {
+            assertTrue(mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) == null);
+        }
     }
 
     public void testRetrieveFailsIfMediaDataSourceReturnsAnError() throws Exception {
-        TestMediaDataSource dataSource = setDataSourceCallback(R.raw.testvideo);
-        dataSource.returnFromReadAt(-2);
-        assertTrue(mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) == null);
+        TestMediaDataSource ds = getFaultyDataSource(R.raw.testvideo, false /* throwing */);
+        try {
+            mRetriever.setDataSource(ds);
+            fail("Failed to throw exceptions");
+        } catch (RuntimeException e) {
+            assertTrue(mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) == null);
+        }
     }
 
     private void testThumbnail(int resId) {
