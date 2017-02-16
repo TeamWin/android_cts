@@ -19,11 +19,14 @@
           package="android.server.alertwindowappsdk25">
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <application>
+    <application android:label="CtsAlertWindowSdk25">
         <activity android:name=".AlertWindowTestActivitySdk25"
-                android:windowSoftInputMode="stateAlwaysVisible"
-                android:exported="true"
-        />
+                  android:exported="true" android:windowSoftInputMode="stateAlwaysVisible">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
 
