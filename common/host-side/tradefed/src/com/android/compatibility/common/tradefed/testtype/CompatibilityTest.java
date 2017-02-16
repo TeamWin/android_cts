@@ -765,11 +765,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
         } else if (mTestName != null) {
             throw new IllegalArgumentException(
                     "Test name given without module name. Add --module <module-name>");
-        } else {
-            // If a module has an arg, assume it's included
-            for (String arg : mModuleArgs) {
-                mIncludeFilters.add(arg.split(":")[0]);
-            }
         }
     }
 
