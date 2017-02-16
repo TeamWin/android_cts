@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.dumpStructure;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
@@ -81,6 +83,42 @@ final class Helper {
     }
 
     /**
+     * Dump the assist structure in the log.
+     */
+    static void dumpStructure(String message, AssistStructure structure) {
+        final StringBuffer buffer = new StringBuffer(message)
+                .append(": component=")
+                .append(structure.getActivityComponent());
+        final int nodes = structure.getWindowNodeCount();
+        for (int i = 0; i < nodes; i++) {
+            final WindowNode windowNode = structure.getWindowNodeAt(i);
+            dump(buffer, windowNode.getRootViewNode(), " ", 0);
+        }
+        Log.i(TAG, buffer.toString());
+    }
+
+    private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {
+        final int childrenSize = node.getChildCount();
+        buffer.append("\n").append(prefix)
+            .append('#').append(childId).append(':')
+            .append("resId=").append(node.getIdEntry())
+            .append(" text=").append(node.getText())
+            .append(" #children=").append(childrenSize);
+
+        buffer.append("\n").append(prefix)
+            .append("   afId=").append(node.getAutoFillId())
+            .append(" afType=").append(node.getAutoFillType())
+            .append(" afValue=").append(node.getAutoFillValue());
+
+        prefix += " ";
+        if (childrenSize > 0) {
+            for (int i = 0; i < childrenSize; i++) {
+                dump(buffer, node.getChildAt(i), prefix, i);
+            }
+        }
+    }
+
+    /**
      * Gets a node give its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
@@ -131,13 +169,32 @@ final class Helper {
     }
 
     /**
-     * Asserts the contents of a text-based node.
+     * Asserts the contents of a text-based node that is also auto-fillable.
+     *
      */
-    static void assertText(ViewNode node, String expectedValue) {
+    static void assertTextOnly(ViewNode node, String expectedValue) {
+        assertText(node, expectedValue, false);
+    }
+
+    /**
+     * Asserts the contents of a text-based node that is also auto-fillable.
+     *
+     */
+    static void assertTextAndValue(ViewNode node, String expectedValue) {
+        assertText(node, expectedValue, true);
+    }
+
+    private static void assertText(ViewNode node, String expectedValue, boolean isAutofillable) {
         assertWithMessage("wrong text on %s", node).that(node.getText().toString())
                 .isEqualTo(expectedValue);
-        assertWithMessage("wrong auto-fill value on %s", node).that(node.getAutoFillValue())
-                .isEqualTo(AutoFillValue.forText(expectedValue));
+        final AutoFillValue value = node.getAutoFillValue();
+        if (isAutofillable) {
+            assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+            assertWithMessage("wrong auto-fill value on %s", node)
+                    .that(value.getTextValue().toString()).isEqualTo(expectedValue);
+        } else {
+            assertWithMessage("node %s should not have AutoFillValue", node).that(value).isNull();
+        }
     }
 
     /**
@@ -149,6 +206,7 @@ final class Helper {
         assertTextIsSanitized(node);
     }
 
+    // TODO(b/33197203, b/33802548): move to CannedFillResponse
     static FillResponse createFromCannedResponse(AssistStructure structure,
             CannedFillResponse response) {
         final FillResponse.Builder builder = new FillResponse.Builder();
@@ -162,7 +220,10 @@ final class Helper {
         if (response.savableIds != null) {
             for (String resourceId : response.savableIds) {
                 final ViewNode node = findNodeByResourceId(structure, resourceId);
-                assertWithMessage("Cannot find node:" + resourceId).that(node).isNotNull();
+                if (node == null) {
+                    dumpStructure("onFillRequest()", structure);
+                    throw new AssertionError("No node with savable resourceId " + resourceId);
+                }
                 final AutoFillId id = node.getAutoFillId();
                 builder.addSavableFields(id);
             }
@@ -173,6 +234,7 @@ final class Helper {
         return builder.build();
     }
 
+    // TODO(b/33197203, b/33802548): move to CannedFillResponse
     static Dataset createFromCannedDataset(AssistStructure structure,
             CannedFillResponse.CannedDataset dataset) {
         final Dataset.Builder builder = new Dataset.Builder();
