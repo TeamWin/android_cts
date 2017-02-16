@@ -27,6 +27,7 @@ import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
@@ -50,6 +51,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         }
     }
 
+    private final static int TEST_USAGE = AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED;
+    private final static int TEST_CONTENT = AudioAttributes.CONTENT_TYPE_SPEECH;
+
     public void testGetterMediaPlayer() throws Exception {
         if (!isValidPlatform("testGetterMediaPlayer")) return;
 
@@ -57,32 +61,29 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         assertNotNull("Could not create AudioManager", am);
 
         final AudioAttributes aa = (new AudioAttributes.Builder())
-                .setUsage(AudioAttributes.USAGE_ASSISTANT)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .setUsage(TEST_USAGE)
+                .setContentType(TEST_CONTENT)
                 .build();
 
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
-        assertEquals("no player, list of configs should be empty", 0 /*expected*/,
-                configs.size());
+        final int nbActivePlayersBeforeStart = configs.size();
 
         mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
                 aa, am.generateAudioSessionId());
         configs = am.getActivePlaybackConfigurations();
-        assertEquals("inactive MediaPlayer, list of configs should be empty", 0 /*expected*/,
-                configs.size());
+        assertEquals("inactive MediaPlayer, number of configs shouldn't have changed",
+                nbActivePlayersBeforeStart /*expected*/, configs.size());
 
         mMp.start();
         Thread.sleep(2*TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
         configs = am.getActivePlaybackConfigurations();
-        assertEquals("active MediaPlayer, list of configs should have one entry", 1 /*expected*/,
+        assertEquals("active MediaPlayer, number of configs should have increased",
+                nbActivePlayersBeforeStart + 1 /*expected*/,
                 configs.size());
-        AudioPlaybackConfiguration config = configs.get(0);
-        assertEquals("One active MediaPlayer, wrong usage", aa.getUsage() /*expected*/,
-                config.getAudioAttributes().getUsage());
-        assertEquals("One active MediaPlayer, wrong content type", aa.getContentType() /*expected*/,
-                config.getAudioAttributes().getContentType());
+        assertTrue("Active player, attributes not found", hasAttr(configs, aa));
 
         // verify "privileged" fields aren't available through reflection
+        final AudioPlaybackConfiguration config = configs.get(0);
         final Class<?> confClass = config.getClass();
         final Method getClientUidMethod = confClass.getDeclaredMethod("getClientUid");
         final Method getClientPidMethod = confClass.getDeclaredMethod("getClientPid");
@@ -106,8 +107,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         assertNotNull("Could not create AudioManager", am);
 
         final AudioAttributes aa = (new AudioAttributes.Builder())
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .setUsage(TEST_USAGE)
+                .setContentType(TEST_CONTENT)
                 .build();
 
         mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
@@ -116,14 +117,19 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
         am.registerAudioPlaybackCallback(callback, null /*handler*/);
 
+        // query how many active players before starting the MediaPlayer
+        List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
+        final int nbActivePlayersBeforeStart = configs.size();
+
         mMp.start();
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
         assertEquals("onPlaybackConfigChanged call count not expected",
-                1/*expected*/, callback.mCalled); //only one start call
+                1/*expected*/, callback.getCbInvocationNumber()); //only one start call
         assertEquals("number of active players not expected",
-                1/*expected*/, callback.mNbConfigs); //only one player active
-        assertEquals("Audio attributes don't match", aa/*expected*/, callback.mAttrConfig);
+                // one more player active
+                nbActivePlayersBeforeStart + 1/*expected*/, callback.getNbConfigs());
+        assertTrue("Active player, attributes not found", hasAttr(callback.getConfigs(), aa));
 
         // stopping recording: callback is called with no match
         callback.reset();
@@ -131,9 +137,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
         assertEquals("onPlaybackConfigChanged call count not expected after pause",
-                1/*expected*/, callback.mCalled); //only one pause call since reset
+                1/*expected*/, callback.getCbInvocationNumber()); //only one pause call since reset
         assertEquals("number of active players not expected after pause",
-                0/*expected*/, callback.mNbConfigs); //nothing should be playing now
+                nbActivePlayersBeforeStart/*expected*/, callback.getNbConfigs());
 
         // unregister callback and start recording again
         am.unregisterAudioPlaybackCallback(callback);
@@ -142,7 +148,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         mMp.start();
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);
         assertEquals("onPlaybackConfigChanged call count not expected after unregister",
-                0/*expected*/, callback.mCalled); //callback is unregistered
+                0/*expected*/, callback.getCbInvocationNumber()); //callback is unregistered
 
         // just call the callback once directly so it's marked as tested
         final AudioManager.AudioPlaybackCallback apc =
@@ -151,30 +157,42 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     }
 
 
-    class MyAudioPlaybackCallback extends AudioManager.AudioPlaybackCallback {
-        int mCalled = 0;
-        int mNbConfigs = 0;
-        AudioAttributes mAttrConfig;
+    private static class MyAudioPlaybackCallback extends AudioManager.AudioPlaybackCallback {
+        private int mCalled = 0;
+        private int mNbConfigs = 0;
+        private List<AudioPlaybackConfiguration> mConfigs;
 
         void reset() {
             mCalled = 0;
-            mAttrConfig = null;
+            mNbConfigs = 0;
+            mConfigs.clear();
         }
 
+        int getCbInvocationNumber() { return mCalled; }
+        int getNbConfigs() { return mNbConfigs; }
+        List<AudioPlaybackConfiguration> getConfigs() { return mConfigs; }
+
         MyAudioPlaybackCallback() {
-            mAttrConfig = null;
         }
 
         @Override
         public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
             mCalled++;
             mNbConfigs = configs.size();
-            if (configs.isEmpty()) {
-                mAttrConfig = null;
-            } else {
-                mAttrConfig = configs.get(0).getAudioAttributes();
+            mConfigs = configs;
+        }
+    }
+
+    private static boolean hasAttr(List<AudioPlaybackConfiguration> configs, AudioAttributes aa) {
+        Iterator<AudioPlaybackConfiguration> it = configs.iterator();
+        while (it.hasNext()) {
+            final AudioPlaybackConfiguration apc = it.next();
+            if (apc.getAudioAttributes().getContentType() == aa.getContentType()
+                    && apc.getAudioAttributes().getUsage() == aa.getUsage()) {
+                return true;
             }
         }
+        return false;
     }
 
     private boolean isValidPlatform(String testName) {
