@@ -34,18 +34,17 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
             removeTestUsers();
             mParentUserId = mPrimaryUserId;
             installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
-
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
-                    "testProvisionManagedProfile", mParentUserId);
-
-            mProfileUserId = getFirstManagedProfileUserId();
+            mProfileUserId = 0;
         }
     }
 
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
-            removeUser(mProfileUserId);
+            if (mProfileUserId != 0) {
+                removeUser(mProfileUserId);
+            }
+            // Remove the test app account: also done by uninstallPackage
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
         }
         super.tearDown();
@@ -56,6 +55,8 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
             return;
         }
 
+        provisionManagedProfile();
+
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
                 "testIsManagedProfile", mProfileUserId);
     }
@@ -64,6 +65,8 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+
+        provisionManagedProfile();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
                 "testVerifyAdminExtraBundle", mProfileUserId);
@@ -74,7 +77,49 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
             return;
         }
 
+        provisionManagedProfile();
+
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
                 "testVerifySuccessfulIntentWasReceived", mProfileUserId);
+    }
+
+    public void testAccountMigration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        provisionManagedProfile();
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testAccountExist", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testAccountNotExist", mParentUserId);
+    }
+
+    public void testAccountCopy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        provisionManagedProfile_accountCopy();
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testAccountExist", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testAccountExist", mParentUserId);
+    }
+
+    private void provisionManagedProfile() throws Exception {
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testProvisionManagedProfile", mParentUserId);
+        mProfileUserId = getFirstManagedProfileUserId();
+    }
+
+    private void provisionManagedProfile_accountCopy() throws Exception {
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
+                "testProvisionManagedProfile_accountCopy", mParentUserId);
+        mProfileUserId = getFirstManagedProfileUserId();
     }
 }
