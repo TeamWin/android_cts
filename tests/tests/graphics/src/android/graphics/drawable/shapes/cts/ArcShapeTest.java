@@ -17,6 +17,7 @@
 package android.graphics.drawable.shapes.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Bitmap;
@@ -35,7 +36,7 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ArcShapeTest {
-    private static final int TEST_WIDTH  = 100;
+    private static final int TEST_WIDTH = 100;
     private static final int TEST_HEIGHT = 200;
 
     private static final int TEST_COLOR_1 = 0xFF00FF00;
@@ -50,6 +51,18 @@ public class ArcShapeTest {
         new ArcShape(0f, 0f);
 
         new ArcShape(-1f, -1f);
+    }
+
+    @Test
+    public void testGetSweepAngle() {
+        ArcShape shape = new ArcShape(100.0f, 360.0f);
+        assertEquals(360.0f, shape.getSweepAngle(), 0.0f);
+    }
+
+    @Test
+    public void testGetStartAngle() {
+        ArcShape shape = new ArcShape(100.0f, 360.0f);
+        assertEquals(100.0f, shape.getStartAngle(), 0.0f);
     }
 
     @Test
@@ -79,7 +92,7 @@ public class ArcShapeTest {
                 count += 1;
             }
         }
-        assertEquals((double)SQUARE / 2 / Math.sqrt(2), count, TOLERANCE);
+        assertEquals((double) SQUARE / 2 / Math.sqrt(2), count, TOLERANCE);
     }
 
     @Test
@@ -92,5 +105,14 @@ public class ArcShapeTest {
         shape = new ArcShape(0.0f, 360.0f);
         shape.getOutline(outline);
         assertTrue(outline.isEmpty());
+    }
+
+    @Test
+    public void testClone() throws Exception {
+        ArcShape shape = new ArcShape(0.0f, 360.0f);
+        ArcShape clone = shape.clone();
+        assertNotNull(clone);
+        assertEquals(0.0f, clone.getStartAngle(), 0.0f);
+        assertEquals(360.0f, clone.getSweepAngle(), 0.0f);
     }
 }

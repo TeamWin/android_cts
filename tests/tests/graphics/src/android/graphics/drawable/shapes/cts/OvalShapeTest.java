@@ -18,6 +18,7 @@ package android.graphics.drawable.shapes.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Bitmap;
@@ -108,5 +109,16 @@ public class OvalShapeTest {
         assertFalse(outline.isEmpty());
         assertTrue(outline.getRadius() < 0);
         assertFalse(outline.getRect(rect));
+    }
+
+    @Test
+    public void testClone() throws Exception {
+        OvalShape shape = new OvalShape();
+        shape.resize(100, 100);
+
+        OvalShape clone = shape.clone();
+        assertNotNull(clone);
+        assertEquals(shape.getWidth(), clone.getWidth());
+        assertEquals(shape.getHeight(), clone.getHeight());
     }
 }
