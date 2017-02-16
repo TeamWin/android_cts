@@ -18,12 +18,14 @@ package android.backup.cts;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -35,6 +37,14 @@ import java.io.IOException;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
+
+    // Value of PackageManager.FEATURE_BACKUP
+    private static final String FEATURE_BACKUP = "android.software.backup";
+
+    @Before
+    public void skipTestUnlessBackupSupported() throws Exception {
+        assumeTrue(supportsBackup());
+    }
 
     @Test
     public void testRestoreSameImageToBoth() throws Exception {
@@ -58,6 +68,10 @@ public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
     public void testRestoreLiveWallpaperAndImageLock() throws Exception {
         restoreBackup("wallpaper_live_green.ab");
         checkDeviceTest("assertSystemIsLiveAndLockIsGreen");
+    }
+
+    private boolean supportsBackup() throws Exception {
+        return getDevice().hasFeature("feature:" + FEATURE_BACKUP);
     }
 
     private void restoreBackup(final String filename) throws Exception {
