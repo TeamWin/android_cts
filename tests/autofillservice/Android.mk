@@ -24,7 +24,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     guava \
     truth-prebuilt \
-    ub-uiautomator
+    ub-uiautomator \
+    testng
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
