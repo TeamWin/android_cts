@@ -700,13 +700,6 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainOne("u:r:netd:s0", "/system/bin/netd");
     }
 
-    /* Debuggerd is always there */
-    @CddTest(requirement="9.7")
-    public void testDebuggerdDomain() throws DeviceNotAvailableException {
-        assertDomainN("u:r:debuggerd:s0", "/system/bin/debuggerd", "/system/bin/debuggerd64",
-                "debuggerd:signaller", "debuggerd64:signaller");
-    }
-
     /* Surface flinger is always there */
     @CddTest(requirement="9.7")
     public void testSurfaceflingerDomain() throws DeviceNotAvailableException {
