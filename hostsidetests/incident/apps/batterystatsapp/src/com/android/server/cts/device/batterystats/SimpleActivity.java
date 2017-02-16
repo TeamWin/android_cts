@@ -22,6 +22,7 @@ import android.os.Bundle;
 public class SimpleActivity extends Activity{
     @Override
     public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
         finish();
     }
 }

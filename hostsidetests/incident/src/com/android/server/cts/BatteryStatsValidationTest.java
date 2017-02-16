@@ -79,6 +79,19 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOffScreenOn();
     }
 
+    public void testWifiScans() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiScanTests",
+                "testBackgroundScan");
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiScanTests",
+                "testForegroundScan");
+
+        assertValueRange("wfl", "", 7, 2, 2);
+        batteryOffScreenOn();
+    }
+
     /**
      * Verifies that the recorded time for the specified tag and name in the test package
      * is within the specified range
@@ -105,7 +118,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 time = Long.parseLong(wlParts[index]);
             }
         }
-        assertTrue("Value not greater than min", time >= min);
-        assertTrue("Value not less than max", time <= max);
+        assertTrue("Value " + time + " is less than min " + min, time >= min);
+        assertTrue("Value " + time + " is greater than max " + max, time <= max);
     }
 }
