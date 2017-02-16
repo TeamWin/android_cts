@@ -187,35 +187,35 @@ public class JarHostTestTest extends TestCase {
         assertTrue(shard1 instanceof JarHostTest);
         ((JarHostTest)shard1).setBuild(new BuildInfo());
         ((JarHostTest)shard1).setDevice(device);
-        assertEquals(78, ((JarHostTest)shard1).countTestCases());
+        assertEquals(58, ((JarHostTest)shard1).countTestCases());
         total += ((JarHostTest)shard1).countTestCases();
 
         IRemoteTest shard2 = mTest.getTestShard(5, 1);
         assertTrue(shard2 instanceof JarHostTest);
         ((JarHostTest)shard2).setBuild(new BuildInfo());
         ((JarHostTest)shard2).setDevice(device);
-        assertEquals(63, ((JarHostTest)shard2).countTestCases());
+        assertEquals(60, ((JarHostTest)shard2).countTestCases());
         total += ((JarHostTest)shard2).countTestCases();
 
         IRemoteTest shard3 = mTest.getTestShard(5, 2);
         assertTrue(shard3 instanceof JarHostTest);
         ((JarHostTest)shard3).setBuild(new BuildInfo());
         ((JarHostTest)shard3).setDevice(device);
-        assertEquals(42, ((JarHostTest)shard3).countTestCases());
+        assertEquals(60, ((JarHostTest)shard3).countTestCases());
         total += ((JarHostTest)shard3).countTestCases();
 
         IRemoteTest shard4 = mTest.getTestShard(5, 3);
         assertTrue(shard4 instanceof JarHostTest);
         ((JarHostTest)shard4).setBuild(new BuildInfo());
         ((JarHostTest)shard4).setDevice(device);
-        assertEquals(14, ((JarHostTest)shard4).countTestCases());
+        assertEquals(30, ((JarHostTest)shard4).countTestCases());
         total += ((JarHostTest)shard4).countTestCases();
 
         IRemoteTest shard5 = mTest.getTestShard(5, 4);
         assertTrue(shard5 instanceof JarHostTest);
         ((JarHostTest)shard5).setBuild(new BuildInfo());
         ((JarHostTest)shard5).setDevice(device);
-        assertEquals(41, ((JarHostTest)shard5).countTestCases());
+        assertEquals(30, ((JarHostTest)shard5).countTestCases());
         total += ((JarHostTest)shard5).countTestCases();
 
         assertEquals(238, total);

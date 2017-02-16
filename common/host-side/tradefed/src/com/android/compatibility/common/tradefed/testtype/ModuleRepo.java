@@ -19,6 +19,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.tradefed.util.LinearPartition;
 import com.android.compatibility.common.util.TestFilter;
+import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
@@ -472,8 +473,8 @@ public class ModuleRepo implements IModuleRepo {
             }
         }
         Collections.sort(modules, new ExecutionOrderComparator());
-        CLog.d("%s running %s modules, expected to complete in %s: %s", serial, modules.size(),
-                TimeUtil.formatElapsedTime(estimatedTime), modules);
+        CLog.logAndDisplay(LogLevel.INFO, "%s running %s modules, expected to complete in %s: %s",
+                serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime), modules);
         return modules;
     }
 
