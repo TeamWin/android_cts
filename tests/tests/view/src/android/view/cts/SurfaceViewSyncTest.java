@@ -111,10 +111,21 @@ public class SurfaceViewSyncTest {
     // ViewFactories
     ///////////////////////////////////////////////////////////////////////////
 
-    private ViewFactory sEmptySurfaceViewFactory = SurfaceView::new;
+    private ViewFactory sEmptySurfaceViewFactory = context -> {
+        SurfaceView surfaceView = new SurfaceView(context);
+
+        // prevent transparent region optimization, which is invalid for a SurfaceView moving around
+        surfaceView.setWillNotDraw(false);
+
+        return surfaceView;
+    };
 
     private ViewFactory sGreenSurfaceViewFactory = context -> {
         SurfaceView surfaceView = new SurfaceView(context);
+
+        // prevent transparent region optimization, which is invalid for a SurfaceView moving around
+        surfaceView.setWillNotDraw(false);
+
         surfaceView.getHolder().setFixedSize(640, 480);
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -135,6 +146,10 @@ public class SurfaceViewSyncTest {
 
     private ViewFactory sVideoViewFactory = context -> {
         SurfaceView surfaceView = new SurfaceView(context);
+
+        // prevent transparent region optimization, which is invalid for a SurfaceView moving around
+        surfaceView.setWillNotDraw(false);
+
         surfaceView.getHolder().setFixedSize(640, 480);
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
