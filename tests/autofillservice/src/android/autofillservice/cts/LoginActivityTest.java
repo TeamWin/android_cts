@@ -23,6 +23,7 @@ import static android.autofillservice.cts.LoginActivity.ID_PASSWORD;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
+import static android.autofillservice.cts.InstrumentedAutoFillService.*;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -72,6 +73,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
@@ -79,17 +81,22 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Check the results.
         mLoginActivity.assertAutoFilled();
 
-        // Sanity check: make sure input was sanitized.
+        // Sanity checks
+
+        // Make sure input was sanitized.
         final FillRequest request = replier.getNextFillRequest();
         assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
         assertTextIsSanitized(request.structure, ID_PASSWORD);
 
-        // Sanity check: make sure initial focus was properly set.
+        // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
-}
+
+        // Other sanity checks
+        waitUntilDisconnected();
+    }
 
     @Test
     public void testAutoFillOneDatasetAndMoveFocusAround() throws Exception {
@@ -108,6 +115,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
 
         // Make sure tapping on other fields from the dataset does not trigger it again
         mLoginActivity.onPassword((v) -> { v.requestFocus(); });
@@ -123,8 +131,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mLoginActivity.onPassword((v) -> { v.requestFocus(); });
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
 
-        // Sanity check: make sure service was called just once.
+        // Sanity checks
         replier.assertNumberUnhandledFillRequests(1);
+        waitUntilDisconnected();
     }
 
     @Test
@@ -152,6 +161,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
@@ -193,6 +203,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Sanity check: make sure service was called just once.
         replier.assertNumberUnhandledFillRequests(1);
         replier.assertNumberUnhandledSaveRequests(0);
+
+        // Sanity check: once saved, the session should be finsihed
+        assertNoDanglingSessions();
+
+        // Other sanity checks
+        waitUntilDisconnected();
     }
 
     @Test
@@ -211,6 +227,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -243,6 +260,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Sanity check: make sure service was called just once.
         replier.assertNumberUnhandledFillRequests(0);
         replier.assertNumberUnhandledSaveRequests(0);
+
+        // Sanity check: once saved, the session should be finsihed
+        assertNoDanglingSessions();
+
+        // Other sanity checks
+        waitUntilDisconnected();
     }
 
     @Test
