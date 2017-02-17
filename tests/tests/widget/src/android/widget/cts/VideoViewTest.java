@@ -31,6 +31,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.AudioPlaybackConfiguration;
 import android.media.MediaPlayer;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -53,6 +56,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 /**
  * Test {@link VideoView}.
@@ -73,6 +77,11 @@ public class VideoViewTest {
     /** delta for duration in case user uses different decoders on different
         hardware that report a duration that's different by a few milliseconds */
     private static final int DURATION_DELTA = 100;
+    /** AudioAttributes to be used by this player */
+    private static final AudioAttributes AUDIO_ATTR = new AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build();
 
     private Instrumentation mInstrumentation;
     private Activity mActivity;
@@ -153,6 +162,53 @@ public class VideoViewTest {
         // wait time is longer than duration in case system is sluggish
         verify(mockCompletionListener, within(TIME_OUT)).onCompletion(any(MediaPlayer.class));
         verify(mockCompletionListener, times(1)).onCompletion(any(MediaPlayer.class));
+    }
+
+    private static final class MyPlaybackCallback extends AudioManager.AudioPlaybackCallback {
+        boolean mMatchingPlayerFound = false;
+
+        @Override
+        public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
+            for (AudioPlaybackConfiguration apc : configs) {
+                if (apc.getPlayerState() == AudioPlaybackConfiguration.PLAYER_STATE_STARTED
+                        && apc.getAudioAttributes().getUsage() == AUDIO_ATTR.getUsage()
+                        && apc.getAudioAttributes().getContentType()
+                                == AUDIO_ATTR.getContentType()) {
+                    mMatchingPlayerFound = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testAudioAttributes() throws Throwable {
+        makeVideoView();
+        // Don't run the test if the codec isn't supported.
+        if (!hasCodec()) {
+            Log.i(TAG, "SKIPPING testAudioAttributes(): codec is not supported");
+            return;
+        }
+
+        final MediaPlayer.OnCompletionListener mockCompletionListener =
+                mock(MediaPlayer.OnCompletionListener.class);
+        mVideoView.setOnCompletionListener(mockCompletionListener);
+
+        mVideoView.setAudioAttributes(AUDIO_ATTR);
+        mVideoView.setAudioFocusRequest(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+        final AudioManager am = new AudioManager(mActivity);
+        final MyPlaybackCallback myCb = new MyPlaybackCallback();
+        mActivityRule.runOnUiThread(() -> am.registerAudioPlaybackCallback(myCb, null));
+        mActivityRule.runOnUiThread(() -> mVideoView.setVideoPath(mVideoPath));
+        mActivityRule.runOnUiThread(mVideoView::start);
+        // wait time is longer than duration in case system is sluggish
+        verify(mockCompletionListener, within(TIME_OUT)).onCompletion(any(MediaPlayer.class));
+        verify(mockCompletionListener, times(1)).onCompletion(any(MediaPlayer.class));
+
+        // TODO is there a more compact way to test this with mockito?
+        assertTrue("Audio playback configuration not found for VideoView",
+                myCb.mMatchingPlayerFound);
     }
 
     @Test
