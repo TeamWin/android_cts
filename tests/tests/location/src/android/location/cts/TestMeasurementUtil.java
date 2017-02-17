@@ -183,7 +183,7 @@ public final class TestMeasurementUtil {
                 timeInNs,
                 "X > 0",
                 String.valueOf(state),
-                state > 0);
+                state >=0);
 
         // Check received_gps_tow_uncertainty_ns
         softAssert.assertTrueAsWarning("received_gps_tow_uncertainty_ns:" +
