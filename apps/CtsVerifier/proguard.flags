@@ -39,3 +39,4 @@
 -dontwarn org.opencv.**
 -dontwarn android.support.test.internal.runner.hidden.ExposedInstrumentationApi
 
+-dontwarn java.lang.management.**
