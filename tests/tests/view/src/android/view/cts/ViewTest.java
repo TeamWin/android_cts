@@ -3647,6 +3647,67 @@ public class ViewTest {
     }
 
     @Test
+    public void testScrollbarSize() {
+        final int configScrollbarSize = ViewConfiguration.get(mActivity).getScaledScrollBarSize();
+        final int customScrollbarSize = configScrollbarSize * 2;
+
+        // No explicit scrollbarSize or custom drawables, ViewConfiguration applies.
+        final MockView view = (MockView) mActivity.findViewById(R.id.scroll_view);
+        assertEquals(configScrollbarSize, view.getScrollBarSize());
+        assertEquals(configScrollbarSize, view.getVerticalScrollbarWidth());
+        assertEquals(configScrollbarSize, view.getHorizontalScrollbarHeight());
+
+        // No custom drawables, explicit scrollbarSize takes precedence.
+        final MockView view2 = (MockView) mActivity.findViewById(R.id.scroll_view_2);
+        view2.setScrollBarSize(customScrollbarSize);
+        assertEquals(customScrollbarSize, view2.getScrollBarSize());
+        assertEquals(customScrollbarSize, view2.getVerticalScrollbarWidth());
+        assertEquals(customScrollbarSize, view2.getHorizontalScrollbarHeight());
+
+        // Custom drawables with no intrinsic size, ViewConfiguration applies.
+        final MockView view3 = (MockView) mActivity.findViewById(R.id.scroll_view_3);
+        assertEquals(configScrollbarSize, view3.getVerticalScrollbarWidth());
+        assertEquals(configScrollbarSize, view3.getHorizontalScrollbarHeight());
+        // Explicit scrollbarSize takes precedence.
+        view3.setScrollBarSize(customScrollbarSize);
+        assertEquals(view3.getScrollBarSize(), view3.getVerticalScrollbarWidth());
+        assertEquals(view3.getScrollBarSize(), view3.getHorizontalScrollbarHeight());
+
+        // Custom thumb drawables with intrinsic sizes define the scrollbars' dimensions.
+        final MockView view4 = (MockView) mActivity.findViewById(R.id.scroll_view_4);
+        final Resources res = mActivity.getResources();
+        final int thumbWidth = res.getDimensionPixelOffset(R.dimen.scrollbar_thumb_width);
+        final int thumbHeight = res.getDimensionPixelOffset(R.dimen.scrollbar_thumb_height);
+        assertEquals(thumbWidth, view4.getVerticalScrollbarWidth());
+        assertEquals(thumbHeight, view4.getHorizontalScrollbarHeight());
+        // Explicit scrollbarSize has no effect.
+        view4.setScrollBarSize(customScrollbarSize);
+        assertEquals(thumbWidth, view4.getVerticalScrollbarWidth());
+        assertEquals(thumbHeight, view4.getHorizontalScrollbarHeight());
+
+        // Custom thumb and track drawables with intrinsic sizes. Track size take precedence.
+        final MockView view5 = (MockView) mActivity.findViewById(R.id.scroll_view_5);
+        final int trackWidth = res.getDimensionPixelOffset(R.dimen.scrollbar_track_width);
+        final int trackHeight = res.getDimensionPixelOffset(R.dimen.scrollbar_track_height);
+        assertEquals(trackWidth, view5.getVerticalScrollbarWidth());
+        assertEquals(trackHeight, view5.getHorizontalScrollbarHeight());
+        // Explicit scrollbarSize has no effect.
+        view5.setScrollBarSize(customScrollbarSize);
+        assertEquals(trackWidth, view5.getVerticalScrollbarWidth());
+        assertEquals(trackHeight, view5.getHorizontalScrollbarHeight());
+
+        // Custom thumb and track, track with no intrinsic size, ViewConfiguration applies
+        // regardless of the thumb drawable dimensions.
+        final MockView view6 = (MockView) mActivity.findViewById(R.id.scroll_view_6);
+        assertEquals(configScrollbarSize, view6.getVerticalScrollbarWidth());
+        assertEquals(configScrollbarSize, view6.getHorizontalScrollbarHeight());
+        // Explicit scrollbarSize takes precedence.
+        view6.setScrollBarSize(customScrollbarSize);
+        assertEquals(customScrollbarSize, view6.getVerticalScrollbarWidth());
+        assertEquals(customScrollbarSize, view6.getHorizontalScrollbarHeight());
+    }
+
+    @Test
     public void testOnStartAndFinishTemporaryDetach() throws Throwable {
         final AtomicBoolean exitedDispatchStartTemporaryDetach = new AtomicBoolean(false);
         final AtomicBoolean exitedDispatchFinishTemporaryDetach = new AtomicBoolean(false);
