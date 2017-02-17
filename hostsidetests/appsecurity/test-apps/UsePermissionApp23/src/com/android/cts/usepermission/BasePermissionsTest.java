@@ -442,7 +442,7 @@ public abstract class BasePermissionsTest {
         getInstrumentation().getUiAutomation().executeAndWaitForEvent(
                 () -> node.performAction(AccessibilityNodeInfo.ACTION_CLICK),
                 (AccessibilityEvent event) -> event.getEventType()
-                        == AccessibilityEvent.TYPE_VIEW_CLICKED,
+                        == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
                 GLOBAL_TIMEOUT_MILLIS);
     }
 
