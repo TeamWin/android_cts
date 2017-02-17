@@ -534,6 +534,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void unlockDeviceWithCredential() throws Exception {
         runCommandAndPrintOutput("input keyevent 82");
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            //ignored
+        }
         enterAndConfirmLockCredential();
     }
 

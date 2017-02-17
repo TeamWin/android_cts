@@ -37,6 +37,11 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     protected void tearDown() throws Exception {
         super.tearDown();
         removeLockCredential();
+        // Dismiss active keyguard after credential is cleared, so
+        // keyguard doesn't ask for the stale credential.
+        pressBackButton();
+        sleepDevice();
+        wakeUpAndUnlockDevice();
     }
 
     public void testLockAndUnlock() throws Exception {
