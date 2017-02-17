@@ -106,8 +106,8 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             new Account(ACCOUNT_NAME,ACCOUNT_TYPE_CUSTOM);
 
     // Installed packages to test visibility API.
-    public static final String PACKAGE_NAME_1 = "android.accounts.cts";
-    public static final String PACKAGE_NAME_2 = "android.accounts.cts.unaffiliated";
+    public static final String PACKAGE_NAME_1 = "android.accounts.cts.unaffiliated";
+    public static final String PACKAGE_NAME_PRIVILEGED = "android.accounts.cts"; // authenticator
 
     public static final Bundle SESSION_BUNDLE = new Bundle();
     public static final String SESSION_DATA_NAME_1 = "session.data.name.1";
@@ -980,69 +980,6 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         // Ask for the AuthToken
         assertNotNull(token);
         assertEquals(mockAuthenticator.getLastTokenServed(), token);
-    }
-
-    /*
-     * Test updates to account visibility and then test subsequent visibility checks:
-     */
-    public void testSetAccountVisibilityVisibility()
-            throws IOException, AuthenticatorException, OperationCanceledException {
-        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
-
-        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_VISIBLE);
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
-                AccountManager.VISIBILITY_VISIBLE);
-
-        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_NOT_VISIBLE);
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
-                AccountManager.VISIBILITY_NOT_VISIBLE);
-
-        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_2, AccountManager.VISIBILITY_VISIBLE);
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
-                AccountManager.VISIBILITY_NOT_VISIBLE);
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_2),
-                AccountManager.VISIBILITY_VISIBLE);
-
-    }
-
-    /**
-     * Test addAccountExplicitly(), setAccountVisibility() , getAccountVisibility(), and
-     * removeAccount().
-     */
-    public void testAddAccountExplicitlyWithVisibility()
-            throws IOException, AuthenticatorException, OperationCanceledException {
-        Map<String, Integer> visibility = new HashMap<>();
-        visibility.put(PACKAGE_NAME_1, AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
-        visibility.put(PACKAGE_NAME_2, AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
-
-        final int expectedAccountsCount = getAccountsCount();
-
-        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */, visibility);
-
-        // Assert that we have one more account
-        Account[] accounts = am.getAccounts();
-        assertNotNull(accounts);
-        assertEquals(1 + expectedAccountsCount, accounts.length);
-        assertTrue(isAccountPresent(am.getAccounts(), ACCOUNT));
-
-        // Visibility values were stored.
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
-                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_2),
-                AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
-        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */)
-                .getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
-
-        // Visibility values were removed
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
-                AccountManager.VISIBILITY_UNDEFINED);
-        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_2),
-                AccountManager.VISIBILITY_UNDEFINED);
-
-        // and verify that we go back to the initial state
-        accounts = am.getAccounts();
-        assertNotNull(accounts);
-        assertEquals(expectedAccountsCount, accounts.length);
     }
 
     private static class BlockingGetAuthTokenFetcher implements TokenFetcher {
