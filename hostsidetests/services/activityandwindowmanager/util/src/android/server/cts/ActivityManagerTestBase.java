@@ -708,6 +708,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
     private static final Pattern sConfigurationChangedPattern =
             Pattern.compile("(.+): onConfigurationChanged");
+    private static final Pattern sMovedToDisplayPattern =
+            Pattern.compile("(.+): onMovedToDisplay");
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
     private static final Pattern sNewConfigPattern = Pattern.compile(
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)" +
@@ -756,9 +758,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return null;
     }
 
-    private class ActivityLifecycleCounts {
+    class ActivityLifecycleCounts {
         int mCreateCount;
         int mConfigurationChangedCount;
+        int mMovedToDisplayCount;
         int mDestroyCount;
 
         public ActivityLifecycleCounts(String activityName) throws DeviceNotAvailableException {
@@ -774,6 +777,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 matcher = sConfigurationChangedPattern.matcher(line);
                 if (matcher.matches()) {
                     mConfigurationChangedCount++;
+                    continue;
+                }
+
+                matcher = sMovedToDisplayPattern.matcher(line);
+                if (matcher.matches()) {
+                    mMovedToDisplayCount++;
                     continue;
                 }
 
