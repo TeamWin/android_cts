@@ -17,6 +17,11 @@ package com.android.cts.deviceowner;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.os.Process;
+import android.os.UserHandle;
+import android.provider.Settings;
 
 import java.lang.reflect.Method;
 
@@ -126,5 +131,27 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      */
     public void testIsDeviceManaged() throws Exception {
         assertTrue(mDevicePolicyManager.isDeviceManaged());
+    }
+
+    /**
+     * Test: It should be recored whether the Device Owner or the user set the default IME.
+     */
+    public void testIsDefaultInputMethodSet() throws Exception {
+        final UserHandle userHandle = Process.myUserHandle();
+        final String setting = Settings.Secure.DEFAULT_INPUT_METHOD;
+        final ContentResolver resolver = getContext().getContentResolver();
+        final String ime = Settings.Secure.getString(resolver, setting);
+
+        Settings.Secure.putString(resolver, setting, "com.test.1");
+        Thread.sleep(500);
+        assertFalse(mDevicePolicyManager.isDefaultInputMethodSetByOwner(userHandle));
+
+        mDevicePolicyManager.setSecureSetting(getWho(), setting, "com.test.2");
+        Thread.sleep(500);
+        assertTrue(mDevicePolicyManager.isDefaultInputMethodSetByOwner(userHandle));
+
+        Settings.Secure.putString(resolver, setting, ime);
+        Thread.sleep(500);
+        assertFalse(mDevicePolicyManager.isDefaultInputMethodSetByOwner(userHandle));
     }
 }

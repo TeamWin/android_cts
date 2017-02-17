@@ -60,6 +60,13 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         executeProfileOwnerTest("ManagementTest");
     }
 
+    public void testAdminActionBookkeeping() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeProfileOwnerTest("AdminActionBookkeepingTest");
+    }
+
     @Override
     protected void tearDown() throws Exception {
         if (mHasFeature) {
