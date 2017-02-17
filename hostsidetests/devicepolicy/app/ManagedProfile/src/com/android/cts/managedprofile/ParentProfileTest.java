@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
      * A whitelist of public API methods in {@link android.app.admin.DevicePolicyManager}
      * that are supported on a parent profile.
      */
-    public static final ImmutableSet<String> SUPPORTED_APIS = new ImmutableSet.Builder<String>()
+    private static final ImmutableSet<String> SUPPORTED_APIS = new ImmutableSet.Builder<String>()
             .add("getPasswordQuality")
             .add("setPasswordQuality")
             .add("getPasswordMinimumLength")
@@ -95,7 +96,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
         List<Method> methods = CurrentApiHelper.getPublicApis(PACKAGE_NAME, CLASS_NAME);
         assertValidMethodNames(SUPPORTED_APIS, methods);
 
-        boolean failed = false;
+        ArrayList<String> failedMethods = new ArrayList<String>();
 
         for (Method method : methods) {
             String methodName = method.getName();
@@ -117,16 +118,18 @@ public class ParentProfileTest extends BaseManagedProfileTest {
                     // Method throws SecurityException as expected
                     continue;
                 } else {
-                    Log.e(LOG_TAG, e.getMessage(), e);
+                    Log.e(LOG_TAG,
+                            methodName + " throws exception other than SecurityException.", e);
                 }
             }
 
             // Either no exception is thrown, or the exception thrown is not a SecurityException
-            failed = true;
+            failedMethods.add(methodName);
             Log.e(LOG_TAG, methodName + " failed to throw SecurityException");
         }
 
-        assertFalse("Some method(s) failed to throw SecurityException", failed);
+        assertTrue("Some method(s) failed to throw SecurityException: " + failedMethods,
+                failedMethods.isEmpty());
     }
 
     private void assertValidMethodNames(Collection<String> names, Collection<Method> allMethods) {
