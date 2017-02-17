@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package android.graphics2.cts;
+package android.view.cts;
 
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 
@@ -35,6 +35,8 @@ import java.util.concurrent.TimeUnit;
 
 public class TextureViewCameraActivity extends Activity implements
         TextureView.SurfaceTextureListener {
+    private static final String TAG = "TextureViewCameraActivity";
+
     private static final int CAPTURE_SCREEN_INTERVAL = 10;
     private static final float SCREEN_ROTATION_RATE = 1.0f;
     private static final int MAX_FRAME_UPDATE = 40;
@@ -47,6 +49,7 @@ public class TextureViewCameraActivity extends Activity implements
     private float mRotation = 0f;
     private final CountDownLatch mLatch = new CountDownLatch(1);
 
+
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         Assert.assertTrue(mTextureView.getLayerType() == View.LAYER_TYPE_HARDWARE);
         Assert.assertTrue(mTextureView.isAvailable());
@@ -56,9 +59,12 @@ public class TextureViewCameraActivity extends Activity implements
         mWidth = width;
         mHeight = height;
         if (Camera.getNumberOfCameras() > 0) {
+            Log.d(TAG, "opening camera...");
             mCamera = Camera.open(0);
+            Log.d(TAG, "surface texture available, opening a camera");
         } else {
             // no camera, and no frame update, so just complete here.
+            Log.d(TAG, "no camera, test aborting");
             mLatch.countDown();
             return;
         }
@@ -73,12 +79,15 @@ public class TextureViewCameraActivity extends Activity implements
     }
 
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+        Log.d(TAG, "surface texture size change " + width + " x " + height);
         mWidth = width;
         mHeight = height;
     }
 
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        Log.d(TAG, "surface texture destroyed");
         if (mCamera != null) {
+            Log.d(TAG, "stopping camera");
             mCamera.stopPreview();
             mCamera.release();
         }
@@ -86,19 +95,22 @@ public class TextureViewCameraActivity extends Activity implements
     }
 
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        Log.d(TAG, "surface texture updated");
         mUpdateCounter++;
         if (mUpdateCounter % CAPTURE_SCREEN_INTERVAL == 0) {
             Bitmap bitmap = mTextureView.getBitmap();
+            Log.d(TAG, "acquired bitmap");
             Assert.assertEquals(mHeight, bitmap.getHeight());
             Assert.assertEquals(mWidth, bitmap.getWidth());
             bitmap.recycle();
             if (mUpdateCounter >= MAX_FRAME_UPDATE) {
+                Log.d(TAG, "seen " + MAX_FRAME_UPDATE + " frames, test complete");
                 mLatch.countDown();
             }
         }
         Matrix transformMatrix =  mTextureView.getTransform(null);
         mRotation += SCREEN_ROTATION_RATE;
-        transformMatrix.setRotate(mRotation, mWidth/2, mHeight/2);
+        transformMatrix.setRotate(mRotation, mWidth / 2, mHeight / 2);
         mTextureView.setTransform(transformMatrix);
     }
 
