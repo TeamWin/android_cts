@@ -44,7 +44,20 @@
                 <action android:name="com.android.cts.ephemeraltest.START_EPHEMERAL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            </activity>
+        </activity>
+        <activity
+            android:name=".EphemeralActivity2">
+            <!-- TEST: ephemeral apps can start this activity using directed intent -->
+            <!-- TEST: normal apps can't start this activity using directed intent -->
+            <intent-filter android:priority="0">
+                <action android:name="com.android.cts.ephemeraltest.START_EPHEMERAL_PRIVATE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".EphemeralActivity3">
+            <!-- TEST: ephemeral apps can start this activity using directed intent -->
+        </activity>
     </application>
 
     <instrumentation
