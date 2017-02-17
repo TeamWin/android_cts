@@ -691,6 +691,157 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     }
 
     /**
+     * Test updates to account visibility.
+     */
+    public void testSetAccountVisibility()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_NOT_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_PRIVILEGED,
+                AccountManager.VISIBILITY_VISIBLE);
+        // No changes to PACKAGE_NAME_1
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+    }
+
+    /**
+     * Test updates to account visibility for authenticator package.
+     */
+    public void testSetAccountVisibilityForPrivilegedPackage()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
+
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_PRIVILEGED),
+                AccountManager.VISIBILITY_VISIBLE);
+        Map<String, Integer> visibilities = am.getPackagesAndVisibilityForAccount(ACCOUNT);
+        assertNull(visibilities.get(PACKAGE_NAME_PRIVILEGED)); // no entry in database
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_PRIVILEGED,
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+        visibilities = am.getPackagesAndVisibilityForAccount(ACCOUNT);
+        // database is updated
+        assertEquals((int) visibilities.get(PACKAGE_NAME_PRIVILEGED),
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+        // VISIBILITY_VISIBLE is used for Authenticator despite database entry.
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_PRIVILEGED),
+                AccountManager.VISIBILITY_VISIBLE);
+    }
+
+    /**
+     * Test getPackagesAndVisibilityForAccount() method.
+     */
+    public void testGetPackagesAndVisibilityForAccount()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
+
+        Map<String, Integer> visibilities = am.getPackagesAndVisibilityForAccount(ACCOUNT);
+        assertNull(visibilities.get(PACKAGE_NAME_1)); // no entry in database
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_VISIBLE);
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_PRIVILEGED,
+                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+        visibilities = am.getPackagesAndVisibilityForAccount(ACCOUNT);
+        assertEquals(visibilities.size(), 2);
+        assertEquals((int) visibilities.get(PACKAGE_NAME_1), AccountManager.VISIBILITY_VISIBLE);
+        assertEquals((int) visibilities.get(PACKAGE_NAME_PRIVILEGED),
+                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+    }
+
+    /**
+     * Test addAccountExplicitly(), setAccountVisibility() , getAccountVisibility(), and
+     * removeAccount().
+     */
+    public void testAddAccountExplicitlyWithVisibility()
+            throws IOException, AuthenticatorException, OperationCanceledException {
+        Map<String, Integer> visibility = new HashMap<>();
+        visibility.put(PACKAGE_NAME_1, AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+
+        final int expectedAccountsCount = getAccountsCount();
+
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */, visibility);
+
+        // Assert that we have one more account
+        Account[] accounts = am.getAccounts();
+        assertNotNull(accounts);
+        assertEquals(1 + expectedAccountsCount, accounts.length);
+        assertTrue(isAccountPresent(am.getAccounts(), ACCOUNT));
+
+        // Visibility values were stored.
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */)
+                .getBoolean(AccountManager.KEY_BOOLEAN_RESULT));
+
+        // Visibility values were removed
+        Map<Account, Integer> visibilities =
+                am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
+        assertNull(visibilities.get(ACCOUNT));
+
+        // and verify that we go back to the initial state
+        accounts = am.getAccounts();
+        assertNotNull(accounts);
+        assertEquals(expectedAccountsCount, accounts.length);
+    }
+
+    /**
+     * Test testGetAccountsAndVisibilityForPackage(), getAccountsByTypeForPackage() methods.
+     */
+    public void testGetAccountsAndVisibilityForPackage() {
+        am.addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */, null);
+        am.addAccountExplicitly(ACCOUNT_SAME_TYPE, ACCOUNT_PASSWORD, null /* userData */, null);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_NOT_VISIBLE);
+        am.setAccountVisibility(ACCOUNT_SAME_TYPE, PACKAGE_NAME_1,
+                AccountManager.VISIBILITY_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT_SAME_TYPE, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_VISIBLE);
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_NOT_VISIBLE);
+        Account[] accounts = am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1);
+        assertEquals(accounts.length, 1); // VISIBILITY_NOT_VISIBLE accounts are not returned.
+        assertEquals(accounts[0], ACCOUNT_SAME_TYPE);
+        Map<Account, Integer> visibilities =
+                am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
+        assertEquals((int) visibilities.get(ACCOUNT), AccountManager.VISIBILITY_NOT_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1,
+                AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+        // VISIBILITY_USER_MANAGED_NOT_VISIBLE accounts are returned by getAccountsByTypeForPackage
+        assertEquals(am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1).length, 2);
+        visibilities = am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
+        assertEquals((int) visibilities.get(ACCOUNT),
+                AccountManager.VISIBILITY_USER_MANAGED_NOT_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1,
+                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+
+        assertEquals(am.getAccountVisibility(ACCOUNT, PACKAGE_NAME_1),
+                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+        assertEquals(am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1).length, 2);
+        visibilities = am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
+        assertEquals((int) visibilities.get(ACCOUNT),
+                AccountManager.VISIBILITY_USER_MANAGED_VISIBLE);
+
+        am.setAccountVisibility(ACCOUNT, PACKAGE_NAME_1, AccountManager.VISIBILITY_VISIBLE);
+
+        assertEquals(am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1).length, 2);
+        visibilities = am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
+        assertEquals((int) visibilities.get(ACCOUNT), AccountManager.VISIBILITY_VISIBLE);
+        assertEquals(am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1).length, 2);
+    }
+
+    /**
      * Test setUserData() and getUserData().
      */
     public void testAccountRenameAndGetPreviousName()
@@ -1781,18 +1932,68 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
             boolean updateImmediately) {
 
         final CountDownLatch latch = new CountDownLatch(1);
-
-        OnAccountsUpdateListener listener = new OnAccountsUpdateListener() {
-            @Override
-            public void onAccountsUpdated(Account[] accounts) {
-                latch.countDown();
-            }
-        };
+        OnAccountsUpdateListener listener =  accounts -> latch.countDown();
 
         // Add a listener
         am.addOnAccountsUpdatedListener(listener,
                 handler,
                 updateImmediately);
+
+        addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
+
+        // Wait with timeout for the callback to do its work
+        try {
+            latch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail("should not throw an InterruptedException");
+        }
+
+        // Cleanup
+        am.removeOnAccountsUpdatedListener(listener);
+    }
+
+    /**
+     * Test addOnAccountsUpdatedListener() with visibility
+     */
+    public void testAddOnAccountsUpdatedListenerWithVisibility() throws IOException,
+            AuthenticatorException, OperationCanceledException {
+
+        testAddOnAccountsUpdatedListenerWithVisibility(null /* handler */,
+                false /* updateImmediately */, new String[] {ACCOUNT_TYPE, ACCOUNT_TYPE_ABSENT});
+
+        // Need to cleanup intermediate state
+        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */).getBoolean(
+                AccountManager.KEY_BOOLEAN_RESULT));
+
+        testAddOnAccountsUpdatedListenerWithVisibility(null /* handler */,
+                true /* updateImmediately */, null /* types */);
+
+        // Need to cleanup intermediate state
+        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */).getBoolean(
+                AccountManager.KEY_BOOLEAN_RESULT));
+
+        testAddOnAccountsUpdatedListenerWithVisibility(new Handler(Looper.getMainLooper()),
+                false /* updateImmediately */, new String[] {ACCOUNT_TYPE});
+
+        // Need to cleanup intermediate state
+        assertTrue(removeAccount(am, ACCOUNT, mActivity, null /* callback */).getBoolean(
+                AccountManager.KEY_BOOLEAN_RESULT));
+
+        testAddOnAccountsUpdatedListenerWithVisibility(new Handler(Looper.getMainLooper()),
+                true /* updateImmediately */, new String[] {ACCOUNT_TYPE});
+    }
+
+    private void testAddOnAccountsUpdatedListenerWithVisibility(Handler handler,
+            boolean updateImmediately, String[] accountTypes) {
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        OnAccountsUpdateListener listener =  accounts -> latch.countDown();
+
+        // Add a listener
+        am.addOnAccountsUpdatedListener(listener,
+                handler,
+                updateImmediately,
+                accountTypes);
 
         addAccountExplicitly(ACCOUNT, ACCOUNT_PASSWORD, null /* userData */);
 
@@ -1823,14 +2024,9 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
     }
 
     private void testRemoveOnAccountsUpdatedListenerWithHandler(Handler handler) {
-        final CountDownLatch latch = new CountDownLatch(1);
 
-        OnAccountsUpdateListener listener = new OnAccountsUpdateListener() {
-            @Override
-            public void onAccountsUpdated(Account[] accounts) {
-                fail("should not be called");
-            }
-        };
+        final CountDownLatch latch = new CountDownLatch(1);
+        OnAccountsUpdateListener listener =  accounts -> fail("should not be called");
 
         // First add a listener
         am.addOnAccountsUpdatedListener(listener,
