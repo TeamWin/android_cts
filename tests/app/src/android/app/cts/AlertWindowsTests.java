@@ -88,8 +88,6 @@ public class AlertWindowsTests {
             // Wait for alert window service to be connection before processing.
             mConnection.wait(WAIT_TIME_MS);
         }
-
-        setAlertWindowPermission(true /* allow */);
     }
 
     @After
@@ -105,12 +103,23 @@ public class AlertWindowsTests {
 
     @Test
     public void testAlertWindowOomAdj() throws Exception {
+        setAlertWindowPermission(true /* allow */);
+
         assertImportance(IMPORTANCE_PERCEPTIBLE);
         addAlertWindow();
         // Process importance should be increased to visible when the service has an alert window.
         assertImportance(IMPORTANCE_VISIBLE);
         addAlertWindow();
         assertImportance(IMPORTANCE_VISIBLE);
+
+        setAlertWindowPermission(false /* allow */);
+        // Process importance should no longer be visible since its alert windows are not allowed to
+        // be visible.
+        assertImportance(IMPORTANCE_PERCEPTIBLE);
+        setAlertWindowPermission(true /* allow */);
+        // They can show again so importance should be visible again.
+        assertImportance(IMPORTANCE_VISIBLE);
+
         removeAlertWindow();
         assertImportance(IMPORTANCE_VISIBLE);
         removeAlertWindow();
