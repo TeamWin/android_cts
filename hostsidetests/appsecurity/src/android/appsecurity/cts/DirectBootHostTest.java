@@ -214,12 +214,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
 
     private boolean isSupportedDevice() throws Exception {
         final String featureList = getDevice().executeShellCommand("pm list features");
-        if (featureList.contains("feature:android.hardware.type.watch\n") ||
-                featureList.contains("feature:android.hardware.type.television\n")) {
-            return false;
-        } else {
-            return true;
-        }
+        return featureList.contains("feature:android.software.device_admin\n");
     }
 
     private void waitForBootCompleted() throws Exception {
