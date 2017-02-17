@@ -446,9 +446,12 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             mCollector.expectKeyValueInRange(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1,
                     CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT,
                     CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN);
-            mCollector.expectKeyValueInRange(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2,
-                    (byte) CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT,
-                    (byte) CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN);
+            // Only check the range if the second reference illuminant is avaliable
+            if (c.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2) != null) {
+                mCollector.expectKeyValueInRange(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2,
+                        (byte) CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT,
+                        (byte) CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN);
+            }
 
             Rational[] zeroes = new Rational[9];
             Arrays.fill(zeroes, Rational.ZERO);
