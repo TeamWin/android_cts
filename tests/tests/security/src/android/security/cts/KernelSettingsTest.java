@@ -86,19 +86,6 @@ public class KernelSettingsTest extends TestCase {
     }
 
     /**
-     * Assert that the kernel config file is not compiled into the kernel.
-     *
-     * Compiling the config file into the kernel leaks the kernel base address
-     * via CONFIG_PHYS_OFFSET. It also wastes a small amount of valuable kernel memory.
-     */
-    public void testNoConfigGz() throws IOException {
-        assertFalse(
-                "/proc/config.gz is readable.  Please recompile your "
-                        + "kernel with CONFIG_IKCONFIG_PROC disabled",
-                new File("/proc/config.gz").exists());
-    }
-
-    /**
      * Verify that ext4 extended attributes (xattrs) are enabled in the
      * Linux kernel.
      *
