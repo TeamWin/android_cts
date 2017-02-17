@@ -45,6 +45,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String LAUNCHER_ENTER_PIP_ACTIVITY = "LaunchEnterPipActivity";
     private static final String PIP_ON_STOP_ACTIVITY = "PipOnStopActivity";
 
+    private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
@@ -68,6 +69,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final int ROTATION_90 = 1;
     private static final int ROTATION_180 = 2;
     private static final int ROTATION_270 = 3;
+
+    // Corresponds to ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+    private static final int ORIENTATION_LANDSCAPE = 0;
+    // Corresponds to ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    private static final int ORIENTATION_PORTRAIT = 1;
 
     private static final float FLOAT_COMPARE_EPSILON = 0.005f;
 
@@ -224,6 +230,23 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         setDeviceRotation(3 /* ROTATION_270 */);
         assertPinnedStackDoesNotIntersectIME();
         setDeviceRotation(0 /* ROTATION_0 */);
+    }
+
+    public void testEnterPipToOtherOrientation() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a portrait only app on the fullscreen stack
+        launchActivity(TEST_ACTIVITY,
+                EXTRA_FIXED_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT));
+        // Launch the PiP activity fixed as landscape
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_FIXED_ORIENTATION, String.valueOf(ORIENTATION_LANDSCAPE));
+        // Enter PiP, and assert that the PiP is within bounds now that the device is back in
+        // portrait
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+        assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
 
     public void testEnterPipAspectRatio() throws Exception {
@@ -609,6 +632,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // when paused
         executeShellCommand("am task lock " + task.mTaskId);
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackDoesNotExist();
         launchHomeActivity();
         assertPinnedStackDoesNotExist();
