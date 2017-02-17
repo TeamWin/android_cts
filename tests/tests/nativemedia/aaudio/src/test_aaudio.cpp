@@ -23,24 +23,26 @@
 #include <aaudio/AAudio.h>
 #include <aaudio/AAudioDefinitions.h>
 
-// Note that this "AAudio" audio API is in the process of being renamed "AAudio".
-// You may see both names until the conversion is complete.
-// TODO Remove this comment when AAudio has become AAudio.
 
-#define DEFAULT_STATE_TIMEOUT  (500 * AAUDIO_NANOS_PER_MILLISECOND)
+#define NANOS_PER_MICROSECOND ((int64_t)1000)
+#define NANOS_PER_MILLISECOND (NANOS_PER_MICROSECOND * 1000)
+#define MILLIS_PER_SECOND     1000
+#define NANOS_PER_SECOND      (NANOS_PER_MILLISECOND * MILLIS_PER_SECOND)
+
+#define DEFAULT_STATE_TIMEOUT  (500 * NANOS_PER_MILLISECOND)
+
+static int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC) {
+    struct timespec time;
+    int result = clock_gettime(clockId, &time);
+    if (result < 0) {
+        return -errno;
+    }
+    return (time.tv_sec * NANOS_PER_SECOND) + time.tv_nsec;
+}
 
 // Test AAudioStreamBuilder
 TEST(test_aaudio, aaudio_stream_builder) {
-    const aaudio_sample_rate_t requestedSampleRate1 = 48000;
-    const aaudio_sample_rate_t requestedSampleRate2 = 44100;
-    const aaudio_size_frames_t requestedBufferCapacity = 8764;
-    const int32_t requestedSamplesPerFrame = 2;
-    const aaudio_audio_format_t requestedDataFormat = AAUDIO_FORMAT_PCM16;
 
-    aaudio_sample_rate_t sampleRate = -1;
-    int32_t samplesPerFrame = -1;
-    aaudio_audio_format_t actualDataFormat;
-    aaudio_size_frames_t actualBufferCapacity = -1;
     AAudioStreamBuilder aaudioBuilder1;
     AAudioStreamBuilder aaudioBuilder2;
 
@@ -48,60 +50,17 @@ TEST(test_aaudio, aaudio_stream_builder) {
     aaudio_result_t result = AAudio_createStreamBuilder(&aaudioBuilder1);
     ASSERT_EQ(AAUDIO_OK, result);
 
-    // Request stream properties.
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSampleRate(aaudioBuilder1, requestedSampleRate1));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSamplesPerFrame(aaudioBuilder1,
-            requestedSamplesPerFrame));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setFormat(aaudioBuilder1, requestedDataFormat));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setBufferCapacity(aaudioBuilder1,
-              requestedBufferCapacity));
-
-    // Check to make sure builder saved the properties.
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getSampleRate(aaudioBuilder1, &sampleRate));
-    EXPECT_EQ(requestedSampleRate1, sampleRate);
-
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getSamplesPerFrame(aaudioBuilder1, &samplesPerFrame));
-    EXPECT_EQ(requestedSamplesPerFrame, samplesPerFrame);
-
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getFormat(aaudioBuilder1, &actualDataFormat));
-    EXPECT_EQ(requestedDataFormat, actualDataFormat);
-
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getBufferCapacity(aaudioBuilder1,
-                                                              &actualBufferCapacity));
-    EXPECT_EQ(requestedBufferCapacity, actualBufferCapacity);
-
-    result = AAudioStreamBuilder_getSampleRate(0x0BADCAFE, &sampleRate); // ridiculous token
-    EXPECT_EQ(AAUDIO_ERROR_INVALID_HANDLE, result);
-
     // Create a second builder and make sure they do not collide.
     ASSERT_EQ(AAUDIO_OK, AAudio_createStreamBuilder(&aaudioBuilder2));
+
     ASSERT_NE(aaudioBuilder1, aaudioBuilder2);
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSampleRate(aaudioBuilder2, requestedSampleRate2));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getSampleRate(aaudioBuilder1, &sampleRate));
-    EXPECT_EQ(requestedSampleRate1, sampleRate);
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getSampleRate(aaudioBuilder2, &sampleRate));
-    EXPECT_EQ(requestedSampleRate2, sampleRate);
-
-    // Delete the builder.
+    // Delete the first builder.
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder1));
-
-    // Now it should no longer be valid.
-    // Note that test assumes we are using the HandleTracker. If we use plain pointers
-    // then it will be difficult to detect this kind of error.
-    result = AAudioStreamBuilder_getSampleRate(aaudioBuilder1, &sampleRate); // stale token
-    EXPECT_EQ(AAUDIO_ERROR_INVALID_HANDLE, result);
-
-    // Second builder should still be valid.
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_getSampleRate(aaudioBuilder2, &sampleRate));
-    EXPECT_EQ(requestedSampleRate2, sampleRate);
 
     // Delete the second builder.
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder2));
 
-    // Now it should no longer be valid. Assumes HandlerTracker used.
-    EXPECT_EQ(AAUDIO_ERROR_INVALID_HANDLE, AAudioStreamBuilder_getSampleRate(aaudioBuilder2,
-            &sampleRate));
 }
 
 // Test creating a default stream with everything unspecified.
@@ -120,31 +79,30 @@ TEST(test_aaudio, aaudio_stream_unspecified) {
     // Cleanup
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
     EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream));
-    // Can only close once. Second time should cause an error.
-    EXPECT_NE(AAUDIO_OK, AAudioStream_close(aaudioStream));
 }
 
 // Test Writing to an AAudioStream
 void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
-    const aaudio_sample_rate_t requestedSampleRate = 48000;
-    const aaudio_sample_rate_t requestedSamplesPerFrame = 2;
-    const aaudio_audio_format_t requestedDataFormat = AAUDIO_FORMAT_PCM16;
+    const int32_t requestedSampleRate = 48000;
+    const int32_t requestedSamplesPerFrame = 2;
+    const aaudio_audio_format_t requestedDataFormat = AAUDIO_FORMAT_PCM_I16;
 
-    aaudio_sample_rate_t actualSampleRate = -1;
+    int32_t actualSampleRate = -1;
     int32_t actualSamplesPerFrame = -1;
     aaudio_audio_format_t actualDataFormat = AAUDIO_FORMAT_INVALID;
     aaudio_sharing_mode_t actualSharingMode;
-    aaudio_size_frames_t framesPerBurst = -1;
+    int32_t framesPerBurst = -1;
     int writeLoops = 0;
 
-    aaudio_size_frames_t framesWritten = 0;
-    aaudio_position_frames_t framesTotal = 0;
-    aaudio_position_frames_t aaudioFramesRead = 0;
-    aaudio_position_frames_t aaudioFramesRead1 = 0;
-    aaudio_position_frames_t aaudioFramesRead2 = 0;
-    aaudio_position_frames_t aaudioFramesWritten = 0;
+    int32_t framesWritten = 0;
+    int32_t actualBufferSize = 0;
+    int64_t framesTotal = 0;
+    int64_t aaudioFramesRead = 0;
+    int64_t aaudioFramesRead1 = 0;
+    int64_t aaudioFramesRead2 = 0;
+    int64_t aaudioFramesWritten = 0;
 
-    aaudio_nanoseconds_t timeoutNanos;
+    int64_t timeoutNanos;
 
     aaudio_stream_state_t state = AAUDIO_STREAM_STATE_UNINITIALIZED;
     AAudioStreamBuilder aaudioBuilder;
@@ -157,41 +115,47 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     ASSERT_EQ(AAUDIO_OK, result);
 
     // Request stream properties.
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSampleRate(aaudioBuilder, requestedSampleRate));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSamplesPerFrame(aaudioBuilder, requestedSamplesPerFrame));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setFormat(aaudioBuilder, requestedDataFormat));
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_setSharingMode(aaudioBuilder, requestedSharingMode));
+    AAudioStreamBuilder_setDeviceId(aaudioBuilder, AAUDIO_DEVICE_UNSPECIFIED);
+    AAudioStreamBuilder_setDirection(aaudioBuilder, AAUDIO_DIRECTION_OUTPUT);
+    AAudioStreamBuilder_setSampleRate(aaudioBuilder, requestedSampleRate);
+    AAudioStreamBuilder_setSamplesPerFrame(aaudioBuilder, requestedSamplesPerFrame);
+    AAudioStreamBuilder_setFormat(aaudioBuilder, requestedDataFormat);
+    AAudioStreamBuilder_setSharingMode(aaudioBuilder, requestedSharingMode);
+    AAudioStreamBuilder_setBufferCapacityInFrames(aaudioBuilder, 2000);
 
     // Create an AAudioStream using the Builder.
     ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream));
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getState(aaudioStream, &state));
-    EXPECT_EQ(AAUDIO_STREAM_STATE_OPEN, state);
+    EXPECT_EQ(AAUDIO_STREAM_STATE_OPEN, AAudioStream_getState(aaudioStream));
+    EXPECT_EQ(AAUDIO_DIRECTION_OUTPUT, AAudioStream_getDirection(aaudioStream));
 
     // Check to see what kind of stream we actually got.
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getSampleRate(aaudioStream, &actualSampleRate));
+    actualSampleRate = AAudioStream_getSampleRate(aaudioStream);
     ASSERT_TRUE(actualSampleRate >= 44100 && actualSampleRate <= 96000);  // TODO what is range?
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getSamplesPerFrame(aaudioStream, &actualSamplesPerFrame));
+    actualSamplesPerFrame = AAudioStream_getSamplesPerFrame(aaudioStream);
     ASSERT_TRUE(actualSamplesPerFrame >= 1 && actualSamplesPerFrame <= 16); // TODO what is max?
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getSharingMode(aaudioStream, &actualSharingMode));
+    actualSharingMode = AAudioStream_getSharingMode(aaudioStream);
     ASSERT_TRUE(actualSharingMode == AAUDIO_SHARING_MODE_EXCLUSIVE
                 || actualSharingMode == AAUDIO_SHARING_MODE_SHARED);
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getFormat(aaudioStream, &actualDataFormat));
-    EXPECT_NE(AAUDIO_FORMAT_INVALID, actualDataFormat);
+    actualDataFormat = AAudioStream_getFormat(aaudioStream);
 
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getFramesPerBurst(aaudioStream, &framesPerBurst));
+    framesPerBurst = AAudioStream_getFramesPerBurst(aaudioStream);
     ASSERT_TRUE(framesPerBurst >= 16 && framesPerBurst <= 1024); // TODO what is min/max?
 
     // Allocate a buffer for the audio data.
     // TODO handle possibility of other data formats
-    ASSERT_TRUE(actualDataFormat == AAUDIO_FORMAT_PCM16);
+    ASSERT_TRUE(actualDataFormat == AAUDIO_FORMAT_PCM_I16);
     size_t dataSizeSamples = framesPerBurst * actualSamplesPerFrame;
     int16_t *data = (int16_t *) calloc(dataSizeSamples, sizeof(int16_t));
     ASSERT_TRUE(nullptr != data);
+
+    actualBufferSize = AAudioStream_getBufferSizeInFrames(aaudioStream);
+    actualBufferSize = AAudioStream_setBufferSizeInFrames(aaudioStream, actualBufferSize);
+    ASSERT_TRUE(actualBufferSize > 0);
 
     // Prime the buffer.
     timeoutNanos = 0;
@@ -218,32 +182,32 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
         // Write some data while we are running. Read counter should be advancing.
         writeLoops = 1 * actualSampleRate / framesPerBurst; // 1 second
         ASSERT_LT(2, writeLoops); // detect absurdly high framesPerBurst
-        timeoutNanos = 10 * AAUDIO_NANOS_PER_SECOND * framesPerBurst / actualSampleRate; // bursts
+        timeoutNanos = 10 * NANOS_PER_SECOND * framesPerBurst / actualSampleRate; // bursts
         framesWritten = 1;
-        ASSERT_EQ(AAUDIO_OK, AAudioStream_getFramesRead(aaudioStream, &aaudioFramesRead));
+        aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
         aaudioFramesRead1 = aaudioFramesRead;
-        aaudio_nanoseconds_t beginTime = AAudio_getNanoseconds(AAUDIO_CLOCK_MONOTONIC);
+        int64_t beginTime = getNanoseconds(CLOCK_MONOTONIC);
         do {
             framesWritten = AAudioStream_write(aaudioStream, data, framesPerBurst, timeoutNanos);
             ASSERT_GE(framesWritten, 0);
             ASSERT_LE(framesWritten, framesPerBurst);
 
             framesTotal += framesWritten;
-            EXPECT_EQ(AAUDIO_OK, AAudioStream_getFramesWritten(aaudioStream, &aaudioFramesWritten));
+            aaudioFramesWritten = AAudioStream_getFramesWritten(aaudioStream);
             EXPECT_EQ(framesTotal, aaudioFramesWritten);
 
             // Try to get a more accurate measure of the sample rate.
             if (beginTime == 0) {
-                EXPECT_EQ(AAUDIO_OK, AAudioStream_getFramesRead(aaudioStream, &aaudioFramesRead));
+                aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
                 if (aaudioFramesRead > aaudioFramesRead1) { // is read pointer advancing
-                    beginTime = AAudio_getNanoseconds(AAUDIO_CLOCK_MONOTONIC);
+                    beginTime = getNanoseconds(CLOCK_MONOTONIC);
                     aaudioFramesRead1 = aaudioFramesRead;
                 }
             }
         } while (framesWritten > 0 && writeLoops-- > 0);
 
-        EXPECT_EQ(AAUDIO_OK, AAudioStream_getFramesRead(aaudioStream, &aaudioFramesRead2));
-        aaudio_nanoseconds_t endTime = AAudio_getNanoseconds(AAUDIO_CLOCK_MONOTONIC);
+        aaudioFramesRead2 = AAudioStream_getFramesRead(aaudioStream);
+        int64_t endTime = getNanoseconds(CLOCK_MONOTONIC);
         ASSERT_GT(aaudioFramesRead2, 0);
         ASSERT_GT(aaudioFramesRead2, aaudioFramesRead1);
         ASSERT_LE(aaudioFramesRead2, aaudioFramesWritten);
@@ -252,7 +216,7 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
         const double rateTolerance = 200.0; // arbitrary tolerance for sample rate
         if (requestedSharingMode != AAUDIO_SHARING_MODE_SHARED) {
             // Calculate approximate sample rate and compare with stream rate.
-            double seconds = (endTime - beginTime) / (double) AAUDIO_NANOS_PER_SECOND;
+            double seconds = (endTime - beginTime) / (double) NANOS_PER_SECOND;
             double measuredRate = (aaudioFramesRead2 - aaudioFramesRead1) / seconds;
             ASSERT_NEAR(actualSampleRate, measuredRate, rateTolerance);
         }
@@ -267,12 +231,12 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     }
 
     // Make sure the read counter is not advancing when we are paused.
-    ASSERT_EQ(AAUDIO_OK, AAudioStream_getFramesRead(aaudioStream, &aaudioFramesRead));
+    aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
     ASSERT_GE(aaudioFramesRead, aaudioFramesRead2); // monotonic increase
 
     // Use this to sleep by waiting for something that won't happen.
     AAudioStream_waitForStateChange(aaudioStream, AAUDIO_STREAM_STATE_PAUSED, &state, timeoutNanos);
-    ASSERT_EQ(AAUDIO_OK, AAudioStream_getFramesRead(aaudioStream, &aaudioFramesRead2));
+    aaudioFramesRead2 = AAudioStream_getFramesRead(aaudioStream);
     EXPECT_EQ(aaudioFramesRead, aaudioFramesRead2);
 
     // ------------------- TEST FLUSH -----------------
@@ -294,9 +258,9 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     EXPECT_EQ(AAUDIO_STREAM_STATE_FLUSHED, state);
 
     // After a flush, the read counter should be caught up with the write counter.
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getFramesWritten(aaudioStream, &aaudioFramesWritten));
+    aaudioFramesWritten = AAudioStream_getFramesWritten(aaudioStream);
     EXPECT_EQ(framesTotal, aaudioFramesWritten);
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getFramesRead(aaudioStream, &aaudioFramesRead));
+    aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
     EXPECT_EQ(aaudioFramesRead, aaudioFramesWritten);
 
     // The buffer should be empty after a flush so we should be able to write.
@@ -328,9 +292,9 @@ static void *TestAAudioStreamThreadProc(void *arg) {
     aaudio_stream_state_t state;
 
     // Use this to sleep by waiting for something that won't happen.
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_getState(aaudioStream, &state));
+    state = AAudioStream_getState(aaudioStream);
     AAudioStream_waitForStateChange(aaudioStream, AAUDIO_STREAM_STATE_PAUSED, &state,
-            AAUDIO_THREAD_DURATION_MSEC * AAUDIO_NANOS_PER_MILLISECOND);
+            AAUDIO_THREAD_DURATION_MSEC * NANOS_PER_MILLISECOND);
     return reinterpret_cast<void *>(AAUDIO_THREAD_ANSWER);
 }
 
@@ -350,24 +314,24 @@ TEST(test_aaudio, aaudio_stream_thread_basic) {
 
     // Start a thread.
     ASSERT_EQ(AAUDIO_OK, AAudioStream_createThread(aaudioStream,
-            10 * AAUDIO_NANOS_PER_MILLISECOND,
+            10 * NANOS_PER_MILLISECOND,
             TestAAudioStreamThreadProc,
             reinterpret_cast<void *>(aaudioStream)));
     // Thread already started.
     ASSERT_NE(AAUDIO_OK, AAudioStream_createThread(aaudioStream,   // should fail!
-            10 * AAUDIO_NANOS_PER_MILLISECOND,
+            10 * NANOS_PER_MILLISECOND,
             TestAAudioStreamThreadProc,
             reinterpret_cast<void *>(aaudioStream)));
 
     // Wait for the thread to finish.
     ASSERT_EQ(AAUDIO_OK, AAudioStream_joinThread(aaudioStream,
-            &threadResult, 2 * AAUDIO_THREAD_DURATION_MSEC * AAUDIO_NANOS_PER_MILLISECOND));
+            &threadResult, 2 * AAUDIO_THREAD_DURATION_MSEC * NANOS_PER_MILLISECOND));
     // The thread returns a special answer.
     ASSERT_EQ(AAUDIO_THREAD_ANSWER, (int)reinterpret_cast<size_t>(threadResult));
 
     // Thread should already be joined.
     ASSERT_NE(AAUDIO_OK, AAudioStream_joinThread(aaudioStream,  // should fail!
-            &threadResult, 2 * AAUDIO_THREAD_DURATION_MSEC * AAUDIO_NANOS_PER_MILLISECOND));
+            &threadResult, 2 * AAUDIO_THREAD_DURATION_MSEC * NANOS_PER_MILLISECOND));
 
     // Cleanup
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
