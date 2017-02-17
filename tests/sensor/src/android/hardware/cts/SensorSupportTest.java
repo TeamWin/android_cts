@@ -20,7 +20,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.test.AndroidTestCase;
 
 /**
  * Checks if Hifi sensors  or VR High performance mode sensors
@@ -35,7 +34,7 @@ import android.test.AndroidTestCase;
  *     -w android.hardware.cts/android.test.AndroidJUnitRunner
  * </pre>
  */
-public class SensorSupportTest extends AndroidTestCase {
+public class SensorSupportTest extends SensorTestCase {
     private SensorManager mSensorManager;
     private boolean mAreHifiSensorsSupported;
     private boolean mVrHighPerformanceModeSupported;

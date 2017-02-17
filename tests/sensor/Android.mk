@@ -14,7 +14,9 @@
 
 LOCAL_PATH:= $(call my-dir)
 
+#
 # Reusable Sensor test classes and helpers
+#
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := cts-sensors-tests
@@ -30,10 +32,38 @@ LOCAL_JAVA_LIBRARIES := platform-test-annotations
 LOCAL_SDK_VERSION := current
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
+#
+# JNI components for testing NDK
+#
+include $(CLEAR_VARS)
 
+LOCAL_MODULE := libcts-sensors-ndk-jni
+
+LOCAL_CFLAGS += -Werror -Wall -Wextra
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_SRC_FILES := \
+    jni/SensorTest.cpp \
+    jni/android_view_cts_SensorNativeTest.cpp \
+    jni/nativeTestHelper.cpp \
+
+LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+
+LOCAL_SHARED_LIBRARIES := libandroid liblog
+
+LOCAL_SDK_VERSION := current
+
+LOCAL_NDK_STL_VARIANT := c++_shared
+
+include $(BUILD_SHARED_LIBRARY)
+
+#
 # CtsSensorTestCases package
+#
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
@@ -47,9 +77,14 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     cts-sensors-tests \
 
+LOCAL_JNI_SHARED_LIBRARIES := libcts-sensors-ndk-jni
+
 LOCAL_PACKAGE_NAME := CtsSensorTestCases
 
 LOCAL_SDK_VERSION := current
+
 LOCAL_JAVA_LIBRARIES := android.test.runner
+
+LOCAL_NDK_STL_VARIANT := c++_shared
 
 include $(BUILD_CTS_PACKAGE)
