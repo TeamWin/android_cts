@@ -28,8 +28,8 @@ import android.graphics.Path.Direction;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Region.Op;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.MaskableIconDrawable;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.PathParser;
@@ -47,18 +47,18 @@ public class MaskableIconDrawableTest {
     private Path mSafeZone = new Path();
     private ColorDrawable mBlueDrawable;
     private ColorDrawable mRedDrawable;
-    private MaskableIconDrawable mDrawable;
+    private AdaptiveIconDrawable mDrawable;
 
     @Before
     public void setup() {
         mBlueDrawable = new ColorDrawable(Color.BLUE);
         mRedDrawable = new ColorDrawable(Color.RED);
-        mDrawable = new MaskableIconDrawable( mBlueDrawable, mRedDrawable);
+        mDrawable = new AdaptiveIconDrawable( mBlueDrawable, mRedDrawable);
         mMask = PathParser.createPathFromPathData(
             Resources.getSystem().getString(com.android.internal.R.string.config_icon_mask));
-        int sInset = (int) (SAFEZONE_INSET * MaskableIconDrawable.MASK_SIZE);
-        mSafeZone.addCircle(MaskableIconDrawable.MASK_SIZE/2,MaskableIconDrawable.MASK_SIZE/2,
-            MaskableIconDrawable.MASK_SIZE/2/2 - sInset, Direction.CW);
+        int sInset = (int) (SAFEZONE_INSET * AdaptiveIconDrawable.MASK_SIZE);
+        mSafeZone.addCircle(AdaptiveIconDrawable.MASK_SIZE/2, AdaptiveIconDrawable.MASK_SIZE/2,
+            AdaptiveIconDrawable.MASK_SIZE/2/2 - sInset, Direction.CW);
     }
 
     @Test
@@ -72,11 +72,11 @@ public class MaskableIconDrawableTest {
         assertTrue("Mask top should be larger than or equal to 0", -DELTA <= bounds.top);
         assertTrue("Mask left should be larger than or equal to 0", -DELTA <= bounds.left);
         assertTrue("Mask bottom should be smaller than or equal to" +
-                MaskableIconDrawable.MASK_SIZE,
-            MaskableIconDrawable.MASK_SIZE + DELTA >= bounds.bottom);
+                AdaptiveIconDrawable.MASK_SIZE,
+            AdaptiveIconDrawable.MASK_SIZE + DELTA >= bounds.bottom);
         assertTrue("Mask right should be smaller than or equal to " +
-                MaskableIconDrawable.MASK_SIZE,
-            MaskableIconDrawable.MASK_SIZE + DELTA >= bounds.right);
+                AdaptiveIconDrawable.MASK_SIZE,
+            AdaptiveIconDrawable.MASK_SIZE + DELTA >= bounds.right);
     }
 
     @Test
@@ -84,12 +84,12 @@ public class MaskableIconDrawableTest {
         assertNotNull(mMask);
 
         // MASK intersection SafeZone = SafeZone
-        Region maskRegion = new Region(0, 0, (int) MaskableIconDrawable.MASK_SIZE,
-            (int) MaskableIconDrawable.MASK_SIZE);
+        Region maskRegion = new Region(0, 0, (int) AdaptiveIconDrawable.MASK_SIZE,
+            (int) AdaptiveIconDrawable.MASK_SIZE);
         maskRegion.setPath(mMask, maskRegion);
 
-        Region safeZoneRegion = new Region(0, 0, (int) MaskableIconDrawable.MASK_SIZE,
-            (int) MaskableIconDrawable.MASK_SIZE);
+        Region safeZoneRegion = new Region(0, 0, (int) AdaptiveIconDrawable.MASK_SIZE,
+            (int) AdaptiveIconDrawable.MASK_SIZE);
         safeZoneRegion.setPath(mSafeZone, safeZoneRegion);
 
         Region intersectRegion = new Region();
