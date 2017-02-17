@@ -30,6 +30,7 @@ import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
+import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -225,6 +226,30 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.prepare();
         mMediaRecorder.start();
         Thread.sleep(RECORD_TIME_MS);
+
+
+        // verify some getMetrics() behaviors while we're here.
+        Bundle metricsBundle = mMediaRecorder.getMetrics();
+        if (metricsBundle == null) {
+            fail("getMetrics() returns no data");
+        } else {
+            // ensure existence of some known fields
+            int ht = metricsBundle.getInt("ht");
+            int wid = metricsBundle.getInt("wid");
+            int videoBitRate = metricsBundle.getInt("video-bitrate");
+            if (ht != height) {
+                fail("getMetrics() height set " + height + " got " + ht);
+            }
+            if (wid != width) {
+                fail("getMetrics() width set " + width + " got " + wid);
+            }
+            if (videoBitRate != VIDEO_BIT_RATE_IN_BPS) {
+                fail("getMetrics() videoEncodeBitrate set " +
+                     VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
+            }
+        }
+
+
         mMediaRecorder.stop();
         checkOutputExist();
     }
@@ -263,6 +288,30 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.prepare();
         mMediaRecorder.start();
         Thread.sleep(RECORD_TIME_MS);
+
+
+
+        // verify some getMetrics() behaviors while we're here.
+        Bundle metricsBundle = mMediaRecorder.getMetrics();
+        if (metricsBundle == null) {
+            fail("getMetrics() returns no data");
+        } else {
+            // ensure existence of some known fields
+            int ht = metricsBundle.getInt("ht");
+            int wid = metricsBundle.getInt("wid");
+            int videoBitRate = metricsBundle.getInt("video-bitrate");
+            if (ht != height) {
+                fail("getMetrics() height set " + height + " got " + ht);
+            }
+            if (wid != width) {
+                fail("getMetrics() width set " + width + " got " + wid);
+            }
+            if (videoBitRate != VIDEO_BIT_RATE_IN_BPS) {
+                fail("getMetrics() videoEncodeBitrate set " +
+                     VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
+            }
+        }
+
         mMediaRecorder.stop();
         checkOutputExist();
     }
