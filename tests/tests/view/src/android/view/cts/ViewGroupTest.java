@@ -155,7 +155,9 @@ public class ViewGroupTest implements CTSResult {
     @Test
     public void testAddKeyboardNavigationClusters() {
         View v1 = new MockView(mContext);
+        v1.setFocusableInTouchMode(true);
         View v2 = new MockView(mContext);
+        v2.setFocusableInTouchMode(true);
         mMockViewGroup.addView(v1);
         mMockViewGroup.addView(v2);
 
@@ -192,6 +194,13 @@ public class ViewGroupTest implements CTSResult {
         parent.addKeyboardNavigationClusters(list, 0);
         assertEquals(1, list.size());
         assertEquals(v1, list.get(0));
+        list.clear();
+
+        // Cluster with no focusables gets ignored
+        mMockViewGroup.addView(v2);
+        v2.setFocusable(false);
+        mMockViewGroup.addKeyboardNavigationClusters(list, 0);
+        assertEquals(1, list.size());
         list.clear();
 
         // Invisible children get ignored.
@@ -1545,6 +1554,44 @@ public class ViewGroupTest implements CTSResult {
         h.c2view1.setVisibility(View.INVISIBLE);
         h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
         assertSame(h.c2view2, h.top.findFocus());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testDefaultCluster() {
+        TestClusterHier h = new TestClusterHier();
+        h.cluster2.setKeyboardNavigationCluster(false);
+        assertTrue(h.top.restoreFocusNotInCluster());
+        assertSame(h.c2view1, h.top.findFocus());
+
+        // Check saves state within non-cluster
+        h = new TestClusterHier();
+        h.cluster2.setKeyboardNavigationCluster(false);
+        h.c2view2.setFocusedInCluster();
+        assertTrue(h.top.restoreFocusNotInCluster());
+        assertSame(h.c2view2, h.top.findFocus());
+
+        // Check that focusable view groups have descendantFocusability honored.
+        h = new TestClusterHier();
+        h.cluster2.setKeyboardNavigationCluster(false);
+        h.cluster2.setFocusableInTouchMode(true);
+        h.cluster2.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+        assertTrue(h.top.restoreFocusNotInCluster());
+        assertSame(h.c2view1, h.top.findFocus());
+        h = new TestClusterHier();
+        h.cluster2.setKeyboardNavigationCluster(false);
+        h.cluster2.setFocusableInTouchMode(true);
+        h.cluster2.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+        assertTrue(h.top.restoreFocusNotInCluster());
+        assertSame(h.cluster2, h.top.findFocus());
+
+        // Check that we return false if nothing out-of-cluster is focusable
+        // (also tests FOCUS_BLOCK_DESCENDANTS)
+        h = new TestClusterHier();
+        h.cluster2.setKeyboardNavigationCluster(false);
+        h.cluster2.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        assertFalse(h.top.restoreFocusNotInCluster());
+        assertNull(h.top.findFocus());
     }
 
     @UiThreadTest
