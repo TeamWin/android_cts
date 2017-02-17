@@ -2924,6 +2924,18 @@ You should be prompted to select credentials; choose the ones you just installed
         7) Press the Reset button.
     </string>
     <string name="enterprise_privacy_set_default_apps">Set Default Apps</string>
+    <string name="enterprise_privacy_default_ime">Default keyboard</string>
+    <string name="enterprise_privacy_default_ime_info">
+        Please do the following:\n
+        1) Press the Open Settings button.\n
+        2) In the screen that opens, verify that you are not told the default keyboard has been set.\n
+        3) Use the Back button to return to this page.\n
+        4) Press the Set Keyboard button to set the default keyboard.\n
+        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that the default keyboard has been set to CTS Verifier.\n
+        6) Press the Finish button to clear the default keyboard.
+    </string>
+    <string name="enterprise_privacy_set_keyboard">Set Keyboard</string>
+    <string name="enterprise_privacy_finish">Finish</string>
     <string name="enterprise_privacy_always_on_vpn">Always-on VPN</string>
     <string name="enterprise_privacy_always_on_vpn_info">
         Please do the following:\n
@@ -2935,7 +2947,6 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Finish button to clear the always-on VPN.
     </string>
     <string name="enterprise_privacy_set_always_on_vpn">Set VPN</string>
-    <string name="enterprise_privacy_finish">Finish</string>
     <string name="enterprise_privacy_comp_always_on_vpn">Always-on VPN (managed profile)</string>
     <string name="enterprise_privacy_comp_always_on_vpn_info">
         Please do the following:\n

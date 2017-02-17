@@ -33,6 +33,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.android.cts.verifier.R;
@@ -95,6 +96,8 @@ public class CommandReceiverActivity extends Activity {
             "set-maximum-password-attempts";
     public static final String COMMAND_CLEAR_MAXIMUM_PASSWORD_ATTEMPTS =
             "clear-maximum-password-attempts";
+    public static final String COMMAND_SET_DEFAULT_IME = "set-default-ime";
+    public static final String COMMAND_CLEAR_DEFAULT_IME = "clear-default-ime";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -393,6 +396,19 @@ public class CommandReceiverActivity extends Activity {
                         return;
                     }
                     mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
+                } break;
+                case COMMAND_SET_DEFAULT_IME: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD,
+                            getPackageName());
+                } break;
+                case COMMAND_CLEAR_DEFAULT_IME: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
                 }
             }
         } catch (Exception e) {
@@ -459,6 +475,7 @@ public class CommandReceiverActivity extends Activity {
         mDpm.setAlwaysOnVpnPackage(mAdmin, null, false);
         mDpm.setRecommendedGlobalProxy(mAdmin, null);
         mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
+        mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
 
         uninstallHelperPackage();
         removeManagedProfile();
