@@ -292,20 +292,28 @@ public class RotateDrawableTest {
         RotateDrawable d2 = (RotateDrawable) mResources.getDrawable(R.drawable.rotatedrawable);
         RotateDrawable d3 = (RotateDrawable) mResources.getDrawable(R.drawable.rotatedrawable);
 
-        d1.setAlpha(100);
-        assertEquals(100, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+        int restoreAlpha = d1.getAlpha();
 
-        d1.mutate();
-        d1.setAlpha(200);
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+        try {
+            // verify bad behavior - modify before mutate pollutes other drawables
+            d1.setAlpha(100);
+            assertEquals(100, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
 
-        d2.setAlpha(50);
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+            d1.mutate();
+            d1.setAlpha(200);
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+
+            d2.setAlpha(50);
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+        } finally {
+            // restore drawable state
+            mResources.getDrawable(R.drawable.rotatedrawable).setAlpha(restoreAlpha);
+        }
     }
 }
