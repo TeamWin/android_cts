@@ -20,38 +20,32 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <TextView android:id="@+id/firstLevelDefault" android:layout_width="match_parent"
+    <EditText android:id="@+id/firstLevelDefault" android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <TextView android:id="@+id/firstLevelInherit" android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autoFillMode="inherit" />
+    <EditText android:id="@+id/firstLevelInherit" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:autoFillMode="inherit" />
 
-    <TextView android:id="@+id/firstLevelAuto" android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autoFillMode="auto" />
+    <EditText android:id="@+id/firstLevelAuto" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:autoFillMode="auto" />
 
-    <TextView android:id="@+id/firstLevelManual" android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:autoFillMode="manual" />
+    <EditText android:id="@+id/firstLevelManual" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:autoFillMode="manual" />
 
-    <LinearLayout android:id="@+id/manualContainer" android:layout_width="match_parent"
+    <LinearLayout android:id="@+id/manualContainer" android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:autoFillMode="manual"
         android:orientation="vertical">
-        <TextView android:id="@+id/manualContainerDefault" android:layout_width="match_parent"
+        <EditText android:id="@+id/manualContainerDefault" android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <TextView android:id="@+id/manualContainerInherit" android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:autoFillMode="inherit" />
+        <EditText android:id="@+id/manualContainerInherit" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:autoFillMode="inherit" />
 
-        <TextView android:id="@+id/manualContainerAuto" android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:autoFillMode="auto" />
+        <EditText android:id="@+id/manualContainerAuto" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:autoFillMode="auto" />
 
-        <TextView android:id="@+id/manualContainerManual" android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:autoFillMode="manual" />
+        <EditText android:id="@+id/manualContainerManual" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:autoFillMode="manual" />
     </LinearLayout>
 
 </LinearLayout>
