@@ -272,10 +272,21 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
         try {
             mDevicePolicyManager.setSecureSetting(mComponent,
-                    Settings.Secure.INSTALL_NON_MARKET_APPS, "1");
+                    Settings.Secure.SKIP_FIRST_USE_HINTS, "1");
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testSetSecureSetting_failForInstallNonMarketApps() {
+        ComponentName profileOwner = DeviceAdminInfoTest.getProfileOwnerComponent();
+        try {
+            mDevicePolicyManager.setSecureSetting(profileOwner,
+                    Settings.Secure.INSTALL_NON_MARKET_APPS, "0");
+            fail("did not throw UnsupportedOperationException");
+        } catch (UnsupportedOperationException exc) {
+            // Supposed to throw. Pass.
         }
     }
 
