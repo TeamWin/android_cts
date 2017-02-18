@@ -54,6 +54,9 @@ public class ClientTest {
     /** Action to start ephemeral test activities */
     private static final String ACTION_START_EPHEMERAL_ACTIVITY =
             "com.android.cts.ephemeraltest.START_EPHEMERAL";
+    /** Action to start private ephemeral test activities */
+    private static final String ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY =
+            "com.android.cts.ephemeraltest.START_EPHEMERAL_PRIVATE";
     /** Action to query for test activities */
     private static final String ACTION_QUERY_ACTIVITY =
             "com.android.cts.ephemeraltest.QUERY";
@@ -248,6 +251,61 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1"));
             assertThat(testResult.activityName,
                     is("EphemeralActivity"));
+        }
+
+        // start a private ephemeral activity
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY);
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
+            final BroadcastResult testResult = getResult();
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity2"));
+        }
+
+        // start a private ephemeral activity; directed package
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY);
+            startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
+            final BroadcastResult testResult = getResult();
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity2"));
+        }
+
+        // start a private ephemeral activity; directed component
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY);
+            startEphemeralIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralActivity2"));
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
+            final BroadcastResult testResult = getResult();
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity2"));
+        }
+
+        // start a private ephemeral activity; directed component
+        {
+            final Intent startEphemeralIntent = new Intent();
+            startEphemeralIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralActivity3"));
+            InstrumentationRegistry
+            .getContext().startActivity(startEphemeralIntent, null /*options*/);
+            final BroadcastResult testResult = getResult();
+            assertThat(testResult.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(testResult.activityName,
+                    is("EphemeralActivity3"));
         }
     }
 
