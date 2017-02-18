@@ -106,7 +106,7 @@ public class BitmapAsserter {
             Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height);
             BitmapDumper.dumpBitmap(croppedBitmap, testName, mClassName);
             BitmapDumper.dumpBitmap(bitmapVerifier.getDifferenceBitmap(), testName + "_verifier",
-                    this.getClass().getSimpleName());
+                    mClassName);
         }
         assertTrue(debugMessage, success);
     }
