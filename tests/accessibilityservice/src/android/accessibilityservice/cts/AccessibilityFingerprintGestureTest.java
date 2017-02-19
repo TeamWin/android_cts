@@ -28,10 +28,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import static android.content.pm.PackageManager.FEATURE_FINGERPRINT;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
@@ -58,8 +60,9 @@ public class AccessibilityFingerprintGestureTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        mFingerprintManager = instrumentation.getContext()
-                .getSystemService(FingerprintManager.class);
+        mFingerprintManager = instrumentation.getContext().getPackageManager()
+                .hasSystemFeature(FEATURE_FINGERPRINT)
+                ? instrumentation.getContext().getSystemService(FingerprintManager.class) : null;
         mFingerprintGestureService = StubFingerprintGestureService.enableSelf(instrumentation);
         mIsHardwareAvailable = (mFingerprintManager == null) ? false :
                 mFingerprintManager.isHardwareDetected();
@@ -100,14 +103,15 @@ public class AccessibilityFingerprintGestureTest {
             mFingerprintManager.authenticate(
                     null, mCancellationSignal, 0, mMockAuthenticationCallback, null);
 
-            verify(mMockFingerprintGestureCallback, timeout(FINGERPRINT_CALLBACK_TIMEOUT))
+            verify(mMockFingerprintGestureCallback,
+                    timeout(FINGERPRINT_CALLBACK_TIMEOUT).atLeastOnce())
                     .onGestureDetectionAvailabilityChanged(false);
             assertFalse(mFingerprintGestureController.isGestureDetectionAvailable());
             reset(mMockFingerprintGestureCallback);
         } finally {
             mCancellationSignal.cancel();
         }
-        verify(mMockFingerprintGestureCallback, timeout(FINGERPRINT_CALLBACK_TIMEOUT))
+        verify(mMockFingerprintGestureCallback, timeout(FINGERPRINT_CALLBACK_TIMEOUT).atLeastOnce())
                 .onGestureDetectionAvailabilityChanged(true);
         assertTrue(mFingerprintGestureController.isGestureDetectionAvailable());
         mFingerprintGestureController.unregisterFingerprintGestureCallback(
