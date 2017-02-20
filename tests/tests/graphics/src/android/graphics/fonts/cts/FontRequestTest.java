@@ -15,6 +15,10 @@
  */
 package android.graphics.fonts.cts;
 
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -22,9 +26,13 @@ import android.graphics.fonts.FontRequest;
 import android.os.Parcel;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Base64;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Tests for {@link android.graphics.fonts.FontRequest}.
@@ -32,13 +40,17 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class FontRequestTest {
-    private static final String PROVIDER = "com.test.fontprovider";
-    private static final String QUERY = "my_family_name";
+    private static final String PROVIDER = "com.test.fontprovider.authority";
+    private static final String QUERY = "query";
+    private static final String PACKAGE = "com.test.fontprovider.package";
+    private static final byte[] BYTE_ARRAY =
+            Base64.decode("e04fd020ea3a6910a2d808002b30", Base64.DEFAULT);
+    private static final List<List<byte[]>> CERTS = Arrays.asList(Arrays.asList(BYTE_ARRAY));
 
     @Test
     public void testWriteToParcel() {
-        // GIVEN a FontRequest
-        FontRequest request = new FontRequest(PROVIDER, QUERY);
+        // GIVEN a FontRequest created with the long constructor
+        FontRequest request = new FontRequest(PROVIDER, PACKAGE, QUERY, CERTS);
 
         // WHEN we write it to a Parcel
         Parcel dest = Parcel.obtain();
@@ -48,30 +60,76 @@ public class FontRequestTest {
         // THEN we create from that parcel and get the same values.
         FontRequest result = FontRequest.CREATOR.createFromParcel(dest);
         assertEquals(PROVIDER, result.getProviderAuthority());
+        assertEquals(PACKAGE, result.getProviderPackage());
         assertEquals(QUERY, result.getQuery());
+        assertEquals(CERTS.size(), result.getCertificates().size());
+        List<byte[]> cert = CERTS.get(0);
+        List<byte[]> resultCert = result.getCertificates().get(0);
+        assertEquals(cert.size(), resultCert.size());
+        assertTrue(Arrays.equals(cert.get(0), resultCert.get(0)));
     }
 
     @Test
-    public void testConstructorWithNullAuthority() {
-        try {
-            // WHEN we create a request with a null authority
-            new FontRequest(null, QUERY);
-        } catch (NullPointerException e) {
-            // THEN we expect an exception to be raised.
-            return;
-        }
-        fail();
+    public void testWriteToParcel_shortConstructor() {
+        // GIVEN a FontRequest created with the short constructor
+        FontRequest request = new FontRequest(PROVIDER, PACKAGE, QUERY);
+
+        // WHEN we write it to a Parcel
+        Parcel dest = Parcel.obtain();
+        request.writeToParcel(dest, 0);
+        dest.setDataPosition(0);
+
+        // THEN we create from that parcel and get the same values.
+        FontRequest result = FontRequest.CREATOR.createFromParcel(dest);
+        assertEquals(PROVIDER, result.getProviderAuthority());
+        assertEquals(PACKAGE, result.getProviderPackage());
+        assertEquals(QUERY, result.getQuery());
+        assertNotNull(result.getCertificates());
+        assertEquals(0, result.getCertificates().size());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testShortConstructor_nullAuthority() {
+        new FontRequest(null, PACKAGE, QUERY);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testShortConstructor_nullPackage() {
+        new FontRequest(PROVIDER, null, QUERY);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testShortConstructor_nullQuery() {
+        new FontRequest(PROVIDER, PACKAGE, null);
     }
 
     @Test
-    public void testConstructorWithNullQuery() {
-        try {
-            // WHEN we create a request with a null query
-            new FontRequest(PROVIDER, null);
-        } catch (NullPointerException e) {
-            // THEN we expect an exception to be raised.
-            return;
-        }
-        fail();
+    public void testShortConstructor_defaults() {
+        // WHEN we create a request with the short constructor
+        FontRequest request = new FontRequest(PROVIDER, PACKAGE, QUERY);
+
+        // THEN we expect the defaults to be the following values
+        assertNotNull(request.getCertificates());
+        assertEquals(0, request.getCertificates().size());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testLongConstructor_nullAuthority() {
+        new FontRequest(null, PACKAGE, QUERY, CERTS);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testLongConstructor_nullPackage() {
+        new FontRequest(PROVIDER, null, QUERY, CERTS);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testLongConstructor_nullQuery() {
+        new FontRequest(PROVIDER, PACKAGE, null, CERTS);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testLongConstructor_nullCerts() {
+        new FontRequest(PROVIDER, PACKAGE, QUERY, null);
     }
 }
