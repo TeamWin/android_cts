@@ -16,12 +16,12 @@
 package android.autofillservice.cts;
 
 import android.app.assist.AssistStructure;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset.Builder;
+import android.content.IntentSender;
 import android.os.Bundle;
-import android.service.autofill.AutoFillService;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.view.autofill.AutoFillValue;
+import android.widget.RemoteViews;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,23 +49,30 @@ final class CannedFillResponse {
     final List<CannedDataset> datasets;
     final String[] savableIds;
     final Bundle extras;
+    final RemoteViews presentation;
+    final IntentSender authentication;
 
     private CannedFillResponse(Builder builder) {
         datasets = builder.mDatasets;
         savableIds = builder.mSavableIds;
         extras = builder.mExtras;
+        presentation = builder.mPresentation;
+        authentication = builder.mAuthentication;
     }
 
     @Override
     public String toString() {
         return "CannedFillResponse: [datasets=" + datasets + ", savableIds="
-                + Arrays.toString(savableIds) + "]";
+                + Arrays.toString(savableIds) + ", hasPresentation="
+                + (presentation != null) + "]";
     }
 
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
         private String[] mSavableIds;
         private Bundle mExtras;
+        private RemoteViews mPresentation;
+        private IntentSender mAuthentication;
 
         public Builder addDataset(CannedDataset dataset) {
             mDatasets.add(dataset);
@@ -86,6 +93,22 @@ final class CannedFillResponse {
          */
         public Builder setExtras(Bundle data) {
             mExtras = data;
+            return this;
+        }
+
+        /**
+         * Sets the view to present the response in the UI.
+         */
+        public Builder setPresentation(RemoteViews presentation) {
+            mPresentation = presentation;
+            return this;
+        }
+
+        /**
+         * Sets the authentication intent.
+         */
+        public Builder setAuthentication(IntentSender authentication) {
+            mAuthentication = authentication;
             return this;
         }
 
@@ -110,33 +133,48 @@ final class CannedFillResponse {
      * </pre class="prettyprint">
      */
     static class CannedDataset {
-
         final Map<String, AutoFillValue> fields;
-        final String name;
+        final RemoteViews presentation;
+        final IntentSender authentication;
 
         private CannedDataset(Builder builder) {
             fields = builder.mFields;
-            name = builder.mName;
+            presentation = builder.mPresentation;
+            authentication = builder.mAuthentication;
         }
 
         @Override
         public String toString() {
-            return "CannedDataset: [name=" + name + ", fields=" + fields + "]";
+            return "CannedDataset: [hasPresentation=" + (presentation != null)
+                    + ", fields=" + fields + "]";
         }
 
         static class Builder {
             private final Map<String, AutoFillValue> mFields = new HashMap<>();
-            private final String mName;
-
-            public Builder(String name) {
-                mName = name;
-            }
+            private RemoteViews mPresentation;
+            private IntentSender mAuthentication;
 
             /**
              * Sets the canned value of a field based on its {@code resourceId}.
              */
             public Builder setField(String resourceId, AutoFillValue value) {
                 mFields.put(resourceId, value);
+                return this;
+            }
+
+            /**
+             * Sets the view to present the response in the UI.
+             */
+            public Builder setPresentation(RemoteViews presentation) {
+                mPresentation = presentation;
+                return this;
+            }
+
+            /**
+             * Sets the authentication intent.
+             */
+            public Builder setAuthentication(IntentSender authentication) {
+                mAuthentication = authentication;
                 return this;
             }
 

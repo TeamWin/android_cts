@@ -21,12 +21,19 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.os.Bundle;
+import android.service.autofill.Dataset;
+import android.service.autofill.FillResponse;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
 
 import com.android.compatibility.common.util.SystemUtil;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Helper for common funcionalities.
@@ -140,6 +147,48 @@ final class Helper {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
         assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
         assertTextIsSanitized(node);
+    }
+
+    static FillResponse createFromCannedResponse(AssistStructure structure,
+            CannedFillResponse response) {
+        final FillResponse.Builder builder = new FillResponse.Builder();
+        if (response.datasets != null) {
+            for (CannedFillResponse.CannedDataset cannedDataset : response.datasets) {
+                final Dataset dataset = createFromCannedDataset(structure, cannedDataset);
+                assertWithMessage("Cannot create datase").that(dataset).isNotNull();
+                builder.addDataset(dataset);
+            }
+        }
+        if (response.savableIds != null) {
+            for (String resourceId : response.savableIds) {
+                final ViewNode node = findNodeByResourceId(structure, resourceId);
+                assertWithMessage("Cannot find node:" + resourceId).that(node).isNotNull();
+                final AutoFillId id = node.getAutoFillId();
+                builder.addSavableFields(id);
+            }
+        }
+        builder.setExtras(response.extras);
+        builder.setPresentation(response.presentation);
+        builder.setAuthentication(response.authentication);
+        return builder.build();
+    }
+
+    static Dataset createFromCannedDataset(AssistStructure structure,
+            CannedFillResponse.CannedDataset dataset) {
+        final Dataset.Builder builder = new Dataset.Builder();
+        if (dataset.fields != null) {
+            for (Map.Entry<String, AutoFillValue> entry : dataset.fields.entrySet()) {
+                final String resourceId = entry.getKey();
+                final ViewNode node = findNodeByResourceId(structure, resourceId);
+                assertWithMessage("Cannot find node:" + resourceId).that(node).isNotNull();
+                final AutoFillId id = node.getAutoFillId();
+                final AutoFillValue value = entry.getValue();
+                builder.setValue(id, value);
+            }
+        }
+        builder.setPresentation(dataset.presentation);
+        builder.setAuthentication(dataset.authentication);
+        return builder.build();
     }
 
     private Helper() {

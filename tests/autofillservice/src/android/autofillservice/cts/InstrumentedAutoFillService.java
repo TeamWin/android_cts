@@ -20,12 +20,10 @@ import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.IGNORE_DANGLING_SESSIONS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
-import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -35,12 +33,8 @@ import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
-import android.view.autofill.AutoFillId;
-import android.view.autofill.AutoFillValue;
 
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -96,7 +90,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
     static void waitUntilConnected() throws InterruptedException {
         final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (state == null) {
-            throw new AssertionError("not connected inin " + CONNECTION_TIMEOUT_MS + " ms");
+            throw new AssertionError("not connected in " + CONNECTION_TIMEOUT_MS + " ms");
         }
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_CONNECTED);
     }
@@ -247,64 +241,15 @@ public class InstrumentedAutoFillService extends AutoFillService {
         private void onFillRequest(AssistStructure structure,
                 @SuppressWarnings("unused") Bundle data, CancellationSignal cancellationSignal,
                 FillCallback callback) {
-
             mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
 
             final CannedFillResponse response = mResponses.remove();
-
             if (response == null) {
                 callback.onSuccess(null);
                 return;
             }
-            final FillResponse.Builder responseBuilder = new FillResponse.Builder();
-            final List<CannedDataset> datasets = response.datasets;
-            final String[] savableIds = response.savableIds;
 
-            if (datasets.isEmpty() && savableIds == null) {
-                callback.onSuccess(responseBuilder.build());
-                return;
-            }
-
-            if (!datasets.isEmpty()) {
-                assertWithMessage("multiple datasets not supported yet").that(datasets).hasSize(1);
-
-                final CannedDataset dataset = datasets.get(0);
-
-                final Map<String, AutoFillValue> fields = dataset.fields;
-                if (fields.isEmpty()) {
-                    callback.onSuccess(responseBuilder.build());
-                    return;
-                }
-
-                final Dataset.Builder datasetBuilder = new Dataset.Builder(dataset.name);
-                for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
-                    final String resourceId = entry.getKey();
-                    final ViewNode node = findNodeByResourceId(structure, resourceId);
-                    assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
-                    final AutoFillId id = node.getAutoFillId();
-                    final AutoFillValue value = entry.getValue();
-                    Log.d(TAG, "setting '" + resourceId + "' (" + id + ") to " + value);
-                    datasetBuilder.setValue(id, value);
-                }
-                responseBuilder.addDataset(datasetBuilder.build());
-            }
-
-            if (savableIds != null) {
-                for (String resourceId : savableIds) {
-                    final ViewNode node = findNodeByResourceId(structure, resourceId);
-                    final AutoFillId id = node.getAutoFillId();
-                    Log.d(TAG, "mapping savable id: '" + resourceId + "' to " + id);
-                    responseBuilder.addSavableFields(id);
-                }
-            }
-
-            final Bundle extras = response.extras;
-
-            if (extras != null) {
-                responseBuilder.setExtras(extras);
-            }
-
-            final FillResponse fillResponse = responseBuilder.build();
+            final FillResponse fillResponse = Helper.createFromCannedResponse(structure, response);
             Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
             callback.onSuccess(fillResponse);
         }

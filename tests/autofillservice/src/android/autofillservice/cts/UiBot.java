@@ -35,22 +35,20 @@ final class UiBot {
 
     private final UiDevice mDevice;
     private final int mTimeout;
-    private final String mPackageName;
 
     UiBot(Instrumentation instrumentation, int timeout) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
         mTimeout = timeout;
-        mPackageName = instrumentation.getContext().getPackageName();
     }
 
     /**
-     * Selects an auto-fill dataset whose name should be visible in the UI.
+     * Selects an a view by text.
      */
-    void selectDataset(String name) {
+    void selectByText(String name) {
         Log.v(TAG, "selectDataset(): " + name);
 
         // TODO(b/33197203): Use more qualified ids for UI.
-        final UiObject2 dataset = waitForObject(By.res("android", "text1").text(name));
+        final UiObject2 dataset = waitForObject(By.text(name));
         dataset.click();
     }
 

@@ -23,13 +23,17 @@ import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import android.widget.RemoteViews;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
+
+import android.autofillservice.cts.R;
 
 /**
  * Base class for all other tests.
@@ -90,6 +94,17 @@ abstract class AutoFillServiceTestCase {
         final String command = "cmd autofill list sessions";
         final String result = runShellCommand(command);
         assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
+    }
+
+    protected static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    protected static RemoteViews createPresentation(String message) {
+        RemoteViews presentation = new RemoteViews(getContext()
+                .getPackageName(), R.layout.list_item);
+        presentation.setTextViewText(R.id.text1, message);
+        return presentation;
     }
 
     private static void assertServiceStatus(boolean enabled) {
