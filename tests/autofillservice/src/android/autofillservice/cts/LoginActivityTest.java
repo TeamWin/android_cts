@@ -28,19 +28,27 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.*;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.PendingIntent;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutoFillValue;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import android.autofillservice.cts.R;
 
 @SmallTest
 public class LoginActivityTest extends AutoFillServiceTestCase {
@@ -64,9 +72,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectation.
-        replier.addResponse(new CannedDataset.Builder("The Dude")
+        replier.addResponse(new CannedDataset.Builder()
                 .setField(ID_USERNAME, AutoFillValue.forText("dude"))
                 .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
                 .build());
 
         mLoginActivity.expectAutoFill("dude", "sweet");
@@ -76,7 +85,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilConnected();
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        sUiBot.selectByText("The Dude");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -106,9 +115,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectation.
-        replier.addResponse(new CannedDataset.Builder("The Dude")
+        replier.addResponse(new CannedDataset.Builder()
                 .setField(ID_USERNAME, AutoFillValue.forText("dude"))
                 .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
                 .build());
 
         mLoginActivity.expectAutoFill("dude", "sweet");
@@ -122,7 +132,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        sUiBot.selectByText("The Dude");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -150,9 +160,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         extras.putString("numbers", "4815162342");
 
         replier.addResponse(new CannedFillResponse.Builder()
-                .addDataset(new CannedDataset.Builder("The Dude")
+                .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, AutoFillValue.forText("dude"))
                         .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                        .setPresentation(createPresentation("The Dude"))
                         .build())
                 .setExtras(extras)
                 .build());
@@ -164,7 +175,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilConnected();
 
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        sUiBot.selectByText("The Dude");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -278,6 +289,107 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutoFillOneDatasetWhenFlagSecure() throws Exception {
         mLoginActivity.setFlags(FLAG_SECURE);
         testAutoFillOneDataset();
+    }
+
+    @Test
+    public void testFillResponseAuth() throws Exception {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Prepare the authenticated response
+        AuthenticationActivity.setResponse(
+                new CannedFillResponse.Builder()
+            .addDataset(new CannedDataset.Builder()
+                    .setField(ID_USERNAME, AutoFillValue.forText("dude"))
+                    .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                    .setPresentation(createPresentation("Dataset"))
+                    .build())
+            .build());
+
+        // Create the authentication intent
+        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+
+        // Configure the service behavior
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication)
+                .setPresentation(createPresentation("Auth"))
+                .build());
+
+        // Set expectation for the activity
+        mLoginActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Wait for onFill() before proceeding.
+        replier.getNextFillRequest();
+
+        // Authenticate
+        sUiBot.selectByText("Auth");
+
+        // Select the dataset
+        sUiBot.selectByText("Dataset");
+
+        // Check the results.
+        mLoginActivity.assertAutoFilled();
+
+        // Other sanity checks
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testDatasetAuth() throws Exception {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Prepare the authenticated response
+        AuthenticationActivity.setDataset(new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutoFillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                .setPresentation(createPresentation("Dataset"))
+                .build());
+
+        // Create the authentication intent
+        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+
+        // Configure the service behavior
+        replier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutoFillValue.forText("dude"))
+                        .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                        .setPresentation(createPresentation("Auth"))
+                        .setAuthentication(authentication)
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        mLoginActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Wait for onFill() before proceeding.
+        replier.getNextFillRequest();
+
+        // Authenticate
+        sUiBot.selectByText("Auth");
+
+        // Select the dataset
+        sUiBot.selectByText("Dataset");
+
+        // Check the results.
+        mLoginActivity.assertAutoFilled();
+
+        // Other sanity checks
+        waitUntilDisconnected();
     }
 
     /*

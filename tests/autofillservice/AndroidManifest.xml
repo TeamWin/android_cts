@@ -35,6 +35,8 @@
 
         <activity android:name=".ViewAttributesTestActivity" />
 
+        <activity android:name=".AuthenticationActivity" />
+
         <service
             android:name=".InstrumentedAutoFillService"
             android:label="InstrumentedAutoFillService"
