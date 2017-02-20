@@ -6333,15 +6333,22 @@ public class TextViewTest {
     public void testAutoSizeCallers_setCompoundDrawablePadding() throws Throwable {
         final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_uniform, false);
+        // Prepare a larger layout in order not to hit the min value easily.
+        mActivityRule.runOnUiThread(() -> {
+            autoSizeTextView.setWidth(autoSizeTextView.getWidth() * 2);
+            autoSizeTextView.setHeight(autoSizeTextView.getHeight() * 2);
+        });
+        mInstrumentation.waitForIdleSync();
         // Setup the drawables before setting their padding in order to modify the available
         // space and trigger a resize.
         Drawable drawable = TestUtils.getDrawable(mActivity, R.drawable.red);
-        drawable.setBounds(0, 0, autoSizeTextView.getWidth() / 3, autoSizeTextView.getHeight() / 3);
+        drawable.setBounds(0, 0, autoSizeTextView.getWidth() / 4, autoSizeTextView.getHeight() / 4);
         mActivityRule.runOnUiThread(() -> autoSizeTextView.setCompoundDrawables(
                 drawable, drawable, drawable, drawable));
         mInstrumentation.waitForIdleSync();
         final float initialTextSize = autoSizeTextView.getTextSize();
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setCompoundDrawablePadding(50));
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setCompoundDrawablePadding(
+                autoSizeTextView.getCompoundDrawablePadding() + 10));
         mInstrumentation.waitForIdleSync();
 
         assertTrue(autoSizeTextView.getTextSize() < initialTextSize);
@@ -6619,35 +6626,32 @@ public class TextViewTest {
 
     @Test
     public void testAutoSizeUniform_obtainStyledAttributesUsingPredefinedSizes() {
-        DisplayMetrics metrics = mActivity.getResources().getDisplayMetrics();
+        DisplayMetrics m = mActivity.getResources().getDisplayMetrics();
         final TextView autoSizeTextViewUniform = (TextView) mActivity.findViewById(
                 R.id.textview_autosize_uniform_predef_sizes);
 
         // In arrays.xml predefined the step sizes as: 10px, 10dp, 10sp, 10pt, 10in and 10mm.
-        int[] expectedSizes = new int[] {
-                (int) Math.ceil(
-                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 10f, metrics)),
-                (int) Math.ceil(
-                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10f, metrics)),
-                (int) Math.ceil(
-                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10f, metrics)),
-                (int) Math.ceil(
-                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PT, 10f, metrics)),
-                (int) Math.ceil(
-                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_IN, 10f, metrics)),
-                (int) Math.ceil(
-                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, 10f, metrics))};
-        expectedSizes = Arrays.stream(expectedSizes)
+        // TypedValue can not use the math library and instead naively ceils the value by adding
+        // 0.5f when obtaining styled attributes. Check TypedValue#complexToDimensionPixelSize(...)
+        int[] expectedSizesInPx = new int[] {
+                (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 10f, m)),
+                (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10f, m)),
+                (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10f, m)),
+                (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PT, 10f, m)),
+                (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_IN, 10f, m)),
+                (int) (0.5f + TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, 10f, m))};
+        expectedSizesInPx = Arrays.stream(expectedSizesInPx)
                 .filter(x -> x > 0)
                 .distinct()
                 .sorted()
                 .toArray();
-        assertArrayEquals(expectedSizes, autoSizeTextViewUniform.getAutoSizeTextAvailableSizes());
+        assertArrayEquals(expectedSizesInPx,
+                autoSizeTextViewUniform.getAutoSizeTextAvailableSizes());
 
         boolean containsValueFromExpectedSizes = false;
         int textSize = (int) autoSizeTextViewUniform.getTextSize();
-        for (int i = 0; i < expectedSizes.length; i++) {
-            if (expectedSizes[i] == textSize) {
+        for (int i = 0; i < expectedSizesInPx.length; i++) {
+            if (expectedSizesInPx[i] == textSize) {
                 containsValueFromExpectedSizes = true;
                 break;
             }
@@ -6671,10 +6675,8 @@ public class TextViewTest {
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, mTextView.getAutoSizeTextType());
 
         final int[] predefinedSizes = new int[] {400, 0, 10, 40, 10, 10, 0, 0};
-        mActivityRule.runOnUiThread(() -> {
-            mTextView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-            mTextView.setAutoSizeTextPresetSizes(predefinedSizes);
-        });
+        mActivityRule.runOnUiThread(() -> mTextView.setAutoSizeTextTypeUniformWithPresetSizes(
+                predefinedSizes, TypedValue.COMPLEX_UNIT_PX));
         mInstrumentation.waitForIdleSync();
         assertArrayEquals(new int[] {10, 40, 400}, mTextView.getAutoSizeTextAvailableSizes());
     }
@@ -6685,10 +6687,8 @@ public class TextViewTest {
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, mTextView.getAutoSizeTextType());
 
         final int[] predefinedSizes = null;
-        mActivityRule.runOnUiThread(() -> {
-            mTextView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-            mTextView.setAutoSizeTextPresetSizes(predefinedSizes);
-        });
+        mActivityRule.runOnUiThread(() -> mTextView.setAutoSizeTextTypeUniformWithPresetSizes(
+                predefinedSizes, TypedValue.COMPLEX_UNIT_PX));
         mInstrumentation.waitForIdleSync();
     }
 
@@ -6698,7 +6698,7 @@ public class TextViewTest {
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, mTextView.getAutoSizeTextType());
 
         mActivityRule.runOnUiThread(() ->
-                mTextView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM));
+                mTextView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM));
         mInstrumentation.waitForIdleSync();
 
         final int[] defaultSizes = mTextView.getAutoSizeTextAvailableSizes();
@@ -6706,8 +6706,8 @@ public class TextViewTest {
         assertTrue(defaultSizes.length > 0);
 
         final int[] predefinedSizes = new int[0];
-        mActivityRule.runOnUiThread(() ->
-                mTextView.setAutoSizeTextPresetSizes(predefinedSizes));
+        mActivityRule.runOnUiThread(() -> mTextView.setAutoSizeTextTypeUniformWithPresetSizes(
+                predefinedSizes, TypedValue.COMPLEX_UNIT_PX));
         mInstrumentation.waitForIdleSync();
 
         final int[] newSizes = mTextView.getAutoSizeTextAvailableSizes();
@@ -6721,27 +6721,31 @@ public class TextViewTest {
                 R.id.textview_autosize_uniform);
 
         // Verify that the interval limits are both included.
-        mActivityRule.runOnUiThread(() -> {
-            autoSizeTextViewUniform.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_PX, 10);
-            autoSizeTextViewUniform.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, 20);
-            autoSizeTextViewUniform.setAutoSizeStepGranularity(TypedValue.COMPLEX_UNIT_PX, 2);
-        });
+        mActivityRule.runOnUiThread(() -> autoSizeTextViewUniform
+                .setAutoSizeTextTypeUniformWithConfiguration(10, 20, 2,
+                        TypedValue.COMPLEX_UNIT_PX));
         mInstrumentation.waitForIdleSync();
         assertArrayEquals(
                 new int[] {10, 12, 14, 16, 18, 20},
                 autoSizeTextViewUniform.getAutoSizeTextAvailableSizes());
 
-        mActivityRule.runOnUiThread(() -> {
-            autoSizeTextViewUniform.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, 19);
-        });
+        mActivityRule.runOnUiThread(() -> autoSizeTextViewUniform
+                .setAutoSizeTextTypeUniformWithConfiguration(
+                        autoSizeTextViewUniform.getAutoSizeMinTextSize(),
+                        19,
+                        autoSizeTextViewUniform.getAutoSizeStepGranularity(),
+                        TypedValue.COMPLEX_UNIT_PX));
         mInstrumentation.waitForIdleSync();
         assertArrayEquals(
                 new int[] {10, 12, 14, 16, 18},
                 autoSizeTextViewUniform.getAutoSizeTextAvailableSizes());
 
-        mActivityRule.runOnUiThread(() -> {
-            autoSizeTextViewUniform.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, 21);
-        });
+        mActivityRule.runOnUiThread(() -> autoSizeTextViewUniform
+                .setAutoSizeTextTypeUniformWithConfiguration(
+                        autoSizeTextViewUniform.getAutoSizeMinTextSize(),
+                        21,
+                        autoSizeTextViewUniform.getAutoSizeStepGranularity(),
+                        TypedValue.COMPLEX_UNIT_PX));
         mInstrumentation.waitForIdleSync();
         assertArrayEquals(
                 new int[] {10, 12, 14, 16, 18, 20},
@@ -6753,11 +6757,11 @@ public class TextViewTest {
         final TextView textView = new TextView(mActivity);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
         // Min/Max/Granularity values for auto-sizing are 0 because they are not used.
-        assertEquals(0, textView.getAutoSizeMinTextSize());
-        assertEquals(0, textView.getAutoSizeMaxTextSize());
-        assertEquals(0, textView.getAutoSizeStepGranularity());
+        assertEquals(-1, textView.getAutoSizeMinTextSize());
+        assertEquals(-1, textView.getAutoSizeMaxTextSize());
+        assertEquals(-1, textView.getAutoSizeStepGranularity());
 
-        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+        textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
         // Min/Max default values for auto-sizing XY have been loaded.
         final int minSize = textView.getAutoSizeMinTextSize();
@@ -6766,22 +6770,22 @@ public class TextViewTest {
         assertTrue(minSize < maxSize);
         assertNotEquals(0, textView.getAutoSizeStepGranularity());
 
-        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_NONE);
+        textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_NONE);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
         // Min/Max values for auto-sizing XY have been cleared.
-        assertEquals(0, textView.getAutoSizeMinTextSize());
-        assertEquals(0, textView.getAutoSizeMaxTextSize());
-        assertEquals(0, textView.getAutoSizeStepGranularity());
+        assertEquals(-1, textView.getAutoSizeMinTextSize());
+        assertEquals(-1, textView.getAutoSizeMaxTextSize());
+        assertEquals(-1, textView.getAutoSizeStepGranularity());
     }
 
     @Test
     public void testAutoSizeUniform_getSetAutoSizeStepGranularity() {
         final TextView textView = new TextView(mActivity);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
-        final int initialValue = 0;
+        final int initialValue = -1;
         assertEquals(initialValue, textView.getAutoSizeStepGranularity());
 
-        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+        textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
         final int defaultValue = 1; // 1px.
         // If the auto-size type is AUTO_SIZE_TEXT_TYPE_UNIFORM then it means textView went through
@@ -6789,14 +6793,18 @@ public class TextViewTest {
         assertEquals(defaultValue, textView.getAutoSizeStepGranularity());
 
         final int newValue = 33;
-        textView.setAutoSizeStepGranularity(TypedValue.COMPLEX_UNIT_PX, newValue);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                textView.getAutoSizeMinTextSize(),
+                textView.getAutoSizeMaxTextSize(),
+                newValue,
+                TypedValue.COMPLEX_UNIT_PX);
         assertEquals(newValue, textView.getAutoSizeStepGranularity());
     }
 
     @Test
     public void testAutoSizeUniform_getSetAutoSizeMinTextSize() {
         final TextView textView = new TextView(mActivity);
-        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+        textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
         final int minSize = textView.getAutoSizeMinTextSize();
         assertNotEquals(0, minSize);
@@ -6807,33 +6815,60 @@ public class TextViewTest {
         // of this test setup (we need at least 2 units).
         assertTrue((maxSize - minSize) > 1);
         final int newMinSize = maxSize - 1;
-        textView.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_PX, newMinSize);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                newMinSize,
+                textView.getAutoSizeMaxTextSize(),
+                textView.getAutoSizeStepGranularity(),
+                TypedValue.COMPLEX_UNIT_PX);
+
         assertEquals(newMinSize, textView.getAutoSizeMinTextSize());
         // Max size has not changed.
         assertEquals(maxSize, textView.getAutoSizeMaxTextSize());
 
-        // Prevent validation error (max <= min).
-        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_SP, newMinSize + 10);
-        textView.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_SP, newMinSize);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                newMinSize,
+                newMinSize + 10,
+                textView.getAutoSizeStepGranularity(),
+                TypedValue.COMPLEX_UNIT_SP);
+
         // It does not matter which unit has been used to set the min size, the getter always
         // returns it in pixels.
         assertEquals((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, newMinSize,
                 mActivity.getResources().getDisplayMetrics()), textView.getAutoSizeMinTextSize());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testAutoSizeUniform_throwsException_whenMaxLessThanMin() {
         final TextView textView = new TextView(mActivity);
-        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-        textView.setAutoSizeMinTextSize(TypedValue.COMPLEX_UNIT_PX, 10);
-        // Should throw IllegalStateException here (because min > max).
-        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, 9);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                10, 9, 1, TypedValue.COMPLEX_UNIT_SP);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAutoSizeUniform_throwsException_minLessThanZero() {
+        final TextView textView = new TextView(mActivity);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                -1, 9, 1, TypedValue.COMPLEX_UNIT_SP);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAutoSizeUniform_throwsException_maxLessThanZero() {
+        final TextView textView = new TextView(mActivity);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                10, -1, 1, TypedValue.COMPLEX_UNIT_SP);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAutoSizeUniform_throwsException_granularityLessThanZero() {
+        final TextView textView = new TextView(mActivity);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                10, 20, -1, TypedValue.COMPLEX_UNIT_SP);
     }
 
     @Test
     public void testAutoSizeUniform_getSetAutoSizeMaxTextSize() {
         final TextView textView = new TextView(mActivity);
-        textView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+        textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
         final int minSize = textView.getAutoSizeMinTextSize();
         assertNotEquals(0, minSize);
@@ -6841,12 +6876,20 @@ public class TextViewTest {
         assertNotEquals(0, maxSize);
 
         final int newMaxSize = maxSize + 11;
-        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_PX, newMaxSize);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                textView.getAutoSizeMinTextSize(),
+                newMaxSize,
+                textView.getAutoSizeStepGranularity(),
+                TypedValue.COMPLEX_UNIT_PX);
+
         assertEquals(newMaxSize, textView.getAutoSizeMaxTextSize());
         // Min size has not changed.
         assertEquals(minSize, textView.getAutoSizeMinTextSize());
-
-        textView.setAutoSizeMaxTextSize(TypedValue.COMPLEX_UNIT_SP, newMaxSize);
+        textView.setAutoSizeTextTypeUniformWithConfiguration(
+                textView.getAutoSizeMinTextSize(),
+                newMaxSize,
+                textView.getAutoSizeStepGranularity(),
+                TypedValue.COMPLEX_UNIT_SP);
         // It does not matter which unit has been used to set the max size, the getter always
         // returns it in pixels.
         assertEquals((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, newMaxSize,
@@ -6865,7 +6908,7 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
         assertEquals(customTextSize, mTextView.getTextSize(), 0f);
         mActivityRule.runOnUiThread(() ->
-                mTextView.setAutoSizeTextType(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM));
+                mTextView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM));
         mInstrumentation.waitForIdleSync();
         // The size of the text should have changed.
         assertNotEquals(customTextSize, mTextView.getTextSize(), 0f);

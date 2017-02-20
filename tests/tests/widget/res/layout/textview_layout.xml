@@ -285,7 +285,7 @@
                 android:autoSizeText="uniform"
                 android:autoSizeMinTextSize="2px"
                 android:autoSizeMaxTextSize="50dp"
-                android:autoSizeStepGranularity="1dp" />
+                android:autoSizeStepGranularity="1px" />
 
             <TextView
                 android:id="@+id/textview_fontresource_fontfamily"
