@@ -173,6 +173,7 @@ public class ByodHelperActivity extends LocationListenerActivity
         final Notification notification = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.icon)
                 .setContentTitle(getString(R.string.provisioning_byod_notification_title))
+                .setContentText(getString(R.string.provisioning_byod_notification_title))
                 .setVisibility(visibility)
                 .setAutoCancel(true)
                 .build();
