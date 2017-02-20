@@ -43,9 +43,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
 
-    protected static final String RESET_PASSWORD_TEST_CLASS = ".ResetPasswordTest";
-    protected static final String FBE_HELPER_CLASS = ".FbeHelper";
-
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
@@ -130,30 +127,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceTestClass(".CaCertManagementTest");
-    }
-
-    /** Test for resetPassword for all devices. */
-    public void testResetPassword() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
-    }
-
-    /** Additional test for resetPassword for FBE-enabled devices. */
-    public void testResetPasswordFbe() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
-            return;
-        }
-
-        // Lock FBE and verify resetPassword is disabled
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testSetPassword");
-        rebootAndWaitUntilReady();
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordDisabled");
-
-        // Unlock FBE and verify resetPassword is enabled again
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPassword");
     }
 
     public void testApplicationRestrictions() throws Exception {

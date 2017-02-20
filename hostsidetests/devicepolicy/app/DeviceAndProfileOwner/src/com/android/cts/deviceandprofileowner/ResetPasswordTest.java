@@ -22,6 +22,9 @@ import java.lang.IllegalStateException;
 /**
  * Test cases for {@link android.app.admin.DevicePolicyManager#resetPassword(String, int)}.
  *
+ * As of O, resetPassword is only accessible to DPCs targeting Sdk level before O, so this
+ * is exercised by CtsDeviceAndProfileOwnerApp25 only.
+ *
  * <p>These tests verify that the device password:
  * <ul>
  *     <li>can be created, changed and cleared when FBE is not locked, and
