@@ -549,20 +549,19 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES
         final String DISALLOW_INSTALL_UNKNOWN_SOURCES = "no_install_unknown_sources";
-        final String UNKNOWN_SOURCES_SETTING = "install_non_market_apps";
         final String PACKAGE_VERIFIER_USER_CONSENT_SETTING = "package_verifier_user_consent";
         final String PACKAGE_VERIFIER_ENABLE_SETTING = "package_verifier_enable";
         final String SECURE_SETTING_CATEGORY = "secure";
         final String GLOBAL_SETTING_CATEGORY = "global";
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final File apk = buildHelper.getTestFile(TEST_APP_APK);
-        String unknownSourceSetting = null;
         String packageVerifierEnableSetting = null;
         String packageVerifierUserConsentSetting = null;
         try {
             // Install the test and prepare the test apk.
             installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
             assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
+            setInstallPackageAppOps(PACKAGE_INSTALLER_PKG, true);
 
             // Add restrictions and test if we can install the apk.
             getDevice().uninstallPackage(TEST_APP_PKG);
@@ -573,15 +572,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Clear restrictions and test if we can install the apk.
             changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES, false, mUserId);
 
-            // Enable Unknown sources in Settings.
-            unknownSourceSetting =
-                    getSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, mUserId);
+            // Disable verifier.
             packageVerifierUserConsentSetting = getSettings(SECURE_SETTING_CATEGORY,
                     PACKAGE_VERIFIER_USER_CONSENT_SETTING, mUserId);
             packageVerifierEnableSetting = getSettings(GLOBAL_SETTING_CATEGORY,
                     PACKAGE_VERIFIER_ENABLE_SETTING, mUserId);
 
-            putSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, "1", mUserId);
             putSettings(SECURE_SETTING_CATEGORY, PACKAGE_VERIFIER_USER_CONSENT_SETTING, "-1",
                     mUserId);
             putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING, "0", mUserId);
@@ -589,14 +585,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
                     "testManualInstallSucceeded", mUserId);
         } finally {
+            setInstallPackageAppOps(PACKAGE_INSTALLER_PKG, false);
             String command = "rm " + TEST_APP_LOCATION + apk.getName();
             getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);
             getDevice().uninstallPackage(PACKAGE_INSTALLER_PKG);
-            if (unknownSourceSetting != null) {
-                putSettings(SECURE_SETTING_CATEGORY, UNKNOWN_SOURCES_SETTING, unknownSourceSetting,
-                        mUserId);
-            }
             if (packageVerifierEnableSetting != null) {
                 putSettings(GLOBAL_SETTING_CATEGORY, PACKAGE_VERIFIER_ENABLE_SETTING,
                         packageVerifierEnableSetting, mUserId);
@@ -772,6 +765,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final String extras = packageNameExtra + " " + scopesExtra;
 
         changePolicyOrFail("set-delegated-scopes", extras, mUserId);
+    }
+
+    private void setInstallPackageAppOps(String packageName, boolean allowed)
+            throws DeviceNotAvailableException {
+        String command = "appops set " + packageName + " REQUEST_INSTALL_PACKAGES "
+                + (allowed ? "allow" : "default");
+        CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
     }
 
     private void changePolicyOrFail(String command, String extras, int userId)
