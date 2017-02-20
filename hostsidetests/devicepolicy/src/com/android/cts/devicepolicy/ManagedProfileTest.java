@@ -654,6 +654,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             installAppAsUser(WIDGET_PROVIDER_APK, mParentUserId);
             getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
                     + " --package " + WIDGET_PROVIDER_PKG);
+            setIdleWhitelist(WIDGET_PROVIDER_PKG, true);
             startWidgetHostService();
 
             String commandOutput = changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
@@ -879,6 +880,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private String changeUserRestriction(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
         return changeUserRestriction(key, value, userId, MANAGED_PROFILE_PKG);
+    }
+
+    private void setIdleWhitelist(String packageName, boolean enabled)
+            throws DeviceNotAvailableException {
+        String command = "cmd deviceidle whitelist " + (enabled ? "+" : "-") + packageName;
+        CLog.d("Output for command " + command + ": "
+                + getDevice().executeShellCommand(command));
     }
 
     private String changeCrossProfileWidgetForUser(String packageName, String command, int userId)
