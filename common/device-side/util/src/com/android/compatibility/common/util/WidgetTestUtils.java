@@ -231,9 +231,8 @@ public class WidgetTestUtils {
 
             if (runner != null) {
                 runner.run();
-            } else {
-                view.invalidate();
             }
+            view.invalidate();
         });
 
         try {
