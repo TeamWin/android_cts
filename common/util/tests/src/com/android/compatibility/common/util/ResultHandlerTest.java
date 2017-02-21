@@ -21,6 +21,7 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -184,15 +185,33 @@ public class ResultHandlerTest extends TestCase {
                 COMMAND_LINE_ARGS);
 
         // Parse the results and assert correctness
-        checkResult(ResultHandler.getResults(resultsDir), resultDir);
+        checkResult(ResultHandler.getResultFromDir(resultDir));
     }
 
     public void testParsing() throws Exception {
-        File resultsDir = null;
+        File resultDir = writeResultDir(resultsDir);
+        // Parse the results and assert correctness
+        checkResult(ResultHandler.getResultFromDir(resultDir));
+    }
+
+    public void testGetLightResults() throws Exception {
+        File resultDir = writeResultDir(resultsDir);
+        List<IInvocationResult> lightResults = ResultHandler.getLightResults(resultsDir);
+        assertEquals("Expected one result", 1, lightResults.size());
+        IInvocationResult lightResult = lightResults.get(0);
+        checkLightResult(lightResult);
+    }
+
+    /*
+     * Helper to write a result to the results dir, for testing.
+     * @return the written resultDir
+     */
+    static File writeResultDir(File resultsDir) throws IOException {
+        File resultDir = null;
         FileWriter writer = null;
+        String dateString = ResultHandler.toReadableDateString(System.currentTimeMillis());
         try {
-            resultsDir = FileUtil.createTempDir("results");
-            File resultDir = FileUtil.createTempDir("12345", resultsDir);
+            resultDir = FileUtil.createTempDir("12345", resultsDir);
             // Create the result file
             File resultFile = new File(resultDir, ResultHandler.TEST_RESULT_FILE_NAME);
             writer = new FileWriter(resultFile);
@@ -225,19 +244,37 @@ public class ResultHandlerTest extends TestCase {
                     buildInfo, summary, modules);
             writer.write(output);
             writer.flush();
-
-            // Parse the results and assert correctness
-            checkResult(ResultHandler.getResults(resultsDir), resultDir);
         } finally {
             if (writer != null) {
                 writer.close();
             }
         }
+        return resultDir;
     }
 
-    private void checkResult(List<IInvocationResult> results, File resultDir) throws Exception {
-        assertEquals("Expected 1 result", 1, results.size());
-        IInvocationResult result = results.get(0);
+    static void checkLightResult(IInvocationResult lightResult) throws Exception {
+        assertEquals("Expected 2 passes", 2, lightResult.countResults(TestStatus.PASS));
+        assertEquals("Expected 1 failure", 1, lightResult.countResults(TestStatus.FAIL));
+        assertEquals("Expected 1 not executed", 1, lightResult.getNotExecuted());
+
+        Map<String, String> buildInfo = lightResult.getInvocationInfo();
+        assertEquals("Incorrect Build ID", EXAMPLE_BUILD_ID, buildInfo.get(BUILD_ID));
+        assertEquals("Incorrect Build Product",
+            EXAMPLE_BUILD_PRODUCT, buildInfo.get(BUILD_PRODUCT));
+
+        Set<String> serials = lightResult.getDeviceSerials();
+        assertTrue("Missing device", serials.contains(DEVICE_A));
+        assertTrue("Missing device", serials.contains(DEVICE_B));
+        assertEquals("Expected 2 devices", 2, serials.size());
+        assertTrue("Incorrect devices", serials.contains(DEVICE_A) && serials.contains(DEVICE_B));
+        assertEquals("Incorrect start time", START_MS, lightResult.getStartTime());
+        assertEquals("Incorrect test plan", SUITE_PLAN, lightResult.getTestPlan());
+        List<IModuleResult> modules = lightResult.getModules();
+        assertEquals("Expected 1 completed module", 1, lightResult.getModuleCompleteCount());
+        assertEquals("Expected 2 total modules", 2, modules.size());
+    }
+
+    static void checkResult(IInvocationResult result) throws Exception {
         assertEquals("Expected 2 passes", 2, result.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
         assertEquals("Expected 1 not executed", 1, result.getNotExecuted());
