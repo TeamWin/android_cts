@@ -1,4 +1,5 @@
-/** Copyright (C) 2012 The Android Open Source Project
+/*
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package android.textureview.cts;
+package android.view.cts;
 
 import android.test.ActivityInstrumentationTestCase2;
 
@@ -26,7 +26,8 @@ public class TextureViewSnapshotTest extends
 
     public void testTextureViewGrabSnapshot() {
         TextureViewSnapshotTestActivity.mMaxWaitDelayMs = 1500;
-        if (!getActivity().waitForCompletion())
+        if (!getActivity().waitForCompletion()) {
             fail("Did not complete complete test.");
+        }
     }
 }

@@ -14,43 +14,47 @@
  * limitations under the License.
  */
 
-package android.textureview.cts;
+package android.view.cts;
 
 import android.test.ActivityInstrumentationTestCase2;
 
-public class TextureViewTest extends
-        ActivityInstrumentationTestCase2<TextureViewTestActivity> {
+public class TextureViewStressTest extends
+        ActivityInstrumentationTestCase2<TextureViewStressTestActivity> {
 
-    public TextureViewTest() {
-        super(TextureViewTestActivity.class);
+    public TextureViewStressTest() {
+        super(TextureViewStressTestActivity.class);
     }
 
     public void testTextureViewStress48Hz() {
-        TextureViewTestActivity.mFrames = 600;
-        TextureViewTestActivity.mDelayMs = 1000/48;
-        if (!getActivity().waitForCompletion())
+        TextureViewStressTestActivity.mFrames = 600;
+        TextureViewStressTestActivity.mDelayMs = 1000 / 48;
+        if (!getActivity().waitForCompletion()) {
             fail("Did not complete 48Hz test.");
+        }
     }
 
     public void testTextureViewStress60Hz() {
-        TextureViewTestActivity.mFrames = 600;
-        TextureViewTestActivity.mDelayMs = 1000/60;
-        if (!getActivity().waitForCompletion())
+        TextureViewStressTestActivity.mFrames = 600;
+        TextureViewStressTestActivity.mDelayMs = 1000 / 60;
+        if (!getActivity().waitForCompletion()) {
             fail("Did not complete 60Hz test.");
+        }
     }
 
     public void testTextureViewStress70Hz()  {
-        TextureViewTestActivity.mFrames = 600;
-        TextureViewTestActivity.mDelayMs = 1000/70;
-        if (!getActivity().waitForCompletion())
+        TextureViewStressTestActivity.mFrames = 600;
+        TextureViewStressTestActivity.mDelayMs = 1000 / 70;
+        if (!getActivity().waitForCompletion()) {
             fail("Did not complete 70Hz test.");
+        }
     }
 
     public void testTextureViewStress200Hz() {
-        TextureViewTestActivity.mFrames = 600;
-        TextureViewTestActivity.mDelayMs = 1000/200;
-        if (!getActivity().waitForCompletion())
+        TextureViewStressTestActivity.mFrames = 600;
+        TextureViewStressTestActivity.mDelayMs = 1000 / 200;
+        if (!getActivity().waitForCompletion()) {
             fail("Did not complete 200Hz test.");
+        }
     }
 
 }
