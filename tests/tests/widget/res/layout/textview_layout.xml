@@ -266,12 +266,6 @@
                 android:shadowRadius="3.0"
                 android:shadowColor="@color/testcolor1" />
 
-            <EditText
-                android:id="@+id/editview_text"
-                android:text="@string/text_view_hello"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
             <TextView
                 android:id="@+id/textview_pointer"
                 android:layout_width="match_parent"

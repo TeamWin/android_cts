@@ -138,7 +138,6 @@ import android.view.textclassifier.TextSelection;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
@@ -5897,33 +5896,46 @@ public class TextViewTest {
             return;
         }
 
-        // Scroll down to our EditText
-        final ScrollView scrollView = (ScrollView) mActivity.findViewById(R.id.scroller);
-        mTextView = findTextView(R.id.editview_text);
-        mActivityRule.runOnUiThread(() -> scrollView.fullScroll(View.FOCUS_DOWN));
+        // prepare a test Layout
+        // will add an focusable TextView so that EditText will not get focus at activity start
+        final TextView textView = new TextView(mActivity);
+        textView.setFocusable(true);
+        textView.setFocusableInTouchMode(true);
+        // EditText to test
+        final EditText editText = new EditText(mActivity);
+        editText.setShowSoftInputOnFocus(true);
+        editText.setFocusable(true);
+        editText.setFocusableInTouchMode(true);
+        // prepare and set the layout
+        final LinearLayout layout = new LinearLayout(mActivity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.addView(textView, new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT));
+        layout.addView(editText, new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT));
+        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout,
+                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT)));
         mInstrumentation.waitForIdleSync();
 
-        // Mark it to show soft input on focus
-        mActivityRule.runOnUiThread(() -> mTextView.setShowSoftInputOnFocus(true));
-        mInstrumentation.waitForIdleSync();
-        assertTrue(mTextView.getShowSoftInputOnFocus());
+        assertTrue(editText.getShowSoftInputOnFocus());
 
         // And emulate click on it
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, editText);
 
         // Verify that input method manager is active and accepting text
         final InputMethodManager imManager = (InputMethodManager) mActivity
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         PollingCheck.waitFor(imManager::isActive);
         assertTrue(imManager.isAcceptingText());
-        assertTrue(imManager.isActive(mTextView));
+        assertTrue(imManager.isActive(editText));
 
         // Since there is no API to check that soft input is showing, we're going to ask
         // the input method manager to show soft input, passing our custom result receiver.
         // We're expecting to get UNCHANGED_SHOWN, indicating that the soft input was already
         // showing before showSoftInput was called.
         SoftInputResultReceiver receiver = new SoftInputResultReceiver(mHandler);
-        imManager.showSoftInput(mTextView, 0, receiver);
+        imManager.showSoftInput(editText, 0, receiver);
         PollingCheck.waitFor(() -> receiver.mIsDone);
         assertEquals(InputMethodManager.RESULT_UNCHANGED_SHOWN, receiver.mResultCode);
 
@@ -5931,17 +5943,17 @@ public class TextViewTest {
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
 
         // Reconfigure our edit text to not show soft input on focus
-        mActivityRule.runOnUiThread(() -> mTextView.setShowSoftInputOnFocus(false));
+        mActivityRule.runOnUiThread(() -> editText.setShowSoftInputOnFocus(false));
         mInstrumentation.waitForIdleSync();
-        assertFalse(mTextView.getShowSoftInputOnFocus());
+        assertFalse(editText.getShowSoftInputOnFocus());
 
         // Emulate click on it
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, editText);
 
         // Ask input method manager to show soft input again. This time we're expecting to get
         // SHOWN, indicating that the soft input was not showing before showSoftInput was called.
         receiver.reset();
-        imManager.showSoftInput(mTextView, 0, receiver);
+        imManager.showSoftInput(editText, 0, receiver);
         PollingCheck.waitFor(() -> receiver.mIsDone);
         assertEquals(InputMethodManager.RESULT_SHOWN, receiver.mResultCode);
 
