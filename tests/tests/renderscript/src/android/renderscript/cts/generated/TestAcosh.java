@@ -43,7 +43,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xcf303663l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x777ec00cf303663l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testAcoshFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x37b311efl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xf102471f37b311efl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testAcoshFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x2dce32cdl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf104103a2dce32cdl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testAcoshFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x23e953abl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf105d95523e953abl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testAcoshFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x78f34665l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xaa23e9f78f34665l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testAcoshHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x3c4e7d9fl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xcdd55db43c4e7d9fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testAcoshHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x9b564293l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xcdd568559b564293l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testAcoshHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestAcosh extends RSBaseCompute {
     }
 
     private void checkAcoshHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xfa5e0787l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xcdd572f6fa5e0787l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testAcoshHalf4Half4(inV, out);

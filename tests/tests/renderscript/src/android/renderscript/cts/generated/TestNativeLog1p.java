@@ -43,7 +43,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe656185dl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xb77ad6f5e656185dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeLog1pFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x68503899l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x36154b5368503899l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeLog1pFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x5e6b5977l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x3617146e5e6b5977l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeLog1pFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x54867a55l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3618dd8954867a55l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeLog1pFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xe4adee2fl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xc8762e2e4adee2fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeLog1pHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x53745f99l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x7dd848a953745f99l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeLog1pHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb27c248dl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x7dd8534ab27c248dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeLog1pHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestNativeLog1p extends RSBaseCompute {
     }
 
     private void checkNativeLog1pHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x1183e981l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x7dd85dec1183e981l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeLog1pHalf4Half4(inV, out);

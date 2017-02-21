@@ -45,9 +45,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloatFloatFloatFloat() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x471d6db1l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xb4422e8fl, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xc6a51d9fl, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x9f4beff6471d6db1l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x6ede0b88b4422e8fl, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x6d2f014ec6a51d9fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -134,9 +134,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloat2Float2Float2Float2() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xa2d9ce9l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x5395e837l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x621e0ac7l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x45502e8f0a2d9ce9l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xba2b8a035395e837l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xe56bef3c621e0ac7l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -223,9 +223,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloat3Float3Float3Float3() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x26b009c5l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x249ee4cbl, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xb0d4f51bl, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xeb4701726b009c5l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x9b21f6b3249ee4cbl, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf15862eab0d4f51bl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -312,9 +312,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloat4Float4Float4Float4() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x433276a1l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf5a7e15fl, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xff8bdf6fl, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd818b19f433276a1l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x7c186362f5a7e15fl, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xfd44d698ff8bdf6fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -411,9 +411,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalfHalfHalfHalf() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xa5c04055l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xbc69b07bl, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x4936a9cbl, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x3dea3b1da5c04055l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x764b3fabc69b07bl, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x3115d5834936a9cbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -506,9 +506,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalf2Half2Half2Half2() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x2fe5c049l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x7114257l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5b09ae7l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x4266268b2fe5c049l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x3720249e07114257l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xd354aab305b09ae7l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -601,9 +601,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalf3Half3Half3Half3() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x25babc91l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xcb4bcb2fl, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x187ca83fl, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x9b13445c25babc91l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xf1bef5aecb4bcb2fl, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x60d7d360187ca83fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -696,9 +696,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalf4Half4Half4Half4() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x1b8fb8d9l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x8f865407l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x2b48b597l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xf3c0622d1b8fb8d9l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xac5dc6bf8f865407l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xee5afc0d2b48b597l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -791,9 +791,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloat2Float2FloatFloat2() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x2bd1d7c3l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x3c8dd1c5l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x92afd1f5l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xf811b2d52bd1d7c3l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x17a127e13c8dd1c5l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe0b7d03e92afd1f5l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -880,9 +880,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloat3Float3FloatFloat3() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x1b20fa80l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd6f4de7cl, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xd131a27cl, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xae7aff441b20fa80l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xe64a4d60d6f4de7cl, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x21bd09bbd131a27cl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -969,9 +969,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixFloat4Float4FloatFloat4() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xa701d3dl, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x715beb33l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xfb37303l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x64e44bb30a701d3dl, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xb4f372e0715beb33l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x62c243390fb37303l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -1058,9 +1058,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalf2Half2HalfHalf2() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xc5a4349l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x2fea4b57l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb339d3e7l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5a6c4ac90c5a4349l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xcc857ec32fea4b57l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xebe632db339d3e7l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -1153,9 +1153,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalf3Half3HalfHalf3() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x204615a8l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x541973f4l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb462aa74l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x825985c204615a8l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x9506d3ea541973f4l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x341608c1b462aa74l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInStop(inStop);
@@ -1248,9 +1248,9 @@ public class TestMix extends RSBaseCompute {
     }
 
     private void checkMixHalf4Half4HalfHalf4() {
-        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x3431e807l, false);
-        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x78489c91l, false);
-        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb58b8101l, false);
+        Allocation inStart = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb5dee5ef3431e807l, false);
+        Allocation inStop = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5d88291178489c91l, false);
+        Allocation inFraction = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x596dae55b58b8101l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInStop(inStop);

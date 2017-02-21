@@ -43,7 +43,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2FloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xb8b72a10l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x58195894b8b72a10l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testExp2FloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2Float2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xe7690e74l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4eeb7f70e7690e74l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testExp2Float2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2Float3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xdd842f52l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x4eed488bdd842f52l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testExp2Float3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2Float4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd39f5030l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x4eef11a6d39f5030l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testExp2Float4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2HalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xe270827al, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xa7680b09e270827al, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testExp2HalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2Half2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x25d5714cl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x1e76ca4825d5714cl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testExp2Half2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2Half3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x84dd3640l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x1e76d4e984dd3640l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testExp2Half3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestExp2 extends RSBaseCompute {
     }
 
     private void checkExp2Half4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe3e4fb34l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x1e76df8ae3e4fb34l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testExp2Half4Half4(inV, out);

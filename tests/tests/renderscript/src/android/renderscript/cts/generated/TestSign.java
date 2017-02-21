@@ -43,7 +43,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x364ea474l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xadc8bc2f364ea474l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testSignFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x27c0ab8l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x2eb1e646027c0ab8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testSignFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf8972b96l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x2eb3af60f8972b96l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testSignFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xeeb24c74l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x2eb5787beeb24c74l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testSignFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xf1994bfel, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xa305b29ef1994bfel, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testSignHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xa36cebb0l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x74262de2a36cebb0l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testSignHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x274b0a4l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x742638840274b0a4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testSignHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestSign extends RSBaseCompute {
     }
 
     private void checkSignHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x617c7598l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x74264325617c7598l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testSignHalf4Half4(inV, out);
