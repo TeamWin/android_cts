@@ -3503,6 +3503,14 @@ public class ViewTest {
         event.setSource(InputDevice.SOURCE_STYLUS);
         mInstrumentation.sendPointerSync(event);
         assertFalse(fitWindowsView.isInTouchMode());
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mockView);
+        assertTrue(fitWindowsView.isInTouchMode());
+
+        event.setSource(InputDevice.SOURCE_MOUSE);
+        event.setAction(MotionEvent.ACTION_DOWN);
+        mInstrumentation.sendPointerSync(event);
+        assertFalse(fitWindowsView.isInTouchMode());
     }
 
     @UiThreadTest
