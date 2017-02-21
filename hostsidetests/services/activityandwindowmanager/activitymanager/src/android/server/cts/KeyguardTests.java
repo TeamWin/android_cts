@@ -154,7 +154,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     /**
-     * Tests whether we can dismiss Keyguard when we start a FLAG_DISMISS_KEYGUARD activity.
+     * Tests whether a FLAG_DISMISS_KEYGUARD activity occludes Keyguard.
      */
     public void testDismissKeyguardActivity() throws Exception {
         if (!isHandheld()) {
@@ -164,10 +164,10 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         launchActivity("DismissKeyguardActivity");
-        mAmWmState.waitForKeyguardGone(mDevice);
+        mAmWmState.waitForKeyguardShowingAndOccluded(mDevice);
         mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardActivity"});
         mAmWmState.assertVisibility("DismissKeyguardActivity", true);
-        assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        assertShowingAndOccluded();
     }
 
     public void testDismissKeyguardActivity_method() throws Exception {
@@ -216,33 +216,16 @@ public class KeyguardTests extends KeyguardTestBase {
         assertOnDismissSucceededInLogcat();
     }
 
-    /**
-     * Tests whether a FLAG_DISMISS_KEYGUARD activity repeatedly dismissed Keyguard, i.e. whenever
-     * lockscreen would show it gets dismissed immediately.
-     */
-    public void testDismissKeyguardActivity_repeating() throws Exception {
-        if (!isHandheld()) {
-            return;
-        }
-        launchActivity("DismissKeyguardActivity");
-        for (int i = 0; i < 3; i++) {
-            gotoKeyguard();
-            mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardActivity"});
-            mAmWmState.assertVisibility("DismissKeyguardActivity", true);
-            assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        }
-    }
-
-    public void testDismissKeyguard_fromShowWhenLocked() throws Exception {
+    public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
         launchActivity("ShowWhenLockedActivity");
         mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        assertShowingAndOccluded();
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
-        mAmWmState.waitForKeyguardGone(mDevice);
-        assertKeyguardGone();
+        assertShowingAndOccluded();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
     }
 
