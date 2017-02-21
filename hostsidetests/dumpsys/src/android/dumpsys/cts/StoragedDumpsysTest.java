@@ -75,19 +75,24 @@ public class StoragedDumpsysTest extends BaseDumpsysTest {
                 new StringReader(output))) {
 
             String line;
+            String[] parts;
             while ((line = reader.readLine()) != null) {
                 if (line.isEmpty()) {
                     continue;
                 }
 
-                String[] parts = line.split(" ");
-                assertTrue(parts.length == 1 || parts.length == 9);
-
-                if (parts.length == 1) {
-                    assertInteger(parts[0]);
+                if (line.contains(",")) {
+                    parts = line.split(",");
+                    assertTrue(parts.length == 2);
+                    if (!parts[0].isEmpty()) {
+                        assertInteger(parts[0]);
+                    }
+                    assertInteger(parts[1]);
                     continue;
                 }
 
+                parts = line.split(" ");
+                assertTrue(parts.length == 9);
                 for (int i = 1; i < parts.length; i++) {
                     assertInteger(parts[i]);
                 }
