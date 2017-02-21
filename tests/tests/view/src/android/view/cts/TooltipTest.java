@@ -117,6 +117,18 @@ public class TooltipTest {
         mActivityRule.runOnUiThread(() -> view.setVisibility(visibility));
     }
 
+    private void setClickable(View view) throws Throwable {
+        mActivityRule.runOnUiThread(() -> view.setClickable(true));
+    }
+
+    private void setLongClickable(View view) throws Throwable {
+        mActivityRule.runOnUiThread(() -> view.setLongClickable(true));
+    }
+
+    private void setContextClickable(View view) throws Throwable {
+        mActivityRule.runOnUiThread(() -> view.setContextClickable(true));
+    }
+
     private void callPerformLongClick(View view) throws Throwable {
         mActivityRule.runOnUiThread(() -> view.performLongClick(0, 0));
     }
@@ -321,21 +333,21 @@ public class TooltipTest {
 
     @Test
     public void testLongClickTooltipOnClickableView() throws Throwable {
-        mTooltipView.setClickable(true);
+        setClickable(mTooltipView);
         injectLongClick(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testLongClickTooltipOnLongClickableView() throws Throwable {
-        mTooltipView.setLongClickable(true);
+        setLongClickable(mTooltipView);
         injectLongClick(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testLongClickTooltipOnContextClickableView() throws Throwable {
-        mTooltipView.setContextClickable(true);
+        setContextClickable(mTooltipView);
         injectLongClick(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
@@ -428,21 +440,21 @@ public class TooltipTest {
 
     @Test
     public void testLongKeyPressTooltipOnClickableView() throws Throwable {
-        mTooltipView.setClickable(true);
+        setClickable(mTooltipView);
         injectLongEnter(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testLongKeyPressTooltipOnLongClickableView() throws Throwable {
-        mTooltipView.setLongClickable(true);
+        setLongClickable(mTooltipView);
         injectLongEnter(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testLongKeyPressTooltipOnContextClickableView() throws Throwable {
-        mTooltipView.setContextClickable(true);
+        setContextClickable(mTooltipView);
         injectLongEnter(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
@@ -532,21 +544,21 @@ public class TooltipTest {
 
     @Test
     public void testMouseHoverTooltipOnClickableView() throws Throwable {
-        mTooltipView.setClickable(true);
+        setClickable(mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testMouseHoverTooltipOnLongClickableView() throws Throwable {
-        mTooltipView.setLongClickable(true);
+        setLongClickable(mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
 
     @Test
     public void testMouseHoverTooltipOnContextClickableView() throws Throwable {
-        mTooltipView.setContextClickable(true);
+        setContextClickable(mTooltipView);
         injectLongHoverMove(mTooltipView);
         assertTrue(hasTooltip(mTooltipView));
     }
