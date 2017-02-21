@@ -78,49 +78,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testScreenCapturePossible");
     }
 
-    /**
-     * Verify the Profile Owner of a managed profile can create and change the password,
-     * but cannot remove it.
-     */
-    @Override
-    public void testResetPassword() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
-    }
-
-    /**
-     *  Verify the Profile Owner of a managed profile can only change the password when FBE is
-     *  unlocked, and cannot remove the password even when FBE is unlocked.
-     */
-    @Override
-    public void testResetPasswordFbe() throws Exception {
-        if (!mHasFeature || !mSupportsFbe) {
-            return;
-        }
-
-        // Lock FBE and verify resetPassword is disabled
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testSetPassword");
-        rebootAndWaitUntilReady();
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordDisabled");
-
-        // Start an activity in managed profile to trigger work challenge
-        startSimpleActivityAsUser(mUserId);
-
-        // Unlock FBE and verify resetPassword is enabled again
-        executeDeviceTestMethod(FBE_HELPER_CLASS, "testUnlockFbe");
-        executeDeviceTestMethod(RESET_PASSWORD_TEST_CLASS, "testResetPasswordManagedProfile");
-    }
-
-    public void testCannotClearProfileOwner() throws Exception {
-        if (mHasFeature) {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS,
-                    mUserId);
-        }
-    }
-
     @Override
     public void testDisallowSetWallpaper_allowed() throws Exception {
         // Managed profile doesn't have wallpaper.
