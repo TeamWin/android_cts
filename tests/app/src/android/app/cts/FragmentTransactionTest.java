@@ -15,9 +15,14 @@
  */
 package android.app.cts;
 
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+
 import android.app.Fragment;
+import android.app.Instrumentation;
 import android.app.stubs.FragmentTestActivity;
 import android.app.stubs.R;
+import android.os.Bundle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -26,8 +31,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static junit.framework.TestCase.*;
 
 /**
  * Tests usage of the {@link android.app.FragmentTransaction} class.
@@ -157,6 +160,19 @@ public class FragmentTransactionTest {
             }
         });
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+    }
+
+    /**
+     * Test to ensure that when onBackPressed() is received that there is no crash.
+     */
+    @Test
+    public void crashOnBackPressed() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            Bundle outState = new Bundle();
+            instrumentation.callActivityOnSaveInstanceState(mActivity, outState);
+            mActivity.onBackPressed();
+        });
     }
 
     public static class CorrectFragment extends Fragment {}
