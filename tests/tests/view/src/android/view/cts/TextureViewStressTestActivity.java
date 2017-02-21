@@ -13,27 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.textureview.cts;
+package android.view.cts;
 
-import android.animation.ObjectAnimator;
+import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
+import static android.opengl.GLES20.glClear;
+import static android.opengl.GLES20.glClearColor;
+
 import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.TextureView;
 import android.view.WindowManager;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+
 import junit.framework.Assert;
 
-import static android.opengl.GLES20.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
-public class TextureViewTestActivity extends Activity implements TextureView.SurfaceTextureListener {
+public class TextureViewStressTestActivity extends Activity
+        implements TextureView.SurfaceTextureListener {
     public static int mFrames = -1;
     public static int mDelayMs = -1;
 
-    private TextureView mTexView;
     private Thread mProducerThread;
     private final Semaphore mSemaphore = new Semaphore(0);
 
@@ -42,12 +46,12 @@ public class TextureViewTestActivity extends Activity implements TextureView.Sur
         super.onCreate(savedInstanceState);
         Assert.assertTrue(mFrames > 0);
         Assert.assertTrue(mDelayMs > 0);
-        mTexView = new TextureView(this);
-        mTexView.setSurfaceTextureListener(this);
-        setContentView(mTexView);
-        ObjectAnimator rotate = ObjectAnimator.ofFloat(mTexView, "rotationY", 180);
-        ObjectAnimator fadeIn = ObjectAnimator.ofFloat(mTexView, "alpha", 0.3f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(mTexView, "scaleY", 0.3f, 1f);
+        TextureView texView = new TextureView(this);
+        texView.setSurfaceTextureListener(this);
+        setContentView(texView);
+        ObjectAnimator rotate = ObjectAnimator.ofFloat(texView, "rotationY", 180);
+        ObjectAnimator fadeIn = ObjectAnimator.ofFloat(texView, "alpha", 0.3f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(texView, "scaleY", 0.3f, 1f);
         AnimatorSet animSet = new AnimatorSet();
         animSet.play(rotate).with(fadeIn).with(scaleY);
         animSet.setDuration(mFrames * mDelayMs);
@@ -55,17 +59,17 @@ public class TextureViewTestActivity extends Activity implements TextureView.Sur
     }
 
     private static int addMargin(int a) {
-         /* Worst case is 2 * actual refresh rate, in case when the delay pushes the frame off
-          * VSYNC every frame.
-          */
-         return 2 * a;
+        /* Worst case is 2 * actual refresh rate, in case when the delay pushes the frame off
+         * VSYNC every frame.
+         */
+        return 2 * a;
     }
 
     private static int roundUpFrame(int a, int b) {
-         /* Need to give time based on (frame duration limited by refresh rate + delay given
-          * from the test)
-          */
-         return (a + b + 1);
+        /* Need to give time based on (frame duration limited by refresh rate + delay given
+         * from the test)
+         */
+        return (a + b + 1);
     }
 
 
@@ -73,10 +77,10 @@ public class TextureViewTestActivity extends Activity implements TextureView.Sur
         Boolean success = false;
         int oneframeMs;
 
-        WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         float rate = display.getRefreshRate();
-        oneframeMs = roundUpFrame(mDelayMs, (int)(1000.0f / rate));
+        oneframeMs = roundUpFrame(mDelayMs, (int) (1000.0f / rate));
         try {
             success = mSemaphore.tryAcquire(addMargin(oneframeMs * mFrames),
                     TimeUnit.MILLISECONDS);
@@ -108,17 +112,18 @@ public class TextureViewTestActivity extends Activity implements TextureView.Sur
     }
 
     public static class GLRendererImpl implements GLProducerThread.GLRenderer {
-        private final int numColors = 4;
-        private final float[][] color =
-            { { 1.0f, 0.0f, 0.0f },
-              { 0.0f, 1.0f, 0.0f },
-              { 0.0f, 0.0f, 1.0f },
-              { 1.0f, 1.0f, 1.0f } };
+        private static final int NUM_COLORS = 4;
+        private static final float[][] COLOR = {
+                { 1.0f, 0.0f, 0.0f },
+                { 0.0f, 1.0f, 0.0f },
+                { 0.0f, 0.0f, 1.0f },
+                { 1.0f, 1.0f, 1.0f }
+        };
 
         @Override
         public void drawFrame(int frame) {
-            int index = frame % numColors;
-            glClearColor(color[index][0], color[index][1], color[index][2], 1.0f);
+            int index = frame % NUM_COLORS;
+            glClearColor(COLOR[index][0], COLOR[index][1], COLOR[index][2], 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
         }
     }

@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.textureview.cts;
+package android.view.cts;
+
+import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
+import static android.opengl.GLES20.glClear;
+import static android.opengl.GLES20.glClearColor;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -21,12 +25,12 @@ import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.view.TextureView;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+
 import junit.framework.Assert;
 
-import static android.opengl.GLES20.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TextureViewSnapshotTestActivity extends Activity
         implements TextureView.SurfaceTextureListener {
@@ -60,7 +64,7 @@ public class TextureViewSnapshotTestActivity extends Activity
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         mProducerThread = new GLProducerThread(surface, new GLRendererImpl(),
-                mShouldRender, 1000/48, mSemaphore);
+                mShouldRender, 1000 / 48, mSemaphore);
         mProducerThread.start();
     }
 
