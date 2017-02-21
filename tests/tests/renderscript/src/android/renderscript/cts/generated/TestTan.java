@@ -43,7 +43,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x7bb50fa4l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x4222fe257bb50fa4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testTanFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x43383868l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xae98520143383868l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testTanFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x39535946l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xae9a1b1c39535946l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testTanFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x2f6e7a24l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xae9be4372f6e7a24l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testTanFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xc3f260ael, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x53c4cfdec3f260ael, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testTanHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xe8d356e0l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x8806fd8e8d356e0l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testTanHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x47db1bd4l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x8807a7a47db1bd4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testTanHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestTan extends RSBaseCompute {
     }
 
     private void checkTanHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa6e2e0c8l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x880851ba6e2e0c8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testTanHalf4Half4(inV, out);

@@ -43,7 +43,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinFloatFloat() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x8d3e5bc7l, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x1167d6d8d3e5bc7l, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeAsinFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinFloat2Float2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xebdf2133l, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xdb4aa187ebdf2133l, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeAsinFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinFloat3Float3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xe1fa4211l, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xdb4c6aa2e1fa4211l, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeAsinFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinFloat4Float4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd81562efl, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xdb4e33bdd81562efl, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeAsinFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinHalfHalf() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x228512e9l, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xd1966c64228512e9l, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeAsinHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinHalf2Half2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xfa5ca303l, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xc773ef20fa5ca303l, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeAsinHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinHalf3Half3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x596467f7l, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xc773f9c2596467f7l, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeAsinHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestNativeAsin extends RSBaseCompute {
     }
 
     private void checkNativeAsinHalf4Half4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb86c2cebl, -1, 1);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xc7740463b86c2cebl, -1, 1);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeAsinHalf4Half4(inV, out);

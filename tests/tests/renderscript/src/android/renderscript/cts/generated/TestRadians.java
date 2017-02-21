@@ -43,7 +43,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x42adfabl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x6e5054c0042adfabl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testRadiansFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xde23baf7l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xc20ed424de23baf7l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testRadiansFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd43edbd5l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xc2109d3fd43edbd5l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testRadiansFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xca59fcb3l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xc212665aca59fcb3l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testRadiansFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x3875b1edl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x1f51a4b83875b1edl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testRadiansHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x714926e7l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x34adc673714926e7l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testRadiansHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xd050ebdbl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x34add114d050ebdbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testRadiansHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestRadians extends RSBaseCompute {
     }
 
     private void checkRadiansHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x2f58b0cfl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x34addbb62f58b0cfl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testRadiansHalf4Half4(inV, out);

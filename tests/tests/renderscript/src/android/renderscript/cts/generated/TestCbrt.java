@@ -43,7 +43,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x845561d4l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x21721d33845561d4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testCbrtFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x9129d518l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x910f9e5d9129d518l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testCbrtFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x8744f5f6l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x911167788744f5f6l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testCbrtFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x7d6016d4l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x911330937d6016d4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testCbrtFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xc175945el, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x678cc7fec175945el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testCbrtHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf173a910l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xe7cf8ee6f173a910l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testCbrtHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x507b6e04l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xe7cf9988507b6e04l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testCbrtHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestCbrt extends RSBaseCompute {
     }
 
     private void checkCbrtHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xaf8332f8l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe7cfa429af8332f8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testCbrtHalf4Half4(inV, out);

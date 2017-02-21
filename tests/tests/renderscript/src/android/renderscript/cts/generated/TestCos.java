@@ -43,7 +43,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xbb80fef6l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe70ae86bb80fef6l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testCosFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xb2bbfaal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4bb740670b2bbfaal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testCosFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x146e088l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x4bb909820146e088l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testCosFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf7620166l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x4bbad29cf7620166l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testCosFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x151d6890l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x66fc5fae151d6890l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testCosHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x289f4632l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xd4ce203a289f4632l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testCosHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x87a70b26l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xd4ce2adb87a70b26l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testCosHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestCos extends RSBaseCompute {
     }
 
     private void checkCosHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe6aed01al, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xd4ce357ce6aed01al, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testCosHalf4Half4(inV, out);

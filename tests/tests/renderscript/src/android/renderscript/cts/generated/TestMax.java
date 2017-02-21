@@ -44,8 +44,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloatFloatFloat() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xc2162460l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xc2162461l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x2952d868c2162460l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x2952d868c2162461l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -123,8 +123,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloat2Float2Float2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x36addadal, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x36addadbl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xc6031e7536addadal, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xc6031e7536addadbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -202,8 +202,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloat3Float3Float3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x388bdc7bl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x388bdc7cl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x1a67fc95388bdc7bl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x1a67fc95388bdc7cl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -281,8 +281,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloat4Float4Float4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3a69de1cl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x3a69de1dl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x6eccdab53a69de1cl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x6eccdab53a69de1dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -368,8 +368,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalfHalfHalf() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb6e25ddbl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb6e25ddcl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x3cd92a4ab6e25ddbl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x3cd92a4ab6e25ddcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -452,8 +452,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalf2Half2Half2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf8fc6855l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf8fc6856l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf8c31a85f8fc6855l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf8c31a85f8fc6856l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -536,8 +536,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalf3Half3Half3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x579b7924l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x579b7925l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x1e779a6f579b7924l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x1e779a6f579b7925l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -620,8 +620,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalf4Half4Half4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb63a89f3l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb63a89f4l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x442c1a58b63a89f3l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x442c1a58b63a89f4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -704,8 +704,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloat2FloatFloat2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x8592438l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x8592439l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x63dd380708592438l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x63dd380708592439l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -783,8 +783,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloat3FloatFloat3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf6c41894l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xf6c41895l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xb92ceb1ef6c41894l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xb92ceb1ef6c41895l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -862,8 +862,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxFloat4FloatFloat4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xe52f0cf0l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe52f0cf1l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xe7c9e36e52f0cf0l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe7c9e36e52f0cf1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -941,8 +941,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalf2HalfHalf2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xf5bbc96fl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xf5bbc970l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x8eb729ebf5bbc96fl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x8eb729ebf5bbc970l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1025,8 +1025,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalf3HalfHalf3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xa8555b13l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xa8555b14l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb9444a6aa8555b13l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb9444a6aa8555b14l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1109,8 +1109,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxHalf4HalfHalf4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x5aeeecb7l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x5aeeecb8l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe3d16ae95aeeecb7l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xe3d16ae95aeeecb8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1199,8 +1199,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxCharCharChar() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 1, 0xb6405876l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 1, 0xb6405877l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 1, 0x5f77cf3cb6405876l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 1, 0x5f77cf3cb6405877l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1277,8 +1277,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxChar2Char2Char2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x19e42804l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x19e42805l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x94dd090a19e42804l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 2, 0x94dd090a19e42805l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1355,8 +1355,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxChar3Char3Char3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x788338d3l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 3, 0x788338d4l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xba9188f3788338d3l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 3, 0xba9188f3788338d4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1433,8 +1433,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxChar4Char4Char4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd72249a2l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xd72249a3l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xe04608dcd72249a2l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_8, 4, 0xe04608dcd72249a3l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1517,8 +1517,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUcharUcharUchar() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 1, 0x853a162dl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 1, 0x853a162el, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 1, 0x800f9948853a162dl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 1, 0x800f9948853a162el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1595,8 +1595,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUchar2Uchar2Uchar2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xb7e9a9dbl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xb7e9a9dcl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xd31d5735b7e9a9dbl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 2, 0xd31d5735b7e9a9dcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1673,8 +1673,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUchar3Uchar3Uchar3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xb9c7ab7cl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0xb9c7ab7dl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x27823555b9c7ab7cl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 3, 0x27823555b9c7ab7dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1751,8 +1751,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUchar4Uchar4Uchar4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xbba5ad1dl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0xbba5ad1el, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7be71375bba5ad1dl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_8, 4, 0x7be71375bba5ad1el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1835,8 +1835,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxShortShortShort() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 1, 0x43b57294l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 1, 0x43b57295l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 1, 0x920335e143b57294l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 1, 0x920335e143b57295l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1913,8 +1913,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxShort2Short2Short2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x56ecb9del, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x56ecb9dfl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x42e9d46b56ecb9del, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 2, 0x42e9d46b56ecb9dfl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1991,8 +1991,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxShort3Short3Short3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x58cabb7fl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x58cabb80l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x974eb28b58cabb7fl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 3, 0x974eb28b58cabb80l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2069,8 +2069,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxShort4Short4Short4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x5aa8bd20l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 4, 0x5aa8bd21l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xebb390ab5aa8bd20l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_16, 4, 0xebb390ab5aa8bd21l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2153,8 +2153,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUshortUshortUshort() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 1, 0xb947704bl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 1, 0xb947704cl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 1, 0x8f869c73b947704bl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 1, 0x8f869c73b947704cl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2231,8 +2231,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUshort2Ushort2Ushort2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x150b1f95l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0x150b1f96l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xbe3c50e6150b1f95l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 2, 0xbe3c50e6150b1f96l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2309,8 +2309,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUshort3Ushort3Ushort3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x5df0112cl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x5df0112dl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x3e2be9df5df0112cl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 3, 0x3e2be9df5df0112dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2387,8 +2387,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUshort4Ushort4Ushort4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xa6d502c3l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xa6d502c4l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xbe1b82d8a6d502c3l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_16, 4, 0xbe1b82d8a6d502c4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2471,8 +2471,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxIntIntInt() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0xe43d0fa9l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0xe43d0faal, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0x773d0d60e43d0fa9l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0x773d0d60e43d0faal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2549,8 +2549,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxInt2Int2Int2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xbb9dccd7l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xbb9dccd8l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x32815a01bb9dccd7l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x32815a01bb9dccd8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2627,8 +2627,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxInt3Int3Int3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x867314c0l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x867314c1l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x3f66ddfc867314c0l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x3f66ddfc867314c1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2705,8 +2705,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxInt4Int4Int4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x51485ca9l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x51485caal, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x4c4c61f751485ca9l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x4c4c61f751485caal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2789,8 +2789,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUintUintUint() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 1, 0x85f73e36l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 1, 0x85f73e37l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 1, 0xcd24e58385f73e36l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 1, 0xcd24e58385f73e37l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2867,8 +2867,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUint2Uint2Uint2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xe84d6c4l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xe84d6c5l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xbd5747860e84d6c4l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 2, 0xbd5747860e84d6c5l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -2945,8 +2945,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUint3Uint3Uint3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x6d23e793l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0x6d23e794l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe30bc76f6d23e793l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 3, 0xe30bc76f6d23e794l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3023,8 +3023,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUint4Uint4Uint4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xcbc2f862l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0xcbc2f863l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x8c04758cbc2f862l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_32, 4, 0x8c04758cbc2f863l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3107,8 +3107,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxLongLongLong() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 1, 0x85eceb84l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 1, 0x85eceb85l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 1, 0x542587285eceb84l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 1, 0x542587285eceb85l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3185,8 +3185,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxLong2Long2Long2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xc249c9dal, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xc249c9dbl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xc5c0bac4c249c9dal, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 2, 0xc5c0bac4c249c9dbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3263,8 +3263,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxLong3Long3Long3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x20e8daa9l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 3, 0x20e8daaal, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xeb753aae20e8daa9l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 3, 0xeb753aae20e8daaal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3341,8 +3341,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxLong4Long4Long4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x7f87eb78l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x7f87eb79l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x1129ba977f87eb78l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.SIGNED_64, 4, 0x1129ba977f87eb79l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_64, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3425,8 +3425,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUlongUlongUlong() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 1, 0x8f18baafl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 1, 0x8f18bab0l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 1, 0x8d1ad8f38f18baafl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 1, 0x8d1ad8f38f18bab0l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3503,8 +3503,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUlong2Ulong2Ulong2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5946bc65l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x5946bc66l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x6e2049a55946bc65l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 2, 0x6e2049a55946bc66l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3581,8 +3581,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUlong3Ulong3Ulong3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x5b24be06l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0x5b24be07l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xc28527c55b24be06l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 3, 0xc28527c55b24be07l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -3659,8 +3659,8 @@ public class TestMax extends RSBaseCompute {
     }
 
     private void checkMaxUlong4Ulong4Ulong4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5d02bfa7l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x5d02bfa8l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x16ea05e55d02bfa7l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.UNSIGNED_64, 4, 0x16ea05e55d02bfa8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_64, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
