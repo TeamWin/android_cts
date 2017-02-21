@@ -68,29 +68,44 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
         validateRingtoneManagerGetRingtone(defaultAlarm, RingtoneManager.TYPE_ALARM);
     }
 
-    private void validateRingtoneManagerGetRingtone(String actualRingtone, int type) {
-        Uri actualRingtoneUri = (actualRingtone == null ? null
-                : Utils.getUriWithoutUserId(Uri.parse(actualRingtone)));
-        Uri ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(mContext, type);
-        if (ringtoneUri == null) {
-            assertNull(actualRingtone);
-        } else {
-            assertEquals(Utils.getUriWithoutUserId(ringtoneUri).toString(),
-                    actualRingtoneUri.toString());
-        }
+    private void validateRingtoneManagerGetRingtone(String expected, int type) {
+        Uri expectedUri = (expected == null ? null : Utils.getUriWithoutUserId(
+                Uri.parse(expected)));
+        Uri actualRingtoneUri = Utils.getUriWithoutUserId(
+                RingtoneManager.getActualDefaultRingtoneUri(mContext, type));
+        assertEquals(expectedUri, actualRingtoneUri);
     }
 
     /*
-     * Tests that setting a work ringtone disables Settings.Secure.SYNC_PARENT_SOUNDS, so that
-     * setting should be "true" before calling
+     * Tests that setting a work ringtone disables Settings.Secure.SYNC_PARENT_SOUNDS.
      */
     private void testSoundDisableSync(int ringtoneType) throws Exception {
+        Uri originalUri = RingtoneManager.getActualDefaultRingtoneUri(mContext, ringtoneType);
+
+        // Make sure we have the rights we need to set a new ringtone.
+        assertTrue(Settings.System.canWrite(mContext));
+
+        // Explicitly set a work sound, to stop syncing ringtones between profiles.
         assertEquals(1, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
         try {
             RingtoneManager.setActualDefaultRingtoneUri(mContext, ringtoneType, null);
             assertEquals(0, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
+            validateRingtoneManagerGetRingtone(null, ringtoneType);
         } finally {
             // Reset the setting we just changed.
+            Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 1);
+        }
+
+        // After re-unifying, the uri should be the same as the parent's uri.
+        Uri postSyncUri = RingtoneManager.getActualDefaultRingtoneUri(mContext, ringtoneType);
+        assertEquals(originalUri, postSyncUri);
+
+        // Manually disabling sync again, without changing settings, should put the ringtone uri
+        // back to its earlier value of null.
+        try {
+            Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 0);
+            assertNull(RingtoneManager.getActualDefaultRingtoneUri(mContext, ringtoneType));
+        } finally {
             Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 1);
         }
     }
