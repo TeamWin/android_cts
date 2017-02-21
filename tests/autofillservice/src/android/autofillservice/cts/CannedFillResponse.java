@@ -62,9 +62,11 @@ final class CannedFillResponse {
 
     @Override
     public String toString() {
-        return "CannedFillResponse: [datasets=" + datasets + ", savableIds="
-                + Arrays.toString(savableIds) + ", hasPresentation="
-                + (presentation != null) + "]";
+        return "CannedFillResponse: [datasets=" + datasets
+                + ", savableIds=" + Arrays.toString(savableIds)
+                + ", hasPresentation=" + (presentation != null)
+                + ", hasPAuthentication=" + (authentication != null)
+                + "]";
     }
 
     static class Builder {
@@ -146,6 +148,7 @@ final class CannedFillResponse {
         @Override
         public String toString() {
             return "CannedDataset: [hasPresentation=" + (presentation != null)
+                    + ", hasAuthentication=" + (authentication != null)
                     + ", fields=" + fields + "]";
         }
 

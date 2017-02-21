@@ -37,13 +37,10 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutoFillValue;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
