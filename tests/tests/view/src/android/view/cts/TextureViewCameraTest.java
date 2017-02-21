@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.graphics2.cts;
+package android.view.cts;
 
 import static org.junit.Assert.assertTrue;
 
@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
-public class TextureViewTest {
+public class TextureViewCameraTest {
     private static final long WAIT_TIMEOUT_IN_SECS = 10;
 
     private TextureViewCameraActivity mActivity;
@@ -54,4 +54,3 @@ public class TextureViewTest {
         assertTrue(mActivity.waitForCompletion(WAIT_TIMEOUT_IN_SECS));
     }
 }
-
