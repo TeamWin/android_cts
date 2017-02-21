@@ -44,8 +44,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceFloatFloatFloat() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x30ae2337l, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x9b58b3c2l, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xb61d5ec530ae2337l, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x98c2c48c9b58b3c2l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -126,8 +126,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceFloat2Float2Float() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x27286713l, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x1e219b6l, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xef86e1d727286713l, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x3d7bc89101e219b6l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -212,8 +212,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceFloat3Float3Float() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x48c71b61l, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xa78a62d0l, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xbe30075548c71b61l, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf3e514c0a78a62d0l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -298,8 +298,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceFloat4Float4Float() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x6a65cfafl, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x4d32abeal, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x8cd92cd36a65cfafl, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xaa4e60f04d32abeal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -392,8 +392,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceHalfHalfHalf() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x4093c950l, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x46eb99f5l, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x2682794a4093c950l, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x79be38e646eb99f5l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -481,8 +481,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceHalf2Half2Half() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x30493el, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x763516efl, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x928c0c6f0030493el, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x9f59f012763516efl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -574,8 +574,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceHalf3Half3Half() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xca7541fal, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6fcade83l, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x404559c2ca7541fal, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xcd79ed256fcade83l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);
@@ -667,8 +667,8 @@ public class TestNativeDistance extends RSBaseCompute {
     }
 
     private void checkNativeDistanceHalf4Half4Half() {
-        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x94ba3ab6l, false);
-        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x6960a617l, false);
+        Allocation inLeftVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xedfea71694ba3ab6l, false);
+        Allocation inRightVector = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xfb99ea386960a617l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInRightVector(inRightVector);

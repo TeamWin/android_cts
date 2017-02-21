@@ -44,8 +44,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrFloatFloatFloat() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x834d1839l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xf9181f0fl, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x22637077834d1839l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xef7b0ab4f9181f0fl, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -123,8 +123,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrFloat2Float2Float2() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x283b11a5l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xb67d4abbl, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x47afceb7283b11a5l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x65ac261bb67d4abbl, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -202,8 +202,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrFloat3Float3Float3() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x10aef718l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd9fcd3el, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xe2961d5b10aef718l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x411aa11d0d9fcd3el, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -281,8 +281,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrFloat4Float4Float4() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf922dc8bl, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x64c24fc1l, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x7d7c6bfef922dc8bl, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x1c891c1e64c24fc1l, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -368,8 +368,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrHalfHalfHalf() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x5f0b09f0l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x2a404496l, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xfccc3ab25f0b09f0l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x371128092a404496l, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -452,8 +452,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrHalf2Half2Half2() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xdfd0cbe8l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xb2e110el, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x2fe8c7b8dfd0cbe8l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xe243e2d40b2e110el, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -536,8 +536,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrHalf3Half3Half3() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xd3821cc5l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xcef3bdbl, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6972d34ed3821cc5l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xab11ff810cef3bdbl, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -620,8 +620,8 @@ public class TestNativePowr extends RSBaseCompute {
     }
 
     private void checkNativePowrHalf4Half4Half4() {
-        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xc7336da2l, 0, 256);
-        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xeb066a8l, -15, 15);
+        Allocation inBase = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa2fcdee4c7336da2l, 0, 256);
+        Allocation inExponent = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x73e01c2e0eb066a8l, -15, 15);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);

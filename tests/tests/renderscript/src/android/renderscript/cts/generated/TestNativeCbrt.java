@@ -43,7 +43,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x18086389l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xa1d3335118086389l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeCbrtFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x59112965l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xce4859fd59112965l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeCbrtFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x4f2c4a43l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xce4a23184f2c4a43l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeCbrtFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x45476b21l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xce4bec3345476b21l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeCbrtFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x54b706bbl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xc79143a554b706bbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeCbrtHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x8526aac5l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x6830a5048526aac5l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeCbrtHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xe42e6fb9l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x6830afa5e42e6fb9l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeCbrtHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestNativeCbrt extends RSBaseCompute {
     }
 
     private void checkNativeCbrtHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x433634adl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x6830ba47433634adl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeCbrtHalf4Half4(inV, out);

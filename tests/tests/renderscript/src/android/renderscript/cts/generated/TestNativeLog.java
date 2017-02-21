@@ -43,7 +43,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogFloatFloat() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe6418d2cl, 10e-10, 10e10);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x6237b14ee6418d2cl, 10e-10, 10e10);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeLogFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogFloat2Float2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xd3eee3b0l, 10e-10, 10e10);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x641a5823d3eee3b0l, 10e-10, 10e10);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeLogFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogFloat3Float3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xca0a048el, 10e-10, 10e10);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x641c213eca0a048el, 10e-10, 10e10);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeLogFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogFloat4Float4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xc025256cl, 10e-10, 10e10);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x641dea59c025256cl, 10e-10, 10e10);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeLogFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogHalfHalf() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x7dcf0276l, 10e-5, 65504);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x9ed3ea227dcf0276l, 10e-5, 65504);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeLogHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogHalf2Half2() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x535fd468l, 10e-5, 65504);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x28952302535fd468l, 10e-5, 65504);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeLogHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogHalf3Half3() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb267995cl, 10e-5, 65504);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x28952da3b267995cl, 10e-5, 65504);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeLogHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestNativeLog extends RSBaseCompute {
     }
 
     private void checkNativeLogHalf4Half4() {
-        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x116f5e50l, 10e-5, 65504);
+        Allocation inV = createRandomFloatAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x28953845116f5e50l, 10e-5, 65504);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeLogHalf4Half4(inV, out);

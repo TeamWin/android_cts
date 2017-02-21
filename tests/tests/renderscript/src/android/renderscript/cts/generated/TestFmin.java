@@ -44,8 +44,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloatFloatFloat() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x1d7b1058l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x1d7b1059l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x7b46a8451d7b1058l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x7b46a8451d7b1059l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -123,8 +123,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloat2Float2Float2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xe75faa42l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xe75faa43l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x12b850a9e75faa42l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x12b850a9e75faa43l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -202,8 +202,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloat3Float3Float3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xe93dabe3l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xe93dabe4l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x671d2ec9e93dabe3l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x671d2ec9e93dabe4l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -281,8 +281,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloat4Float4Float4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xeb1bad84l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xeb1bad85l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xbb820ce9eb1bad84l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xbb820ce9eb1bad85l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -368,8 +368,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalfHalfHalf() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xc5ee8503l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xc5ee8504l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x91d4a423c5ee8503l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x91d4a423c5ee8504l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -452,8 +452,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalf2Half2Half2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5461544dl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5461544el, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x4ab6ea625461544dl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x4ab6ea625461544el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -536,8 +536,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalf3Half3Half3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb300651cl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xb300651dl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x706b6a4bb300651cl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x706b6a4bb300651dl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -620,8 +620,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalf4Half4Half4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x119f75ebl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x119f75ecl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x961fea35119f75ebl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x961fea35119f75ecl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -704,8 +704,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloat2FloatFloat2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x24457670l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x24457671l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x4dd5869724457670l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x4dd5869724457671l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -783,8 +783,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloat3FloatFloat3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x12b06accl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x12b06acdl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xa32539af12b06accl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xa32539af12b06acdl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -862,8 +862,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminFloat4FloatFloat4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x11b5f28l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x11b5f29l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xf874ecc7011b5f28l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xf874ecc7011b5f29l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -941,8 +941,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalf2HalfHalf2() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xa4829957l, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xa4829958l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x5b0a3aa9a4829957l, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x5b0a3aa9a4829958l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1025,8 +1025,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalf3HalfHalf3() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x571c2afbl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x571c2afcl, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x85975b28571c2afbl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x85975b28571c2afcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInB(inB);
@@ -1109,8 +1109,8 @@ public class TestFmin extends RSBaseCompute {
     }
 
     private void checkFminHalf4HalfHalf4() {
-        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x9b5bc9fl, false);
-        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x9b5bca0l, false);
+        Allocation inA = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xb0247ba709b5bc9fl, false);
+        Allocation inB = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xb0247ba709b5bca0l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInB(inB);

@@ -43,7 +43,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xc5dde30al, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x606ed077c5dde30al, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testDegreesFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xe417141el, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x803a665ae417141el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testDegreesFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xda3234fcl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x803c2f75da3234fcl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testDegreesFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd04d55dal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x803df890d04d55dal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testDegreesFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x17e3b944l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xebce8b7317e3b944l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testDegreesHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x32fc2a46l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x26cc422b32fc2a46l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testDegreesHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x9203ef3al, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x26cc4ccc9203ef3al, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testDegreesHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestDegrees extends RSBaseCompute {
     }
 
     private void checkDegreesHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xf10bb42el, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x26cc576df10bb42el, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testDegreesHalf4Half4(inV, out);

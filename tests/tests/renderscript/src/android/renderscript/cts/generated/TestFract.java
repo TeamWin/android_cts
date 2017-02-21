@@ -44,7 +44,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloatFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x3c675d27l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x57d8e6573c675d27l, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
@@ -132,7 +132,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloat2Float2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xcdf8f525l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xd1dbe683cdf8f525l, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
@@ -220,7 +220,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloat3Float3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xcfd6f6c6l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x2640c4a3cfd6f6c6l, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
@@ -308,7 +308,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloat4Float4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd1b4f867l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x7aa5a2c3d1b4f867l, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
@@ -401,7 +401,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x9db2cad3l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xf559208b9db2cad3l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testFractFloatFloat(inV, out);
@@ -470,7 +470,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xc4d52edfl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x1096c5acc4d52edfl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testFractFloat2Float2(inV, out);
@@ -539,7 +539,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xbaf04fbdl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x10988ec7baf04fbdl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testFractFloat3Float3(inV, out);
@@ -608,7 +608,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xb10b709bl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x109a57e2b10b709bl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testFractFloat4Float4(inV, out);
@@ -684,7 +684,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalfHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x64a42fb6l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xd06c85e164a42fb6l, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
@@ -779,7 +779,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalf2Half2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x734da11cl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x27492874734da11cl, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
@@ -874,7 +874,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalf3Half3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xd1ecb1ebl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x4cfda85dd1ecb1ebl, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
@@ -969,7 +969,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalf4Half4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x308bc2bal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x72b22847308bc2bal, false);
         try {
             Allocation outFloor = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
@@ -1070,7 +1070,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x96468e55l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x924ee10e96468e55l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testFractHalfHalf(inV, out);
@@ -1143,7 +1143,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xad1120fl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xbbb6923f0ad1120fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testFractHalf2Half2(inV, out);
@@ -1216,7 +1216,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x69d8d703l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xbbb69ce069d8d703l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testFractHalf3Half3(inV, out);
@@ -1289,7 +1289,7 @@ public class TestFract extends RSBaseCompute {
     }
 
     private void checkFractHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xc8e09bf7l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xbbb6a781c8e09bf7l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testFractHalf4Half4(inV, out);
