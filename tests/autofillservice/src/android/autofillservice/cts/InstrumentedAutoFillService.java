@@ -20,10 +20,13 @@ import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.IGNORE_DANGLING_SESSIONS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.dumpStructure;
+import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
+import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -33,8 +36,12 @@ import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
+import android.view.autofill.AutoFillId;
+import android.view.autofill.AutoFillValue;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -47,6 +54,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class InstrumentedAutoFillService extends AutoFillService {
 
     private static final String TAG = "InstrumentedAutoFillService";
+
+    private static final boolean DUMP_FILL_REQUESTS = false;
+    private static final boolean DUMP_SAVE_REQUESTS = false;
 
     private static final String STATE_CONNECTED = "CONNECTED";
     private static final String STATE_DISCONNECTED = "DISCONNECTED";
@@ -72,6 +82,8 @@ public class InstrumentedAutoFillService extends AutoFillService {
     @Override
     public void onFillRequest(AssistStructure structure, Bundle data,
             CancellationSignal cancellationSignal, FillCallback callback) {
+        if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", structure);
+
         final Replier replier = sReplier.getAndSet(null);
         assertWithMessage("Replier not set").that(replier).isNotNull();
         replier.onFillRequest(structure, data, cancellationSignal, callback);
@@ -79,6 +91,8 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     @Override
     public void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", structure);
+
         final Replier replier = sReplier.getAndSet(null);
         assertWithMessage("Replier not set").that(replier).isNotNull();
         replier.onSaveRequest(structure, data, callback);
@@ -241,8 +255,6 @@ public class InstrumentedAutoFillService extends AutoFillService {
         private void onFillRequest(AssistStructure structure,
                 @SuppressWarnings("unused") Bundle data, CancellationSignal cancellationSignal,
                 FillCallback callback) {
-            mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
-
             final CannedFillResponse response = mResponses.remove();
             if (response == null) {
                 callback.onSuccess(null);
@@ -250,8 +262,11 @@ public class InstrumentedAutoFillService extends AutoFillService {
             }
 
             final FillResponse fillResponse = Helper.createFromCannedResponse(structure, response);
+
             Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
             callback.onSuccess(fillResponse);
+
+            mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
         }
 
         private void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {

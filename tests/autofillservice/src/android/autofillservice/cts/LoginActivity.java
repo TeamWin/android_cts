@@ -52,12 +52,16 @@ public class LoginActivity extends Activity {
     private static final long LOGIN_TIMEOUT_MS = 1000;
 
     static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
+    static final String ID_USERNAME_LABEL = "username_label";
     static final String ID_USERNAME = "username";
+    static final String ID_PASSWORD_LABEL = "password_label";
     static final String ID_PASSWORD = "password";
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
 
+    private TextView mUsernameLabel;
     private EditText mUsernameEditText;
+    private TextView mPasswordLabel;
     private EditText mPasswordEditText;
     private TextView mOutput;
     private Button mLoginButton;
@@ -83,7 +87,9 @@ public class LoginActivity extends Activity {
 
         mLoginButton = (Button) findViewById(R.id.login);
         mClearButton = (Button) findViewById(R.id.clear);
+        mUsernameLabel = (TextView) findViewById(R.id.username_label);
         mUsernameEditText = (EditText) findViewById(R.id.username);
+        mPasswordLabel = (TextView) findViewById(R.id.password_label);
         mPasswordEditText = (EditText) findViewById(R.id.password);
         mOutput = (TextView) findViewById(R.id.output);
 
@@ -168,11 +174,29 @@ public class LoginActivity extends Activity {
     }
 
     /**
+     * Visits the {@code username_label} in the UiThread.
+     */
+    void onUsernameLabel(ViewVisitor<TextView> v) {
+        runOnUiThread(() -> {
+            v.visit(mUsernameLabel);
+        });
+    }
+
+    /**
      * Visits the {@code username} in the UiThread.
      */
     void onUsername(ViewVisitor<EditText> v) {
         runOnUiThread(() -> {
             v.visit(mUsernameEditText);
+        });
+    }
+
+    /**
+     * Visits the {@code password_label} in the UiThread.
+     */
+    void onPasswordLabel(ViewVisitor<TextView> v) {
+        runOnUiThread(() -> {
+            v.visit(mPasswordLabel);
         });
     }
 
