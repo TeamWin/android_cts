@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.eq;
@@ -192,8 +193,12 @@ public class ListPopupWindowTest {
         assertEquals(height, mPopupWindow.getHeight());
 
         height = -getDisplay().getHeight() / 2;
-        mPopupWindow.setHeight(height);
-        assertEquals(height, mPopupWindow.getHeight());
+        try {
+            mPopupWindow.setHeight(height);
+            fail("should throw IllegalArgumentException for negative height.");
+        } catch (IllegalArgumentException e) {
+            // expected exception.
+        }
     }
 
     /**
