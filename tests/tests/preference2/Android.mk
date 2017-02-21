@@ -27,7 +27,9 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
+    compatibility-device-util \
     mockito-target-minus-junit4 \
+    ub-uiautomator \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
