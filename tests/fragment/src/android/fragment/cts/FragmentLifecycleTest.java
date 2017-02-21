@@ -18,6 +18,7 @@
 package android.fragment.cts;
 
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotSame;
@@ -659,6 +660,77 @@ public class FragmentLifecycleTest {
                 fc2.saveAllState();
                 fc2.dispatchStop();
                 fc2.dispatchDestroy();
+            }
+        });
+    }
+
+    // Make sure that executing transactions during activity lifecycle events
+    // is properly prevented.
+    @Test
+    public void preventReentrantCalls() throws Throwable {
+        testLifecycleTransitionFailure(StrictFragment.ATTACHED, StrictFragment.CREATED);
+        testLifecycleTransitionFailure(StrictFragment.CREATED, StrictFragment.ACTIVITY_CREATED);
+        testLifecycleTransitionFailure(StrictFragment.ACTIVITY_CREATED, StrictFragment.STARTED);
+        testLifecycleTransitionFailure(StrictFragment.STARTED, StrictFragment.RESUMED);
+
+        testLifecycleTransitionFailure(StrictFragment.RESUMED, StrictFragment.STARTED);
+        testLifecycleTransitionFailure(StrictFragment.STARTED, StrictFragment.CREATED);
+        testLifecycleTransitionFailure(StrictFragment.CREATED, StrictFragment.ATTACHED);
+        testLifecycleTransitionFailure(StrictFragment.ATTACHED, StrictFragment.DETACHED);
+    }
+
+    private void testLifecycleTransitionFailure(int fromState, int toState) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            final FragmentController fc1 = FragmentController.createController(
+                    new HostCallbacks(mActivityRule.getActivity()));
+            FragmentTestUtil.resume(mActivityRule, fc1, null);
+
+            final FragmentManager fm1 = fc1.getFragmentManager();
+
+            final Fragment reentrantFragment = ReentrantFragment.create(fromState, toState);
+
+            fm1.beginTransaction()
+                    .add(reentrantFragment, "reentrant")
+                    .commit();
+            try {
+                fm1.executePendingTransactions();
+            } catch (IllegalStateException e) {
+                fail("An exception shouldn't happen when initially adding the fragment");
+            }
+
+            // Now shut down the fragment controller. When fromState > toState, this should
+            // result in an exception
+            Pair<Parcelable, FragmentManagerNonConfig> savedState = null;
+            try {
+                savedState = FragmentTestUtil.destroy(mActivityRule, fc1);
+                if (fromState > toState) {
+                    fail("Expected IllegalStateException when moving from "
+                            + StrictFragment.stateToString(fromState) + " to "
+                            + StrictFragment.stateToString(toState));
+                }
+            } catch (IllegalStateException e) {
+                if (fromState < toState) {
+                    fail("Unexpected IllegalStateException when moving from "
+                            + StrictFragment.stateToString(fromState) + " to "
+                            + StrictFragment.stateToString(toState));
+                }
+                return; // test passed!
+            }
+
+            // now restore from saved state. This will be reached when
+            // fromState < toState. We want to catch the fragment while it
+            // is being restored as the fragment controller state is being brought up.
+
+            final FragmentController fc2 = FragmentController.createController(
+                    new HostCallbacks(mActivityRule.getActivity()));
+            try {
+                FragmentTestUtil.resume(mActivityRule, fc2, savedState);
+
+                fail("Expected IllegalStateException when moving from "
+                        + StrictFragment.stateToString(fromState) + " to "
+                        + StrictFragment.stateToString(toState));
+            } catch (IllegalStateException e) {
+                // expected, so the test passed!
             }
         });
     }

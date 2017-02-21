@@ -23,6 +23,7 @@ import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
@@ -44,10 +45,14 @@ public class FragmentTestUtil {
 
     private static void runOnUiThreadRethrow(ActivityTestRule<FragmentTestActivity> rule,
             Runnable r) {
-        try {
-            rule.runOnUiThread(r);
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
+        if (Looper.getMainLooper() == Looper.myLooper()) {
+            r.run();
+        } else {
+            try {
+                rule.runOnUiThread(r);
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
         }
     }
 
@@ -142,8 +147,7 @@ public class FragmentTestUtil {
     public static FragmentController createController(ActivityTestRule<FragmentTestActivity> rule) {
         final FragmentController[] controller = new FragmentController[1];
         final FragmentTestActivity activity = rule.getActivity();
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.runOnMainSync(() -> {
+        runOnUiThreadRethrow(rule, () -> {
             HostCallbacks hostCallbacks = new HostCallbacks(activity, null, 0);
             controller[0] = FragmentController.createController(hostCallbacks);
         });
@@ -154,8 +158,7 @@ public class FragmentTestUtil {
     public static void resume(ActivityTestRule<FragmentTestActivity> rule,
             FragmentController fragmentController,
             Pair<Parcelable, FragmentManagerNonConfig> savedState) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.runOnMainSync(() -> {
+        runOnUiThreadRethrow(rule, () -> {
             fragmentController.attachHost(null);
             if (savedState != null) {
                 fragmentController.restoreAllState(savedState.first, savedState.second);
@@ -173,9 +176,8 @@ public class FragmentTestUtil {
 
     public static Pair<Parcelable, FragmentManagerNonConfig> destroy(
             ActivityTestRule<FragmentTestActivity> rule, FragmentController fragmentController) {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final Pair<Parcelable, FragmentManagerNonConfig>[] result = new Pair[1];
-        instrumentation.runOnMainSync(() -> {
+        runOnUiThreadRethrow(rule, () -> {
             fragmentController.dispatchPause();
             final Parcelable savedState = fragmentController.saveAllState();
             final FragmentManagerNonConfig nonConfig = fragmentController.retainNestedNonConfig();
