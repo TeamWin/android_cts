@@ -74,7 +74,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("ShowWhenLockedActivity", false);
     }
 
-    public void testDismissKeyguard_fromShowWhenLocked() throws Exception {
+    public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
@@ -83,8 +83,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
         enterAndConfirmLockCredential();
-        mAmWmState.waitForKeyguardGone(mDevice);
-        assertKeyguardGone();
+
+        // Make sure we stay on Keyguard.
+        assertShowingAndOccluded();
         mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
     }
 

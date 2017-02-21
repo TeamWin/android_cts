@@ -538,6 +538,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void enterAndConfirmLockCredential() throws Exception {
+        // TODO: This should use waitForIdle..but there ain't such a thing on hostside tests, boo :(
+        Thread.sleep(500);
+
         runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
         runCommandAndPrintOutput("input keyevent KEYCODE_ENTER");
     }
