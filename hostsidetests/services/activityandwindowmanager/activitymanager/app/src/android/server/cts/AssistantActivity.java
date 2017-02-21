@@ -38,6 +38,9 @@ public class AssistantActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Set the layout
+        setContentView(R.layout.assistant);
+
         // Launch the new activity if requested
         if (getIntent().hasExtra(EXTRA_LAUNCH_NEW_TASK)) {
             Intent i = new Intent();

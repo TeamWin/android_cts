@@ -286,6 +286,9 @@
 
         <activity android:name=".AssistantActivity"
             android:exported="true" />
+        <activity android:name=".TranslucentAssistantActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Transparent" />
         <activity android:name=".LaunchAssistantActivityFromSession"
             android:taskAffinity="nobody.but.LaunchAssistantActivityFromSession"
             android:exported="true" />

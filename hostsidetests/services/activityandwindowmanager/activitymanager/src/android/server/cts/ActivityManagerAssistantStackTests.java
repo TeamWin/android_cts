@@ -39,6 +39,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
     private static final String EXTRA_FINISH_SELF = "finish_self";
+    public static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
 
     private static final String TEST_ACTIVITY_ACTION_FINISH_SELF =
             "android.server.cts.TestActivity.finish_self";
@@ -147,6 +148,42 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         disableAssistant();
         mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.", PINNED_STACK_ID);
+    }
+
+    public void testTranslucentAssistantActivityStackVisibility() throws Exception {
+        enableAssistant();
+        // Go home, launch the assistant and check to see that home is visible
+        removeStacks(FULLSCREEN_WORKSPACE_STACK_ID);
+        launchHomeActivity();
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        assertAssistantStackExists();
+        mAmWmState.assertHomeActivityVisible(true);
+
+        // Launch a fullscreen app and then launch the assistant and check to see that it is
+        // also visible
+        removeStacks(ASSISTANT_STACK_ID);
+        launchActivity(TEST_ACTIVITY);
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        assertAssistantStackExists();
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+
+        // Launch a fullscreen and docked app and then launch the assistant and check to see that it
+        // is also visible
+        removeStacks(ASSISTANT_STACK_ID);
+        launchActivityInDockStack(DOCKED_ACTIVITY);
+        launchActivity(TEST_ACTIVITY);
+        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+        mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
+        assertAssistantStackExists();
+        mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true);
+        disableAssistant();
     }
 
     /**

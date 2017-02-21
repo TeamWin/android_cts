@@ -19,10 +19,21 @@ package android.server.cts;
 import android.app.Activity;
 
 public class LaunchAssistantActivityIntoAssistantStack extends Activity {
+
+    // Launches the translucent assist activity
+    public static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
+
     @Override
     protected void onResume() {
         super.onResume();
-        AssistantActivity.launchActivityIntoAssistantStack(this, getIntent().getExtras());
+
+        if (getIntent().hasExtra(EXTRA_IS_TRANSLUCENT) &&
+                Boolean.valueOf(getIntent().getStringExtra(EXTRA_IS_TRANSLUCENT))) {
+            TranslucentAssistantActivity.launchActivityIntoAssistantStack(this,
+                    getIntent().getExtras());
+        } else {
+            AssistantActivity.launchActivityIntoAssistantStack(this, getIntent().getExtras());
+        }
         finishAndRemoveTask();
     }
 }
