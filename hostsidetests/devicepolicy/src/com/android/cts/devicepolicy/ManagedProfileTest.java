@@ -143,6 +143,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !mSupportsFbe) {
             return;
         }
+        changeUserCredential("1234", null, mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".LockNowTest",
                 "testLockNowWithKeyEviction", mProfileUserId);
         final String cmd = "dumpsys activity | grep 'User #" + mProfileUserId + ": state='";
@@ -854,11 +855,15 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
                 "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndUnified",
                 mProfileUserId);
-        // Non-unified case, this test must run last because we have no way to clear work side
-        // password.
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
-                "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndNonUnified",
-                mProfileUserId);
+        // Non-unified case
+        try {
+            changeUserCredential("1234", null, mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
+                    "testSetTrustAgentConfiguration_bothHaveTrustAgentConfigAndNonUnified",
+                    mProfileUserId);
+        } finally {
+            changeUserCredential(null, "1234", mProfileUserId);
+        }
     }
 
     private void disableActivityForUser(String activityName, int userId)

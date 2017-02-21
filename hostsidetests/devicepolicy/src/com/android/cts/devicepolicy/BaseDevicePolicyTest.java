@@ -720,4 +720,27 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         }
         return "clear-restriction";
     }
+
+    /**
+     * Set lockscreen password / work challenge for the given user, null or "" means clear
+     */
+    protected void changeUserCredential(String newCredential, String oldCredential, int userId)
+            throws DeviceNotAvailableException {
+        final String oldCredentialArgument = (oldCredential == null || oldCredential.isEmpty()) ? ""
+                : ("--old " + oldCredential);
+        if (newCredential != null && !newCredential.isEmpty()) {
+            String commandOutput = getDevice().executeShellCommand(String.format(
+                    "cmd lock_settings set-password --user %d %s %s", userId, oldCredentialArgument,
+                    newCredential));
+            if (!commandOutput.startsWith("Password set to")) {
+                fail("Failed to set user credential: " + commandOutput);
+            }
+        } else {
+            String commandOutput = getDevice().executeShellCommand(String.format(
+                    "cmd lock_settings clear --user %d %s", userId, oldCredentialArgument));
+            if (!commandOutput.startsWith("Lock credential cleared")) {
+                fail("Failed to clear user credential: " + commandOutput);
+            }
+        }
+    }
 }
