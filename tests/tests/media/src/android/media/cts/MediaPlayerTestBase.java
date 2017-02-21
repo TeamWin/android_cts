@@ -20,12 +20,16 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
+import java.net.HttpCookie;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.Map;
 
 /**
  * Base class for tests which use MediaPlayer to play audio or video.
@@ -215,6 +219,32 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         }
 
         playLoadedVideo(width, height, 0);
+    }
+
+    protected void playLiveVideoTest(
+            Uri uri, Map<String, String> headers, List<HttpCookie> cookies,
+            int playTime) throws Exception {
+        playVideoWithRetries(uri, headers, cookies, null /* width */, null /* height */, playTime);
+    }
+
+    protected void playVideoWithRetries(
+            Uri uri, Map<String, String> headers, List<HttpCookie> cookies,
+            Integer width, Integer height, int playTime) throws Exception {
+        boolean playedSuccessfully = false;
+        for (int i = 0; i < STREAM_RETRIES; i++) {
+            try {
+                mMediaPlayer.setDataSource(getInstrumentation().getTargetContext(),
+                        uri, headers, cookies);
+                playLoadedVideo(width, height, playTime);
+                playedSuccessfully = true;
+                break;
+            } catch (PrepareFailedException e) {
+                // prepare() can fail because of network issues, so try again
+                // playLoadedVideo already has reset the player so we can try again safely.
+                LOG.warning("prepare() failed on try " + i + ", trying playback again");
+            }
+        }
+        assertTrue("Stream did not play successfully after all attempts", playedSuccessfully);
     }
 
     /**

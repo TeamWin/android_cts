@@ -19,6 +19,7 @@ import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
 import android.media.TimedMetaData;
+import android.net.Uri;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -29,7 +30,10 @@ import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Tests of MediaPlayer streaming capabilities.
@@ -158,6 +162,41 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
                 + ",id,itag,source,playlist_type/signature/773AB8ACC68A96E5AA48"
                 + "1996AD6A1BBCB70DCB87.95733B544ACC5F01A1223A837D2CF04DF85A336"
                 + "0/key/ik0/file/m3u8", 60 * 1000);
+    }
+
+    public void testHlsWithHeadersCookies() throws Exception {
+        if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            return; // skip
+        }
+
+        final Uri uri = Uri.parse(
+                "http://www.youtube.com/api/manifest/hls_variant/id/"
+                + "0168724d02bd9945/itag/5/source/youtube/playlist_type/DVR/ip/"
+                + "0.0.0.0/ipbits/0/expire/19000000000/sparams/ip,ipbits,expire"
+                + ",id,itag,source,playlist_type/signature/773AB8ACC68A96E5AA48"
+                + "1996AD6A1BBCB70DCB87.95733B544ACC5F01A1223A837D2CF04DF85A336"
+                + "0/key/ik0/file/m3u8");
+
+        // TODO: dummy values for headers/cookies till we find a server that actually needs them
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("header0", "value0");
+        headers.put("header1", "value1");
+
+        String cookieName = "auth_1234567";
+        String cookieValue = "0123456789ABCDEF0123456789ABCDEF";
+        HttpCookie cookie = new HttpCookie(cookieName, cookieValue);
+        cookie.setHttpOnly(true);
+        cookie.setDomain("www.youtube.com");
+        cookie.setPath("/");        // all paths
+        cookie.setSecure(false);
+        cookie.setDiscard(false);
+        cookie.setMaxAge(24 * 3600);  // 24hrs
+
+        java.util.Vector<HttpCookie> cookies = new java.util.Vector<HttpCookie>();
+        cookies.add(cookie);
+
+        // Play stream for 60 seconds
+        playLiveVideoTest(uri, headers, cookies, 60 * 1000);
     }
 
     // Streaming audio from local HTTP server
