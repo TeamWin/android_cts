@@ -31,11 +31,9 @@ import android.content.Context;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
-import android.system.Os;
 import android.test.InstrumentationTestCase;
 
 import java.io.File;
-import java.io.FileDescriptor;
 
 /**
  * Client app for verifying storage behaviors.
@@ -66,9 +64,9 @@ public class StorageTest extends InstrumentationTestCase {
     public void testVerifySpaceApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
 
-        final long cacheSize = sm.getCacheSizeBytes();
-        final long extCacheSize = sm.getExternalCacheSizeBytes();
-        if (extCacheSize == -1) {
+        final long cacheSize = sm.getCacheSizeBytes(getContext().getCacheDir());
+        final long extCacheSize = sm.getCacheSizeBytes(getContext().getExternalCacheDir());
+        if (cacheSize == extCacheSize) {
             assertMostlyEquals(CACHE_ALL, cacheSize);
         } else {
             assertMostlyEquals(CACHE_INT, cacheSize);
@@ -79,21 +77,18 @@ public class StorageTest extends InstrumentationTestCase {
     public void testVerifyQuotaApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
         assertTrue("Apps must have at least 10MB quota",
-                sm.getCacheQuotaBytes() > 10 * MB_IN_BYTES);
-        if (sm.getExternalCacheSizeBytes() == -1) {
-            assertEquals(-1, sm.getExternalCacheQuotaBytes());
-        } else {
-            assertTrue("Apps must have at least 10MB external quota",
-                    sm.getExternalCacheQuotaBytes() > 10 * MB_IN_BYTES);
-        }
+                sm.getCacheQuotaBytes(getContext().getCacheDir()) > 10 * MB_IN_BYTES);
     }
 
     public void testVerifyAllocateApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
 
         final File filesDir = getContext().getFilesDir();
-        assertTrue("Files bytes must be at least usable space",
-                sm.getAllocatableBytes(filesDir, 0) >= filesDir.getUsableSpace());
+        assertTrue("Apps must be able to allocate internal space",
+                sm.getAllocatableBytes(filesDir, 0) > 10 * MB_IN_BYTES);
+        final File extDir = Environment.getExternalStorageDirectory();
+        assertTrue("Apps must be able to allocate external space",
+                sm.getAllocatableBytes(extDir, 0) > 10 * MB_IN_BYTES);
 
         // Should always be able to allocate 1MB indirectly
         sm.allocateBytes(filesDir, 1 * MB_IN_BYTES, 0);
@@ -106,10 +101,6 @@ public class StorageTest extends InstrumentationTestCase {
             sm.allocateBytes(pfd.getFileDescriptor(), 1 * MB_IN_BYTES, 0);
         }
         assertEquals(1 * MB_IN_BYTES, filesFile.length());
-
-        final File extDir = Environment.getExternalStorageDirectory();
-        assertTrue("External bytes must be at least usable space",
-                sm.getAllocatableBytes(extDir, 0) >= extDir.getUsableSpace());
     }
 
     public void testBehaviorNormal() throws Exception {
