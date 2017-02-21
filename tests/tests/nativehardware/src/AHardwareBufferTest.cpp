@@ -23,17 +23,20 @@
 #include <sys/un.h>
 
 #include <android/hardware_buffer.h>
-#include <android_runtime/android_hardware_HardwareBuffer.h>
-#include <private/android/AHardwareBufferHelpers.h>
-#include <ui/GraphicBuffer.h>
 #include <utils/Errors.h>
 
 #include <gtest/gtest.h>
 
 using namespace android;
 
-// Helper routines for checking that allocation was successful; depend on
-// internal implementation details.
+static ::testing::AssertionResult BuildHexFailureMessage(uint64_t expected,
+        uint64_t actual, const char* type) {
+    std::ostringstream ss;
+    ss << type << " 0x" << std::hex << actual
+            << " does not match expected " << type << " 0x" << std::hex
+            << expected;
+    return ::testing::AssertionFailure() << ss.str();
+}
 
 static ::testing::AssertionResult BuildFailureMessage(uint32_t expected,
         uint32_t actual, const char* type) {
@@ -43,28 +46,20 @@ static ::testing::AssertionResult BuildFailureMessage(uint32_t expected,
 
 static ::testing::AssertionResult CheckAHardwareBufferMatchesDesc(
         AHardwareBuffer* abuffer, const AHardwareBuffer_Desc& desc) {
-    GraphicBuffer* buffer = AHardwareBuffer_to_GraphicBuffer(abuffer);
-    if (static_cast<uint32_t>(buffer->width) != desc.width)
-        return BuildFailureMessage(desc.width,
-                static_cast<uint32_t>(buffer->width), "widths");
-    if (static_cast<uint32_t>(buffer->height) != desc.height)
-        return BuildFailureMessage(desc.height,
-                static_cast<uint32_t>(buffer->height), "heights");
-    if (static_cast<uint32_t>(buffer->layerCount) != desc.layers)
-        return BuildFailureMessage(desc.layers,
-                static_cast<uint32_t>(buffer->layerCount), "layers");
-    uint64_t producerUsage = 0;
-    uint64_t consumerUsage = 0;
-    android_hardware_HardwareBuffer_convertToGrallocUsageBits(
-            desc.usage0, desc.usage1, &producerUsage, &consumerUsage);
-    uint64_t combinedUsage = producerUsage | consumerUsage;
-    if (static_cast<uint32_t>(buffer->usage) != combinedUsage)
-        return BuildFailureMessage(combinedUsage,
-                static_cast<uint32_t>(buffer->usage), "usages");
-    if (android_hardware_HardwareBuffer_convertFromPixelFormat(
-            buffer->getPixelFormat()) != desc.format)
-        return BuildFailureMessage(desc.format,
-                static_cast<uint32_t>(buffer->format), "formats");
+    AHardwareBuffer_Desc bufferDesc;
+    AHardwareBuffer_describe(abuffer, &bufferDesc);
+    if (bufferDesc.width != desc.width)
+        return BuildFailureMessage(desc.width, bufferDesc.width, "widths");
+    if (bufferDesc.height != desc.height)
+        return BuildFailureMessage(desc.height, bufferDesc.height, "heights");
+    if (bufferDesc.layers != desc.layers)
+        return BuildFailureMessage(desc.layers, bufferDesc.layers, "layers");
+    if (bufferDesc.usage0 != desc.usage0)
+        return BuildHexFailureMessage(desc.usage0, bufferDesc.usage0, "usage0");
+    if (bufferDesc.usage1 != desc.usage1)
+        return BuildHexFailureMessage(desc.usage1, bufferDesc.usage1, "usage1");
+    if (bufferDesc.format != desc.format)
+        return BuildFailureMessage(desc.format, bufferDesc.format, "formats");
     return ::testing::AssertionSuccess();
 }
 
