@@ -43,7 +43,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x4820e8fl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xf8a6aebf04820e8fl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testTanpiFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x53d567bbl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xebbed6ee53d567bbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testTanpiFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x49f08899l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xebc0a00949f08899l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testTanpiFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x400ba977l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xebc26924400ba977l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testTanpiFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xe56353f1l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xae714c6e56353f1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testTanpiHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x71a055cbl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xbf04207271a055cbl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testTanpiHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xd0a81abfl, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xbf042b13d0a81abfl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testTanpiHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestTanpi extends RSBaseCompute {
     }
 
     private void checkTanpiHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x2fafdfb3l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xbf0435b52fafdfb3l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testTanpiHalf4Half4(inV, out);

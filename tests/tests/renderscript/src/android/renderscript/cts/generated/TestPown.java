@@ -44,8 +44,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownFloatIntFloat() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x622f0405l, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0x96b9f1bl, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xe020952d622f0405l, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0x9c3888e9096b9f1bl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -123,8 +123,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownFloat2Int2Float2() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xbe438467l, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x249076ddl, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0x7571c02be438467l, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0xe6177b3249076ddl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -202,8 +202,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownFloat3Int3Float3() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xe35ff8a2l, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x144a81a8l, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0x5e88c45be35ff8a2l, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0xaf710734144a81a8l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -281,8 +281,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownFloat4Int4Float4() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0x87c6cddl, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x4048c73l, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xb5ba6cb5087c6cddl, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x508096b504048c73l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -367,8 +367,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownHalfIntHalf() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x858a42bbl, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0x30c3d6f1l, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x89409624858a42bbl, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 1, 0xfdb4ee1e30c3d6f1l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -450,8 +450,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownHalf2Int2Half2() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x29ccb2d5l, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x6e5f9cebl, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0x218972b229ccb2d5l, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 2, 0x90a067e6e5f9cebl, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -533,8 +533,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownHalf3Int3Half3() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x2f8523b4l, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x92b63d1al, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x82d20b742f8523b4l, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 3, 0x3cb4a30b92b63d1al, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);
@@ -616,8 +616,8 @@ public class TestPown extends RSBaseCompute {
     }
 
     private void checkPownHalf4Int4Half4() {
-        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0x353d9493l, false);
-        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0xb70cdd49l, false);
+        Allocation inBase = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xe41aa436353d9493l, false);
+        Allocation inExponent = createRandomAllocation(mRS, Element.DataType.SIGNED_32, 4, 0x705f3f98b70cdd49l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.set_gAllocInExponent(inExponent);

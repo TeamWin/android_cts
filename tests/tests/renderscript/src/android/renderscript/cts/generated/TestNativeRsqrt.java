@@ -43,7 +43,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtFloatFloat() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0x795084f6l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 1, 0xf3caff6b795084f6l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeRsqrtFloatFloat(inV, out);
@@ -112,7 +112,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtFloat2Float2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xfb0a95aal, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 2, 0xd5098485fb0a95aal, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeRsqrtFloat2Float2(inV, out);
@@ -181,7 +181,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtFloat3Float3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xf125b688l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 3, 0xd50b4da0f125b688l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeRsqrtFloat3Float3(inV, out);
@@ -250,7 +250,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtFloat4Float4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xe740d766l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_32, 4, 0xd50d16bbe740d766l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeRsqrtFloat4Float4(inV, out);
@@ -325,7 +325,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtHalfHalf() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0x3e331e90l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 1, 0xd690914a3e331e90l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeRsqrtHalfHalf(inV, out);
@@ -398,7 +398,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtHalf2Half2() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xe66ecc32l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 2, 0xba28711ee66ecc32l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeRsqrtHalf2Half2(inV, out);
@@ -471,7 +471,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtHalf3Half3() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0x45769126l, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 3, 0xba287bc045769126l, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeRsqrtHalf3Half3(inV, out);
@@ -544,7 +544,7 @@ public class TestNativeRsqrt extends RSBaseCompute {
     }
 
     private void checkNativeRsqrtHalf4Half4() {
-        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xa47e561al, false);
+        Allocation inV = createRandomAllocation(mRS, Element.DataType.FLOAT_16, 4, 0xba288661a47e561al, false);
         try {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeRsqrtHalf4Half4(inV, out);
