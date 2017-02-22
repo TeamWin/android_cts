@@ -615,6 +615,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am task lock stop");
     }
 
+    public void testSingleConfigurationChangeDuringTransition() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a PiP activity and ensure configuration change only happened once
+        launchActivity(PIP_ACTIVITY);
+        clearLogcat();
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+        assertRelaunchOrConfigChanged(PIP_ACTIVITY, 0, 1);
+
+        // Trigger it to go back to fullscreen and ensure that only triggered one configuration
+        // change as well
+        clearLogcat();
+        launchActivity(PIP_ACTIVITY);
+        assertRelaunchOrConfigChanged(PIP_ACTIVITY, 0, 1);
+    }
+
     /**
      * Asserts that the pinned stack bounds does not intersect with the IME bounds.
      */
