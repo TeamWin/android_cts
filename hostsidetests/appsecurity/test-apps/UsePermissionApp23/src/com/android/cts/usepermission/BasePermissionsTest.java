@@ -276,7 +276,8 @@ public abstract class BasePermissionsTest {
         waitForIdle();
 
         // Open the permissions UI
-        AccessibilityNodeInfo permLabelView = getNodeTimed(() -> findByText("Permissions"));
+        String label = mContext.getResources().getString(R.string.Permissions);
+        AccessibilityNodeInfo permLabelView = getNodeTimed(() -> findByText(label));
         Assert.assertNotNull("Permissions label should be present", permLabelView);
 
         AccessibilityNodeInfo permItemView = findCollectionItem(permLabelView);
