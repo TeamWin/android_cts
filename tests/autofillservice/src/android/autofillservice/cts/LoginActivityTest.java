@@ -51,6 +51,29 @@ import org.junit.Test;
 
 import android.autofillservice.cts.R;
 
+/**
+ * This is the test case covering most scenarios - other test cases will cover characteristics
+ * specific to that test's activity (for example, custom views).
+ *
+ * TODO(b/33197203, b/33802548): test other scenarios
+ *
+ * Fill:
+ *  - no dataset
+ *  - multiple datasets
+ *  - partitioned datasets (i.e., multiple fields)
+ *  - response-level authentication
+ *  - dataset-level authentication
+ *
+ *  Save:
+ *  - test cases where only non-savable-ids are changed
+ *  - test case where 'no thanks' is tapped
+ *  - make sure snack bar times out (will require a shell cmd to change timeout)
+ *
+ *  Other assertions:
+ *  - illegal state thrown on callback calls
+ *  - system server state after calls (for example, no pending callback)
+ *  - make sure there is no dangling session using 'cmd autofill list sessions'
+ */
 @SmallTest
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
@@ -440,28 +463,4 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_USERNAME), "malkovich");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "malkovich");
     }
-
-    /*
-     * TODO(b/33197203, b/33802548): test other scenarios
-     *
-     *  - no dataset
-     *  - multiple datasets
-     *  - partitioned datasets (i.e., multiple fields)
-     *  - response-level authentication (custom and fingerprint)
-     *  - dataset-level authentication (custom and fingerprint)
-     *
-     *  Save:
-     *  - when no dataset is returned initially
-     *  - when a dataset is returned initially
-     *  - make sure password is set
-     *  - test cases where non-savable-ids only are changed
-     *  - test case where 'no thanks' is tapped
-     *  - make sure snack bar times out (will require a shell cmd to change timeout)
-     *  - text value of extras
-     *
-     *  Other assertions:
-     *  - illegal state thrown on callback calls
-     *  - system server state after calls (for example, no pending callback)
-     *  - make sure there is no dangling session using 'cmd autofill list sessions'
-     */
 }

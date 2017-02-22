@@ -15,15 +15,11 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -33,7 +29,6 @@ import android.widget.TextView;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Activity that has the following fields:
@@ -66,7 +61,7 @@ public class LoginActivity extends Activity {
     private TextView mOutput;
     private Button mLoginButton;
     private Button mClearButton;
-    private AutoFillExpectation mAutoFillExpectation;
+    private FillExpectation mExpectation;
 
     // State used to synchronously get the result of a login attempt.
     private CountDownLatch mLoginLatch;
@@ -93,8 +88,6 @@ public class LoginActivity extends Activity {
         mPasswordEditText = (EditText) findViewById(R.id.password);
         mOutput = (TextView) findViewById(R.id.output);
 
-        // TODO(b/33197203): remove login / clear button if not used by the tests (currently,
-        // they're only used for debugging)
         mLoginButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,12 +121,12 @@ public class LoginActivity extends Activity {
 
         if (valid) {
             Log.d(TAG, "login ok: " + username);
-            finish();
             final Intent intent = new Intent(this, WelcomeActivity.class);
             final String message = getWelcomeMessage(username);
             intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, message);
             setLoginMessage(message);
             startActivity(intent);
+            finish();
         } else {
             Log.d(TAG, "login failed: " + AUTHENTICATION_MESSAGE);
             mOutput.setText(AUTHENTICATION_MESSAGE);
@@ -154,11 +147,9 @@ public class LoginActivity extends Activity {
      * {@link #assertAutoFilled()} later.
      */
     void expectAutoFill(String username, String password) {
-        mAutoFillExpectation = new AutoFillExpectation(username, password);
-        mUsernameEditText
-                .addTextChangedListener(new MyTextWatcher(mAutoFillExpectation.usernameLatch));
-        mPasswordEditText
-                .addTextChangedListener(new MyTextWatcher(mAutoFillExpectation.passwordLatch));
+        mExpectation = new FillExpectation(username, password);
+        mUsernameEditText.addTextChangedListener(mExpectation.ccUsernameWatcher);
+        mPasswordEditText.addTextChangedListener(mExpectation.ccPasswordWatcher);
     }
 
     /**
@@ -166,11 +157,9 @@ public class LoginActivity extends Activity {
      * {@link #expectAutoFill(String, String)}.
      */
     void assertAutoFilled() throws Exception {
-        assertWithMessage("expectAutoFill() not called").that(mAutoFillExpectation).isNotNull();
-        assertField("username", mUsernameEditText,
-                mAutoFillExpectation.usernameLatch, mAutoFillExpectation.expectedUsername);
-        assertField("password", mPasswordEditText,
-                mAutoFillExpectation.passwordLatch, mAutoFillExpectation.expectedPassword);
+        assertWithMessage("expectAutoFill() not called").that(mExpectation).isNotNull();
+        mExpectation.ccUsernameWatcher.assertAutoFilled();
+        mExpectation.ccPasswordWatcher.assertAutoFilled();
     }
 
     /**
@@ -234,52 +223,15 @@ public class LoginActivity extends Activity {
     }
 
     /**
-     * Asserts the value of an input field, using a latch to make sure it was set.
-     */
-    private void assertField(String name, EditText field, CountDownLatch latch,
-            String expectedValue) throws Exception {
-        final boolean set = latch.await(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        assertWithMessage("Timeout (%s ms) for auto-fill of field %s", FILL_TIMEOUT_MS, name)
-                .that(set).isTrue();
-        final String actualValue = field.getText().toString();
-        assertWithMessage("Wrong auto-fill value for field %s", name).that(actualValue)
-                .isEqualTo(expectedValue);
-    }
-
-    /**
      * Holder for the expected auto-fill values.
      */
-    private final class AutoFillExpectation {
-        private final CountDownLatch usernameLatch = new CountDownLatch(1);
-        private final CountDownLatch passwordLatch = new CountDownLatch(1);
-        private final String expectedUsername;
-        private final String expectedPassword;
+    private final class FillExpectation {
+        private final OneTimeTextWatcher ccUsernameWatcher;
+        private final OneTimeTextWatcher ccPasswordWatcher;
 
-        private AutoFillExpectation(String username, String password) {
-            expectedUsername = username;
-            expectedPassword = password;
-        }
-    }
-
-    private class MyTextWatcher implements TextWatcher {
-        private final CountDownLatch latch;
-
-        private MyTextWatcher(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-            Log.d(TAG, "onTextChanged(): " + s);
-            latch.countDown();
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
+        private FillExpectation(String username, String password) {
+            ccUsernameWatcher = new OneTimeTextWatcher("username", mUsernameEditText, username);
+            ccPasswordWatcher = new OneTimeTextWatcher("password", mPasswordEditText, password);
         }
     }
 }

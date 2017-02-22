@@ -20,7 +20,7 @@
     <application>
         <activity
             android:name=".LoginActivity"
-            android:label="LoginActivity" >
+            android:label="CTS_Login" >
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
                 this app during CTS development... -->
@@ -36,6 +36,17 @@
         <activity android:name=".ViewAttributesTestActivity" />
 
         <activity android:name=".AuthenticationActivity" />
+
+        <activity
+            android:name=".CheckoutActivity"
+            android:label="CTS_Checkout" >
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it maks easier to launch
+                this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".InstrumentedAutoFillService"

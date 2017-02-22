@@ -1,0 +1,202 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.autofillservice.cts;
+
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.RadioGroup;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Activity that has the following fields:
+ *
+ * <ul>
+ *   <li>Credit Card Number EditText (id: cc_numberusername, no input-type)
+ *   <li>Credit Card Expiration EditText (id: cc_expiration, no input-type)
+ *   <li>Address RadioGroup (id: addess, no autofill-type)
+ *   <li>Save Credit Card CheckBox (id: save_cc, no autofill-type)
+ *   <li>Clear Button
+ *   <li>Buy Button
+ * </ul>
+ */
+public class CheckoutActivity extends Activity {
+    private static final long BUY_TIMEOUT_MS = 1000;
+
+    static final String ID_CC_NUMBER = "cc_number";
+    static final String ID_CC_EXPIRATION = "cc_expiration";
+    static final String ID_ADDRESS = "address";
+    static final String ID_SAVE_CC = "save_cc";
+
+    private EditText mCcNumber;
+    private EditText mCcExpiration;
+    private RadioGroup mAddress;
+    private CheckBox mSaveCc;
+    private Button mBuyButton;
+    private Button mClearButton;
+
+    private FillExpectation mExpectation;
+    private CountDownLatch mBuyLatch;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.checkout_activity);
+
+        mCcNumber = (EditText) findViewById(R.id.cc_number);
+        mCcExpiration = (EditText) findViewById(R.id.cc_expiration);
+        mAddress = (RadioGroup) findViewById(R.id.address);
+        mSaveCc = (CheckBox) findViewById(R.id.save_cc);
+        mBuyButton = (Button) findViewById(R.id.buy);
+        mClearButton = (Button) findViewById(R.id.clear);
+
+        mBuyButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                buy();
+            }
+        });
+        mClearButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetFields();
+            }
+        });
+    }
+
+    /**
+     * Resets the values of the input fields.
+     */
+    private void resetFields() {
+        mCcNumber.setText("");
+        mCcExpiration.setText("");
+        mAddress.clearCheck();
+        mSaveCc.setChecked(false);
+    }
+
+    /**
+     * Emulates a buy action.
+     */
+    private void buy() {
+        final Intent intent = new Intent(this, WelcomeActivity.class);
+        intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, "Thank you an come again!");
+        startActivity(intent);
+        mBuyLatch.countDown();
+        finish();
+    }
+
+    /**
+     * Sets the expectation for an auto-fill request, so it can be asserted through
+     * {@link #assertAutoFilled()} later.
+     */
+    void expectAutoFill(String ccNumber, String ccExpiration, int addressId, boolean saveCc) {
+        mExpectation = new FillExpectation(ccNumber, ccExpiration, addressId, saveCc);
+        mCcNumber.addTextChangedListener(mExpectation.ccNumberWatcher);
+        mCcExpiration.addTextChangedListener(mExpectation.ccExpirationWatcher);
+        mAddress.setOnCheckedChangeListener(mExpectation.addressListener);
+        mSaveCc.setOnCheckedChangeListener(mExpectation.saveCcListener);
+    }
+
+    /**
+     * Asserts the activity was auto-filled with the values passed to
+     * {@link #expectAutoFill(String, String, int, boolean)}.
+     */
+    void assertAutoFilled() throws Exception {
+        assertWithMessage("expectAutoFill() not called").that(mExpectation).isNotNull();
+        mExpectation.ccNumberWatcher.assertAutoFilled();
+        mExpectation.ccExpirationWatcher.assertAutoFilled();
+        mExpectation.addressListener.assertAutoFilled();
+        mExpectation.saveCcListener.assertAutoFilled();
+    }
+
+    /**
+     * Visits the {@code ccNumber} in the UiThread.
+     */
+    void onCcNumber(ViewVisitor<EditText> v) {
+        runOnUiThread(() -> {
+            v.visit(mCcNumber);
+        });
+    }
+
+    /**
+     * Visits the {@code ccExpirationDate} in the UiThread.
+     */
+    void onCcExpiration(ViewVisitor<EditText> v) {
+        runOnUiThread(() -> {
+            v.visit(mCcExpiration);
+        });
+    }
+
+    /**
+     * Visits the {@code address} in the UiThread.
+     */
+    void onAddress(ViewVisitor<RadioGroup> v) {
+        runOnUiThread(() -> {
+            v.visit(mAddress);
+        });
+    }
+
+    /**
+     * Visits the {@code saveCC} in the UiThread.
+     */
+    void onSaveCc(ViewVisitor<CheckBox> v) {
+        runOnUiThread(() -> {
+            v.visit(mSaveCc);
+        });
+    }
+
+    /**
+     * Taps the buy button in the UI thread.
+     */
+    void tapBuy() throws Exception {
+        mBuyLatch = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            mBuyButton.performClick();
+        });
+        boolean called = mBuyLatch.await(BUY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertWithMessage("Timeout (%s ms) waiting for buy action", BUY_TIMEOUT_MS)
+                .that(called).isTrue();
+    }
+
+    /**
+     * Holder for the expected auto-fill values.
+     */
+    private final class FillExpectation {
+        private final OneTimeTextWatcher ccNumberWatcher;
+        private final OneTimeTextWatcher ccExpirationWatcher;
+        private final OneTimeRadioGroupListener addressListener;
+        private final OneTimeCompoundButtonListener saveCcListener;
+
+        private FillExpectation(String ccNumber, String ccExpiration, int addressId,
+                boolean saveCc) {
+            this.ccNumberWatcher = new OneTimeTextWatcher("ccNumber", mCcNumber, ccNumber);
+            this.ccExpirationWatcher =
+                    new OneTimeTextWatcher("ccExpiration", mCcExpiration, ccExpiration);
+            addressListener = new OneTimeRadioGroupListener("address", mAddress, addressId);
+            saveCcListener = new OneTimeCompoundButtonListener("saveCc", mSaveCc, saveCc);
+        }
+    }
+}
