@@ -17,10 +17,25 @@
 package android.server.cts;
 
 import android.content.res.Configuration;
+import android.os.Bundle;
 
 public class TestActivity extends AbstractLifecycleLogActivity {
 
     private static final String TAG = TestActivity.class.getSimpleName();
+
+    // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
+    private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
+
+    @Override
+    protected void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+
+        // Set the fixed orientation if requested
+        if (getIntent().hasExtra(EXTRA_FIXED_ORIENTATION)) {
+            final int ori = Integer.parseInt(getIntent().getStringExtra(EXTRA_FIXED_ORIENTATION));
+            setRequestedOrientation(ori);
+        }
+    }
 
     @Override
     protected void onResume() {

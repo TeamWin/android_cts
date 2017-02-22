@@ -43,6 +43,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     // Intent action that this activity dynamically registers to enter picture-in-picture
     private static final String ACTION_ENTER_PIP = "android.server.cts.PipActivity.enter_pip";
 
+    // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
+    private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
     // Calls enterPictureInPicture() on creation
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
@@ -82,6 +84,12 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set the fixed orientation if requested
+        if (getIntent().hasExtra(EXTRA_FIXED_ORIENTATION)) {
+            final int ori = Integer.parseInt(getIntent().getStringExtra(EXTRA_FIXED_ORIENTATION));
+            setRequestedOrientation(ori);
+        }
 
         // Set the window flag to show over the keyguard
         if (getIntent().hasExtra(EXTRA_SHOW_OVER_KEYGUARD)) {
