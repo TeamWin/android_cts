@@ -1685,6 +1685,40 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Get AeAvailableTargetFpsRanges with max fps not exceeding 30
+     *
+     * @param staticInfo camera static metadata
+     * @return AeAvailableTargetFpsRanges with max fps not exceeding 30
+     */
+    public static List<Range<Integer>> getTargetFpsRangesUpTo30(StaticMetadata staticInfo) {
+        Range<Integer>[] fpsRanges = staticInfo.getAeAvailableTargetFpsRangesChecked();
+        ArrayList<Range<Integer>> fpsRangesUpTo30 = new ArrayList<Range<Integer>>();
+        for (Range<Integer> fpsRange : fpsRanges) {
+            if (fpsRange.getUpper() <= 30) {
+                fpsRangesUpTo30.add(fpsRange);
+            }
+        }
+        return fpsRangesUpTo30;
+    }
+
+    /**
+     * Get AeAvailableTargetFpsRanges with max fps greater than 30
+     *
+     * @param staticInfo camera static metadata
+     * @return AeAvailableTargetFpsRanges with max fps greater than 30
+     */
+    public static List<Range<Integer>> getTargetFpsRangesGreaterThan30(StaticMetadata staticInfo) {
+        Range<Integer>[] fpsRanges = staticInfo.getAeAvailableTargetFpsRangesChecked();
+        ArrayList<Range<Integer>> fpsRangesGreaterThan30 = new ArrayList<Range<Integer>>();
+        for (Range<Integer> fpsRange : fpsRanges) {
+            if (fpsRange.getUpper() > 30) {
+                fpsRangesGreaterThan30.add(fpsRange);
+            }
+        }
+        return fpsRangesGreaterThan30;
+    }
+
+    /**
      * Calculate output 3A region from the intersection of input 3A region and cropped region.
      *
      * @param requestRegions The input 3A regions
