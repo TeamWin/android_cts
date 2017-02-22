@@ -32,18 +32,17 @@ import java.util.Map;
 public class CompatibilityBuildHelper {
 
     public static final String MODULE_IDS = "MODULE_IDS";
-
     public static final String ROOT_DIR = "ROOT_DIR";
+    public static final String SUITE_BUILD = "SUITE_BUILD";
     public static final String SUITE_NAME = "SUITE_NAME";
+    public static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
+    public static final String SUITE_VERSION = "SUITE_VERSION";
+    public static final String SUITE_PLAN = "SUITE_PLAN";
     public static final String START_TIME_MS = "START_TIME_MS";
+    public static final String COMMAND_LINE_ARGS = "command_line_args";
 
     private static final String ROOT_DIR2 = "ROOT_DIR2";
-    private static final String SUITE_BUILD = "SUITE_BUILD";
-    private static final String SUITE_FULL_NAME = "SUITE_FULL_NAME";
-    private static final String SUITE_VERSION = "SUITE_VERSION";
-    private static final String SUITE_PLAN = "SUITE_PLAN";
     private static final String DYNAMIC_CONFIG_OVERRIDE_URL = "DYNAMIC_CONFIG_OVERRIDE_URL";
-    private static final String COMMAND_LINE_ARGS = "command_line_args";
     private static final String RETRY_COMMAND_LINE_ARGS = "retry_command_line_args";
     private final IBuildInfo mBuildInfo;
 

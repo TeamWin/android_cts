@@ -40,8 +40,6 @@ public class MetadataReporterTest extends TestCase {
 
     private static final String MIN_TEST_DURATION = "10";
     private static final String BUILD_NUMBER = "2";
-    private static final String SUITE_PLAN = "cts";
-    private static final String DYNAMIC_CONFIG_URL = "";
     private static final String ROOT_DIR_NAME = "root";
     private static final String BASE_DIR_NAME = "android-tests";
     private static final String TESTCASES = "testcases";
@@ -54,12 +52,10 @@ public class MetadataReporterTest extends TestCase {
     private static final String METHOD_3 = "testBlah3";
     private static final String STACK_TRACE = "Something small is not alright\n " +
             "at four.big.insects.Marley.sing(Marley.java:10)";
-    private static final long START_TIME = 123456L;
 
     private MetadataReporter mReporter;
     private IBuildInfo mBuildInfo;
     private IInvocationContext mContext;
-    private CompatibilityBuildHelper mBuildHelper;
 
     private File mRoot = null;
     private File mBase = null;
