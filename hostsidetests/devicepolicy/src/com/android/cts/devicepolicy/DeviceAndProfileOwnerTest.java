@@ -534,7 +534,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Install the test and prepare the test apk.
             installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);
             assertTrue(getDevice().pushFile(apk, TEST_APP_LOCATION + apk.getName()));
-            setInstallPackageAppOps(PACKAGE_INSTALLER_PKG, true);
+            setInstallPackageAppOps(PACKAGE_INSTALLER_PKG, true, mUserId);
 
             // Add restrictions and test if we can install the apk.
             getDevice().uninstallPackage(TEST_APP_PKG);
@@ -558,7 +558,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
                     "testManualInstallSucceeded", mUserId);
         } finally {
-            setInstallPackageAppOps(PACKAGE_INSTALLER_PKG, false);
+            setInstallPackageAppOps(PACKAGE_INSTALLER_PKG, false, mUserId);
             String command = "rm " + TEST_APP_LOCATION + apk.getName();
             getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);
@@ -747,9 +747,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         changePolicyOrFail("set-delegated-scopes", extras, mUserId);
     }
 
-    private void setInstallPackageAppOps(String packageName, boolean allowed)
+    private void setInstallPackageAppOps(String packageName, boolean allowed, int userId)
             throws DeviceNotAvailableException {
-        String command = "appops set " + packageName + " REQUEST_INSTALL_PACKAGES "
+        String command = "appops set --user " + userId + " " + packageName + " " +
+                "REQUEST_INSTALL_PACKAGES "
                 + (allowed ? "allow" : "default");
         CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
     }
