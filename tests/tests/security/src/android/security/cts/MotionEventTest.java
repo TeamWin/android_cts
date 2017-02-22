@@ -74,7 +74,7 @@ public class MotionEventTest {
      * obscured.
      *
      * If ACTION_OUTSIDE_EVENTS contain information about whether the touch is obscured, then a
-     * pattern of invisible, untouchable, unfocusable SYSTEM_ALERT_WINDOWS can be placed across the
+     * pattern of invisible, untouchable, unfocusable application overlays can be placed across the
      * screen to determine approximate locations of touch events without the user knowing.
      */
     @Test
@@ -88,7 +88,7 @@ public class MotionEventTest {
             wm.getDefaultDisplay().getSize(size);
 
             WindowManager.LayoutParams wmlp = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH |
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
