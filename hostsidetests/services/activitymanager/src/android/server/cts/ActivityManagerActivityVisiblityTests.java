@@ -34,6 +34,10 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     private static final String BROADCAST_RECEIVER_ACTIVITY = "BroadcastReceiverActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         executeShellCommand(getAmStartCmd(VISIBLE_BEHIND_ACTIVITY));
         mAmWmState.waitForValidState(mDevice, true, new String[] {VISIBLE_BEHIND_ACTIVITY},
                 new int[] {FULLSCREEN_WORKSPACE_STACK_ID}, false /* compareTaskAndStackBounds */);
@@ -65,6 +69,10 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testVisibleBehindOtherActivity_OverHome() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         executeShellCommand(getAmStartCmdOverHome(VISIBLE_BEHIND_ACTIVITY));
         executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
 
@@ -95,6 +103,10 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
      * fullscreen stack over the home activity.
      */
     public void testTranslucentActivityOnTopOfHome() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
         executeShellCommand(getAmStartCmd(TRANSLUCENT_ACTIVITY));
 
