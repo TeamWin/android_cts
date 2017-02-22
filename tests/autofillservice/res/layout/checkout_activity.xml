@@ -51,9 +51,9 @@
             android:layout_height="wrap_content"
             android:text="Expiration" />
 
-        <EditText
+        <Spinner
             android:id="@+id/cc_expiration"
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>
 
@@ -90,9 +90,9 @@
 
     <CheckBox
         android:id="@+id/save_cc"
-        android:text="Save CC?"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="Save CC?" />
 
     <LinearLayout
         android:layout_width="match_parent"
