@@ -17,20 +17,13 @@
 package android.text.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.text.NoCopySpan;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.SpannedString;
-import android.text.style.QuoteSpan;
-import android.text.style.UnderlineSpan;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,22 +81,4 @@ public class SpannedStringTest {
         } catch (StringIndexOutOfBoundsException e) {
         }
     }
-
-    @Test
-    public void testCopyConstructor_doesNotCopyNoCopySpans() {
-        final SpannableString first = new SpannableString("t\nest data");
-        first.setSpan(new QuoteSpan(), 0, 2, Spanned.SPAN_PARAGRAPH);
-        first.setSpan(new NoCopySpan.Concrete(), 2, 4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        first.setSpan(new UnderlineSpan(), 0, first.length(), Spanned.SPAN_PRIORITY);
-
-        final SpannedString copied = new SpannedString(first);
-        final Object[] spans = copied.getSpans(0, copied.length(), Object.class);
-        assertNotNull(spans);
-        assertEquals(2, spans.length);
-
-        for (int i = 0; i < spans.length; i++) {
-            assertFalse(spans[i] instanceof NoCopySpan);
-        }
-    }
-
 }
