@@ -16,31 +16,19 @@
 
 package android.text.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
-
 import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.text.NoCopySpan;
+import android.test.AndroidTestCase;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.LocaleSpan;
 import android.text.style.QuoteSpan;
 import android.text.style.UnderlineSpan;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import java.util.Locale;
 
-@SmallTest
-@RunWith(AndroidJUnit4.class)
-public class SpannableStringTest {
+public class SpannableStringTest extends AndroidTestCase {
 
-    @Test
+    @SmallTest
     public void testConstructor() {
         new SpannableString("test");
 
@@ -51,7 +39,7 @@ public class SpannableStringTest {
         }
     }
 
-    @Test
+    @SmallTest
     public void testValueOf() {
         String text = "test valueOf";
         SpannableString spannable = SpannableString.valueOf(text);
@@ -68,7 +56,7 @@ public class SpannableStringTest {
         }
     }
 
-    @Test
+    @SmallTest
     public void testSetSpan() {
         String text = "hello, world";
         SpannableString spannable = new SpannableString(text);
@@ -99,7 +87,7 @@ public class SpannableStringTest {
         }
     }
 
-    @Test
+    @SmallTest
     public void testRemoveSpan() {
         SpannableString spannable = new SpannableString("hello, world");
 
@@ -123,7 +111,7 @@ public class SpannableStringTest {
         assertEquals(0, spannable.getSpanFlags(underlineSpan));
     }
 
-    @Test
+    @SmallTest
     public void testSubSequence() {
         String text = "hello, world";
         SpannableString spannable = new SpannableString(text);
@@ -147,7 +135,7 @@ public class SpannableStringTest {
         }
     }
 
-    @Test
+    @SmallTest
     public void testSubsequence_copiesSpans() {
         SpannableString first = new SpannableString("t\nest data");
         QuoteSpan quoteSpan = new QuoteSpan();
@@ -178,7 +166,7 @@ public class SpannableStringTest {
     }
 
 
-    @Test
+    @SmallTest
     public void testCopyConstructor_copiesAllSpans() {
         SpannableString first = new SpannableString("t\nest data");
         first.setSpan(new QuoteSpan(), 0, 2, Spanned.SPAN_PARAGRAPH);
@@ -201,24 +189,7 @@ public class SpannableStringTest {
         }
     }
 
-    @Test
-    public void testCopyConstructor_doesNotCopyNoCopySpans() {
-        final SpannableString first = new SpannableString("t\nest data");
-        first.setSpan(new QuoteSpan(), 0, 2, Spanned.SPAN_PARAGRAPH);
-        first.setSpan(new NoCopySpan.Concrete(), 2, 4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        first.setSpan(new UnderlineSpan(), 0, first.length(), Spanned.SPAN_PRIORITY);
-
-        final SpannableString copied = new SpannableString(first);
-        final Object[] spans = copied.getSpans(0, copied.length(), Object.class);
-        assertNotNull(spans);
-        assertEquals(2, spans.length);
-
-        for (int i = 0; i < spans.length; i++) {
-            assertFalse(spans[i] instanceof NoCopySpan);
-        }
-    }
-
-    @Test
+    @SmallTest
     public void testCopyGrowable() {
         SpannableString first = new SpannableString("t\nest data");
         final int N_SPANS = 127;
