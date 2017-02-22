@@ -186,6 +186,16 @@ public class FrameMetricsListenerTest {
         frameMetrics.getMetric(FrameMetrics.SWAP_BUFFERS_DURATION);
         frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION);
 
+        // Perform basic checks on timestamp values.
+        long intended_vsync = frameMetrics.getMetric(FrameMetrics.INTENDED_VSYNC_TIMESTAMP);
+        long vsync = frameMetrics.getMetric(FrameMetrics.VSYNC_TIMESTAMP);
+        long now = System.nanoTime();
+        assertTrue(intended_vsync > 0);
+        assertTrue(vsync > 0);
+        assertTrue(intended_vsync < now);
+        assertTrue(vsync < now);
+        assertTrue(vsync >= intended_vsync);
+
         // This is the only boolean metric so far
         final long firstDrawFrameMetric = frameMetrics.getMetric(FrameMetrics.FIRST_DRAW_FRAME);
         assertTrue("First draw frame metric should be boolean but is " + firstDrawFrameMetric,
