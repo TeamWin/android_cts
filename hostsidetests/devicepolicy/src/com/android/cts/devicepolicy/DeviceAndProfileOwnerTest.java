@@ -183,8 +183,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         };
 
         // Set a device lockscreen password (precondition for installing private key pairs).
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordHelper", "testSetPassword",
-                mUserId);
+        changeUserCredential("1234", null, mUserId);
 
         // Install relevant apps.
         installAppAsUser(DELEGATE_APP_APK, mUserId);
@@ -214,8 +213,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             setDelegatedScopes(DELEGATE_APP_PKG, null);
             // Clear lockscreen password previously set for installing private key pairs (DO only).
             if (mPrimaryUserId == mUserId) {
-                runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                        ".ResetPasswordHelper", "testClearPassword", mUserId);
+                changeUserCredential(null, "1234", mUserId);
             }
         }
     }
@@ -463,14 +461,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             // Set a non-empty device lockscreen password, which is a precondition for installing
             // private key pairs.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ResetPasswordHelper", "testSetPassword",
-                    mUserId);
+            changeUserCredential("1234", null, mUserId);
+
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
         } finally {
             if (!isManagedProfile) {
                 // Skip managed profile as dpm doesn't allow clear password
-                runDeviceTestsAsUser(DEVICE_ADMIN_PKG,
-                        ".ResetPasswordHelper", "testClearPassword", mUserId);
+                changeUserCredential(null, "1234", mUserId);
             }
         }
     }

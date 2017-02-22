@@ -88,7 +88,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testKeyManagement() throws Exception {
-        executeDeviceOwnerTest("KeyManagementTest");
+        try {
+            changeUserCredential("1234", null, mPrimaryUserId);
+
+            executeDeviceOwnerTest("KeyManagementTest");
+        } finally {
+            changeUserCredential(null, "1234", mPrimaryUserId);
+        }
     }
 
     public void testLockScreenInfo() throws Exception {
