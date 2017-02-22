@@ -152,8 +152,8 @@ public class Settings_SecureTest extends AndroidTestCase {
         assertEquals(Uri.withAppendedPath(Secure.CONTENT_URI, name), uri);
     }
 
-    public void testUnknownSourcesOffByDefault() throws SettingNotFoundException {
-        assertEquals("Device should not ship with 'Unknown Sources' enabled by default.",
-                0, Settings.Global.getInt(cr, Settings.Global.INSTALL_NON_MARKET_APPS));
+    public void testUnknownSourcesOnByDefault() throws SettingNotFoundException {
+        assertEquals("install_non_market_apps is deprecated. Should be set to 1 by default.",
+                1, Settings.Secure.getInt(cr, Settings.Global.INSTALL_NON_MARKET_APPS));
     }
 }
