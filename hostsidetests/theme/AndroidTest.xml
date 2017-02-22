@@ -20,6 +20,6 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsThemeHostTestCases.jar" />
-        <option name="runtime-hint" value="5h2m34s" />
+        <option name="runtime-hint" value="7m30s" />
     </test>
 </configuration>

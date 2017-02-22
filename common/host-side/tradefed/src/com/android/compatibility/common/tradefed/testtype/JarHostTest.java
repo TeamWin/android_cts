@@ -25,7 +25,6 @@ import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.testtype.IRuntimeHintProvider;
 import com.android.tradefed.util.StreamUtil;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -49,24 +48,11 @@ import java.util.jar.JarFile;
 /**
  * Test runner for host-side JUnit tests.
  */
-public class JarHostTest extends HostTest implements IRuntimeHintProvider {
+public class JarHostTest extends HostTest {
 
     @Option(name="jar", description="The jars containing the JUnit test class to run.",
             importance = Importance.IF_UNSET)
     private Set<String> mJars = new HashSet<>();
-
-    @Option(name = "runtime-hint",
-            isTimeVal = true,
-            description="The hint about the test's runtime.")
-    private long mRuntimeHint = 60000;// 1 minute
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long getRuntimeHint() {
-        return mRuntimeHint;
-    }
 
     /**
      * {@inheritDoc}
