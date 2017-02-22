@@ -229,15 +229,15 @@ final class Helper {
             }
         }
         builder.setExtras(response.extras);
-        builder.setPresentation(response.presentation);
-        builder.setAuthentication(response.authentication);
+        builder.setAuthentication(response.authentication,
+                response.presentation);
         return builder.build();
     }
 
     // TODO(b/33197203, b/33802548): move to CannedFillResponse
     static Dataset createFromCannedDataset(AssistStructure structure,
             CannedFillResponse.CannedDataset dataset) {
-        final Dataset.Builder builder = new Dataset.Builder();
+        final Dataset.Builder builder = new Dataset.Builder(dataset.presentation);
         if (dataset.fields != null) {
             for (Map.Entry<String, AutoFillValue> entry : dataset.fields.entrySet()) {
                 final String resourceId = entry.getKey();
@@ -248,7 +248,6 @@ final class Helper {
                 builder.setValue(id, value);
             }
         }
-        builder.setPresentation(dataset.presentation);
         builder.setAuthentication(dataset.authentication);
         return builder.build();
     }
