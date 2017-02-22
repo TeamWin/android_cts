@@ -34,6 +34,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         pinnedStackTester(PIP_ACTIVITY, PIP_ACTIVITY, true, false);
     }
 
+    /**
+     * Disabled for b/35314835
     public void testAlwaysFocusablePipActivity() throws Exception {
         pinnedStackTester(ALWAYS_FOCUSABLE_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY, true, true);
     }
@@ -42,6 +44,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         pinnedStackTester(
                 LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY, false, true);
     }
+    */
 
     private void pinnedStackTester(String startActivity, String topActivityName,
             boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
