@@ -57,7 +57,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
     // Starts the activity (component name) provided by the value at the end of onCreate
     private static final String EXTRA_START_ACTIVITY = "start_activity";
-    // Finishes the activity at the end of onCreate (after EXTRA_START_ACTIVITY is handled)
+    // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
     private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
     // Calls enterPictureInPicture() again after onPictureInPictureModeChanged(false) is called
     private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
