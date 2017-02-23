@@ -124,7 +124,7 @@ LOCAL_COMPATIBILITY_SUPPORT_FILES += \
   $(foreach lib, $(my_bionic_testlib_files), \
     $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
 
-ifneq ($(TARGET_ARCH),mips)
+ifneq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),mips mips64))
 LOCAL_COMPATIBILITY_SUPPORT_FILES += \
   $(foreach lib, $(my_bionic_testlib_files_non_mips), \
     $(my_bionic_testlibs_src_dir)/$(lib):$(my_bionic_testlibs_out_dir)/$(lib))
