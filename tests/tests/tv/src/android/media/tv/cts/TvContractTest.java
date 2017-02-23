@@ -60,6 +60,7 @@ public class TvContractTest extends AndroidTestCase {
         Channels.COLUMN_VIDEO_FORMAT,
         Channels.COLUMN_INTERNAL_PROVIDER_DATA,
         Channels.COLUMN_VERSION_NUMBER,
+        Channels.COLUMN_INTERNAL_PROVIDER_ID,
     };
 
     private static final String[] PROGRAMS_PROJECTION = {
