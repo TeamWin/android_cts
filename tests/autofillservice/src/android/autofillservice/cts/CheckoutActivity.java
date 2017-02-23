@@ -28,6 +28,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 
@@ -52,6 +53,8 @@ public class CheckoutActivity extends Activity {
     static final String ID_CC_NUMBER = "cc_number";
     static final String ID_CC_EXPIRATION = "cc_expiration";
     static final String ID_ADDRESS = "address";
+    static final String ID_HOME_ADDRESS = "home_address";
+    static final String ID_WORK_ADDRESS = "work_address";
     static final String ID_SAVE_CC = "save_cc";
 
     static final int INDEX_ADDRESS_HOME = 0;
@@ -65,6 +68,7 @@ public class CheckoutActivity extends Activity {
     private EditText mCcNumber;
     private Spinner mCcExpiration;
     private RadioGroup mAddress;
+    private RadioButton mHomeAddress;
     private CheckBox mSaveCc;
     private Button mBuyButton;
     private Button mClearButton;
@@ -76,11 +80,12 @@ public class CheckoutActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.checkout_activity);
+        setContentView(getContentView());
 
         mCcNumber = (EditText) findViewById(R.id.cc_number);
         mCcExpiration = (Spinner) findViewById(R.id.cc_expiration);
         mAddress = (RadioGroup) findViewById(R.id.address);
+        mHomeAddress = (RadioButton ) findViewById(R.id.home_address);
         mSaveCc = (CheckBox) findViewById(R.id.save_cc);
         mBuyButton = (Button) findViewById(R.id.buy);
         mClearButton = (Button) findViewById(R.id.clear);
@@ -103,6 +108,10 @@ public class CheckoutActivity extends Activity {
                 resetFields();
             }
         });
+    }
+
+    protected int getContentView() {
+        return R.layout.checkout_activity;
     }
 
     /**
@@ -174,6 +183,15 @@ public class CheckoutActivity extends Activity {
     void onAddress(ViewVisitor<RadioGroup> v) {
         runOnUiThread(() -> {
             v.visit(mAddress);
+        });
+    }
+
+    /**
+     * Visits the {@code homeAddress} in the UiThread.
+     */
+    void onHomeAddress(ViewVisitor<RadioButton> v) {
+        runOnUiThread(() -> {
+            v.visit(mHomeAddress);
         });
     }
 

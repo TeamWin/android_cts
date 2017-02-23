@@ -18,7 +18,9 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.CheckoutActivity.ID_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_EXPIRATION;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
+import static android.autofillservice.cts.CheckoutActivity.ID_HOME_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.ID_SAVE_CC;
+import static android.autofillservice.cts.CheckoutActivity.ID_WORK_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.INDEX_ADDRESS_WORK;
 import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_NEVER;
 import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_TODAY;
@@ -26,6 +28,7 @@ import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_T
 import static android.autofillservice.cts.Helper.assertListValue;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.Helper.assertToggleIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
@@ -51,9 +54,6 @@ import org.junit.Test;
 
 /**
  * Test case for an activity containing non-TextField views.
- *
- * TODO(b/33197203, b/33802548): use spinner for credit card expiration once supported
- *
  */
 @SmallTest
 public class CheckoutActivityTest extends AutoFillServiceTestCase {
@@ -127,23 +127,31 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 .setSavableIds(ID_CC_NUMBER, ID_CC_EXPIRATION, ID_ADDRESS, ID_SAVE_CC)
                 .build());
 
-        // Change view contents.
+        // Dynamically change view contents
         mCheckoutActivity.onCcNumber((v) -> { v.setText("108"); });
         mCheckoutActivity.onCcExpiration((v) -> {
             v.setSelection(INDEX_CC_EXPIRATION_TOMORROW, true);
+        });
+        mCheckoutActivity.onHomeAddress((v) -> {
+            v.setChecked(true);
+        });
+        mCheckoutActivity.onSaveCc((v) -> {
+            v.setChecked(true);
         });
 
         // Trigger auto-fill.
         mCheckoutActivity.onCcNumber((v) -> { v.requestFocus(); });
         waitUntilConnected();
 
-        // Assert sanitization on fill request:
+        // Assert sanitization on fill request: everything should be sanitized!
         final FillRequest fillRequest = replier.getNextFillRequest();
 
         assertTextIsSanitized(fillRequest.structure, ID_CC_NUMBER);
         assertTextIsSanitized(fillRequest.structure, ID_CC_EXPIRATION);
+        assertToggleIsSanitized(fillRequest.structure, ID_HOME_ADDRESS);
+        assertToggleIsSanitized(fillRequest.structure, ID_SAVE_CC);
 
-        // Trigger save
+        // Trigger save.
         mCheckoutActivity.onCcNumber((v) -> { v.setText("4815162342"); });
         mCheckoutActivity.onCcExpiration((v) -> { v.setSelection(INDEX_CC_EXPIRATION_TODAY); });
         mCheckoutActivity.onAddress((v) -> { v.check(R.id.work_address); });
@@ -160,6 +168,8 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 INDEX_CC_EXPIRATION_TODAY);
         assertListValue(findNodeByResourceId(saveRequest.structure, ID_ADDRESS),
                 INDEX_ADDRESS_WORK);
+        assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_HOME_ADDRESS), false);
+        assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_WORK_ADDRESS), true);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), true);
     }
 }

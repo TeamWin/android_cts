@@ -108,7 +108,8 @@ final class Helper {
         buffer.append("\n").append(prefix)
             .append("   afId=").append(node.getAutoFillId())
             .append(" afType=").append(node.getAutoFillType())
-            .append(" afValue=").append(node.getAutoFillValue());
+            .append(" afValue=").append(node.getAutoFillValue())
+            .append(" checked=").append(node.isChecked());
 
         prefix += " ";
         if (childrenSize > 0) {
@@ -163,9 +164,12 @@ final class Helper {
       if (!TextUtils.isEmpty(text)) {
         throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
       }
-      final AutoFillValue initialValue = node.getAutoFillValue();
-      assertWithMessage("auto-fill value on sanitized field %s: %s", resourceId,
-              initialValue).that(initialValue).isNull();
+      assertNodeHasNoAutoFillValue(node);
+    }
+
+    static void assertNodeHasNoAutoFillValue(ViewNode node) {
+        final AutoFillValue value = node.getAutoFillValue();
+        assertWithMessage("node.getAutoFillValue()").that(value).isNull();
     }
 
     /**
@@ -221,7 +225,6 @@ final class Helper {
 
     /**
      * Asserts a text-base node exists and is sanitized.
-     * @return
      */
     static ViewNode assertTextIsSanitized(AssistStructure structure, String resourceId) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
@@ -231,12 +234,22 @@ final class Helper {
     }
 
     /**
-     * Asserts a list-base node exists and is sanitized.
+     * Asserts a list-based node exists and is sanitized.
      */
     static void assertListValueIsSanitized(AssistStructure structure, String resourceId) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
         assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
         assertTextIsSanitized(node);
+    }
+
+    /**
+     * Asserts a toggle node exists and is sanitized.
+     */
+    static void assertToggleIsSanitized(AssistStructure structure, String resourceId) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertNodeHasNoAutoFillValue(node);
+        assertWithMessage("ViewNode %s should not be checked", resourceId).that(node.isChecked())
+                .isFalse();
     }
 
     // TODO(b/33197203, b/33802548): move to CannedFillResponse
