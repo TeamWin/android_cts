@@ -53,21 +53,19 @@ import org.junit.Test;
  * This is the test case covering most scenarios - other test cases will cover characteristics
  * specific to that test's activity (for example, custom views).
  *
- * TODO(b/33197203, b/33802548): test other scenarios
+ * TODO(b/33197203, b/33802548): test other scenarios like:
  *
- * Fill:
+ * Fill
  *  - no dataset
  *  - multiple datasets
  *  - partitioned datasets (i.e., multiple fields)
- *  - response-level authentication
- *  - dataset-level authentication
  *
- *  Save:
+ *  Save
  *  - test cases where only non-savable-ids are changed
  *  - test case where 'no thanks' is tapped
  *  - make sure snack bar times out (will require a shell cmd to change timeout)
  *
- *  Other assertions:
+ *  Other assertions
  *  - illegal state thrown on callback calls
  *  - system server state after calls (for example, no pending callback)
  *  - make sure there is no dangling session using 'cmd autofill list sessions'
@@ -109,7 +107,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilConnected();
 
         // Auto-fill it.
-        sUiBot.selectByText("The Dude");
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -155,7 +153,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
 
         // Auto-fill it.
-        sUiBot.selectByText("The Dude");
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -197,7 +195,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilConnected();
 
         // Auto-fill it.
-        sUiBot.selectByText("The Dude");
+        sUiBot.selectDataset("The Dude");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -261,11 +259,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
         waitUntilConnected();
 
+        // Sanity check.
+        sUiBot.assertNoDatasets();
+
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
         replier.getNextFillRequest();
-
-        // TODO(b/33197203, b/33802548): assert auto-fill bar was not shown
 
         // Set credentials...
         mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
@@ -353,7 +352,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectByText("Auth");
 
         // Select the dataset
-        sUiBot.selectByText("Dataset");
+        sUiBot.selectDataset("Dataset");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();
@@ -404,7 +403,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectByText("Auth");
 
         // Select the dataset
-        sUiBot.selectByText("Dataset");
+        sUiBot.selectDataset("Dataset");
 
         // Check the results.
         mLoginActivity.assertAutoFilled();

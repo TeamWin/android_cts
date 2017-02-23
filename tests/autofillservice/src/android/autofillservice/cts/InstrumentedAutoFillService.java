@@ -261,7 +261,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
                     return;
                 }
 
-                final FillResponse fillResponse = Helper.createFromCannedResponse(structure, response);
+                final FillResponse fillResponse = response.asFillResponse(structure);
 
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);

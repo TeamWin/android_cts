@@ -42,12 +42,35 @@ final class UiBot {
     }
 
     /**
-     * Selects an a view by text.
+     * Asserts the dataset chooser is not shown.
+     */
+    void assertNoDatasets() {
+        final UiObject2 ui;
+        try {
+            ui = waitForObject(By.res("android", "list"));
+        } catch (Throwable t) {
+            // TODO(b/33197203): use a more elegant check than catching the expection because it's
+            // not showing...
+            return;
+        }
+        throw new AssertionError("floating ui is shown: " + ui);
+    }
+
+    /**
+     * Selects a dataset that should be visible in the floating UI.
+     */
+    void selectDataset(String name) {
+        // TODO(b/33197203): Use more qualified ids for UI.
+        waitForObject(By.res("android", "list"));
+        selectByText(name);
+    }
+
+    /**
+     * Selects a view by text.
      */
     void selectByText(String name) {
-        Log.v(TAG, "selectDataset(): " + name);
+        Log.v(TAG, "selectByText(): " + name);
 
-        // TODO(b/33197203): Use more qualified ids for UI.
         final UiObject2 dataset = waitForObject(By.text(name));
         dataset.click();
     }

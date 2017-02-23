@@ -26,7 +26,7 @@ import android.view.autofill.AutoFillManager;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 /**
- * This class simulates authentication at the dataset ot reponse level
+ * This class simulates authentication at the dataset at reponse level
  */
 public class AuthenticationActivity extends Activity {
     private static CannedFillResponse sResponse;
@@ -53,9 +53,11 @@ public class AuthenticationActivity extends Activity {
 
         Parcelable result = null;
         if (sResponse != null) {
-            result = Helper.createFromCannedResponse(structure, sResponse);
+            result = sResponse.asFillResponse(structure);
         } else if (sDataset != null) {
-            result = Helper.createFromCannedDataset(structure, sDataset);
+            result = sDataset.asDataset(structure);
+        } else {
+            throw new IllegalStateException("no dataset or response");
         }
 
         // Pass on the auth result
