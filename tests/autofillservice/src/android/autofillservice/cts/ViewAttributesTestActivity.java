@@ -25,6 +25,6 @@ public class ViewAttributesTestActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.partially_manually_filled_activity);
+        setContentView(R.layout.view_attribute_test_activity);
     }
 }

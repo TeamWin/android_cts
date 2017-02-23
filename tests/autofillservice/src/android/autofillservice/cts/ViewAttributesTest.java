@@ -233,17 +233,61 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkSet() {
-        View v = mActivity.findViewById(R.id.firstLevelDefault);
-
-        v.setAutoFillMode(View.AUTO_FILL_MODE_MANUAL);
-        assertThat(v.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+    public void checkSetAutoFillMode() {
+        mFirstLevelDefault.setAutoFillMode(View.AUTO_FILL_MODE_MANUAL);
+        assertThat(mFirstLevelDefault.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
     }
 
     @Test
-    public void checkIllegalSet() throws Exception {
-        View v = mActivity.findViewById(R.id.firstLevelDefault);
+    public void checkIllegalAutoFillModeSet() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> mFirstLevelDefault.setAutoFillMode(-1));
+    }
 
-        assertThrows(IllegalArgumentException.class, () -> v.setAutoFillMode(-1));
+    @Test
+    public void checkTextViewNoHint() {
+        assertThat(mActivity.findViewById(R.id.textViewNoHint).getAutoFillHint()).isEqualTo(
+                View.AUTO_FILL_HINT_NONE);
+    }
+
+    @Test
+    public void checkTextViewHintNone() {
+        assertThat(mActivity.findViewById(R.id.textViewHintNone).getAutoFillHint()).isEqualTo(
+                View.AUTO_FILL_HINT_NONE);
+    }
+
+    @Test
+    public void checkTextViewPassword() {
+        assertThat(mActivity.findViewById(R.id.textViewPassword).getAutoFillHint()).isEqualTo(
+                View.AUTO_FILL_HINT_PASSWORD);
+    }
+
+    @Test
+    public void checkTextViewPhoneName() {
+        assertThat(mActivity.findViewById(R.id.textViewPhoneName).getAutoFillHint()).isEqualTo(
+                View.AUTO_FILL_HINT_PHONE | View.AUTO_FILL_HINT_USERNAME);
+    }
+
+    @Test
+    public void checkSetAutoFill() {
+        View v = mActivity.findViewById(R.id.textViewNoHint);
+
+        v.setAutoFillHint(View.AUTO_FILL_HINT_NONE);
+        assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_NONE);
+
+        v.setAutoFillHint(View.AUTO_FILL_HINT_PASSWORD);
+        assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_PASSWORD);
+
+        v.setAutoFillHint(View.AUTO_FILL_HINT_PASSWORD | View.AUTO_FILL_HINT_EMAIL_ADDRESS);
+        assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_PASSWORD
+                | View.AUTO_FILL_HINT_EMAIL_ADDRESS);
+    }
+
+    @Test
+    public void checkSetAutoFillUnknown() {
+        View v = mActivity.findViewById(R.id.textViewNoHint);
+
+        // Unknown values are allowed
+        v.setAutoFillHint(-1);
+        assertThat(v.getAutoFillHint()).isEqualTo(-1);
     }
 }

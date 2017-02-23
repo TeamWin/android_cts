@@ -48,4 +48,12 @@
             android:layout_height="wrap_content" android:autoFillMode="manual" />
     </LinearLayout>
 
+    <TextView android:id="@+id/textViewNoHint" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <TextView android:id="@+id/textViewHintNone" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:autoFillHint="none" />
+    <TextView android:id="@+id/textViewPassword" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:autoFillHint="password" />
+    <TextView android:id="@+id/textViewPhoneName" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:autoFillHint="phone|username" />
 </LinearLayout>
