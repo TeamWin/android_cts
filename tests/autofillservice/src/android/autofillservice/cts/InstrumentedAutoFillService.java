@@ -252,21 +252,22 @@ public class InstrumentedAutoFillService extends AutoFillService {
                     .isEqualTo(expected);
         }
 
-        private void onFillRequest(AssistStructure structure,
-                @SuppressWarnings("unused") Bundle data, CancellationSignal cancellationSignal,
-                FillCallback callback) {
-            final CannedFillResponse response = mResponses.remove();
-            if (response == null) {
-                callback.onSuccess(null);
-                return;
+        private void onFillRequest(AssistStructure structure, Bundle data,
+                CancellationSignal cancellationSignal, FillCallback callback) {
+            try {
+                final CannedFillResponse response = mResponses.remove();
+                if (response == null) {
+                    callback.onSuccess(null);
+                    return;
+                }
+
+                final FillResponse fillResponse = Helper.createFromCannedResponse(structure, response);
+
+                Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
+                callback.onSuccess(fillResponse);
+            } finally {
+                mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
             }
-
-            final FillResponse fillResponse = Helper.createFromCannedResponse(structure, response);
-
-            Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
-            callback.onSuccess(fillResponse);
-
-            mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
         }
 
         private void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {

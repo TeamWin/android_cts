@@ -48,6 +48,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".InitializedCheckoutActivity"
+            android:label="CTS_Init_Checkout" >
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it maks easier to launch
+                this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".InstrumentedAutoFillService"
             android:label="InstrumentedAutoFillService"
