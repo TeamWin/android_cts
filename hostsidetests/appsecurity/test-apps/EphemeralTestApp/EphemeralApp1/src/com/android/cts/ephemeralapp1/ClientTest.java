@@ -150,7 +150,8 @@ public class ClientTest {
         } catch (ActivityNotFoundException expected) {
         }
 
-// TODO: Make this work. It's unclear the best way to expose VIEW/BROWSABLE just for launching
+// TODO: Ideally we should have a test for this. However, it shows a disambig between the
+//       the normal app and chrome; for which there is no easy solution.
 //        // start the normal activity; using VIEW/BROWSABLE
 //        {
 //            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW);
