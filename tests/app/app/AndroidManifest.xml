@@ -339,6 +339,9 @@
         <activity android:name="android.app.stubs.NewDocumentTestActivity"
                   android:documentLaunchMode="intoExisting" />
 
+        <activity android:name="android.app.stubs.DisplayTestActivity"
+            android:configChanges="smallestScreenSize|orientation|screenSize|screenLayout" />
+
         <service
             android:name="android.app.stubs.LiveWallpaper"
             android:icon="@drawable/robot"
