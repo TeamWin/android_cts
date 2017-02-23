@@ -208,12 +208,6 @@ public final class TestMeasurementUtil {
                 measurement.getCn0DbHz() >= 0.0 &&
                         measurement.getCn0DbHz() <= 63.0);
 
-        softAssert.assertTrue("pseudorange_rate_mps: Pseudorange rate in m/s",
-                timeInNs,
-                "X != 0.0",
-                String.valueOf(measurement.getPseudorangeRateMetersPerSecond()),
-                measurement.getPseudorangeRateMetersPerSecond() != 0.0);
-
         softAssert.assertTrue("pseudorange_rate_uncertainty_mps: " +
                         "Pseudorange Rate Uncertainty in m/s",
                 timeInNs,
