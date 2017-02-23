@@ -233,9 +233,9 @@ public class EditTextTest {
 
         // If auto-size would work then the text size would be less then 50dp (the value set in the
         // layout file).
-        final float sizeSetInPixels = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, 50f, metrics);
-        assertEquals(sizeSetInPixels, autoSizeEditText.getTextSize(), 0f);
+        final int sizeSetInPixels = (int) (0.5f + TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 50f, metrics));
+        assertEquals(sizeSetInPixels, (int) autoSizeEditText.getTextSize());
     }
 
     @Test
