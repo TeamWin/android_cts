@@ -20,6 +20,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.util.Log;
 import android.media.AudioPlaybackConfiguration;
 
@@ -34,9 +35,11 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";
 
     private final static int TEST_TIMING_TOLERANCE_MS = 50;
+    private final static int TEST_TIMEOUT_SOUNDPOOL_LOAD_MS = 3000;
 
     // not declared inside test so it can be released in case of failure
     private MediaPlayer mMp;
+    private SoundPool mSp;
 
     @Override
     protected void setUp() throws Exception {
@@ -48,6 +51,11 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         if (mMp != null) {
             mMp.stop();
             mMp.release();
+            mMp = null;
+        }
+        if (mSp != null) {
+            mSp.release();
+            mSp = null;
         }
     }
 
@@ -156,30 +164,112 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         apc.onPlaybackConfigChanged(new ArrayList<AudioPlaybackConfiguration>());
     }
 
+    public void testGetterSoundPool() throws Exception {
+        if (!isValidPlatform("testSoundPool")) return;
+
+        AudioManager am = new AudioManager(getContext());
+        assertNotNull("Could not create AudioManager", am);
+        MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
+        am.registerAudioPlaybackCallback(callback, null /*handler*/);
+
+        // query how many active players before starting the SoundPool
+        List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
+        int nbActivePlayersBeforeStart = 0;
+        for (AudioPlaybackConfiguration apc : configs) {
+            if (apc.getPlayerState() == AudioPlaybackConfiguration.PLAYER_STATE_STARTED) {
+                nbActivePlayersBeforeStart++;
+            }
+        }
+
+        final AudioAttributes aa = (new AudioAttributes.Builder())
+                .setUsage(TEST_USAGE)
+                .setContentType(TEST_CONTENT)
+                .build();
+
+        mSp = new SoundPool.Builder()
+                .setAudioAttributes(aa)
+                .setMaxStreams(1)
+                .build();
+        final Object loadLock = new Object();
+        final SoundPool zepool = mSp;
+        // load a sound and play it once load completion is reported
+        mSp.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
+            @Override
+            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+                assertEquals("Receiving load completion for wrong SoundPool", zepool, mSp);
+                assertEquals("Load completion error", 0 /*success expected*/, status);
+                synchronized (loadLock) {
+                    loadLock.notify();
+                }
+            }
+        });
+        final int loadId = mSp.load(getContext(), R.raw.sine1320hz5sec, 1/*priority*/);
+        synchronized (loadLock) {
+            loadLock.wait(TEST_TIMEOUT_SOUNDPOOL_LOAD_MS);
+        }
+        int res = mSp.play(loadId, 1.0f /*leftVolume*/, 1.0f /*rightVolume*/, 1 /*priority*/,
+                0 /*loop*/, 1.0f/*rate*/);
+        // FIXME SoundPool activity is not reported yet, but exercise creation/release with
+        //       an AudioPlaybackCallback registered
+        assertTrue("Error playing sound through SoundPool", res > 0);
+        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+
+        mSp.autoPause();
+        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+        // query how many active players after pausing
+        configs = am.getActivePlaybackConfigurations();
+        int nbActivePlayersAfterPause = 0;
+        for (AudioPlaybackConfiguration apc : configs) {
+            if (apc.getPlayerState() == AudioPlaybackConfiguration.PLAYER_STATE_STARTED) {
+                nbActivePlayersAfterPause++;
+            }
+        }
+        assertEquals("Number of active players changed after pausing SoundPool",
+                nbActivePlayersBeforeStart, nbActivePlayersAfterPause);
+    }
 
     private static class MyAudioPlaybackCallback extends AudioManager.AudioPlaybackCallback {
         private int mCalled = 0;
         private int mNbConfigs = 0;
         private List<AudioPlaybackConfiguration> mConfigs;
+        private final Object mCbLock = new Object();
 
         void reset() {
-            mCalled = 0;
-            mNbConfigs = 0;
-            mConfigs.clear();
+            synchronized (mCbLock) {
+                mCalled = 0;
+                mNbConfigs = 0;
+                mConfigs.clear();
+            }
         }
 
-        int getCbInvocationNumber() { return mCalled; }
-        int getNbConfigs() { return mNbConfigs; }
-        List<AudioPlaybackConfiguration> getConfigs() { return mConfigs; }
+        int getCbInvocationNumber() {
+            synchronized (mCbLock) {
+                return mCalled;
+            }
+        }
+
+        int getNbConfigs() {
+            synchronized (mCbLock) {
+                return mNbConfigs;
+            }
+        }
+
+        List<AudioPlaybackConfiguration> getConfigs() {
+            synchronized (mCbLock) {
+                return mConfigs;
+            }
+        }
 
         MyAudioPlaybackCallback() {
         }
 
         @Override
         public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
-            mCalled++;
-            mNbConfigs = configs.size();
-            mConfigs = configs;
+            synchronized (mCbLock) {
+                mCalled++;
+                mNbConfigs = configs.size();
+                mConfigs = configs;
+            }
         }
     }
 
