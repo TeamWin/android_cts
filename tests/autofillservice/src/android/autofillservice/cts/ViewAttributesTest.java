@@ -29,6 +29,8 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.autofill.AutoFillValue;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,6 +67,29 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
         mManualContainerInherit = (EditText) mActivity.findViewById(R.id.manualContainerInherit);
     }
 
+    private void runOnUiThreadSync(@NonNull Runnable r) throws InterruptedException {
+        RuntimeException exceptionOnUiThread[] = {null};
+
+        synchronized (this) {
+            mActivity.runOnUiThread(() -> {
+                synchronized (this) {
+                    try {
+                        r.run();
+                    } catch (RuntimeException e) {
+                        exceptionOnUiThread[0] = e;
+                    }
+                    this.notify();
+                }
+            });
+
+            wait();
+        }
+
+        if (exceptionOnUiThread[0] != null) {
+            throw exceptionOnUiThread[0];
+        }
+    }
+
     /**
      * Sets the expectation for an auto-fill request, so it can be asserted through
      * {@link #assertAutoFilled()} later.
@@ -93,11 +118,17 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
      * @throws Exception If something unexpected happened
      */
     private void checkFieldBehavior(@NonNull EditText field, boolean expectUI) throws Exception {
+        if (expectUI) {
+            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+        } else {
+            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+        }
+
         // Make sure the requestFocus triggers a change
         if (field == mFirstLevelManual) {
-            mActivity.runOnUiThread(() -> mFirstLevelDefault.requestFocus());
+            runOnUiThreadSync(() -> mFirstLevelDefault.requestFocus());
         } else {
-            mActivity.runOnUiThread(() -> mFirstLevelManual.requestFocus());
+            runOnUiThreadSync(() -> mFirstLevelManual.requestFocus());
         }
 
         enableService();
@@ -123,7 +154,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
             expectAutoFill();
 
-            mActivity.runOnUiThread(() -> field.requestFocus());
+            runOnUiThreadSync(() -> field.requestFocus());
 
             Throwable exceptionDuringAutoFillTrigger = null;
             try {
@@ -143,8 +174,6 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
             } else {
                 assertThat(exceptionDuringAutoFillTrigger).isNotNull();
             }
-
-            waitUntilDisconnected();
         } finally {
             disableService();
         }
@@ -280,6 +309,91 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
         v.setAutoFillHint(View.AUTO_FILL_HINT_PASSWORD | View.AUTO_FILL_HINT_EMAIL_ADDRESS);
         assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_PASSWORD
                 | View.AUTO_FILL_HINT_EMAIL_ADDRESS);
+    }
+
+    @Test
+    public void attachViewToManualContainer() throws Exception {
+        runOnUiThreadSync(() -> mFirstLevelManual.requestFocus());
+        enableService();
+
+        try {
+            View view = new TextView(mActivity);
+
+            view.setLayoutParams(
+                    new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+
+            assertThat(view.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
+            assertThat(view.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+
+            // Requesting focus should not trigger any mishaps
+            runOnUiThreadSync(() -> view.requestFocus());
+
+            LinearLayout attachmentPoint = (LinearLayout) mActivity.findViewById(
+                    R.id.manualContainer);
+            runOnUiThreadSync(() -> attachmentPoint.addView(view));
+
+            assertThat(view.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+        } finally {
+            disableService();
+        }
+    }
+
+    @Test
+    public void attachNestedViewToContainer() throws Exception {
+        runOnUiThreadSync(() -> mFirstLevelManual.requestFocus());
+        enableService();
+
+        try {
+            // Create view and viewGroup but do not attach to window
+            LinearLayout container = (LinearLayout) mActivity.getLayoutInflater().inflate(
+                    R.layout.nested_layout, null);
+            EditText field = container.findViewById(R.id.field);
+
+            assertThat(field.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
+            assertThat(container.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
+
+            // Resolved mode for detached views should behave as documented
+            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+            assertThat(container.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+
+            // Requesting focus should not trigger any mishaps
+            runOnUiThreadSync(() -> field.requestFocus());
+
+            // Set up auto-fill service and response
+            final InstrumentedAutoFillService.Replier replier =
+                    new InstrumentedAutoFillService.Replier();
+            InstrumentedAutoFillService.setReplier(replier);
+
+            replier.addResponse(new CannedFillResponse.Builder()
+                    .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                            .setField("field", AutoFillValue.forText("filled"))
+                            .setPresentation(createPresentation("dataset"))
+                            .build())
+                    .build());
+
+            OneTimeTextWatcher mViewWatcher = new OneTimeTextWatcher("field", field, "filled");
+            field.addTextChangedListener(mViewWatcher);
+
+            // As the focus is set to "field", attaching "container" should trigger an auto-fill
+            // request on "field"
+            LinearLayout attachmentPoint = (LinearLayout) mActivity.findViewById(
+                    R.id.rootContainer);
+            runOnUiThreadSync(() -> attachmentPoint.addView(container));
+
+            // Now the resolved auto-fill modes make sense, hence check them
+            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+            assertThat(container.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+
+            // We should now be able to select the data set
+            waitUntilConnected();
+            sUiBot.selectDataset("dataset");
+
+            // Check if auto-fill operation worked
+            mViewWatcher.assertAutoFilled();
+        } finally {
+            disableService();
+        }
     }
 
     @Test
