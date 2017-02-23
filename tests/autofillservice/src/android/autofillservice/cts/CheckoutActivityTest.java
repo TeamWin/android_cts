@@ -105,7 +105,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                         getContext().getResources().getStringArray(R.array.cc_expiration_values));
 
         // Auto-fill it.
-        sUiBot.selectByText("ACME CC");
+        sUiBot.selectDataset("ACME CC");
 
         // Check the results.
         mCheckoutActivity.assertAutoFilled();

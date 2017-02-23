@@ -252,52 +252,6 @@ final class Helper {
                 .isFalse();
     }
 
-    // TODO(b/33197203, b/33802548): move to CannedFillResponse
-    static FillResponse createFromCannedResponse(AssistStructure structure,
-            CannedFillResponse response) {
-        final FillResponse.Builder builder = new FillResponse.Builder();
-        if (response.datasets != null) {
-            for (CannedFillResponse.CannedDataset cannedDataset : response.datasets) {
-                final Dataset dataset = createFromCannedDataset(structure, cannedDataset);
-                assertWithMessage("Cannot create datase").that(dataset).isNotNull();
-                builder.addDataset(dataset);
-            }
-        }
-        if (response.savableIds != null) {
-            for (String resourceId : response.savableIds) {
-                final ViewNode node = findNodeByResourceId(structure, resourceId);
-                if (node == null) {
-                    dumpStructure("onFillRequest()", structure);
-                    throw new AssertionError("No node with savable resourceId " + resourceId);
-                }
-                final AutoFillId id = node.getAutoFillId();
-                builder.addSavableFields(id);
-            }
-        }
-        builder.setExtras(response.extras);
-        builder.setAuthentication(response.authentication,
-                response.presentation);
-        return builder.build();
-    }
-
-    // TODO(b/33197203, b/33802548): move to CannedFillResponse
-    static Dataset createFromCannedDataset(AssistStructure structure,
-            CannedFillResponse.CannedDataset dataset) {
-        final Dataset.Builder builder = new Dataset.Builder(dataset.presentation);
-        if (dataset.fields != null) {
-            for (Map.Entry<String, AutoFillValue> entry : dataset.fields.entrySet()) {
-                final String resourceId = entry.getKey();
-                final ViewNode node = findNodeByResourceId(structure, resourceId);
-                assertWithMessage("Cannot find node:" + resourceId).that(node).isNotNull();
-                final AutoFillId id = node.getAutoFillId();
-                final AutoFillValue value = entry.getValue();
-                builder.setValue(id, value);
-            }
-        }
-        builder.setAuthentication(dataset.authentication);
-        return builder.build();
-    }
-
     private Helper() {
     }
 }

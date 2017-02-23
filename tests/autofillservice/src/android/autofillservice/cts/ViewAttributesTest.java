@@ -129,7 +129,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
             try {
                 waitUntilConnected();
 
-                sUiBot.selectByText("dataset");
+                sUiBot.selectDataset("dataset");
             } catch (Throwable e) {
                 if (expectUI) {
                     throw e;

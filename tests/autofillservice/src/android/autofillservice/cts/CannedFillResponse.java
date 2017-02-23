@@ -15,11 +15,17 @@
  */
 package android.autofillservice.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static android.autofillservice.cts.Helper.dumpStructure;
+import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import android.app.assist.AssistStructure;
+import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
+import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
 import android.widget.RemoteViews;
 
@@ -58,6 +64,35 @@ final class CannedFillResponse {
         extras = builder.mExtras;
         presentation = builder.mPresentation;
         authentication = builder.mAuthentication;
+    }
+
+    /**
+     * Creates a new response, replacing the dataset field ids by the real ids from the assist
+     * structure.
+     */
+    FillResponse asFillResponse(AssistStructure structure) {
+        final FillResponse.Builder builder = new FillResponse.Builder();
+        if (datasets != null) {
+            for (CannedFillResponse.CannedDataset cannedDataset : datasets) {
+                final Dataset dataset = cannedDataset.asDataset(structure);
+                assertWithMessage("Cannot create datase").that(dataset).isNotNull();
+                builder.addDataset(dataset);
+            }
+        }
+        if (savableIds != null) {
+            for (String resourceId : savableIds) {
+                final ViewNode node = findNodeByResourceId(structure, resourceId);
+                if (node == null) {
+                    dumpStructure("onFillRequest()", structure);
+                    throw new AssertionError("No node with savable resourceId " + resourceId);
+                }
+                final AutoFillId id = node.getAutoFillId();
+                builder.addSavableFields(id);
+            }
+        }
+        builder.setExtras(extras);
+        builder.setAuthentication(authentication, presentation);
+        return builder.build();
     }
 
     @Override
@@ -143,6 +178,25 @@ final class CannedFillResponse {
             fields = builder.mFields;
             presentation = builder.mPresentation;
             authentication = builder.mAuthentication;
+        }
+
+        /**
+         * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
+         */
+        Dataset asDataset(AssistStructure structure) {
+            final Dataset.Builder builder = new Dataset.Builder(presentation);
+            if (fields != null) {
+                for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
+                    final String resourceId = entry.getKey();
+                    final ViewNode node = findNodeByResourceId(structure, resourceId);
+                    assertWithMessage("Cannot find node:" + resourceId).that(node).isNotNull();
+                    final AutoFillId id = node.getAutoFillId();
+                    final AutoFillValue value = entry.getValue();
+                    builder.setValue(id, value);
+                }
+            }
+            builder.setAuthentication(authentication);
+            return builder.build();
         }
 
         @Override
