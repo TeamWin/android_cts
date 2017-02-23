@@ -200,11 +200,12 @@ final class Helper {
     /**
      * Asserts the auto-fill value of a list-based node.
      */
-    static void assertListValue(ViewNode node, int expectedIndex) {
+    static ViewNode assertListValue(ViewNode node, int expectedIndex) {
         final AutoFillValue value = node.getAutoFillValue();
         assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
         assertWithMessage("wrong auto-fill value on %s", node).that(value.getListValue())
                 .isEqualTo(expectedIndex);
+        return node;
     }
 
     /**
@@ -220,8 +221,19 @@ final class Helper {
 
     /**
      * Asserts a text-base node exists and is sanitized.
+     * @return
      */
-    static void assertTextIsSanitized(AssistStructure structure, String resourceId) {
+    static ViewNode assertTextIsSanitized(AssistStructure structure, String resourceId) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
+        assertTextIsSanitized(node);
+        return node;
+    }
+
+    /**
+     * Asserts a list-base node exists and is sanitized.
+     */
+    static void assertListValueIsSanitized(AssistStructure structure, String resourceId) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
         assertWithMessage("no ViewNode with id %s", resourceId).that(node).isNotNull();
         assertTextIsSanitized(node);

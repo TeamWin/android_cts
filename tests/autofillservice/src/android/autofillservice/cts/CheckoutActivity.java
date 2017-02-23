@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import static android.widget.ArrayAdapter.createFromResource;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
@@ -22,10 +24,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -50,8 +54,16 @@ public class CheckoutActivity extends Activity {
     static final String ID_ADDRESS = "address";
     static final String ID_SAVE_CC = "save_cc";
 
+    static final int INDEX_ADDRESS_HOME = 0;
+    static final int INDEX_ADDRESS_WORK = 1;
+
+    static final int INDEX_CC_EXPIRATION_YESTERDAY = 0;
+    static final int INDEX_CC_EXPIRATION_TODAY = 1;
+    static final int INDEX_CC_EXPIRATION_TOMORROW = 2;
+    static final int INDEX_CC_EXPIRATION_NEVER = 3;
+
     private EditText mCcNumber;
-    private EditText mCcExpiration;
+    private Spinner mCcExpiration;
     private RadioGroup mAddress;
     private CheckBox mSaveCc;
     private Button mBuyButton;
@@ -67,11 +79,17 @@ public class CheckoutActivity extends Activity {
         setContentView(R.layout.checkout_activity);
 
         mCcNumber = (EditText) findViewById(R.id.cc_number);
-        mCcExpiration = (EditText) findViewById(R.id.cc_expiration);
+        mCcExpiration = (Spinner) findViewById(R.id.cc_expiration);
         mAddress = (RadioGroup) findViewById(R.id.address);
         mSaveCc = (CheckBox) findViewById(R.id.save_cc);
         mBuyButton = (Button) findViewById(R.id.buy);
         mClearButton = (Button) findViewById(R.id.clear);
+
+        final ArrayAdapter<CharSequence> expirationValuesAdapter = createFromResource(this,
+                R.array.cc_expiration_values, android.R.layout.simple_spinner_item);
+        expirationValuesAdapter
+                .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mCcExpiration.setAdapter(expirationValuesAdapter);
 
         mBuyButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -92,7 +110,7 @@ public class CheckoutActivity extends Activity {
      */
     private void resetFields() {
         mCcNumber.setText("");
-        mCcExpiration.setText("");
+        mCcExpiration.setSelection(0, false);
         mAddress.clearCheck();
         mSaveCc.setChecked(false);
     }
@@ -112,10 +130,10 @@ public class CheckoutActivity extends Activity {
      * Sets the expectation for an auto-fill request, so it can be asserted through
      * {@link #assertAutoFilled()} later.
      */
-    void expectAutoFill(String ccNumber, String ccExpiration, int addressId, boolean saveCc) {
-        mExpectation = new FillExpectation(ccNumber, ccExpiration, addressId, saveCc);
+    void expectAutoFill(String ccNumber, int ccExpirationIndex, int addressId, boolean saveCc) {
+        mExpectation = new FillExpectation(ccNumber, ccExpirationIndex, addressId, saveCc);
         mCcNumber.addTextChangedListener(mExpectation.ccNumberWatcher);
-        mCcExpiration.addTextChangedListener(mExpectation.ccExpirationWatcher);
+        mCcExpiration.setOnItemSelectedListener(mExpectation.ccExpirationListener);
         mAddress.setOnCheckedChangeListener(mExpectation.addressListener);
         mSaveCc.setOnCheckedChangeListener(mExpectation.saveCcListener);
     }
@@ -127,7 +145,7 @@ public class CheckoutActivity extends Activity {
     void assertAutoFilled() throws Exception {
         assertWithMessage("expectAutoFill() not called").that(mExpectation).isNotNull();
         mExpectation.ccNumberWatcher.assertAutoFilled();
-        mExpectation.ccExpirationWatcher.assertAutoFilled();
+        mExpectation.ccExpirationListener.assertAutoFilled();
         mExpectation.addressListener.assertAutoFilled();
         mExpectation.saveCcListener.assertAutoFilled();
     }
@@ -144,7 +162,7 @@ public class CheckoutActivity extends Activity {
     /**
      * Visits the {@code ccExpirationDate} in the UiThread.
      */
-    void onCcExpiration(ViewVisitor<EditText> v) {
+    void onCcExpiration(ViewVisitor<Spinner> v) {
         runOnUiThread(() -> {
             v.visit(mCcExpiration);
         });
@@ -186,15 +204,15 @@ public class CheckoutActivity extends Activity {
      */
     private final class FillExpectation {
         private final OneTimeTextWatcher ccNumberWatcher;
-        private final OneTimeTextWatcher ccExpirationWatcher;
+        private final OneTimeSpinnerListener ccExpirationListener;
         private final OneTimeRadioGroupListener addressListener;
         private final OneTimeCompoundButtonListener saveCcListener;
 
-        private FillExpectation(String ccNumber, String ccExpiration, int addressId,
+        private FillExpectation(String ccNumber, int ccExpirationIndex, int addressId,
                 boolean saveCc) {
             this.ccNumberWatcher = new OneTimeTextWatcher("ccNumber", mCcNumber, ccNumber);
-            this.ccExpirationWatcher =
-                    new OneTimeTextWatcher("ccExpiration", mCcExpiration, ccExpiration);
+            this.ccExpirationListener =
+                    new OneTimeSpinnerListener("ccExpiration", mCcExpiration, ccExpirationIndex);
             addressListener = new OneTimeRadioGroupListener("address", mAddress, addressId);
             saveCcListener = new OneTimeCompoundButtonListener("saveCc", mSaveCc, saveCc);
         }

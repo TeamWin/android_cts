@@ -49,8 +49,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import android.autofillservice.cts.R;
-
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
  * specific to that test's activity (for example, custom views).
