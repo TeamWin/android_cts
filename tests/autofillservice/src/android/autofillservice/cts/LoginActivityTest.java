@@ -56,8 +56,6 @@ import org.junit.Test;
  * TODO(b/33197203, b/33802548): test other scenarios like:
  *
  * Fill
- *  - no dataset
- *  - multiple datasets
  *  - partitioned datasets (i.e., multiple fields)
  *
  *  Save
@@ -85,6 +83,31 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testAutoFillNoDatasets() throws Exception {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse((CannedFillResponse) null);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+
+        // Auto-fill it.
+        sUiBot.assertNoDatasets();
+
+        // Sanity checks.
+        replier.assertNumberUnhandledFillRequests(1);
+        replier.assertNumberUnhandledSaveRequests(0);
+
+        // Other sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
     public void testAutoFillOneDataset() throws Exception {
         // Set service.
         enableService();
@@ -99,7 +122,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
         mLoginActivity.expectAutoFill("dude", "sweet");
 
-        // Dinamycally set password to make sure it's sanitized.
+        // Dynamically set password to make sure it's sanitized.
         mLoginActivity.onPassword((v) -> { v.setText("I AM GROOT"); });
 
         // Trigger auto-fill.
@@ -239,6 +262,81 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertNoDanglingSessions();
 
         // Other sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testAutoFillMultipleDatasetsPickFirst() throws Exception {
+        multipleDatasetsTest(1);
+    }
+
+    @Test
+    public void testAutoFillMultipleDatasetsPickSecond() throws Exception {
+        multipleDatasetsTest(2);
+    }
+
+    @Test
+    public void testAutoFillMultipleDatasetsPickThird() throws Exception {
+        multipleDatasetsTest(3);
+    }
+
+    private void multipleDatasetsTest(int number) throws Exception {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutoFillValue.forText("mr_plow"))
+                        .setField(ID_PASSWORD, AutoFillValue.forText("D'OH!"))
+                        .setPresentation(createPresentation("Mr Plow"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutoFillValue.forText("el barto"))
+                        .setField(ID_PASSWORD, AutoFillValue.forText("aycaramba!"))
+                        .setPresentation(createPresentation("El Barto"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutoFillValue.forText("mr sparkle"))
+                        .setField(ID_PASSWORD, AutoFillValue.forText("Aw3someP0wer"))
+                        .setPresentation(createPresentation("Mr Sparkle"))
+                        .build())
+                .build());
+        final String name;
+
+        switch (number) {
+            case 1:
+                name = "Mr Plow";
+                mLoginActivity.expectAutoFill("mr_plow", "D'OH!");
+                break;
+            case 2:
+                name = "El Barto";
+                mLoginActivity.expectAutoFill("el barto", "aycaramba!");
+                break;
+            case 3:
+                name = "Mr Sparkle";
+                mLoginActivity.expectAutoFill("mr sparkle", "Aw3someP0wer");
+                break;
+            default:
+                throw new IllegalArgumentException("invalid dataset number: " + number);
+        }
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+
+        // Make sure all datasets are shown.
+        sUiBot.assertDatasets("Mr Plow", "El Barto", "Mr Sparkle");
+
+        // Auto-fill it.
+        sUiBot.selectDataset(name);
+
+        // Check the results.
+        mLoginActivity.assertAutoFilled();
+
+        // Sanity checks.
         waitUntilDisconnected();
     }
 

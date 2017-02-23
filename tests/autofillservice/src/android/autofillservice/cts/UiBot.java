@@ -31,6 +31,9 @@ import android.util.Log;
  */
 final class UiBot {
 
+    // TODO(b/33197203): Use a more qualified id to avoid conflict with OEM views.
+    private static final String RESOURCE_DATASET_PICKER = "list";
+
     private static final String TAG = "AutoFillCtsUiBot";
 
     private final UiDevice mDevice;
@@ -47,7 +50,7 @@ final class UiBot {
     void assertNoDatasets() {
         final UiObject2 ui;
         try {
-            ui = waitForObject(By.res("android", "list"));
+            ui = waitForObject(By.res("android", RESOURCE_DATASET_PICKER));
         } catch (Throwable t) {
             // TODO(b/33197203): use a more elegant check than catching the expection because it's
             // not showing...
@@ -57,12 +60,25 @@ final class UiBot {
     }
 
     /**
+     * Asserts the dataset chooser is shown and contains the given datasets.
+     */
+    void assertDatasets(String...names) {
+        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_DATASET_PICKER));
+
+        for (String name : names) {
+            final UiObject2 dataset = picker.findObject(By.text(name));
+            assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
+        }
+    }
+
+    /**
      * Selects a dataset that should be visible in the floating UI.
      */
     void selectDataset(String name) {
-        // TODO(b/33197203): Use more qualified ids for UI.
-        waitForObject(By.res("android", "list"));
-        selectByText(name);
+        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_DATASET_PICKER));
+        final UiObject2 dataset = picker.findObject(By.text(name));
+        assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
+        dataset.click();
     }
 
     /**
