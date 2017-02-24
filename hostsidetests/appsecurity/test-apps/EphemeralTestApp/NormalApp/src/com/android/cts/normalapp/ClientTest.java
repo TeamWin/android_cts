@@ -198,17 +198,16 @@ public class ClientTest {
         } catch (ActivityNotFoundException expected) {
         }
 
-// TODO: Make this work. It's unclear the best way to expose VIEW/BROWSABLE just for launching
-//      // start the ephemeral activity; using VIEW/BROWSABLE
-//      {
-//          final Intent startViewIntent = new Intent(Intent.ACTION_VIEW);
-//          startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
-//          startViewIntent.setData(Uri.parse("https://cts.google.com/ephemeral"));
-//          InstrumentationRegistry.getContext().startActivity(startViewIntent, null /*options*/);
-//          final BroadcastResult testResult = getResult();
-//          assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
-//          assertThat("EphemeralActivity", is(testResult.activityName));
-//      }
+        // start the ephemeral activity; using VIEW/BROWSABLE
+        {
+            final Intent startViewIntent = new Intent(Intent.ACTION_VIEW);
+            startViewIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+            startViewIntent.setData(Uri.parse("https://cts.google.com/ephemeral"));
+            InstrumentationRegistry.getContext().startActivity(startViewIntent, null /*options*/);
+            final BroadcastResult testResult = getResult();
+            assertThat("com.android.cts.ephemeralapp1", is(testResult.packageName));
+            assertThat("EphemeralActivity", is(testResult.activityName));
+        }
     }
 
     private BroadcastResult getResult() {
