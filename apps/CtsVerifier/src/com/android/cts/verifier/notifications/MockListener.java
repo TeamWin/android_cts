@@ -30,7 +30,6 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +55,7 @@ public class MockListener extends NotificationListenerService {
     static final String SERVICE_PROBE_HINTS = SERVICE_BASE + "SERVICE_PROBE_HINTS";
     static final String SERVICE_ORDER = SERVICE_BASE + "SERVICE_ORDER";
     static final String SERVICE_DND = SERVICE_BASE + "SERVICE_DND";
-    static final String SERVICE_SNOOZE_UNTIL = SERVICE_BASE + "SERVICE_SNOOZE_UNTIL";
+    static final String SERVICE_SNOOZE_DURATION = SERVICE_BASE + "SERVICE_SNOOZE_DURATION";
     static final String SERVICE_GET_SNOOZED = SERVICE_BASE + "GET_SNOOZED";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
@@ -162,7 +161,7 @@ public class MockListener extends NotificationListenerService {
                     bundle.putInt(EXTRA_INT, MockListener.this.getCurrentListenerHints());
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
-                } else if (SERVICE_SNOOZE_UNTIL.equals(action)) {
+                } else if (SERVICE_SNOOZE_DURATION.equals(action)) {
                     String tag = intent.getStringExtra(EXTRA_TAG);
                     String key = mNotificationKeys.get(tag);
                     MockListener.this.snoozeNotification(key,
@@ -196,7 +195,7 @@ public class MockListener extends NotificationListenerService {
         filter.addAction(SERVICE_SNOOZE);
         filter.addAction(SERVICE_HINTS);
         filter.addAction(SERVICE_PROBE_HINTS);
-        filter.addAction(SERVICE_SNOOZE_UNTIL);
+        filter.addAction(SERVICE_SNOOZE_DURATION);
         filter.addAction(SERVICE_GET_SNOOZED);
         registerReceiver(mReceiver, filter);
     }
@@ -357,11 +356,11 @@ public class MockListener extends NotificationListenerService {
         sendCommand(context, SERVICE_CLEAR_ONE, tag, code);
     }
 
-    public static void snoozeOneUntil(Context context, String tag, long until) {
-        Intent broadcast = new Intent(SERVICE_SNOOZE_UNTIL);
+    public static void snoozeOneFor(Context context, String tag, long duration) {
+        Intent broadcast = new Intent(SERVICE_SNOOZE_DURATION);
         if (tag != null) {
             broadcast.putExtra(EXTRA_TAG, tag);
-            broadcast.putExtra(EXTRA_LONG, until);
+            broadcast.putExtra(EXTRA_LONG, duration);
         }
         context.sendBroadcast(broadcast);
     }

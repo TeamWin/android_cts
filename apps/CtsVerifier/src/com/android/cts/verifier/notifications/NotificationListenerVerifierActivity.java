@@ -716,8 +716,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         void test() {
             status = RETEST;
             if (state == READY_TO_SNOOZE) {
-                MockListener.snoozeOneUntil(mContext, mTag1,
-                        System.currentTimeMillis() + snoozeTime);
+                MockListener.snoozeOneFor(mContext, mTag1, snoozeTime);
                 state = SNOOZED;
             } else if (state == SNOOZED){
                 MockListener.probeListenerRemovedWithReason(mContext,
@@ -805,10 +804,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         void test() {
             status = RETEST;
             if (state == READY_TO_SNOOZE) {
-                MockListener.snoozeOneUntil(mContext, mTag1,
-                        System.currentTimeMillis() + snoozeTime);
-                MockListener.snoozeOneUntil(mContext, mTag2,
-                        System.currentTimeMillis() + snoozeTime);
+                MockListener.snoozeOneFor(mContext, mTag1, snoozeTime);
+                MockListener.snoozeOneFor(mContext, mTag2, snoozeTime);
                 state = SNOOZED;
             } else if (state == SNOOZED){
                 MockListener.probeListenerRemovedWithReason(mContext,
