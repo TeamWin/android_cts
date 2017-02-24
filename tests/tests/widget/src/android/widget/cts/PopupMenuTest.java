@@ -290,9 +290,9 @@ public class PopupMenuTest {
                 assertNull(item.getContentDescription());
                 assertNull(item.getTooltipText());
             }
-
+            // Tooltips are not set on list-based menus.
+            assertNull(itemView.getTooltipText());
             assertEquals(item.getContentDescription(), itemView.getContentDescription());
-            assertEquals(item.getTooltipText(), itemView.getTooltipText());
         }
     }
 
