@@ -313,8 +313,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
             assertFalse(f.canRead());
             assertFalse(f.canWrite());
             assertFalse(f.canExecute());
-            assertFileOwnedBy(f, "root");
-            assertFileOwnedByGroup(f, "root");
         }
 
         if (supported_64 || supported) {
@@ -323,8 +321,6 @@ public class FileSystemPermissionTest extends AndroidTestCase {
             assertFalse(f.canRead());
             assertFalse(f.canWrite());
             assertFalse(f.canExecute());
-            assertFileOwnedBy(f, "root");
-            assertFileOwnedByGroup(f, "root");
         }
     }
 
