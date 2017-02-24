@@ -36,6 +36,7 @@ import java.util.HashMap;
  */
 public class MetadataReporterTest extends TestCase {
 
+    private static final String ROOT_PROPERTY = "TESTS_ROOT";
     private static final String MIN_TEST_DURATION = "10";
     private static final String BUILD_NUMBER = "2";
     private static final String SUITE_PLAN = "cts";
@@ -72,7 +73,7 @@ public class MetadataReporterTest extends TestCase {
         mBase.mkdirs();
         mTests = new File(mBase, TESTCASES);
         mTests.mkdirs();
-        System.setProperty(CompatibilityBuildHelper.ROOT_DIR, mRoot.getAbsolutePath());
+        System.setProperty(ROOT_PROPERTY, mRoot.getAbsolutePath());
         mBuildInfo = new BuildInfo(BUILD_NUMBER, "", "");
         mBuildHelper = new CompatibilityBuildHelper(mBuildInfo);
         mBuildHelper.init(SUITE_PLAN, DYNAMIC_CONFIG_URL, START_TIME);
