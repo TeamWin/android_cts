@@ -33,8 +33,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
-import android.autofillservice.cts.R;
-
 /**
  * Base class for all other tests.
  */
