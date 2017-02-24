@@ -27,6 +27,9 @@ import static android.autofillservice.cts.LoginActivity.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -43,6 +46,7 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutoFillValue;
 
 import org.junit.Before;
@@ -373,8 +377,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final String actualMessage = mLoginActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
-        // Assert the snack bar is shown and tap "Save".
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
+
+        // Assert the snack bar is shown and tap "Save".
         sUiBot.saveForAutofill(true);
 
         final SaveRequest saveRequest = replier.getNextSaveRequest();
@@ -392,6 +397,69 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Sanity check: once saved, the session should be finsihed.
         assertNoDanglingSessions();
+
+        // Other sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testCustomizedSavePassword() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Test
+    public void testCustomizedSaveAddress() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_ADDRESS);
+    }
+
+    @Test
+    public void testCustomizedSaveCreditCard() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_CREDIT_CARD);
+    }
+
+    private void customizedSaveTest(int type) throws Exception {
+        enableService();
+
+        // Set service.
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        final String saveDescription = "Your data will be saved with love and care...";
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSaveDescription(saveDescription)
+                .setSaveType(type)
+                .build());
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+
+        // Sanity check.
+        sUiBot.assertNoDatasets();
+
+        // Wait for onFill() before proceeding, otherwise the fields might be changed before
+        // the session started
+        replier.getNextFillRequest();
+
+        // Set credentials...
+        mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
+        mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mLoginActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
+
+        // Assert the snack bar is shown and tap "Save".
+        final UiObject2 saveSnackBar = sUiBot.assertSaveShowing(type, saveDescription);
+        sUiBot.saveForAutofill(saveSnackBar, true);
+
+        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Other sanity checks.
         waitUntilDisconnected();

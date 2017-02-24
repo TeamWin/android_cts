@@ -16,9 +16,15 @@
 
 package android.autofillservice.cts;
 
+import static android.service.autofill.SaveInfo.*;
+
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
+import android.content.Context;
+import android.content.res.Resources;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -31,8 +37,17 @@ import android.util.Log;
  */
 final class UiBot {
 
-    // TODO(b/33197203): Use a more qualified id to avoid conflict with OEM views.
-    private static final String RESOURCE_DATASET_PICKER = "list";
+    private static final String RESOURCE_ID_DATASET_PICKER = "autofill_dataset_picker";
+    private static final String RESOURCE_ID_SAVE_SNACKBAR = "autofill_save";
+    private static final String RESOURCE_ID_SAVE_TITLE = "autofill_save_title";
+
+    private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
+    private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
+            "autofill_save_title_with_type";
+    private static final String RESOURCE_STRING_SAVE_TYPE_PASSWORD = "autofill_save_type_password";
+    private static final String RESOURCE_STRING_SAVE_TYPE_ADDRESS = "autofill_save_type_address";
+    private static final String RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD =
+            "autofill_save_type_credit_card";
 
     private static final String TAG = "AutoFillCtsUiBot";
 
@@ -50,7 +65,7 @@ final class UiBot {
     void assertNoDatasets() {
         final UiObject2 ui;
         try {
-            ui = waitForObject(By.res("android", RESOURCE_DATASET_PICKER));
+            ui = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
         } catch (Throwable t) {
             // TODO(b/33197203): use a more elegant check than catching the expection because it's
             // not showing...
@@ -63,7 +78,7 @@ final class UiBot {
      * Asserts the dataset chooser is shown and contains the given datasets.
      */
     void assertDatasets(String...names) {
-        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_DATASET_PICKER));
+        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
 
         for (String name : names) {
             final UiObject2 dataset = picker.findObject(By.text(name));
@@ -75,7 +90,7 @@ final class UiBot {
      * Selects a dataset that should be visible in the floating UI.
      */
     void selectDataset(String name) {
-        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_DATASET_PICKER));
+        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
         final UiObject2 dataset = picker.findObject(By.text(name));
         assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
         dataset.click();
@@ -92,13 +107,80 @@ final class UiBot {
     }
 
     /**
+     * Asserts the save snackbar is showing and returns it.
+     */
+    UiObject2 assertSaveShowing() {
+        return assertSaveShowing(SAVE_DATA_TYPE_GENERIC, null);
+    }
+
+    UiObject2 assertSaveShowing(int type, String description) {
+        final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR));
+
+        final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
+        assertWithMessage("save title (%s)", RESOURCE_ID_SAVE_TITLE).that(titleView).isNotNull();
+
+        final Resources resources = InstrumentationRegistry.getContext().getResources();
+        final String serviceLabel = InstrumentedAutoFillService.class.getSimpleName();
+        final String expectedTitle;
+        if (type == SAVE_DATA_TYPE_GENERIC) {
+            final int titleId = resources.getIdentifier(RESOURCE_STRING_SAVE_TITLE, "string",
+                    "android");
+            expectedTitle = resources.getString(titleId, serviceLabel);
+        } else {
+            final String typeResourceName;
+            switch (type) {
+                case SAVE_DATA_TYPE_PASSWORD:
+                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_PASSWORD;
+                    break;
+                case SAVE_DATA_TYPE_ADDRESS:
+                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_ADDRESS;
+                    break;
+                case SAVE_DATA_TYPE_CREDIT_CARD:
+                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported type: " + type);
+            }
+            final int typeId = resources.getIdentifier(typeResourceName, "string", "android");
+            final String typeString = resources.getString(typeId);
+            final int titleId = resources.getIdentifier(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE,
+                    "string", "android");
+            expectedTitle = resources.getString(titleId, typeString, serviceLabel);
+        }
+
+        final String actualTitle = titleView.getText();
+        Log.d(TAG, "save title: " + actualTitle);
+        assertThat(actualTitle).isEqualTo(expectedTitle);
+
+        if (description != null) {
+            final UiObject2 saveSubTitle = snackbar.findObject(By.text(description));
+            assertWithMessage("save subtitle(%s)", description).that(saveSubTitle).isNotNull();
+        }
+
+        return snackbar;
+    }
+
+    /**
      * Taps an option in the save snackbar.
      *
      * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
      */
     void saveForAutofill(boolean yesDoIt) {
+        final UiObject2 saveSnackBar = assertSaveShowing();
+        saveForAutofill(saveSnackBar, true);
+    }
+
+    /**
+     * Taps an option in the save snackbar.
+     *
+     * @param saveSnackBar Save snackbar, typically obtained through {@link #assertSaveShowing()}.
+     * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
+     */
+    void saveForAutofill(UiObject2 saveSnackBar, boolean yesDoIt) {
         final String id = yesDoIt ? "autofill_save_yes" : "autofill_save_no";
-        final UiObject2 button = waitForObject(By.res("android", id));
+
+        final UiObject2 button = saveSnackBar.findObject(By.res("android", id));
+        assertWithMessage("save button (%s)", id).that(button).isNotNull();
         button.click();
     }
 
