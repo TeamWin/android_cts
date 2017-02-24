@@ -43,15 +43,17 @@ static int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC) {
 // Test AAudioStreamBuilder
 TEST(test_aaudio, aaudio_stream_builder) {
 
-    AAudioStreamBuilder aaudioBuilder1;
-    AAudioStreamBuilder aaudioBuilder2;
+    AAudioStreamBuilder* aaudioBuilder1 = nullptr;
+    AAudioStreamBuilder* aaudioBuilder2 = nullptr;
 
     // Use an AAudioStreamBuilder to define the stream.
     aaudio_result_t result = AAudio_createStreamBuilder(&aaudioBuilder1);
     ASSERT_EQ(AAUDIO_OK, result);
+    ASSERT_NE(nullptr, aaudioBuilder1);
 
     // Create a second builder and make sure they do not collide.
     ASSERT_EQ(AAUDIO_OK, AAudio_createStreamBuilder(&aaudioBuilder2));
+    ASSERT_NE(nullptr, aaudioBuilder2);
 
     ASSERT_NE(aaudioBuilder1, aaudioBuilder2);
 
@@ -65,16 +67,18 @@ TEST(test_aaudio, aaudio_stream_builder) {
 
 // Test creating a default stream with everything unspecified.
 TEST(test_aaudio, aaudio_stream_unspecified) {
-    AAudioStreamBuilder aaudioBuilder;
-    AAudioStream aaudioStream;
+    AAudioStreamBuilder *aaudioBuilder = nullptr;
+    AAudioStream *aaudioStream = nullptr;
     aaudio_result_t result = AAUDIO_OK;
 
     // Use an AAudioStreamBuilder to define the stream.
     result = AAudio_createStreamBuilder(&aaudioBuilder);
     ASSERT_EQ(AAUDIO_OK, result);
+    ASSERT_NE(nullptr, aaudioBuilder);
 
     // Create an AAudioStream using the Builder.
     ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream));
+    ASSERT_NE(nullptr, aaudioStream);
 
     // Cleanup
     EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
@@ -105,8 +109,8 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     int64_t timeoutNanos;
 
     aaudio_stream_state_t state = AAUDIO_STREAM_STATE_UNINITIALIZED;
-    AAudioStreamBuilder aaudioBuilder;
-    AAudioStream aaudioStream;
+    AAudioStreamBuilder *aaudioBuilder = nullptr;
+    AAudioStream *aaudioStream = nullptr;
 
     aaudio_result_t result = AAUDIO_OK;
 
@@ -142,6 +146,9 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
                 || actualSharingMode == AAUDIO_SHARING_MODE_SHARED);
 
     actualDataFormat = AAudioStream_getFormat(aaudioStream);
+
+    // TODO test this on full build
+    // ASSERT_NE(AAUDIO_DEVICE_UNSPECIFIED, AAudioStream_getDeviceId(aaudioStream));
 
     framesPerBurst = AAudioStream_getFramesPerBurst(aaudioStream);
     ASSERT_TRUE(framesPerBurst >= 16 && framesPerBurst <= 1024); // TODO what is min/max?
@@ -288,7 +295,7 @@ TEST(test_aaudio, aaudio_stream_exclusive) {
 #define AAUDIO_THREAD_DURATION_MSEC       500
 
 static void *TestAAudioStreamThreadProc(void *arg) {
-    AAudioStream aaudioStream = (AAudioStream) reinterpret_cast<size_t>(arg);
+    AAudioStream* aaudioStream = (AAudioStream*) reinterpret_cast<size_t>(arg);
     aaudio_stream_state_t state;
 
     // Use this to sleep by waiting for something that won't happen.
@@ -300,8 +307,8 @@ static void *TestAAudioStreamThreadProc(void *arg) {
 
 // Test creating a stream related thread.
 TEST(test_aaudio, aaudio_stream_thread_basic) {
-    AAudioStreamBuilder aaudioBuilder;
-    AAudioStream aaudioStream;
+    AAudioStreamBuilder *aaudioBuilder = nullptr;
+    AAudioStream *aaudioStream = nullptr;
     aaudio_result_t result = AAUDIO_OK;
     void *threadResult;
 
