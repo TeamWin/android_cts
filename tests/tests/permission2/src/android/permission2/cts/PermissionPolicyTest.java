@@ -90,15 +90,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
             // OEMs cannot change permission protection flags
             final int expectedProtectionFlags = expectedPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_FLAGS;
-            int declaredProtectionFlags = declaredPermission.protectionLevel
+            final int declaredProtectionFlags = declaredPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_FLAGS;
-            // Device makers are allowed to backport the framework fix on nougat mr1
-            // https://android.googlesource.com/platform/frameworks/base/+/b2457c
-            if (expectedPermissionName.equals("android.permission.PEERS_MAC_ADDRESS")
-                && declaredProtectionFlags == 0)
-            {
-                declaredProtectionFlags = PermissionInfo.PROTECTION_FLAG_SETUP;
-            }
             assertEquals("Permission " + expectedPermissionName + " invalid enforced protection"
                     + " level flags", expectedProtectionFlags, declaredProtectionFlags);
 
