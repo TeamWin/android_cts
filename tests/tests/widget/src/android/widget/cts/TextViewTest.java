@@ -2975,49 +2975,6 @@ public class TextViewTest {
                 tvTwoLines.getHeight(), tvEllipsizeEnd.getHeight());
     }
 
-    @Test
-    public void testTextViewInWeigthenedLayoutChangesWidthAfterSetText() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            mTextView = new TextView(mActivity);
-            mTextView.setEllipsize(TruncateAt.END);
-            mTextView.setSingleLine(true);
-            mTextView.setText("a");
-
-            mSecondTextView = new TextView(mActivity);
-            mSecondTextView.setSingleLine(true);
-            mSecondTextView.setText("any");
-        });
-        mInstrumentation.waitForIdleSync();
-
-        final LinearLayout layout = new LinearLayout(mActivity);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-
-        // TextView under test has weight 1, and width 0
-        layout.addView(mTextView, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-
-        // other TextView has default weight
-        layout.addView(mSecondTextView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        // main layout params
-        layout.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        mActivityRule.runOnUiThread(() -> mActivity.setContentView(layout));
-        mInstrumentation.waitForIdleSync();
-
-        int oldWidth = mTextView.getWidth();
-
-        mActivityRule.runOnUiThread(() -> mTextView.setText("aaa"));
-        mInstrumentation.waitForIdleSync();
-
-        assertTrue("TextView should have larger width after a longer text is set",
-                mTextView.getWidth() > oldWidth);
-    }
-
-
     @UiThreadTest
     @Test
     public void testAccessCursorVisible() {
