@@ -388,30 +388,33 @@ public class VectorDrawableTest {
         VectorDrawable d1 = (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
         VectorDrawable d2 = (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
         VectorDrawable d3 = (VectorDrawable) mResources.getDrawable(R.drawable.vector_icon_create);
-        int originalAlpha = d2.getAlpha();
+        int restoreAlpha = d1.getAlpha();
 
-        d1.setAlpha(0x80);
-        assertEquals(0x80, d1.getAlpha());
-        assertEquals(0x80, d2.getAlpha());
-        assertEquals(0x80, d3.getAlpha());
+        try {
+            // verify bad behavior - modify before mutate pollutes other drawables
+            d1.setAlpha(0x80);
+            assertEquals(0x80, d1.getAlpha());
+            assertEquals(0x80, d2.getAlpha());
+            assertEquals(0x80, d3.getAlpha());
 
-        d1.mutate();
-        d1.setAlpha(0x40);
-        assertEquals(0x40, d1.getAlpha());
-        assertEquals(0x80, d2.getAlpha());
-        assertEquals(0x80, d3.getAlpha());
+            d1.mutate();
+            d1.setAlpha(0x40);
+            assertEquals(0x40, d1.getAlpha());
+            assertEquals(0x80, d2.getAlpha());
+            assertEquals(0x80, d3.getAlpha());
 
-        d2.setAlpha(0x00);
-        d2.mutate();
-        // Test that after mutating, the alpha value is copied over.
-        assertEquals(0x00, d2.getAlpha());
+            d2.setAlpha(0x00);
+            d2.mutate();
+            // Test that after mutating, the alpha value is copied over.
+            assertEquals(0x00, d2.getAlpha());
 
-        d2.setAlpha(0x20);
-        assertEquals(0x40, d1.getAlpha());
-        assertEquals(0x20, d2.getAlpha());
-        assertEquals(0x00, d3.getAlpha());
-
-        d3.setAlpha(originalAlpha);
+            d2.setAlpha(0x20);
+            assertEquals(0x40, d1.getAlpha());
+            assertEquals(0x20, d2.getAlpha());
+            assertEquals(0x00, d3.getAlpha());
+        } finally {
+            mResources.getDrawable(R.drawable.vector_icon_create).setAlpha(restoreAlpha);
+        }
     }
 
     @SmallTest

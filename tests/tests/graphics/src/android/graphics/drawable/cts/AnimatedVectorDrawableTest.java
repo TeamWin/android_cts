@@ -149,27 +149,33 @@ public class AnimatedVectorDrawableTest {
         AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
         AnimatedVectorDrawable d2 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
         AnimatedVectorDrawable d3 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
-        int originalAlpha = d2.getAlpha();
-        int newAlpha = (originalAlpha + 1) % 255;
+        int restoreAlpha = d1.getAlpha();
 
-        // AVD is different than VectorDrawable. Every instance of it is a deep copy
-        // of the VectorDrawable.
-        // So every setAlpha operation will happen only to that specific object.
-        d1.setAlpha(newAlpha);
-        assertEquals(newAlpha, d1.getAlpha());
-        assertEquals(originalAlpha, d2.getAlpha());
-        assertEquals(originalAlpha, d3.getAlpha());
+        try {
+            int originalAlpha = d2.getAlpha();
+            int newAlpha = (originalAlpha + 1) % 255;
 
-        d1.mutate();
-        d1.setAlpha(0x40);
-        assertEquals(0x40, d1.getAlpha());
-        assertEquals(originalAlpha, d2.getAlpha());
-        assertEquals(originalAlpha, d3.getAlpha());
+            // AVD is different than VectorDrawable. Every instance of it is a deep copy
+            // of the VectorDrawable.
+            // So every setAlpha operation will happen only to that specific object.
+            d1.setAlpha(newAlpha);
+            assertEquals(newAlpha, d1.getAlpha());
+            assertEquals(originalAlpha, d2.getAlpha());
+            assertEquals(originalAlpha, d3.getAlpha());
 
-        d2.setAlpha(0x20);
-        assertEquals(0x40, d1.getAlpha());
-        assertEquals(0x20, d2.getAlpha());
-        assertEquals(originalAlpha, d3.getAlpha());
+            d1.mutate();
+            d1.setAlpha(0x40);
+            assertEquals(0x40, d1.getAlpha());
+            assertEquals(originalAlpha, d2.getAlpha());
+            assertEquals(originalAlpha, d3.getAlpha());
+
+            d2.setAlpha(0x20);
+            assertEquals(0x40, d1.getAlpha());
+            assertEquals(0x20, d2.getAlpha());
+            assertEquals(originalAlpha, d3.getAlpha());
+        } finally {
+            mResources.getDrawable(mResId).setAlpha(restoreAlpha);
+        }
     }
 
     @Test

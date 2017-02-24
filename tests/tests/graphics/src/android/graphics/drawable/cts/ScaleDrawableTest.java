@@ -478,22 +478,29 @@ public class ScaleDrawableTest {
         ScaleDrawable d1 = (ScaleDrawable) mContext.getDrawable(R.drawable.scaledrawable);
         ScaleDrawable d2 = (ScaleDrawable) mContext.getDrawable(R.drawable.scaledrawable);
         ScaleDrawable d3 = (ScaleDrawable) mContext.getDrawable(R.drawable.scaledrawable);
+        int restoreAlpha = d1.getAlpha();
 
-        d1.setAlpha(100);
-        assertEquals(100, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+        try {
+            // verify bad behavior - modify before mutate pollutes other drawables
+            d1.setAlpha(100);
+            assertEquals(100, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
 
-        d1.mutate();
-        d1.setAlpha(200);
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+            d1.mutate();
+            d1.setAlpha(200);
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
 
-        d2.setAlpha(50);
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+            d2.setAlpha(50);
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable()).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d2.getDrawable()).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d3.getDrawable()).getPaint().getAlpha());
+        } finally {
+            // restore externally visible state, since other tests may use the drawable
+            mContext.getDrawable(R.drawable.scaledrawable).setAlpha(restoreAlpha);
+        }
     }
 
     // Since Mockito can't mock or spy on protected methods, we have a custom extension

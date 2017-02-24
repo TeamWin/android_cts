@@ -1632,33 +1632,39 @@ public class LayerDrawableTest {
         LayerDrawable d1 = (LayerDrawable) mContext.getDrawable(R.drawable.layerdrawable);
         LayerDrawable d2 = (LayerDrawable) mContext.getDrawable(R.drawable.layerdrawable);
         LayerDrawable d3 = (LayerDrawable) mContext.getDrawable(R.drawable.layerdrawable);
+        int restoreAlpha = d1.getAlpha();
 
-        d1.setAlpha(100);
-        assertEquals(100, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+        try {
+            // verify bad behavior - modify before mutate pollutes other drawables
+            d1.setAlpha(100);
+            assertEquals(100, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
 
-        d1.mutate();
-        d1.setAlpha(200);
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(100, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+            d1.mutate();
+            d1.setAlpha(200);
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(100, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
 
-        d2.setAlpha(50);
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
-        assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+            d2.setAlpha(50);
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(200, ((BitmapDrawable) d1.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d2.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+            assertEquals(50, ((BitmapDrawable) d3.getDrawable(0)).getPaint().getAlpha());
+        } finally {
+            // restore externally visible state, since other tests may use the drawable
+            mContext.getDrawable(R.drawable.layerdrawable).setAlpha(restoreAlpha);
+        }
     }
-
 
     @Test
     public void testPreloadDensity() throws XmlPullParserException, IOException {
