@@ -241,6 +241,11 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
             MoreAsserts.assertContainsRegex("is not installed on the current user",
                         ex.getMessage());
         }
+        if (!shouldThrowException) {
+            assertTrue("Cert install delegate was not set on uninstalled package",
+                    NOT_EXIST_CERT_INSTALLER_PACKAGE.equals(
+                            mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)));
+        }
     }
 
     /**

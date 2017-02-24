@@ -705,8 +705,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void executeDelegationTests(String[] delegationTests, boolean positive)
             throws Exception {
         for (String delegationTestClass : delegationTests) {
-            CLog.e("Delegation test " + delegationTestClass + " " +
-                    (positive ? "testCanAccessApis" : "testCannotAccessApis"));
             runDeviceTestsAsUser(DELEGATE_APP_PKG, delegationTestClass,
                 positive ? "testCanAccessApis" : "testCannotAccessApis", mUserId);
         }
