@@ -35,6 +35,7 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  android-support-v4 \
 # Use multi-dex as the compatibility-common-util-devicesidelib dependency
 # on compatibility-device-util pushes us beyond 64k methods.
 LOCAL_JACK_FLAGS := --multi-dex legacy
+LOCAL_DX_FLAGS := --multi-dex
 
 # Resource unit tests use a private locale and some densities
 LOCAL_AAPT_FLAGS = -c small -c normal -c large -c xlarge \
