@@ -2510,10 +2510,10 @@ public class TextViewTest {
         assertEquals(mTextView.getScrollY() + mTextView.getHeight(), rc.bottom);
 
         mActivityRule.runOnUiThread(() -> {
-            mTextView.setSelected(true);
-            SpannableString text = new SpannableString(mTextView.getText());
-            Selection.setSelection(text, 3, 13);
+            final SpannableString text = new SpannableString(mTextView.getText());
+            mTextView.setTextIsSelectable(true);
             mTextView.setText(text);
+            Selection.setSelection((Spannable) mTextView.getText(), 3, 13);
         });
         mInstrumentation.waitForIdleSync();
         mTextView.getFocusedRect(rc);
@@ -2529,10 +2529,10 @@ public class TextViewTest {
         assertEquals(mTextView.getLayout().getLineBottom(0), rc.bottom);
 
         mActivityRule.runOnUiThread(() -> {
-            mTextView.setSelected(true);
-            SpannableString text = new SpannableString(mTextView.getText());
-            Selection.setSelection(text, 13, 3);
+            final SpannableString text = new SpannableString(mTextView.getText());
+            mTextView.setTextIsSelectable(true);
             mTextView.setText(text);
+            Selection.setSelection((Spannable) mTextView.getText(), 13, 3);
         });
         mInstrumentation.waitForIdleSync();
         mTextView.getFocusedRect(rc);
@@ -2551,10 +2551,10 @@ public class TextViewTest {
         assertEquals(mTextView.getScrollY() + mTextView.getHeight(), rc.bottom);
 
         mActivityRule.runOnUiThread(() -> {
-            mTextView.setSelected(true);
-            SpannableString text = new SpannableString(mTextView.getText());
-            Selection.setSelection(text, 2, 4);
+            final SpannableString text = new SpannableString(mTextView.getText());
+            mTextView.setTextIsSelectable(true);
             mTextView.setText(text);
+            Selection.setSelection((Spannable) mTextView.getText(), 2, 4);
         });
         mInstrumentation.waitForIdleSync();
         mTextView.getFocusedRect(rc);
@@ -2565,10 +2565,11 @@ public class TextViewTest {
         assertEquals(mTextView.getLayout().getLineBottom(0), rc.bottom);
 
         mActivityRule.runOnUiThread(() -> {
-            mTextView.setSelected(true);
-            SpannableString text = new SpannableString(mTextView.getText());
-            Selection.setSelection(text, 2, 10); // cross the "\n" and two lines
+            final SpannableString text = new SpannableString(mTextView.getText());
+            mTextView.setTextIsSelectable(true);
             mTextView.setText(text);
+            // cross the "\n" and two lines
+            Selection.setSelection((Spannable) mTextView.getText(), 2, 10);
         });
         mInstrumentation.waitForIdleSync();
         mTextView.getFocusedRect(rc);
