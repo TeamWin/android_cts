@@ -23,6 +23,8 @@ import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.StrictMode;
 import android.os.SystemClock;
+import android.system.Os;
+import android.system.OsConstants;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -30,6 +32,9 @@ import libcore.io.Streams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
@@ -42,7 +47,8 @@ import java.util.Date;
 public class StrictModeTest extends InstrumentationTestCase {
     private static final String TAG = "StrictModeTest";
 
-    private StrictMode.VmPolicy mPolicy;
+    private StrictMode.ThreadPolicy mThreadPolicy;
+    private StrictMode.VmPolicy mVmPolicy;
 
     private Context getContext() {
         return getInstrumentation().getContext();
@@ -50,12 +56,14 @@ public class StrictModeTest extends InstrumentationTestCase {
 
     @Override
     protected void setUp() {
-        mPolicy = StrictMode.getVmPolicy();
+        mThreadPolicy = StrictMode.getThreadPolicy();
+        mVmPolicy = StrictMode.getVmPolicy();
     }
 
     @Override
     protected void tearDown() {
-        StrictMode.setVmPolicy(mPolicy);
+        StrictMode.setThreadPolicy(mThreadPolicy);
+        StrictMode.setVmPolicy(mVmPolicy);
     }
 
     /**
@@ -192,8 +200,136 @@ public class StrictModeTest extends InstrumentationTestCase {
         assertLogged("Untagged socket detected", mark);
     }
 
+    public void testRead() throws Exception {
+        final File test = File.createTempFile("foo", "bar");
+        final File dir = test.getParentFile();
+
+        FileInputStream is = null;
+        FileDescriptor fd = null;
+
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads()
+                .penaltyLog()
+                .build());
+
+        SystemClock.sleep(1500);
+
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            test.exists();
+        }
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            test.length();
+        }
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            dir.list();
+        }
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            is = new FileInputStream(test);
+        }
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            is.read();
+        }
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            fd = Os.open(test.getAbsolutePath(), OsConstants.O_RDONLY, 0600);
+        }
+        try (AssertDiskReadLogged l = new AssertDiskReadLogged()) {
+            Os.read(fd, new byte[10], 0, 1);
+        }
+    }
+
+    public void testWrite() throws Exception {
+        File file = null;
+
+        FileOutputStream os = null;
+        FileDescriptor fd = null;
+
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectDiskWrites()
+                .penaltyLog()
+                .build());
+
+        SystemClock.sleep(1500);
+
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            file = File.createTempFile("foo", "bar");
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            file.delete();
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            file.createNewFile();
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            os = new FileOutputStream(file);
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            os.write(32);
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            fd = Os.open(file.getAbsolutePath(), OsConstants.O_RDWR, 0600);
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            Os.write(fd, new byte[10], 0, 1);
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            Os.fsync(fd);
+        }
+        try (AssertDiskWriteLogged l = new AssertDiskWriteLogged()) {
+            file.renameTo(new File(file.getParent(), "foobar"));
+        }
+    }
+
+    public void testNetwork() throws Exception {
+        if (!hasInternetConnection()) {
+            Log.i(TAG, "testUntaggedSockets() ignored on device without Internet");
+            return;
+        }
+
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectNetwork()
+                .penaltyLog()
+                .build());
+
+        long mark = System.currentTimeMillis();
+        try (Socket socket = new Socket("example.com", 80)) {
+            socket.getOutputStream().close();
+        }
+        assertLogged("StrictModeNetworkViolation", mark);
+
+        mark = System.currentTimeMillis();
+        ((HttpURLConnection) new URL("http://example.com/").openConnection()).getResponseCode();
+        assertLogged("StrictModeNetworkViolation", mark);
+    }
+
+    private static class AssertLogged implements AutoCloseable {
+        private final String mMessage;
+        private final long mStart;
+
+        public AssertLogged(String message) {
+            mMessage = message;
+            mStart = System.currentTimeMillis();
+        }
+
+        @Override
+        public void close() throws Exception {
+            assertLogged(mMessage, mStart);
+        }
+    }
+
+    private static class AssertDiskReadLogged extends AssertLogged {
+        public AssertDiskReadLogged() {
+            super("StrictModeDiskReadViolation");
+        }
+    }
+
+    private static class AssertDiskWriteLogged extends AssertLogged {
+        public AssertDiskWriteLogged() {
+            super("StrictModeDiskWriteViolation");
+        }
+    }
+
     private static void assertLogged(String msg, long since) throws Exception {
-        assertLogged(msg, since, 1000);
+        assertLogged(msg, since, 1100);
     }
 
     private static void assertLogged(String msg, long since, long wait) throws Exception {
@@ -202,7 +338,7 @@ public class StrictModeTest extends InstrumentationTestCase {
     }
 
     private static void assertNotLogged(String msg, long since) throws Exception {
-        assertNotLogged(msg, since, 1000);
+        assertNotLogged(msg, since, 1100);
     }
 
     private static void assertNotLogged(String msg, long since, long wait) throws Exception {
