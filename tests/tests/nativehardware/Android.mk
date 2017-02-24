@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := \
     src/Gralloc1MapperTest.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-  libandroid \
+  libnativewindow \
   libandroid_runtime \
   libui \
   libutils \

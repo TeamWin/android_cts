@@ -24,6 +24,7 @@
 
 #include <android/hardware_buffer.h>
 #include <android_runtime/android_hardware_HardwareBuffer.h>
+#include <private/android/AHardwareBufferHelpers.h>
 #include <ui/GraphicBuffer.h>
 #include <utils/Errors.h>
 
@@ -33,15 +34,6 @@ using namespace android;
 
 // Helper routines for checking that allocation was successful; depend on
 // internal implementation details.
-static inline GraphicBuffer* AHardwareBuffer_to_GraphicBuffer(
-        AHardwareBuffer* buffer) {
-    return reinterpret_cast<GraphicBuffer*>(buffer);
-}
-
-static inline AHardwareBuffer* GraphicBuffer_to_AHardwareBuffer(
-        GraphicBuffer* buffer) {
-    return reinterpret_cast<AHardwareBuffer*>(buffer);
-}
 
 static ::testing::AssertionResult BuildFailureMessage(uint32_t expected,
         uint32_t actual, const char* type) {
@@ -138,7 +130,6 @@ TEST(AHardwareBufferTest, AHardwareBuffer_allocate_Succeeds) {
     desc.format = AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM;
     res = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(NO_ERROR, res);
-    GraphicBuffer* gb = AHardwareBuffer_to_GraphicBuffer(buffer);
     EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(buffer, desc));
     AHardwareBuffer_release(buffer);
 }
