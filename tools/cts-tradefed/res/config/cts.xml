@@ -36,4 +36,7 @@
     </target_preparer>
     <template-include name="reporters" default="basic-reporters" />
 
+    <!-- Include additional test metadata output. -->
+    <template-include name="metadata-reporters" default="empty" />
+
 </configuration>
