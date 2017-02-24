@@ -34,7 +34,6 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -71,6 +70,9 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class PopupWindowTest {
+    private static final int WINDOW_SIZE_DP = 50;
+    private static final int CONTENT_SIZE_DP = 30;
+
     private Instrumentation mInstrumentation;
     private PopupWindowCtsActivity mActivity;
     private PopupWindow mPopupWindow;
@@ -83,7 +85,7 @@ public class PopupWindowTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mActivity = (PopupWindowCtsActivity) mActivityRule.getActivity();
+        mActivity = mActivityRule.getActivity();
     }
 
     @Test
@@ -337,7 +339,8 @@ public class PopupWindowTest {
 
     @Test
     public void testShowAsDropDown() throws Throwable {
-        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
+                CONTENT_SIZE_DP));
         popup.setClipToScreenEnabled(false);
         popup.setOverlapAnchor(false);
         popup.setAnimationStyle(0);
@@ -368,7 +371,8 @@ public class PopupWindowTest {
 
     @Test
     public void testShowAsDropDown_ClipToScreen() throws Throwable {
-        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
+                CONTENT_SIZE_DP));
         popup.setClipToScreenEnabled(true);
         popup.setOverlapAnchor(false);
         popup.setAnimationStyle(0);
@@ -399,7 +403,8 @@ public class PopupWindowTest {
 
     @Test
     public void testShowAsDropDown_ClipToScreen_Overlap() throws Throwable {
-        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
+                CONTENT_SIZE_DP));
         popup.setClipToScreenEnabled(true);
         popup.setOverlapAnchor(true);
         popup.setAnimationStyle(0);
@@ -430,7 +435,8 @@ public class PopupWindowTest {
 
     @Test
     public void testShowAsDropDown_ClipToScreen_Overlap_Offset() throws Throwable {
-        final PopupWindow popup = createPopupWindow(createPopupContent(50, 50));
+        final PopupWindow popup = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
+                CONTENT_SIZE_DP));
         popup.setClipToScreenEnabled(true);
         popup.setOverlapAnchor(true);
         popup.setAnimationStyle(0);
@@ -539,8 +545,8 @@ public class PopupWindowTest {
         anchor.getWindowVisibleDisplayFrame(displayFrame);
         final Rect contentFrame = new Rect();
         content.getBoundsOnScreen(contentFrame);
-        assertTrue("Content (" + contentFrame + ") extends outside display (" + displayFrame + ")",
-                displayFrame.contains(contentFrame));
+        assertTrue("Content (" + contentFrame + ") extends outside display ("
+                + displayFrame + ")", displayFrame.contains(contentFrame));
 
         mActivityRule.runOnUiThread(popup::dismiss);
         mInstrumentation.waitForIdleSync();
@@ -606,7 +612,7 @@ public class PopupWindowTest {
         int[] popupContentViewOnScreenXY = new int[2];
         Rect containingRect = new Rect();
 
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         // Do not attach within the decor; we will be measuring location
         // with regard to screen coordinates.
         mPopupWindow.setAttachedInDecor(false);
@@ -646,7 +652,7 @@ public class PopupWindowTest {
         int[] viewOnScreenXY = new int[2];
         int[] viewInWindowXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
         upperAnchor.getLocationOnScreen(anchorXY);
         int height = upperAnchor.getHeight();
@@ -671,7 +677,7 @@ public class PopupWindowTest {
         int[] viewOnScreenXY = new int[2];
         int[] viewInWindowXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
         upperAnchor.getLocationOnScreen(anchorXY);
 
@@ -690,7 +696,7 @@ public class PopupWindowTest {
 
     @Test
     public void testAccessWindowLayoutType() {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         assertEquals(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
                 mPopupWindow.getWindowLayoutType());
         mPopupWindow.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL);
@@ -700,12 +706,11 @@ public class PopupWindowTest {
 
     @Test
     public void testGetMaxAvailableHeight() {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
-        final Point point = new Point();
-        getDisplay().getSize(point);
-        final int displayHeight = point.y;
-
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+        Rect displayFrame = new Rect();
         View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        anchorView.getWindowVisibleDisplayFrame(displayFrame);
+        int displayHeight = displayFrame.height();
         int available = displayHeight - anchorView.getHeight();
         int maxAvailableHeight = mPopupWindow.getMaxAvailableHeight(anchorView);
         int maxAvailableHeightIgnoringBottomDecoration =
@@ -773,7 +778,7 @@ public class PopupWindowTest {
     @UiThreadTest
     @Test
     public void testDismiss() {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         assertFalse(mPopupWindow.isShowing());
         View anchorView = mActivity.findViewById(R.id.anchor_upper);
         mPopupWindow.showAsDropDown(anchorView);
@@ -810,7 +815,7 @@ public class PopupWindowTest {
 
     @Test
     public void testUpdate() throws Throwable {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         mPopupWindow.setBackgroundDrawable(null);
         showPopup();
 
@@ -873,7 +878,7 @@ public class PopupWindowTest {
 
         OnDismissListener dismissListener = mock(OnDismissListener.class);
 
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         mPopupWindow.setEnterTransition(enterTransition);
         mPopupWindow.setExitTransition(exitTransition);
         mPopupWindow.setOnDismissListener(dismissListener);
@@ -899,7 +904,7 @@ public class PopupWindowTest {
         Rect containingRect = new Rect();
 
         mActivityRule.runOnUiThread(() -> {
-            mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+            mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
             // Do not attach within the decor; we will be measuring location
             // with regard to screen coordinates.
             mPopupWindow.setAttachedInDecor(false);
@@ -909,8 +914,8 @@ public class PopupWindowTest {
         // Do not update if it is not shown
         assertFalse(mPopupWindow.isShowing());
         assertFalse(mPopupWindow.isAttachedInDecor());
-        assertEquals(100, mPopupWindow.getWidth());
-        assertEquals(100, mPopupWindow.getHeight());
+        assertEquals(WINDOW_SIZE_DP, mPopupWindow.getWidth());
+        assertEquals(WINDOW_SIZE_DP, mPopupWindow.getHeight());
 
         showPopup();
         mPopupWindow.getContentView().getLocationInWindow(viewInWindowXY);
@@ -955,15 +960,16 @@ public class PopupWindowTest {
     @Test
     public void testUpdateDimensionAndAlignAnchorView() throws Throwable {
         mActivityRule.runOnUiThread(
-                () -> mPopupWindow = createPopupWindow(createPopupContent(50, 50)));
+                () -> mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP,
+                        CONTENT_SIZE_DP)));
         mInstrumentation.waitForIdleSync();
 
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
         mPopupWindow.update(anchorView, 50, 50);
         // Do not update if it is not shown
         assertFalse(mPopupWindow.isShowing());
-        assertEquals(100, mPopupWindow.getWidth());
-        assertEquals(100, mPopupWindow.getHeight());
+        assertEquals(WINDOW_SIZE_DP, mPopupWindow.getWidth());
+        assertEquals(WINDOW_SIZE_DP, mPopupWindow.getHeight());
 
         mActivityRule.runOnUiThread(() -> mPopupWindow.showAsDropDown(anchorView));
         mInstrumentation.waitForIdleSync();
@@ -991,12 +997,12 @@ public class PopupWindowTest {
         int[] viewInWindowOff = new int[2];
         int[] viewXY = new int[2];
 
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
         // Do not update if it is not shown
         assertFalse(mPopupWindow.isShowing());
-        assertEquals(100, mPopupWindow.getWidth());
-        assertEquals(100, mPopupWindow.getHeight());
+        assertEquals(WINDOW_SIZE_DP, mPopupWindow.getWidth());
+        assertEquals(WINDOW_SIZE_DP, mPopupWindow.getHeight());
 
         showPopup();
         anchorView.getLocationOnScreen(anchorXY);
@@ -1097,8 +1103,8 @@ public class PopupWindowTest {
 
     @Test
     public void testIsAboveAnchor() throws Throwable {
-        mActivityRule.runOnUiThread(() -> mPopupWindow = createPopupWindow(createPopupContent(50,
-                50)));
+        mActivityRule.runOnUiThread(() -> mPopupWindow = createPopupWindow(createPopupContent(
+                CONTENT_SIZE_DP, CONTENT_SIZE_DP)));
         mInstrumentation.waitForIdleSync();
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
 
@@ -1107,7 +1113,7 @@ public class PopupWindowTest {
         assertFalse(mPopupWindow.isAboveAnchor());
         dismissPopup();
 
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         final View lowerAnchor = mActivity.findViewById(R.id.anchor_lower);
 
         mActivityRule.runOnUiThread(() -> mPopupWindow.showAsDropDown(lowerAnchor, 0, 0));
@@ -1180,7 +1186,7 @@ public class PopupWindowTest {
 
     @Test
     public void testAccessElevation() throws Throwable {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         mActivityRule.runOnUiThread(() -> mPopupWindow.setElevation(2.0f));
 
         showPopup();
@@ -1199,7 +1205,7 @@ public class PopupWindowTest {
 
     @Test
     public void testAccessSoftInputMode() throws Throwable {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         mActivityRule.runOnUiThread(
                 () -> mPopupWindow.setSoftInputMode(
                         WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE));
@@ -1219,7 +1225,7 @@ public class PopupWindowTest {
 
     @Test
     public void testAccessSplitTouchEnabled() throws Throwable {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         mActivityRule.runOnUiThread(() -> mPopupWindow.setSplitTouchEnabled(true));
 
         showPopup();
@@ -1326,7 +1332,7 @@ public class PopupWindowTest {
 
     @Test
     public void testPositionAfterAnchorRemoval() throws Throwable {
-        mPopupWindow = createPopupWindow(createPopupContent(50, 50));
+        mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         showPopup(R.id.anchor_middle);
 
         final ViewGroup container = (ViewGroup) mActivity.findViewById(R.id.main_container);
@@ -1395,8 +1401,8 @@ public class PopupWindowTest {
 
     private PopupWindow createPopupWindow() {
         PopupWindow window = new PopupWindow(mActivity);
-        window.setWidth(100);
-        window.setHeight(100);
+        window.setWidth(WINDOW_SIZE_DP);
+        window.setHeight(WINDOW_SIZE_DP);
         window.setBackgroundDrawable(new ColorDrawable(Color.YELLOW));
         return window;
     }
