@@ -25,11 +25,9 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_SRC_FILES := \
     src/AHardwareBufferTest.cpp \
-    src/Gralloc1MapperTest.cpp
 
 LOCAL_SHARED_LIBRARIES := \
   libnativewindow \
-  libui \
   libutils \
   liblog \
 
