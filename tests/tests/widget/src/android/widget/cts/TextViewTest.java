@@ -26,6 +26,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.doAnswer;
@@ -132,7 +133,7 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.view.textclassifier.TextClassificationManager;
+import android.view.textclassifier.TextClassificationResult;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
 import android.widget.EditText;
@@ -176,6 +177,11 @@ public class TextViewTest {
             + "I have made this string longer to fix this case. If you are correcting "
             + "this text, I would love to see the kind of devices you guys now use!";
     private static final long TIMEOUT = 5000;
+
+    private static final int SMARTSELECT_START = 0;
+    private static final int SMARTSELECT_END = 40;
+    private static final int CLICK_TIMEOUT = ViewConfiguration.getDoubleTapTimeout() + 50;
+
     private CharSequence mTransformedText;
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
@@ -6890,27 +6896,65 @@ public class TextViewTest {
         String text = "The president-elect, Filip, is coming to town tomorrow.";
         int startIndex = text.indexOf("president");
         int endIndex = startIndex + "president".length();
-        initTextViewForTypingOnUiThread();
-        TextClassificationManager tcm = mActivity.getSystemService(TextClassificationManager.class);
-        mActivityRule.runOnUiThread(() -> {
-            mTextView.setTextIsSelectable(true);
-            mTextView.setText(text, BufferType.EDITABLE);
-            mTextView.setTextClassifier(tcm.getDefaultTextClassifier());
-        });
-        mInstrumentation.waitForIdleSync();
+        initializeTextForSmartSelection(text);
 
+        // Long-press for smart selection. Expect smart selection.
         Point offset = getCenterPositionOfTextAt(mTextView, startIndex, endIndex);
-        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, mTextView, offset.x, offset.y);
-        PollingCheck.waitFor(mTextView::hasSelection);
-        // Wait for smart selection. It times out after about 200ms.
-        SystemClock.sleep(300);
-
-        TextSelection selection = tcm.getDefaultTextClassifier()
-                .suggestSelection(text, startIndex, endIndex);
-        assertEquals(selection.getSelectionStartIndex(), mTextView.getSelectionStart());
-        assertEquals(selection.getSelectionEndIndex(), mTextView.getSelectionEnd());
+        emulateLongPressOnView(mTextView, offset.x, offset.y);
+        PollingCheck.waitFor(() -> mTextView.getSelectionStart() == SMARTSELECT_START
+                && mTextView.getSelectionEnd() == SMARTSELECT_END);
         // TODO: Test the floating toolbar content.
     }
+
+    @Test
+    public void testSmartSelection_dragSelection() throws Throwable {
+        mTextView = findTextView(R.id.textview_text);
+        String text = "The president-elect, Filip, is coming to town tomorrow.";
+        int startIndex = text.indexOf("is coming to town");
+        int endIndex = startIndex + "is coming to town".length();
+        initializeTextForSmartSelection(text);
+
+        Point start = getCenterPositionOfTextAt(mTextView, startIndex, startIndex);
+        Point end = getCenterPositionOfTextAt(mTextView, endIndex, endIndex);
+        int[] viewOnScreenXY = new int[2];
+        mTextView.getLocationOnScreen(viewOnScreenXY);
+        int startX = start.x + viewOnScreenXY[0];
+        int startY = start.y + viewOnScreenXY[1];
+        int offsetX = end.x - start.x;
+
+        // Perform drag selection.
+        CtsTouchUtils.emulateLongPressAndDragGesture(
+                mInstrumentation, startX, startY, offsetX, 0 /* offsetY */);
+
+        // No smart selection on drag selection.
+        assertEquals(startIndex, mTextView.getSelectionStart());
+        assertEquals(endIndex, mTextView.getSelectionEnd());
+    }
+
+    @Test
+    public void testSmartSelection_resetSelection() throws Throwable {
+        mTextView = findTextView(R.id.textview_text);
+        String text = "The president-elect, Filip, is coming to town tomorrow.";
+        int startIndex = text.indexOf("president");
+        int endIndex = startIndex + "president".length();
+        initializeTextForSmartSelection(text);
+
+        // Long-press for smart selection. Expect smart selection.
+        Point offset = getCenterPositionOfTextAt(mTextView, startIndex, endIndex);
+        emulateLongPressOnView(mTextView, offset.x, offset.y);
+        PollingCheck.waitFor(() -> mTextView.getSelectionStart() == SMARTSELECT_START
+                && mTextView.getSelectionEnd() == SMARTSELECT_END);
+
+        // Click to reset selection. Expect selection of original selection.
+        emulateClickOnView(mTextView, offset.x, offset.y);
+        PollingCheck.waitFor(() -> mTextView.getSelectionStart() == startIndex
+                && mTextView.getSelectionEnd() == endIndex);
+
+        // Click one more time to dismiss the selection.
+        emulateClickOnView(mTextView, offset.x, offset.y);
+        assertFalse(mTextView.hasSelection());
+    }
+
     @Test
     public void testFontResources_setInXmlFamilyName() {
         mTextView = findTextView(R.id.textview_fontresource_fontfamily);
@@ -6959,35 +7003,34 @@ public class TextViewTest {
         assertEquals(expected, mTextView.getTypeface());
     }
 
-    @Test
-    public void testSmartSelection_multiSelect() throws Throwable {
-        mTextView = findTextView(R.id.textview_text);
-        String text = "The president-elect, Filip, is coming to town tomorrow.";
-        int startIndex = text.indexOf("is coming to town");
-        int endIndex = startIndex + "is coming to town".length();
+    private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
+        assertTrue(text.length() >= SMARTSELECT_END);
         initTextViewForTypingOnUiThread();
-        TextClassificationManager tcm = mActivity.getSystemService(TextClassificationManager.class);
+        TextClassifier mockClassifier = mock(TextClassifier.class);
+        when(mockClassifier.suggestSelection(
+                any(CharSequence.class), anyInt(), anyInt()))
+                .thenReturn(new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build());
+        when(mockClassifier.getTextClassificationResult(
+                any(CharSequence.class), anyInt(), anyInt()))
+                .thenReturn(new TextClassificationResult.Builder().build());
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);
             mTextView.setText(text, BufferType.EDITABLE);
-            mTextView.setTextClassifier(tcm.getDefaultTextClassifier());
+            mTextView.setTextClassifier(mockClassifier);
         });
         mInstrumentation.waitForIdleSync();
+    }
 
-        Point start = getCenterPositionOfTextAt(mTextView, startIndex, startIndex);
-        Point end = getCenterPositionOfTextAt(mTextView, endIndex, endIndex);
-        int[] viewOnScreenXY = new int[2];
-        mTextView.getLocationOnScreen(viewOnScreenXY);
-        int startX = start.x + viewOnScreenXY[0];
-        int startY = start.y + viewOnScreenXY[1];
-        int offsetX = end.x - start.x;
+    private void emulateClickOnView(View view, int offsetX, int offsetY) {
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, view, offsetX, offsetY);
+        SystemClock.sleep(CLICK_TIMEOUT);
+    }
 
-        CtsTouchUtils.emulateLongPressAndDragGesture(
-                mInstrumentation, startX, startY, offsetX, 0 /* offsetY */);
-
-        // No smart selection when multiple words are selected.
-        assertEquals(startIndex, mTextView.getSelectionStart());
-        assertEquals(endIndex, mTextView.getSelectionEnd());
+    private void emulateLongPressOnView(View view, int offsetX, int offsetY) {
+        CtsTouchUtils.emulateLongPressOnView(mInstrumentation, view, offsetX, offsetY);
+        // TODO: Ideally, we shouldn't have to wait for a click timeout after a long-press but it
+        // seems like we have a minor bug (call it inconvenience) in TextView that requires this.
+        SystemClock.sleep(CLICK_TIMEOUT);
     }
 
     /**
