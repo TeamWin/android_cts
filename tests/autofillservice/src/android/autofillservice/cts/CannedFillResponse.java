@@ -17,6 +17,8 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static android.service.autofill.SaveInfo.SAVE_UI_TYPE_GENERIC;
+
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import android.app.assist.AssistStructure;
@@ -25,6 +27,7 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
+import android.service.autofill.SaveInfo;
 import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
 import android.widget.RemoteViews;
@@ -53,6 +56,7 @@ import java.util.Map;
 final class CannedFillResponse {
 
     final List<CannedDataset> datasets;
+    final int saveType = SAVE_UI_TYPE_GENERIC;
     final String[] savableIds;
     final Bundle extras;
     final RemoteViews presentation;
@@ -80,6 +84,7 @@ final class CannedFillResponse {
             }
         }
         if (savableIds != null) {
+            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType);
             for (String resourceId : savableIds) {
                 final ViewNode node = findNodeByResourceId(structure, resourceId);
                 if (node == null) {
@@ -87,12 +92,14 @@ final class CannedFillResponse {
                     throw new AssertionError("No node with savable resourceId " + resourceId);
                 }
                 final AutoFillId id = node.getAutoFillId();
-                builder.addSavableFields(id);
+                saveInfo.addSavableIds(id);
             }
+            builder.setSaveInfo(saveInfo.build());
         }
-        builder.setExtras(extras);
-        builder.setAuthentication(authentication, presentation);
-        return builder.build();
+        return builder
+                .setExtras(extras)
+                .setAuthentication(authentication, presentation)
+                .build();
     }
 
     @Override
