@@ -18,7 +18,7 @@ matplotlib.use('Agg')
 import its.error
 import pylab
 import sys
-import Image
+from PIL import Image
 import numpy
 import math
 import unittest
