@@ -23,12 +23,16 @@ import android.os.SystemProperties;
 import dalvik.system.VMRuntime;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
+
+import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 
 public class BuildTest extends TestCase {
 
@@ -218,6 +222,28 @@ public class BuildTest extends TestCase {
         assertTrue(TYPE_PATTERN.matcher(Build.TYPE).matches());
 
         assertNotEmpty(Build.USER);
+
+        // CUR_DEVELOPMENT must be larger than any released version.
+        Field[] fields = Build.VERSION_CODES.class.getDeclaredFields();
+        for (Field field : fields) {
+            if (field.getType().equals(int.class) && Modifier.isStatic(field.getModifiers())) {
+                String fieldName = field.getName();
+                final int fieldValue;
+                try {
+                    fieldValue = field.getInt(null);
+                } catch (IllegalAccessException e) {
+                    throw new AssertionError(e.getMessage());
+                }
+                if (fieldName.equals("CUR_DEVELOPMENT")) {
+                    // It should be okay to change the value of this constant in future, but it
+                    // should at least be a conscious decision.
+                    assertEquals(10000, fieldValue);
+                } else {
+                    assertTrue("Expected " + fieldName + " value to be < " + CUR_DEVELOPMENT
+                            + ", got " + fieldValue, fieldValue < CUR_DEVELOPMENT);
+                }
+            }
+        }
     }
 
     static final String RO_DEBUGGABLE = "ro.debuggable";
