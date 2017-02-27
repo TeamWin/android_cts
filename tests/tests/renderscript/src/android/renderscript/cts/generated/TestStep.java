@@ -37,6 +37,13 @@ public class TestStep extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestStepRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inEdge;
         public float inV;
@@ -51,6 +58,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloatFloatFloat(inEdge, out);
             verifyResultsStepFloatFloatFloat(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloatFloatFloat(inEdge, out);
             verifyResultsStepFloatFloatFloat(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloatFloat: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloatFloatFloat(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloat2Float2Float2(inEdge, out);
             verifyResultsStepFloat2Float2Float2(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloat2Float2Float2(inEdge, out);
             verifyResultsStepFloat2Float2Float2(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat2Float2Float2: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloat2Float2Float2(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloat3Float3Float3(inEdge, out);
             verifyResultsStepFloat3Float3Float3(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloat3Float3Float3(inEdge, out);
             verifyResultsStepFloat3Float3Float3(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat3Float3Float3: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloat3Float3Float3(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloat4Float4Float4(inEdge, out);
             verifyResultsStepFloat4Float4Float4(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloat4Float4Float4(inEdge, out);
             verifyResultsStepFloat4Float4Float4(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat4Float4Float4: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloat4Float4Float4(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalfHalfHalf(inEdge, out);
             verifyResultsStepHalfHalfHalf(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalfHalfHalf(inEdge, out);
             verifyResultsStepHalfHalfHalf(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalfHalf: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalfHalfHalf(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalf2Half2Half2(inEdge, out);
             verifyResultsStepHalf2Half2Half2(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalf2Half2Half2(inEdge, out);
             verifyResultsStepHalf2Half2Half2(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf2Half2Half2: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalf2Half2Half2(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalf3Half3Half3(inEdge, out);
             verifyResultsStepHalf3Half3Half3(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalf3Half3Half3(inEdge, out);
             verifyResultsStepHalf3Half3Half3(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf3Half3Half3: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalf3Half3Half3(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalf4Half4Half4(inEdge, out);
             verifyResultsStepHalf4Half4Half4(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalf4Half4Half4(inEdge, out);
             verifyResultsStepHalf4Half4Half4(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf4Half4Half4: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalf4Half4Half4(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -711,6 +750,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloat2FloatFloat2(inEdge, out);
             verifyResultsStepFloat2FloatFloat2(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat2FloatFloat2: " + e.toString());
         }
@@ -719,9 +759,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloat2FloatFloat2(inEdge, out);
             verifyResultsStepFloat2FloatFloat2(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat2FloatFloat2: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloat2FloatFloat2(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -790,6 +833,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloat3FloatFloat3(inEdge, out);
             verifyResultsStepFloat3FloatFloat3(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat3FloatFloat3: " + e.toString());
         }
@@ -798,9 +842,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloat3FloatFloat3(inEdge, out);
             verifyResultsStepFloat3FloatFloat3(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat3FloatFloat3: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloat3FloatFloat3(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -869,6 +916,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloat4FloatFloat4(inEdge, out);
             verifyResultsStepFloat4FloatFloat4(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat4FloatFloat4: " + e.toString());
         }
@@ -877,9 +925,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloat4FloatFloat4(inEdge, out);
             verifyResultsStepFloat4FloatFloat4(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloat4FloatFloat4: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloat4FloatFloat4(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -948,6 +999,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalf2HalfHalf2(inEdge, out);
             verifyResultsStepHalf2HalfHalf2(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf2HalfHalf2: " + e.toString());
         }
@@ -956,9 +1008,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalf2HalfHalf2(inEdge, out);
             verifyResultsStepHalf2HalfHalf2(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf2HalfHalf2: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalf2HalfHalf2(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1032,6 +1087,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalf3HalfHalf3(inEdge, out);
             verifyResultsStepHalf3HalfHalf3(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf3HalfHalf3: " + e.toString());
         }
@@ -1040,9 +1096,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalf3HalfHalf3(inEdge, out);
             verifyResultsStepHalf3HalfHalf3(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf3HalfHalf3: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalf3HalfHalf3(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1116,6 +1175,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalf4HalfHalf4(inEdge, out);
             verifyResultsStepHalf4HalfHalf4(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf4HalfHalf4: " + e.toString());
         }
@@ -1124,9 +1184,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalf4HalfHalf4(inEdge, out);
             verifyResultsStepHalf4HalfHalf4(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalf4HalfHalf4: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalf4HalfHalf4(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1200,6 +1263,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloatFloat2Float2(inEdge, out);
             verifyResultsStepFloatFloat2Float2(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloat2Float2: " + e.toString());
         }
@@ -1208,9 +1272,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloatFloat2Float2(inEdge, out);
             verifyResultsStepFloatFloat2Float2(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloat2Float2: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloatFloat2Float2(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1279,6 +1346,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloatFloat3Float3(inEdge, out);
             verifyResultsStepFloatFloat3Float3(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloat3Float3: " + e.toString());
         }
@@ -1287,9 +1355,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloatFloat3Float3(inEdge, out);
             verifyResultsStepFloatFloat3Float3(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloat3Float3: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloatFloat3Float3(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1358,6 +1429,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepFloatFloat4Float4(inEdge, out);
             verifyResultsStepFloatFloat4Float4(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloat4Float4: " + e.toString());
         }
@@ -1366,9 +1438,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepFloatFloat4Float4(inEdge, out);
             verifyResultsStepFloatFloat4Float4(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepFloatFloat4Float4: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepFloatFloat4Float4(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1437,6 +1512,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalfHalf2Half2(inEdge, out);
             verifyResultsStepHalfHalf2Half2(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalf2Half2: " + e.toString());
         }
@@ -1445,9 +1521,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalfHalf2Half2(inEdge, out);
             verifyResultsStepHalfHalf2Half2(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalf2Half2: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalfHalf2Half2(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1521,6 +1600,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalfHalf3Half3(inEdge, out);
             verifyResultsStepHalfHalf3Half3(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalf3Half3: " + e.toString());
         }
@@ -1529,9 +1609,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalfHalf3Half3(inEdge, out);
             verifyResultsStepHalfHalf3Half3(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalf3Half3: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalfHalf3Half3(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {
@@ -1605,6 +1688,7 @@ public class TestStep extends RSBaseCompute {
             script.set_gAllocInV(inV);
             script.forEach_testStepHalfHalf4Half4(inEdge, out);
             verifyResultsStepHalfHalf4Half4(inEdge, inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalf4Half4: " + e.toString());
         }
@@ -1613,9 +1697,12 @@ public class TestStep extends RSBaseCompute {
             scriptRelaxed.set_gAllocInV(inV);
             scriptRelaxed.forEach_testStepHalfHalf4Half4(inEdge, out);
             verifyResultsStepHalfHalf4Half4(inEdge, inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testStepHalfHalf4Half4: " + e.toString());
         }
+        inEdge.destroy();
+        inV.destroy();
     }
 
     private void verifyResultsStepHalfHalf4Half4(Allocation inEdge, Allocation inV, Allocation out, boolean relaxed) {

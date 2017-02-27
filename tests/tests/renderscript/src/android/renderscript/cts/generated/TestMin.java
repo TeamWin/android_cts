@@ -37,6 +37,13 @@ public class TestMin extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestMinRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inA;
         public float inB;
@@ -51,6 +58,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloatFloatFloat(inA, out);
             verifyResultsMinFloatFloatFloat(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloatFloatFloat(inA, out);
             verifyResultsMinFloatFloatFloat(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloatFloatFloat: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloatFloatFloat(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloat2Float2Float2(inA, out);
             verifyResultsMinFloat2Float2Float2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloat2Float2Float2(inA, out);
             verifyResultsMinFloat2Float2Float2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat2Float2Float2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloat2Float2Float2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloat3Float3Float3(inA, out);
             verifyResultsMinFloat3Float3Float3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloat3Float3Float3(inA, out);
             verifyResultsMinFloat3Float3Float3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat3Float3Float3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloat3Float3Float3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloat4Float4Float4(inA, out);
             verifyResultsMinFloat4Float4Float4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloat4Float4Float4(inA, out);
             verifyResultsMinFloat4Float4Float4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat4Float4Float4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloat4Float4Float4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalfHalfHalf(inA, out);
             verifyResultsMinHalfHalfHalf(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalfHalfHalf(inA, out);
             verifyResultsMinHalfHalfHalf(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalfHalfHalf: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalfHalfHalf(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalf2Half2Half2(inA, out);
             verifyResultsMinHalf2Half2Half2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalf2Half2Half2(inA, out);
             verifyResultsMinHalf2Half2Half2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf2Half2Half2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalf2Half2Half2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalf3Half3Half3(inA, out);
             verifyResultsMinHalf3Half3Half3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalf3Half3Half3(inA, out);
             verifyResultsMinHalf3Half3Half3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf3Half3Half3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalf3Half3Half3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalf4Half4Half4(inA, out);
             verifyResultsMinHalf4Half4Half4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalf4Half4Half4(inA, out);
             verifyResultsMinHalf4Half4Half4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf4Half4Half4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalf4Half4Half4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -711,6 +750,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloat2FloatFloat2(inA, out);
             verifyResultsMinFloat2FloatFloat2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat2FloatFloat2: " + e.toString());
         }
@@ -719,9 +759,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloat2FloatFloat2(inA, out);
             verifyResultsMinFloat2FloatFloat2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat2FloatFloat2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloat2FloatFloat2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -790,6 +833,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloat3FloatFloat3(inA, out);
             verifyResultsMinFloat3FloatFloat3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat3FloatFloat3: " + e.toString());
         }
@@ -798,9 +842,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloat3FloatFloat3(inA, out);
             verifyResultsMinFloat3FloatFloat3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat3FloatFloat3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloat3FloatFloat3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -869,6 +916,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinFloat4FloatFloat4(inA, out);
             verifyResultsMinFloat4FloatFloat4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat4FloatFloat4: " + e.toString());
         }
@@ -877,9 +925,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinFloat4FloatFloat4(inA, out);
             verifyResultsMinFloat4FloatFloat4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinFloat4FloatFloat4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinFloat4FloatFloat4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -948,6 +999,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalf2HalfHalf2(inA, out);
             verifyResultsMinHalf2HalfHalf2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf2HalfHalf2: " + e.toString());
         }
@@ -956,9 +1008,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalf2HalfHalf2(inA, out);
             verifyResultsMinHalf2HalfHalf2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf2HalfHalf2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalf2HalfHalf2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1032,6 +1087,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalf3HalfHalf3(inA, out);
             verifyResultsMinHalf3HalfHalf3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf3HalfHalf3: " + e.toString());
         }
@@ -1040,9 +1096,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalf3HalfHalf3(inA, out);
             verifyResultsMinHalf3HalfHalf3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf3HalfHalf3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalf3HalfHalf3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1116,6 +1175,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinHalf4HalfHalf4(inA, out);
             verifyResultsMinHalf4HalfHalf4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf4HalfHalf4: " + e.toString());
         }
@@ -1124,9 +1184,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinHalf4HalfHalf4(inA, out);
             verifyResultsMinHalf4HalfHalf4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinHalf4HalfHalf4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinHalf4HalfHalf4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1206,6 +1269,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinCharCharChar(inA, out);
             verifyResultsMinCharCharChar(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinCharCharChar: " + e.toString());
         }
@@ -1214,9 +1278,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinCharCharChar(inA, out);
             verifyResultsMinCharCharChar(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinCharCharChar: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinCharCharChar(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1284,6 +1351,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinChar2Char2Char2(inA, out);
             verifyResultsMinChar2Char2Char2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinChar2Char2Char2: " + e.toString());
         }
@@ -1292,9 +1360,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinChar2Char2Char2(inA, out);
             verifyResultsMinChar2Char2Char2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinChar2Char2Char2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinChar2Char2Char2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1362,6 +1433,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinChar3Char3Char3(inA, out);
             verifyResultsMinChar3Char3Char3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinChar3Char3Char3: " + e.toString());
         }
@@ -1370,9 +1442,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinChar3Char3Char3(inA, out);
             verifyResultsMinChar3Char3Char3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinChar3Char3Char3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinChar3Char3Char3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1440,6 +1515,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinChar4Char4Char4(inA, out);
             verifyResultsMinChar4Char4Char4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinChar4Char4Char4: " + e.toString());
         }
@@ -1448,9 +1524,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinChar4Char4Char4(inA, out);
             verifyResultsMinChar4Char4Char4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinChar4Char4Char4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinChar4Char4Char4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1524,6 +1603,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUcharUcharUchar(inA, out);
             verifyResultsMinUcharUcharUchar(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUcharUcharUchar: " + e.toString());
         }
@@ -1532,9 +1612,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUcharUcharUchar(inA, out);
             verifyResultsMinUcharUcharUchar(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUcharUcharUchar: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUcharUcharUchar(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1602,6 +1685,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUchar2Uchar2Uchar2(inA, out);
             verifyResultsMinUchar2Uchar2Uchar2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUchar2Uchar2Uchar2: " + e.toString());
         }
@@ -1610,9 +1694,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUchar2Uchar2Uchar2(inA, out);
             verifyResultsMinUchar2Uchar2Uchar2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUchar2Uchar2Uchar2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUchar2Uchar2Uchar2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1680,6 +1767,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUchar3Uchar3Uchar3(inA, out);
             verifyResultsMinUchar3Uchar3Uchar3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUchar3Uchar3Uchar3: " + e.toString());
         }
@@ -1688,9 +1776,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUchar3Uchar3Uchar3(inA, out);
             verifyResultsMinUchar3Uchar3Uchar3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUchar3Uchar3Uchar3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUchar3Uchar3Uchar3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1758,6 +1849,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUchar4Uchar4Uchar4(inA, out);
             verifyResultsMinUchar4Uchar4Uchar4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUchar4Uchar4Uchar4: " + e.toString());
         }
@@ -1766,9 +1858,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUchar4Uchar4Uchar4(inA, out);
             verifyResultsMinUchar4Uchar4Uchar4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUchar4Uchar4Uchar4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUchar4Uchar4Uchar4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1842,6 +1937,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinShortShortShort(inA, out);
             verifyResultsMinShortShortShort(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShortShortShort: " + e.toString());
         }
@@ -1850,9 +1946,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinShortShortShort(inA, out);
             verifyResultsMinShortShortShort(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShortShortShort: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinShortShortShort(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1920,6 +2019,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinShort2Short2Short2(inA, out);
             verifyResultsMinShort2Short2Short2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShort2Short2Short2: " + e.toString());
         }
@@ -1928,9 +2028,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinShort2Short2Short2(inA, out);
             verifyResultsMinShort2Short2Short2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShort2Short2Short2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinShort2Short2Short2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1998,6 +2101,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinShort3Short3Short3(inA, out);
             verifyResultsMinShort3Short3Short3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShort3Short3Short3: " + e.toString());
         }
@@ -2006,9 +2110,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinShort3Short3Short3(inA, out);
             verifyResultsMinShort3Short3Short3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShort3Short3Short3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinShort3Short3Short3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2076,6 +2183,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinShort4Short4Short4(inA, out);
             verifyResultsMinShort4Short4Short4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShort4Short4Short4: " + e.toString());
         }
@@ -2084,9 +2192,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinShort4Short4Short4(inA, out);
             verifyResultsMinShort4Short4Short4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinShort4Short4Short4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinShort4Short4Short4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2160,6 +2271,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUshortUshortUshort(inA, out);
             verifyResultsMinUshortUshortUshort(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshortUshortUshort: " + e.toString());
         }
@@ -2168,9 +2280,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUshortUshortUshort(inA, out);
             verifyResultsMinUshortUshortUshort(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshortUshortUshort: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUshortUshortUshort(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2238,6 +2353,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUshort2Ushort2Ushort2(inA, out);
             verifyResultsMinUshort2Ushort2Ushort2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshort2Ushort2Ushort2: " + e.toString());
         }
@@ -2246,9 +2362,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUshort2Ushort2Ushort2(inA, out);
             verifyResultsMinUshort2Ushort2Ushort2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshort2Ushort2Ushort2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUshort2Ushort2Ushort2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2316,6 +2435,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUshort3Ushort3Ushort3(inA, out);
             verifyResultsMinUshort3Ushort3Ushort3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshort3Ushort3Ushort3: " + e.toString());
         }
@@ -2324,9 +2444,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUshort3Ushort3Ushort3(inA, out);
             verifyResultsMinUshort3Ushort3Ushort3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshort3Ushort3Ushort3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUshort3Ushort3Ushort3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2394,6 +2517,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUshort4Ushort4Ushort4(inA, out);
             verifyResultsMinUshort4Ushort4Ushort4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshort4Ushort4Ushort4: " + e.toString());
         }
@@ -2402,9 +2526,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUshort4Ushort4Ushort4(inA, out);
             verifyResultsMinUshort4Ushort4Ushort4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUshort4Ushort4Ushort4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUshort4Ushort4Ushort4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2478,6 +2605,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinIntIntInt(inA, out);
             verifyResultsMinIntIntInt(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinIntIntInt: " + e.toString());
         }
@@ -2486,9 +2614,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinIntIntInt(inA, out);
             verifyResultsMinIntIntInt(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinIntIntInt: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinIntIntInt(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2556,6 +2687,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinInt2Int2Int2(inA, out);
             verifyResultsMinInt2Int2Int2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinInt2Int2Int2: " + e.toString());
         }
@@ -2564,9 +2696,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinInt2Int2Int2(inA, out);
             verifyResultsMinInt2Int2Int2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinInt2Int2Int2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinInt2Int2Int2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2634,6 +2769,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinInt3Int3Int3(inA, out);
             verifyResultsMinInt3Int3Int3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinInt3Int3Int3: " + e.toString());
         }
@@ -2642,9 +2778,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinInt3Int3Int3(inA, out);
             verifyResultsMinInt3Int3Int3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinInt3Int3Int3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinInt3Int3Int3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2712,6 +2851,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinInt4Int4Int4(inA, out);
             verifyResultsMinInt4Int4Int4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinInt4Int4Int4: " + e.toString());
         }
@@ -2720,9 +2860,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinInt4Int4Int4(inA, out);
             verifyResultsMinInt4Int4Int4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinInt4Int4Int4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinInt4Int4Int4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2796,6 +2939,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUintUintUint(inA, out);
             verifyResultsMinUintUintUint(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUintUintUint: " + e.toString());
         }
@@ -2804,9 +2948,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUintUintUint(inA, out);
             verifyResultsMinUintUintUint(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUintUintUint: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUintUintUint(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2874,6 +3021,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUint2Uint2Uint2(inA, out);
             verifyResultsMinUint2Uint2Uint2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUint2Uint2Uint2: " + e.toString());
         }
@@ -2882,9 +3030,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUint2Uint2Uint2(inA, out);
             verifyResultsMinUint2Uint2Uint2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUint2Uint2Uint2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUint2Uint2Uint2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2952,6 +3103,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUint3Uint3Uint3(inA, out);
             verifyResultsMinUint3Uint3Uint3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUint3Uint3Uint3: " + e.toString());
         }
@@ -2960,9 +3112,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUint3Uint3Uint3(inA, out);
             verifyResultsMinUint3Uint3Uint3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUint3Uint3Uint3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUint3Uint3Uint3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3030,6 +3185,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUint4Uint4Uint4(inA, out);
             verifyResultsMinUint4Uint4Uint4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUint4Uint4Uint4: " + e.toString());
         }
@@ -3038,9 +3194,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUint4Uint4Uint4(inA, out);
             verifyResultsMinUint4Uint4Uint4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUint4Uint4Uint4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUint4Uint4Uint4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3114,6 +3273,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinLongLongLong(inA, out);
             verifyResultsMinLongLongLong(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLongLongLong: " + e.toString());
         }
@@ -3122,9 +3282,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinLongLongLong(inA, out);
             verifyResultsMinLongLongLong(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLongLongLong: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinLongLongLong(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3192,6 +3355,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinLong2Long2Long2(inA, out);
             verifyResultsMinLong2Long2Long2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLong2Long2Long2: " + e.toString());
         }
@@ -3200,9 +3364,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinLong2Long2Long2(inA, out);
             verifyResultsMinLong2Long2Long2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLong2Long2Long2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinLong2Long2Long2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3270,6 +3437,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinLong3Long3Long3(inA, out);
             verifyResultsMinLong3Long3Long3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLong3Long3Long3: " + e.toString());
         }
@@ -3278,9 +3446,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinLong3Long3Long3(inA, out);
             verifyResultsMinLong3Long3Long3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLong3Long3Long3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinLong3Long3Long3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3348,6 +3519,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinLong4Long4Long4(inA, out);
             verifyResultsMinLong4Long4Long4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLong4Long4Long4: " + e.toString());
         }
@@ -3356,9 +3528,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinLong4Long4Long4(inA, out);
             verifyResultsMinLong4Long4Long4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinLong4Long4Long4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinLong4Long4Long4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3432,6 +3607,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUlongUlongUlong(inA, out);
             verifyResultsMinUlongUlongUlong(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlongUlongUlong: " + e.toString());
         }
@@ -3440,9 +3616,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUlongUlongUlong(inA, out);
             verifyResultsMinUlongUlongUlong(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlongUlongUlong: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUlongUlongUlong(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3510,6 +3689,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUlong2Ulong2Ulong2(inA, out);
             verifyResultsMinUlong2Ulong2Ulong2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlong2Ulong2Ulong2: " + e.toString());
         }
@@ -3518,9 +3698,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUlong2Ulong2Ulong2(inA, out);
             verifyResultsMinUlong2Ulong2Ulong2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlong2Ulong2Ulong2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUlong2Ulong2Ulong2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3588,6 +3771,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUlong3Ulong3Ulong3(inA, out);
             verifyResultsMinUlong3Ulong3Ulong3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlong3Ulong3Ulong3: " + e.toString());
         }
@@ -3596,9 +3780,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUlong3Ulong3Ulong3(inA, out);
             verifyResultsMinUlong3Ulong3Ulong3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlong3Ulong3Ulong3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUlong3Ulong3Ulong3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3666,6 +3853,7 @@ public class TestMin extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMinUlong4Ulong4Ulong4(inA, out);
             verifyResultsMinUlong4Ulong4Ulong4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlong4Ulong4Ulong4: " + e.toString());
         }
@@ -3674,9 +3862,12 @@ public class TestMin extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMinUlong4Ulong4Ulong4(inA, out);
             verifyResultsMinUlong4Ulong4Ulong4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMinUlong4Ulong4Ulong4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMinUlong4Ulong4Ulong4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {

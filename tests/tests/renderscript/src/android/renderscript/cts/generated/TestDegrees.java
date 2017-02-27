@@ -37,6 +37,13 @@ public class TestDegrees extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestDegreesRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testDegreesFloatFloat(inV, out);
             verifyResultsDegreesFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesFloatFloat(inV, out);
             verifyResultsDegreesFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -117,6 +127,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testDegreesFloat2Float2(inV, out);
             verifyResultsDegreesFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloat2Float2: " + e.toString());
         }
@@ -124,9 +135,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesFloat2Float2(inV, out);
             verifyResultsDegreesFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -186,6 +199,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testDegreesFloat3Float3(inV, out);
             verifyResultsDegreesFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloat3Float3: " + e.toString());
         }
@@ -193,9 +207,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesFloat3Float3(inV, out);
             verifyResultsDegreesFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -255,6 +271,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testDegreesFloat4Float4(inV, out);
             verifyResultsDegreesFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloat4Float4: " + e.toString());
         }
@@ -262,9 +279,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesFloat4Float4(inV, out);
             verifyResultsDegreesFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -330,6 +349,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testDegreesHalfHalf(inV, out);
             verifyResultsDegreesHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalfHalf: " + e.toString());
         }
@@ -337,9 +357,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesHalfHalf(inV, out);
             verifyResultsDegreesHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -403,6 +425,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testDegreesHalf2Half2(inV, out);
             verifyResultsDegreesHalf2Half2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalf2Half2: " + e.toString());
         }
@@ -410,9 +433,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesHalf2Half2(inV, out);
             verifyResultsDegreesHalf2Half2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalf2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesHalf2Half2(Allocation inV, Allocation out, boolean relaxed) {
@@ -476,6 +501,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testDegreesHalf3Half3(inV, out);
             verifyResultsDegreesHalf3Half3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalf3Half3: " + e.toString());
         }
@@ -483,9 +509,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesHalf3Half3(inV, out);
             verifyResultsDegreesHalf3Half3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalf3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesHalf3Half3(Allocation inV, Allocation out, boolean relaxed) {
@@ -549,6 +577,7 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testDegreesHalf4Half4(inV, out);
             verifyResultsDegreesHalf4Half4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalf4Half4: " + e.toString());
         }
@@ -556,9 +585,11 @@ public class TestDegrees extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testDegreesHalf4Half4(inV, out);
             verifyResultsDegreesHalf4Half4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDegreesHalf4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsDegreesHalf4Half4(Allocation inV, Allocation out, boolean relaxed) {
