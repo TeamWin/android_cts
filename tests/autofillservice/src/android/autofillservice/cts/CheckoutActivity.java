@@ -96,17 +96,11 @@ public class CheckoutActivity extends Activity {
                 .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mCcExpiration.setAdapter(expirationValuesAdapter);
 
-        mBuyButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                buy();
-            }
+        mBuyButton.setOnClickListener((v) -> {
+            buy();
         });
-        mClearButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                resetFields();
-            }
+        mClearButton.setOnClickListener((v) ->{
+            resetFields();
         });
     }
 
@@ -131,7 +125,10 @@ public class CheckoutActivity extends Activity {
         final Intent intent = new Intent(this, WelcomeActivity.class);
         intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, "Thank you an come again!");
         startActivity(intent);
-        mBuyLatch.countDown();
+        if (mBuyLatch != null) {
+            // Latch is not set when activity launched outside tests
+            mBuyLatch.countDown();
+        }
         finish();
     }
 

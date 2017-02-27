@@ -1,0 +1,99 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.autofillservice.cts;
+
+import static android.autofillservice.cts.Helper.assertNumberOfChildren;
+import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.Helper.assertTimeValue;
+import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
+import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.autofillservice.cts.AbstractTimePickerActivity.ID_OUTPUT;
+import static android.autofillservice.cts.AbstractTimePickerActivity.ID_TIME_PICKER;
+
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.icu.util.Calendar;
+import android.view.autofill.AutoFillValue;
+
+import org.junit.Test;
+
+/**
+ * Base class for {@link AbstractTimePickerActivity} tests.
+ */
+abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
+        extends AutoFillServiceTestCase {
+
+    protected abstract T getTimePickerActivity();
+
+    @Test
+    public void testAutoFillAndSave() throws Exception {
+        final T activity = getTimePickerActivity();
+
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        final Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR, 4);
+        cal.set(Calendar.MINUTE, 20);
+
+        replier.addResponse(new CannedDataset.Builder()
+                .setPresentation(createPresentation("Adventure Time"))
+                .setField(ID_OUTPUT, AutoFillValue.forText("Y U NO CHANGE ME?"))
+                .setField(ID_TIME_PICKER, AutoFillValue.forDate(cal.getTimeInMillis()))
+                .build());
+        activity.expectAutoFill("4:20", 4, 20);
+
+        // Trigger auto-fill.
+        activity.onOutput((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+
+        final FillRequest fillRequest = replier.getNextFillRequest();
+
+        // Assert properties of TimePicker field.
+        assertTextIsSanitized(fillRequest.structure, ID_TIME_PICKER);
+        assertNumberOfChildren(fillRequest.structure, ID_TIME_PICKER, 0);
+        // Auto-fill it.
+        sUiBot.selectDataset("Adventure Time");
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        // Trigger save.
+        activity.setTime(10, 40);
+        activity.tapOk();
+
+        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
+        sUiBot.saveForAutofill(true);
+        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
+
+        // Assert sanitization on save: everything should be available!
+        assertTimeValue(findNodeByResourceId(saveRequest.structure, ID_TIME_PICKER), 10, 40);
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_OUTPUT), "10:40");
+
+        // Sanity checks.
+        waitUntilDisconnected();
+    }
+}

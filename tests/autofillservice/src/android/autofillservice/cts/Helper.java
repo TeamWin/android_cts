@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
@@ -224,6 +225,40 @@ final class Helper {
     }
 
     /**
+     * Asserts the auto-fill value of a date-based node.
+     */
+    static void assertDateValue(ViewNode node, int year, int month, int day) {
+        final AutoFillValue value = node.getAutoFillValue();
+        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+
+        final Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(value.getDateValue());
+
+        assertWithMessage("Wrong year on AutoFillValue %s", value)
+            .that(cal.get(Calendar.YEAR)).isEqualTo(year);
+        assertWithMessage("Wrong month on AutoFillValue %s", value)
+            .that(cal.get(Calendar.MONTH)).isEqualTo(month);
+        assertWithMessage("Wrong day on AutoFillValue %s", value)
+             .that(cal.get(Calendar.DAY_OF_MONTH)).isEqualTo(day);
+    }
+
+    /**
+     * Asserts the auto-fill value of a time-based node.
+     */
+    static void assertTimeValue(ViewNode node, int hour, int minute) {
+        final AutoFillValue value = node.getAutoFillValue();
+        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+
+        final Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(value.getDateValue());
+
+        assertWithMessage("Wrong hour on AutoFillValue %s", value)
+            .that(cal.get(Calendar.HOUR)).isEqualTo(hour);
+        assertWithMessage("Wrong minute on AutoFillValue %s", value)
+            .that(cal.get(Calendar.MINUTE)).isEqualTo(minute);
+    }
+
+    /**
      * Asserts a text-base node exists and is sanitized.
      */
     static ViewNode assertTextIsSanitized(AssistStructure structure, String resourceId) {
@@ -250,6 +285,19 @@ final class Helper {
         assertNodeHasNoAutoFillValue(node);
         assertWithMessage("ViewNode %s should not be checked", resourceId).that(node.isChecked())
                 .isFalse();
+    }
+
+    /**
+     * Asserts a node exists and has the {@code expected} number of children.
+     */
+    static void assertNumberOfChildren(AssistStructure structure, String resourceId, int expected) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        final int actual = node.getChildCount();
+        if (actual != expected) {
+            dumpStructure("assertNumberOfChildren()", structure);
+            throw new AssertionError("assertNumberOfChildren() for " + resourceId
+                    + " failed: expected " + expected + ", got " + actual);
+        }
     }
 
     private Helper() {
