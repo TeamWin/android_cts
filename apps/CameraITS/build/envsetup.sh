@@ -17,7 +17,7 @@
 # and that the unit tests for the modules passed (indicating that the setup
 # is correct).
 
-CAMERA_ITS_TOP=$PWD
+export CAMERA_ITS_TOP=$PWD
 
 [[ "${BASH_SOURCE[0]}" != "${0}" ]] || \
     { echo ">> Script must be sourced with 'source $0'" >&2; exit 1; }
