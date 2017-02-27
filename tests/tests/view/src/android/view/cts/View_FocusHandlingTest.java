@@ -30,8 +30,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.FrameLayout;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -258,6 +258,23 @@ public class View_FocusHandlingTest {
 
     @UiThreadTest
     @Test
+    public void testFocusableInTouchMode() {
+        final Activity activity = mActivityRule.getActivity();
+        View singleView = new View(activity);
+        assertFalse("Must not be focusable by default", singleView.isFocusable());
+        singleView.setFocusableInTouchMode(true);
+        assertSame("setFocusableInTouchMode(true) must imply explicit focusable",
+                View.FOCUSABLE, singleView.getFocusable());
+
+        activity.getLayoutInflater().inflate(R.layout.focus_handling_auto_layout,
+                (ViewGroup) activity.findViewById(R.id.auto_test_area));
+        View focusTouchModeView = activity.findViewById(R.id.focusabletouchmode);
+        assertSame("focusableInTouchMode=\"true\" must imply explicit focusable",
+                View.FOCUSABLE, focusTouchModeView.getFocusable());
+    }
+
+    @UiThreadTest
+    @Test
     public void testHasFocusable() {
         final Activity activity = mActivityRule.getActivity();
         final ViewGroup group = (ViewGroup) activity.findViewById(R.id.auto_test_area);
@@ -294,6 +311,11 @@ public class View_FocusHandlingTest {
         assertFalse("single view unexpectedly hasExplicitFocusable", view.hasExplicitFocusable());
 
         view.setFocusable(View.FOCUSABLE);
+        assertTrue("single view doesn't hasFocusable", view.hasFocusable());
+        assertTrue("single view doesn't hasExplicitFocusable", view.hasExplicitFocusable());
+
+        view.setFocusable(View.FOCUSABLE_AUTO);
+        view.setFocusableInTouchMode(true);
         assertTrue("single view doesn't hasFocusable", view.hasFocusable());
         assertTrue("single view doesn't hasExplicitFocusable", view.hasExplicitFocusable());
     }
