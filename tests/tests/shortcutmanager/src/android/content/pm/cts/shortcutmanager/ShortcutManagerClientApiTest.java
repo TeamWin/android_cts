@@ -25,6 +25,7 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.BitmapFactory;
@@ -123,6 +124,18 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                 "disabledMessage cannot be empty",
                 () -> new ShortcutInfo.Builder(getTestContext(), "id").setDisabledMessage(""));
 
+        assertExpectException(
+                RuntimeException.class,
+                "component name cannot be null",
+                () -> new ShortcutInfo.Builder(getTestContext(), "id")
+                        .addChooserIntentFilter(new IntentFilter(Intent.ACTION_SEND), null));
+
+        assertExpectException(
+                RuntimeException.class,
+                "intent filter cannot be null",
+                () -> new ShortcutInfo.Builder(getTestContext(), "id")
+                        .addChooserIntentFilter(null, new ComponentName("xxx", "s")));
+
         assertExpectException(NullPointerException.class, "action must be set",
                 () -> new ShortcutInfo.Builder(getTestContext(), "id").setIntent(new Intent()));
 
@@ -142,23 +155,6 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     assertTrue(getManager().addDynamicShortcuts(list(si)));
                 });
 
-        assertExpectException(NullPointerException.class, "Intent must be provided", () -> {
-            ShortcutInfo si = new ShortcutInfo.Builder(getTestContext(), "id")
-                    .setActivity(mainActivity)
-                    .setShortLabel("x")
-                    .build();
-            assertTrue(getManager().setDynamicShortcuts(list(si)));
-        });
-
-        // same for add.
-        assertExpectException(NullPointerException.class, "Intent must be provided", () -> {
-            ShortcutInfo si = new ShortcutInfo.Builder(getTestContext(), "id")
-                    .setActivity(mainActivity)
-                    .setShortLabel("x")
-                    .build();
-            assertTrue(getManager().addDynamicShortcuts(list(si)));
-        });
-
         assertExpectException(
                 IllegalStateException.class, "does not belong to package", () -> {
                     ShortcutInfo si = new ShortcutInfo.Builder(getTestContext(), "id")
@@ -175,6 +171,25 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                             .build();
                     assertTrue(getManager().addDynamicShortcuts(list(si)));
                 });
+
+        assertExpectException(NullPointerException.class,
+                "Intent must be provided if not a chooser target", () -> {
+            ShortcutInfo si = new ShortcutInfo.Builder(getTestContext(), "id")
+                    .setActivity(mainActivity)
+                    .setShortLabel("x")
+                    .build();
+            assertTrue(getManager().setDynamicShortcuts(list(si)));
+        });
+
+        // same for add.
+        assertExpectException(NullPointerException.class,
+                "Intent must be provided if not a chooser target", () -> {
+            ShortcutInfo si = new ShortcutInfo.Builder(getTestContext(), "id")
+                    .setActivity(mainActivity)
+                    .setShortLabel("x")
+                    .build();
+            assertTrue(getManager().addDynamicShortcuts(list(si)));
+        });
 
         // Not main activity
         final ComponentName nonMainActivity = new ComponentName(
@@ -1007,7 +1022,8 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                 getTestContext().getResources(), R.drawable.black_32x32));
         final Icon icon3 = loadPackageDrawableIcon(mPackageContext1, "black_64x16");
         final Icon icon4 = loadPackageDrawableIcon(mPackageContext1, "black_64x64");
-
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction("view");
         runWithCaller(mPackageContext1, () -> {
             final ShortcutInfo source = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
@@ -1017,6 +1033,8 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .setDisabledMessage("disabledmessage")
                     .setIntents(new Intent[]{new Intent("view").putExtra("k1", "v1")})
                     .setExtras(makePersistableBundle("ek1", "ev1"))
+                    .addChooserIntentFilter(filter, new ComponentName("xxx", "yy"))
+                    .setChooserExtras(makePersistableBundle("fk1", "fv1"))
                     .setCategories(set("cat1"))
                     .build();
 
@@ -1033,6 +1051,9 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                         assertEquals("view", si.getIntents()[0].getAction());
                         assertEquals("v1", si.getIntents()[0].getStringExtra("k1"));
                         assertEquals("ev1", si.getExtras().getString("ek1"));
+                        assertEquals("fv1", si.getChooserExtras().getString("fk1"));
+                        assertEquals("view", si.getChooserIntentFilters()[0].getAction(0));
+                        assertEquals("xxx", si.getChooserComponentNames()[0].getPackageName());
                         assertEquals(set("cat1"), si.getCategories());
                     });
             assertIconDimensions(mLauncherContext1, mPackageContext1.getPackageName(), "s1",
@@ -1711,6 +1732,95 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                         assertEquals(Intent.FLAG_ACTIVITY_NEW_DOCUMENT, i.getFlags());
                     })
             ;
+        });
+    }
+
+    public void testSetChooserShortcuts() {
+        runWithCaller(mPackageContext1, () -> {
+            assertTrue(getManager().setDynamicShortcuts(list(
+                    makeShortcut("s1", "title1"),
+                    makeChooserShortcut("s2", 1, false),
+                    makeChooserShortcut("s3", 2, true))));
+        });
+
+        runWithCaller(mPackageContext1, () -> {
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .haveIds("s1", "s2", "s3")
+                    .forShortcutWithId("s1", si -> {
+                        assertEquals("title1", si.getShortLabel());
+                    })
+                    .forShortcutWithId("s2", si -> {
+                        assertEquals(1, si.getChooserIntentFilters().length);
+                    })
+                    .forShortcutWithId("s3", si -> {
+                        assertEquals(2, si.getChooserIntentFilters().length);
+                    });
+            assertWith(getManager().getPinnedShortcuts())
+                    .isEmpty();
+            assertWith(getManager().getManifestShortcuts())
+                    .isEmpty();
+        });
+
+        // Publish from different package.
+        runWithCaller(mPackageContext2, () -> {
+            assertTrue(getManager().setDynamicShortcuts(list(
+                    makeShortcut("s1x", "title1x"),
+                    makeChooserShortcut("s2x", 1, true))));
+        });
+
+        runWithCaller(mPackageContext2, () -> {
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .haveIds("s1x", "s2x")
+                    .forShortcutWithId("s1x", si -> {
+                        assertEquals("title1x", si.getShortLabel());
+                    })
+                    .forShortcutWithId("s2x", si -> {
+                        assertEquals(1, si.getChooserIntentFilters().length);
+                    });
+            assertWith(getManager().getPinnedShortcuts())
+                    .isEmpty();
+            assertWith(getManager().getManifestShortcuts())
+                    .isEmpty();
+        });
+
+        // Package 1 still has the same shortcuts.
+        runWithCaller(mPackageContext1, () -> {
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .haveIds("s1", "s2", "s3")
+                    .forShortcutWithId("s1", si -> {
+                        assertEquals("title1", si.getShortLabel());
+                    })
+                    .forShortcutWithId("s2", si -> {
+                        assertEquals(1, si.getChooserIntentFilters().length);
+                    })
+                    .forShortcutWithId("s3", si -> {
+                        assertEquals(2, si.getChooserIntentFilters().length);
+                    });
+            assertWith(getManager().getPinnedShortcuts())
+                    .isEmpty();
+            assertWith(getManager().getManifestShortcuts())
+                    .isEmpty();
+        });
+
+        runWithCaller(mPackageContext1, () -> {
+            assertTrue(getManager().setDynamicShortcuts(list(
+                    makeShortcut("s2", "title2-updated"))));
+        });
+
+        runWithCaller(mPackageContext1, () -> {
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .haveIds("s2")
+                    .forShortcutWithId("s2", si -> {
+                        assertEquals("title2-updated", si.getShortLabel());
+                    });
+            assertWith(getManager().getPinnedShortcuts())
+                    .isEmpty();
+            assertWith(getManager().getManifestShortcuts())
+                    .isEmpty();
         });
     }
 
