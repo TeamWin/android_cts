@@ -30,6 +30,8 @@ import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.text.InputType.TYPE_NULL;
+import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -578,6 +580,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilDisconnected();
     }
 
+    @Test
     public void testSanitization() throws Exception {
         enableService();
 
@@ -625,5 +628,30 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 "DA PASSWORD");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_USERNAME), "malkovich");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "malkovich");
+    }
+
+    @Test
+    public void testGetTextInputType() throws Exception {
+        enableService();
+
+        // Set service.
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse((CannedFillResponse) null);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+
+        // Assert input text on fill request:
+        final FillRequest fillRequest = replier.getNextFillRequest();
+
+        final ViewNode label = findNodeByResourceId(fillRequest.structure, ID_PASSWORD_LABEL);
+        assertThat(label.getInputType()).isEqualTo(TYPE_NULL);
+        final ViewNode password = findNodeByResourceId(fillRequest.structure, ID_PASSWORD);
+        assertWithMessage("No TYPE_TEXT_VARIATION_PASSWORD on %s", password.getInputType())
+                .that(password.getInputType() & TYPE_TEXT_VARIATION_PASSWORD)
+                .isEqualTo(TYPE_TEXT_VARIATION_PASSWORD);
     }
 }
