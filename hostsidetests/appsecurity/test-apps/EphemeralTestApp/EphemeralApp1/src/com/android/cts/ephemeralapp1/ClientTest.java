@@ -109,10 +109,14 @@ public class ClientTest {
                 is("com.android.cts.ephemeralapp1"));
         assertThat(resolveInfo.get(0).activityInfo.name,
                 is("com.android.cts.ephemeralapp1.EphemeralActivity"));
+        assertThat(resolveInfo.get(0).instantAppAvailable,
+                is(true));
         assertThat(resolveInfo.get(1).activityInfo.packageName,
                 is("com.android.cts.normalapp"));
         assertThat(resolveInfo.get(1).activityInfo.name,
                 is("com.android.cts.normalapp.ExposedActivity"));
+        assertThat(resolveInfo.get(1).instantAppAvailable,
+                is(false));
     }
 
     @Test
