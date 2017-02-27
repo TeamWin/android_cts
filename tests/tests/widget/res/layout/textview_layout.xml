@@ -276,7 +276,7 @@
                 android:layout_width="100dp"
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
-                android:autoSizeText="uniform"
+                android:autoSizeTextType="uniform"
                 android:autoSizeMinTextSize="2px"
                 android:autoSizeMaxTextSize="50dp"
                 android:autoSizeStepGranularity="1px" />
@@ -328,7 +328,7 @@
                 android:layout_width="100dp"
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
-                android:autoSizeText="uniform"
+                android:autoSizeTextType="uniform"
                 android:autoSizePresetSizes="@array/auto_size_predefined_sizes" />
 
             <TextView
@@ -336,7 +336,7 @@
                 android:layout_width="100dp"
                 android:layout_height="200dp"
                 android:text="@string/sample_text"
-                android:autoSizeText="uniform"
+                android:autoSizeTextType="uniform"
                 android:autoSizePresetSizes="@array/auto_size_predefined_sizes_redundant_values" />
         </LinearLayout>
 
