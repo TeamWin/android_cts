@@ -4280,6 +4280,56 @@ public class ViewTest {
         assertEquals("Incorrect Z value", offset + start, view.getZ(), 0.0f);
     }
 
+    @Test
+    public void testOnHoverEvent() {
+        MotionEvent event;
+
+        View view = new View(mActivity);
+        long downTime = SystemClock.uptimeMillis();
+
+        // Preconditions.
+        assertFalse(view.isHovered());
+        assertFalse(view.isClickable());
+        assertTrue(view.isEnabled());
+
+        // Simulate an ENTER/EXIT pair on a non-clickable view.
+        event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_HOVER_ENTER, 0, 0, 0);
+        view.onHoverEvent(event);
+        assertFalse(view.isHovered());
+        event.recycle();
+
+        event = MotionEvent.obtain(downTime, downTime + 10, MotionEvent.ACTION_HOVER_EXIT, 0, 0, 0);
+        view.onHoverEvent(event);
+        assertFalse(view.isHovered());
+        event.recycle();
+
+        // Simulate an ENTER/EXIT pair on a clickable view.
+        view.setClickable(true);
+
+        event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_HOVER_ENTER, 0, 0, 0);
+        view.onHoverEvent(event);
+        assertTrue(view.isHovered());
+        event.recycle();
+
+        event = MotionEvent.obtain(downTime, downTime + 10, MotionEvent.ACTION_HOVER_EXIT, 0, 0, 0);
+        view.onHoverEvent(event);
+        assertFalse(view.isHovered());
+        event.recycle();
+
+        // Simulate an ENTER, then disable the view and simulate EXIT.
+        event = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_HOVER_ENTER, 0, 0, 0);
+        view.onHoverEvent(event);
+        assertTrue(view.isHovered());
+        event.recycle();
+
+        view.setEnabled(false);
+
+        event = MotionEvent.obtain(downTime, downTime + 10, MotionEvent.ACTION_HOVER_EXIT, 0, 0, 0);
+        view.onHoverEvent(event);
+        assertFalse(view.isHovered());
+        event.recycle();
+    }
+
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetTint = false;
 
