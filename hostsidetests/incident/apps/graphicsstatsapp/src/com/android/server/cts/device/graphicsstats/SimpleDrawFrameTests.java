@@ -40,4 +40,30 @@ public class SimpleDrawFrameTests {
         DrawFramesActivity activity = mActivityRule.getActivity();
         activity.drawFrames(10);
     }
+
+    @Test
+    public void testDrawJankyFrames() throws Throwable {
+        DrawFramesActivity activity = mActivityRule.getActivity();
+        int[] frames = new int[50];
+        for (int i = 0; i < 10; i++) {
+            int indx = i * 5;
+            frames[indx] = DrawFramesActivity.FRAME_JANK_RECORD_DRAW;
+            frames[indx + 1] = DrawFramesActivity.FRAME_JANK_ANIMATION;
+            frames[indx + 2] = DrawFramesActivity.FRAME_JANK_LAYOUT;
+            frames[indx + 3] = DrawFramesActivity.FRAME_JANK_MISS_VSYNC;
+        }
+        activity.drawFrames(frames);
+    }
+
+    @Test
+    public void testDrawDaveyFrames() throws Throwable {
+        DrawFramesActivity activity = mActivityRule.getActivity();
+        int[] frames = new int[40];
+        for (int i = 0; i < 10; i++) {
+            int indx = i * 4;
+            frames[indx] = DrawFramesActivity.FRAME_JANK_DAVEY;
+            frames[indx + 2] = DrawFramesActivity.FRAME_JANK_DAVEY_JR;
+        }
+        activity.drawFrames(frames);
+    }
 }

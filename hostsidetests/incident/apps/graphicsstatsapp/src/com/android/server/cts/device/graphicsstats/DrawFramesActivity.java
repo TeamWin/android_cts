@@ -17,10 +17,10 @@
 package com.android.server.cts.device.graphicsstats;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.Choreographer;
 import android.view.View;
 
 import java.util.concurrent.CountDownLatch;
@@ -28,6 +28,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class DrawFramesActivity extends Activity {
+
+    public static final int FRAME_JANK_RECORD_DRAW = 1 << 0;
+    public static final int FRAME_JANK_ANIMATION = 1 << 1;
+    public static final int FRAME_JANK_LAYOUT = 1 << 2;
+    public static final int FRAME_JANK_DAVEY_JR = 1 << 3;
+    public static final int FRAME_JANK_DAVEY = 1 << 4;
+    public static final int FRAME_JANK_MISS_VSYNC = 1 << 5;
 
     private static final String TAG = "GraphicsStatsDeviceTest";
 
@@ -40,16 +47,47 @@ public class DrawFramesActivity extends Activity {
     private View mColorView;
     private int mColorIndex;
     private final CountDownLatch mReady = new CountDownLatch(1);
+    private Choreographer mChoreographer;
     private CountDownLatch mFramesFinishedFence = mReady;
-    private int mFramesRemaining = 1;
+    private int mFrameIndex;
+    private int[] mFramesToDraw;
 
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        mColorView = new View(this);
+        mChoreographer = Choreographer.getInstance();
+        mColorView = new View(this) {
+            {
+                setWillNotDraw(false);
+            }
+
+            @Override
+            protected void onDraw(Canvas canvas) {
+                jankIf(FRAME_JANK_RECORD_DRAW);
+            }
+
+            @Override
+            public void layout(int l, int t, int r, int b) {
+                super.layout(l, t, r, b);
+                jankIf(FRAME_JANK_LAYOUT);
+            }
+        };
         updateColor();
         mColorView.getViewTreeObserver().addOnDrawListener(this::onDraw);
         setContentView(mColorView);
+    }
+
+    private void setupFrame() {
+        updateColor();
+        if (isFrameFlagSet(FRAME_JANK_LAYOUT)) {
+            mColorView.requestLayout();
+        }
+        if (isFrameFlagSet(FRAME_JANK_DAVEY_JR)) {
+            spinSleep(150);
+        }
+        if (isFrameFlagSet(FRAME_JANK_DAVEY)) {
+            spinSleep(700);
+        }
     }
 
     private void updateColor() {
@@ -59,31 +97,79 @@ public class DrawFramesActivity extends Activity {
         mColorIndex = (mColorIndex + 1) % COLORS.length;
     }
 
+    private void jankIf(int flagIsSet) {
+        if (isFrameFlagSet(flagIsSet)) {
+            jank();
+        }
+    }
+
+    private boolean isFrameFlagSet(int flag) {
+        return mFramesToDraw != null && (mFramesToDraw[mFrameIndex] & flag) != 0;
+    }
+
+    private void jank() {
+        spinSleep(20);
+    }
+
+    private void spinSleep(int durationMs) {
+        long until = System.currentTimeMillis() + durationMs;
+        while (System.currentTimeMillis() < until) {}
+    }
+
+    private void scheduleDraw() {
+        mChoreographer.postFrameCallback((long timestamp) -> {
+            setupFrame();
+            jankIf(FRAME_JANK_ANIMATION);
+        });
+        if (isFrameFlagSet(FRAME_JANK_MISS_VSYNC)) {
+            spinSleep(32);
+        }
+    }
+
     private void onDraw() {
-        if (mFramesFinishedFence != null && --mFramesRemaining >= 0) {
-            if (mFramesRemaining == 0) {
-                mFramesFinishedFence.countDown();
-                mFramesFinishedFence = null;
-            } else {
-                mColorView.post(this::updateColor);
-            }
+        mColorView.post(this::onDrawFinished);
+    }
+
+    private void onDrawFinished() {
+        if (mFramesToDraw != null && mFrameIndex < mFramesToDraw.length - 1) {
+            mFrameIndex++;
+            scheduleDraw();
+        } else if (mFramesFinishedFence != null) {
+            mFramesFinishedFence.countDown();
+            mFramesFinishedFence = null;
+            mFramesToDraw = null;
         }
     }
 
     public void drawFrames(final int frameCount) throws InterruptedException, TimeoutException {
+        drawFrames(new int[frameCount]);
+    }
+
+    public void drawFrames(final int[] framesToDraw) throws InterruptedException, TimeoutException {
         if (!mReady.await(4, TimeUnit.SECONDS)) {
             throw new TimeoutException();
         }
         final CountDownLatch fence = new CountDownLatch(1);
+        long timeoutDurationMs = 0;
+        for (int frame : framesToDraw) {
+            // 50ms base time + 20ms for every extra jank event
+            timeoutDurationMs += 50 + (20 * Integer.bitCount(frame));
+            if ((frame & FRAME_JANK_DAVEY_JR) != 0) {
+                timeoutDurationMs += 150;
+            }
+            if ((frame & FRAME_JANK_DAVEY) != 0) {
+                timeoutDurationMs += 700;
+            }
+        }
         runOnUiThread(() -> {
-            mFramesRemaining = frameCount;
+            mFramesToDraw = framesToDraw;
+            mFrameIndex = 0;
             mFramesFinishedFence = fence;
-            mColorView.invalidate();
+            scheduleDraw();
         });
-        // Set an upper-bound at 100ms/frame, nothing should ever come close to this for a simple
-        // color fill.
-        if (!fence.await(frameCount / 10, TimeUnit.SECONDS)) {
-            throw new TimeoutException();
+        if (!fence.await(timeoutDurationMs, TimeUnit.MILLISECONDS)) {
+            throw new TimeoutException("Drawing " + framesToDraw.length + " frames timed out after "
+                    + timeoutDurationMs + "ms");
         }
     }
 }
