@@ -17,12 +17,13 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static android.service.autofill.SaveInfo.SAVE_UI_TYPE_GENERIC;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
+import android.autofillservice.cts.CannedFillResponse.CannedDataset.Builder;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
@@ -56,8 +57,9 @@ import java.util.Map;
 final class CannedFillResponse {
 
     final List<CannedDataset> datasets;
-    final int saveType = SAVE_UI_TYPE_GENERIC;
+    final int saveType;
     final String[] savableIds;
+    final String saveDescription;
     final Bundle extras;
     final RemoteViews presentation;
     final IntentSender authentication;
@@ -65,6 +67,8 @@ final class CannedFillResponse {
     private CannedFillResponse(Builder builder) {
         datasets = builder.mDatasets;
         savableIds = builder.mSavableIds;
+        saveDescription = builder.mSaveDescription;
+        saveType = builder.mSaveType;
         extras = builder.mExtras;
         presentation = builder.mPresentation;
         authentication = builder.mAuthentication;
@@ -85,6 +89,9 @@ final class CannedFillResponse {
         }
         if (savableIds != null) {
             final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType);
+            if (saveDescription != null) {
+                saveInfo.setDescription(saveDescription);
+            }
             for (String resourceId : savableIds) {
                 final ViewNode node = findNodeByResourceId(structure, resourceId);
                 if (node == null) {
@@ -106,6 +113,7 @@ final class CannedFillResponse {
     public String toString() {
         return "CannedFillResponse: [datasets=" + datasets
                 + ", savableIds=" + Arrays.toString(savableIds)
+                + ", saveDescription=" + saveDescription
                 + ", hasPresentation=" + (presentation != null)
                 + ", hasPAuthentication=" + (authentication != null)
                 + "]";
@@ -114,6 +122,8 @@ final class CannedFillResponse {
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
         private String[] mSavableIds;
+        private String mSaveDescription;
+        public int mSaveType;
         private Bundle mExtras;
         private RemoteViews mPresentation;
         private IntentSender mAuthentication;
@@ -131,6 +141,21 @@ final class CannedFillResponse {
             return this;
         }
 
+        /**
+         * Sets the description passed to the {@link SaveInfo}.
+         */
+        public Builder setSaveDescription(String description) {
+            mSaveDescription = description;
+            return this;
+        }
+
+        /**
+         * Sets the type passed to the {@link SaveInfo}.
+         */
+        public Builder setSaveType(int type) {
+            mSaveType = type;
+            return this;
+        }
         /**
          * Sets the extra passed to {@link
          * android.service.autofill.FillResponse.Builder#setExtras(Bundle)}.
