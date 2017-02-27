@@ -29,7 +29,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
   libnativewindow \
-  libandroid_runtime \
   libui \
   libutils \
   liblog \
