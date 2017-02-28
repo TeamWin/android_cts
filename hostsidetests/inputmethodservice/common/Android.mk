@@ -12,22 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+###############################################################################
+# Build the common library for use device-side
+###############################################################################
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-annotations \
-    CtsInputMethodServiceCommon
+LOCAL_JAVA_LIBRARIES := junit
 
 LOCAL_MODULE_TAGS := tests
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_MODULE := CtsInputMethodServiceLib
+LOCAL_MODULE := CtsInputMethodServiceCommon
 
 LOCAL_SDK_VERSION := current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
+
+###############################################################################
+# Build the common library for use host-side
+###############################################################################
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_JAVA_LIBRARIES := junit-host
+
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_MODULE := cts-inputmethodservice-common-host
+
+include $(BUILD_HOST_JAVA_LIBRARY)

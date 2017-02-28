@@ -16,18 +16,25 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+# When built, explicitly put it in the data partition.
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_DEX_PREOPT := false
+
+LOCAL_PROGUARD_ENABLED := disabled
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-annotations \
-    CtsInputMethodServiceCommon
-
-LOCAL_MODULE_TAGS := tests
+    CtsInputMethodServiceCommon \
+    CtsInputMethodServiceLib
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_MODULE := CtsInputMethodServiceLib
+LOCAL_PACKAGE_NAME := CtsInputMethodServiceEventProvider
 
 LOCAL_SDK_VERSION := current
 
-include $(BUILD_STATIC_JAVA_LIBRARY)
+include $(BUILD_PACKAGE)
