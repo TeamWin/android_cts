@@ -47,8 +47,10 @@ import java.io.IOException;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.verifier.PassFailButtons;
+import com.android.cts.verifier.ArrayTestListAdapter;
+import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestResult;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -58,7 +60,7 @@ import org.json.JSONObject;
  * This test activity requires a USB connection to a computer, and a corresponding host-side run of
  * the python scripts found in the CameraITS directory.
  */
-public class ItsTestActivity extends PassFailButtons.Activity {
+public class ItsTestActivity extends DialogTestListActivity {
     private static final String TAG = "ItsTestActivity";
     private static final String EXTRA_CAMERA_ID = "camera.its.extra.CAMERA_ID";
     private static final String EXTRA_RESULTS = "camera.its.extra.RESULTS";
@@ -78,6 +80,16 @@ public class ItsTestActivity extends PassFailButtons.Activity {
 
     // Initialized in onCreate
     ArrayList<String> mNonLegacyCameraIds = null;
+
+    // Scenes
+    private static final ArrayList<String> mSceneIds = new ArrayList<String> () { {
+            add("scene0");
+            add("scene1");
+            add("scene2");
+            add("scene3");
+            add("scene4");
+            add("scene5");
+        } };
 
     // TODO: cache the following in saved bundle
     private Set<ResultKey> mAllScenes = null;
@@ -112,6 +124,13 @@ public class ItsTestActivity extends PassFailButtons.Activity {
             h = ((h << 5) - h) ^ sceneId.hashCode();
             return h;
         }
+    }
+
+    public ItsTestActivity() {
+        super(R.layout.its_main,
+                R.string.camera_its_test,
+                R.string.camera_its_test_info,
+                R.string.camera_its_test);
     }
 
     private final Comparator<ResultKey> mComparator = new Comparator<ResultKey>() {
@@ -217,6 +236,9 @@ public class ItsTestActivity extends PassFailButtons.Activity {
                         if (result.equals(RESULT_PASS) || result.equals(RESULT_FAIL)) {
                             boolean pass = result.equals(RESULT_PASS);
                             mExecutedScenes.put(key, pass);
+                            setTestResult(testId(cameraId, scene), pass ?
+                                    TestResult.TEST_RESULT_PASSED : TestResult.TEST_RESULT_FAILED);
+                            Log.e(TAG, "setTestResult for " + testId(cameraId, scene) + ": " + result);
                             String summary = sceneResult.optString("summary");
                             if (!summary.equals("")) {
                                 mSummaryMap.put(key, summary);
@@ -269,6 +291,7 @@ public class ItsTestActivity extends PassFailButtons.Activity {
                     // Enable pass button
                     ItsTestActivity.this.showToast(R.string.its_test_passed);
                     ItsTestActivity.this.getPassButton().setEnabled(true);
+                    ItsTestActivity.this.setTestResultAndFinish(true);
                 } else {
                     ItsTestActivity.this.getPassButton().setEnabled(false);
                 }
@@ -305,13 +328,6 @@ public class ItsTestActivity extends PassFailButtons.Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.its_main);
-        setInfoResources(R.string.camera_its_test, R.string.camera_its_test_info, -1);
-        setPassFailButtonClickListeners();
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         // Hide the test if all camera devices are legacy
         CameraManager manager = (CameraManager) this.getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -339,7 +355,37 @@ public class ItsTestActivity extends PassFailButtons.Activity {
                             + e, Toast.LENGTH_SHORT).show();
         }
 
-        getPassButton().setEnabled(false);
+        super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    @Override
+    public void showManualTestDialog(final DialogTestListItem test,
+            final DialogTestListItem.TestCallback callback) {
+        //Nothing todo for ITS
+    }
+
+    protected String testTitle(String cam, String scene) {
+        return "Camera: " + cam + ", " + scene;
+    }
+
+    protected String testId(String cam, String scene) {
+        return "Camera_ITS_" + cam + "_" + scene;
+    }
+
+    protected void setupItsTests(ArrayTestListAdapter adapter) {
+        for (String cam : mNonLegacyCameraIds) {
+            for (String scene : mSceneIds) {
+                adapter.add(new DialogTestListItem(this,
+                testTitle(cam, scene),
+                testId(cam, scene)));
+            }
+        }
+    }
+
+    @Override
+    protected void setupTests(ArrayTestListAdapter adapter) {
+        setupItsTests(adapter);
     }
 
     @Override
@@ -369,9 +415,4 @@ public class ItsTestActivity extends PassFailButtons.Activity {
         setInfoResources(R.string.camera_its_test, R.string.camera_its_test_info, -1);
         setPassFailButtonClickListeners();
     }
-
-    private void showToast(int messageId) {
-        Toast.makeText(ItsTestActivity.this, messageId, Toast.LENGTH_SHORT).show();
-    }
-
 }
