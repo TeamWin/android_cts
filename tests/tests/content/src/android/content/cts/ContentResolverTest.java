@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ContentResolverTest extends AndroidTestCase {
     private final static String COLUMN_ID_NAME = "_id";
@@ -320,7 +322,7 @@ public class ContentResolverTest extends AndroidTestCase {
         mCursor.close();
     }
 
-    public void testQuery_WithSelectionArgs() {
+    public void testQuery_WithSqlSelectionArgs() {
         Bundle queryArgs = new Bundle();
         queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, COLUMN_ID_NAME + "=?");
         queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, new String[] {"1"});
@@ -347,6 +349,75 @@ public class ContentResolverTest extends AndroidTestCase {
         assertEquals(3, mCursor.getInt(mCursor.getColumnIndexOrThrow(COLUMN_ID_NAME)));
         assertEquals(KEY3, mCursor.getString(mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME)));
         assertEquals(VALUE3, mCursor.getInt(mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME)));
+        mCursor.close();
+    }
+
+    /*
+     * NOTE: this test is implicitly coupled to the implementation
+     * of MockContentProvider#query, specifically the facts:
+     *
+     * - it does *not* override the query w/ Bundle methods
+     * - it receives the auto-generated sql format arguments (supplied by the framework)
+     * - it is backed by sqlite and forwards the sql formatted args.
+     */
+    public void testQuery_SqlSortingFromBundleArgs() {
+
+        mContentResolver.delete(TABLE1_URI, null, null);
+        ContentValues values = new ContentValues();
+
+        values.put(COLUMN_KEY_NAME, "0");
+        values.put(COLUMN_VALUE_NAME, "abc");
+        mContentResolver.insert(TABLE1_URI, values);
+
+        values.put(COLUMN_KEY_NAME, "1");
+        values.put(COLUMN_VALUE_NAME, "DEF");
+        mContentResolver.insert(TABLE1_URI, values);
+
+        values.put(COLUMN_KEY_NAME, "2");
+        values.put(COLUMN_VALUE_NAME, "ghi");
+        mContentResolver.insert(TABLE1_URI, values);
+
+        String[] sortCols = new String[] { COLUMN_VALUE_NAME };
+        Bundle queryArgs = new Bundle();
+        queryArgs.putStringArray(
+                ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                sortCols);
+
+        // Sort ascending...
+        queryArgs.putInt(
+                ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                ContentResolver.QUERY_SORT_DIRECTION_ASCENDING);
+
+        mCursor = mContentResolver.query(TABLE1_URI, sortCols, queryArgs, null);
+        int col = mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME);
+
+        mCursor.moveToNext();
+        assertEquals("DEF", mCursor.getString(col));
+        mCursor.moveToNext();
+        assertEquals("abc", mCursor.getString(col));
+        mCursor.moveToNext();
+        assertEquals("ghi", mCursor.getString(col));
+
+        mCursor.close();
+
+        // Nocase collation, descending...
+        queryArgs.putInt(
+                ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                ContentResolver.QUERY_SORT_DIRECTION_DESCENDING);
+        queryArgs.putInt(
+                ContentResolver.QUERY_ARG_SORT_COLLATION,
+                java.text.Collator.SECONDARY);
+
+        mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
+        col = mCursor.getColumnIndexOrThrow(COLUMN_VALUE_NAME);
+
+        mCursor.moveToNext();
+        assertEquals("ghi", mCursor.getString(col));
+        mCursor.moveToNext();
+        assertEquals("DEF", mCursor.getString(col));
+        mCursor.moveToNext();
+        assertEquals("abc", mCursor.getString(col));
+
         mCursor.close();
     }
 

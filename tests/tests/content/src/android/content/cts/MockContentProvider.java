@@ -51,8 +51,6 @@ import java.util.HashMap;
 public class MockContentProvider extends ContentProvider
         implements PipeDataWriter<String> {
 
-    private SQLiteOpenHelper mOpenHelper;
-
     private static final String DEFAULT_AUTHORITY = "ctstest";
     private static final String DEFAULT_DBNAME = "ctstest.db";
     private static final int DBVERSION = 2;
@@ -73,6 +71,8 @@ public class MockContentProvider extends ContentProvider
     private final UriMatcher URL_MATCHER;
     private HashMap<String, String> CTSDBTABLE1_LIST_PROJECTION_MAP;
     private HashMap<String, String> CTSDBTABLE2_LIST_PROJECTION_MAP;
+
+    private SQLiteOpenHelper mOpenHelper;
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -116,12 +116,12 @@ public class MockContentProvider extends ContentProvider
         URL_MATCHER.addURI(mAuthority, "self", SELF_ID);
         URL_MATCHER.addURI(mAuthority, "crash", CRASH_ID);
 
-        CTSDBTABLE1_LIST_PROJECTION_MAP = new HashMap<String, String>();
+        CTSDBTABLE1_LIST_PROJECTION_MAP = new HashMap<>();
         CTSDBTABLE1_LIST_PROJECTION_MAP.put("_id", "_id");
         CTSDBTABLE1_LIST_PROJECTION_MAP.put("key", "key");
         CTSDBTABLE1_LIST_PROJECTION_MAP.put("value", "value");
 
-        CTSDBTABLE2_LIST_PROJECTION_MAP = new HashMap<String, String>();
+        CTSDBTABLE2_LIST_PROJECTION_MAP = new HashMap<>();
         CTSDBTABLE2_LIST_PROJECTION_MAP.put("_id", "_id");
         CTSDBTABLE2_LIST_PROJECTION_MAP.put("key", "key");
         CTSDBTABLE2_LIST_PROJECTION_MAP.put("value", "value");
@@ -302,11 +302,7 @@ public class MockContentProvider extends ContentProvider
         }
 
         /* If no sort order is specified use the default */
-        String orderBy;
-        if (TextUtils.isEmpty(sortOrder))
-            orderBy = "_id";
-        else
-            orderBy = sortOrder;
+        String orderBy = TextUtils.isEmpty(sortOrder) ? "_id" : sortOrder;
 
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, orderBy,
