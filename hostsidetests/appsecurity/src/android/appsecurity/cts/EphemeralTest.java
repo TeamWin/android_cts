@@ -44,9 +44,6 @@ public class EphemeralTest extends DeviceTestCase
 
     private static final String TEST_CLASS = ".ClientTest";
 
-    private static final boolean MATCH_UNINSTALLED = true;
-    private static final boolean MATCH_NORMAL = false;
-
     private String mOldVerifierValue;
     private IAbi mAbi;
     private IBuildInfo mBuildInfo;
@@ -67,15 +64,12 @@ public class EphemeralTest extends DeviceTestCase
         assertNotNull(mAbi);
         assertNotNull(mBuildInfo);
 
-        installApp(NORMAL_APK);
-        installEphemeralApp(EPHEMERAL_1_APK);
-        installEphemeralApp(EPHEMERAL_2_APK);
+        uninstallTestPackages();
+        installTestPackages();
     }
 
     public void tearDown() throws Exception {
-        getDevice().uninstallPackage(NORMAL_PKG);
-        getDevice().uninstallPackage(EPHEMERAL_1_PKG);
-        getDevice().uninstallPackage(EPHEMERAL_2_PKG);
+        uninstallTestPackages();
         super.tearDown();
     }
 
@@ -124,5 +118,17 @@ public class EphemeralTest extends DeviceTestCase
     private void installEphemeralApp(String apk) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
         assertNull(getDevice().installPackage(buildHelper.getTestFile(apk), false, "--ephemeral"));
+    }
+
+    private void installTestPackages() throws Exception {
+        installApp(NORMAL_APK);
+        installEphemeralApp(EPHEMERAL_1_APK);
+        installEphemeralApp(EPHEMERAL_2_APK);
+    }
+
+    private void uninstallTestPackages() throws Exception {
+        getDevice().uninstallPackage(NORMAL_PKG);
+        getDevice().uninstallPackage(EPHEMERAL_1_PKG);
+        getDevice().uninstallPackage(EPHEMERAL_2_PKG);
     }
 }
