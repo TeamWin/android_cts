@@ -24,6 +24,7 @@ import socket
 import subprocess
 import hashlib
 import numpy
+import string
 
 class ItsSession(object):
     """Controls a device over adb to run ITS scripts.
@@ -71,6 +72,7 @@ class ItsSession(object):
     CURRENT_ITS_VERSION = '1.0' # version number to sync with CtsVerifier
     EXTRA_CAMERA_ID = 'camera.its.extra.CAMERA_ID'
     EXTRA_RESULTS = 'camera.its.extra.RESULTS'
+    ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
 
     RESULT_PASS = 'PASS'
     RESULT_FAIL = 'FAIL'
@@ -814,6 +816,11 @@ def report_result(device_id, camera_id, results):
         Nothing.
     """
     adb = "adb -s " + device_id
+
+    # Start ItsTestActivity to prevent flaky
+    cmd = "%s shell am start %s --activity-brought-to-front" % (adb, ItsSession.ITS_TEST_ACTIVITY)
+    _run(cmd)
+
     # Validate/process results argument
     for scene in results:
         result_key = ItsSession.RESULT_KEY
@@ -829,6 +836,7 @@ def report_result(device_id, camera_id, results):
             _run("%s push %s %s" % (
                     adb, results[scene][summary_key], device_summary_path))
             results[scene][summary_key] = device_summary_path
+
     json_results = json.dumps(results)
     cmd = "%s shell am broadcast -a %s --es %s %s --es %s %s --es %s \'%s\'" % (
             adb, ItsSession.ACTION_ITS_RESULT,
@@ -838,6 +846,33 @@ def report_result(device_id, camera_id, results):
     if len(cmd) > 4095:
         print "ITS command string might be too long! len:", len(cmd)
     _run(cmd)
+
+def get_device_fingerprint(device_id):
+    """ Return the Build FingerPrint of the device that the test is running on.
+
+    Returns:
+        Device Build Fingerprint string.
+    """
+    device_bfp = None
+
+    # Get a list of connected devices
+
+    com = ('adb -s %s shell getprop | grep ro.build.fingerprint' % device_id)
+    proc = subprocess.Popen(com.split(), stdout=subprocess.PIPE)
+    output, error = proc.communicate()
+    assert error is None
+
+    lst = string.split( \
+            string.replace( \
+            string.replace( \
+            string.replace(output,
+            '\n', ''), '[', ''), ']', ''), \
+            ' ')
+
+    if lst[0].find('ro.build.fingerprint') != -1:
+        device_bfp = lst[1]
+
+    return device_bfp
 
 def _run(cmd):
     """Replacement for os.system, with hiding of stdout+stderr messages.
