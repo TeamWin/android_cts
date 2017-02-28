@@ -39,6 +39,7 @@ import java.util.List;
 public class ResultReporterTest extends TestCase {
 
     private static final String ROOT_PROPERTY = "TESTS_ROOT";
+    private static final String SUITE_NAME = "TESTS";
     private static final String BUILD_NUMBER = "2";
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
