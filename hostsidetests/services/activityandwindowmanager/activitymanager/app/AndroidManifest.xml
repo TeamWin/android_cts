@@ -38,7 +38,7 @@
         <activity android:name=".ResizeableActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
-                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"
         />
         <activity android:name=".NonResizeableActivity"
                 android:resizeableActivity="false"
