@@ -18,11 +18,9 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := optional
 
-# TODO(b/30946317): remove guava (currently needed by truth-prebuilt)
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
-    guava \
     truth-prebuilt \
     ub-uiautomator \
     testng
