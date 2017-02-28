@@ -365,43 +365,50 @@ public class TvContractTest extends AndroidTestCase {
         ContentValues values = createDummyChannelValues(mInputId, false);
         Uri channelUri = mContentResolver.insert(mChannelsUri, values);
 
-        final String COLUMN_BROWSABLE = "browsable";
         final String COLUMN_SYSTEM_APPROVED = "system_approved";
 
         // Test: insert
-        values.put(COLUMN_BROWSABLE, 1);
+        values.put(Channels.COLUMN_BROWSABLE, 1);
         values.putNull(COLUMN_SYSTEM_APPROVED);
         try {
             mContentResolver.insert(mChannelsUri, values);
-            fail("'" + COLUMN_BROWSABLE + "' should not be accessible.");
+            fail("Channels.COLUMN_BROWSABLE should be read-only.");
         } catch (Exception e) {
             // Expected.
         }
-        values.putNull(COLUMN_BROWSABLE);
+        values.putNull(Channels.COLUMN_BROWSABLE);
         values.put(COLUMN_SYSTEM_APPROVED, 1);
         try {
             mContentResolver.insert(mChannelsUri, values);
-            fail("'" + COLUMN_SYSTEM_APPROVED + "' should not be accessible.");
+            fail("'" + COLUMN_SYSTEM_APPROVED + "' should be read-only.");
         } catch (Exception e) {
             // Expected.
         }
 
         // Test: update
-        values.put(COLUMN_BROWSABLE, 1);
+        values.put(Channels.COLUMN_BROWSABLE, 1);
         values.putNull(COLUMN_SYSTEM_APPROVED);
         try {
             mContentResolver.update(channelUri, values, null, null);
-            fail("'" + COLUMN_BROWSABLE + "' should not be accessible.");
+            fail("Channels.COLUMN_BROWSABLE should be read-only.");
         } catch (Exception e) {
             // Expected.
         }
-        values.putNull(COLUMN_BROWSABLE);
+        values.putNull(Channels.COLUMN_BROWSABLE);
         values.put(COLUMN_SYSTEM_APPROVED, 1);
         try {
             mContentResolver.update(channelUri, values, null, null);
-            fail("'" + COLUMN_SYSTEM_APPROVED + "' should not be accessible.");
+            fail("'" + COLUMN_SYSTEM_APPROVED + "' should be read-only.");
         } catch (Exception e) {
             // Expected.
+        }
+
+        // Test: query
+        try (Cursor cursor = mContentResolver.query(
+                channelUri,
+                new String[]{ Channels.COLUMN_BROWSABLE }, null, null, null)) {
+            // Channels.COLUMN_BROWSABLE should be readable from application.
+            assertEquals(1, cursor.getCount());
         }
 
         mContentResolver.delete(mChannelsUri, null, null);
@@ -706,10 +713,10 @@ public class TvContractTest extends AndroidTestCase {
         values = createDummyPreviewProgramValues(channelId);
         Uri previewProgramUri = mContentResolver.insert(previewProgramsUri, values);
 
-        values.put("browsable", 1);
+        values.put(PreviewPrograms.COLUMN_BROWSABLE, 1);
         try {
             mContentResolver.insert(previewProgramUri, values);
-            fail("'browsable' should not be accessible.");
+            fail("PreviewPrograms.COLUMN_BROWSABLE should not be accessible.");
         } catch (Exception e) {
             // Expected.
         }
