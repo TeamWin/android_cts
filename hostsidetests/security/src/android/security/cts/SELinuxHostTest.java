@@ -696,7 +696,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* netd is always there */
     @CddTest(requirement="9.7")
     public void testNetdDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:netd:s0", "/system/bin/netd");
+        assertDomainN("u:r:netd:s0", "/system/bin/netd", "/system/bin/iptables-restore", "/system/bin/ip6tables-restore");
     }
 
     /* Surface flinger is always there */
