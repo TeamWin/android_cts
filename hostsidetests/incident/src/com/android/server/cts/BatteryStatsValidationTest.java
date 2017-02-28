@@ -29,6 +29,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     private static final String DEVICE_SIDE_TEST_APK = "CtsBatteryStatsApp.apk";
     private static final String DEVICE_SIDE_TEST_PACKAGE
             = "com.android.server.cts.device.batterystats";
+    private static final String DEVICE_SIDE_JOB_COMPONENT
+            = "com.android.server.cts.device.batterystats/.SimpleJobService";
 
     @Override
     protected void tearDown() throws Exception {
@@ -92,6 +94,20 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOffScreenOn();
     }
 
+    public void testJobDuration() throws Exception {
+        batteryOnScreenOff();
+
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsJobDurationTests",
+                "testJobDuration");
+
+        // Should be approximately 3000 ms. Use 0.8x and 2x as the lower and upper
+        // bounds to account for possible errors due to thread scheduling and cpu load.
+        assertValueRange("jb", DEVICE_SIDE_JOB_COMPONENT, 5, (long) (3000 * 0.8), 3000 * 2);
+        batteryOffScreenOn();
+    }
+
     /**
      * Verifies that the recorded time for the specified tag and name in the test package
      * is within the specified range
@@ -109,16 +125,16 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertTrue(uid > 10000);
 
         String[] lines = dumpsys.split("\n");
-        long time = 0;
+        long value = 0;
         for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines[i];
             if (line.contains(uid + ",l," + tag + "," + optionalAfterTag)) {
                 String[] wlParts = line.split(",");
-                //System.err.println(line);
-                time = Long.parseLong(wlParts[index]);
+                value = Long.parseLong(wlParts[index]);
+                //System.err.println("Found match: " + line);
             }
         }
-        assertTrue("Value " + time + " is less than min " + min, time >= min);
-        assertTrue("Value " + time + " is greater than max " + max, time <= max);
+        assertTrue("Value " + value + " is less than min " + min, value >= min);
+        assertTrue("Value " + value + " is greater than max " + max, value <= max);
     }
 }

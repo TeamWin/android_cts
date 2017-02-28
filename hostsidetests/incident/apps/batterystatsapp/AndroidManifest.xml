@@ -23,8 +23,14 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+
         <service android:name=".SimpleForegroundService" android:exported="true" />
+
+        <service android:name=".SimpleJobService"
+                android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <activity android:name=".SimpleActivity" android:label="BatteryStats Test Activity" />
+
         <activity android:name=".BatteryStatsWifiScanTests$WiFiScanActivity" android:label="BatteryStats Wifi scan Test Activity" />
     </application>
 
