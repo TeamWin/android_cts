@@ -77,13 +77,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Rule
     public final ActivityTestRule<LoginActivity> mActivityRule =
-        new ActivityTestRule<LoginActivity>(LoginActivity.class);
+            new ActivityTestRule<LoginActivity>(LoginActivity.class);
 
     private LoginActivity mLoginActivity;
 
     @Before
     public void setActivity() {
         mLoginActivity = mActivityRule.getActivity();
+        destroyAllSessions();
     }
 
     @Test
@@ -262,11 +263,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.assertNumberUnhandledFillRequests(1);
         replier.assertNumberUnhandledSaveRequests(0);
 
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
-
         // Other sanity checks.
         waitUntilDisconnected();
+
+        // Sanity check: once saved, the session should be finished.
+        assertNoDanglingSessions();
     }
 
     @Test
@@ -395,11 +396,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.assertNumberUnhandledFillRequests(0);
         replier.assertNumberUnhandledSaveRequests(0);
 
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
-
         // Other sanity checks.
         waitUntilDisconnected();
+
+        // Sanity check: once saved, the session should be finsihed.
+        assertNoDanglingSessions();
     }
 
     @Test
@@ -578,6 +579,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         waitUntilDisconnected();
     }
 
+    @Test
     public void testSanitization() throws Exception {
         enableService();
 
@@ -596,6 +598,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
 
         // Assert sanitization on fill request:
         final FillRequest fillRequest = replier.getNextFillRequest();
@@ -625,5 +628,63 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 "DA PASSWORD");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_USERNAME), "malkovich");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "malkovich");
+
+        // Sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testDisableSelfWhenConnected() throws Exception {
+        enableService();
+
+        // Ensure enabled.
+        assertServiceEnabled();
+
+        // Set no-op behavior.
+        final Replier replier = new Replier();
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .build());
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Can disable while connected.
+        mLoginActivity.runOnUiThread(() ->
+                InstrumentedAutoFillService.peekInstance().disableSelf());
+
+        // Ensure disabled.
+        assertServiceDisabled();
+    }
+
+    @Test
+    public void testDisableSelfWhenDisconnected() throws Exception {
+        enableService();
+
+        // Ensure enabled.
+        assertServiceEnabled();
+
+        // Set no-op behavior.
+        final Replier replier = new Replier();
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .build());
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Wait until we timeout and disconnect.
+        waitUntilDisconnected();
+
+        // Cannot disable while disconnected.
+        mLoginActivity.runOnUiThread(() ->
+                InstrumentedAutoFillService.peekInstance().disableSelf());
+
+        // Ensure enabled.
+        assertServiceEnabled();
     }
 }

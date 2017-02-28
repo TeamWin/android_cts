@@ -18,15 +18,13 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
-import static android.autofillservice.cts.Helper.IGNORE_DANGLING_SESSIONS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.IDLE_UNBIND_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.dumpStructure;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
-import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -36,12 +34,8 @@ import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
-import android.view.autofill.AutoFillId;
-import android.view.autofill.AutoFillValue;
 
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -61,12 +55,21 @@ public class InstrumentedAutoFillService extends AutoFillService {
     private static final String STATE_CONNECTED = "CONNECTED";
     private static final String STATE_DISCONNECTED = "DISCONNECTED";
 
+    private static final AtomicReference<InstrumentedAutoFillService> sInstance =
+            new AtomicReference<>();
     private static final AtomicReference<Replier> sReplier = new AtomicReference<>();
     private static final BlockingQueue<String> sConnectionStates = new LinkedBlockingQueue<>();
 
+    public InstrumentedAutoFillService() {
+        sInstance.set(this);
+    }
+
+    public static AutoFillService peekInstance() {
+        return sInstance.get();
+    }
+
     // TODO(b/33197203, b/33802548): add tests for onConnected() / onDisconnected() and/or remove
     // overriden methods below that are only logging their calls.
-
     @Override
     public void onConnected() {
         Log.v(TAG, "onConnected(): " + sConnectionStates);
@@ -113,11 +116,10 @@ public class InstrumentedAutoFillService extends AutoFillService {
      * Waits until {@link #onDisconnected()} is called, or fails if it times out.
      */
     static void waitUntilDisconnected() throws InterruptedException {
-        if (IGNORE_DANGLING_SESSIONS) return;
-
-        final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        final String state = sConnectionStates.poll(2 * IDLE_UNBIND_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
         if (state == null) {
-            throw new AssertionError("not disconnected inin " + CONNECTION_TIMEOUT_MS + " ms");
+            throw new AssertionError("not disconnected in " + IDLE_UNBIND_TIMEOUT_MS + " ms");
         }
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_DISCONNECTED);
     }
@@ -273,6 +275,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
         private void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
             Log.d(TAG, "onSaveRequest()");
             mSaveRequests.offer(new SaveRequest(structure, data, callback));
+            callback.onSuccess();
         }
     }
 }

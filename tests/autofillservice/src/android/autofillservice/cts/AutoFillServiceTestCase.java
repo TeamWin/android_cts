@@ -16,7 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.IGNORE_DANGLING_SESSIONS;
 import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
@@ -88,10 +87,16 @@ abstract class AutoFillServiceTestCase {
      * Asserts that there is no session left in the service.
      */
     protected void assertNoDanglingSessions() {
-        if (IGNORE_DANGLING_SESSIONS) return;
         final String command = "cmd autofill list sessions";
         final String result = runShellCommand(command);
         assertWithMessage("Dangling sessions ('%s'): %s'", command, result).that(result).isEmpty();
+    }
+
+    /**
+     * Destroys all sessions.
+     */
+    protected void destroyAllSessions() {
+        runShellCommand("cmd autofill destroy sessions");
     }
 
     protected static Context getContext() {
