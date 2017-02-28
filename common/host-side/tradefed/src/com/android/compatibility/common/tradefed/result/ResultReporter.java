@@ -490,7 +490,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         try {
             // Zip the full test results directory.
             copyDynamicConfigFiles(mBuildHelper.getDynamicConfigFiles(), mResultDir);
-            copyFormattingFiles(mResultDir);
+            copyFormattingFiles(mResultDir, mBuildHelper.getSuiteName());
 
             File resultFile = ResultHandler.writeResults(mBuildHelper.getSuiteName(),
                     mBuildHelper.getSuiteVersion(), mBuildHelper.getSuitePlan(),
@@ -684,10 +684,15 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      *
      * @param resultsDir
      */
-    static void copyFormattingFiles(File resultsDir) {
+    static void copyFormattingFiles(File resultsDir, String suiteName) {
         for (String resultFileName : ResultHandler.RESULT_RESOURCES) {
             InputStream configStream = ResultHandler.class.getResourceAsStream(
+                    String.format("/report/%s-%s", suiteName, resultFileName));
+            if (configStream == null) {
+                // If suite specific files are not available, fallback to common.
+                configStream = ResultHandler.class.getResourceAsStream(
                     String.format("/report/%s", resultFileName));
+            }
             if (configStream != null) {
                 File resultFile = new File(resultsDir, resultFileName);
                 try {

@@ -411,7 +411,7 @@ public class ResultReporterTest extends TestCase {
     public void testCopyFormattingFiles() throws Exception {
         File resultDir = new File(mBuildHelper.getResultsDir(), RESULT_DIR);
         resultDir.mkdirs();
-        ResultReporter.copyFormattingFiles(resultDir);
+        ResultReporter.copyFormattingFiles(resultDir, SUITE_NAME);
         for (String filename : FORMATTING_FILES) {
             File file = new File(resultDir, filename);
             assertTrue(String.format("%s (%s) was not created", filename, file.getAbsolutePath()),
