@@ -112,6 +112,24 @@ public class DelegationTest extends BaseDeviceAdminTest {
                 scopes, reportedScopes);
     }
 
+    public void testCantDelegateToUninstalledPackage() {
+        // Prepare the package name and scopes to be delegated.
+        final String NON_EXISTENT_PKG = "com.android.nonexistent.delegate";
+        final List<String> scopes = Arrays.asList(
+                DELEGATION_CERT_INSTALL,
+                DELEGATION_ENABLE_SYSTEM_APP);
+        try {
+            // Trying to delegate to non existent package should throw.
+            mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
+                    NON_EXISTENT_PKG, scopes);
+            fail("Should throw when delegating to non existent package");
+        } catch(IllegalArgumentException expected) {
+        }
+        // Assert no scopes were delegated.
+        assertTrue("Delegation scopes granted to non existent package", mDevicePolicyManager
+                .getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, NON_EXISTENT_PKG).isEmpty());
+    }
+
     private void startAndWaitDelegateActivity() throws InterruptedException {
         mContext.startActivity(new Intent()
                 .setComponent(new ComponentName(DELEGATE_PKG, DELEGATE_ACTIVITY_NAME))
