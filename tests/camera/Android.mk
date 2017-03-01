@@ -62,7 +62,7 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_PACKAGE_NAME := CtsCameraTestCases
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
 

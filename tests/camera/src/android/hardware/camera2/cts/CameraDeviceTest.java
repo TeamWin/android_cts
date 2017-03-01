@@ -37,6 +37,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.media.ImageReader;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -665,6 +666,95 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
         }
     }
+
+    /**
+     * Verify creating a custom session
+     */
+    public void testCreateCustomSession() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i], mCameraMockListener);
+                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                testCreateCustomSessionByCamera(mCameraIds[i]);
+            }
+            finally {
+                closeDevice(mCameraIds[i], mCameraMockListener);
+            }
+        }
+    }
+
+    /**
+     * Verify creating a custom mode session works
+     */
+    private void testCreateCustomSessionByCamera(String cameraId) throws Exception {
+        final int SESSION_TIMEOUT_MS = 1000;
+        final int CAPTURE_TIMEOUT_MS = 3000;
+
+        if (VERBOSE) {
+            Log.v(TAG, "Testing creating custom session for camera " + cameraId);
+        }
+
+        Size yuvSize = mOrderedPreviewSizes.get(0);
+
+        // Create a list of image readers. JPEG for last one and YUV for the rest.
+        ImageReader imageReader = ImageReader.newInstance(yuvSize.getWidth(), yuvSize.getHeight(),
+                ImageFormat.YUV_420_888, /*maxImages*/1);
+
+        try {
+            // Create a normal-mode session via createCustomCaptureSession
+            mSessionMockListener = spy(new BlockingSessionCallback());
+            mSessionWaiter = mSessionMockListener.getStateWaiter();
+            List<OutputConfiguration> outputs = new ArrayList<>();
+            outputs.add(new OutputConfiguration(imageReader.getSurface()));
+            mCamera.createCustomCaptureSession(/*inputConfig*/null, outputs,
+                    CameraDevice.SESSION_OPERATION_MODE_NORMAL, mSessionMockListener, mHandler);
+            mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+
+            // Verify we can capture a frame with the session.
+            SimpleCaptureCallback captureListener = new SimpleCaptureCallback();
+            SimpleImageReaderListener imageListener = new SimpleImageReaderListener();
+            imageReader.setOnImageAvailableListener(imageListener, mHandler);
+
+            CaptureRequest.Builder builder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            builder.addTarget(imageReader.getSurface());
+            CaptureRequest request = builder.build();
+
+            mSession.capture(request, captureListener, mHandler);
+            captureListener.getCaptureResultForRequest(request, CAPTURE_TIMEOUT_MS);
+            imageListener.getImage(CAPTURE_TIMEOUT_MS).close();
+
+            // Create a few invalid custom sessions by using undefined non-vendor mode indices, and
+            // check that they fail to configure
+            mSessionMockListener = spy(new BlockingSessionCallback());
+            mSessionWaiter = mSessionMockListener.getStateWaiter();
+            mCamera.createCustomCaptureSession(/*inputConfig*/null, outputs,
+                    CameraDevice.SESSION_OPERATION_MODE_VENDOR_START - 1, mSessionMockListener, mHandler);
+            mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+            waitForSessionState(BlockingSessionCallback.SESSION_CONFIGURE_FAILED,
+                    SESSION_CONFIGURE_TIMEOUT_MS);
+
+            mSessionMockListener = spy(new BlockingSessionCallback());
+            mCamera.createCustomCaptureSession(/*inputConfig*/null, outputs,
+                    CameraDevice.SESSION_OPERATION_MODE_CONSTRAINED_HIGH_SPEED + 1, mSessionMockListener,
+                    mHandler);
+            mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+            mSessionWaiter = mSessionMockListener.getStateWaiter();
+            waitForSessionState(BlockingSessionCallback.SESSION_CONFIGURE_FAILED,
+                    SESSION_CONFIGURE_TIMEOUT_MS);
+
+        } finally {
+            imageReader.close();
+            mSession.close();
+        }
+    }
+
 
     /**
      * Verify creating sessions back to back and only the last one is valid for
