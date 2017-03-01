@@ -17,47 +17,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.autofillservice.cts" >
 
+
     <application>
-        <activity
-            android:name=".LoginActivity"
-            android:label="CTS_Login" >
+        <activity android:name=".LoginActivity" >
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
-                this app during CTS development... -->
+                     this app during CTS development... -->
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".WelcomeActivity"
-            android:label="WelcomeActivity" />
-
+        <activity android:name=".WelcomeActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
-
         <activity android:name=".AuthenticationActivity" />
-
-        <activity
-            android:name=".CheckoutActivity"
-            android:label="CTS_Checkout" >
-            <intent-filter>
-                <!-- This intent filter is not really needed by CTS, but it maks easier to launch
-                this app during CTS development... -->
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".InitializedCheckoutActivity"
-            android:label="CTS_Init_Checkout" >
-            <intent-filter>
-                <!-- This intent filter is not really needed by CTS, but it maks easier to launch
-                this app during CTS development... -->
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".CheckoutActivity"/>
+        <activity android:name=".InitializedCheckoutActivity" />
+        <activity android:name=".DatePickerCalendarActivity" />
+        <activity android:name=".DatePickerSpinnerActivity" />
+        <activity android:name=".TimePickerClockActivity" />
+        <activity android:name=".TimePickerSpinnerActivity" />
 
         <service
             android:name=".InstrumentedAutoFillService"

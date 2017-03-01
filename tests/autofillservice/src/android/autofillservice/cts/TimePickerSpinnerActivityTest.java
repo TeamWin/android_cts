@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.autofillservice.cts;
 
-import android.text.TextWatcher;
-import android.widget.EditText;
+import android.support.test.filters.SmallTest;
+import android.support.test.rule.ActivityTestRule;
 
-/**
- * Custom {@link TextWatcher} used to assert a {@link EditText} was auto-filled properly.
- */
-final class OneTimeTextWatcher extends MultipleTimesTextWatcher {
+import org.junit.Rule;
 
-    OneTimeTextWatcher(String name, EditText editText, CharSequence expectedAutoFillValue) {
-        super(name, 1, editText, expectedAutoFillValue);
+@SmallTest
+public class TimePickerSpinnerActivityTest extends TimePickerTestCase<TimePickerSpinnerActivity> {
+
+    @Rule
+    public final ActivityTestRule<TimePickerSpinnerActivity> mActivityRule =
+        new ActivityTestRule<TimePickerSpinnerActivity>(TimePickerSpinnerActivity.class);
+
+    @Override
+    protected TimePickerSpinnerActivity getTimePickerActivity() {
+        return mActivityRule.getActivity();
     }
 }

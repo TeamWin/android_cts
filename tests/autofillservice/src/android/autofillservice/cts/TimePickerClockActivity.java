@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.autofillservice.cts;
 
-import android.text.TextWatcher;
-import android.widget.EditText;
+public class TimePickerClockActivity extends AbstractTimePickerActivity {
 
-/**
- * Custom {@link TextWatcher} used to assert a {@link EditText} was auto-filled properly.
- */
-final class OneTimeTextWatcher extends MultipleTimesTextWatcher {
-
-    OneTimeTextWatcher(String name, EditText editText, CharSequence expectedAutoFillValue) {
-        super(name, 1, editText, expectedAutoFillValue);
+    @Override
+    protected int getContentView() {
+        return R.layout.time_picker_clock_activity;
     }
 }

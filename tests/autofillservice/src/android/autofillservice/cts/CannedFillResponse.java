@@ -221,7 +221,10 @@ final class CannedFillResponse {
                 for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
                     final String resourceId = entry.getKey();
                     final ViewNode node = findNodeByResourceId(structure, resourceId);
-                    assertWithMessage("Cannot find node:" + resourceId).that(node).isNotNull();
+                    if (node == null) {
+                        dumpStructure("asDataset()", structure);
+                        throw new AssertionError("No node with resource id " + resourceId);
+                    }
                     final AutoFillId id = node.getAutoFillId();
                     final AutoFillValue value = entry.getValue();
                     builder.setValue(id, value);
