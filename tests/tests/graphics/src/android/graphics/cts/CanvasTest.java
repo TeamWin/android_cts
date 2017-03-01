@@ -143,6 +143,24 @@ public class CanvasTest {
     }
 
     @Test
+    public void testSetBitmapFromEmpty() {
+        Canvas canvas = new Canvas();
+        assertEquals(0, canvas.getWidth());
+        assertEquals(0, canvas.getHeight());
+
+        // now ensure that we can "grow" the canvas
+
+        Bitmap normal = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        canvas.setBitmap(normal);
+        assertEquals(10, canvas.getWidth());
+        assertEquals(10, canvas.getHeight());
+
+        // now draw, and check that the clip was "open"
+        canvas.drawColor(0xFFFF0000);
+        assertEquals(0xFFFF0000, normal.getPixel(5, 5));
+    }
+
+    @Test
     public void testIsOpaque() {
         assertFalse(mCanvas.isOpaque());
     }
