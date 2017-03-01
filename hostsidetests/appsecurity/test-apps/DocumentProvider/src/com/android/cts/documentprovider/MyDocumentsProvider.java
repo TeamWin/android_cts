@@ -280,7 +280,7 @@ public class MyDocumentsProvider extends DocumentsProvider {
     }
 
     @Override
-    public Path findDocumentPath(String documentId, String parentDocumentId)
+    public Path findDocumentPath(String parentDocumentId, String documentId)
             throws FileNotFoundException {
         if (!mDocs.containsKey(documentId)) {
             throw new FileNotFoundException(documentId + " is not found.");
