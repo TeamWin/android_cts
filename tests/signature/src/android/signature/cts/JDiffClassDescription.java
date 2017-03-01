@@ -51,6 +51,23 @@ public class JDiffClassDescription {
     /** Indicates that the method is a synthetic method. */
     private static final int METHOD_MODIFIER_SYNTHETIC = 0x00001000;
 
+    private static final Set<String> HIDDEN_INTERFACE_WHITELIST = new HashSet<>();
+    static {
+        // Interfaces that define @hide methods will by definition contain
+        // methods that do not appear in current.txt. Interfaces added to this
+        // list are probably not meant to be implemented in an application.
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract boolean android.companion.DeviceFilter.matches(D)");
+        HIDDEN_INTERFACE_WHITELIST.add("public static <D> boolean android.companion.DeviceFilter.matches(android.companion.DeviceFilter<D>,D)");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract void android.nfc.tech.TagTechnology.reconnect() throws java.io.IOException");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract void android.os.IBinder.shellCommand(java.io.FileDescriptor,java.io.FileDescriptor,java.io.FileDescriptor,java.lang.String[],android.os.ShellCallback,android.os.ResultReceiver) throws android.os.RemoteException");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract int android.text.ParcelableSpan.getSpanTypeIdInternal()");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract void android.text.ParcelableSpan.writeToParcelInternal(android.os.Parcel,int)");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract void android.view.WindowManager.requestAppKeyboardShortcuts(android.view.WindowManager$KeyboardShortcutsReceiver,int)");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract boolean javax.microedition.khronos.egl.EGL10.eglReleaseThread()");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract void org.w3c.dom.ls.LSSerializer.setFilter(org.w3c.dom.ls.LSSerializerFilter)");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract org.w3c.dom.ls.LSSerializerFilter org.w3c.dom.ls.LSSerializer.getFilter()");
+    }
+
     public enum JDiffType {
         INTERFACE, CLASS
     }
@@ -1100,6 +1117,40 @@ public class JDiffClassDescription {
     }
 
     /**
+     * Validate that an interfaces method count is as expected.
+     */
+    private List<String> checkInterfaceMethodCompliance() {
+        List<String> unexpectedMethods = new ArrayList<>();
+        for (Method method : mClass.getDeclaredMethods()) {
+            if (method.isDefault()) {
+                continue;
+            }
+            if (method.isSynthetic()) {
+                continue;
+            }
+            if (method.isBridge()) {
+                continue;
+            }
+            if (HIDDEN_INTERFACE_WHITELIST.contains(method.toGenericString())) {
+                continue;
+            }
+
+            boolean foundMatch = false;
+            for (JDiffMethod jdiffMethod : jDiffMethods) {
+                if (matches(jdiffMethod, method)) {
+                    foundMatch = true;
+                }
+            }
+            if (!foundMatch) {
+                unexpectedMethods.add(method.toGenericString());
+            }
+        }
+
+        return unexpectedMethods;
+
+    }
+
+    /**
      * Checks that the class found through reflection matches the
      * specification from the API xml file.
      */
@@ -1123,6 +1174,15 @@ public class JDiffClassDescription {
 
                 return;
             }
+
+            List<String> methods = checkInterfaceMethodCompliance();
+            if (JDiffType.INTERFACE.equals(mClassType) && methods.size() > 0) {
+                mResultObserver.notifyFailure(FailureType.MISMATCH_INTERFACE_METHOD,
+                        mAbsoluteClassName, "Interfaces cannot be modified: "
+                                + mAbsoluteClassName + ": " + methods);
+                return;
+            }
+
             if (!checkClassModifiersCompliance()) {
                 logMismatchInterfaceSignature(mAbsoluteClassName,
                         "Non-compatible class found when looking for " +
