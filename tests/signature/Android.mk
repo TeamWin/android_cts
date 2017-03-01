@@ -29,7 +29,8 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner \
     compatibility-device-util \
-    android-support-test
+    android-support-test \
+    legacy-android-test
 
 include $(BUILD_CTS_PACKAGE)
 
