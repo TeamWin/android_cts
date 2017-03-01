@@ -93,10 +93,14 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(0).instantAppAvailable,
+                    is(false));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.NormalActivity"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
         }
 
         // query asking for ephemeral apps [we should only get normal apps]
@@ -113,10 +117,14 @@ public class ClientTest {
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(0).activityInfo.name,
                     is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(0).instantAppAvailable,
+                    is(false));
             assertThat(resolveInfo.get(1).activityInfo.packageName,
                     is("com.android.cts.normalapp"));
             assertThat(resolveInfo.get(1).activityInfo.name,
                     is("com.android.cts.normalapp.NormalActivity"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
         }
     }
 
