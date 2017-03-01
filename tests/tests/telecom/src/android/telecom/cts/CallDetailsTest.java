@@ -33,7 +33,6 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
-import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;

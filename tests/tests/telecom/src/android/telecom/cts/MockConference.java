@@ -32,8 +32,8 @@ public class MockConference extends Conference {
 
     private RemoteConference mRemoteConference = null;
     private String mDtmfString = "";
-    public BaseTelecomTestWithMockServices.InvokeCounter mOnExtrasChanged =
-            new BaseTelecomTestWithMockServices.InvokeCounter("onExtrasChanged");
+    public TestUtils.InvokeCounter mOnExtrasChanged =
+            new TestUtils.InvokeCounter("onExtrasChanged");
 
     public MockConference(PhoneAccountHandle phoneAccount) {
         super(phoneAccount);
