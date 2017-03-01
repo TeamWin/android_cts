@@ -94,6 +94,35 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOffScreenOn();
     }
 
+    /**
+     * Tests whether the on-battery realtime and total realtime values
+     * are properly updated in battery stats.
+     */
+    public void testRealtime() throws Exception {
+        batteryOnScreenOff();
+        long startingValueRealtime = getLongValue(0, "bt", "", 7);
+        long startingValueBatteryRealtime = getLongValue(0, "bt", "", 5);
+        // After going on battery
+        Thread.sleep(2000);
+        batteryOffScreenOn();
+        // After going off battery
+        Thread.sleep(2000);
+
+        long currentValueRealtime = getLongValue(0, "bt", "", 7);
+        long currentValueBatteryRealtime = getLongValue(0, "bt", "", 5);
+
+        // Total realtime increase should be 4000ms at least
+        assertTrue(currentValueRealtime >= startingValueRealtime + 4000);
+        // But not too much more
+        assertTrue(currentValueRealtime < startingValueRealtime + 6000);
+        // Battery on realtime should be more than 2000 but less than 4000
+        assertTrue(currentValueBatteryRealtime >= startingValueBatteryRealtime + 2000);
+        assertTrue(currentValueBatteryRealtime < startingValueBatteryRealtime + 4000);
+    }
+
+    /**
+     * Tests the total duration reported for jobs run on the job scheduler.
+     */
     public void testJobDuration() throws Exception {
         batteryOnScreenOff();
 
@@ -110,12 +139,10 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     /**
      * Verifies that the recorded time for the specified tag and name in the test package
-     * is within the specified range
-     * @throws Exception
+     * is within the specified range.
      */
     private void assertValueRange(String tag, String optionalAfterTag,
             int index, long min, long max) throws Exception {
-        String dumpsys = getDevice().executeShellCommand("dumpsys batterystats --checkin");
         String uidLine = getDevice().executeShellCommand("cmd package list packages -U "
                 + DEVICE_SIDE_TEST_PACKAGE);
         String[] uidLineParts = uidLine.split(":");
@@ -124,6 +151,18 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         int uid = Integer.parseInt(uidLineParts[2].trim());
         assertTrue(uid > 10000);
 
+        long value = getLongValue(uid, tag, optionalAfterTag, index);
+
+        assertTrue("Value " + value + " is less than min " + min, value >= min);
+        assertTrue("Value " + value + " is greater than max " + max, value <= max);
+    }
+
+    /**
+     * Returns a particular long value from a line matched by uid, tag and the optionalAfterTag.
+     */
+    private long getLongValue(int uid, String tag, String optionalAfterTag, int index)
+            throws Exception {
+        String dumpsys = getDevice().executeShellCommand("dumpsys batterystats --checkin");
         String[] lines = dumpsys.split("\n");
         long value = 0;
         for (int i = lines.length - 1; i >= 0; i--) {
@@ -134,7 +173,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 //System.err.println("Found match: " + line);
             }
         }
-        assertTrue("Value " + value + " is less than min " + min, value >= min);
-        assertTrue("Value " + value + " is greater than max " + max, value <= max);
+        return value;
     }
 }
