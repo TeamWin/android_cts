@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsTelecomTestCases2
+LOCAL_PACKAGE_NAME := CtsTelecomTestCases3
 
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := optional
@@ -29,10 +29,10 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 src_dirs := src \
     ../telecom/src/android/telecom/cts/SelfManagedConnection.java \
     ../telecom/src/android/telecom/cts/CtsSelfManagedConnectionService.java \
-    ../telecom/src/android/telecom/cts/TestUtils.java
+    ../telecom/src/android/telecom/cts/TestUtils.java \
+    ../telecom/src/android/telecom/cts/MockDialerActivity.java
 
-res_dirs := res \
-    ../telecom/res
+res_dirs := ../telecom/res
 
 LOCAL_SRC_FILES := $(call all-java-files-under, $(src_dirs))
 
@@ -41,7 +41,7 @@ LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs))
 LOCAL_AAPT_FLAGS := \
     --auto-add-overlay \
     --extra-packages android.telecom.cts \
-    --rename-manifest-package android.telecom2.cts \
+    --rename-manifest-package android.telecom3.cts \
 
 LOCAL_SDK_VERSION := current
 
