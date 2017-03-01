@@ -19,7 +19,9 @@ package android.telecom.cts;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
-import android.telecom.cts.BaseTelecomTestWithMockServices.InvokeCounter;
+import android.telecom.cts.TestUtils.InvokeCounter;
+
+import java.util.concurrent.CountDownLatch;
 
 /**
  * CTS Test self-managed {@link Connection} implementation.
@@ -29,6 +31,7 @@ public class SelfManagedConnection extends Connection {
     InvokeCounter mCallAudioRouteInvokeCounter = new InvokeCounter("onCallAudioStateChanged");
     InvokeCounter mOnShowIncomingUiInvokeCounter = new InvokeCounter(
             "onShowIncomingUiInvokeCounter");
+    CountDownLatch mOnHoldLatch = new CountDownLatch(1);
 
     public static abstract class Listener {
         void onDestroyed(SelfManagedConnection connection) { };
@@ -62,11 +65,21 @@ public class SelfManagedConnection extends Connection {
         mOnShowIncomingUiInvokeCounter.invoke();
     }
 
+    @Override
+    public void onHold() {
+        mOnHoldLatch.countDown();
+    }
+
     public InvokeCounter getCallAudioStateChangedInvokeCounter() {
         return mCallAudioRouteInvokeCounter;
     }
 
     public InvokeCounter getOnShowIncomingUiInvokeCounter() {
         return mOnShowIncomingUiInvokeCounter;
+    }
+
+    public boolean waitOnHold() {
+        mOnHoldLatch = TestUtils.waitForLock(mOnHoldLatch);
+        return mOnHoldLatch != null;
     }
 }
