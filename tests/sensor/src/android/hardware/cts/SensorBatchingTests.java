@@ -71,6 +71,30 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    public void testAccelerometerUncalibrated_fastest_batching() throws Throwable {
+        runBatchingSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
+                              RATE_FASTEST,
+                              BATCHING_PERIOD);
+    }
+
+    public void testAccelUncalibrated() throws Throwable {
+        runBatchingSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
+                              RATE_FASTEST,
+                              BATCHING_PERIOD);
+    }
+
+    public void testAccelUncalibrated_50hz_batching() throws Throwable {
+        runBatchingSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_50HZ, BATCHING_PERIOD);
+    }
+
+    public void tesAccelUncalibrated_fastest_flush() throws Throwable {
+        runFlushSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_FASTEST, BATCHING_PERIOD);
+    }
+
+    public void tesAccelUncalibrated_50hz_flush() throws Throwable {
+        runFlushSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_50HZ, BATCHING_PERIOD);
+    }
+
     public void testMagneticField_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_FASTEST, BATCHING_PERIOD);
     }

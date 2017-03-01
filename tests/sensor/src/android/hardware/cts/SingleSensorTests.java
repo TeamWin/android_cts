@@ -142,12 +142,12 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    public void testAccelerometer_100hz() throws Throwable {
-        runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_100HZ);
-    }
-
     public void testAccelerometer_200hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_200HZ);
+    }
+
+    public void testAccelerometer_100hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_100HZ);
     }
 
     public void testAccelerometer_50hz() throws Throwable {
@@ -172,6 +172,42 @@ public class SingleSensorTests extends SensorTestCase {
 
     public void testAccelerometer_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_1HZ);
+    }
+
+    public void testAccelUncalibrated_fastest() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    public void testAccelUncalibrated_200hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_200HZ);
+    }
+
+    public void testAccelUncalibrated_100hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_100HZ);
+    }
+
+    public void testAccelUncalibrated_50hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_50HZ);
+    }
+
+    public void testAccelUncalibrated_25hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_25HZ);
+    }
+
+    public void testAccelUncalibrated_15hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_15HZ);
+    }
+
+    public void testAccelUncalibrated_10hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_10HZ);
+    }
+
+    public void testAccelUncalibrated_5hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_5HZ);
+    }
+
+    public void testAccelUncalibrated_1hz() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_1HZ);
     }
 
     public void testMagneticField_fastest() throws Throwable {
