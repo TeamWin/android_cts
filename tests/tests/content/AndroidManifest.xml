@@ -48,6 +48,52 @@
                 android:protectionLevel="normal"
                 android:permissionGroup="android.permission-group.COST_MONEY" />
 
+    <permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED"
+        android:protectionLevel="normal" />
+
+    <permission android:name="android.content.cts.REQUIRED_FEATURE_UNDEFINED"
+        android:protectionLevel="normal" />
+
+    <permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_DEFINED"
+        android:protectionLevel="normal" />
+
+    <permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_UNDEFINED"
+        android:protectionLevel="normal" />
+
+    <permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
+        android:protectionLevel="normal" />
+
+    <permission android:name="android.content.cts.REQUIRED_MULTI_GRANT"
+        android:protectionLevel="normal" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED"
+        android:requiredFeature="android.software.cts" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_UNDEFINED"
+        android:requiredFeature="android.software.cts.undefined" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_DEFINED"
+        android:requiredNotFeature="android.software.cts" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_UNDEFINED"
+        android:requiredNotFeature="android.software.cts.undefined" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
+        android:requiredFeature="android.software.cts.undefined"
+        android:requiredNotFeature="android.software.cts" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
+        android:requiredFeature="android.software.cts"
+        android:requiredNotFeature="android.software.cts" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
+        android:requiredFeature="android.software.cts.undefined"
+        android:requiredNotFeature="android.software.cts.undefined" />
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_GRANT"
+        android:requiredFeature="android.software.cts"
+        android:requiredNotFeature="android.software.cts.undefined" />
+
     <!-- Used for PackageManager test, don't delete! -->
     <uses-configuration/>
     <uses-feature android:name="android.hardware.camera" />
