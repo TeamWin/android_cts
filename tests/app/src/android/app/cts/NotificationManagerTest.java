@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.net.Uri;
+import android.provider.Settings;
 import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
 import android.test.AndroidTestCase;
@@ -91,6 +92,16 @@ public class NotificationManagerTest extends AndroidTestCase {
         // Lockscreen Visibility and canBypassDnd no longer settable.
         assertTrue(createdChannel.getLockscreenVisibility() != Notification.VISIBILITY_SECRET);
         assertFalse(createdChannel.canBypassDnd());
+    }
+
+    public void testCreateChannel_resIdName() throws Exception {
+        final NotificationChannel channel =
+                new NotificationChannel(mId, R.string.text_view_hello,
+                        NotificationManager.IMPORTANCE_DEFAULT);
+        mNotificationManager.createNotificationChannel(channel);
+        final NotificationChannel createdChannel =
+                mNotificationManager.getNotificationChannel(mId);
+        compareChannels(channel, createdChannel);
     }
 
     public void testCreateSameChannelDoesNotUpdate() throws Exception {
@@ -380,12 +391,18 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getNameResId(), actual.getNameResId());
         assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
         assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
         assertEquals(expected.getImportance(), actual.getImportance());
-        assertEquals(expected.getSound(), actual.getSound());
+        if (expected.getSound() == null) {
+            assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, actual.getSound());
+            assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, actual.getAudioAttributes());
+        } else {
+            assertEquals(expected.getSound(), actual.getSound());
+            assertEquals(expected.getAudioAttributes(), actual.getAudioAttributes());
+        }
         assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
         assertEquals(expected.getGroup(), actual.getGroup());
-        assertEquals(expected.getAudioAttributes(), actual.getAudioAttributes());
     }
 }
