@@ -41,7 +41,10 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.test.filters.SmallTest;
@@ -52,6 +55,9 @@ import android.view.autofill.AutoFillValue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
@@ -686,5 +692,54 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Ensure enabled.
         assertServiceEnabled();
+    }
+
+    @Test
+    public void testCustomNegativeSaveButton() throws Exception {
+        enableService();
+
+        // Set service behavior.
+        final Replier replier = new Replier();
+
+        final String intentAction = "android.autofillservice.cts.CUSTOM_ACTION";
+
+        // Configure the save UI.
+        final IntentSender listener = PendingIntent.getBroadcast(
+                getContext(), 0, new Intent(intentAction), 0).getIntentSender();
+
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setNegativeAction("Foo", listener)
+                .build());
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Wait for onFill() before proceeding.
+        replier.getNextFillRequest();
+
+        // Trigger save.
+        mLoginActivity.onUsername((v) -> v.setText("foo"));
+        mLoginActivity.onPassword((v) -> v.setText("foo"));
+        mLoginActivity.tapLogin();
+
+        // Start watching for the negative intent
+        final CountDownLatch latch = new CountDownLatch(1);
+        final IntentFilter intentFilter = new IntentFilter(intentAction);
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getContext().unregisterReceiver(this);
+                latch.countDown();
+            }
+        }, intentFilter);
+
+        // Trigger the negative button.
+        sUiBot.saveForAutofill(false);
+
+        // Wait for the custom action.
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
     }
 }
