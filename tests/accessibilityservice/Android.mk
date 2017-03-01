@@ -18,7 +18,10 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner mockito-target
+LOCAL_STATIC_JAVA_LIBRARIES := \
+	ctstestrunner \
+	mockito-target \
+	legacy-android-test
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

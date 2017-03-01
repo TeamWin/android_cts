@@ -27,7 +27,12 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4 ctstestrunner ub-uiautomator android-support-test
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    android-support-v4  \
+    ctstestrunner  \
+    ub-uiautomator  \
+    android-support-test \
+    legacy-android-test
 
 LOCAL_SDK_VERSION := current
 
