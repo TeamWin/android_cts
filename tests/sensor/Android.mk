@@ -48,8 +48,9 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_SRC_FILES := \
     jni/SensorTest.cpp \
+    jni/SensorTestCases.cpp \
     jni/android_view_cts_SensorNativeTest.cpp \
-    jni/nativeTestHelper.cpp \
+    jni/nativeTestHelper.cpp
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
