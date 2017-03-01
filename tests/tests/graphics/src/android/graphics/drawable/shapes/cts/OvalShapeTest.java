@@ -118,7 +118,7 @@ public class OvalShapeTest {
 
         OvalShape clone = shape.clone();
         assertNotNull(clone);
-        assertEquals(shape.getWidth(), clone.getWidth());
-        assertEquals(shape.getHeight(), clone.getHeight());
+        assertEquals(shape.getWidth(), clone.getWidth(), 0.0f);
+        assertEquals(shape.getHeight(), clone.getHeight(), 0.0f);
     }
 }
