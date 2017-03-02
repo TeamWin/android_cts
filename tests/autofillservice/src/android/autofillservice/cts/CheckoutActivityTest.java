@@ -42,12 +42,12 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutoFillType;
 import android.view.autofill.AutoFillValue;
 import android.widget.Spinner;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,7 +55,6 @@ import org.junit.Test;
 /**
  * Test case for an activity containing non-TextField views.
  */
-@SmallTest
 public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
     @Rule
@@ -67,6 +66,11 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mCheckoutActivity = mActivityRule.getActivity();
+    }
+
+    @After
+    public void finishWelcomeActivity() {
+        WelcomeActivity.finishIt();
     }
 
     @Test

@@ -33,6 +33,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
 import android.view.autofill.AutoFillValue;
 
+import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -42,6 +43,11 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         extends AutoFillServiceTestCase {
 
     protected abstract T getDatePickerActivity();
+
+    @After
+    public void finishWelcomeActivity() {
+        WelcomeActivity.finishIt();
+    }
 
     @Test
     public void testAutoFillAndSave() throws Exception {

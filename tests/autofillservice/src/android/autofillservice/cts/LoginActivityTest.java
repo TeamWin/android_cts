@@ -49,11 +49,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutoFillValue;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -80,7 +80,6 @@ import java.util.concurrent.TimeUnit;
  *  - system server state after calls (for example, no pending callback)
  *  - make sure there is no dangling session using 'cmd autofill list sessions'
  */
-@SmallTest
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Rule
@@ -93,6 +92,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void setActivity() {
         mLoginActivity = mActivityRule.getActivity();
         destroyAllSessions();
+    }
+
+    @After
+    public void finishWelcomeActivity() {
+        WelcomeActivity.finishIt();
     }
 
     @Test

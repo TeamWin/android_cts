@@ -15,12 +15,10 @@
  */
 package android.autofillservice.cts;
 
-import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 
 import org.junit.Rule;
 
-@SmallTest
 public class TimePickerSpinnerActivityTest extends TimePickerTestCase<TimePickerSpinnerActivity> {
 
     @Rule

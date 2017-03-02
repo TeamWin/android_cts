@@ -16,7 +16,6 @@
 
 package android.autofillservice.cts;
 
-import android.app.Activity;
 import android.app.assist.AssistStructure;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,7 +27,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 /**
  * This class simulates authentication at the dataset at reponse level
  */
-public class AuthenticationActivity extends Activity {
+public class AuthenticationActivity extends AbstractAutoFillActivity {
     private static CannedFillResponse sResponse;
     private static CannedFillResponse.CannedDataset sDataset;
 

@@ -19,7 +19,6 @@ import static android.widget.ArrayAdapter.createFromResource;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -47,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  *   <li>Buy Button
  * </ul>
  */
-public class CheckoutActivity extends Activity {
+public class CheckoutActivity extends AbstractAutoFillActivity {
     private static final long BUY_TIMEOUT_MS = 1000;
 
     static final String ID_CC_NUMBER = "cc_number";
@@ -160,7 +159,7 @@ public class CheckoutActivity extends Activity {
      * Visits the {@code ccNumber} in the UiThread.
      */
     void onCcNumber(ViewVisitor<EditText> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mCcNumber);
         });
     }
@@ -169,7 +168,7 @@ public class CheckoutActivity extends Activity {
      * Visits the {@code ccExpirationDate} in the UiThread.
      */
     void onCcExpiration(ViewVisitor<Spinner> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mCcExpiration);
         });
     }
@@ -178,7 +177,7 @@ public class CheckoutActivity extends Activity {
      * Visits the {@code address} in the UiThread.
      */
     void onAddress(ViewVisitor<RadioGroup> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mAddress);
         });
     }
@@ -187,7 +186,7 @@ public class CheckoutActivity extends Activity {
      * Visits the {@code homeAddress} in the UiThread.
      */
     void onHomeAddress(ViewVisitor<RadioButton> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mHomeAddress);
         });
     }
@@ -196,7 +195,7 @@ public class CheckoutActivity extends Activity {
      * Visits the {@code saveCC} in the UiThread.
      */
     void onSaveCc(ViewVisitor<CheckBox> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mSaveCc);
         });
     }
@@ -206,7 +205,7 @@ public class CheckoutActivity extends Activity {
      */
     void tapBuy() throws Exception {
         mBuyLatch = new CountDownLatch(1);
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             mBuyButton.performClick();
         });
         boolean called = mBuyLatch.await(BUY_TIMEOUT_MS, TimeUnit.MILLISECONDS);

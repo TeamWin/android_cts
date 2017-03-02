@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -190,13 +191,17 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      */
     private UiObject2 waitForObject(BySelector selector) {
-        final boolean gotIt = mDevice.wait(Until.hasObject(selector), mTimeout);
-        assertWithMessage("object for '%s' not found in %s ms", selector, mTimeout).that(gotIt)
-                .isTrue();
-
-        final UiObject2 uiObject = mDevice.findObject(selector);
-        assertWithMessage("object for '%s' null in %s ms", selector, mTimeout).that(uiObject)
-                .isNotNull();
-        return uiObject;
+        // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
+        final int maxTries = 5;
+        final int napTime = mTimeout / maxTries;
+        for (int i = 1; i <= maxTries; i++) {
+            final UiObject2 uiObject = mDevice.findObject(selector);
+            if (uiObject != null) {
+                return uiObject;
+            }
+            SystemClock.sleep(napTime);
+        }
+        throw new AssertionError("Object with selector " + selector + " not found in "
+                + mTimeout + " ms");
     }
 }
