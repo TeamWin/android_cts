@@ -37,6 +37,13 @@ public class TestMix extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestMixRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloatFloat {
         public float inStart;
         public float inStop;
@@ -54,6 +61,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloatFloatFloatFloat(inStart, out);
             verifyResultsMixFloatFloatFloatFloat(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloatFloatFloatFloat: " + e.toString());
         }
@@ -63,9 +71,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloatFloatFloatFloat(inStart, out);
             verifyResultsMixFloatFloatFloatFloat(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloatFloatFloatFloat: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloatFloatFloatFloat(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -143,6 +155,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloat2Float2Float2Float2(inStart, out);
             verifyResultsMixFloat2Float2Float2Float2(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat2Float2Float2Float2: " + e.toString());
         }
@@ -152,9 +165,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloat2Float2Float2Float2(inStart, out);
             verifyResultsMixFloat2Float2Float2Float2(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat2Float2Float2Float2: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloat2Float2Float2Float2(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -232,6 +249,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloat3Float3Float3Float3(inStart, out);
             verifyResultsMixFloat3Float3Float3Float3(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat3Float3Float3Float3: " + e.toString());
         }
@@ -241,9 +259,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloat3Float3Float3Float3(inStart, out);
             verifyResultsMixFloat3Float3Float3Float3(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat3Float3Float3Float3: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloat3Float3Float3Float3(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -321,6 +343,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloat4Float4Float4Float4(inStart, out);
             verifyResultsMixFloat4Float4Float4Float4(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat4Float4Float4Float4: " + e.toString());
         }
@@ -330,9 +353,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloat4Float4Float4Float4(inStart, out);
             verifyResultsMixFloat4Float4Float4Float4(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat4Float4Float4Float4: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloat4Float4Float4Float4(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -420,6 +447,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalfHalfHalfHalf(inStart, out);
             verifyResultsMixHalfHalfHalfHalf(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalfHalfHalfHalf: " + e.toString());
         }
@@ -429,9 +457,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalfHalfHalfHalf(inStart, out);
             verifyResultsMixHalfHalfHalfHalf(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalfHalfHalfHalf: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalfHalfHalfHalf(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -515,6 +547,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalf2Half2Half2Half2(inStart, out);
             verifyResultsMixHalf2Half2Half2Half2(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf2Half2Half2Half2: " + e.toString());
         }
@@ -524,9 +557,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalf2Half2Half2Half2(inStart, out);
             verifyResultsMixHalf2Half2Half2Half2(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf2Half2Half2Half2: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalf2Half2Half2Half2(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -610,6 +647,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalf3Half3Half3Half3(inStart, out);
             verifyResultsMixHalf3Half3Half3Half3(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf3Half3Half3Half3: " + e.toString());
         }
@@ -619,9 +657,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalf3Half3Half3Half3(inStart, out);
             verifyResultsMixHalf3Half3Half3Half3(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf3Half3Half3Half3: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalf3Half3Half3Half3(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -705,6 +747,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalf4Half4Half4Half4(inStart, out);
             verifyResultsMixHalf4Half4Half4Half4(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf4Half4Half4Half4: " + e.toString());
         }
@@ -714,9 +757,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalf4Half4Half4Half4(inStart, out);
             verifyResultsMixHalf4Half4Half4Half4(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf4Half4Half4Half4: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalf4Half4Half4Half4(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -800,6 +847,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloat2Float2FloatFloat2(inStart, out);
             verifyResultsMixFloat2Float2FloatFloat2(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat2Float2FloatFloat2: " + e.toString());
         }
@@ -809,9 +857,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloat2Float2FloatFloat2(inStart, out);
             verifyResultsMixFloat2Float2FloatFloat2(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat2Float2FloatFloat2: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloat2Float2FloatFloat2(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -889,6 +941,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloat3Float3FloatFloat3(inStart, out);
             verifyResultsMixFloat3Float3FloatFloat3(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat3Float3FloatFloat3: " + e.toString());
         }
@@ -898,9 +951,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloat3Float3FloatFloat3(inStart, out);
             verifyResultsMixFloat3Float3FloatFloat3(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat3Float3FloatFloat3: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloat3Float3FloatFloat3(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -978,6 +1035,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixFloat4Float4FloatFloat4(inStart, out);
             verifyResultsMixFloat4Float4FloatFloat4(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat4Float4FloatFloat4: " + e.toString());
         }
@@ -987,9 +1045,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixFloat4Float4FloatFloat4(inStart, out);
             verifyResultsMixFloat4Float4FloatFloat4(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixFloat4Float4FloatFloat4: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixFloat4Float4FloatFloat4(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -1067,6 +1129,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalf2Half2HalfHalf2(inStart, out);
             verifyResultsMixHalf2Half2HalfHalf2(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf2Half2HalfHalf2: " + e.toString());
         }
@@ -1076,9 +1139,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalf2Half2HalfHalf2(inStart, out);
             verifyResultsMixHalf2Half2HalfHalf2(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf2Half2HalfHalf2: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalf2Half2HalfHalf2(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -1162,6 +1229,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalf3Half3HalfHalf3(inStart, out);
             verifyResultsMixHalf3Half3HalfHalf3(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf3Half3HalfHalf3: " + e.toString());
         }
@@ -1171,9 +1239,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalf3Half3HalfHalf3(inStart, out);
             verifyResultsMixHalf3Half3HalfHalf3(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf3Half3HalfHalf3: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalf3Half3HalfHalf3(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {
@@ -1257,6 +1329,7 @@ public class TestMix extends RSBaseCompute {
             script.set_gAllocInFraction(inFraction);
             script.forEach_testMixHalf4Half4HalfHalf4(inStart, out);
             verifyResultsMixHalf4Half4HalfHalf4(inStart, inStop, inFraction, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf4Half4HalfHalf4: " + e.toString());
         }
@@ -1266,9 +1339,13 @@ public class TestMix extends RSBaseCompute {
             scriptRelaxed.set_gAllocInFraction(inFraction);
             scriptRelaxed.forEach_testMixHalf4Half4HalfHalf4(inStart, out);
             verifyResultsMixHalf4Half4HalfHalf4(inStart, inStop, inFraction, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMixHalf4Half4HalfHalf4: " + e.toString());
         }
+        inStart.destroy();
+        inStop.destroy();
+        inFraction.destroy();
     }
 
     private void verifyResultsMixHalf4Half4HalfHalf4(Allocation inStart, Allocation inStop, Allocation inFraction, Allocation out, boolean relaxed) {

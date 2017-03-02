@@ -37,6 +37,13 @@ public class TestLdexp extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestLdexpRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatIntFloat {
         public float inMantissa;
         public int inExponent;
@@ -51,6 +58,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloatIntFloat(inMantissa, out);
             verifyResultsLdexpFloatIntFloat(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloatIntFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloatIntFloat(inMantissa, out);
             verifyResultsLdexpFloatIntFloat(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloatIntFloat: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloatIntFloat(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloat2Int2Float2(inMantissa, out);
             verifyResultsLdexpFloat2Int2Float2(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat2Int2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloat2Int2Float2(inMantissa, out);
             verifyResultsLdexpFloat2Int2Float2(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat2Int2Float2: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloat2Int2Float2(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloat3Int3Float3(inMantissa, out);
             verifyResultsLdexpFloat3Int3Float3(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat3Int3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloat3Int3Float3(inMantissa, out);
             verifyResultsLdexpFloat3Int3Float3(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat3Int3Float3: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloat3Int3Float3(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloat4Int4Float4(inMantissa, out);
             verifyResultsLdexpFloat4Int4Float4(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat4Int4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloat4Int4Float4(inMantissa, out);
             verifyResultsLdexpFloat4Int4Float4(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat4Int4Float4: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloat4Int4Float4(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -367,6 +390,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloat2IntFloat2(inMantissa, out);
             verifyResultsLdexpFloat2IntFloat2(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat2IntFloat2: " + e.toString());
         }
@@ -375,9 +399,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloat2IntFloat2(inMantissa, out);
             verifyResultsLdexpFloat2IntFloat2(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat2IntFloat2: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloat2IntFloat2(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -446,6 +473,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloat3IntFloat3(inMantissa, out);
             verifyResultsLdexpFloat3IntFloat3(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat3IntFloat3: " + e.toString());
         }
@@ -454,9 +482,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloat3IntFloat3(inMantissa, out);
             verifyResultsLdexpFloat3IntFloat3(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat3IntFloat3: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloat3IntFloat3(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -525,6 +556,7 @@ public class TestLdexp extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testLdexpFloat4IntFloat4(inMantissa, out);
             verifyResultsLdexpFloat4IntFloat4(inMantissa, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat4IntFloat4: " + e.toString());
         }
@@ -533,9 +565,12 @@ public class TestLdexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testLdexpFloat4IntFloat4(inMantissa, out);
             verifyResultsLdexpFloat4IntFloat4(inMantissa, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLdexpFloat4IntFloat4: " + e.toString());
         }
+        inMantissa.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsLdexpFloat4IntFloat4(Allocation inMantissa, Allocation inExponent, Allocation out, boolean relaxed) {

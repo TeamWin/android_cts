@@ -37,6 +37,13 @@ public class TestClamp extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestClampRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloatFloat {
         public float inValue;
         public float inMinValue;
@@ -55,6 +62,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloatFloatFloatFloat(inValue, out);
             verifyResultsClampFloatFloatFloatFloat(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloatFloatFloatFloat: " + e.toString());
         }
@@ -64,9 +72,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloatFloatFloatFloat(inValue, out);
             verifyResultsClampFloatFloatFloatFloat(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloatFloatFloatFloat: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloatFloatFloatFloat(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -145,6 +157,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloat2Float2Float2Float2(inValue, out);
             verifyResultsClampFloat2Float2Float2Float2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat2Float2Float2Float2: " + e.toString());
         }
@@ -154,9 +167,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloat2Float2Float2Float2(inValue, out);
             verifyResultsClampFloat2Float2Float2Float2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat2Float2Float2Float2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloat2Float2Float2Float2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -235,6 +252,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloat3Float3Float3Float3(inValue, out);
             verifyResultsClampFloat3Float3Float3Float3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat3Float3Float3Float3: " + e.toString());
         }
@@ -244,9 +262,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloat3Float3Float3Float3(inValue, out);
             verifyResultsClampFloat3Float3Float3Float3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat3Float3Float3Float3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloat3Float3Float3Float3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -325,6 +347,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloat4Float4Float4Float4(inValue, out);
             verifyResultsClampFloat4Float4Float4Float4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat4Float4Float4Float4: " + e.toString());
         }
@@ -334,9 +357,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloat4Float4Float4Float4(inValue, out);
             verifyResultsClampFloat4Float4Float4Float4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat4Float4Float4Float4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloat4Float4Float4Float4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -415,6 +442,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloat2FloatFloatFloat2(inValue, out);
             verifyResultsClampFloat2FloatFloatFloat2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat2FloatFloatFloat2: " + e.toString());
         }
@@ -424,9 +452,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloat2FloatFloatFloat2(inValue, out);
             verifyResultsClampFloat2FloatFloatFloat2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat2FloatFloatFloat2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloat2FloatFloatFloat2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -505,6 +537,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloat3FloatFloatFloat3(inValue, out);
             verifyResultsClampFloat3FloatFloatFloat3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat3FloatFloatFloat3: " + e.toString());
         }
@@ -514,9 +547,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloat3FloatFloatFloat3(inValue, out);
             verifyResultsClampFloat3FloatFloatFloat3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat3FloatFloatFloat3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloat3FloatFloatFloat3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -595,6 +632,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampFloat4FloatFloatFloat4(inValue, out);
             verifyResultsClampFloat4FloatFloatFloat4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat4FloatFloatFloat4: " + e.toString());
         }
@@ -604,9 +642,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampFloat4FloatFloatFloat4(inValue, out);
             verifyResultsClampFloat4FloatFloatFloat4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampFloat4FloatFloatFloat4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampFloat4FloatFloatFloat4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -692,6 +734,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampCharCharCharChar(inValue, out);
             verifyResultsClampCharCharCharChar(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampCharCharCharChar: " + e.toString());
         }
@@ -701,9 +744,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampCharCharCharChar(inValue, out);
             verifyResultsClampCharCharCharChar(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampCharCharCharChar: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampCharCharCharChar(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -781,6 +828,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampChar2Char2Char2Char2(inValue, out);
             verifyResultsClampChar2Char2Char2Char2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar2Char2Char2Char2: " + e.toString());
         }
@@ -790,9 +838,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampChar2Char2Char2Char2(inValue, out);
             verifyResultsClampChar2Char2Char2Char2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar2Char2Char2Char2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampChar2Char2Char2Char2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -870,6 +922,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampChar3Char3Char3Char3(inValue, out);
             verifyResultsClampChar3Char3Char3Char3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar3Char3Char3Char3: " + e.toString());
         }
@@ -879,9 +932,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampChar3Char3Char3Char3(inValue, out);
             verifyResultsClampChar3Char3Char3Char3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar3Char3Char3Char3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampChar3Char3Char3Char3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -959,6 +1016,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampChar4Char4Char4Char4(inValue, out);
             verifyResultsClampChar4Char4Char4Char4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar4Char4Char4Char4: " + e.toString());
         }
@@ -968,9 +1026,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampChar4Char4Char4Char4(inValue, out);
             verifyResultsClampChar4Char4Char4Char4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar4Char4Char4Char4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampChar4Char4Char4Char4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1055,6 +1117,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUcharUcharUcharUchar(inValue, out);
             verifyResultsClampUcharUcharUcharUchar(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUcharUcharUcharUchar: " + e.toString());
         }
@@ -1064,9 +1127,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUcharUcharUcharUchar(inValue, out);
             verifyResultsClampUcharUcharUcharUchar(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUcharUcharUcharUchar: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUcharUcharUcharUchar(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1144,6 +1211,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUchar2Uchar2Uchar2Uchar2(inValue, out);
             verifyResultsClampUchar2Uchar2Uchar2Uchar2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar2Uchar2Uchar2Uchar2: " + e.toString());
         }
@@ -1153,9 +1221,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUchar2Uchar2Uchar2Uchar2(inValue, out);
             verifyResultsClampUchar2Uchar2Uchar2Uchar2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar2Uchar2Uchar2Uchar2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUchar2Uchar2Uchar2Uchar2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1233,6 +1305,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUchar3Uchar3Uchar3Uchar3(inValue, out);
             verifyResultsClampUchar3Uchar3Uchar3Uchar3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar3Uchar3Uchar3Uchar3: " + e.toString());
         }
@@ -1242,9 +1315,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUchar3Uchar3Uchar3Uchar3(inValue, out);
             verifyResultsClampUchar3Uchar3Uchar3Uchar3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar3Uchar3Uchar3Uchar3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUchar3Uchar3Uchar3Uchar3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1322,6 +1399,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUchar4Uchar4Uchar4Uchar4(inValue, out);
             verifyResultsClampUchar4Uchar4Uchar4Uchar4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar4Uchar4Uchar4Uchar4: " + e.toString());
         }
@@ -1331,9 +1409,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUchar4Uchar4Uchar4Uchar4(inValue, out);
             verifyResultsClampUchar4Uchar4Uchar4Uchar4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar4Uchar4Uchar4Uchar4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUchar4Uchar4Uchar4Uchar4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1418,6 +1500,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShortShortShortShort(inValue, out);
             verifyResultsClampShortShortShortShort(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShortShortShortShort: " + e.toString());
         }
@@ -1427,9 +1510,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShortShortShortShort(inValue, out);
             verifyResultsClampShortShortShortShort(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShortShortShortShort: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShortShortShortShort(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1507,6 +1594,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShort2Short2Short2Short2(inValue, out);
             verifyResultsClampShort2Short2Short2Short2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort2Short2Short2Short2: " + e.toString());
         }
@@ -1516,9 +1604,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShort2Short2Short2Short2(inValue, out);
             verifyResultsClampShort2Short2Short2Short2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort2Short2Short2Short2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShort2Short2Short2Short2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1596,6 +1688,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShort3Short3Short3Short3(inValue, out);
             verifyResultsClampShort3Short3Short3Short3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort3Short3Short3Short3: " + e.toString());
         }
@@ -1605,9 +1698,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShort3Short3Short3Short3(inValue, out);
             verifyResultsClampShort3Short3Short3Short3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort3Short3Short3Short3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShort3Short3Short3Short3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1685,6 +1782,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShort4Short4Short4Short4(inValue, out);
             verifyResultsClampShort4Short4Short4Short4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort4Short4Short4Short4: " + e.toString());
         }
@@ -1694,9 +1792,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShort4Short4Short4Short4(inValue, out);
             verifyResultsClampShort4Short4Short4Short4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort4Short4Short4Short4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShort4Short4Short4Short4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1781,6 +1883,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshortUshortUshortUshort(inValue, out);
             verifyResultsClampUshortUshortUshortUshort(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshortUshortUshortUshort: " + e.toString());
         }
@@ -1790,9 +1893,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshortUshortUshortUshort(inValue, out);
             verifyResultsClampUshortUshortUshortUshort(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshortUshortUshortUshort: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshortUshortUshortUshort(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1870,6 +1977,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshort2Ushort2Ushort2Ushort2(inValue, out);
             verifyResultsClampUshort2Ushort2Ushort2Ushort2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort2Ushort2Ushort2Ushort2: " + e.toString());
         }
@@ -1879,9 +1987,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshort2Ushort2Ushort2Ushort2(inValue, out);
             verifyResultsClampUshort2Ushort2Ushort2Ushort2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort2Ushort2Ushort2Ushort2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshort2Ushort2Ushort2Ushort2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -1959,6 +2071,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshort3Ushort3Ushort3Ushort3(inValue, out);
             verifyResultsClampUshort3Ushort3Ushort3Ushort3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort3Ushort3Ushort3Ushort3: " + e.toString());
         }
@@ -1968,9 +2081,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshort3Ushort3Ushort3Ushort3(inValue, out);
             verifyResultsClampUshort3Ushort3Ushort3Ushort3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort3Ushort3Ushort3Ushort3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshort3Ushort3Ushort3Ushort3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2048,6 +2165,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshort4Ushort4Ushort4Ushort4(inValue, out);
             verifyResultsClampUshort4Ushort4Ushort4Ushort4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort4Ushort4Ushort4Ushort4: " + e.toString());
         }
@@ -2057,9 +2175,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshort4Ushort4Ushort4Ushort4(inValue, out);
             verifyResultsClampUshort4Ushort4Ushort4Ushort4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort4Ushort4Ushort4Ushort4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshort4Ushort4Ushort4Ushort4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2144,6 +2266,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampIntIntIntInt(inValue, out);
             verifyResultsClampIntIntIntInt(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampIntIntIntInt: " + e.toString());
         }
@@ -2153,9 +2276,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampIntIntIntInt(inValue, out);
             verifyResultsClampIntIntIntInt(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampIntIntIntInt: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampIntIntIntInt(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2233,6 +2360,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampInt2Int2Int2Int2(inValue, out);
             verifyResultsClampInt2Int2Int2Int2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt2Int2Int2Int2: " + e.toString());
         }
@@ -2242,9 +2370,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampInt2Int2Int2Int2(inValue, out);
             verifyResultsClampInt2Int2Int2Int2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt2Int2Int2Int2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampInt2Int2Int2Int2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2322,6 +2454,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampInt3Int3Int3Int3(inValue, out);
             verifyResultsClampInt3Int3Int3Int3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt3Int3Int3Int3: " + e.toString());
         }
@@ -2331,9 +2464,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampInt3Int3Int3Int3(inValue, out);
             verifyResultsClampInt3Int3Int3Int3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt3Int3Int3Int3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampInt3Int3Int3Int3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2411,6 +2548,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampInt4Int4Int4Int4(inValue, out);
             verifyResultsClampInt4Int4Int4Int4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt4Int4Int4Int4: " + e.toString());
         }
@@ -2420,9 +2558,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampInt4Int4Int4Int4(inValue, out);
             verifyResultsClampInt4Int4Int4Int4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt4Int4Int4Int4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampInt4Int4Int4Int4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2507,6 +2649,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUintUintUintUint(inValue, out);
             verifyResultsClampUintUintUintUint(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUintUintUintUint: " + e.toString());
         }
@@ -2516,9 +2659,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUintUintUintUint(inValue, out);
             verifyResultsClampUintUintUintUint(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUintUintUintUint: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUintUintUintUint(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2596,6 +2743,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUint2Uint2Uint2Uint2(inValue, out);
             verifyResultsClampUint2Uint2Uint2Uint2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint2Uint2Uint2Uint2: " + e.toString());
         }
@@ -2605,9 +2753,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUint2Uint2Uint2Uint2(inValue, out);
             verifyResultsClampUint2Uint2Uint2Uint2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint2Uint2Uint2Uint2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUint2Uint2Uint2Uint2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2685,6 +2837,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUint3Uint3Uint3Uint3(inValue, out);
             verifyResultsClampUint3Uint3Uint3Uint3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint3Uint3Uint3Uint3: " + e.toString());
         }
@@ -2694,9 +2847,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUint3Uint3Uint3Uint3(inValue, out);
             verifyResultsClampUint3Uint3Uint3Uint3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint3Uint3Uint3Uint3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUint3Uint3Uint3Uint3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2774,6 +2931,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUint4Uint4Uint4Uint4(inValue, out);
             verifyResultsClampUint4Uint4Uint4Uint4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint4Uint4Uint4Uint4: " + e.toString());
         }
@@ -2783,9 +2941,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUint4Uint4Uint4Uint4(inValue, out);
             verifyResultsClampUint4Uint4Uint4Uint4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint4Uint4Uint4Uint4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUint4Uint4Uint4Uint4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2870,6 +3032,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLongLongLongLong(inValue, out);
             verifyResultsClampLongLongLongLong(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLongLongLongLong: " + e.toString());
         }
@@ -2879,9 +3042,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLongLongLongLong(inValue, out);
             verifyResultsClampLongLongLongLong(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLongLongLongLong: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLongLongLongLong(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -2959,6 +3126,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLong2Long2Long2Long2(inValue, out);
             verifyResultsClampLong2Long2Long2Long2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong2Long2Long2Long2: " + e.toString());
         }
@@ -2968,9 +3136,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLong2Long2Long2Long2(inValue, out);
             verifyResultsClampLong2Long2Long2Long2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong2Long2Long2Long2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLong2Long2Long2Long2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3048,6 +3220,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLong3Long3Long3Long3(inValue, out);
             verifyResultsClampLong3Long3Long3Long3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong3Long3Long3Long3: " + e.toString());
         }
@@ -3057,9 +3230,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLong3Long3Long3Long3(inValue, out);
             verifyResultsClampLong3Long3Long3Long3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong3Long3Long3Long3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLong3Long3Long3Long3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3137,6 +3314,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLong4Long4Long4Long4(inValue, out);
             verifyResultsClampLong4Long4Long4Long4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong4Long4Long4Long4: " + e.toString());
         }
@@ -3146,9 +3324,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLong4Long4Long4Long4(inValue, out);
             verifyResultsClampLong4Long4Long4Long4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong4Long4Long4Long4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLong4Long4Long4Long4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3233,6 +3415,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlongUlongUlongUlong(inValue, out);
             verifyResultsClampUlongUlongUlongUlong(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlongUlongUlongUlong: " + e.toString());
         }
@@ -3242,9 +3425,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlongUlongUlongUlong(inValue, out);
             verifyResultsClampUlongUlongUlongUlong(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlongUlongUlongUlong: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlongUlongUlongUlong(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3322,6 +3509,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlong2Ulong2Ulong2Ulong2(inValue, out);
             verifyResultsClampUlong2Ulong2Ulong2Ulong2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong2Ulong2Ulong2Ulong2: " + e.toString());
         }
@@ -3331,9 +3519,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlong2Ulong2Ulong2Ulong2(inValue, out);
             verifyResultsClampUlong2Ulong2Ulong2Ulong2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong2Ulong2Ulong2Ulong2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlong2Ulong2Ulong2Ulong2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3411,6 +3603,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlong3Ulong3Ulong3Ulong3(inValue, out);
             verifyResultsClampUlong3Ulong3Ulong3Ulong3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong3Ulong3Ulong3Ulong3: " + e.toString());
         }
@@ -3420,9 +3613,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlong3Ulong3Ulong3Ulong3(inValue, out);
             verifyResultsClampUlong3Ulong3Ulong3Ulong3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong3Ulong3Ulong3Ulong3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlong3Ulong3Ulong3Ulong3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3500,6 +3697,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlong4Ulong4Ulong4Ulong4(inValue, out);
             verifyResultsClampUlong4Ulong4Ulong4Ulong4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong4Ulong4Ulong4Ulong4: " + e.toString());
         }
@@ -3509,9 +3707,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlong4Ulong4Ulong4Ulong4(inValue, out);
             verifyResultsClampUlong4Ulong4Ulong4Ulong4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong4Ulong4Ulong4Ulong4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlong4Ulong4Ulong4Ulong4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3589,6 +3791,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampChar2CharCharChar2(inValue, out);
             verifyResultsClampChar2CharCharChar2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar2CharCharChar2: " + e.toString());
         }
@@ -3598,9 +3801,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampChar2CharCharChar2(inValue, out);
             verifyResultsClampChar2CharCharChar2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar2CharCharChar2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampChar2CharCharChar2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3678,6 +3885,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampChar3CharCharChar3(inValue, out);
             verifyResultsClampChar3CharCharChar3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar3CharCharChar3: " + e.toString());
         }
@@ -3687,9 +3895,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampChar3CharCharChar3(inValue, out);
             verifyResultsClampChar3CharCharChar3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar3CharCharChar3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampChar3CharCharChar3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3767,6 +3979,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampChar4CharCharChar4(inValue, out);
             verifyResultsClampChar4CharCharChar4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar4CharCharChar4: " + e.toString());
         }
@@ -3776,9 +3989,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampChar4CharCharChar4(inValue, out);
             verifyResultsClampChar4CharCharChar4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampChar4CharCharChar4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampChar4CharCharChar4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3856,6 +4073,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUchar2UcharUcharUchar2(inValue, out);
             verifyResultsClampUchar2UcharUcharUchar2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar2UcharUcharUchar2: " + e.toString());
         }
@@ -3865,9 +4083,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUchar2UcharUcharUchar2(inValue, out);
             verifyResultsClampUchar2UcharUcharUchar2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar2UcharUcharUchar2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUchar2UcharUcharUchar2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -3945,6 +4167,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUchar3UcharUcharUchar3(inValue, out);
             verifyResultsClampUchar3UcharUcharUchar3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar3UcharUcharUchar3: " + e.toString());
         }
@@ -3954,9 +4177,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUchar3UcharUcharUchar3(inValue, out);
             verifyResultsClampUchar3UcharUcharUchar3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar3UcharUcharUchar3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUchar3UcharUcharUchar3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4034,6 +4261,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUchar4UcharUcharUchar4(inValue, out);
             verifyResultsClampUchar4UcharUcharUchar4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar4UcharUcharUchar4: " + e.toString());
         }
@@ -4043,9 +4271,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUchar4UcharUcharUchar4(inValue, out);
             verifyResultsClampUchar4UcharUcharUchar4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUchar4UcharUcharUchar4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUchar4UcharUcharUchar4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4123,6 +4355,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShort2ShortShortShort2(inValue, out);
             verifyResultsClampShort2ShortShortShort2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort2ShortShortShort2: " + e.toString());
         }
@@ -4132,9 +4365,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShort2ShortShortShort2(inValue, out);
             verifyResultsClampShort2ShortShortShort2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort2ShortShortShort2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShort2ShortShortShort2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4212,6 +4449,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShort3ShortShortShort3(inValue, out);
             verifyResultsClampShort3ShortShortShort3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort3ShortShortShort3: " + e.toString());
         }
@@ -4221,9 +4459,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShort3ShortShortShort3(inValue, out);
             verifyResultsClampShort3ShortShortShort3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort3ShortShortShort3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShort3ShortShortShort3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4301,6 +4543,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampShort4ShortShortShort4(inValue, out);
             verifyResultsClampShort4ShortShortShort4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort4ShortShortShort4: " + e.toString());
         }
@@ -4310,9 +4553,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampShort4ShortShortShort4(inValue, out);
             verifyResultsClampShort4ShortShortShort4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampShort4ShortShortShort4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampShort4ShortShortShort4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4390,6 +4637,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshort2UshortUshortUshort2(inValue, out);
             verifyResultsClampUshort2UshortUshortUshort2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort2UshortUshortUshort2: " + e.toString());
         }
@@ -4399,9 +4647,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshort2UshortUshortUshort2(inValue, out);
             verifyResultsClampUshort2UshortUshortUshort2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort2UshortUshortUshort2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshort2UshortUshortUshort2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4479,6 +4731,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshort3UshortUshortUshort3(inValue, out);
             verifyResultsClampUshort3UshortUshortUshort3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort3UshortUshortUshort3: " + e.toString());
         }
@@ -4488,9 +4741,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshort3UshortUshortUshort3(inValue, out);
             verifyResultsClampUshort3UshortUshortUshort3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort3UshortUshortUshort3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshort3UshortUshortUshort3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4568,6 +4825,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUshort4UshortUshortUshort4(inValue, out);
             verifyResultsClampUshort4UshortUshortUshort4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort4UshortUshortUshort4: " + e.toString());
         }
@@ -4577,9 +4835,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUshort4UshortUshortUshort4(inValue, out);
             verifyResultsClampUshort4UshortUshortUshort4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUshort4UshortUshortUshort4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUshort4UshortUshortUshort4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4657,6 +4919,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampInt2IntIntInt2(inValue, out);
             verifyResultsClampInt2IntIntInt2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt2IntIntInt2: " + e.toString());
         }
@@ -4666,9 +4929,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampInt2IntIntInt2(inValue, out);
             verifyResultsClampInt2IntIntInt2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt2IntIntInt2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampInt2IntIntInt2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4746,6 +5013,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampInt3IntIntInt3(inValue, out);
             verifyResultsClampInt3IntIntInt3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt3IntIntInt3: " + e.toString());
         }
@@ -4755,9 +5023,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampInt3IntIntInt3(inValue, out);
             verifyResultsClampInt3IntIntInt3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt3IntIntInt3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampInt3IntIntInt3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4835,6 +5107,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampInt4IntIntInt4(inValue, out);
             verifyResultsClampInt4IntIntInt4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt4IntIntInt4: " + e.toString());
         }
@@ -4844,9 +5117,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampInt4IntIntInt4(inValue, out);
             verifyResultsClampInt4IntIntInt4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampInt4IntIntInt4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampInt4IntIntInt4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -4924,6 +5201,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUint2UintUintUint2(inValue, out);
             verifyResultsClampUint2UintUintUint2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint2UintUintUint2: " + e.toString());
         }
@@ -4933,9 +5211,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUint2UintUintUint2(inValue, out);
             verifyResultsClampUint2UintUintUint2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint2UintUintUint2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUint2UintUintUint2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5013,6 +5295,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUint3UintUintUint3(inValue, out);
             verifyResultsClampUint3UintUintUint3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint3UintUintUint3: " + e.toString());
         }
@@ -5022,9 +5305,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUint3UintUintUint3(inValue, out);
             verifyResultsClampUint3UintUintUint3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint3UintUintUint3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUint3UintUintUint3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5102,6 +5389,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUint4UintUintUint4(inValue, out);
             verifyResultsClampUint4UintUintUint4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint4UintUintUint4: " + e.toString());
         }
@@ -5111,9 +5399,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUint4UintUintUint4(inValue, out);
             verifyResultsClampUint4UintUintUint4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUint4UintUintUint4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUint4UintUintUint4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5191,6 +5483,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLong2LongLongLong2(inValue, out);
             verifyResultsClampLong2LongLongLong2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong2LongLongLong2: " + e.toString());
         }
@@ -5200,9 +5493,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLong2LongLongLong2(inValue, out);
             verifyResultsClampLong2LongLongLong2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong2LongLongLong2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLong2LongLongLong2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5280,6 +5577,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLong3LongLongLong3(inValue, out);
             verifyResultsClampLong3LongLongLong3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong3LongLongLong3: " + e.toString());
         }
@@ -5289,9 +5587,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLong3LongLongLong3(inValue, out);
             verifyResultsClampLong3LongLongLong3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong3LongLongLong3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLong3LongLongLong3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5369,6 +5671,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampLong4LongLongLong4(inValue, out);
             verifyResultsClampLong4LongLongLong4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong4LongLongLong4: " + e.toString());
         }
@@ -5378,9 +5681,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampLong4LongLongLong4(inValue, out);
             verifyResultsClampLong4LongLongLong4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampLong4LongLongLong4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampLong4LongLongLong4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5458,6 +5765,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlong2UlongUlongUlong2(inValue, out);
             verifyResultsClampUlong2UlongUlongUlong2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong2UlongUlongUlong2: " + e.toString());
         }
@@ -5467,9 +5775,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlong2UlongUlongUlong2(inValue, out);
             verifyResultsClampUlong2UlongUlongUlong2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong2UlongUlongUlong2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlong2UlongUlongUlong2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5547,6 +5859,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlong3UlongUlongUlong3(inValue, out);
             verifyResultsClampUlong3UlongUlongUlong3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong3UlongUlongUlong3: " + e.toString());
         }
@@ -5556,9 +5869,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlong3UlongUlongUlong3(inValue, out);
             verifyResultsClampUlong3UlongUlongUlong3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong3UlongUlongUlong3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlong3UlongUlongUlong3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5636,6 +5953,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampUlong4UlongUlongUlong4(inValue, out);
             verifyResultsClampUlong4UlongUlongUlong4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong4UlongUlongUlong4: " + e.toString());
         }
@@ -5645,9 +5963,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampUlong4UlongUlongUlong4(inValue, out);
             verifyResultsClampUlong4UlongUlongUlong4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampUlong4UlongUlongUlong4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampUlong4UlongUlongUlong4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5735,6 +6057,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalfHalfHalfHalf(inValue, out);
             verifyResultsClampHalfHalfHalfHalf(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalfHalfHalfHalf: " + e.toString());
         }
@@ -5744,9 +6067,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalfHalfHalfHalf(inValue, out);
             verifyResultsClampHalfHalfHalfHalf(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalfHalfHalfHalf: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalfHalfHalfHalf(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5831,6 +6158,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalf2Half2Half2Half2(inValue, out);
             verifyResultsClampHalf2Half2Half2Half2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf2Half2Half2Half2: " + e.toString());
         }
@@ -5840,9 +6168,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalf2Half2Half2Half2(inValue, out);
             verifyResultsClampHalf2Half2Half2Half2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf2Half2Half2Half2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalf2Half2Half2Half2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -5927,6 +6259,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalf3Half3Half3Half3(inValue, out);
             verifyResultsClampHalf3Half3Half3Half3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf3Half3Half3Half3: " + e.toString());
         }
@@ -5936,9 +6269,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalf3Half3Half3Half3(inValue, out);
             verifyResultsClampHalf3Half3Half3Half3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf3Half3Half3Half3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalf3Half3Half3Half3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -6023,6 +6360,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalf4Half4Half4Half4(inValue, out);
             verifyResultsClampHalf4Half4Half4Half4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf4Half4Half4Half4: " + e.toString());
         }
@@ -6032,9 +6370,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalf4Half4Half4Half4(inValue, out);
             verifyResultsClampHalf4Half4Half4Half4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf4Half4Half4Half4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalf4Half4Half4Half4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -6119,6 +6461,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalf2HalfHalfHalf2(inValue, out);
             verifyResultsClampHalf2HalfHalfHalf2(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf2HalfHalfHalf2: " + e.toString());
         }
@@ -6128,9 +6471,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalf2HalfHalfHalf2(inValue, out);
             verifyResultsClampHalf2HalfHalfHalf2(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf2HalfHalfHalf2: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalf2HalfHalfHalf2(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -6215,6 +6562,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalf3HalfHalfHalf3(inValue, out);
             verifyResultsClampHalf3HalfHalfHalf3(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf3HalfHalfHalf3: " + e.toString());
         }
@@ -6224,9 +6572,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalf3HalfHalfHalf3(inValue, out);
             verifyResultsClampHalf3HalfHalfHalf3(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf3HalfHalfHalf3: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalf3HalfHalfHalf3(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {
@@ -6311,6 +6663,7 @@ public class TestClamp extends RSBaseCompute {
             script.set_gAllocInMaxValue(inMaxValue);
             script.forEach_testClampHalf4HalfHalfHalf4(inValue, out);
             verifyResultsClampHalf4HalfHalfHalf4(inValue, inMinValue, inMaxValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf4HalfHalfHalf4: " + e.toString());
         }
@@ -6320,9 +6673,13 @@ public class TestClamp extends RSBaseCompute {
             scriptRelaxed.set_gAllocInMaxValue(inMaxValue);
             scriptRelaxed.forEach_testClampHalf4HalfHalfHalf4(inValue, out);
             verifyResultsClampHalf4HalfHalfHalf4(inValue, inMinValue, inMaxValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClampHalf4HalfHalfHalf4: " + e.toString());
         }
+        inValue.destroy();
+        inMinValue.destroy();
+        inMaxValue.destroy();
     }
 
     private void verifyResultsClampHalf4HalfHalfHalf4(Allocation inValue, Allocation inMinValue, Allocation inMaxValue, Allocation out, boolean relaxed) {

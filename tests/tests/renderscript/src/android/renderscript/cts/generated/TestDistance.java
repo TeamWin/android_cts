@@ -37,6 +37,13 @@ public class TestDistance extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestDistanceRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inLeftVector;
         public float inRightVector;
@@ -51,6 +58,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceFloatFloatFloat(inLeftVector, out);
             verifyResultsDistanceFloatFloatFloat(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceFloatFloatFloat(inLeftVector, out);
             verifyResultsDistanceFloatFloatFloat(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloatFloatFloat: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceFloatFloatFloat(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -133,6 +144,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceFloat2Float2Float(inLeftVector, out);
             verifyResultsDistanceFloat2Float2Float(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloat2Float2Float: " + e.toString());
         }
@@ -141,9 +153,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceFloat2Float2Float(inLeftVector, out);
             verifyResultsDistanceFloat2Float2Float(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloat2Float2Float: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceFloat2Float2Float(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -219,6 +234,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceFloat3Float3Float(inLeftVector, out);
             verifyResultsDistanceFloat3Float3Float(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloat3Float3Float: " + e.toString());
         }
@@ -227,9 +243,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceFloat3Float3Float(inLeftVector, out);
             verifyResultsDistanceFloat3Float3Float(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloat3Float3Float: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceFloat3Float3Float(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -305,6 +324,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceFloat4Float4Float(inLeftVector, out);
             verifyResultsDistanceFloat4Float4Float(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloat4Float4Float: " + e.toString());
         }
@@ -313,9 +333,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceFloat4Float4Float(inLeftVector, out);
             verifyResultsDistanceFloat4Float4Float(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceFloat4Float4Float: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceFloat4Float4Float(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -399,6 +422,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceHalfHalfHalf(inLeftVector, out);
             verifyResultsDistanceHalfHalfHalf(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalfHalfHalf: " + e.toString());
         }
@@ -407,9 +431,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceHalfHalfHalf(inLeftVector, out);
             verifyResultsDistanceHalfHalfHalf(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalfHalfHalf: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceHalfHalfHalf(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -488,6 +515,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceHalf2Half2Half(inLeftVector, out);
             verifyResultsDistanceHalf2Half2Half(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalf2Half2Half: " + e.toString());
         }
@@ -496,9 +524,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceHalf2Half2Half(inLeftVector, out);
             verifyResultsDistanceHalf2Half2Half(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalf2Half2Half: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceHalf2Half2Half(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -581,6 +612,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceHalf3Half3Half(inLeftVector, out);
             verifyResultsDistanceHalf3Half3Half(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalf3Half3Half: " + e.toString());
         }
@@ -589,9 +621,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceHalf3Half3Half(inLeftVector, out);
             verifyResultsDistanceHalf3Half3Half(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalf3Half3Half: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceHalf3Half3Half(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -674,6 +709,7 @@ public class TestDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testDistanceHalf4Half4Half(inLeftVector, out);
             verifyResultsDistanceHalf4Half4Half(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalf4Half4Half: " + e.toString());
         }
@@ -682,9 +718,12 @@ public class TestDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testDistanceHalf4Half4Half(inLeftVector, out);
             verifyResultsDistanceHalf4Half4Half(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testDistanceHalf4Half4Half: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsDistanceHalf4Half4Half(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {

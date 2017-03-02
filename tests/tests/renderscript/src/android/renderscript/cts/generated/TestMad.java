@@ -37,6 +37,13 @@ public class TestMad extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestMadRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloatFloat {
         public float inMultiplicand1;
         public float inMultiplicand2;
@@ -54,6 +61,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadFloatFloatFloatFloat(inMultiplicand1, out);
             verifyResultsMadFloatFloatFloatFloat(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloatFloatFloatFloat: " + e.toString());
         }
@@ -63,9 +71,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadFloatFloatFloatFloat(inMultiplicand1, out);
             verifyResultsMadFloatFloatFloatFloat(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloatFloatFloatFloat: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadFloatFloatFloatFloat(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -143,6 +155,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadFloat2Float2Float2Float2(inMultiplicand1, out);
             verifyResultsMadFloat2Float2Float2Float2(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloat2Float2Float2Float2: " + e.toString());
         }
@@ -152,9 +165,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadFloat2Float2Float2Float2(inMultiplicand1, out);
             verifyResultsMadFloat2Float2Float2Float2(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloat2Float2Float2Float2: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadFloat2Float2Float2Float2(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -232,6 +249,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadFloat3Float3Float3Float3(inMultiplicand1, out);
             verifyResultsMadFloat3Float3Float3Float3(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloat3Float3Float3Float3: " + e.toString());
         }
@@ -241,9 +259,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadFloat3Float3Float3Float3(inMultiplicand1, out);
             verifyResultsMadFloat3Float3Float3Float3(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloat3Float3Float3Float3: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadFloat3Float3Float3Float3(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -321,6 +343,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadFloat4Float4Float4Float4(inMultiplicand1, out);
             verifyResultsMadFloat4Float4Float4Float4(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloat4Float4Float4Float4: " + e.toString());
         }
@@ -330,9 +353,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadFloat4Float4Float4Float4(inMultiplicand1, out);
             verifyResultsMadFloat4Float4Float4Float4(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadFloat4Float4Float4Float4: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadFloat4Float4Float4Float4(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -420,6 +447,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadHalfHalfHalfHalf(inMultiplicand1, out);
             verifyResultsMadHalfHalfHalfHalf(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalfHalfHalfHalf: " + e.toString());
         }
@@ -429,9 +457,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadHalfHalfHalfHalf(inMultiplicand1, out);
             verifyResultsMadHalfHalfHalfHalf(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalfHalfHalfHalf: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadHalfHalfHalfHalf(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -515,6 +547,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadHalf2Half2Half2Half2(inMultiplicand1, out);
             verifyResultsMadHalf2Half2Half2Half2(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalf2Half2Half2Half2: " + e.toString());
         }
@@ -524,9 +557,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadHalf2Half2Half2Half2(inMultiplicand1, out);
             verifyResultsMadHalf2Half2Half2Half2(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalf2Half2Half2Half2: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadHalf2Half2Half2Half2(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -610,6 +647,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadHalf3Half3Half3Half3(inMultiplicand1, out);
             verifyResultsMadHalf3Half3Half3Half3(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalf3Half3Half3Half3: " + e.toString());
         }
@@ -619,9 +657,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadHalf3Half3Half3Half3(inMultiplicand1, out);
             verifyResultsMadHalf3Half3Half3Half3(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalf3Half3Half3Half3: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadHalf3Half3Half3Half3(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {
@@ -705,6 +747,7 @@ public class TestMad extends RSBaseCompute {
             script.set_gAllocInOffset(inOffset);
             script.forEach_testMadHalf4Half4Half4Half4(inMultiplicand1, out);
             verifyResultsMadHalf4Half4Half4Half4(inMultiplicand1, inMultiplicand2, inOffset, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalf4Half4Half4Half4: " + e.toString());
         }
@@ -714,9 +757,13 @@ public class TestMad extends RSBaseCompute {
             scriptRelaxed.set_gAllocInOffset(inOffset);
             scriptRelaxed.forEach_testMadHalf4Half4Half4Half4(inMultiplicand1, out);
             verifyResultsMadHalf4Half4Half4Half4(inMultiplicand1, inMultiplicand2, inOffset, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMadHalf4Half4Half4Half4: " + e.toString());
         }
+        inMultiplicand1.destroy();
+        inMultiplicand2.destroy();
+        inOffset.destroy();
     }
 
     private void verifyResultsMadHalf4Half4Half4Half4(Allocation inMultiplicand1, Allocation inMultiplicand2, Allocation inOffset, Allocation out, boolean relaxed) {

@@ -37,6 +37,13 @@ public class TestNextafter extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestNextafterRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inV;
         public float inTarget;
@@ -51,6 +58,7 @@ public class TestNextafter extends RSBaseCompute {
             script.set_gAllocInTarget(inTarget);
             script.forEach_testNextafterFloatFloatFloat(inV, out);
             verifyResultsNextafterFloatFloatFloat(inV, inTarget, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestNextafter extends RSBaseCompute {
             scriptRelaxed.set_gAllocInTarget(inTarget);
             scriptRelaxed.forEach_testNextafterFloatFloatFloat(inV, out);
             verifyResultsNextafterFloatFloatFloat(inV, inTarget, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloatFloatFloat: " + e.toString());
         }
+        inV.destroy();
+        inTarget.destroy();
     }
 
     private void verifyResultsNextafterFloatFloatFloat(Allocation inV, Allocation inTarget, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestNextafter extends RSBaseCompute {
             script.set_gAllocInTarget(inTarget);
             script.forEach_testNextafterFloat2Float2Float2(inV, out);
             verifyResultsNextafterFloat2Float2Float2(inV, inTarget, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestNextafter extends RSBaseCompute {
             scriptRelaxed.set_gAllocInTarget(inTarget);
             scriptRelaxed.forEach_testNextafterFloat2Float2Float2(inV, out);
             verifyResultsNextafterFloat2Float2Float2(inV, inTarget, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloat2Float2Float2: " + e.toString());
         }
+        inV.destroy();
+        inTarget.destroy();
     }
 
     private void verifyResultsNextafterFloat2Float2Float2(Allocation inV, Allocation inTarget, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestNextafter extends RSBaseCompute {
             script.set_gAllocInTarget(inTarget);
             script.forEach_testNextafterFloat3Float3Float3(inV, out);
             verifyResultsNextafterFloat3Float3Float3(inV, inTarget, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestNextafter extends RSBaseCompute {
             scriptRelaxed.set_gAllocInTarget(inTarget);
             scriptRelaxed.forEach_testNextafterFloat3Float3Float3(inV, out);
             verifyResultsNextafterFloat3Float3Float3(inV, inTarget, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloat3Float3Float3: " + e.toString());
         }
+        inV.destroy();
+        inTarget.destroy();
     }
 
     private void verifyResultsNextafterFloat3Float3Float3(Allocation inV, Allocation inTarget, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestNextafter extends RSBaseCompute {
             script.set_gAllocInTarget(inTarget);
             script.forEach_testNextafterFloat4Float4Float4(inV, out);
             verifyResultsNextafterFloat4Float4Float4(inV, inTarget, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestNextafter extends RSBaseCompute {
             scriptRelaxed.set_gAllocInTarget(inTarget);
             scriptRelaxed.forEach_testNextafterFloat4Float4Float4(inV, out);
             verifyResultsNextafterFloat4Float4Float4(inV, inTarget, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNextafterFloat4Float4Float4: " + e.toString());
         }
+        inV.destroy();
+        inTarget.destroy();
     }
 
     private void verifyResultsNextafterFloat4Float4Float4(Allocation inV, Allocation inTarget, Allocation out, boolean relaxed) {

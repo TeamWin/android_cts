@@ -37,6 +37,13 @@ public class TestNativeSincos extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestNativeSincosRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inV;
         public Target.Floaty outCos;
@@ -51,6 +58,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosFloatFloatFloat(inV, out);
             verifyResultsNativeSincosFloatFloatFloat(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloatFloatFloat: " + e.toString());
         }
@@ -60,9 +69,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosFloatFloatFloat(inV, out);
             verifyResultsNativeSincosFloatFloatFloat(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloatFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosFloatFloatFloat(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -139,6 +151,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosFloat2Float2Float2(inV, out);
             verifyResultsNativeSincosFloat2Float2Float2(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloat2Float2Float2: " + e.toString());
         }
@@ -148,9 +162,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosFloat2Float2Float2(inV, out);
             verifyResultsNativeSincosFloat2Float2Float2(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloat2Float2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosFloat2Float2Float2(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -227,6 +244,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosFloat3Float3Float3(inV, out);
             verifyResultsNativeSincosFloat3Float3Float3(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloat3Float3Float3: " + e.toString());
         }
@@ -236,9 +255,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosFloat3Float3Float3(inV, out);
             verifyResultsNativeSincosFloat3Float3Float3(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloat3Float3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosFloat3Float3Float3(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -315,6 +337,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosFloat4Float4Float4(inV, out);
             verifyResultsNativeSincosFloat4Float4Float4(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloat4Float4Float4: " + e.toString());
         }
@@ -324,9 +348,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosFloat4Float4Float4(inV, out);
             verifyResultsNativeSincosFloat4Float4Float4(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosFloat4Float4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosFloat4Float4Float4(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -410,6 +437,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosHalfHalfHalf(inV, out);
             verifyResultsNativeSincosHalfHalfHalf(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalfHalfHalf: " + e.toString());
         }
@@ -419,9 +448,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosHalfHalfHalf(inV, out);
             verifyResultsNativeSincosHalfHalfHalf(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalfHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosHalfHalfHalf(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -505,6 +537,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosHalf2Half2Half2(inV, out);
             verifyResultsNativeSincosHalf2Half2Half2(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalf2Half2Half2: " + e.toString());
         }
@@ -514,9 +548,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosHalf2Half2Half2(inV, out);
             verifyResultsNativeSincosHalf2Half2Half2(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalf2Half2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosHalf2Half2Half2(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -600,6 +637,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosHalf3Half3Half3(inV, out);
             verifyResultsNativeSincosHalf3Half3Half3(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalf3Half3Half3: " + e.toString());
         }
@@ -609,9 +648,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosHalf3Half3Half3(inV, out);
             verifyResultsNativeSincosHalf3Half3Half3(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalf3Half3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosHalf3Half3Half3(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {
@@ -695,6 +737,8 @@ public class TestNativeSincos extends RSBaseCompute {
             script.set_gAllocOutCos(outCos);
             script.forEach_testNativeSincosHalf4Half4Half4(inV, out);
             verifyResultsNativeSincosHalf4Half4Half4(inV, outCos, out, false);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalf4Half4Half4: " + e.toString());
         }
@@ -704,9 +748,12 @@ public class TestNativeSincos extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutCos(outCos);
             scriptRelaxed.forEach_testNativeSincosHalf4Half4Half4(inV, out);
             verifyResultsNativeSincosHalf4Half4Half4(inV, outCos, out, true);
+            outCos.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSincosHalf4Half4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSincosHalf4Half4Half4(Allocation inV, Allocation outCos, Allocation out, boolean relaxed) {

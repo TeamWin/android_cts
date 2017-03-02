@@ -37,6 +37,13 @@ public class TestFract extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestFractRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inV;
         public Target.Floaty outFloor;
@@ -51,6 +58,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractFloatFloatFloat(inV, out);
             verifyResultsFractFloatFloatFloat(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloatFloatFloat: " + e.toString());
         }
@@ -60,9 +69,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractFloatFloatFloat(inV, out);
             verifyResultsFractFloatFloatFloat(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloatFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloatFloatFloat(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -139,6 +151,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractFloat2Float2Float2(inV, out);
             verifyResultsFractFloat2Float2Float2(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat2Float2Float2: " + e.toString());
         }
@@ -148,9 +162,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractFloat2Float2Float2(inV, out);
             verifyResultsFractFloat2Float2Float2(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat2Float2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloat2Float2Float2(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -227,6 +244,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractFloat3Float3Float3(inV, out);
             verifyResultsFractFloat3Float3Float3(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat3Float3Float3: " + e.toString());
         }
@@ -236,9 +255,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractFloat3Float3Float3(inV, out);
             verifyResultsFractFloat3Float3Float3(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat3Float3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloat3Float3Float3(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -315,6 +337,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractFloat4Float4Float4(inV, out);
             verifyResultsFractFloat4Float4Float4(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat4Float4Float4: " + e.toString());
         }
@@ -324,9 +348,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractFloat4Float4Float4(inV, out);
             verifyResultsFractFloat4Float4Float4(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat4Float4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloat4Float4Float4(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -406,6 +433,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testFractFloatFloat(inV, out);
             verifyResultsFractFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloatFloat: " + e.toString());
         }
@@ -413,9 +441,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testFractFloatFloat(inV, out);
             verifyResultsFractFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -475,6 +505,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testFractFloat2Float2(inV, out);
             verifyResultsFractFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat2Float2: " + e.toString());
         }
@@ -482,9 +513,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testFractFloat2Float2(inV, out);
             verifyResultsFractFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -544,6 +577,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testFractFloat3Float3(inV, out);
             verifyResultsFractFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat3Float3: " + e.toString());
         }
@@ -551,9 +585,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testFractFloat3Float3(inV, out);
             verifyResultsFractFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -613,6 +649,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testFractFloat4Float4(inV, out);
             verifyResultsFractFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat4Float4: " + e.toString());
         }
@@ -620,9 +657,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testFractFloat4Float4(inV, out);
             verifyResultsFractFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -691,6 +730,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractHalfHalfHalf(inV, out);
             verifyResultsFractHalfHalfHalf(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalfHalfHalf: " + e.toString());
         }
@@ -700,9 +741,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractHalfHalfHalf(inV, out);
             verifyResultsFractHalfHalfHalf(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalfHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalfHalfHalf(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -786,6 +830,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractHalf2Half2Half2(inV, out);
             verifyResultsFractHalf2Half2Half2(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf2Half2Half2: " + e.toString());
         }
@@ -795,9 +841,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractHalf2Half2Half2(inV, out);
             verifyResultsFractHalf2Half2Half2(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf2Half2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalf2Half2Half2(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -881,6 +930,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractHalf3Half3Half3(inV, out);
             verifyResultsFractHalf3Half3Half3(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf3Half3Half3: " + e.toString());
         }
@@ -890,9 +941,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractHalf3Half3Half3(inV, out);
             verifyResultsFractHalf3Half3Half3(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf3Half3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalf3Half3Half3(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -976,6 +1030,8 @@ public class TestFract extends RSBaseCompute {
             script.set_gAllocOutFloor(outFloor);
             script.forEach_testFractHalf4Half4Half4(inV, out);
             verifyResultsFractHalf4Half4Half4(inV, outFloor, out, false);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf4Half4Half4: " + e.toString());
         }
@@ -985,9 +1041,12 @@ public class TestFract extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutFloor(outFloor);
             scriptRelaxed.forEach_testFractHalf4Half4Half4(inV, out);
             verifyResultsFractHalf4Half4Half4(inV, outFloor, out, true);
+            outFloor.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf4Half4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalf4Half4Half4(Allocation inV, Allocation outFloor, Allocation out, boolean relaxed) {
@@ -1075,6 +1134,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testFractHalfHalf(inV, out);
             verifyResultsFractHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalfHalf: " + e.toString());
         }
@@ -1082,9 +1142,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testFractHalfHalf(inV, out);
             verifyResultsFractHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -1148,6 +1210,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testFractHalf2Half2(inV, out);
             verifyResultsFractHalf2Half2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf2Half2: " + e.toString());
         }
@@ -1155,9 +1218,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testFractHalf2Half2(inV, out);
             verifyResultsFractHalf2Half2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalf2Half2(Allocation inV, Allocation out, boolean relaxed) {
@@ -1221,6 +1286,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testFractHalf3Half3(inV, out);
             verifyResultsFractHalf3Half3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf3Half3: " + e.toString());
         }
@@ -1228,9 +1294,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testFractHalf3Half3(inV, out);
             verifyResultsFractHalf3Half3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalf3Half3(Allocation inV, Allocation out, boolean relaxed) {
@@ -1294,6 +1362,7 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testFractHalf4Half4(inV, out);
             verifyResultsFractHalf4Half4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf4Half4: " + e.toString());
         }
@@ -1301,9 +1370,11 @@ public class TestFract extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testFractHalf4Half4(inV, out);
             verifyResultsFractHalf4Half4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFractHalf4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFractHalf4Half4(Allocation inV, Allocation out, boolean relaxed) {

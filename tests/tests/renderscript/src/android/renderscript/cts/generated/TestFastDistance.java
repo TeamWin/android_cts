@@ -37,6 +37,13 @@ public class TestFastDistance extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestFastDistanceRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inLeftVector;
         public float inRightVector;
@@ -51,6 +58,7 @@ public class TestFastDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testFastDistanceFloatFloatFloat(inLeftVector, out);
             verifyResultsFastDistanceFloatFloatFloat(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestFastDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testFastDistanceFloatFloatFloat(inLeftVector, out);
             verifyResultsFastDistanceFloatFloatFloat(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloatFloatFloat: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsFastDistanceFloatFloatFloat(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -133,6 +144,7 @@ public class TestFastDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testFastDistanceFloat2Float2Float(inLeftVector, out);
             verifyResultsFastDistanceFloat2Float2Float(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloat2Float2Float: " + e.toString());
         }
@@ -141,9 +153,12 @@ public class TestFastDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testFastDistanceFloat2Float2Float(inLeftVector, out);
             verifyResultsFastDistanceFloat2Float2Float(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloat2Float2Float: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsFastDistanceFloat2Float2Float(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -219,6 +234,7 @@ public class TestFastDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testFastDistanceFloat3Float3Float(inLeftVector, out);
             verifyResultsFastDistanceFloat3Float3Float(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloat3Float3Float: " + e.toString());
         }
@@ -227,9 +243,12 @@ public class TestFastDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testFastDistanceFloat3Float3Float(inLeftVector, out);
             verifyResultsFastDistanceFloat3Float3Float(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloat3Float3Float: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsFastDistanceFloat3Float3Float(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -305,6 +324,7 @@ public class TestFastDistance extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testFastDistanceFloat4Float4Float(inLeftVector, out);
             verifyResultsFastDistanceFloat4Float4Float(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloat4Float4Float: " + e.toString());
         }
@@ -313,9 +333,12 @@ public class TestFastDistance extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testFastDistanceFloat4Float4Float(inLeftVector, out);
             verifyResultsFastDistanceFloat4Float4Float(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFastDistanceFloat4Float4Float: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsFastDistanceFloat4Float4Float(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
