@@ -37,6 +37,13 @@ public class TestRootn extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestRootnRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatIntFloat {
         public float inV;
         public int inN;
@@ -51,6 +58,7 @@ public class TestRootn extends RSBaseCompute {
             script.set_gAllocInN(inN);
             script.forEach_testRootnFloatIntFloat(inV, out);
             verifyResultsRootnFloatIntFloat(inV, inN, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloatIntFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestRootn extends RSBaseCompute {
             scriptRelaxed.set_gAllocInN(inN);
             scriptRelaxed.forEach_testRootnFloatIntFloat(inV, out);
             verifyResultsRootnFloatIntFloat(inV, inN, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloatIntFloat: " + e.toString());
         }
+        inV.destroy();
+        inN.destroy();
     }
 
     private void verifyResultsRootnFloatIntFloat(Allocation inV, Allocation inN, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestRootn extends RSBaseCompute {
             script.set_gAllocInN(inN);
             script.forEach_testRootnFloat2Int2Float2(inV, out);
             verifyResultsRootnFloat2Int2Float2(inV, inN, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloat2Int2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestRootn extends RSBaseCompute {
             scriptRelaxed.set_gAllocInN(inN);
             scriptRelaxed.forEach_testRootnFloat2Int2Float2(inV, out);
             verifyResultsRootnFloat2Int2Float2(inV, inN, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloat2Int2Float2: " + e.toString());
         }
+        inV.destroy();
+        inN.destroy();
     }
 
     private void verifyResultsRootnFloat2Int2Float2(Allocation inV, Allocation inN, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestRootn extends RSBaseCompute {
             script.set_gAllocInN(inN);
             script.forEach_testRootnFloat3Int3Float3(inV, out);
             verifyResultsRootnFloat3Int3Float3(inV, inN, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloat3Int3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestRootn extends RSBaseCompute {
             scriptRelaxed.set_gAllocInN(inN);
             scriptRelaxed.forEach_testRootnFloat3Int3Float3(inV, out);
             verifyResultsRootnFloat3Int3Float3(inV, inN, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloat3Int3Float3: " + e.toString());
         }
+        inV.destroy();
+        inN.destroy();
     }
 
     private void verifyResultsRootnFloat3Int3Float3(Allocation inV, Allocation inN, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestRootn extends RSBaseCompute {
             script.set_gAllocInN(inN);
             script.forEach_testRootnFloat4Int4Float4(inV, out);
             verifyResultsRootnFloat4Int4Float4(inV, inN, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloat4Int4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestRootn extends RSBaseCompute {
             scriptRelaxed.set_gAllocInN(inN);
             scriptRelaxed.forEach_testRootnFloat4Int4Float4(inV, out);
             verifyResultsRootnFloat4Int4Float4(inV, inN, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRootnFloat4Int4Float4: " + e.toString());
         }
+        inV.destroy();
+        inN.destroy();
     }
 
     private void verifyResultsRootnFloat4Int4Float4(Allocation inV, Allocation inN, Allocation out, boolean relaxed) {

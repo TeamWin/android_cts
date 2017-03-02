@@ -37,6 +37,13 @@ public class TestNativeDivide extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestNativeDivideRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inLeftVector;
         public float inRightVector;
@@ -51,6 +58,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideFloatFloatFloat(inLeftVector, out);
             verifyResultsNativeDivideFloatFloatFloat(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideFloatFloatFloat(inLeftVector, out);
             verifyResultsNativeDivideFloatFloatFloat(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloatFloatFloat: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideFloatFloatFloat(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideFloat2Float2Float2(inLeftVector, out);
             verifyResultsNativeDivideFloat2Float2Float2(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideFloat2Float2Float2(inLeftVector, out);
             verifyResultsNativeDivideFloat2Float2Float2(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloat2Float2Float2: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideFloat2Float2Float2(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideFloat3Float3Float3(inLeftVector, out);
             verifyResultsNativeDivideFloat3Float3Float3(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideFloat3Float3Float3(inLeftVector, out);
             verifyResultsNativeDivideFloat3Float3Float3(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloat3Float3Float3: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideFloat3Float3Float3(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideFloat4Float4Float4(inLeftVector, out);
             verifyResultsNativeDivideFloat4Float4Float4(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideFloat4Float4Float4(inLeftVector, out);
             verifyResultsNativeDivideFloat4Float4Float4(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideFloat4Float4Float4: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideFloat4Float4Float4(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideHalfHalfHalf(inLeftVector, out);
             verifyResultsNativeDivideHalfHalfHalf(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideHalfHalfHalf(inLeftVector, out);
             verifyResultsNativeDivideHalfHalfHalf(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalfHalfHalf: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideHalfHalfHalf(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideHalf2Half2Half2(inLeftVector, out);
             verifyResultsNativeDivideHalf2Half2Half2(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideHalf2Half2Half2(inLeftVector, out);
             verifyResultsNativeDivideHalf2Half2Half2(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalf2Half2Half2: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideHalf2Half2Half2(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideHalf3Half3Half3(inLeftVector, out);
             verifyResultsNativeDivideHalf3Half3Half3(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideHalf3Half3Half3(inLeftVector, out);
             verifyResultsNativeDivideHalf3Half3Half3(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalf3Half3Half3: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideHalf3Half3Half3(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestNativeDivide extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testNativeDivideHalf4Half4Half4(inLeftVector, out);
             verifyResultsNativeDivideHalf4Half4Half4(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestNativeDivide extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testNativeDivideHalf4Half4Half4(inLeftVector, out);
             verifyResultsNativeDivideHalf4Half4Half4(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeDivideHalf4Half4Half4: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsNativeDivideHalf4Half4Half4(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {

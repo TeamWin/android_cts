@@ -37,6 +37,13 @@ public class TestNativePowr extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestNativePowrRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inBase;
         public float inExponent;
@@ -51,6 +58,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrFloatFloatFloat(inBase, out);
             verifyResultsNativePowrFloatFloatFloat(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrFloatFloatFloat(inBase, out);
             verifyResultsNativePowrFloatFloatFloat(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloatFloatFloat: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrFloatFloatFloat(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrFloat2Float2Float2(inBase, out);
             verifyResultsNativePowrFloat2Float2Float2(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrFloat2Float2Float2(inBase, out);
             verifyResultsNativePowrFloat2Float2Float2(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloat2Float2Float2: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrFloat2Float2Float2(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrFloat3Float3Float3(inBase, out);
             verifyResultsNativePowrFloat3Float3Float3(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrFloat3Float3Float3(inBase, out);
             verifyResultsNativePowrFloat3Float3Float3(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloat3Float3Float3: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrFloat3Float3Float3(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrFloat4Float4Float4(inBase, out);
             verifyResultsNativePowrFloat4Float4Float4(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrFloat4Float4Float4(inBase, out);
             verifyResultsNativePowrFloat4Float4Float4(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrFloat4Float4Float4: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrFloat4Float4Float4(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrHalfHalfHalf(inBase, out);
             verifyResultsNativePowrHalfHalfHalf(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrHalfHalfHalf(inBase, out);
             verifyResultsNativePowrHalfHalfHalf(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalfHalfHalf: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrHalfHalfHalf(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrHalf2Half2Half2(inBase, out);
             verifyResultsNativePowrHalf2Half2Half2(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrHalf2Half2Half2(inBase, out);
             verifyResultsNativePowrHalf2Half2Half2(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalf2Half2Half2: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrHalf2Half2Half2(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrHalf3Half3Half3(inBase, out);
             verifyResultsNativePowrHalf3Half3Half3(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrHalf3Half3Half3(inBase, out);
             verifyResultsNativePowrHalf3Half3Half3(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalf3Half3Half3: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrHalf3Half3Half3(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestNativePowr extends RSBaseCompute {
             script.set_gAllocInExponent(inExponent);
             script.forEach_testNativePowrHalf4Half4Half4(inBase, out);
             verifyResultsNativePowrHalf4Half4Half4(inBase, inExponent, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestNativePowr extends RSBaseCompute {
             scriptRelaxed.set_gAllocInExponent(inExponent);
             scriptRelaxed.forEach_testNativePowrHalf4Half4Half4(inBase, out);
             verifyResultsNativePowrHalf4Half4Half4(inBase, inExponent, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativePowrHalf4Half4Half4: " + e.toString());
         }
+        inBase.destroy();
+        inExponent.destroy();
     }
 
     private void verifyResultsNativePowrHalf4Half4Half4(Allocation inBase, Allocation inExponent, Allocation out, boolean relaxed) {

@@ -37,6 +37,13 @@ public class TestMax extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestMaxRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inA;
         public float inB;
@@ -51,6 +58,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloatFloatFloat(inA, out);
             verifyResultsMaxFloatFloatFloat(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloatFloatFloat(inA, out);
             verifyResultsMaxFloatFloatFloat(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloatFloatFloat: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloatFloatFloat(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloat2Float2Float2(inA, out);
             verifyResultsMaxFloat2Float2Float2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloat2Float2Float2(inA, out);
             verifyResultsMaxFloat2Float2Float2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat2Float2Float2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloat2Float2Float2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloat3Float3Float3(inA, out);
             verifyResultsMaxFloat3Float3Float3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloat3Float3Float3(inA, out);
             verifyResultsMaxFloat3Float3Float3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat3Float3Float3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloat3Float3Float3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloat4Float4Float4(inA, out);
             verifyResultsMaxFloat4Float4Float4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloat4Float4Float4(inA, out);
             verifyResultsMaxFloat4Float4Float4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat4Float4Float4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloat4Float4Float4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalfHalfHalf(inA, out);
             verifyResultsMaxHalfHalfHalf(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalfHalfHalf(inA, out);
             verifyResultsMaxHalfHalfHalf(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalfHalfHalf: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalfHalfHalf(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalf2Half2Half2(inA, out);
             verifyResultsMaxHalf2Half2Half2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalf2Half2Half2(inA, out);
             verifyResultsMaxHalf2Half2Half2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf2Half2Half2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalf2Half2Half2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalf3Half3Half3(inA, out);
             verifyResultsMaxHalf3Half3Half3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalf3Half3Half3(inA, out);
             verifyResultsMaxHalf3Half3Half3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf3Half3Half3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalf3Half3Half3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalf4Half4Half4(inA, out);
             verifyResultsMaxHalf4Half4Half4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalf4Half4Half4(inA, out);
             verifyResultsMaxHalf4Half4Half4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf4Half4Half4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalf4Half4Half4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -711,6 +750,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloat2FloatFloat2(inA, out);
             verifyResultsMaxFloat2FloatFloat2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat2FloatFloat2: " + e.toString());
         }
@@ -719,9 +759,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloat2FloatFloat2(inA, out);
             verifyResultsMaxFloat2FloatFloat2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat2FloatFloat2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloat2FloatFloat2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -790,6 +833,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloat3FloatFloat3(inA, out);
             verifyResultsMaxFloat3FloatFloat3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat3FloatFloat3: " + e.toString());
         }
@@ -798,9 +842,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloat3FloatFloat3(inA, out);
             verifyResultsMaxFloat3FloatFloat3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat3FloatFloat3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloat3FloatFloat3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -869,6 +916,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxFloat4FloatFloat4(inA, out);
             verifyResultsMaxFloat4FloatFloat4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat4FloatFloat4: " + e.toString());
         }
@@ -877,9 +925,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxFloat4FloatFloat4(inA, out);
             verifyResultsMaxFloat4FloatFloat4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxFloat4FloatFloat4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxFloat4FloatFloat4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -948,6 +999,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalf2HalfHalf2(inA, out);
             verifyResultsMaxHalf2HalfHalf2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf2HalfHalf2: " + e.toString());
         }
@@ -956,9 +1008,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalf2HalfHalf2(inA, out);
             verifyResultsMaxHalf2HalfHalf2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf2HalfHalf2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalf2HalfHalf2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1032,6 +1087,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalf3HalfHalf3(inA, out);
             verifyResultsMaxHalf3HalfHalf3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf3HalfHalf3: " + e.toString());
         }
@@ -1040,9 +1096,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalf3HalfHalf3(inA, out);
             verifyResultsMaxHalf3HalfHalf3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf3HalfHalf3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalf3HalfHalf3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1116,6 +1175,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxHalf4HalfHalf4(inA, out);
             verifyResultsMaxHalf4HalfHalf4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf4HalfHalf4: " + e.toString());
         }
@@ -1124,9 +1184,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxHalf4HalfHalf4(inA, out);
             verifyResultsMaxHalf4HalfHalf4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxHalf4HalfHalf4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxHalf4HalfHalf4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1206,6 +1269,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxCharCharChar(inA, out);
             verifyResultsMaxCharCharChar(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxCharCharChar: " + e.toString());
         }
@@ -1214,9 +1278,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxCharCharChar(inA, out);
             verifyResultsMaxCharCharChar(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxCharCharChar: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxCharCharChar(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1284,6 +1351,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxChar2Char2Char2(inA, out);
             verifyResultsMaxChar2Char2Char2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxChar2Char2Char2: " + e.toString());
         }
@@ -1292,9 +1360,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxChar2Char2Char2(inA, out);
             verifyResultsMaxChar2Char2Char2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxChar2Char2Char2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxChar2Char2Char2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1362,6 +1433,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxChar3Char3Char3(inA, out);
             verifyResultsMaxChar3Char3Char3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxChar3Char3Char3: " + e.toString());
         }
@@ -1370,9 +1442,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxChar3Char3Char3(inA, out);
             verifyResultsMaxChar3Char3Char3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxChar3Char3Char3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxChar3Char3Char3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1440,6 +1515,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxChar4Char4Char4(inA, out);
             verifyResultsMaxChar4Char4Char4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxChar4Char4Char4: " + e.toString());
         }
@@ -1448,9 +1524,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxChar4Char4Char4(inA, out);
             verifyResultsMaxChar4Char4Char4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxChar4Char4Char4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxChar4Char4Char4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1524,6 +1603,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUcharUcharUchar(inA, out);
             verifyResultsMaxUcharUcharUchar(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUcharUcharUchar: " + e.toString());
         }
@@ -1532,9 +1612,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUcharUcharUchar(inA, out);
             verifyResultsMaxUcharUcharUchar(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUcharUcharUchar: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUcharUcharUchar(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1602,6 +1685,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUchar2Uchar2Uchar2(inA, out);
             verifyResultsMaxUchar2Uchar2Uchar2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUchar2Uchar2Uchar2: " + e.toString());
         }
@@ -1610,9 +1694,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUchar2Uchar2Uchar2(inA, out);
             verifyResultsMaxUchar2Uchar2Uchar2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUchar2Uchar2Uchar2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUchar2Uchar2Uchar2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1680,6 +1767,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUchar3Uchar3Uchar3(inA, out);
             verifyResultsMaxUchar3Uchar3Uchar3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUchar3Uchar3Uchar3: " + e.toString());
         }
@@ -1688,9 +1776,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUchar3Uchar3Uchar3(inA, out);
             verifyResultsMaxUchar3Uchar3Uchar3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUchar3Uchar3Uchar3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUchar3Uchar3Uchar3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1758,6 +1849,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUchar4Uchar4Uchar4(inA, out);
             verifyResultsMaxUchar4Uchar4Uchar4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUchar4Uchar4Uchar4: " + e.toString());
         }
@@ -1766,9 +1858,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUchar4Uchar4Uchar4(inA, out);
             verifyResultsMaxUchar4Uchar4Uchar4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUchar4Uchar4Uchar4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUchar4Uchar4Uchar4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1842,6 +1937,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxShortShortShort(inA, out);
             verifyResultsMaxShortShortShort(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShortShortShort: " + e.toString());
         }
@@ -1850,9 +1946,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxShortShortShort(inA, out);
             verifyResultsMaxShortShortShort(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShortShortShort: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxShortShortShort(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1920,6 +2019,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxShort2Short2Short2(inA, out);
             verifyResultsMaxShort2Short2Short2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShort2Short2Short2: " + e.toString());
         }
@@ -1928,9 +2028,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxShort2Short2Short2(inA, out);
             verifyResultsMaxShort2Short2Short2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShort2Short2Short2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxShort2Short2Short2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -1998,6 +2101,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxShort3Short3Short3(inA, out);
             verifyResultsMaxShort3Short3Short3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShort3Short3Short3: " + e.toString());
         }
@@ -2006,9 +2110,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxShort3Short3Short3(inA, out);
             verifyResultsMaxShort3Short3Short3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShort3Short3Short3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxShort3Short3Short3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2076,6 +2183,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxShort4Short4Short4(inA, out);
             verifyResultsMaxShort4Short4Short4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShort4Short4Short4: " + e.toString());
         }
@@ -2084,9 +2192,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxShort4Short4Short4(inA, out);
             verifyResultsMaxShort4Short4Short4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxShort4Short4Short4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxShort4Short4Short4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2160,6 +2271,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUshortUshortUshort(inA, out);
             verifyResultsMaxUshortUshortUshort(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshortUshortUshort: " + e.toString());
         }
@@ -2168,9 +2280,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUshortUshortUshort(inA, out);
             verifyResultsMaxUshortUshortUshort(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshortUshortUshort: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUshortUshortUshort(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2238,6 +2353,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUshort2Ushort2Ushort2(inA, out);
             verifyResultsMaxUshort2Ushort2Ushort2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshort2Ushort2Ushort2: " + e.toString());
         }
@@ -2246,9 +2362,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUshort2Ushort2Ushort2(inA, out);
             verifyResultsMaxUshort2Ushort2Ushort2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshort2Ushort2Ushort2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUshort2Ushort2Ushort2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2316,6 +2435,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUshort3Ushort3Ushort3(inA, out);
             verifyResultsMaxUshort3Ushort3Ushort3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshort3Ushort3Ushort3: " + e.toString());
         }
@@ -2324,9 +2444,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUshort3Ushort3Ushort3(inA, out);
             verifyResultsMaxUshort3Ushort3Ushort3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshort3Ushort3Ushort3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUshort3Ushort3Ushort3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2394,6 +2517,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUshort4Ushort4Ushort4(inA, out);
             verifyResultsMaxUshort4Ushort4Ushort4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshort4Ushort4Ushort4: " + e.toString());
         }
@@ -2402,9 +2526,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUshort4Ushort4Ushort4(inA, out);
             verifyResultsMaxUshort4Ushort4Ushort4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUshort4Ushort4Ushort4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUshort4Ushort4Ushort4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2478,6 +2605,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxIntIntInt(inA, out);
             verifyResultsMaxIntIntInt(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxIntIntInt: " + e.toString());
         }
@@ -2486,9 +2614,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxIntIntInt(inA, out);
             verifyResultsMaxIntIntInt(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxIntIntInt: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxIntIntInt(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2556,6 +2687,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxInt2Int2Int2(inA, out);
             verifyResultsMaxInt2Int2Int2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxInt2Int2Int2: " + e.toString());
         }
@@ -2564,9 +2696,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxInt2Int2Int2(inA, out);
             verifyResultsMaxInt2Int2Int2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxInt2Int2Int2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxInt2Int2Int2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2634,6 +2769,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxInt3Int3Int3(inA, out);
             verifyResultsMaxInt3Int3Int3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxInt3Int3Int3: " + e.toString());
         }
@@ -2642,9 +2778,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxInt3Int3Int3(inA, out);
             verifyResultsMaxInt3Int3Int3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxInt3Int3Int3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxInt3Int3Int3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2712,6 +2851,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxInt4Int4Int4(inA, out);
             verifyResultsMaxInt4Int4Int4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxInt4Int4Int4: " + e.toString());
         }
@@ -2720,9 +2860,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxInt4Int4Int4(inA, out);
             verifyResultsMaxInt4Int4Int4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxInt4Int4Int4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxInt4Int4Int4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2796,6 +2939,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUintUintUint(inA, out);
             verifyResultsMaxUintUintUint(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUintUintUint: " + e.toString());
         }
@@ -2804,9 +2948,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUintUintUint(inA, out);
             verifyResultsMaxUintUintUint(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUintUintUint: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUintUintUint(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2874,6 +3021,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUint2Uint2Uint2(inA, out);
             verifyResultsMaxUint2Uint2Uint2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUint2Uint2Uint2: " + e.toString());
         }
@@ -2882,9 +3030,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUint2Uint2Uint2(inA, out);
             verifyResultsMaxUint2Uint2Uint2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUint2Uint2Uint2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUint2Uint2Uint2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -2952,6 +3103,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUint3Uint3Uint3(inA, out);
             verifyResultsMaxUint3Uint3Uint3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUint3Uint3Uint3: " + e.toString());
         }
@@ -2960,9 +3112,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUint3Uint3Uint3(inA, out);
             verifyResultsMaxUint3Uint3Uint3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUint3Uint3Uint3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUint3Uint3Uint3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3030,6 +3185,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUint4Uint4Uint4(inA, out);
             verifyResultsMaxUint4Uint4Uint4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUint4Uint4Uint4: " + e.toString());
         }
@@ -3038,9 +3194,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUint4Uint4Uint4(inA, out);
             verifyResultsMaxUint4Uint4Uint4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUint4Uint4Uint4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUint4Uint4Uint4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3114,6 +3273,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxLongLongLong(inA, out);
             verifyResultsMaxLongLongLong(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLongLongLong: " + e.toString());
         }
@@ -3122,9 +3282,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxLongLongLong(inA, out);
             verifyResultsMaxLongLongLong(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLongLongLong: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxLongLongLong(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3192,6 +3355,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxLong2Long2Long2(inA, out);
             verifyResultsMaxLong2Long2Long2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLong2Long2Long2: " + e.toString());
         }
@@ -3200,9 +3364,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxLong2Long2Long2(inA, out);
             verifyResultsMaxLong2Long2Long2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLong2Long2Long2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxLong2Long2Long2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3270,6 +3437,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxLong3Long3Long3(inA, out);
             verifyResultsMaxLong3Long3Long3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLong3Long3Long3: " + e.toString());
         }
@@ -3278,9 +3446,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxLong3Long3Long3(inA, out);
             verifyResultsMaxLong3Long3Long3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLong3Long3Long3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxLong3Long3Long3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3348,6 +3519,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxLong4Long4Long4(inA, out);
             verifyResultsMaxLong4Long4Long4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLong4Long4Long4: " + e.toString());
         }
@@ -3356,9 +3528,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxLong4Long4Long4(inA, out);
             verifyResultsMaxLong4Long4Long4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxLong4Long4Long4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxLong4Long4Long4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3432,6 +3607,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUlongUlongUlong(inA, out);
             verifyResultsMaxUlongUlongUlong(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlongUlongUlong: " + e.toString());
         }
@@ -3440,9 +3616,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUlongUlongUlong(inA, out);
             verifyResultsMaxUlongUlongUlong(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlongUlongUlong: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUlongUlongUlong(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3510,6 +3689,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUlong2Ulong2Ulong2(inA, out);
             verifyResultsMaxUlong2Ulong2Ulong2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlong2Ulong2Ulong2: " + e.toString());
         }
@@ -3518,9 +3698,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUlong2Ulong2Ulong2(inA, out);
             verifyResultsMaxUlong2Ulong2Ulong2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlong2Ulong2Ulong2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUlong2Ulong2Ulong2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3588,6 +3771,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUlong3Ulong3Ulong3(inA, out);
             verifyResultsMaxUlong3Ulong3Ulong3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlong3Ulong3Ulong3: " + e.toString());
         }
@@ -3596,9 +3780,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUlong3Ulong3Ulong3(inA, out);
             verifyResultsMaxUlong3Ulong3Ulong3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlong3Ulong3Ulong3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUlong3Ulong3Ulong3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -3666,6 +3853,7 @@ public class TestMax extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testMaxUlong4Ulong4Ulong4(inA, out);
             verifyResultsMaxUlong4Ulong4Ulong4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlong4Ulong4Ulong4: " + e.toString());
         }
@@ -3674,9 +3862,12 @@ public class TestMax extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testMaxUlong4Ulong4Ulong4(inA, out);
             verifyResultsMaxUlong4Ulong4Ulong4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testMaxUlong4Ulong4Ulong4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsMaxUlong4Ulong4Ulong4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
