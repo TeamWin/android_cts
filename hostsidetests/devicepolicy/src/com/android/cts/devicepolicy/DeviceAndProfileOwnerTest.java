@@ -183,7 +183,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         };
 
         // Set a device lockscreen password (precondition for installing private key pairs).
-        changeUserCredential("1234", null, mUserId);
+        changeUserCredential("1234", null, mPrimaryUserId);
 
         // Install relevant apps.
         installAppAsUser(DELEGATE_APP_APK, mUserId);
@@ -210,11 +210,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestClass(".DelegationTest");
 
         } finally {
-            setDelegatedScopes(DELEGATE_APP_PKG, null);
             // Clear lockscreen password previously set for installing private key pairs (DO only).
-            if (mPrimaryUserId == mUserId) {
-                changeUserCredential(null, "1234", mUserId);
-            }
+            changeUserCredential(null, "1234", mPrimaryUserId);
+            // Remove any remaining delegations.
+            setDelegatedScopes(DELEGATE_APP_PKG, null);
         }
     }
 
