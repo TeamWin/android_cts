@@ -238,14 +238,15 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         View belowSquare = mActivity.findViewById(bottomViewResource);
         assertEquals(0, belowSquare.getLeft());
-        assertEquals(aboveSquareBottom, belowSquare.getTop());
-        assertEquals(aboveSquareBottom + aboveSquare.getHeight(), belowSquare.getBottom());
-        assertEquals(aboveSquare.getRight(), belowSquare.getRight());
+        assertWithinAPixel(aboveSquareBottom, belowSquare.getTop());
+        assertWithinAPixel(aboveSquareBottom + aboveSquare.getHeight(),
+                belowSquare.getBottom());
+        assertWithinAPixel(aboveSquare.getRight(), belowSquare.getRight());
 
-        assertTrue(isWithinAPixel(expectedDim, aboveSquare.getHeight()));
-        assertTrue(isWithinAPixel(expectedDim, aboveSquare.getWidth()));
-        assertTrue(isWithinAPixel(expectedDim, belowSquare.getHeight()));
-        assertTrue(isWithinAPixel(expectedDim, belowSquare.getWidth()));
+        assertWithinAPixel(expectedDim, aboveSquare.getHeight());
+        assertWithinAPixel(expectedDim, aboveSquare.getWidth());
+        assertWithinAPixel(expectedDim, belowSquare.getHeight());
+        assertWithinAPixel(expectedDim, belowSquare.getWidth());
 
         assertNull(aboveSquare.getClipBounds());
         assertNull(belowSquare.getClipBounds());
@@ -262,10 +263,10 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         View greenSquare = mActivity.findViewById(R.id.greenSquare);
         assertTrue(redSquare.getTop() != 0);
         assertTrue(greenSquare.getTop() != 0);
-        assertFalse(isWithinAPixel(smallDim, redSquare.getTop()));
-        assertFalse(isWithinAPixel(largeDim, redSquare.getTop()));
-        assertFalse(isWithinAPixel(smallDim, greenSquare.getTop()));
-        assertFalse(isWithinAPixel(largeDim, greenSquare.getTop()));
+        assertNotWithinAPixel(smallDim, redSquare.getTop());
+        assertNotWithinAPixel(largeDim, redSquare.getTop());
+        assertNotWithinAPixel(smallDim, greenSquare.getTop());
+        assertNotWithinAPixel(largeDim, greenSquare.getTop());
     }
 
     private void validateClippedIntermediate() {
@@ -276,10 +277,10 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         View redSquare = mActivity.findViewById(R.id.redSquare);
         View greenSquare = mActivity.findViewById(R.id.greenSquare);
 
-        assertTrue(isWithinAPixel(largeDim, redSquare.getWidth()));
-        assertTrue(isWithinAPixel(largeDim, redSquare.getHeight()));
-        assertTrue(isWithinAPixel(largeDim, greenSquare.getWidth()));
-        assertTrue(isWithinAPixel(largeDim, greenSquare.getHeight()));
+        assertWithinAPixel(largeDim, redSquare.getWidth());
+        assertWithinAPixel(largeDim, redSquare.getHeight());
+        assertWithinAPixel(largeDim, greenSquare.getWidth());
+        assertWithinAPixel(largeDim, greenSquare.getHeight());
 
         assertNotNull(redSquare.getClipBounds());
         assertNotNull(greenSquare.getClipBounds());
@@ -294,22 +295,32 @@ public class ChangeBoundsTest extends BaseTransitionTest {
                 LARGE_SQUARE_SIZE_DP, resources.getDisplayMetrics());
         View redSquare = mActivity.findViewById(R.id.redSquare);
         View greenSquare = mActivity.findViewById(R.id.greenSquare);
-        assertFalse(isWithinAPixel(smallDim, redSquare.getWidth()));
-        assertFalse(isWithinAPixel(smallDim, redSquare.getHeight()));
-        assertFalse(isWithinAPixel(largeDim, redSquare.getWidth()));
-        assertFalse(isWithinAPixel(largeDim, redSquare.getHeight()));
+        assertNotWithinAPixel(smallDim, redSquare.getWidth());
+        assertNotWithinAPixel(smallDim, redSquare.getHeight());
+        assertNotWithinAPixel(largeDim, redSquare.getWidth());
+        assertNotWithinAPixel(largeDim, redSquare.getHeight());
 
-        assertFalse(isWithinAPixel(smallDim, greenSquare.getWidth()));
-        assertFalse(isWithinAPixel(smallDim, greenSquare.getHeight()));
-        assertFalse(isWithinAPixel(largeDim, greenSquare.getWidth()));
-        assertFalse(isWithinAPixel(largeDim, greenSquare.getHeight()));
+        assertNotWithinAPixel(smallDim, greenSquare.getWidth());
+        assertNotWithinAPixel(smallDim, greenSquare.getHeight());
+        assertNotWithinAPixel(largeDim, greenSquare.getWidth());
+        assertNotWithinAPixel(largeDim, greenSquare.getHeight());
 
         assertNull(redSquare.getClipBounds());
         assertNull(greenSquare.getClipBounds());
     }
 
     private static boolean isWithinAPixel(float expectedDim, int dim) {
-        return (Math.abs(dim - expectedDim) < 1);
+        return (Math.abs(dim - expectedDim) <= 1);
+    }
+
+    private static void assertWithinAPixel(float expectedDim, int dim) {
+        assertTrue("Expected dimension to be within one pixel of "
+                + expectedDim + ", but was " + dim, isWithinAPixel(expectedDim, dim));
+    }
+
+    private static void assertNotWithinAPixel(float expectedDim, int dim) {
+        assertTrue("Expected dimension to not be within one pixel of "
+                + expectedDim + ", but was " + dim, !isWithinAPixel(expectedDim, dim));
     }
 }
 
