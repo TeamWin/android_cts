@@ -25,7 +25,7 @@
         <activity android:name=".SurfaceViewTestActivity"
                   android:exported="true"
         />
-        <activity android:name=".MovingSurfaceViewTestActivity"
+        <activity android:name=".MovingPopupTestActivity"
                   android:exported="true"
         />
     </application>

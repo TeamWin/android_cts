@@ -22,15 +22,19 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import android.view.Window;
 import android.view.Gravity;
-import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Space;
+import android.widget.PopupWindow;
+import android.widget.Button;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
 
-// This activity will parent a SurfaceView to the main window, and then move
-// the main window around. We can use this to verify the SurfaceView
+// This activity will parent a Popup to the main window, and then move
+// the main window around. We can use this to verify the Popup
 // is properly updated.
-public class MovingSurfaceViewTestActivity extends Activity {
-    SurfaceView mSurfaceView;
+public class MovingPopupTestActivity extends Activity {
+    Space mView;
+    PopupWindow mPopupWindow;
     int mX = 0;
     int mY = 0;
 
@@ -44,23 +48,34 @@ public class MovingSurfaceViewTestActivity extends Activity {
                 w.setAttributes(attribs);
                 mX += 5;
                 mY += 5;
-                mSurfaceView.postDelayed(this, 50);
+                mView.postDelayed(this, 50);
+            }
+    };
+
+    final Runnable makePopup = new Runnable() {
+            @Override
+            public void run() {
+                Button b = new Button(MovingPopupTestActivity.this);
+
+                mPopupWindow = new PopupWindow(MovingPopupTestActivity.this);
+                mPopupWindow.setContentView(b);
+                mPopupWindow.setWidth(50);
+                mPopupWindow.setHeight(50);
+                mPopupWindow.showAtLocation(mView, 0, 0, 0);
+
+                mView.postDelayed(moveWindow, 50);
             }
     };
 
     protected void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+
         final LayoutParams p = new LayoutParams(100, 100);
         final Window w = getWindow();
         w.setLayout(100, 100);
+        mView = new Space(this);
 
-        mSurfaceView = new SurfaceView(this);
-        setContentView(mSurfaceView, p);
-
-        super.onCreate(icicle);
-    }
-
-    protected void onResume() {
-        mSurfaceView.postDelayed(moveWindow, 50);
-        super.onResume();
+        setContentView(mView, p);
+        mView.post(makePopup);
     }
 }

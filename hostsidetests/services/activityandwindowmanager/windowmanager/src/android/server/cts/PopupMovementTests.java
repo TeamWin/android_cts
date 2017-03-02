@@ -32,30 +32,70 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import android.server.cts.ActivityManagerTestBase;
 import android.server.cts.WindowManagerState.WindowState;
 
-public class SurfaceViewMovementTests extends SurfaceViewTests {
+public class PopupMovementTests extends ParentChildTestBase {
     private List<WindowState> mWindowList = new ArrayList();
 
     @Override
-    String activityName() {
-        return "MovingSurfaceViewTestActivity";
+    String intentKey() {
+        return "android.server.FrameTestApp.PopupTestCase";
     }
+
+    @Override
+    String activityName() {
+        return "MovingPopupTestActivity";
+    }
+
+    WindowState getSingleWindow(String fullWindowName) {
+        try {
+            mAmWmState.getWmState().getMatchingVisibleWindowState(fullWindowName, mWindowList);
+            return mWindowList.get(0);
+        } catch (Exception e) {
+            CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + fullWindowName);
+            return null;
+        }
+    }
+
+    WindowState getSingleWindowByPrefix(String prefix) {
+        try {
+            mAmWmState.getWmState().getPrefixMatchingVisibleWindowState(prefix, mWindowList);
+            return mWindowList.get(0);
+        } catch (Exception e) {
+            CLog.logAndDisplay(LogLevel.INFO, "Couldn't find window: " + prefix);
+            return null;
+        }
+    }
+
+    void doSingleTest(ParentChildTest t) throws Exception {
+        String popupName = "PopupWindow";
+        final String[] waitForVisible = new String[] { popupName };
+
+        mAmWmState.setUseActivityNamesForWindowNames(false);
+        mAmWmState.computeState(mDevice, waitForVisible);
+        WindowState popup = getSingleWindowByPrefix(popupName);
+        WindowState parent = getSingleWindow(getBaseWindowName() + activityName());
+
+        t.doTest(parent, popup);
+    }
+
 
     Object monitor = new Object();
     boolean testPassed = false;
-    String svName = null;
+    String popupName = null;
     String mainName = null;
 
     SurfaceTraceReceiver.SurfaceObserver observer = new SurfaceTraceReceiver.SurfaceObserver() {
         int transactionCount = 0;
-        boolean sawSVMove = false;
+        boolean sawPopupMove = false;
         boolean sawMainMove = false;
         int timesSeen = 0;
 
         @Override
         public void openTransaction() {
             transactionCount++;
-            sawSVMove = false;
-            sawMainMove = false;
+            if (transactionCount == 1) {
+                sawPopupMove = false;
+                sawMainMove = false;
+            }
         }
 
         @Override
@@ -65,7 +105,7 @@ public class SurfaceViewMovementTests extends SurfaceViewTests {
                 return;
             }
             synchronized (monitor) {
-                if (sawSVMove ^ sawMainMove ) {
+                if (sawPopupMove ^ sawMainMove ) {
                     monitor.notifyAll();
                     return;
                 }
@@ -78,8 +118,8 @@ public class SurfaceViewMovementTests extends SurfaceViewTests {
 
         @Override
         public void setPosition(String windowName, float x, float y) {
-            if (windowName.equals(svName)) {
-                sawSVMove = true;
+            if (windowName.equals(popupName)) {
+                sawPopupMove = true;
                 timesSeen++;
             } else if (windowName.equals(mainName)) {
                 sawMainMove = true;
@@ -88,16 +128,16 @@ public class SurfaceViewMovementTests extends SurfaceViewTests {
     };
 
     /**
-     * Here we test that a SurfaceView moves in the same transaction
-     * as its parent. We launch an activity with a SurfaceView which will
+     * Here we test that a Popup moves in the same transaction
+     * as its parent. We launch an activity with a Popup which will
      * move around its own main window. Then we listen to WindowManager transactions.
-     * Since the SurfaceView is static within the window, if we ever see one of
+     * Since the Popup is static within the window, if we ever see one of
      * them move xor the other one we have a problem!
      */
     public void testSurfaceMovesWithParent() throws Exception {
         doFullscreenTest("MovesWithParent",
-            (WindowState parent, WindowState sv) -> {
-                    svName = sv.getName();
+            (WindowState parent, WindowState popup) -> {
+                    popupName = popup.getName();
                     mainName = parent.getName();
                     installSurfaceObserver(observer);
                     try {

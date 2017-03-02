@@ -351,6 +351,15 @@ public class WindowManagerState {
         }
     }
 
+    void getPrefixMatchingVisibleWindowState(final String windowName, List<WindowState> windowList) {
+        windowList.clear();
+        for (WindowState ws : mWindowStates) {
+            if (ws.isShown() && ws.getName().startsWith(windowName)) {
+                windowList.add(ws);
+            }
+        }
+    }
+
     WindowState getWindowByPackageName(String packageName, int windowType) {
         for (WindowState ws : mWindowStates) {
             final String name = ws.getName();
