@@ -37,6 +37,13 @@ public class TestClz extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestClzRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsCharChar {
         public byte inValue;
         public byte out;
@@ -48,6 +55,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 1), INPUTSIZE);
             script.forEach_testClzCharChar(inValue, out);
             verifyResultsClzCharChar(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzCharChar: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 1), INPUTSIZE);
             scriptRelaxed.forEach_testClzCharChar(inValue, out);
             verifyResultsClzCharChar(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzCharChar: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzCharChar(Allocation inValue, Allocation out, boolean relaxed) {
@@ -116,6 +126,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             script.forEach_testClzChar2Char2(inValue, out);
             verifyResultsClzChar2Char2(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzChar2Char2: " + e.toString());
         }
@@ -123,9 +134,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 2), INPUTSIZE);
             scriptRelaxed.forEach_testClzChar2Char2(inValue, out);
             verifyResultsClzChar2Char2(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzChar2Char2: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzChar2Char2(Allocation inValue, Allocation out, boolean relaxed) {
@@ -184,6 +197,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             script.forEach_testClzChar3Char3(inValue, out);
             verifyResultsClzChar3Char3(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzChar3Char3: " + e.toString());
         }
@@ -191,9 +205,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 3), INPUTSIZE);
             scriptRelaxed.forEach_testClzChar3Char3(inValue, out);
             verifyResultsClzChar3Char3(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzChar3Char3: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzChar3Char3(Allocation inValue, Allocation out, boolean relaxed) {
@@ -252,6 +268,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             script.forEach_testClzChar4Char4(inValue, out);
             verifyResultsClzChar4Char4(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzChar4Char4: " + e.toString());
         }
@@ -259,9 +276,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_8, 4), INPUTSIZE);
             scriptRelaxed.forEach_testClzChar4Char4(inValue, out);
             verifyResultsClzChar4Char4(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzChar4Char4: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzChar4Char4(Allocation inValue, Allocation out, boolean relaxed) {
@@ -325,6 +344,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 1), INPUTSIZE);
             script.forEach_testClzUcharUchar(inValue, out);
             verifyResultsClzUcharUchar(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUcharUchar: " + e.toString());
         }
@@ -332,9 +352,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 1), INPUTSIZE);
             scriptRelaxed.forEach_testClzUcharUchar(inValue, out);
             verifyResultsClzUcharUchar(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUcharUchar: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUcharUchar(Allocation inValue, Allocation out, boolean relaxed) {
@@ -393,6 +415,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             script.forEach_testClzUchar2Uchar2(inValue, out);
             verifyResultsClzUchar2Uchar2(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUchar2Uchar2: " + e.toString());
         }
@@ -400,9 +423,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 2), INPUTSIZE);
             scriptRelaxed.forEach_testClzUchar2Uchar2(inValue, out);
             verifyResultsClzUchar2Uchar2(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUchar2Uchar2: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUchar2Uchar2(Allocation inValue, Allocation out, boolean relaxed) {
@@ -461,6 +486,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             script.forEach_testClzUchar3Uchar3(inValue, out);
             verifyResultsClzUchar3Uchar3(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUchar3Uchar3: " + e.toString());
         }
@@ -468,9 +494,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 3), INPUTSIZE);
             scriptRelaxed.forEach_testClzUchar3Uchar3(inValue, out);
             verifyResultsClzUchar3Uchar3(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUchar3Uchar3: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUchar3Uchar3(Allocation inValue, Allocation out, boolean relaxed) {
@@ -529,6 +557,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             script.forEach_testClzUchar4Uchar4(inValue, out);
             verifyResultsClzUchar4Uchar4(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUchar4Uchar4: " + e.toString());
         }
@@ -536,9 +565,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_8, 4), INPUTSIZE);
             scriptRelaxed.forEach_testClzUchar4Uchar4(inValue, out);
             verifyResultsClzUchar4Uchar4(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUchar4Uchar4: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUchar4Uchar4(Allocation inValue, Allocation out, boolean relaxed) {
@@ -602,6 +633,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 1), INPUTSIZE);
             script.forEach_testClzShortShort(inValue, out);
             verifyResultsClzShortShort(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShortShort: " + e.toString());
         }
@@ -609,9 +641,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testClzShortShort(inValue, out);
             verifyResultsClzShortShort(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShortShort: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzShortShort(Allocation inValue, Allocation out, boolean relaxed) {
@@ -670,6 +704,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             script.forEach_testClzShort2Short2(inValue, out);
             verifyResultsClzShort2Short2(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShort2Short2: " + e.toString());
         }
@@ -677,9 +712,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testClzShort2Short2(inValue, out);
             verifyResultsClzShort2Short2(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShort2Short2: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzShort2Short2(Allocation inValue, Allocation out, boolean relaxed) {
@@ -738,6 +775,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             script.forEach_testClzShort3Short3(inValue, out);
             verifyResultsClzShort3Short3(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShort3Short3: " + e.toString());
         }
@@ -745,9 +783,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testClzShort3Short3(inValue, out);
             verifyResultsClzShort3Short3(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShort3Short3: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzShort3Short3(Allocation inValue, Allocation out, boolean relaxed) {
@@ -806,6 +846,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             script.forEach_testClzShort4Short4(inValue, out);
             verifyResultsClzShort4Short4(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShort4Short4: " + e.toString());
         }
@@ -813,9 +854,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testClzShort4Short4(inValue, out);
             verifyResultsClzShort4Short4(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzShort4Short4: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzShort4Short4(Allocation inValue, Allocation out, boolean relaxed) {
@@ -879,6 +922,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 1), INPUTSIZE);
             script.forEach_testClzUshortUshort(inValue, out);
             verifyResultsClzUshortUshort(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshortUshort: " + e.toString());
         }
@@ -886,9 +930,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testClzUshortUshort(inValue, out);
             verifyResultsClzUshortUshort(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshortUshort: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUshortUshort(Allocation inValue, Allocation out, boolean relaxed) {
@@ -947,6 +993,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             script.forEach_testClzUshort2Ushort2(inValue, out);
             verifyResultsClzUshort2Ushort2(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshort2Ushort2: " + e.toString());
         }
@@ -954,9 +1001,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testClzUshort2Ushort2(inValue, out);
             verifyResultsClzUshort2Ushort2(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshort2Ushort2: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUshort2Ushort2(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1015,6 +1064,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             script.forEach_testClzUshort3Ushort3(inValue, out);
             verifyResultsClzUshort3Ushort3(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshort3Ushort3: " + e.toString());
         }
@@ -1022,9 +1072,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testClzUshort3Ushort3(inValue, out);
             verifyResultsClzUshort3Ushort3(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshort3Ushort3: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUshort3Ushort3(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1083,6 +1135,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             script.forEach_testClzUshort4Ushort4(inValue, out);
             verifyResultsClzUshort4Ushort4(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshort4Ushort4: " + e.toString());
         }
@@ -1090,9 +1143,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testClzUshort4Ushort4(inValue, out);
             verifyResultsClzUshort4Ushort4(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUshort4Ushort4: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUshort4Ushort4(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1156,6 +1211,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 1), INPUTSIZE);
             script.forEach_testClzIntInt(inValue, out);
             verifyResultsClzIntInt(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzIntInt: " + e.toString());
         }
@@ -1163,9 +1219,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testClzIntInt(inValue, out);
             verifyResultsClzIntInt(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzIntInt: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzIntInt(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1224,6 +1282,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             script.forEach_testClzInt2Int2(inValue, out);
             verifyResultsClzInt2Int2(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzInt2Int2: " + e.toString());
         }
@@ -1231,9 +1290,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testClzInt2Int2(inValue, out);
             verifyResultsClzInt2Int2(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzInt2Int2: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzInt2Int2(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1292,6 +1353,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             script.forEach_testClzInt3Int3(inValue, out);
             verifyResultsClzInt3Int3(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzInt3Int3: " + e.toString());
         }
@@ -1299,9 +1361,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testClzInt3Int3(inValue, out);
             verifyResultsClzInt3Int3(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzInt3Int3: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzInt3Int3(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1360,6 +1424,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             script.forEach_testClzInt4Int4(inValue, out);
             verifyResultsClzInt4Int4(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzInt4Int4: " + e.toString());
         }
@@ -1367,9 +1432,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.SIGNED_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testClzInt4Int4(inValue, out);
             verifyResultsClzInt4Int4(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzInt4Int4: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzInt4Int4(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1433,6 +1500,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 1), INPUTSIZE);
             script.forEach_testClzUintUint(inValue, out);
             verifyResultsClzUintUint(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUintUint: " + e.toString());
         }
@@ -1440,9 +1508,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testClzUintUint(inValue, out);
             verifyResultsClzUintUint(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUintUint: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUintUint(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1501,6 +1571,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             script.forEach_testClzUint2Uint2(inValue, out);
             verifyResultsClzUint2Uint2(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUint2Uint2: " + e.toString());
         }
@@ -1508,9 +1579,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testClzUint2Uint2(inValue, out);
             verifyResultsClzUint2Uint2(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUint2Uint2: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUint2Uint2(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1569,6 +1642,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             script.forEach_testClzUint3Uint3(inValue, out);
             verifyResultsClzUint3Uint3(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUint3Uint3: " + e.toString());
         }
@@ -1576,9 +1650,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testClzUint3Uint3(inValue, out);
             verifyResultsClzUint3Uint3(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUint3Uint3: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUint3Uint3(Allocation inValue, Allocation out, boolean relaxed) {
@@ -1637,6 +1713,7 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             script.forEach_testClzUint4Uint4(inValue, out);
             verifyResultsClzUint4Uint4(inValue, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUint4Uint4: " + e.toString());
         }
@@ -1644,9 +1721,11 @@ public class TestClz extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.UNSIGNED_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testClzUint4Uint4(inValue, out);
             verifyResultsClzUint4Uint4(inValue, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testClzUint4Uint4: " + e.toString());
         }
+        inValue.destroy();
     }
 
     private void verifyResultsClzUint4Uint4(Allocation inValue, Allocation out, boolean relaxed) {

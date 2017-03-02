@@ -37,6 +37,13 @@ public class TestCross extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestCrossRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatNFloatNFloatN {
         public float[] inLeftVector;
         public float[] inRightVector;
@@ -51,6 +58,7 @@ public class TestCross extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testCrossFloat3Float3Float3(inLeftVector, out);
             verifyResultsCrossFloat3Float3Float3(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossFloat3Float3Float3: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestCross extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testCrossFloat3Float3Float3(inLeftVector, out);
             verifyResultsCrossFloat3Float3Float3(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossFloat3Float3Float3: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsCrossFloat3Float3Float3(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -142,6 +153,7 @@ public class TestCross extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testCrossFloat4Float4Float4(inLeftVector, out);
             verifyResultsCrossFloat4Float4Float4(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossFloat4Float4Float4: " + e.toString());
         }
@@ -150,9 +162,12 @@ public class TestCross extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testCrossFloat4Float4Float4(inLeftVector, out);
             verifyResultsCrossFloat4Float4Float4(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossFloat4Float4Float4: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsCrossFloat4Float4Float4(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -241,6 +256,7 @@ public class TestCross extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testCrossHalf3Half3Half3(inLeftVector, out);
             verifyResultsCrossHalf3Half3Half3(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossHalf3Half3Half3: " + e.toString());
         }
@@ -249,9 +265,12 @@ public class TestCross extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testCrossHalf3Half3Half3(inLeftVector, out);
             verifyResultsCrossHalf3Half3Half3(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossHalf3Half3Half3: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsCrossHalf3Half3Half3(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {
@@ -339,6 +358,7 @@ public class TestCross extends RSBaseCompute {
             script.set_gAllocInRightVector(inRightVector);
             script.forEach_testCrossHalf4Half4Half4(inLeftVector, out);
             verifyResultsCrossHalf4Half4Half4(inLeftVector, inRightVector, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossHalf4Half4Half4: " + e.toString());
         }
@@ -347,9 +367,12 @@ public class TestCross extends RSBaseCompute {
             scriptRelaxed.set_gAllocInRightVector(inRightVector);
             scriptRelaxed.forEach_testCrossHalf4Half4Half4(inLeftVector, out);
             verifyResultsCrossHalf4Half4Half4(inLeftVector, inRightVector, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCrossHalf4Half4Half4: " + e.toString());
         }
+        inLeftVector.destroy();
+        inRightVector.destroy();
     }
 
     private void verifyResultsCrossHalf4Half4Half4(Allocation inLeftVector, Allocation inRightVector, Allocation out, boolean relaxed) {

@@ -37,6 +37,13 @@ public class TestCospi extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestCospiRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testCospiFloatFloat(inV, out);
             verifyResultsCospiFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testCospiFloatFloat(inV, out);
             verifyResultsCospiFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -117,6 +127,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testCospiFloat2Float2(inV, out);
             verifyResultsCospiFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloat2Float2: " + e.toString());
         }
@@ -124,9 +135,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testCospiFloat2Float2(inV, out);
             verifyResultsCospiFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -186,6 +199,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testCospiFloat3Float3(inV, out);
             verifyResultsCospiFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloat3Float3: " + e.toString());
         }
@@ -193,9 +207,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testCospiFloat3Float3(inV, out);
             verifyResultsCospiFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -255,6 +271,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testCospiFloat4Float4(inV, out);
             verifyResultsCospiFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloat4Float4: " + e.toString());
         }
@@ -262,9 +279,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testCospiFloat4Float4(inV, out);
             verifyResultsCospiFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -330,6 +349,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testCospiHalfHalf(inV, out);
             verifyResultsCospiHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalfHalf: " + e.toString());
         }
@@ -337,9 +357,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testCospiHalfHalf(inV, out);
             verifyResultsCospiHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -403,6 +425,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testCospiHalf2Half2(inV, out);
             verifyResultsCospiHalf2Half2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalf2Half2: " + e.toString());
         }
@@ -410,9 +433,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testCospiHalf2Half2(inV, out);
             verifyResultsCospiHalf2Half2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalf2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiHalf2Half2(Allocation inV, Allocation out, boolean relaxed) {
@@ -476,6 +501,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testCospiHalf3Half3(inV, out);
             verifyResultsCospiHalf3Half3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalf3Half3: " + e.toString());
         }
@@ -483,9 +509,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testCospiHalf3Half3(inV, out);
             verifyResultsCospiHalf3Half3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalf3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiHalf3Half3(Allocation inV, Allocation out, boolean relaxed) {
@@ -549,6 +577,7 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testCospiHalf4Half4(inV, out);
             verifyResultsCospiHalf4Half4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalf4Half4: " + e.toString());
         }
@@ -556,9 +585,11 @@ public class TestCospi extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testCospiHalf4Half4(inV, out);
             verifyResultsCospiHalf4Half4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testCospiHalf4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsCospiHalf4Half4(Allocation inV, Allocation out, boolean relaxed) {

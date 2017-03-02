@@ -37,6 +37,13 @@ public class TestLength extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestLengthRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testLengthFloatFloat(inV, out);
             verifyResultsLengthFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthFloatFloat(inV, out);
             verifyResultsLengthFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -119,6 +129,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testLengthFloat2Float(inV, out);
             verifyResultsLengthFloat2Float(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloat2Float: " + e.toString());
         }
@@ -126,9 +137,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthFloat2Float(inV, out);
             verifyResultsLengthFloat2Float(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloat2Float: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthFloat2Float(Allocation inV, Allocation out, boolean relaxed) {
@@ -190,6 +203,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testLengthFloat3Float(inV, out);
             verifyResultsLengthFloat3Float(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloat3Float: " + e.toString());
         }
@@ -197,9 +211,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthFloat3Float(inV, out);
             verifyResultsLengthFloat3Float(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloat3Float: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthFloat3Float(Allocation inV, Allocation out, boolean relaxed) {
@@ -261,6 +277,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testLengthFloat4Float(inV, out);
             verifyResultsLengthFloat4Float(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloat4Float: " + e.toString());
         }
@@ -268,9 +285,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthFloat4Float(inV, out);
             verifyResultsLengthFloat4Float(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthFloat4Float: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthFloat4Float(Allocation inV, Allocation out, boolean relaxed) {
@@ -338,6 +357,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testLengthHalfHalf(inV, out);
             verifyResultsLengthHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalfHalf: " + e.toString());
         }
@@ -345,9 +365,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthHalfHalf(inV, out);
             verifyResultsLengthHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -414,6 +436,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testLengthHalf2Half(inV, out);
             verifyResultsLengthHalf2Half(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalf2Half: " + e.toString());
         }
@@ -421,9 +444,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthHalf2Half(inV, out);
             verifyResultsLengthHalf2Half(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalf2Half: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthHalf2Half(Allocation inV, Allocation out, boolean relaxed) {
@@ -490,6 +515,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testLengthHalf3Half(inV, out);
             verifyResultsLengthHalf3Half(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalf3Half: " + e.toString());
         }
@@ -497,9 +523,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthHalf3Half(inV, out);
             verifyResultsLengthHalf3Half(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalf3Half: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthHalf3Half(Allocation inV, Allocation out, boolean relaxed) {
@@ -566,6 +594,7 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testLengthHalf4Half(inV, out);
             verifyResultsLengthHalf4Half(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalf4Half: " + e.toString());
         }
@@ -573,9 +602,11 @@ public class TestLength extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLengthHalf4Half(inV, out);
             verifyResultsLengthHalf4Half(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLengthHalf4Half: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLengthHalf4Half(Allocation inV, Allocation out, boolean relaxed) {

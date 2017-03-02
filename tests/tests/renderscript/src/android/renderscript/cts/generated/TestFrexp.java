@@ -37,6 +37,13 @@ public class TestFrexp extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestFrexpRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatIntFloat {
         public float inV;
         public int outExponent;
@@ -51,6 +58,8 @@ public class TestFrexp extends RSBaseCompute {
             script.set_gAllocOutExponent(outExponent);
             script.forEach_testFrexpFloatIntFloat(inV, out);
             verifyResultsFrexpFloatIntFloat(inV, outExponent, out, false);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloatIntFloat: " + e.toString());
         }
@@ -60,9 +69,12 @@ public class TestFrexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutExponent(outExponent);
             scriptRelaxed.forEach_testFrexpFloatIntFloat(inV, out);
             verifyResultsFrexpFloatIntFloat(inV, outExponent, out, true);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloatIntFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFrexpFloatIntFloat(Allocation inV, Allocation outExponent, Allocation out, boolean relaxed) {
@@ -139,6 +151,8 @@ public class TestFrexp extends RSBaseCompute {
             script.set_gAllocOutExponent(outExponent);
             script.forEach_testFrexpFloat2Int2Float2(inV, out);
             verifyResultsFrexpFloat2Int2Float2(inV, outExponent, out, false);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloat2Int2Float2: " + e.toString());
         }
@@ -148,9 +162,12 @@ public class TestFrexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutExponent(outExponent);
             scriptRelaxed.forEach_testFrexpFloat2Int2Float2(inV, out);
             verifyResultsFrexpFloat2Int2Float2(inV, outExponent, out, true);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloat2Int2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFrexpFloat2Int2Float2(Allocation inV, Allocation outExponent, Allocation out, boolean relaxed) {
@@ -227,6 +244,8 @@ public class TestFrexp extends RSBaseCompute {
             script.set_gAllocOutExponent(outExponent);
             script.forEach_testFrexpFloat3Int3Float3(inV, out);
             verifyResultsFrexpFloat3Int3Float3(inV, outExponent, out, false);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloat3Int3Float3: " + e.toString());
         }
@@ -236,9 +255,12 @@ public class TestFrexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutExponent(outExponent);
             scriptRelaxed.forEach_testFrexpFloat3Int3Float3(inV, out);
             verifyResultsFrexpFloat3Int3Float3(inV, outExponent, out, true);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloat3Int3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFrexpFloat3Int3Float3(Allocation inV, Allocation outExponent, Allocation out, boolean relaxed) {
@@ -315,6 +337,8 @@ public class TestFrexp extends RSBaseCompute {
             script.set_gAllocOutExponent(outExponent);
             script.forEach_testFrexpFloat4Int4Float4(inV, out);
             verifyResultsFrexpFloat4Int4Float4(inV, outExponent, out, false);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloat4Int4Float4: " + e.toString());
         }
@@ -324,9 +348,12 @@ public class TestFrexp extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutExponent(outExponent);
             scriptRelaxed.forEach_testFrexpFloat4Int4Float4(inV, out);
             verifyResultsFrexpFloat4Int4Float4(inV, outExponent, out, true);
+            outExponent.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFrexpFloat4Int4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsFrexpFloat4Int4Float4(Allocation inV, Allocation outExponent, Allocation out, boolean relaxed) {

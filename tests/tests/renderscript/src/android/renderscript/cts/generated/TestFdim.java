@@ -37,6 +37,13 @@ public class TestFdim extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestFdimRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inA;
         public float inB;
@@ -51,6 +58,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimFloatFloatFloat(inA, out);
             verifyResultsFdimFloatFloatFloat(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimFloatFloatFloat(inA, out);
             verifyResultsFdimFloatFloatFloat(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloatFloatFloat: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimFloatFloatFloat(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimFloat2Float2Float2(inA, out);
             verifyResultsFdimFloat2Float2Float2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimFloat2Float2Float2(inA, out);
             verifyResultsFdimFloat2Float2Float2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloat2Float2Float2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimFloat2Float2Float2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimFloat3Float3Float3(inA, out);
             verifyResultsFdimFloat3Float3Float3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimFloat3Float3Float3(inA, out);
             verifyResultsFdimFloat3Float3Float3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloat3Float3Float3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimFloat3Float3Float3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimFloat4Float4Float4(inA, out);
             verifyResultsFdimFloat4Float4Float4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimFloat4Float4Float4(inA, out);
             verifyResultsFdimFloat4Float4Float4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimFloat4Float4Float4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimFloat4Float4Float4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimHalfHalfHalf(inA, out);
             verifyResultsFdimHalfHalfHalf(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimHalfHalfHalf(inA, out);
             verifyResultsFdimHalfHalfHalf(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalfHalfHalf: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimHalfHalfHalf(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimHalf2Half2Half2(inA, out);
             verifyResultsFdimHalf2Half2Half2(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimHalf2Half2Half2(inA, out);
             verifyResultsFdimHalf2Half2Half2(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalf2Half2Half2: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimHalf2Half2Half2(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimHalf3Half3Half3(inA, out);
             verifyResultsFdimHalf3Half3Half3(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimHalf3Half3Half3(inA, out);
             verifyResultsFdimHalf3Half3Half3(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalf3Half3Half3: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimHalf3Half3Half3(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestFdim extends RSBaseCompute {
             script.set_gAllocInB(inB);
             script.forEach_testFdimHalf4Half4Half4(inA, out);
             verifyResultsFdimHalf4Half4Half4(inA, inB, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestFdim extends RSBaseCompute {
             scriptRelaxed.set_gAllocInB(inB);
             scriptRelaxed.forEach_testFdimHalf4Half4Half4(inA, out);
             verifyResultsFdimHalf4Half4Half4(inA, inB, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFdimHalf4Half4Half4: " + e.toString());
         }
+        inA.destroy();
+        inB.destroy();
     }
 
     private void verifyResultsFdimHalf4Half4Half4(Allocation inA, Allocation inB, Allocation out, boolean relaxed) {

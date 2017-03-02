@@ -37,6 +37,13 @@ public class TestLgamma extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestLgammaRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testLgammaFloatFloat(inV, out);
             verifyResultsLgammaFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testLgammaFloatFloat(inV, out);
             verifyResultsLgammaFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -117,6 +127,7 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testLgammaFloat2Float2(inV, out);
             verifyResultsLgammaFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat2Float2: " + e.toString());
         }
@@ -124,9 +135,11 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testLgammaFloat2Float2(inV, out);
             verifyResultsLgammaFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -186,6 +199,7 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testLgammaFloat3Float3(inV, out);
             verifyResultsLgammaFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat3Float3: " + e.toString());
         }
@@ -193,9 +207,11 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testLgammaFloat3Float3(inV, out);
             verifyResultsLgammaFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -255,6 +271,7 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testLgammaFloat4Float4(inV, out);
             verifyResultsLgammaFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat4Float4: " + e.toString());
         }
@@ -262,9 +279,11 @@ public class TestLgamma extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testLgammaFloat4Float4(inV, out);
             verifyResultsLgammaFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -332,6 +351,8 @@ public class TestLgamma extends RSBaseCompute {
             script.set_gAllocOutSignOfGamma(outSignOfGamma);
             script.forEach_testLgammaFloatIntFloat(inV, out);
             verifyResultsLgammaFloatIntFloat(inV, outSignOfGamma, out, false);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloatIntFloat: " + e.toString());
         }
@@ -341,9 +362,12 @@ public class TestLgamma extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutSignOfGamma(outSignOfGamma);
             scriptRelaxed.forEach_testLgammaFloatIntFloat(inV, out);
             verifyResultsLgammaFloatIntFloat(inV, outSignOfGamma, out, true);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloatIntFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloatIntFloat(Allocation inV, Allocation outSignOfGamma, Allocation out, boolean relaxed) {
@@ -405,6 +429,8 @@ public class TestLgamma extends RSBaseCompute {
             script.set_gAllocOutSignOfGamma(outSignOfGamma);
             script.forEach_testLgammaFloat2Int2Float2(inV, out);
             verifyResultsLgammaFloat2Int2Float2(inV, outSignOfGamma, out, false);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat2Int2Float2: " + e.toString());
         }
@@ -414,9 +440,12 @@ public class TestLgamma extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutSignOfGamma(outSignOfGamma);
             scriptRelaxed.forEach_testLgammaFloat2Int2Float2(inV, out);
             verifyResultsLgammaFloat2Int2Float2(inV, outSignOfGamma, out, true);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat2Int2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloat2Int2Float2(Allocation inV, Allocation outSignOfGamma, Allocation out, boolean relaxed) {
@@ -478,6 +507,8 @@ public class TestLgamma extends RSBaseCompute {
             script.set_gAllocOutSignOfGamma(outSignOfGamma);
             script.forEach_testLgammaFloat3Int3Float3(inV, out);
             verifyResultsLgammaFloat3Int3Float3(inV, outSignOfGamma, out, false);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat3Int3Float3: " + e.toString());
         }
@@ -487,9 +518,12 @@ public class TestLgamma extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutSignOfGamma(outSignOfGamma);
             scriptRelaxed.forEach_testLgammaFloat3Int3Float3(inV, out);
             verifyResultsLgammaFloat3Int3Float3(inV, outSignOfGamma, out, true);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat3Int3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloat3Int3Float3(Allocation inV, Allocation outSignOfGamma, Allocation out, boolean relaxed) {
@@ -551,6 +585,8 @@ public class TestLgamma extends RSBaseCompute {
             script.set_gAllocOutSignOfGamma(outSignOfGamma);
             script.forEach_testLgammaFloat4Int4Float4(inV, out);
             verifyResultsLgammaFloat4Int4Float4(inV, outSignOfGamma, out, false);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat4Int4Float4: " + e.toString());
         }
@@ -560,9 +596,12 @@ public class TestLgamma extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutSignOfGamma(outSignOfGamma);
             scriptRelaxed.forEach_testLgammaFloat4Int4Float4(inV, out);
             verifyResultsLgammaFloat4Int4Float4(inV, outSignOfGamma, out, true);
+            outSignOfGamma.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testLgammaFloat4Int4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsLgammaFloat4Int4Float4(Allocation inV, Allocation outSignOfGamma, Allocation out, boolean relaxed) {
