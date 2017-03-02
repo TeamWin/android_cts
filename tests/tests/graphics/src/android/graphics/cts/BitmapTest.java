@@ -60,6 +60,10 @@ public class BitmapTest {
 
     private static final BitmapFactory.Options HARDWARE_OPTIONS = createHardwareBitmapOptions();
 
+    static {
+        System.loadLibrary("ctsgraphics_jni");
+    }
+
     private Resources mRes;
     private Bitmap mBitmap;
     private BitmapFactory.Options mOptions;
@@ -1258,6 +1262,28 @@ public class BitmapTest {
         assertEquals(255, Color.alpha(alphaBitmap.getPixel(25, 25)));
         assertEquals(127, Color.alpha(alphaBitmap.getPixel(40, 40)));
     }
+
+    @Test
+    public void testUseMetadataAfterRecycle() {
+        Bitmap bitmap = Bitmap.createBitmap(10, 20, Config.RGB_565);
+        bitmap.recycle();
+        assertEquals(10, bitmap.getWidth());
+        assertEquals(20, bitmap.getHeight());
+        assertEquals(Config.RGB_565, bitmap.getConfig());
+    }
+
+    @Test
+    public void testNdkAccessAfterRecycle() {
+        Bitmap bitmap = Bitmap.createBitmap(10, 20, Config.RGB_565);
+        nValidateBitmapInfo(bitmap, 10, 20, true);
+        bitmap.recycle();
+        nValidateBitmapInfo(bitmap, 10, 20, true);
+        nValidateNdkAccessAfterRecycle(bitmap);
+    }
+
+    private static native void nValidateBitmapInfo(Bitmap bitmap, int width, int height,
+            boolean is565);
+    private static native void nValidateNdkAccessAfterRecycle(Bitmap bitmap);
 
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
