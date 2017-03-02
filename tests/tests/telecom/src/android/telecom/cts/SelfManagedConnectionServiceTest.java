@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
+import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
 /**
  * CTS tests for the self-managed {@link android.telecom.ConnectionService} APIs.
@@ -37,7 +38,6 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockServices {
     private Uri TEST_ADDRESS_1 = Uri.fromParts("sip", "call1@test.com", null);
     private Uri TEST_ADDRESS_2 = Uri.fromParts("sip", "call2@test.com", null);
-    private Uri TEST_ADDRESS_3 = Uri.fromParts("sip", "call3@test.com", null);
 
     @Override
     protected void setUp() throws Exception {
@@ -197,7 +197,6 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
 
-        assertMockInCallServiceUnbound();
         setDisconnectedAndVerify(connection);
     }
 
@@ -226,7 +225,6 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
 
-        assertMockInCallServiceUnbound();
         setDisconnectedAndVerify(connection);
     }
 
@@ -346,6 +344,8 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
         connections.forEach((selfManagedConnection) ->
                 selfManagedConnection.disconnectAndDestroy());
+
+        waitOnAllHandlers(getInstrumentation());
     }
 
     public void testEmergencyCallOngoing() throws Exception {
