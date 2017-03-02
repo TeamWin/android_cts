@@ -37,6 +37,13 @@ public class TestFmod extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestFmodRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inNumerator;
         public float inDenominator;
@@ -51,6 +58,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodFloatFloatFloat(inNumerator, out);
             verifyResultsFmodFloatFloatFloat(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloatFloatFloat: " + e.toString());
         }
@@ -59,9 +67,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodFloatFloatFloat(inNumerator, out);
             verifyResultsFmodFloatFloatFloat(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloatFloatFloat: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodFloatFloatFloat(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -130,6 +141,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodFloat2Float2Float2(inNumerator, out);
             verifyResultsFmodFloat2Float2Float2(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloat2Float2Float2: " + e.toString());
         }
@@ -138,9 +150,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodFloat2Float2Float2(inNumerator, out);
             verifyResultsFmodFloat2Float2Float2(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloat2Float2Float2: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodFloat2Float2Float2(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -209,6 +224,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodFloat3Float3Float3(inNumerator, out);
             verifyResultsFmodFloat3Float3Float3(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloat3Float3Float3: " + e.toString());
         }
@@ -217,9 +233,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodFloat3Float3Float3(inNumerator, out);
             verifyResultsFmodFloat3Float3Float3(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloat3Float3Float3: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodFloat3Float3Float3(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -288,6 +307,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodFloat4Float4Float4(inNumerator, out);
             verifyResultsFmodFloat4Float4Float4(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloat4Float4Float4: " + e.toString());
         }
@@ -296,9 +316,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodFloat4Float4Float4(inNumerator, out);
             verifyResultsFmodFloat4Float4Float4(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodFloat4Float4Float4: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodFloat4Float4Float4(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -375,6 +398,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodHalfHalfHalf(inNumerator, out);
             verifyResultsFmodHalfHalfHalf(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalfHalfHalf: " + e.toString());
         }
@@ -383,9 +407,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodHalfHalfHalf(inNumerator, out);
             verifyResultsFmodHalfHalfHalf(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalfHalfHalf: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodHalfHalfHalf(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -459,6 +486,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodHalf2Half2Half2(inNumerator, out);
             verifyResultsFmodHalf2Half2Half2(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalf2Half2Half2: " + e.toString());
         }
@@ -467,9 +495,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodHalf2Half2Half2(inNumerator, out);
             verifyResultsFmodHalf2Half2Half2(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalf2Half2Half2: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodHalf2Half2Half2(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -543,6 +574,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodHalf3Half3Half3(inNumerator, out);
             verifyResultsFmodHalf3Half3Half3(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalf3Half3Half3: " + e.toString());
         }
@@ -551,9 +583,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodHalf3Half3Half3(inNumerator, out);
             verifyResultsFmodHalf3Half3Half3(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalf3Half3Half3: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodHalf3Half3Half3(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {
@@ -627,6 +662,7 @@ public class TestFmod extends RSBaseCompute {
             script.set_gAllocInDenominator(inDenominator);
             script.forEach_testFmodHalf4Half4Half4(inNumerator, out);
             verifyResultsFmodHalf4Half4Half4(inNumerator, inDenominator, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalf4Half4Half4: " + e.toString());
         }
@@ -635,9 +671,12 @@ public class TestFmod extends RSBaseCompute {
             scriptRelaxed.set_gAllocInDenominator(inDenominator);
             scriptRelaxed.forEach_testFmodHalf4Half4Half4(inNumerator, out);
             verifyResultsFmodHalf4Half4Half4(inNumerator, inDenominator, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testFmodHalf4Half4Half4: " + e.toString());
         }
+        inNumerator.destroy();
+        inDenominator.destroy();
     }
 
     private void verifyResultsFmodHalf4Half4Half4(Allocation inNumerator, Allocation inDenominator, Allocation out, boolean relaxed) {

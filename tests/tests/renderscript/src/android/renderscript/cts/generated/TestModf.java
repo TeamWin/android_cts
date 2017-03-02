@@ -37,6 +37,13 @@ public class TestModf extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestModfRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloatFloat {
         public float inV;
         public Target.Floaty outIntegralPart;
@@ -51,6 +58,8 @@ public class TestModf extends RSBaseCompute {
             script.set_gAllocOutIntegralPart(outIntegralPart);
             script.forEach_testModfFloatFloatFloat(inV, out);
             verifyResultsModfFloatFloatFloat(inV, outIntegralPart, out, false);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloatFloatFloat: " + e.toString());
         }
@@ -60,9 +69,12 @@ public class TestModf extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutIntegralPart(outIntegralPart);
             scriptRelaxed.forEach_testModfFloatFloatFloat(inV, out);
             verifyResultsModfFloatFloatFloat(inV, outIntegralPart, out, true);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloatFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsModfFloatFloatFloat(Allocation inV, Allocation outIntegralPart, Allocation out, boolean relaxed) {
@@ -139,6 +151,8 @@ public class TestModf extends RSBaseCompute {
             script.set_gAllocOutIntegralPart(outIntegralPart);
             script.forEach_testModfFloat2Float2Float2(inV, out);
             verifyResultsModfFloat2Float2Float2(inV, outIntegralPart, out, false);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloat2Float2Float2: " + e.toString());
         }
@@ -148,9 +162,12 @@ public class TestModf extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutIntegralPart(outIntegralPart);
             scriptRelaxed.forEach_testModfFloat2Float2Float2(inV, out);
             verifyResultsModfFloat2Float2Float2(inV, outIntegralPart, out, true);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloat2Float2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsModfFloat2Float2Float2(Allocation inV, Allocation outIntegralPart, Allocation out, boolean relaxed) {
@@ -227,6 +244,8 @@ public class TestModf extends RSBaseCompute {
             script.set_gAllocOutIntegralPart(outIntegralPart);
             script.forEach_testModfFloat3Float3Float3(inV, out);
             verifyResultsModfFloat3Float3Float3(inV, outIntegralPart, out, false);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloat3Float3Float3: " + e.toString());
         }
@@ -236,9 +255,12 @@ public class TestModf extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutIntegralPart(outIntegralPart);
             scriptRelaxed.forEach_testModfFloat3Float3Float3(inV, out);
             verifyResultsModfFloat3Float3Float3(inV, outIntegralPart, out, true);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloat3Float3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsModfFloat3Float3Float3(Allocation inV, Allocation outIntegralPart, Allocation out, boolean relaxed) {
@@ -315,6 +337,8 @@ public class TestModf extends RSBaseCompute {
             script.set_gAllocOutIntegralPart(outIntegralPart);
             script.forEach_testModfFloat4Float4Float4(inV, out);
             verifyResultsModfFloat4Float4Float4(inV, outIntegralPart, out, false);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloat4Float4Float4: " + e.toString());
         }
@@ -324,9 +348,12 @@ public class TestModf extends RSBaseCompute {
             scriptRelaxed.set_gAllocOutIntegralPart(outIntegralPart);
             scriptRelaxed.forEach_testModfFloat4Float4Float4(inV, out);
             verifyResultsModfFloat4Float4Float4(inV, outIntegralPart, out, true);
+            outIntegralPart.destroy();
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testModfFloat4Float4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsModfFloat4Float4Float4(Allocation inV, Allocation outIntegralPart, Allocation out, boolean relaxed) {

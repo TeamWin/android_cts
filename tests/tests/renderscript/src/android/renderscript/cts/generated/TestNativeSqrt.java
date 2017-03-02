@@ -37,6 +37,13 @@ public class TestNativeSqrt extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestNativeSqrtRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeSqrtFloatFloat(inV, out);
             verifyResultsNativeSqrtFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtFloatFloat(inV, out);
             verifyResultsNativeSqrtFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -117,6 +127,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeSqrtFloat2Float2(inV, out);
             verifyResultsNativeSqrtFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloat2Float2: " + e.toString());
         }
@@ -124,9 +135,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtFloat2Float2(inV, out);
             verifyResultsNativeSqrtFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -186,6 +199,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeSqrtFloat3Float3(inV, out);
             verifyResultsNativeSqrtFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloat3Float3: " + e.toString());
         }
@@ -193,9 +207,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtFloat3Float3(inV, out);
             verifyResultsNativeSqrtFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -255,6 +271,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeSqrtFloat4Float4(inV, out);
             verifyResultsNativeSqrtFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloat4Float4: " + e.toString());
         }
@@ -262,9 +279,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtFloat4Float4(inV, out);
             verifyResultsNativeSqrtFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -330,6 +349,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeSqrtHalfHalf(inV, out);
             verifyResultsNativeSqrtHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalfHalf: " + e.toString());
         }
@@ -337,9 +357,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtHalfHalf(inV, out);
             verifyResultsNativeSqrtHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -403,6 +425,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeSqrtHalf2Half2(inV, out);
             verifyResultsNativeSqrtHalf2Half2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalf2Half2: " + e.toString());
         }
@@ -410,9 +433,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtHalf2Half2(inV, out);
             verifyResultsNativeSqrtHalf2Half2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalf2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtHalf2Half2(Allocation inV, Allocation out, boolean relaxed) {
@@ -476,6 +501,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeSqrtHalf3Half3(inV, out);
             verifyResultsNativeSqrtHalf3Half3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalf3Half3: " + e.toString());
         }
@@ -483,9 +509,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtHalf3Half3(inV, out);
             verifyResultsNativeSqrtHalf3Half3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalf3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtHalf3Half3(Allocation inV, Allocation out, boolean relaxed) {
@@ -549,6 +577,7 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeSqrtHalf4Half4(inV, out);
             verifyResultsNativeSqrtHalf4Half4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalf4Half4: " + e.toString());
         }
@@ -556,9 +585,11 @@ public class TestNativeSqrt extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testNativeSqrtHalf4Half4(inV, out);
             verifyResultsNativeSqrtHalf4Half4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeSqrtHalf4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeSqrtHalf4Half4(Allocation inV, Allocation out, boolean relaxed) {

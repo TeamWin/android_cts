@@ -37,6 +37,13 @@ public class TestNativeLog extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestNativeLogRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testNativeLogFloatFloat(inV, out);
             verifyResultsNativeLogFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogFloatFloat(inV, out);
             verifyResultsNativeLogFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -117,6 +127,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testNativeLogFloat2Float2(inV, out);
             verifyResultsNativeLogFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloat2Float2: " + e.toString());
         }
@@ -124,9 +135,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogFloat2Float2(inV, out);
             verifyResultsNativeLogFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -186,6 +199,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testNativeLogFloat3Float3(inV, out);
             verifyResultsNativeLogFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloat3Float3: " + e.toString());
         }
@@ -193,9 +207,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogFloat3Float3(inV, out);
             verifyResultsNativeLogFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -255,6 +271,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testNativeLogFloat4Float4(inV, out);
             verifyResultsNativeLogFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloat4Float4: " + e.toString());
         }
@@ -262,9 +279,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogFloat4Float4(inV, out);
             verifyResultsNativeLogFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -330,6 +349,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testNativeLogHalfHalf(inV, out);
             verifyResultsNativeLogHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalfHalf: " + e.toString());
         }
@@ -337,9 +357,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogHalfHalf(inV, out);
             verifyResultsNativeLogHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -403,6 +425,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testNativeLogHalf2Half2(inV, out);
             verifyResultsNativeLogHalf2Half2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalf2Half2: " + e.toString());
         }
@@ -410,9 +433,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogHalf2Half2(inV, out);
             verifyResultsNativeLogHalf2Half2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalf2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogHalf2Half2(Allocation inV, Allocation out, boolean relaxed) {
@@ -476,6 +501,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testNativeLogHalf3Half3(inV, out);
             verifyResultsNativeLogHalf3Half3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalf3Half3: " + e.toString());
         }
@@ -483,9 +509,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogHalf3Half3(inV, out);
             verifyResultsNativeLogHalf3Half3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalf3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogHalf3Half3(Allocation inV, Allocation out, boolean relaxed) {
@@ -549,6 +577,7 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testNativeLogHalf4Half4(inV, out);
             verifyResultsNativeLogHalf4Half4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalf4Half4: " + e.toString());
         }
@@ -556,9 +585,11 @@ public class TestNativeLog extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testNativeLogHalf4Half4(inV, out);
             verifyResultsNativeLogHalf4Half4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testNativeLogHalf4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsNativeLogHalf4Half4(Allocation inV, Allocation out, boolean relaxed) {

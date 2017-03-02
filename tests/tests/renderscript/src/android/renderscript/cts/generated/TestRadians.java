@@ -37,6 +37,13 @@ public class TestRadians extends RSBaseCompute {
         scriptRelaxed = new ScriptC_TestRadiansRelaxed(mRS);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
+
     public class ArgumentsFloatFloat {
         public float inV;
         public Target.Floaty out;
@@ -48,6 +55,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             script.forEach_testRadiansFloatFloat(inV, out);
             verifyResultsRadiansFloatFloat(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloatFloat: " + e.toString());
         }
@@ -55,9 +63,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 1), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansFloatFloat(inV, out);
             verifyResultsRadiansFloatFloat(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloatFloat: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansFloatFloat(Allocation inV, Allocation out, boolean relaxed) {
@@ -117,6 +127,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             script.forEach_testRadiansFloat2Float2(inV, out);
             verifyResultsRadiansFloat2Float2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloat2Float2: " + e.toString());
         }
@@ -124,9 +135,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 2), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansFloat2Float2(inV, out);
             verifyResultsRadiansFloat2Float2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloat2Float2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansFloat2Float2(Allocation inV, Allocation out, boolean relaxed) {
@@ -186,6 +199,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             script.forEach_testRadiansFloat3Float3(inV, out);
             verifyResultsRadiansFloat3Float3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloat3Float3: " + e.toString());
         }
@@ -193,9 +207,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 3), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansFloat3Float3(inV, out);
             verifyResultsRadiansFloat3Float3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloat3Float3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansFloat3Float3(Allocation inV, Allocation out, boolean relaxed) {
@@ -255,6 +271,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             script.forEach_testRadiansFloat4Float4(inV, out);
             verifyResultsRadiansFloat4Float4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloat4Float4: " + e.toString());
         }
@@ -262,9 +279,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_32, 4), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansFloat4Float4(inV, out);
             verifyResultsRadiansFloat4Float4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansFloat4Float4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansFloat4Float4(Allocation inV, Allocation out, boolean relaxed) {
@@ -330,6 +349,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             script.forEach_testRadiansHalfHalf(inV, out);
             verifyResultsRadiansHalfHalf(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalfHalf: " + e.toString());
         }
@@ -337,9 +357,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 1), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansHalfHalf(inV, out);
             verifyResultsRadiansHalfHalf(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalfHalf: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansHalfHalf(Allocation inV, Allocation out, boolean relaxed) {
@@ -403,6 +425,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             script.forEach_testRadiansHalf2Half2(inV, out);
             verifyResultsRadiansHalf2Half2(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalf2Half2: " + e.toString());
         }
@@ -410,9 +433,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 2), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansHalf2Half2(inV, out);
             verifyResultsRadiansHalf2Half2(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalf2Half2: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansHalf2Half2(Allocation inV, Allocation out, boolean relaxed) {
@@ -476,6 +501,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             script.forEach_testRadiansHalf3Half3(inV, out);
             verifyResultsRadiansHalf3Half3(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalf3Half3: " + e.toString());
         }
@@ -483,9 +509,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 3), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansHalf3Half3(inV, out);
             verifyResultsRadiansHalf3Half3(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalf3Half3: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansHalf3Half3(Allocation inV, Allocation out, boolean relaxed) {
@@ -549,6 +577,7 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             script.forEach_testRadiansHalf4Half4(inV, out);
             verifyResultsRadiansHalf4Half4(inV, out, false);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalf4Half4: " + e.toString());
         }
@@ -556,9 +585,11 @@ public class TestRadians extends RSBaseCompute {
             Allocation out = Allocation.createSized(mRS, getElement(mRS, Element.DataType.FLOAT_16, 4), INPUTSIZE);
             scriptRelaxed.forEach_testRadiansHalf4Half4(inV, out);
             verifyResultsRadiansHalf4Half4(inV, out, true);
+            out.destroy();
         } catch (Exception e) {
             throw new RSRuntimeException("RenderScript. Can't invoke forEach_testRadiansHalf4Half4: " + e.toString());
         }
+        inV.destroy();
     }
 
     private void verifyResultsRadiansHalf4Half4(Allocation inV, Allocation out, boolean relaxed) {
