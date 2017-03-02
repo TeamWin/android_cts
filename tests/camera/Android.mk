@@ -14,6 +14,24 @@
 
 LOCAL_PATH:= $(call my-dir)
 
+# CtsCameraUtils package
+
+include $(CLEAR_VARS)
+
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
+	mockito-target-minus-junit4 \
+	android-ex-camera2
+
+LOCAL_SRC_FILES := \
+	$(call all-java-files-under, utils/src) \
+	$(call all-renderscript-files-under, utils/src)
+
+LOCAL_MODULE := CtsCameraUtils
+
+LOCAL_SDK_VERSION := current
+
+include $(BUILD_STATIC_JAVA_LIBRARY)
+
 # CtsCameraTestCases package
 
 include $(CLEAR_VARS)
@@ -26,7 +44,8 @@ LOCAL_MULTILIB := both
 LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 	ctstestrunner \
 	mockito-target-minus-junit4 \
-	android-ex-camera2
+	android-ex-camera2 \
+	CtsCameraUtils
 
 LOCAL_JNI_SHARED_LIBRARIES := \
 	libctscamera2_jni \
@@ -34,7 +53,9 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 
 LOCAL_NDK_STL_VARIANT := c++_shared
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
+LOCAL_SRC_FILES := \
+	$(call all-java-files-under, src) \
+	$(call all-renderscript-files-under, src)
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
