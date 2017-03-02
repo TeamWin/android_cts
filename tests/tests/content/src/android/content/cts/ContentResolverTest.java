@@ -421,6 +421,42 @@ public class ContentResolverTest extends AndroidTestCase {
         mCursor.close();
     }
 
+    /**
+     * Verifies that paging arguments are handled correctly
+     * when the provider supports paging.
+     */
+    public void testQuery_PagingSupport() {
+
+        mContentResolver.delete(TABLE1_URI, null, null);
+        ContentValues values = new ContentValues();
+
+        for (int i = 0; i < 100; i++) {
+            values.put(COLUMN_KEY_NAME, i);
+            mContentResolver.insert(TABLE1_URI, values);
+        }
+
+        Bundle queryArgs = new Bundle();
+        queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 10);
+        queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 3);
+
+        mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
+        int col = mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME);
+
+        assertEquals(3, mCursor.getCount());
+        assertEquals(100, mCursor.getExtras().getInt(ContentResolver.EXTRA_TOTAL_SIZE));
+
+        mCursor.moveToNext();
+        assertEquals(10, mCursor.getInt(col));
+        mCursor.moveToNext();
+        assertEquals(11, mCursor.getInt(col));
+        mCursor.moveToNext();
+        assertEquals(12, mCursor.getInt(col));
+
+        assertFalse(mCursor.moveToNext());
+
+        mCursor.close();
+    }
+
     public void testQuery_NullUriThrows() {
         try {
             mContentResolver.query(null, null, null, null, null);

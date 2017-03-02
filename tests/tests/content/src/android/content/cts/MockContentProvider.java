@@ -16,18 +16,21 @@
 
 package android.content.cts;
 
+import static android.support.v4.util.Preconditions.checkArgument;
 import static junit.framework.Assert.assertEquals;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.ContentProvider;
 import android.content.ContentProvider.PipeDataWriter;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -252,6 +255,22 @@ public class MockContentProvider extends ContentProvider
     }
 
     @Override
+    public Cursor query(Uri uri, String[] projection, Bundle queryArgs,
+            CancellationSignal cancellationSignal) {
+        Cursor c = super.query(uri, projection, queryArgs, cancellationSignal);
+
+        queryArgs = queryArgs != null ? queryArgs : Bundle.EMPTY;
+        int offset = queryArgs.getInt(ContentResolver.QUERY_ARG_OFFSET, 0);
+        int limit = queryArgs.getInt(ContentResolver.QUERY_ARG_LIMIT, 0);
+
+        if (offset > 0 || limit > 0) {
+            return new PageViewCursor(c, offset, limit);
+        }
+
+        return c;
+    }
+
+    @Override
     public Cursor query(Uri uri, String[] projection, String selection,
             String[] selectionArgs, String sortOrder) {
         return query(uri, projection, selection, selectionArgs, sortOrder, null);
@@ -447,5 +466,115 @@ public class MockContentProvider extends ContentProvider
 
     private static File getCrashOnLaunchFile(Context context) {
         return context.getFileStreamPath("MockContentProvider.crashonlaunch");
+    }
+
+    /**
+     * Cursor wrapper that provides visibility into a subset of a wrapped cursor.
+     *
+     * The window is specified by offset and limit.
+     */
+    private static final class PageViewCursor extends CursorWrapper {
+
+        private final int mOffset;  // aka first index
+        private final int mCount;
+        private final Bundle mExtras;
+
+        private int mPos = -1;
+
+        PageViewCursor(Cursor cursor, int offset, int limit) {
+            super(cursor);
+
+            checkArgument(offset > -1);
+            checkArgument(limit > -1);
+
+            mOffset = offset;
+
+            Bundle extras = cursor.getExtras();
+
+            // We need a mutable bundle so we can add QUERY_RESULT_SIZE.
+            // Direct equality check is correct here. Bundle.EMPTY is a specific instance
+            // of Bundle that is immutable by way of implementation.
+            mExtras = (extras == Bundle.EMPTY) ? new Bundle() : extras;
+
+            // When we're wrapping another cursor, it should not already be "paged".
+            checkArgument(!mExtras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
+
+            int count = mCursor.getCount();
+            checkArgument(offset < count);
+
+            mExtras.putInt(ContentResolver.EXTRA_TOTAL_SIZE, count);
+            mCount = (limit > count - offset) ? count - offset : limit;
+        }
+
+        @Override
+        public Bundle getExtras() {
+            return mExtras;
+        }
+
+        @Override
+        public int getPosition() {
+            return mPos;
+        }
+
+        @Override
+        public boolean moveToFirst() {
+            return moveToPosition(0);
+        }
+
+        @Override
+        public boolean moveToLast() {
+            return moveToPosition(mCount - 1);
+        }
+
+        @Override
+        public boolean moveToNext() {
+            return move(1);
+        }
+
+        @Override
+        public boolean moveToPrevious() {
+            return move(-1);
+        }
+
+        @Override
+        public boolean move(int offset) {
+            return moveToPosition(mPos + offset);
+        }
+
+        @Override
+        public boolean moveToPosition(int position) {
+            if (position > mCount - 1) {
+                mPos = mOffset + mCount;
+                super.moveToPosition(mPos);
+                return false;
+            }
+
+            // Make sure position isn't before the beginning of the cursor
+            if (position < 0) {
+                mPos = -1;
+                super.moveToPosition(-1);
+                return false;
+            }
+
+            int oldPosition = mPos;
+            // Check for no-op moves, and skip the rest of the work for them.
+            if (position == oldPosition) {
+                return true;
+            }
+
+            if (super.moveToPosition(position + mOffset)) {
+                mPos = position;
+                return true;
+            } else {
+                mPos = -1;
+                super.moveToPosition(-1);
+                return false;
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return mCount;
+        }
     }
 }
