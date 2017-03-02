@@ -118,7 +118,9 @@ public class LockHoldingService extends Service {
 
         // Acquire the lock based on the information contained in the intent received.
         this.fileLock = FileChannelInterProcessLockTest.acquire(lockType);
-        Intent responseIntent = new Intent().putExtra(NOTIFICATION_KEY, NOTIFICATION_LOCK_HELD)
+        Intent responseIntent = new Intent()
+                .setPackage("android.libcorefileio.cts")
+                .putExtra(NOTIFICATION_KEY, NOTIFICATION_LOCK_HELD)
                 .setAction(ACTION_TYPE_FOR_INTENT_COMMUNICATION);
         sendBroadcast(responseIntent);
     }
@@ -139,6 +141,7 @@ public class LockHoldingService extends Service {
 
         // Signal the lock is now held.
         Intent heldIntent = new Intent()
+                .setPackage("android.libcorefileio.cts")
                 .putExtra(NOTIFICATION_KEY, NOTIFICATION_LOCK_HELD)
                 .setAction(ACTION_TYPE_FOR_INTENT_COMMUNICATION);
         sendBroadcast(heldIntent);
@@ -154,6 +157,7 @@ public class LockHoldingService extends Service {
 
         // Signal the lock is released and some information about timing.
         Intent releaseIntent = new Intent()
+                .setPackage("android.libcorefileio.cts")
                 .putExtra(NOTIFICATION_KEY, NOTIFICATION_LOCK_RELEASED)
                 .putExtra(LOCK_NOT_YET_RELEASED_TIMESTAMP, lockNotReleasedTimestamp)
                 .putExtra(LOCK_DEFINITELY_RELEASED_TIMESTAMP, lockReleasedTimestamp)
@@ -170,7 +174,9 @@ public class LockHoldingService extends Service {
         } catch (IOException e) {
             Log.e(LOG_MESSAGE_TAG, e.getMessage());
         }
-        Intent intent = new Intent().putExtra(NOTIFICATION_KEY, NOTIFICATION_STOP)
+        Intent intent = new Intent()
+                .setPackage("android.libcorefileio.cts")
+                .putExtra(NOTIFICATION_KEY, NOTIFICATION_STOP)
                 .setAction(ACTION_TYPE_FOR_INTENT_COMMUNICATION);
         sendBroadcast(intent);
     }
