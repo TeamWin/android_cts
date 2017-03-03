@@ -64,6 +64,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     static final String SIMPLE_ACTIVITY_IMMEDIATE_EXIT = ".SimpleActivityImmediateExit";
     static final String SIMPLE_ACTIVITY_CHAIN_EXIT = ".SimpleActivityChainExit";
     static final String SIMPLE_SERVICE = ".SimpleService";
+    static final String SIMPLE_SERVICE2 = ".SimpleService2";
     static final String SIMPLE_RECEIVER = ".SimpleReceiver";
     static final String SIMPLE_REMOTE_RECEIVER = ".SimpleRemoteReceiver";
     // The action sent back by the SIMPLE_APP after a restart.
@@ -579,11 +580,15 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     }
 
     public void testUidImportanceListener() throws Exception {
+        final Parcel data = Parcel.obtain();
         Intent serviceIntent = new Intent();
-        Parcel data = Parcel.obtain();
         serviceIntent.setClassName(SIMPLE_PACKAGE_NAME,
                 SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE);
         ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, serviceIntent);
+        Intent service2Intent = new Intent();
+        service2Intent.setClassName(SIMPLE_PACKAGE_NAME,
+                SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE2);
+        ServiceConnectionHandler conn2 = new ServiceConnectionHandler(mContext, service2Intent);
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
@@ -621,17 +626,23 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid);
         am.addOnUidImportanceListener(uidGoneListener,
-                RunningAppProcessInfo.IMPORTANCE_EMPTY);
+                RunningAppProcessInfo.IMPORTANCE_CACHED);
 
-        // First kill the process to start out in a stable state.
+        // First kill the processes to start out in a stable state.
         conn.bind(WAIT_TIME);
+        conn2.bind(WAIT_TIME);
         try {
             conn.mService.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
         }
+        try {
+            conn2.mService.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+        } catch (RemoteException e) {
+        }
         conn.unbind(WAIT_TIME);
+        conn2.unbind(WAIT_TIME);
 
-        // Wait for uid's process to go away.
+        // Wait for uid's processes to go away.
         uidGoneListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_GONE,
                 RunningAppProcessInfo.IMPORTANCE_GONE, WAIT_TIME);
         assertEquals(RunningAppProcessInfo.IMPORTANCE_GONE,
@@ -649,9 +660,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         // Now unbind and see if we get told about it going to the background.
         conn.unbind(WAIT_TIME);
-        uidForegroundListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_BACKGROUND,
-                RunningAppProcessInfo.IMPORTANCE_EMPTY, WAIT_TIME);
-        assertEquals(RunningAppProcessInfo.IMPORTANCE_BACKGROUND,
+        uidForegroundListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_CACHED,
+                RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_CACHED,
                 am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
         // Now kill the process and see if we are told about it being gone.
@@ -666,6 +677,54 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertEquals(RunningAppProcessInfo.IMPORTANCE_GONE,
                 am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
+        // Now we are going to try different combinations of binding to two processes to
+        // see if they are correctly combined together for the app.
+
+        // Bring up both services.
+        conn.bind(WAIT_TIME);
+        conn2.bind(WAIT_TIME);
+        uidForegroundListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                RunningAppProcessInfo.IMPORTANCE_VISIBLE, WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        // Bring down one service, app state should remain foreground.
+        conn2.unbind(WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        // Bring down other service, app state should now be cached.  (If the processes both
+        // actually get killed immediately, this is also not a correctly behaving system.)
+        conn.unbind(WAIT_TIME);
+        uidGoneListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_CACHED,
+                RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_CACHED,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        // Bring up one service, this should be sufficient to become foreground.
+        conn2.bind(WAIT_TIME);
+        uidForegroundListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                RunningAppProcessInfo.IMPORTANCE_VISIBLE, WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        // Bring up other service, should remain foreground.
+        conn.bind(WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        // Bring down one service, should remain foreground.
+        conn.unbind(WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
+        // And bringing down other service should put us back to cached.
+        conn2.unbind(WAIT_TIME);
+        uidGoneListener.waitForValue(RunningAppProcessInfo.IMPORTANCE_CACHED,
+                RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+        assertEquals(RunningAppProcessInfo.IMPORTANCE_CACHED,
+                am.getPackageImportance(SIMPLE_PACKAGE_NAME));
+
         data.recycle();
 
         am.removeOnUidImportanceListener(uidForegroundListener);
@@ -673,8 +732,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     }
 
     public void testBackgroundCheckService() throws Exception {
+        final Parcel data = Parcel.obtain();
         Intent serviceIntent = new Intent();
-        Parcel data = Parcel.obtain();
         serviceIntent.setClassName(SIMPLE_PACKAGE_NAME,
                 SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE);
         ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, serviceIntent);
