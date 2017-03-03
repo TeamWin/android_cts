@@ -2960,6 +2960,28 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="enterprise_privacy_set_proxy">Set Proxy</string>
     <string name="enterprise_privacy_clear_proxy">Clear Proxy</string>
+    <string name="enterprise_privacy_failed_password_wipe">Wipe on authentication failure</string>
+    <string name="enterprise_privacy_failed_password_wipe_info">
+        Please do the following:\n
+        1) Press the Open Settings button.\n
+        2) In the screen that opens, verify that you are not told all device data will be deleted if you mistype your password too many times.\n
+        3) Use the Back button to return to this page.\n
+        4) Press the Set Limit button to set the maximum number of password attempts.\n
+        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that all device data will be deleted if you mistype your password 100 times.\n
+        6) Press the Finish button to clear the maximum number of password attempts.
+    </string>
+    <string name="enterprise_privacy_set_limit">Set Limit</string>
+    <string name="enterprise_privacy_comp_failed_password_wipe">Wipe on authentication failure (managed profile)</string>
+    <string name="enterprise_privacy_comp_failed_password_wipe_info">
+        Please do the following:\n
+        1) Press the Start button to create a work profile.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are not told work profile data will be deleted if you mistype your password too many times.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Set Limit button to set the maximum number of password attempts.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that work profile device data will be deleted if you mistype your password 100 times.\n
+        7) Press the Finish button to remove the work profile.
+    </string>
     <string name="enterprise_privacy_quick_settings">Quick settings disclosure</string>
     <string name="enterprise_privacy_quick_settings_info">
         Please do the following:\n

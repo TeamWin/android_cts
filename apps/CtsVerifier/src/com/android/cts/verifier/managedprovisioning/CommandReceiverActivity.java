@@ -91,6 +91,10 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_CLEAR_ALWAYS_ON_VPN = "clear-always-on-vpn";
     public static final String COMMAND_SET_GLOBAL_HTTP_PROXY = "set-global-http-proxy";
     public static final String COMMAND_CLEAR_GLOBAL_HTTP_PROXY = "clear-global-http-proxy";
+    public static final String COMMAND_SET_MAXIMUM_PASSWORD_ATTEMPTS =
+            "set-maximum-password-attempts";
+    public static final String COMMAND_CLEAR_MAXIMUM_PASSWORD_ATTEMPTS =
+            "clear-maximum-password-attempts";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -378,6 +382,18 @@ public class CommandReceiverActivity extends Activity {
                     }
                     mDpm.setRecommendedGlobalProxy(mAdmin, null);
                 }
+                case COMMAND_SET_MAXIMUM_PASSWORD_ATTEMPTS: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 100);
+                } break;
+                case COMMAND_CLEAR_MAXIMUM_PASSWORD_ATTEMPTS: {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        return;
+                    }
+                    mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to execute command: " + intent, e);
@@ -442,6 +458,7 @@ public class CommandReceiverActivity extends Activity {
         mDpm.clearPackagePersistentPreferredActivities(mAdmin, getPackageName());
         mDpm.setAlwaysOnVpnPackage(mAdmin, null, false);
         mDpm.setRecommendedGlobalProxy(mAdmin, null);
+        mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
 
         uninstallHelperPackage();
         removeManagedProfile();

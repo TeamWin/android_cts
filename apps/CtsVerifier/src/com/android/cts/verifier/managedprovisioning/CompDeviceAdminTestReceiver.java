@@ -45,6 +45,7 @@ public class CompDeviceAdminTestReceiver extends DeviceAdminReceiver {
             // user to send us commands.
             final IntentFilter filter = new IntentFilter();
             filter.addAction(CompHelperActivity.ACTION_SET_ALWAYS_ON_VPN);
+            filter.addAction(CompHelperActivity.ACTION_SET_MAXIMUM_PASSWORD_ATTEMPTS);
             dpm.addCrossProfileIntentFilter(getWho(context), filter,
                     DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT);
         }
