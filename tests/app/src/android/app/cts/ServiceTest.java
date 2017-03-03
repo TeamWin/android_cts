@@ -29,6 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.support.test.InstrumentationRegistry;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -40,6 +41,7 @@ import android.util.Log;
 import android.app.stubs.R;
 
 import com.android.compatibility.common.util.IBinderParcelable;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.List;
 
@@ -57,8 +59,9 @@ public class ServiceTest extends ActivityTestsBase {
     private static final
         String EXIST_CONN_TO_RECEIVE_SERVICE = "existing connection to receive service";
     private static final String EXIST_CONN_TO_LOSE_SERVICE = "existing connection to lose service";
+    private static final String EXTERNAL_SERVICE_PACKAGE = "com.android.app2";
     private static final String EXTERNAL_SERVICE_COMPONENT =
-            "com.android.app2/android.app.stubs.LocalService";
+            EXTERNAL_SERVICE_PACKAGE + "/android.app.stubs.LocalService";
     private int mExpectedServiceState;
     private Context mContext;
     private Intent mLocalService;
@@ -605,6 +608,10 @@ public class ServiceTest extends ActivityTestsBase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
+        // Put target app on whitelist so we can start its services.
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd deviceidle whitelist +" + EXTERNAL_SERVICE_PACKAGE);
+
         // No services should be reported back at the beginning
         assertEquals(0, am.getRunningServices(maxReturnedServices).size());
         try {
@@ -626,6 +633,8 @@ public class ServiceTest extends ActivityTestsBase {
             assertEquals(1, services.size());
             assertEquals(android.os.Process.myUid(), services.get(0).uid);
         } finally {
+            SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                    "cmd deviceidle whitelist -" + EXTERNAL_SERVICE_PACKAGE);
             if (!success) {
                 mContext.stopService(mLocalService);
                 mContext.stopService(mExternalService);
