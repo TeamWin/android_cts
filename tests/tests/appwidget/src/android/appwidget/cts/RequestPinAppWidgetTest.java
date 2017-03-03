@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.LauncherApps;
+import android.os.Bundle;
 import android.os.Handler;
 
 import java.util.Arrays;
@@ -62,10 +63,13 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         BlockingReceiver setupReceiver = new BlockingReceiver()
                 .register(Constants.ACTION_SETUP_REPLY);
 
+        Bundle extras = new Bundle();
+        extras.putString("dummy", launcherPkg + "-dummy");
+
         PendingIntent pinResult = PendingIntent.getBroadcast(context, 0,
                 new Intent(ACTION_PIN_RESULT), PendingIntent.FLAG_ONE_SHOT);
         AppWidgetManager.getInstance(context).requestPinAppWidget(
-                getFirstWidgetComponent(), pinResult);
+                getFirstWidgetComponent(), extras, pinResult);
 
         setupReceiver.await();
         // Verify that the confirmation dialog was opened
@@ -80,6 +84,8 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         boolean[] providerInfo = verifyInstalledProviders(Arrays.asList(
                 req.getAppWidgetProviderInfo(context), req.getAppWidgetProviderInfo(context)));
         assertTrue(providerInfo[0]);
+        assertNotNull(req.getExtras());
+        assertEquals(launcherPkg + "-dummy", req.getExtras().getString("dummy"));
 
         // Accept the request
         BlockingReceiver resultReceiver = new BlockingReceiver().register(ACTION_PIN_RESULT);
