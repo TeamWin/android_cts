@@ -19,6 +19,7 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
@@ -27,6 +28,7 @@ import static android.autofillservice.cts.LoginActivity.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
@@ -49,6 +51,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutoFillValue;
@@ -73,7 +76,6 @@ import java.util.concurrent.TimeUnit;
  *  Save
  *  - test cases where only non-savable-ids are changed
  *  - test case where 'no thanks' is tapped
- *  - make sure snack bar times out (will require a shell cmd to change timeout)
  *
  *  Other assertions
  *  - illegal state thrown on callback calls
@@ -413,6 +415,65 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Sanity check: once saved, the session should be finsihed.
         assertNoDanglingSessions();
+    }
+
+    private void setSnackBarLifetimeMs(int timeout) {
+        runShellCommand("cmd autofill set save_timeout %s", timeout);
+    }
+
+    @Test
+    public void testSaveSnackBarGoesAway() throws Exception {
+        enableService();
+        final int timeout = 1000;
+        setSnackBarLifetimeMs(timeout);
+
+        try {
+            // Set service.
+            final Replier replier = new Replier();
+            InstrumentedAutoFillService.setReplier(replier);
+
+
+            // Set expectations.
+            replier.addResponse(new CannedFillResponse.Builder()
+                    .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                    .build());
+
+            // Trigger auto-fill.
+            mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+            waitUntilConnected();
+
+            // Sanity check.
+            sUiBot.assertNoDatasets();
+
+            // Wait for onFill() before proceeding, otherwise the fields might be changed before
+            // the session started
+            replier.getNextFillRequest();
+
+            // Set credentials...
+            mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
+            mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
+
+            // ...and login
+            final String expectedMessage = getWelcomeMessage("malkovich");
+            final String actualMessage = mLoginActivity.tapLogin();
+            assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+            InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
+
+            // Assert the snack bar is shown.
+            sUiBot.assertSaveShowing();
+            SystemClock.sleep(timeout);
+            sUiBot.assertSaveNotShowing();
+
+
+            // Sanity check: once timed out, session should be finsihed.
+            assertNoDanglingSessions();
+
+            // Other sanity checks.
+            waitUntilDisconnected();
+        } finally {
+            setSnackBarLifetimeMs(5000);
+        }
     }
 
     @Test
