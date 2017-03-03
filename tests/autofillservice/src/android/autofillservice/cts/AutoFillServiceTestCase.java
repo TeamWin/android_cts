@@ -49,6 +49,7 @@ abstract class AutoFillServiceTestCase {
         sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation(), UI_TIMEOUT_MS);
     }
 
+    @BeforeClass
     @AfterClass
     public static void disableService() {
         runShellCommand("settings delete secure %s", AUTO_FILL_SERVICE);
