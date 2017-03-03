@@ -23,6 +23,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
@@ -77,6 +79,7 @@ public class TestUtils {
             .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
             .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER |
                     PhoneAccount.CAPABILITY_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_RTT |
                     PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
             .setHighlightColor(Color.RED)
             .setShortDescription(ACCOUNT_LABEL)
@@ -166,6 +169,19 @@ public class TestUtils {
 
     public static void waitOnAllHandlers(Instrumentation instrumentation) throws Exception {
         executeShellCommand(instrumentation, COMMAND_WAIT_ON_HANDLERS);
+    }
+
+    public static void waitOnLocalMainLooper(long timeoutMs) {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        final CountDownLatch lock = new CountDownLatch(1);
+        mainHandler.post(lock::countDown);
+        while (lock.getCount() > 0) {
+            try {
+                lock.await(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+        }
     }
 
     /**
