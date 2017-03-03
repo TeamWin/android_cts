@@ -118,7 +118,7 @@ def main():
         dist_max = math.sqrt(pow(w, 2)+pow(h, 2))/2
         for spb_ct in SPB_CT_LIST:
             # list sample block center location
-            num_sample = (1-spb_ct*2)/spb_r/2 + 1
+            num_sample = int(numpy.asscalar((1-spb_ct*2)/spb_r/2 + 1))
             ct_cord_x = numpy.concatenate(
                         (numpy.arange(spb_ct, 1-spb_ct+spb_r, spb_r*2),
                          spb_ct*numpy.ones((num_sample-1)),
