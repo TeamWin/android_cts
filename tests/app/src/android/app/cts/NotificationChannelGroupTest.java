@@ -37,6 +37,12 @@ public class NotificationChannelGroupTest extends AndroidTestCase {
         NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
         assertEquals("1", group.getId());
         assertEquals("one", group.getName());
+        assertEquals(0, group.getNameResId());
+
+        NotificationChannelGroup group2 =  new NotificationChannelGroup("2", 1234);
+        assertEquals("2", group2.getId());
+        assertEquals(null, group2.getName());
+        assertEquals(1234, group2.getNameResId());
     }
 
     public void testWriteToParcel() {
@@ -47,5 +53,20 @@ public class NotificationChannelGroupTest extends AndroidTestCase {
         NotificationChannelGroup fromParcel =
                 NotificationChannelGroup.CREATOR.createFromParcel(parcel);
         assertEquals(group, fromParcel);
+    }
+
+    public void testClone() {
+        NotificationChannelGroup group =  new NotificationChannelGroup("1", "one");
+        NotificationChannelGroup cloned = group.clone();
+        assertEquals("1", cloned.getId());
+        assertEquals("one", cloned.getName());
+        assertEquals(0, cloned.getNameResId());
+
+        NotificationChannelGroup group2 =  new NotificationChannelGroup("2", 1234);
+        NotificationChannelGroup cloned2 = group2.clone();
+        assertEquals("2", cloned2.getId());
+        assertEquals(null, cloned2.getName());
+        assertEquals(1234, cloned2.getNameResId());
+
     }
 }
