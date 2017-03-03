@@ -34,7 +34,11 @@ import javax.imageio.ImageIO;
 public class ComparisonTask implements Callable<File> {
     private static final String TAG = "ComparisonTask";
 
-    private static final int IMAGE_THRESHOLD = 2;
+    /** Maximum allowed LAB distance between two pixels. */
+    private static final double IMAGE_THRESHOLD = 0.76;
+
+    /** Neutral gray for blending colors. */
+    private static final int GRAY = 0xFF808080;
 
     /** Maximum allowable number of consecutive failed pixels. */
     private static final int MAX_CONSECUTIVE_FAILURES = 1;
@@ -90,30 +94,29 @@ public class ComparisonTask implements Callable<File> {
         return (color & 0xFF000000) >>> 24;
     }
 
-    private static boolean compare(BufferedImage reference, BufferedImage generated, int threshold) {
+    private static boolean compare(BufferedImage reference, BufferedImage generated,
+            double threshold) {
         final int w = generated.getWidth();
         final int h = generated.getHeight();
         if (w != reference.getWidth() || h != reference.getHeight()) {
             return false;
         }
 
+        double maxDist = 0;
         for (int i = 0; i < w; i++) {
             int consecutive = 0;
 
             for (int j = 0; j < h; j++) {
                 final int p1 = reference.getRGB(i, j);
                 final int p2 = generated.getRGB(i, j);
+                final double dist = computeLabDistance(p1, p2);
+                if (dist > threshold) {
+                    System.err.println("fail " + dist);
 
-                final int dr = getAlphaScaledRed(p1) - getAlphaScaledRed(p2);
-                final int dg = getAlphaScaledGreen(p1) - getAlphaScaledGreen(p2);
-                final int db = getAlphaScaledBlue(p1) - getAlphaScaledBlue(p2);
-
-                if (Math.abs(db) > threshold ||
-                        Math.abs(dg) > threshold ||
-                        Math.abs(dr) > threshold) {
                     consecutive++;
 
                     if (consecutive > MAX_CONSECUTIVE_FAILURES) {
+                        System.err.println("consecutive fail");
                         return false;
                     }
                 } else {
@@ -122,6 +125,30 @@ public class ComparisonTask implements Callable<File> {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns the perceptual difference score (lower is better) for the
+     * provided ARGB pixels.
+     */
+    private static double computeLabDistance(int p1, int p2) {
+        // Blend with neutral gray to account for opacity.
+        p1 = ColorUtils.blendSrcOver(p1, GRAY);
+        p2 = ColorUtils.blendSrcOver(p2, GRAY);
+
+        // Convert to LAB.
+        double[] lab1 = new double[3];
+        double[] lab2 = new double[3];
+        ColorUtils.colorToLAB(p1, lab1);
+        ColorUtils.colorToLAB(p2, lab2);
+
+        // Compute the distance
+        double dist = 0;
+        for (int i = 0; i < 3; i++) {
+            double delta = lab1[i] - lab2[i];
+            dist += delta * delta;
+        }
+        return Math.sqrt(dist);
     }
 
     private static void createDiff(BufferedImage expected, BufferedImage actual, File out)

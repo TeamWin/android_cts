@@ -18,7 +18,13 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_RESOURCE_DIRS := assets/
+# Special handling for pre-release builds where the SDK version has not been
+# updated, in which case we'll use the version codename (ex. "O").
+ifeq (REL,$(PLATFORM_VERSION_CODENAME))
+    LOCAL_JAVA_RESOURCE_DIRS := assets/$(PLATFORM_SDK_VERSION)/
+else
+    LOCAL_JAVA_RESOURCE_DIRS := assets/$(PLATFORM_VERSION_CODENAME)/
+endif
 
 LOCAL_MODULE_TAGS := optional
 
