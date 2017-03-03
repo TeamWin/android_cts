@@ -29,6 +29,7 @@ import java.util.function.DoubleUnaryOperator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -710,6 +711,15 @@ public class ColorSpaceTest {
     }
 
     @Test
+    public void testTransferParameters() {
+        ColorSpace.Rgb colorSpace = (ColorSpace.Rgb) ColorSpace.get(ColorSpace.Named.SRGB);
+        assertNotNull(colorSpace.getTransferParameters());
+
+        colorSpace = (ColorSpace.Rgb) ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+        assertNull(colorSpace.getTransferParameters());
+    }
+
+    @Test
     public void testIdempotentTransferFunctions() {
         Arrays.stream(ColorSpace.Named.values())
                 .map(ColorSpace::get)
@@ -720,6 +730,26 @@ public class ColorSpaceTest {
                         float[] r = cs.fromLinear(cs.toLinear(source[0], source[1], source[2]));
                         assertArrayEquals(source, r, 1e-3f);
                 });
+    }
+
+    @Test
+    public void testMatch() {
+        for (ColorSpace.Named named : ColorSpace.Named.values()) {
+            ColorSpace cs = ColorSpace.get(named);
+            if (cs.getModel() == ColorSpace.Model.RGB) {
+                ColorSpace.Rgb rgb = (ColorSpace.Rgb) cs;
+                // match() cannot match extended sRGB
+                if (rgb != ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB) &&
+                        rgb != ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)) {
+                    assertSame(cs,
+                            ColorSpace.match(rgb.getTransform(), rgb.getTransferParameters()));
+                }
+            }
+        }
+
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB),
+                ColorSpace.match(SRGB_TO_XYZ, new ColorSpace.Rgb.TransferParameters(
+                        1 / 1.055, 0.055 / 1.055, 1 / 12.92, 0.04045, 2.4)));
     }
 
     @Test
@@ -743,6 +773,21 @@ public class ColorSpaceTest {
                 .size(1024)
                 .clip(true)
                 .showWhitePoint(false)
+                .add(ColorSpace.get(ColorSpace.Named.SRGB), 0xffffffff)
+                .add(ColorSpace.get(ColorSpace.Named.DCI_P3), 0xffffffff)
+                .add(ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB), 0.1f, 0.5f, 0.1f, 0xff000000)
+                .add(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), 0.1f, 0.5f, 0.1f, 0xff000000)
+                .render();
+        assertNotNull(b);
+    }
+
+    @Test
+    public void testUcsRenderer() {
+        Bitmap b = ColorSpace.createRenderer()
+                .size(1024)
+                .clip(true)
+                .showWhitePoint(false)
+                .uniformChromaticityScale(true)
                 .add(ColorSpace.get(ColorSpace.Named.SRGB), 0xffffffff)
                 .add(ColorSpace.get(ColorSpace.Named.DCI_P3), 0xffffffff)
                 .add(ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB), 0.1f, 0.5f, 0.1f, 0xff000000)
