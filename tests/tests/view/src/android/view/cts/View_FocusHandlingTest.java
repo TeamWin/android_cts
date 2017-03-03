@@ -24,14 +24,17 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.app.Instrumentation;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.FrameLayout;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -146,10 +149,13 @@ public class View_FocusHandlingTest {
         v2.setVisibility(View.VISIBLE);
         v3.setVisibility(View.VISIBLE);
         v4.setVisibility(View.VISIBLE);
-        assertTrue(v1.isFocused());
+        assertFalse(v1.isFocused());
         assertFalse(v2.isFocused());
         assertFalse(v3.isFocused());
         assertFalse(v4.isFocused());
+
+        v1.requestFocus();
+        assertTrue(v1.isFocused());
 
         // test scenario: a view will not actually take focus if it is not focusable
         v2.setFocusable(false);
@@ -296,5 +302,42 @@ public class View_FocusHandlingTest {
         view.setFocusable(View.FOCUSABLE);
         assertTrue("single view doesn't hasFocusable", view.hasFocusable());
         assertTrue("single view doesn't hasExplicitFocusable", view.hasExplicitFocusable());
+    }
+
+    private View[] getInitialAndFirstFocus(int res) throws Throwable {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        instrumentation.setInTouchMode(false);
+        final Activity activity = mActivityRule.getActivity();
+        mActivityRule.runOnUiThread(() -> activity.getLayoutInflater().inflate(res,
+                (ViewGroup) activity.findViewById(R.id.auto_test_area)));
+        instrumentation.waitForIdleSync();
+        View root = activity.findViewById(R.id.main_view);
+        View initial = root.findFocus();
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
+        View first = root.findFocus();
+        return new View[]{initial, first};
+    }
+
+    @Test
+    public void testNoInitialFocus() throws Throwable {
+        Activity activity = mActivityRule.getActivity();
+        View[] result = getInitialAndFirstFocus(R.layout.focus_handling_focusables);
+        assertNull(result[0]);
+        assertSame(result[1], activity.findViewById(R.id.focusable1));
+    }
+
+    @Test
+    public void testDefaultFocus() throws Throwable {
+        Activity activity = mActivityRule.getActivity();
+        View[] result = getInitialAndFirstFocus(R.layout.focus_handling_default_focus);
+        assertNull(result[0]);
+        assertSame(result[1], activity.findViewById(R.id.focusable2));
+    }
+
+    @Test
+    public void testInitialFocus() throws Throwable {
+        Activity activity = mActivityRule.getActivity();
+        View[] result = getInitialAndFirstFocus(R.layout.focus_handling_initial_focus);
+        assertSame(result[0], activity.findViewById(R.id.focusable3));
     }
 }
