@@ -63,6 +63,8 @@ final class CannedFillResponse {
     final Bundle extras;
     final RemoteViews presentation;
     final IntentSender authentication;
+    final CharSequence negativeActionLabel;
+    final IntentSender negativeActionListener;
 
     private CannedFillResponse(Builder builder) {
         datasets = builder.mDatasets;
@@ -72,6 +74,8 @@ final class CannedFillResponse {
         extras = builder.mExtras;
         presentation = builder.mPresentation;
         authentication = builder.mAuthentication;
+        negativeActionLabel = builder.mNegativeActionLabel;
+        negativeActionListener = builder.mNegativeActionListener;
     }
 
     /**
@@ -101,6 +105,9 @@ final class CannedFillResponse {
                 final AutoFillId id = node.getAutoFillId();
                 saveInfo.addSavableIds(id);
             }
+            if (negativeActionLabel != null) {
+                saveInfo.setNegativeAction(negativeActionLabel, negativeActionListener);
+            }
             builder.setSaveInfo(saveInfo.build());
         }
         return builder
@@ -115,7 +122,7 @@ final class CannedFillResponse {
                 + ", savableIds=" + Arrays.toString(savableIds)
                 + ", saveDescription=" + saveDescription
                 + ", hasPresentation=" + (presentation != null)
-                + ", hasPAuthentication=" + (authentication != null)
+                + ", hasAuthentication=" + (authentication != null)
                 + "]";
     }
 
@@ -127,6 +134,8 @@ final class CannedFillResponse {
         private Bundle mExtras;
         private RemoteViews mPresentation;
         private IntentSender mAuthentication;
+        private CharSequence mNegativeActionLabel;
+        private IntentSender mNegativeActionListener;
 
         public Builder addDataset(CannedDataset dataset) {
             mDatasets.add(dataset);
@@ -178,6 +187,16 @@ final class CannedFillResponse {
          */
         public Builder setAuthentication(IntentSender authentication) {
             mAuthentication = authentication;
+            return this;
+        }
+
+        /**
+         * Sets the negative action spec.
+         */
+        public Builder setNegativeAction(CharSequence label,
+                IntentSender listener) {
+            mNegativeActionLabel = label;
+            mNegativeActionListener = listener;
             return this;
         }
 

@@ -29,6 +29,7 @@ import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
@@ -51,6 +52,11 @@ final class Helper {
     static final long CONNECTION_TIMEOUT_MS = 2000;
 
     /**
+     * Timeout (in milliseconds) until framework unbinds from a service.
+     */
+    static final long IDLE_UNBIND_TIMEOUT_MS = 5 * DateUtils.SECOND_IN_MILLIS;
+
+    /**
      * Timeout (in milliseconds) for expected auto-fill requests.
      */
     static final long FILL_TIMEOUT_MS = 2000;
@@ -64,9 +70,6 @@ final class Helper {
      * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
      */
     static final int UI_TIMEOUT_MS = 2000;
-
-    // TODO(b/33197203 , b/35395043): temporary guard to skip assertions known to fail
-    static final boolean IGNORE_DANGLING_SESSIONS = true;
 
     /**
      * Runs a Shell command, returning a trimmed response.

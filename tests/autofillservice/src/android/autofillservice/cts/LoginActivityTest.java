@@ -43,7 +43,10 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.test.filters.SmallTest;
@@ -54,6 +57,9 @@ import android.view.autofill.AutoFillValue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
@@ -79,13 +85,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Rule
     public final ActivityTestRule<LoginActivity> mActivityRule =
-        new ActivityTestRule<LoginActivity>(LoginActivity.class);
+            new ActivityTestRule<LoginActivity>(LoginActivity.class);
 
     private LoginActivity mLoginActivity;
 
     @Before
     public void setActivity() {
         mLoginActivity = mActivityRule.getActivity();
+        destroyAllSessions();
     }
 
     @Test
@@ -264,11 +271,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.assertNumberUnhandledFillRequests(1);
         replier.assertNumberUnhandledSaveRequests(0);
 
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
-
         // Other sanity checks.
         waitUntilDisconnected();
+
+        // Sanity check: once saved, the session should be finished.
+        assertNoDanglingSessions();
     }
 
     @Test
@@ -397,11 +404,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.assertNumberUnhandledFillRequests(0);
         replier.assertNumberUnhandledSaveRequests(0);
 
-        // Sanity check: once saved, the session should be finsihed.
-        assertNoDanglingSessions();
-
         // Other sanity checks.
         waitUntilDisconnected();
+
+        // Sanity check: once saved, the session should be finsihed.
+        assertNoDanglingSessions();
     }
 
     @Test
@@ -599,6 +606,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
 
         // Assert sanitization on fill request:
         final FillRequest fillRequest = replier.getNextFillRequest();
@@ -628,6 +636,113 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 "DA PASSWORD");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_USERNAME), "malkovich");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "malkovich");
+
+        // Sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testDisableSelfWhenConnected() throws Exception {
+        enableService();
+
+        // Ensure enabled.
+        assertServiceEnabled();
+
+        // Set no-op behavior.
+        final Replier replier = new Replier();
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .build());
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Can disable while connected.
+        mLoginActivity.runOnUiThread(() ->
+                InstrumentedAutoFillService.peekInstance().disableSelf());
+
+        // Ensure disabled.
+        assertServiceDisabled();
+    }
+
+    @Test
+    public void testDisableSelfWhenDisconnected() throws Exception {
+        enableService();
+
+        // Ensure enabled.
+        assertServiceEnabled();
+
+        // Set no-op behavior.
+        final Replier replier = new Replier();
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .build());
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Wait until we timeout and disconnect.
+        waitUntilDisconnected();
+
+        // Cannot disable while disconnected.
+        mLoginActivity.runOnUiThread(() ->
+                InstrumentedAutoFillService.peekInstance().disableSelf());
+
+        // Ensure enabled.
+        assertServiceEnabled();
+    }
+
+    @Test
+    public void testCustomNegativeSaveButton() throws Exception {
+        enableService();
+
+        // Set service behavior.
+        final Replier replier = new Replier();
+
+        final String intentAction = "android.autofillservice.cts.CUSTOM_ACTION";
+
+        // Configure the save UI.
+        final IntentSender listener = PendingIntent.getBroadcast(
+                getContext(), 0, new Intent(intentAction), 0).getIntentSender();
+
+        replier.addResponse(new CannedFillResponse.Builder()
+                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setNegativeAction("Foo", listener)
+                .build());
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        // Wait for onFill() before proceeding.
+        replier.getNextFillRequest();
+
+        // Trigger save.
+        mLoginActivity.onUsername((v) -> v.setText("foo"));
+        mLoginActivity.onPassword((v) -> v.setText("foo"));
+        mLoginActivity.tapLogin();
+
+        // Start watching for the negative intent
+        final CountDownLatch latch = new CountDownLatch(1);
+        final IntentFilter intentFilter = new IntentFilter(intentAction);
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getContext().unregisterReceiver(this);
+                latch.countDown();
+            }
+        }, intentFilter);
+
+        // Trigger the negative button.
+        sUiBot.saveForAutofill(false);
+
+        // Wait for the custom action.
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
