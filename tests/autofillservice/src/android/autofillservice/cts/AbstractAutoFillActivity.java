@@ -12,9 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */package android.autofillservice.cts;
+ */
+
+package android.autofillservice.cts;
+
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
+import android.view.autofill.AutoFillManager;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +28,8 @@ import java.util.concurrent.TimeUnit;
   * Base class for all activities in this test suite
   */
 abstract class AbstractAutoFillActivity extends Activity {
+
+    private MyAutofillCallback mCallback;
 
     /**
      * Run an action in the UI thread, and blocks caller until the action is finished.
@@ -43,11 +50,32 @@ abstract class AbstractAutoFillActivity extends Activity {
         });
         try {
             if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
-                throw new AssertionError("action on UI thread timed out after " + timeoutMs + " ms");
+                throw new AssertionError(
+                        "action on UI thread timed out after " + timeoutMs + " ms");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted", e);
         }
+    }
+
+    /**
+     * Registers and returns a custom callback for autofill events.
+     */
+    protected MyAutofillCallback registerCallback() {
+        assertWithMessage("already registered").that(mCallback).isNull();
+        final AutoFillManager afm = getSystemService(AutoFillManager.class);
+        mCallback = new MyAutofillCallback();
+        afm.registerCallback(mCallback);
+        return mCallback;
+    }
+
+    /**
+     * Unregister the callback from the {@link AutoFillManager}.
+     */
+    protected void unregisterCallback() {
+        assertWithMessage("not registered").that(mCallback).isNotNull();
+        getSystemService(AutoFillManager.class).unregisterCallback(mCallback);
+        mCallback = null;
     }
 }
