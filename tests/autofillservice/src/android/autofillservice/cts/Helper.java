@@ -256,7 +256,7 @@ final class Helper {
         cal.setTimeInMillis(value.getDateValue());
 
         assertWithMessage("Wrong hour on AutoFillValue %s", value)
-            .that(cal.get(Calendar.HOUR)).isEqualTo(hour);
+            .that(cal.get(Calendar.HOUR_OF_DAY)).isEqualTo(hour);
         assertWithMessage("Wrong minute on AutoFillValue %s", value)
             .that(cal.get(Calendar.MINUTE)).isEqualTo(minute);
     }

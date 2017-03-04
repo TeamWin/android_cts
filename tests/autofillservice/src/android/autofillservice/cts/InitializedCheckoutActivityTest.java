@@ -39,7 +39,6 @@ import org.junit.Test;
 /**
  * Test case for an activity containing non-TextField views with initial values set on XML.
  */
-@SmallTest
 public class InitializedCheckoutActivityTest extends AutoFillServiceTestCase {
 
     @Rule

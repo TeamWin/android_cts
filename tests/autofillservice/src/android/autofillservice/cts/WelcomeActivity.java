@@ -15,7 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -25,13 +24,19 @@ import android.widget.TextView;
 /**
  * Activity that displays a "Welcome USER" message after login.
  */
-public class WelcomeActivity extends Activity {
+public class WelcomeActivity extends AbstractAutoFillActivity {
+
+    private static WelcomeActivity sInstance;
 
     private static final String TAG = "WelcomeActivity";
 
     static final String EXTRA_MESSAGE = "message";
 
     private TextView mOutput;
+
+    public WelcomeActivity() {
+        sInstance = this;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,5 +54,12 @@ public class WelcomeActivity extends Activity {
         }
 
         Log.d(TAG, "Output: " + mOutput.getText());
+    }
+
+    static void finishIt() {
+        if (sInstance != null) {
+            Log.d(TAG, "So long and thanks for all the fish!");
+            sInstance.finish();
+        }
     }
 }

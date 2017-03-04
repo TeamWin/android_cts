@@ -17,7 +17,6 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  *   <li>Login Button
  * </ul>
  */
-public class LoginActivity extends Activity {
+public class LoginActivity extends AbstractAutoFillActivity {
 
     private static final String TAG = "LoginActivity";
     private static String WELCOME_TEMPLATE = "Welcome to the new activity, %s!";
@@ -166,7 +165,7 @@ public class LoginActivity extends Activity {
      * Visits the {@code username_label} in the UiThread.
      */
     void onUsernameLabel(ViewVisitor<TextView> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mUsernameLabel);
         });
     }
@@ -175,7 +174,7 @@ public class LoginActivity extends Activity {
      * Visits the {@code username} in the UiThread.
      */
     void onUsername(ViewVisitor<EditText> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mUsernameEditText);
         });
     }
@@ -184,7 +183,7 @@ public class LoginActivity extends Activity {
      * Visits the {@code password_label} in the UiThread.
      */
     void onPasswordLabel(ViewVisitor<TextView> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mPasswordLabel);
         });
     }
@@ -193,7 +192,7 @@ public class LoginActivity extends Activity {
      * Visits the {@code password} in the UiThread.
      */
     void onPassword(ViewVisitor<EditText> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mPasswordEditText);
         });
     }
@@ -203,7 +202,7 @@ public class LoginActivity extends Activity {
      */
     String tapLogin() throws Exception {
         mLoginLatch = new CountDownLatch(1);
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             mLoginButton.performClick();
         });
         boolean called = mLoginLatch.await(LOGIN_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -217,7 +216,7 @@ public class LoginActivity extends Activity {
      */
     void setFlags(int flags) {
         Log.d(TAG, "setFlags():" + flags);
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             getWindow().setFlags(flags, flags);
         });
     }

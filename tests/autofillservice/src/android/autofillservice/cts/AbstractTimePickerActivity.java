@@ -17,7 +17,6 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * <p>It's abstract because the sub-class must provide the view id, so it can support multiple
  * UI types (like clock and spinner).
  */
-abstract class AbstractTimePickerActivity extends Activity {
+abstract class AbstractTimePickerActivity extends AbstractAutoFillActivity {
 
     private static final long OK_TIMEOUT_MS = 1000;
 
@@ -117,7 +116,7 @@ abstract class AbstractTimePickerActivity extends Activity {
      * Visits the {@code output} in the UiThread.
      */
     void onOutput(ViewVisitor<EditText> v) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             v.visit(mOutput);
         });
     }
@@ -126,7 +125,7 @@ abstract class AbstractTimePickerActivity extends Activity {
      * Sets the time in the {@link TimePicker}.
      */
     void setTime(int hour, int minute) {
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             mTimePicker.setHour(hour);
             mTimePicker.setMinute(minute);
         });
@@ -137,7 +136,7 @@ abstract class AbstractTimePickerActivity extends Activity {
      */
     void tapOk() throws Exception {
         mOkLatch = new CountDownLatch(1);
-        runOnUiThread(() -> {
+        syncRunOnUiThread(() -> {
             mOk.performClick();
         });
         boolean called = mOkLatch.await(OK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
