@@ -73,7 +73,7 @@ public class StaticMetadata {
     private final CheckLevel mLevel;
     private final CameraErrorCollector mCollector;
 
-    // Index with android.control.aeMode
+    // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {
         "AE_MODE_OFF",
         "AE_MODE_ON",
@@ -82,7 +82,7 @@ public class StaticMetadata {
         "AE_MODE_ON_AUTO_FLASH_REDEYE"
     };
 
-    // Index with android.control.afMode
+    // Access via getAfModeName() to account for vendor extensions
     public static final String[] AF_MODE_NAMES = new String[] {
         "AF_MODE_OFF",
         "AF_MODE_AUTO",
@@ -432,6 +432,16 @@ public class StaticMetadata {
                 calibration <= CameraMetadata.LENS_INFO_FOCUS_DISTANCE_CALIBRATION_CALIBRATED);
 
         return calibration;
+    }
+
+    public static String getAeModeName(int aeMode) {
+        return (aeMode >= AE_MODE_NAMES.length) ? String.format("VENDOR_AE_MODE_%d", aeMode) :
+                AE_MODE_NAMES[aeMode];
+    }
+
+    public static String getAfModeName(int afMode) {
+        return (afMode >= AF_MODE_NAMES.length) ? String.format("VENDOR_AF_MODE_%d", afMode) :
+                AF_MODE_NAMES[afMode];
     }
 
     /**
@@ -1139,9 +1149,16 @@ public class StaticMetadata {
         }
         List<Integer> modeList = new ArrayList<Integer>();
         for (int mode : modes) {
-            modeList.add(mode);
+            // Skip vendor-added modes
+            if (mode <= CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE) {
+                modeList.add(mode);
+            }
         }
         checkTrueForKey(modesKey, "value is empty", !modeList.isEmpty());
+        modes = new int[modeList.size()];
+        for (int i = 0; i < modeList.size(); i++) {
+            modes[i] = modeList.get(i);
+        }
 
         // All camera device must support ON
         checkTrueForKey(modesKey, "values " + modeList.toString() + " must contain ON mode",
@@ -1227,7 +1244,17 @@ public class StaticMetadata {
             return new int[0];
         }
 
-        List<Integer> modesList = Arrays.asList(CameraTestUtils.toObject(afModes));
+        List<Integer> modesList = new ArrayList<Integer>();
+        for (int afMode : afModes) {
+            // Skip vendor-added AF modes
+            if (afMode > CameraCharacteristics.CONTROL_AF_MODE_EDOF) continue;
+            modesList.add(afMode);
+        }
+        afModes = new int[modesList.size()];
+        for (int i = 0; i < modesList.size(); i++) {
+            afModes[i] = modesList.get(i);
+        }
+
         if (isHardwareLevelAtLeastLimited()) {
             // Some LEGACY mode devices do not support AF OFF
             checkTrueForKey(key, " All camera devices must support OFF mode",
