@@ -114,6 +114,20 @@ final class UiBot {
         return assertSaveShowing(SAVE_DATA_TYPE_GENERIC, null);
     }
 
+    /**
+     * Asserts the save snackbar is not showing and returns it.
+     */
+    void assertSaveNotShowing() {
+        try {
+            assertSaveShowing();
+        } catch (Throwable t) {
+            // TODO(b/33197203): use a more elegant check than catching the expection because it's
+            // not showing...
+            return;
+        }
+        throw new AssertionError("snack bar is showing");
+    }
+
     UiObject2 assertSaveShowing(int type, String description) {
         final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR));
 
