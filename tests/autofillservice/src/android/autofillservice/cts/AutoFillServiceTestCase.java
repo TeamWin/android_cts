@@ -47,6 +47,12 @@ abstract class AutoFillServiceTestCase {
     protected static UiBot sUiBot;
 
     @BeforeClass
+    public static void removeLockScreen() {
+        runShellCommand("input keyevent KEYCODE_WAKEUP");
+        runShellCommand("input keyevent 82");
+    }
+
+    @BeforeClass
     public static void setUiBot() throws Exception {
         sUiBot = new UiBot(InstrumentationRegistry.getInstrumentation(), UI_TIMEOUT_MS);
     }
