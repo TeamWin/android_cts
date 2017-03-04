@@ -342,7 +342,7 @@ public class DisplayTest extends InstrumentationTestCase {
 
             WindowManager.LayoutParams params = getWindow().getAttributes();
             params.preferredDisplayModeId = mModeId;
-            params.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
             params.setTitle("CtsTestPresentation");
             getWindow().setAttributes(params);
         }
