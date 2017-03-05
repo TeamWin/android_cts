@@ -131,26 +131,40 @@ void SensorTest::testInvalidParameter(JNIEnv *env) {
     ASSERT_EQ(ASensor_getHighestDirectReportRateLevel(nullptr), ASENSOR_DIRECT_RATE_STOP);
 }
 
-// Test direct report of gyroscope at normal rate level through ashmem direct channel
-void SensorTest::testGyroscopeSharedMemoryDirectReport(JNIEnv* env) {
-    constexpr int type = ASENSOR_TYPE_GYROSCOPE;
+// Test sensor direct report functionality
+void SensorTest::testDirectReport(JNIEnv* env, int32_t sensorType, int32_t channelType, int32_t rateLevel) {
     constexpr size_t kEventSize = sizeof(ASensorEvent);
     constexpr size_t kNEvent = 500;
     constexpr size_t kMemSize = kEventSize * kNEvent;
 
-    TestSensor sensor = mManager->getDefaultSensor(type);
+    // value check criterion
+    constexpr float GRAVITY_MIN = 9.81f - 0.5f;
+    constexpr float GRAVITY_MAX = 9.81f + 0.5f;
+    constexpr float GYRO_MAX = 0.1f; // ~5 dps
 
-    if (sensor.getHighestDirectReportRateLevel() == ASENSOR_DIRECT_RATE_STOP
-        || !sensor.isDirectChannelTypeSupported(ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY)) {
-        // does not declare support
+    constexpr float RATE_NORMAL_NOMINAL = 50;
+    constexpr float RATE_FAST_NOMINAL = 200;
+    constexpr float RATE_VERY_FAST_NOMINAL = 800;
+
+    TestSensor sensor = mManager->getDefaultSensor(sensorType);
+    if (!sensor.isValid()
+        || sensor.getHighestDirectReportRateLevel() < rateLevel
+        || !sensor.isDirectChannelTypeSupported(channelType)) {
+        // no sensor of type sensorType or it does not declare support of channelType or rateLevel
         return;
     }
 
-    std::unique_ptr<TestSharedMemory>
-            mem(TestSharedMemory::create(ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY, kMemSize));
+    std::unique_ptr<TestSharedMemory> mem(TestSharedMemory::create(channelType, kMemSize));
     ASSERT_NE(mem, nullptr);
     ASSERT_NE(mem->getBuffer(), nullptr);
-    ASSERT_GT(mem->getSharedMemoryFd(), 0);
+    switch (channelType) {
+        case ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY:
+            ASSERT_GT(mem->getSharedMemoryFd(), 0);
+            break;
+        case ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER:
+            ASSERT_NOT_NULL(mem->getHardwareBuffer());
+            break;
+    }
 
     char* buffer = mem->getBuffer();
     // fill memory with data
@@ -168,24 +182,56 @@ void SensorTest::testGyroscopeSharedMemoryDirectReport(JNIEnv* env) {
     }
 
     int32_t eventToken;
-    eventToken = mManager->configureDirectReport(sensor, channel, ASENSOR_DIRECT_RATE_NORMAL);
+    eventToken = mManager->configureDirectReport(sensor, channel, rateLevel);
     usleep(1500000); // sleep 1 sec for data, plus 0.5 sec for initialization
     auto events = mem->parseEvents();
 
-    // allowed to be between 55% and 220% of nominal freq (50Hz)
-    ASSERT_GT(events.size(), 50 / 2);
-    ASSERT_LT(events.size(), static_cast<size_t>(110*1.5));
+    // find norminal rate
+    float nominalFreq = 0.f;
+    float nominalTestTimeSec = 1.f;
+    float maxTestTimeSec = 1.5f;
+    switch (rateLevel) {
+        case ASENSOR_DIRECT_RATE_NORMAL:
+            nominalFreq = RATE_NORMAL_NOMINAL;
+            break;
+        case ASENSOR_DIRECT_RATE_FAST:
+            nominalFreq = RATE_FAST_NOMINAL;
+            break;
+        case ASENSOR_DIRECT_RATE_VERY_FAST:
+            nominalFreq = RATE_VERY_FAST_NOMINAL;
+            break;
+    }
+
+    // allowed to be between 55% and 220% of nominal freq
+    ASSERT_GT(events.size(), static_cast<size_t>(nominalFreq * 0.55f * nominalTestTimeSec));
+    ASSERT_LT(events.size(), static_cast<size_t>(nominalFreq * 2.2f * maxTestTimeSec));
 
     int64_t lastTimestamp = 0;
     for (auto &e : events) {
-        ASSERT_EQ(e.type, type);
+        ASSERT_EQ(e.type, sensorType);
         ASSERT_EQ(e.sensor, eventToken);
         ASSERT_GT(e.timestamp, lastTimestamp);
 
-        ASensorVector &gyro = e.vector;
-        double gyroNorm = std::sqrt(gyro.x * gyro.x + gyro.y * gyro.y + gyro.z * gyro.z);
-        // assert not drifting
-        ASSERT_TRUE(gyroNorm < 0.1);  // < ~5 degree/sa
+        // type specific value check
+        switch(sensorType) {
+            case ASENSOR_TYPE_ACCELEROMETER: {
+                ASensorVector &acc = e.vector;
+                double accNorm = std::sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+                if (accNorm > GRAVITY_MAX || accNorm < GRAVITY_MIN) {
+                    ALOGE("Gravity norm = %f", accNorm);
+                }
+                ASSERT_GE(accNorm, GRAVITY_MIN);
+                ASSERT_LE(accNorm, GRAVITY_MAX);
+                break;
+            }
+            case ASENSOR_TYPE_GYROSCOPE: {
+                ASensorVector &gyro = e.vector;
+                double gyroNorm = std::sqrt(gyro.x * gyro.x + gyro.y * gyro.y + gyro.z * gyro.z);
+                // assert not drifting
+                ASSERT_LE(gyroNorm, GYRO_MAX);  // < ~2.5 degree/s
+                break;
+            }
+        }
 
         lastTimestamp = e.timestamp;
     }

@@ -19,7 +19,8 @@
 #include <cstdlib>
 #include <cstring>
 
-extern int register_android_view_cts_SensorNativeTest(JNIEnv* env);
+extern int register_android_hardware_cts_SensorNativeTest(JNIEnv* env);
+extern int register_android_hardware_cts_SensorDirectReportTest(JNIEnv* env);
 
 void fail(JNIEnv* env, const char* format, ...) {
     va_list args;
@@ -41,7 +42,10 @@ jint JNI_OnLoad(JavaVM *vm, void *) {
     if (vm->GetEnv((void**)&env, JNI_VERSION_1_4) != JNI_OK) {
         return JNI_ERR;
     }
-    if (register_android_view_cts_SensorNativeTest(env)) {
+    if (register_android_hardware_cts_SensorNativeTest(env)) {
+        return JNI_ERR;
+    }
+    if (register_android_hardware_cts_SensorDirectReportTest(env)) {
         return JNI_ERR;
     }
     return JNI_VERSION_1_4;

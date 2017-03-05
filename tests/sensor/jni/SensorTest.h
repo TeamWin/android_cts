@@ -43,7 +43,8 @@ public:
     // tests
     void testInitialized(JNIEnv *env);
     void testInvalidParameter(JNIEnv *env);
-    void testGyroscopeSharedMemoryDirectReport(JNIEnv *env);
+    void testDirectReport(JNIEnv *env, int32_t sensorType, int32_t channelType, int32_t rateLevel);
+
 private:
     std::unique_ptr<TestSensorManager> mManager;
 };

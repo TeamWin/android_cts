@@ -44,6 +44,8 @@
         ASSERT((a) < (b), "assert failed on (" #a " < " #b ") at " __FILE__ ":%d", __LINE__)
 #define ASSERT_LE(a, b) \
         ASSERT((a) <= (b), "assert failed on (" #a " <= " #b ") at " __FILE__ ":%d", __LINE__)
+#define ASSERT_NOT_NULL(a) \
+        ASSERT((a) != nullptr, "assert failed on isNotNull(" #a ") at " __FILE__ ":%d", __LINE__)
 #define ASSERT_EMPTY_CSTR(a) do { \
         const char *tmp = a; \
         ASSERT(tmp != nullptr, \

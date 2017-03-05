@@ -57,9 +57,9 @@ public class SensorDirectReportTest extends SensorTestCase {
     private static final float FREQ_UPPER_BOUND = 2.2f;
 
     // sensor reading assumption
-    private static final float GRAVITY_MIN = 9.81f - 1.f;
-    private static final float GRAVITY_MAX = 9.81f + 1.f;
-    private static final float GYRO_NORM_MAX = 0.05f;
+    private static final float GRAVITY_MIN = 9.81f - 0.5f;
+    private static final float GRAVITY_MAX = 9.81f + 0.5f;
+    private static final float GYRO_NORM_MAX = 0.1f;
 
     // test constants
     private static final int REST_PERIOD_BEFORE_TEST_MILLISEC = 3000;
@@ -69,6 +69,9 @@ public class SensorDirectReportTest extends SensorTestCase {
     private static final int SHARED_MEMORY_SIZE = 2000 * SENSORS_EVENT_SIZE;
     private static final float MERCY_FACTOR = 0.1f;
 
+    private static native boolean nativeReadHardwareBuffer(HardwareBuffer hardwareBuffer,
+            byte[] buffer, int srcOffset, int destOffset, int count);
+
     private boolean mNeedMemoryFile;
     private MemoryFile mMemoryFile;
     private boolean mNeedHardwareBuffer;
@@ -77,6 +80,10 @@ public class SensorDirectReportTest extends SensorTestCase {
 
     private SensorManager mSensorManager;
     private SensorDirectChannel mChannel;
+
+    static {
+        System.loadLibrary("cts-sensors-ndk-jni");
+    }
 
     @Override
     protected void setUp() throws Exception {
@@ -323,11 +330,9 @@ public class SensorDirectReportTest extends SensorTestCase {
     private HardwareBuffer allocateHardwareBuffer() {
         HardwareBuffer hardwareBuffer;
 
-        // TODO: remove this after BLOB constant is added into HardwareBuffer.
-        int BLOB = 6;
         hardwareBuffer = HardwareBuffer.create(
-                SHARED_MEMORY_SIZE, 1 /* height */, BLOB, 1 /* layer */,
-                HardwareBuffer.USAGE0_CPU_READ | HardwareBuffer.USAGE0_GPU_DATA_BUFFER
+                SHARED_MEMORY_SIZE, 1 /* height */, HardwareBuffer.BLOB, 1 /* layer */,
+                HardwareBuffer.USAGE0_CPU_READ_OFTEN | HardwareBuffer.USAGE0_GPU_DATA_BUFFER
                     | HardwareBuffer.USAGE0_SENSOR_DIRECT_DATA);
         return hardwareBuffer;
     }
@@ -345,11 +350,14 @@ public class SensorDirectReportTest extends SensorTestCase {
     private boolean isSharedMemoryFormatted(int memType) {
         if (memType == SensorDirectChannel.TYPE_ASHMEM) {
             if (!readMemoryFileContent()) {
+                Log.e(TAG, "Read MemoryFile content fail");
                 return false;
             }
         } else {
-            // Android API only support memory file read back
-            return true;
+            if (!readHardwareBufferContent()) {
+                Log.e(TAG, "Read HardwareBuffer content fail");
+                return false;
+            }
         }
 
         for (byte b : mBuffer) {
@@ -364,8 +372,7 @@ public class SensorDirectReportTest extends SensorTestCase {
         if (memType == SensorDirectChannel.TYPE_ASHMEM) {
             assertTrue("read MemoryFile content failed", readMemoryFileContent());
         } else {
-            // Android API only support memory file read back
-            return;
+            assertTrue("read HardwareBuffer content failed", readHardwareBufferContent());
         }
 
         int offset = 0;
@@ -453,6 +460,10 @@ public class SensorDirectReportTest extends SensorTestCase {
             return false;
         }
         return true;
+    }
+
+    private boolean readHardwareBufferContent() {
+        return nativeReadHardwareBuffer(mHardwareBuffer, mBuffer, 0, 0, SHARED_MEMORY_SIZE);
     }
 
     private class DirectReportSensorEvent {

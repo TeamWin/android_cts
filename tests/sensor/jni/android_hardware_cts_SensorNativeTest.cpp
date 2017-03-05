@@ -21,6 +21,8 @@
 namespace {
 using android::SensorTest::SensorTest;
 
+#define RETURN_ON_EXCEPTION() do { if (env->ExceptionCheck()) { return;} } while(false)
+
 jlong setUp(JNIEnv*, jclass) {
     SensorTest *test = new SensorTest();
     if (test != nullptr) {
@@ -35,16 +37,34 @@ void tearDown(JNIEnv*, jclass, jlong instance) {
 
 void test(JNIEnv* env, jclass, jlong instance) {
     SensorTest *test = reinterpret_cast<SensorTest *>(instance);
-    ASSERT_NE(test, nullptr);
+    ASSERT_NOT_NULL(test);
 
     // test if SensorTest is intialized
+    ALOGI("testInitialized");
     test->testInitialized(env);
+    RETURN_ON_EXCEPTION();
 
     // test if SensorTest is intialized
+    ALOGI("testInvalidParameter");
     test->testInvalidParameter(env);
+    RETURN_ON_EXCEPTION();
 
-    // test gyro direct report using shared memory buffer
-    test->testGyroscopeSharedMemoryDirectReport(env);
+    // test sensor direct report
+    std::vector<int32_t> sensorTypes ={ASENSOR_TYPE_ACCELEROMETER, ASENSOR_TYPE_GYROSCOPE};
+    std::vector<int32_t> rates = {
+        ASENSOR_DIRECT_RATE_NORMAL, ASENSOR_DIRECT_RATE_FAST, ASENSOR_DIRECT_RATE_VERY_FAST};
+    std::vector<int32_t> channelTypes =
+        {ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY};
+    for (auto s : sensorTypes) {
+        for (auto c : channelTypes) {
+            for (auto r : rates) {
+                ALOGI("testDirectReport: sensorType = %d, channelType = %d, ratelevel = %d",
+                      s, c, r);
+                test->testDirectReport(env, s, c, r);
+                RETURN_ON_EXCEPTION();
+            }
+        }
+    }
 }
 
 JNINativeMethod gMethods[] = {
@@ -57,8 +77,7 @@ JNINativeMethod gMethods[] = {
 };
 } // unamed namespace
 
-int register_android_view_cts_SensorNativeTest(JNIEnv* env)
-{
+int register_android_hardware_cts_SensorNativeTest(JNIEnv* env) {
     jclass clazz = env->FindClass("android/hardware/cts/SensorNativeTest");
     return env->RegisterNatives(clazz, gMethods,
             sizeof(gMethods) / sizeof(JNINativeMethod));
