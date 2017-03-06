@@ -426,11 +426,11 @@ public class PopupWindowTest {
                 RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
 
         verifyPosition(popup, R.id.anchor_lower_left,
-                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, BOTTOM);
         verifyPosition(popup, R.id.anchor_lower,
-                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, BOTTOM);
         verifyPosition(popup, R.id.anchor_lower_right,
-                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, TOP);
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, BOTTOM);
     }
 
     @Test
@@ -469,13 +469,13 @@ public class PopupWindowTest {
 
         verifyPosition(popup, R.id.anchor_lower_left,
                 LEFT, GREATER_THAN, LEFT, BOTTOM, LESS_THAN, BOTTOM,
-                offsetX, offsetY, gravity);
+                offsetX, -offsetY, gravity);
         verifyPosition(popup, R.id.anchor_lower,
                 LEFT, GREATER_THAN, LEFT, BOTTOM, LESS_THAN, BOTTOM,
-                offsetX, offsetY, gravity);
+                offsetX, -offsetY, gravity);
         verifyPosition(popup, R.id.anchor_lower_right,
                 RIGHT, EQUAL_TO, RIGHT, BOTTOM, LESS_THAN, BOTTOM,
-                offsetX, offsetY, gravity);
+                offsetX, -offsetY, gravity);
     }
 
     @Test
@@ -673,13 +673,12 @@ public class PopupWindowTest {
 
     @Test
     public void testOverlapAnchor() throws Throwable {
-        int[] anchorXY = new int[2];
-        int[] viewOnScreenXY = new int[2];
-        int[] viewInWindowXY = new int[2];
+        int[] anchorOnScreenXY = new int[2];
+        int[] popupOnScreenXY = new int[2];
 
         mPopupWindow = createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
         final View upperAnchor = mActivity.findViewById(R.id.anchor_upper);
-        upperAnchor.getLocationOnScreen(anchorXY);
+        upperAnchor.getLocationOnScreen(anchorOnScreenXY);
 
         assertFalse(mPopupWindow.getOverlapAnchor());
         mPopupWindow.setOverlapAnchor(true);
@@ -688,10 +687,27 @@ public class PopupWindowTest {
         mActivityRule.runOnUiThread(() -> mPopupWindow.showAsDropDown(upperAnchor, 0, 0));
         mInstrumentation.waitForIdleSync();
 
-        mPopupWindow.getContentView().getLocationOnScreen(viewOnScreenXY);
-        mPopupWindow.getContentView().getLocationInWindow(viewInWindowXY);
-        assertEquals(anchorXY[0] + viewInWindowXY[0], viewOnScreenXY[0]);
-        assertEquals(anchorXY[1] + viewInWindowXY[1], viewOnScreenXY[1]);
+        mPopupWindow.getContentView().getLocationOnScreen(popupOnScreenXY);
+        // When the popup is shown below the anchor, their positions should match exactly.
+        assertEquals(anchorOnScreenXY[0], popupOnScreenXY[0]);
+        assertEquals(anchorOnScreenXY[1], popupOnScreenXY[1]);
+
+        mActivityRule.runOnUiThread(mPopupWindow::dismiss);
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mPopupWindow.isShowing());
+
+        final View lowerAnchor = mActivity.findViewById(R.id.anchor_lower);
+        lowerAnchor.getLocationOnScreen(anchorOnScreenXY);
+
+        mActivityRule.runOnUiThread(() -> mPopupWindow.showAsDropDown(lowerAnchor, 0, 0));
+        mInstrumentation.waitForIdleSync();
+
+        mPopupWindow.getContentView().getLocationOnScreen(popupOnScreenXY);
+        // When the popup is shown above the anchor, the bottom edges of the popup and the anchor
+        // should be aligned.
+        assertEquals(anchorOnScreenXY[0], popupOnScreenXY[0]);
+        assertEquals(anchorOnScreenXY[1] + lowerAnchor.getHeight(),
+                popupOnScreenXY[1] + mPopupWindow.getContentView().getHeight());
     }
 
     @Test
