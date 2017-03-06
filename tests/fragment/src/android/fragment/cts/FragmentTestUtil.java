@@ -32,6 +32,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+
 public class FragmentTestUtil {
     public static void waitForExecution(final ActivityTestRule<FragmentTestActivity> rule) {
         // Wait for two cycles. When starting a postponed transition, it will post to
@@ -43,7 +46,7 @@ public class FragmentTestUtil {
         instrumentation.runOnMainSync(() -> {});
     }
 
-    private static void runOnUiThreadRethrow(ActivityTestRule<FragmentTestActivity> rule,
+    private static void runOnUiThreadRethrow(ActivityTestRule<? extends Activity> rule,
             Runnable r) {
         if (Looper.getMainLooper() == Looper.myLooper()) {
             r.run();
@@ -57,12 +60,12 @@ public class FragmentTestUtil {
     }
 
     public static boolean executePendingTransactions(
-            final ActivityTestRule<FragmentTestActivity> rule) {
+            final ActivityTestRule<? extends Activity> rule) {
         return executePendingTransactions(rule, rule.getActivity().getFragmentManager());
     }
 
     public static boolean executePendingTransactions(
-            final ActivityTestRule<FragmentTestActivity> rule, final FragmentManager fm) {
+            final ActivityTestRule<? extends Activity> rule, final FragmentManager fm) {
         final boolean[] ret = new boolean[1];
         runOnUiThreadRethrow(rule, new Runnable() {
             @Override
@@ -196,5 +199,22 @@ public class FragmentTestUtil {
         boolean isVisible = accessibilityNodeInfo.isVisibleToUser();
         accessibilityNodeInfo.recycle();
         return isVisible;
+    }
+
+    /**
+     * Allocates until a garbage collection occurs.
+     */
+    public static void forceGC() {
+        // Do it twice so that we know we're not in the middle of the first collection when
+        // returning.
+        for (int i = 0; i < 2; i++) {
+            // Use a random index in the list to detect the garbage collection each time because
+            // .get() may accidentally trigger a strong reference during collection.
+            ArrayList<WeakReference<byte[]>> leak = new ArrayList<>();
+            do {
+                WeakReference<byte[]> arr = new WeakReference<byte[]>(new byte[100]);
+                leak.add(arr);
+            } while (leak.get((int) (Math.random() * leak.size())).get() != null);
+        }
     }
 }
