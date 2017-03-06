@@ -51,6 +51,11 @@ public class ActivityAndWindowManagersState extends Assert {
     // Must be kept in sync with 'default_minimal_size_resizable_task' dimen from frameworks/base.
     private static final int DEFAULT_RESIZABLE_TASK_SIZE_DP = 220;
 
+    // Default minimal size of a resizable PiP task, used if none is set explicitly.
+    // Must be kept in sync with 'default_minimal_size_pip_resizable_task' dimen from
+    // frameworks/base.
+    private static final int DEFAULT_PIP_RESIZABLE_TASK_SIZE_DP = 108;
+
     private ActivityManagerState mAmState = new ActivityManagerState();
     private WindowManagerState mWmState = new WindowManagerState();
 
@@ -619,7 +624,9 @@ public class ActivityAndWindowManagersState extends Assert {
 
                         if (aTaskMinWidth == -1 || aTaskMinHeight == -1) {
                             // Minimal dimension(s) not set for task - it should be using defaults.
-                            int defaultMinimalSize = defaultMinimalTaskSize(aStack.mDisplayId);
+                            int defaultMinimalSize = (stackId == PINNED_STACK_ID)
+                                    ? defaultMinimalPinnedTaskSize(aStack.mDisplayId)
+                                    : defaultMinimalTaskSize(aStack.mDisplayId);
 
                             if (aTaskMinWidth == -1) {
                                 aTaskMinWidth = defaultMinimalSize;
@@ -660,7 +667,11 @@ public class ActivityAndWindowManagersState extends Assert {
         return (int) (dp * densityDpi / DISPLAY_DENSITY_DEFAULT + 0.5f);
     }
 
-    int defaultMinimalTaskSize(int displayId) {
+    private int defaultMinimalTaskSize(int displayId) {
         return dpToPx(DEFAULT_RESIZABLE_TASK_SIZE_DP, mWmState.getDisplay(displayId).getDpi());
+    }
+
+    private int defaultMinimalPinnedTaskSize(int displayId) {
+        return dpToPx(DEFAULT_PIP_RESIZABLE_TASK_SIZE_DP, mWmState.getDisplay(displayId).getDpi());
     }
 }
