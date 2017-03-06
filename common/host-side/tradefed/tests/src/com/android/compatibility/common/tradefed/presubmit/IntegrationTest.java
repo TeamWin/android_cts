@@ -38,6 +38,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.RunUtil;
 
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -481,7 +482,8 @@ public class IntegrationTest {
         for (ShardThread thread : threads) {
             thread.join(1000);
         }
-
+        // Allow some time for ResultReport to finalize the results coming from the threads.
+        RunUtil.getDefault().sleep(200);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
         IInvocationResult result = mReporter.getResult();
@@ -530,7 +532,8 @@ public class IntegrationTest {
         for (ShardThread thread : threads) {
             thread.join(1000);
         }
-
+        // Allow some time for ResultReport to finalize the results coming from the threads.
+        RunUtil.getDefault().sleep(200);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
         IInvocationResult result = mReporter.getResult();
