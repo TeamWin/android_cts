@@ -20,7 +20,6 @@ import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.os.Process;
-import android.os.UserHandle;
 import android.provider.Settings;
 
 import java.lang.reflect.Method;
@@ -134,24 +133,23 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
     }
 
     /**
-     * Test: It should be recored whether the Device Owner or the user set the default IME.
+     * Test: It should be recored whether the Device Owner or the user set the current IME.
      */
     public void testIsDefaultInputMethodSet() throws Exception {
-        final UserHandle userHandle = Process.myUserHandle();
         final String setting = Settings.Secure.DEFAULT_INPUT_METHOD;
         final ContentResolver resolver = getContext().getContentResolver();
         final String ime = Settings.Secure.getString(resolver, setting);
 
         Settings.Secure.putString(resolver, setting, "com.test.1");
         Thread.sleep(500);
-        assertFalse(mDevicePolicyManager.isDefaultInputMethodSetByOwner(userHandle));
+        assertFalse(mDevicePolicyManager.isCurrentInputMethodSetByOwner());
 
         mDevicePolicyManager.setSecureSetting(getWho(), setting, "com.test.2");
         Thread.sleep(500);
-        assertTrue(mDevicePolicyManager.isDefaultInputMethodSetByOwner(userHandle));
+        assertTrue(mDevicePolicyManager.isCurrentInputMethodSetByOwner());
 
         Settings.Secure.putString(resolver, setting, ime);
         Thread.sleep(500);
-        assertFalse(mDevicePolicyManager.isDefaultInputMethodSetByOwner(userHandle));
+        assertFalse(mDevicePolicyManager.isCurrentInputMethodSetByOwner());
     }
 }
