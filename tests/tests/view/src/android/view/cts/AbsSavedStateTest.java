@@ -56,7 +56,7 @@ public class AbsSavedStateTest {
     @Test
     public void testConstructor() {
         AbsSavedState superState = new AbsSavedStateImpl(Parcel.obtain());
-        assertNull(superState.getSuperState());
+        assertSame(AbsSavedState.EMPTY_STATE, superState.getSuperState());
 
         AbsSavedState s = new AbsSavedStateImpl(superState);
         assertSame(superState, s.getSuperState());
@@ -64,22 +64,21 @@ public class AbsSavedStateTest {
         Parcel source = Parcel.obtain();
         source.writeParcelable(superState, 0);
         source.setDataPosition(0);
-        s = new AbsSavedStateImpl(source);
+        s = new AbsSavedStateImpl(source, AbsSavedStateImpl.class.getClassLoader());
         assertTrue(s.getSuperState() instanceof AbsSavedState);
 
         source = Parcel.obtain();
         s = new AbsSavedStateImpl(source);
         assertSame(AbsSavedState.EMPTY_STATE, s.getSuperState());
 
-        ClassLoader loader = AbsSavedState.class.getClassLoader();
         source = Parcel.obtain();
         source.writeParcelable(superState, 0);
         source.setDataPosition(0);
-        s = new AbsSavedStateImpl(source, loader);
+        s = new AbsSavedStateImpl(source, AbsSavedStateImpl.class.getClassLoader());
         assertTrue(s.getSuperState() instanceof AbsSavedState);
 
         source = Parcel.obtain();
-        s = new AbsSavedStateImpl(source, loader);
+        s = new AbsSavedStateImpl(source, AbsSavedState.class.getClassLoader());
         assertSame(AbsSavedState.EMPTY_STATE, s.getSuperState());
     }
 
@@ -99,17 +98,20 @@ public class AbsSavedStateTest {
         parcel.setDataPosition(0);
         AbsSavedState unparceled = AbsSavedState.CREATOR.createFromParcel(parcel);
         assertNotNull(unparceled);
-        assertEquals(AbsSavedState.EMPTY_STATE, unparceled.getSuperState());
+        assertNull(unparceled.getSuperState());
 
         AbsSavedState stateWithSuper = new AbsSavedStateImpl(state);
         parcel = Parcel.obtain();
         stateWithSuper.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        try {
-            AbsSavedState.CREATOR.createFromParcel(parcel);
-            fail("Expected IllegalStateException");
-        } catch (IllegalStateException e) {
-            // Expected.
+        if (AbsSavedState.CREATOR instanceof Parcelable.ClassLoaderCreator) {
+            try {
+                ((Parcelable.ClassLoaderCreator) AbsSavedState.CREATOR).createFromParcel(parcel,
+                        AbsSavedStateImpl.class.getClassLoader());
+                fail("Expected IllegalStateException");
+            } catch (IllegalStateException e) {
+                // Expected.
+            }
         }
     }
 
@@ -136,10 +138,16 @@ public class AbsSavedStateTest {
             super(source, loader);
         }
 
-        public static final Creator<AbsSavedStateImpl> CREATOR = new Creator<AbsSavedStateImpl>() {
+        public static final Creator<AbsSavedStateImpl> CREATOR =
+                new ClassLoaderCreator<AbsSavedStateImpl>() {
             @Override
             public AbsSavedStateImpl createFromParcel(Parcel source) {
                 return new AbsSavedStateImpl(source);
+            }
+
+            @Override
+            public AbsSavedStateImpl createFromParcel(Parcel source, ClassLoader loader) {
+                return new AbsSavedStateImpl(source, loader);
             }
 
             @Override
