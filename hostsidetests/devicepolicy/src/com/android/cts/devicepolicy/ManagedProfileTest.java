@@ -398,6 +398,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     /** Tests for the API helper class. */
     public void testCurrentApiHelper() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CurrentApiHelperTest",
                 mProfileUserId);
     }
