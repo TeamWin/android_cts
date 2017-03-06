@@ -106,6 +106,7 @@ final class Helper {
         buffer.append("\n").append(prefix)
             .append('#').append(childId).append(':')
             .append("resId=").append(node.getIdEntry())
+            .append(" class=").append(node.getClassName())
             .append(" text=").append(node.getText())
             .append(" #children=").append(childrenSize);
 
@@ -124,7 +125,7 @@ final class Helper {
     }
 
     /**
-     * Gets a node give its Android resource id, or {@code null} if not found.
+     * Gets a node given its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(AssistStructure structure, String resourceId) {
         Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
@@ -141,7 +142,7 @@ final class Helper {
     }
 
     /**
-     * Gets a node give its Android resource id, or {@code null} if not found.
+     * Gets a node given its Android resource id, or {@code null} if not found.
      */
     static ViewNode findNodeByResourceId(ViewNode node, String resourceId) {
         if (resourceId.equals(node.getIdEntry())) {
@@ -151,6 +152,42 @@ final class Helper {
         if (childrenSize > 0) {
             for (int i = 0; i < childrenSize; i++) {
                 final ViewNode found = findNodeByResourceId(node.getChildAt(i), resourceId);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node given its expected text, or {@code null} if not found.
+     */
+    static ViewNode findNodeByText(AssistStructure structure, String text) {
+        Log.v(TAG, "Parsing request for activity " + structure.getActivityComponent());
+        final int nodes = structure.getWindowNodeCount();
+        for (int i = 0; i < nodes; i++) {
+            final WindowNode windowNode = structure.getWindowNodeAt(i);
+            final ViewNode rootNode = windowNode.getRootViewNode();
+            final ViewNode node = findNodeByText(rootNode, text);
+            if (node != null) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a node given its expected text, or {@code null} if not found.
+     */
+    static ViewNode findNodeByText(ViewNode node, String text) {
+        if (text.equals(node.getText())) {
+            return node;
+        }
+        final int childrenSize = node.getChildCount();
+        if (childrenSize > 0) {
+            for (int i = 0; i < childrenSize; i++) {
+                final ViewNode found = findNodeByText(node.getChildAt(i), text);
                 if (found != null) {
                     return found;
                 }
@@ -301,6 +338,48 @@ final class Helper {
             throw new AssertionError("assertNumberOfChildren() for " + resourceId
                     + " failed: expected " + expected + ", got " + actual);
         }
+    }
+
+    /**
+     * Asserts the number of children in the Assist structure.
+     */
+    static void assertNumberOfChildren(AssistStructure structure, int expected) {
+        assertWithMessage("wrong number of nodes").that(structure.getWindowNodeCount())
+                .isEqualTo(1);
+        final int actual = getNumberNodes(structure);
+        if (actual != expected) {
+            dumpStructure("assertNumberOfChildren()", structure);
+            throw new AssertionError("assertNumberOfChildren() for structure failed: expected "
+                    + expected + ", got " + actual);
+        }
+    }
+
+    /**
+     * Gets the total number of nodes in an structure, including all descendants.
+     */
+    static int getNumberNodes(AssistStructure structure) {
+        int count = 0;
+        final int nodes = structure.getWindowNodeCount();
+        for (int i = 0; i < nodes; i++) {
+            final WindowNode windowNode = structure.getWindowNodeAt(i);
+            final ViewNode rootNode = windowNode.getRootViewNode();
+            count += getNumberNodes(rootNode);
+        }
+        return count;
+    }
+
+    /**
+     * Gets the total number of nodes in an node, including all descendants and the node itself.
+     */
+    private static int getNumberNodes(ViewNode node) {
+        int count = 1;
+        final int childrenSize = node.getChildCount();
+        if (childrenSize > 0) {
+            for (int i = 0; i < childrenSize; i++) {
+                count += getNumberNodes(node.getChildAt(i));
+            }
+        }
+        return count;
     }
 
     private Helper() {

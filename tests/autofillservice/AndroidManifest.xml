@@ -36,6 +36,7 @@
         <activity android:name=".DatePickerSpinnerActivity" />
         <activity android:name=".TimePickerClockActivity" />
         <activity android:name=".TimePickerSpinnerActivity" />
+        <activity android:name=".FatActivity" />
 
         <service
             android:name=".InstrumentedAutoFillService"

@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
@@ -26,6 +27,7 @@ import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.ID_PASSWORD;
 import static android.autofillservice.cts.LoginActivity.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
+import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
@@ -822,7 +824,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.addResponse((CannedFillResponse) null);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mLoginActivity.onUsername((v) -> {
+            v.requestFocus();
+        });
 
         // Assert input text on fill request:
         final FillRequest fillRequest = replier.getNextFillRequest();
@@ -833,5 +837,51 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("No TYPE_TEXT_VARIATION_PASSWORD on %s", password.getInputType())
                 .that(password.getInputType() & TYPE_TEXT_VARIATION_PASSWORD)
                 .isEqualTo(TYPE_TEXT_VARIATION_PASSWORD);
+    }
+
+    @Test
+    public void testNoContainers() throws Exception {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse((CannedFillResponse) null);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+        sUiBot.assertNoDatasets();
+
+        final FillRequest fillRequest = replier.getNextFillRequest();
+
+        // Assert it only has 1 root view with 8 "leaf" nodes:
+        // 1.text view for app title
+        // 2.username text label
+        // 3.username text field
+        // 4.password text label
+        // 5.password text field
+        // 6.output text field
+        // 7.clear button
+        // 8.login button
+        //
+        // But it also has an intermediate container (for username) that should be included because
+        // it has a resource id.
+
+        assertNumberOfChildren(fillRequest.structure, 10);
+
+        // Make sure container with a resource id was included:
+        final ViewNode usernameContainer =
+                findNodeByResourceId(fillRequest.structure, ID_USERNAME_CONTAINER);
+        assertThat(usernameContainer).isNotNull();
+        assertThat(usernameContainer.getChildCount()).isEqualTo(2);
+
+        // Sanity checks.
+        replier.assertNumberUnhandledFillRequests(0);
+        replier.assertNumberUnhandledSaveRequests(0);
+
+        // Other sanity checks.
+        waitUntilDisconnected();
     }
 }
