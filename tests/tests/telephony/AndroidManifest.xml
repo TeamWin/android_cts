@@ -106,6 +106,16 @@
 
         </service>
 
+        <service
+            android:name=".PermissionlessVisualVoicemailService"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.VisualVoicemailService"/>
+            </intent-filter>
+
+        </service>
+
         <activity android:name="android.telephony.cts.StubDialerActvity">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL"/>

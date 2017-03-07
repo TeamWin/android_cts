@@ -18,6 +18,7 @@ package android.telephony.cts;
 
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -36,6 +37,7 @@ import android.support.annotation.Nullable;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.telephony.VisualVoicemailService;
 import android.telephony.VisualVoicemailSms;
@@ -89,6 +91,14 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
                     .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
             mPhoneNumber = telecomManager.getLine1Number(mPhoneAccountHandle);
         }
+
+        PackageManager packageManager = mContext.getPackageManager();
+        packageManager.setComponentEnabledSetting(
+                new ComponentName(mContext, MockVisualVoicemailService.class),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        packageManager.setComponentEnabledSetting(
+                new ComponentName(mContext, PermissionlessVisualVoicemailService.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
     }
 
     @Override
@@ -103,6 +113,55 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             }
         }
         super.tearDown();
+    }
+
+    public void testPermissionlessService_ignored() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+
+        PackageManager packageManager = mContext.getPackageManager();
+        packageManager.setComponentEnabledSetting(
+                new ComponentName(mContext, MockVisualVoicemailService.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        packageManager.setComponentEnabledSetting(
+                new ComponentName(mContext, PermissionlessVisualVoicemailService.class),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        String clientPrefix = "//CTSVVM";
+        String text =  "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1";
+
+        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle,
+                new VisualVoicemailSmsFilterSettings.Builder()
+                        .setClientPrefix(clientPrefix)
+                        .build());
+
+        try {
+            VisualVoicemailService
+                    .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, (short) 0,
+                            text, null);
+            fail("SecurityException expected");
+        } catch (SecurityException e){
+            // Expected
+        }
+
+        CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
+        PermissionlessVisualVoicemailService.setSmsFuture(future);
+
+        setupSmsReceiver();
+
+        SmsManager.getDefault().sendTextMessage(mPhoneNumber, null, text, null, null);
+
+        mSmsReceiver.assertReceived(EVENT_RECEIVED_TIMEOUT_MILLIS);
+        try {
+            future.get(EVENT_NOT_RECEIVED_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            throw new RuntimeException("Unexpected visual voicemail SMS received");
+        } catch (TimeoutException e) {
+            // expected
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public void testFilter() {
