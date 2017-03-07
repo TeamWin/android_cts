@@ -19,7 +19,6 @@ package com.android.cts.encryptionapp;
 import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
 import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -32,8 +31,6 @@ import android.os.SystemClock;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -42,9 +39,6 @@ import android.view.KeyEvent;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-// for another encryption ui setting package
-import android.content.pm.ResolveInfo;
 
 public class EncryptionAppTest extends InstrumentationTestCase {
     private static final String TAG = "EncryptionAppTest";
@@ -65,9 +59,6 @@ public class EncryptionAppTest extends InstrumentationTestCase {
     private UiDevice mDevice;
     private AwareActivity mActivity;
 
-    // for another encryption ui setting package
-    private String mEncryptionSettingPackage = "com.android.settings";
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -75,13 +66,6 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mCe = getInstrumentation().getContext();
         mDe = mCe.createDeviceProtectedStorageContext();
         mPm = mCe.getPackageManager();
-
-        final Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        ResolveInfo rInfo = mPm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        if (rInfo != null) {
-            mEncryptionSettingPackage = rInfo.activityInfo.packageName;
-        }
 
         mDevice = UiDevice.getInstance(getInstrumentation());
         assertNotNull(mDevice);
@@ -108,44 +92,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Set a PIN for this user
-        final Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        mActivity.startActivity(intent);
-        mDevice.waitForIdle();
-
-        // Pick PIN from the option list
-        UiObject view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/lock_pin"));
-        assertTrue("lock_pin", view.waitForExists(TIMEOUT));
-        view.click();
-        mDevice.waitForIdle();
-
-        // Ignore any interstitial options
-        view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/encrypt_dont_require_password"));
-        if (view.waitForExists(TIMEOUT)) {
-            view.click();
-            mDevice.waitForIdle();
-        }
-
-        // Yes, we really want to
-        view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/next_button"));
-        if (view.waitForExists(TIMEOUT)) {
-            view.click();
-            mDevice.waitForIdle();
-        }
-
-        // Set our PIN
-        view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/password_entry"));
-        assertTrue("password_entry", view.waitForExists(TIMEOUT));
-
-        // Enter it twice to confirm
-        enterTestPin();
-        enterTestPin();
-
-        mDevice.pressBack();
+        mDevice.executeShellCommand("locksettings set-pin 12345");
     }
 
     public void testTearDown() throws Exception {
@@ -157,48 +104,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Clear PIN for this user
-        final Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        mActivity.startActivity(intent);
-        mDevice.waitForIdle();
-
-        // Enter current PIN
-        UiObject view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/password_entry"));
-        if (!view.waitForExists(TIMEOUT)) {
-            // Odd, maybe there is a crash dialog showing; try dismissing it
-            mDevice.pressBack();
-            mDevice.waitForIdle();
-
-            assertTrue("password_entry", view.waitForExists(TIMEOUT));
-        }
-
-        enterTestPin();
-
-        // Set back to "none"
-        view = new UiObject(new UiSelector()
-                .resourceId(mEncryptionSettingPackage + ":id/lock_none"));
-        assertTrue("lock_none", view.waitForExists(TIMEOUT));
-        view.click();
-        mDevice.waitForIdle();
-
-        // Yes, we really want "none" if prompted again
-        view = new UiObject(new UiSelector()
-                .resourceId("com.android.settings:id/lock_none"));
-        if (view.waitForExists(TIMEOUT)) {
-            view.click();
-            mDevice.waitForIdle();
-        }
-
-        // Yes, we really want to
-        view = new UiObject(new UiSelector()
-                .resourceId("android:id/button1"));
-        if (view.waitForExists(TIMEOUT)) {
-            view.click();
-            mDevice.waitForIdle();
-        }
-
-        mDevice.pressBack();
+        mDevice.executeShellCommand("locksettings clear --old 12345");
     }
 
     public void doBootCountBefore() throws Exception {
