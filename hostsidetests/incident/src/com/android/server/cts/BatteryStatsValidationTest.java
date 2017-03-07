@@ -31,6 +31,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             = "com.android.server.cts.device.batterystats";
     private static final String DEVICE_SIDE_JOB_COMPONENT
             = "com.android.server.cts.device.batterystats/.SimpleJobService";
+    private static final String DEVICE_SIDE_SYNC_COMPONENT
+            = "com.android.server.cts.device.batterystats.provider/"
+            + "com.android.server.cts.device.batterystats";
 
     @Override
     protected void tearDown() throws Exception {
@@ -134,6 +137,26 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         // Should be approximately 3000 ms. Use 0.8x and 2x as the lower and upper
         // bounds to account for possible errors due to thread scheduling and cpu load.
         assertValueRange("jb", DEVICE_SIDE_JOB_COMPONENT, 5, (long) (3000 * 0.8), 3000 * 2);
+        batteryOffScreenOn();
+    }
+
+    /**
+     * Tests the total duration and # of syncs reported for sync activities.
+     */
+    public void testSyncs() throws Exception {
+        batteryOnScreenOff();
+
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsSyncTest", "testRunSyncs");
+
+        // First, check the count, which should be 10.
+        // (It could be 11, if the initial sync actually happened before getting cancelled.)
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 10L, 11L);
+
+        // Should be approximately, but at least 10 seconds. Use 2x as the upper
+        // bounds to account for possible errors due to thread scheduling and cpu load.
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 5, 10000, 10000 * 2);
         batteryOffScreenOn();
     }
 
