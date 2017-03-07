@@ -79,6 +79,8 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
         assertEquals("foo.bar.Activity", speakingService.getSettingsActivityName());
         assertEquals("Some description", speakingService.loadDescription(
                 getInstrumentation().getContext().getPackageManager()));
+        assertEquals("Some summary", speakingService.loadSummary(
+                getInstrumentation().getContext().getPackageManager()));
         assertNotNull(speakingService.getResolveInfo());
     }
 }
