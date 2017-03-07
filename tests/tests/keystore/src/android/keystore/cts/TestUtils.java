@@ -846,8 +846,6 @@ abstract class TestUtils extends Assert {
         if (KeyProperties.KEY_ALGORITHM_EC.equalsIgnoreCase(keyAlgorithm)) {
             return new KeyProtection.Builder(KeyProperties.PURPOSE_SIGN)
                     .setDigests(digest)
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .build();
         } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
             String padding = getSignatureAlgorithmPadding(signatureAlgorithm);
