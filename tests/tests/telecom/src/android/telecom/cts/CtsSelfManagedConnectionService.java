@@ -94,12 +94,14 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
     }
 
     @Override
-    public void onCreateIncomingConnectionFailed(ConnectionRequest request) {
+    public void onCreateIncomingConnectionFailed(PhoneAccountHandle connectionManagerHandle,
+                                                 ConnectionRequest request) {
         mLocks[CREATE_INCOMING_CONNECTION_FAILED_LOCK].countDown();
     }
 
     @Override
-    public void onCreateOutgoingConnectionFailed(ConnectionRequest request) {
+    public void onCreateOutgoingConnectionFailed(PhoneAccountHandle connectionManagerHandle,
+                                                 ConnectionRequest request) {
         mLocks[CREATE_OUTGOING_CONNECTION_FAILED_LOCK].countDown();
     }
 
