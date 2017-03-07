@@ -90,16 +90,9 @@ public class FontResultTest {
         assertEquals(STYLE, result.getStyle());
     }
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void testConstructorWithNullFileDescriptor() {
-        try {
-            // WHEN we create a result with a null file descriptor
-            new FontResult(null, TTC_INDEX, FONT_VARIATION_SETTINGS, STYLE);
-        } catch (NullPointerException e) {
-            // THEN we expect an exception to be raised.
-            return;
-        }
-        fail();
+        new FontResult(null, TTC_INDEX, FONT_VARIATION_SETTINGS, STYLE);
     }
 
     @Test
