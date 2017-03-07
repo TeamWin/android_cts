@@ -75,6 +75,9 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
+# include both the 32 and 64 bit versions
+LOCAL_MULTILIB := both
+
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     cts-sensors-tests \

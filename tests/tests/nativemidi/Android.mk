@@ -44,6 +44,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libnativemidi_jni
 #LOCAL_SHARED_LIBRARIES := libnativemidi_jni
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_PACKAGE_NAME := CtsNativeMidiTestCases
+LOCAL_MULTILIB := both
 
 #LOCAL_SDK_VERSION := current
 

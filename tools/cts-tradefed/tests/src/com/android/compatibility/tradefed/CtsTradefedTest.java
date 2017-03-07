@@ -36,6 +36,20 @@ public class CtsTradefedTest extends TestCase {
     private static final String SUITE_PLAN = "cts";
     private static final String DYNAMIC_CONFIG_URL = "";
 
+    private String mOriginalProperty = null;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mOriginalProperty = System.getProperty(PROPERTY_NAME);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        System.setProperty(PROPERTY_NAME, mOriginalProperty);
+        super.tearDown();
+    }
+
     public void testSuiteInfoLoad() throws Exception {
         // Test the values in the manifest can be loaded
         File root = FileUtil.createTempDir("root");
@@ -53,6 +67,5 @@ public class CtsTradefedTest extends TestCase {
         assertEquals("Incorrect suite full name", SUITE_FULL_NAME, helper.getSuiteFullName());
         assertEquals("Incorrect suite name", SUITE_NAME, helper.getSuiteName());
         FileUtil.recursiveDelete(root);
-        System.clearProperty(PROPERTY_NAME);
     }
 }
