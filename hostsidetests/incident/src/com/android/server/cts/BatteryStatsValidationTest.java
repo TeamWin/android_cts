@@ -43,6 +43,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
     }
 
+    /** Smallest possible HTTP header. */
+    private static final int MIN_HTTP_HEADER_BYTES = 26;
+
     @Override
     protected void tearDown() throws Exception {
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
@@ -178,6 +181,53 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         // Should be approximately, but at least 10 seconds. Use 2x as the upper
         // bounds to account for possible errors due to thread scheduling and cpu load.
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 5, 10000, 10000 * 2);
+    }
+
+    /**
+     * Tests the total bytes reported for downloading over wifi.
+     */
+    public void testWifiDownload() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
+                "testForegroundDownload");
+        long foregroundBytes = getDownloadedBytes();
+        assertTrue(foregroundBytes > 0);
+        long min = foregroundBytes + MIN_HTTP_HEADER_BYTES;
+        long max = foregroundBytes + (10 * 1024); // Add some fuzzing.
+        assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
+        assertValueRange("nt", "", 11, 1, 40); // wifi_bytes_tx
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
+                "testBackgroundDownload");
+        long backgroundBytes = getDownloadedBytes();
+        assertTrue(backgroundBytes > 0);
+        min += backgroundBytes + MIN_HTTP_HEADER_BYTES;
+        max += backgroundBytes + (10 * 1024);
+        assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
+        assertValueRange("nt", "", 11, 2, 80); // wifi_bytes_tx
+
+        batteryOffScreenOn();
+    }
+
+    /**
+     * Tests the total bytes reported for uploading over wifi.
+     */
+    public void testWifiUpload() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
+                "testForegroundUpload");
+        int min = MIN_HTTP_HEADER_BYTES + (2 * 1024);
+        int max = min + (6 * 1024); // Add some fuzzing.
+        assertValueRange("nt", "", 7, min, max); // wifi_bytes_tx
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
+                "testBackgroundUpload");
+        assertValueRange("nt", "", 7, min * 2, max * 2); // wifi_bytes_tx
+
         batteryOffScreenOn();
     }
 
@@ -218,5 +268,22 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             }
         }
         return value;
+    }
+
+    /**
+     * Returns the bytes downloaded for the wifi transfer download tests.
+     */
+    private long getDownloadedBytes() throws Exception {
+        String log = getDevice().executeShellCommand(
+                "logcat -d -s BatteryStatsWifiTransferTests -e '\\d+'");
+        String[] lines = log.split("\n");
+        for (int i = lines.length - 1; i >= 0; i--) {
+            String[] parts = lines[i].split(":");
+            String num = parts[parts.length - 1].trim();
+            if (num.matches("\\d+")) {
+                return Integer.parseInt(num);
+            }
+        }
+        return 0;
     }
 }
