@@ -260,8 +260,9 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
         }
-        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
-        assertEquals(PACKAGE, telephonyManager.getVisualVoicemailPackageName(mPhoneAccountHandle));
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class)
+                .createForPhoneAccountHandle(mPhoneAccountHandle);
+        assertEquals(PACKAGE, telephonyManager.getVisualVoicemailPackageName());
     }
 
     public void testVoicemailRingtoneSettings(){
