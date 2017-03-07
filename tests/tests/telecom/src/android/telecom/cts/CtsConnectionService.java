@@ -180,6 +180,7 @@ public class CtsConnectionService extends ConnectionService {
         Log.i(LOG_TAG, "Service has been unbound");
         sServiceUnBoundLatch.countDown();
         sIsBound = false;
+        sConnectionService = null;
         return super.onUnbind(intent);
     }
 
