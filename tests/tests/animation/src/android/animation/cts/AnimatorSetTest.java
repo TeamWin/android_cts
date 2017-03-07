@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -470,6 +471,8 @@ public class AnimatorSetTest {
 
         mActivityRule.runOnUiThread(() -> {
             set.start();
+            verify(setListener, times(0)).onAnimationEnd(any(AnimatorSet.class),
+                    any(boolean.class));
         });
         verify(setListener, within(100)).onAnimationEnd(set, false);
         verify(listener1, times(1)).onAnimationEnd(a1, false);
