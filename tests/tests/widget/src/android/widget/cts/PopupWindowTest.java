@@ -519,7 +519,7 @@ public class PopupWindowTest {
     private void verifyPosition(PopupWindow popup, int anchorId,
             int contentEdgeX, int operatorX, int anchorEdgeX,
             int contentEdgeY, int operatorY, int anchorEdgeY) throws Throwable {
-        verifyPosition(popup, anchorId,
+        verifyPosition(popup, mActivity.findViewById(anchorId),
                 contentEdgeX, operatorX, anchorEdgeX,
                 contentEdgeY, operatorY, anchorEdgeY,
                 0, 0, Gravity.TOP | Gravity.START);
@@ -529,8 +529,25 @@ public class PopupWindowTest {
             int contentEdgeX, int operatorX, int anchorEdgeX,
             int contentEdgeY, int operatorY, int anchorEdgeY,
             int offsetX, int offsetY, int gravity) throws Throwable {
+        verifyPosition(popup, mActivity.findViewById(anchorId),
+                contentEdgeX, operatorX, anchorEdgeX,
+                contentEdgeY, operatorY, anchorEdgeY, offsetX, offsetY, gravity);
+    }
+
+    private void verifyPosition(PopupWindow popup, View anchor,
+            int contentEdgeX, int operatorX, int anchorEdgeX,
+            int contentEdgeY, int operatorY, int anchorEdgeY) throws Throwable {
+        verifyPosition(popup, anchor,
+                contentEdgeX, operatorX, anchorEdgeX,
+                contentEdgeY, operatorY, anchorEdgeY,
+                0, 0, Gravity.TOP | Gravity.START);
+    }
+
+    private void verifyPosition(PopupWindow popup, View anchor,
+            int contentEdgeX, int operatorX, int anchorEdgeX,
+            int contentEdgeY, int operatorY, int anchorEdgeY,
+            int offsetX, int offsetY, int gravity) throws Throwable {
         final View content = popup.getContentView();
-        final View anchor = mActivity.findViewById(anchorId);
 
         mActivityRule.runOnUiThread(() -> popup.showAsDropDown(
                 anchor, offsetX, offsetY, gravity));
@@ -1375,6 +1392,100 @@ public class PopupWindowTest {
                 () -> container.addView(anchor, anchorLayoutParams),
                 false  /* force layout */);
         assertPopupLocation(originalLocation, deltaX * 2, deltaY * 2);
+    }
+
+    @Test
+    public void testAnchorInPopup() throws Throwable {
+        mPopupWindow = createPopupWindow(
+                mActivity.getLayoutInflater().inflate(R.layout.popup_window, null));
+
+        final PopupWindow subPopup =
+                createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
+
+        // Check alignment without overlapping the anchor.
+        assertFalse(subPopup.getOverlapAnchor());
+
+        verifySubPopupPosition(subPopup, R.id.anchor_upper_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        verifySubPopupPosition(subPopup, R.id.anchor_middle_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+
+        verifySubPopupPosition(subPopup, R.id.anchor_upper, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        verifySubPopupPosition(subPopup, R.id.anchor_middle, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, BOTTOM);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, TOP);
+
+        verifySubPopupPosition(subPopup, R.id.anchor_upper_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, BOTTOM);
+        verifySubPopupPosition(subPopup, R.id.anchor_middle_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, BOTTOM);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, TOP);
+
+        // Check alignment while overlapping the anchor.
+        subPopup.setOverlapAnchor(true);
+
+        verifySubPopupPosition(subPopup, R.id.anchor_upper_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_middle_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower_left, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, BOTTOM);
+
+        verifySubPopupPosition(subPopup, R.id.anchor_upper, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_middle, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower, R.id.anchor_lower_right,
+                LEFT, EQUAL_TO, LEFT, BOTTOM, EQUAL_TO, BOTTOM);
+
+        verifySubPopupPosition(subPopup, R.id.anchor_upper_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_middle_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, TOP, EQUAL_TO, TOP);
+        verifySubPopupPosition(subPopup, R.id.anchor_lower_right, R.id.anchor_lower_right,
+                RIGHT, EQUAL_TO, RIGHT, BOTTOM, EQUAL_TO, BOTTOM);
+
+        // Check that scrolling scrolls the sub popup along with the main popup.
+        showPopup(R.id.anchor_middle);
+
+        mActivityRule.runOnUiThread(() -> subPopup.showAsDropDown(
+                mPopupWindow.getContentView().findViewById(R.id.anchor_middle)));
+        mInstrumentation.waitForIdleSync();
+
+        final int[] popupLocation = mPopupWindow.getContentView().getLocationOnScreen();
+        final int[] subPopupLocation = subPopup.getContentView().getLocationOnScreen();
+
+        final int deltaX = 20;
+        final int deltaY = 30;
+
+        final ViewGroup container = (ViewGroup) mActivity.findViewById(R.id.main_container);
+        WidgetTestUtils.runOnMainAndLayoutSync(
+                mActivityRule,
+                subPopup.getContentView().getRootView(),
+                () -> container.scrollBy(deltaX, deltaY),
+                false  /* force layout */);
+
+        final int[] newPopupLocation = mPopupWindow.getContentView().getLocationOnScreen();
+        assertEquals(popupLocation[0] - deltaX, newPopupLocation[0]);
+        assertEquals(popupLocation[1] - deltaY, newPopupLocation[1]);
+
+        final int[] newSubPopupLocation = subPopup.getContentView().getLocationOnScreen();
+        assertEquals(subPopupLocation[0] - deltaX, newSubPopupLocation[0]);
+        assertEquals(subPopupLocation[1] - deltaY, newSubPopupLocation[1]);
+    }
+
+    private void verifySubPopupPosition(PopupWindow subPopup, int mainAnchorId, int subAnchorId,
+            int contentEdgeX, int operatorX, int anchorEdgeX,
+            int contentEdgeY, int operatorY, int anchorEdgeY) throws Throwable {
+        showPopup(mainAnchorId);
+        verifyPosition(subPopup, mPopupWindow.getContentView().findViewById(subAnchorId),
+                contentEdgeX, operatorX, anchorEdgeX, contentEdgeY, operatorY, anchorEdgeY);
+        dismissPopup();
     }
 
     private void assertPopupLocation(int[] originalLocation, int deltaX, int deltaY) {
