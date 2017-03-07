@@ -21,7 +21,7 @@ import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.view.View;
-import android.view.autofill.AutoFillManager.AutofillCallback;
+import android.view.autofill.AutofillManager.AutofillCallback;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

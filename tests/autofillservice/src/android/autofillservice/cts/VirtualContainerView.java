@@ -34,8 +34,8 @@ import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStructure;
-import android.view.autofill.AutoFillManager;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillManager;
+import android.view.autofill.AutofillValue;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -51,7 +51,7 @@ public class VirtualContainerView extends View {
 
     private final ArrayList<Line> mLines = new ArrayList<>();
     private final SparseArray<Item> mItems = new SparseArray<>();
-    private final AutoFillManager mAfm;
+    private final AutofillManager mAfm;
 
     private Line mFocusedLine;
 
@@ -68,7 +68,7 @@ public class VirtualContainerView extends View {
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        mAfm = context.getSystemService(AutoFillManager.class);
+        mAfm = context.getSystemService(AutofillManager.class);
 
         mTextPaint = new Paint();
 
@@ -86,7 +86,7 @@ public class VirtualContainerView extends View {
     }
 
     @Override
-    public void autoFillVirtual(int id, AutoFillValue value) {
+    public void autofillVirtual(int id, AutofillValue value) {
         Log.d(TAG, "autofillVirtual: id=" + id + ", value=" + value);
         final Item item = mItems.get(id);
         if (item == null) {
@@ -150,7 +150,7 @@ public class VirtualContainerView extends View {
     }
 
     @Override
-    public void onProvideAutoFillVirtualStructure(ViewStructure structure, int flags) {
+    public void onProvideAutofillVirtualStructure(ViewStructure structure, int flags) {
         Log.d(TAG, "onProvideAutofillVirtualStructure(): flags = " + flags);
         structure.setClassName(getClass().getName());
         final int childrenSize = mItems.size();
@@ -161,15 +161,15 @@ public class VirtualContainerView extends View {
             final Item item = mItems.valueAt(i);
             Log.d(TAG, "Adding new child" + syncMsg + " at index " + index + ": " + item);
             final ViewStructure child = mSync
-                    ? structure.newChildForAutoFill(index, item.id, 0)
-                    : structure.asyncNewChildForAutoFill(index, item.id, 0);
+                    ? structure.newChildForAutofill(index, item.id, 0)
+                    : structure.asyncNewChildForAutofill(index, item.id, 0);
             child.setSanitized(item.sanitized);
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
             child.setClassName(className);
             child.setId(1000 + index, packageName, "id", item.resourceId);
             child.setText(item.text);
-            child.setAutoFillValue(AutoFillValue.forText(item.text));
+            child.setAutofillValue(AutofillValue.forText(item.text));
             child.setFocused(item.line.focused);
             if (!mSync) {
                 Log.d(TAG, "Commiting virtual child");
@@ -225,9 +225,9 @@ public class VirtualContainerView extends View {
             Log.d(TAG, "changeFocus() on " + text.id + ": " + focused + " bounds: " + bounds);
             this.focused = focused;
             if (focused) {
-                mAfm.startAutoFillRequestOnVirtualView(VirtualContainerView.this, text.id, bounds);
+                mAfm.startAutofillRequestOnVirtualView(VirtualContainerView.this, text.id, bounds);
             } else {
-                mAfm.stopAutoFillRequestOnVirtualView(VirtualContainerView.this, text.id);
+                mAfm.stopAutofillRequestOnVirtualView(VirtualContainerView.this, text.id);
             }
         }
 

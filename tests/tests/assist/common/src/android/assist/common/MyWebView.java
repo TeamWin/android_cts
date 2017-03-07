@@ -43,17 +43,17 @@ public final class MyWebView extends WebView {
     public void onProvideStructure(ViewStructure structure) {
         super.onProvideStructure(structure);
 
-        onProvideAutoFillStructureForAssistOrAutoFill(structure);
+        onProvideStructureForAssistOrAutofill(structure);
     }
 
     @Override
-    public void onProvideAutoFillStructure(ViewStructure structure, int flags) {
-        super.onProvideAutoFillStructure(structure, flags);
+    public void onProvideAutofillStructure(ViewStructure structure, int flags) {
+        super.onProvideAutofillStructure(structure, flags);
 
-        onProvideAutoFillStructureForAssistOrAutoFill(structure);
+        onProvideStructureForAssistOrAutofill(structure);
     }
 
-    private void onProvideAutoFillStructureForAssistOrAutoFill(ViewStructure structure) {
+    private void onProvideStructureForAssistOrAutofill(ViewStructure structure) {
         if (mUrl != null) {
             structure.setUrl(mUrl);
         }

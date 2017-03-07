@@ -19,7 +19,7 @@ package android.autofillservice.cts;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
-import android.view.autofill.AutoFillManager;
+import android.view.autofill.AutofillManager;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -64,18 +64,18 @@ abstract class AbstractAutoFillActivity extends Activity {
      */
     protected MyAutofillCallback registerCallback() {
         assertWithMessage("already registered").that(mCallback).isNull();
-        final AutoFillManager afm = getSystemService(AutoFillManager.class);
+        final AutofillManager afm = getSystemService(AutofillManager.class);
         mCallback = new MyAutofillCallback();
         afm.registerCallback(mCallback);
         return mCallback;
     }
 
     /**
-     * Unregister the callback from the {@link AutoFillManager}.
+     * Unregister the callback from the {@link AutofillManager}.
      */
     protected void unregisterCallback() {
         assertWithMessage("not registered").that(mCallback).isNotNull();
-        getSystemService(AutoFillManager.class).unregisterCallback(mCallback);
+        getSystemService(AutofillManager.class).unregisterCallback(mCallback);
         mCallback = null;
     }
 }

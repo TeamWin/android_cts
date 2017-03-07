@@ -27,7 +27,7 @@ import android.support.annotation.NonNull;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -119,9 +119,9 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
      */
     private void checkFieldBehavior(@NonNull EditText field, boolean expectUI) throws Exception {
         if (expectUI) {
-            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+            assertThat(field.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
         } else {
-            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+            assertThat(field.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_MANUAL);
         }
 
         // Make sure the requestFocus triggers a change
@@ -140,14 +140,14 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
             replier.addResponse(new CannedFillResponse.Builder()
                     .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                            .setField("firstLevelDefault", AutoFillValue.forText("filled"))
-                            .setField("firstLevelManual", AutoFillValue.forText("filled"))
-                            .setField("firstLevelAuto", AutoFillValue.forText("filled"))
-                            .setField("firstLevelInherit", AutoFillValue.forText("filled"))
-                            .setField("manualContainerDefault", AutoFillValue.forText("filled"))
-                            .setField("manualContainerManual", AutoFillValue.forText("filled"))
-                            .setField("manualContainerAuto", AutoFillValue.forText("filled"))
-                            .setField("manualContainerInherit", AutoFillValue.forText("filled"))
+                            .setField("firstLevelDefault", AutofillValue.forText("filled"))
+                            .setField("firstLevelManual", AutofillValue.forText("filled"))
+                            .setField("firstLevelAuto", AutofillValue.forText("filled"))
+                            .setField("firstLevelInherit", AutofillValue.forText("filled"))
+                            .setField("manualContainerDefault", AutofillValue.forText("filled"))
+                            .setField("manualContainerManual", AutofillValue.forText("filled"))
+                            .setField("manualContainerAuto", AutofillValue.forText("filled"))
+                            .setField("manualContainerInherit", AutofillValue.forText("filled"))
                             .setPresentation(createPresentation("dataset"))
                             .build())
                     .build());
@@ -181,44 +181,44 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
     @Test
     public void checkDefaultValue() {
-        assertThat(mFirstLevelDefault.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
+        assertThat(mFirstLevelDefault.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_INHERIT);
     }
 
     @Test
     public void checkInheritValue() {
-        assertThat(mFirstLevelInherit.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
+        assertThat(mFirstLevelInherit.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_INHERIT);
     }
 
     @Test
     public void checkAutoValue() {
-        assertThat(mFirstLevelAuto.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+        assertThat(mFirstLevelAuto.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
     }
 
     @Test
     public void checkManualValue() {
-        assertThat(mFirstLevelManual.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+        assertThat(mFirstLevelManual.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_MANUAL);
     }
 
     @Test
     public void checkNestedDefaultValue() {
-        assertThat(mManualContainerDefault.getAutoFillMode()).isEqualTo(
-                View.AUTO_FILL_MODE_INHERIT);
+        assertThat(mManualContainerDefault.getAutofillMode()).isEqualTo(
+                View.AUTOFILL_MODE_INHERIT);
     }
 
     @Test
     public void checkNestedInheritValue() {
-        assertThat(mManualContainerInherit.getAutoFillMode()).isEqualTo(
-                View.AUTO_FILL_MODE_INHERIT);
+        assertThat(mManualContainerInherit.getAutofillMode()).isEqualTo(
+                View.AUTOFILL_MODE_INHERIT);
     }
 
     @Test
     public void checkNestedAutoValue() {
-        assertThat(mManualContainerAuto.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+        assertThat(mManualContainerAuto.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
     }
 
     @Test
     public void checkNestedManualValue() {
-        assertThat(mManualContainerManual.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+        assertThat(mManualContainerManual.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_MANUAL);
     }
 
     @Test
@@ -262,53 +262,53 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void checkSetAutoFillMode() {
-        mFirstLevelDefault.setAutoFillMode(View.AUTO_FILL_MODE_MANUAL);
-        assertThat(mFirstLevelDefault.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+    public void checksetAutofillMode() {
+        mFirstLevelDefault.setAutofillMode(View.AUTOFILL_MODE_MANUAL);
+        assertThat(mFirstLevelDefault.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_MANUAL);
     }
 
     @Test
     public void checkIllegalAutoFillModeSet() throws Exception {
-        assertThrows(IllegalArgumentException.class, () -> mFirstLevelDefault.setAutoFillMode(-1));
+        assertThrows(IllegalArgumentException.class, () -> mFirstLevelDefault.setAutofillMode(-1));
     }
 
     @Test
     public void checkTextViewNoHint() {
-        assertThat(mActivity.findViewById(R.id.textViewNoHint).getAutoFillHint()).isEqualTo(
-                View.AUTO_FILL_HINT_NONE);
+        assertThat(mActivity.findViewById(R.id.textViewNoHint).getAutofillHint()).isEqualTo(
+                View.AUTOFILL_HINT_NONE);
     }
 
     @Test
     public void checkTextViewHintNone() {
-        assertThat(mActivity.findViewById(R.id.textViewHintNone).getAutoFillHint()).isEqualTo(
-                View.AUTO_FILL_HINT_NONE);
+        assertThat(mActivity.findViewById(R.id.textViewHintNone).getAutofillHint()).isEqualTo(
+                View.AUTOFILL_HINT_NONE);
     }
 
     @Test
     public void checkTextViewPassword() {
-        assertThat(mActivity.findViewById(R.id.textViewPassword).getAutoFillHint()).isEqualTo(
-                View.AUTO_FILL_HINT_PASSWORD);
+        assertThat(mActivity.findViewById(R.id.textViewPassword).getAutofillHint()).isEqualTo(
+                View.AUTOFILL_HINT_PASSWORD);
     }
 
     @Test
     public void checkTextViewPhoneName() {
-        assertThat(mActivity.findViewById(R.id.textViewPhoneName).getAutoFillHint()).isEqualTo(
-                View.AUTO_FILL_HINT_PHONE | View.AUTO_FILL_HINT_USERNAME);
+        assertThat(mActivity.findViewById(R.id.textViewPhoneName).getAutofillHint()).isEqualTo(
+                View.AUTOFILL_HINT_PHONE | View.AUTOFILL_HINT_USERNAME);
     }
 
     @Test
     public void checkSetAutoFill() {
         View v = mActivity.findViewById(R.id.textViewNoHint);
 
-        v.setAutoFillHint(View.AUTO_FILL_HINT_NONE);
-        assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_NONE);
+        v.setAutofillHint(View.AUTOFILL_HINT_NONE);
+        assertThat(v.getAutofillHint()).isEqualTo(View.AUTOFILL_HINT_NONE);
 
-        v.setAutoFillHint(View.AUTO_FILL_HINT_PASSWORD);
-        assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_PASSWORD);
+        v.setAutofillHint(View.AUTOFILL_HINT_PASSWORD);
+        assertThat(v.getAutofillHint()).isEqualTo(View.AUTOFILL_HINT_PASSWORD);
 
-        v.setAutoFillHint(View.AUTO_FILL_HINT_PASSWORD | View.AUTO_FILL_HINT_EMAIL_ADDRESS);
-        assertThat(v.getAutoFillHint()).isEqualTo(View.AUTO_FILL_HINT_PASSWORD
-                | View.AUTO_FILL_HINT_EMAIL_ADDRESS);
+        v.setAutofillHint(View.AUTOFILL_HINT_PASSWORD | View.AUTOFILL_HINT_EMAIL_ADDRESS);
+        assertThat(v.getAutofillHint()).isEqualTo(View.AUTOFILL_HINT_PASSWORD
+                | View.AUTOFILL_HINT_EMAIL_ADDRESS);
     }
 
     @Test
@@ -323,8 +323,8 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
                     new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT));
 
-            assertThat(view.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
-            assertThat(view.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+            assertThat(view.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_INHERIT);
+            assertThat(view.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
 
             // Requesting focus should not trigger any mishaps
             runOnUiThreadSync(() -> view.requestFocus());
@@ -333,7 +333,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
                     R.id.manualContainer);
             runOnUiThreadSync(() -> attachmentPoint.addView(view));
 
-            assertThat(view.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_MANUAL);
+            assertThat(view.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_MANUAL);
         } finally {
             disableService();
         }
@@ -350,12 +350,12 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
                     R.layout.nested_layout, null);
             EditText field = container.findViewById(R.id.field);
 
-            assertThat(field.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
-            assertThat(container.getAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_INHERIT);
+            assertThat(field.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_INHERIT);
+            assertThat(container.getAutofillMode()).isEqualTo(View.AUTOFILL_MODE_INHERIT);
 
             // Resolved mode for detached views should behave as documented
-            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
-            assertThat(container.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+            assertThat(field.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
+            assertThat(container.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
 
             // Requesting focus should not trigger any mishaps
             runOnUiThreadSync(() -> field.requestFocus());
@@ -367,7 +367,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
             replier.addResponse(new CannedFillResponse.Builder()
                     .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                            .setField("field", AutoFillValue.forText("filled"))
+                            .setField("field", AutofillValue.forText("filled"))
                             .setPresentation(createPresentation("dataset"))
                             .build())
                     .build());
@@ -382,8 +382,8 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
             runOnUiThreadSync(() -> attachmentPoint.addView(container));
 
             // Now the resolved auto-fill modes make sense, hence check them
-            assertThat(field.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
-            assertThat(container.getResolvedAutoFillMode()).isEqualTo(View.AUTO_FILL_MODE_AUTO);
+            assertThat(field.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
+            assertThat(container.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
 
             // We should now be able to select the data set
             waitUntilConnected();
@@ -401,7 +401,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
         View v = mActivity.findViewById(R.id.textViewNoHint);
 
         // Unknown values are allowed
-        v.setAutoFillHint(-1);
-        assertThat(v.getAutoFillHint()).isEqualTo(-1);
+        v.setAutofillHint(-1);
+        assertThat(v.getAutofillHint()).isEqualTo(-1);
     }
 }

@@ -49,9 +49,9 @@
         <service
             android:name=".InstrumentedAutoFillService"
             android:label="InstrumentedAutoFillService"
-            android:permission="android.permission.BIND_AUTO_FILL" >
+            android:permission="android.permission.BIND_AUTOFILL" >
             <intent-filter>
-                <action android:name="android.service.autofill.AutoFillService" />
+                <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
     </application>

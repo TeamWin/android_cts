@@ -33,7 +33,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillValue;
 
 import org.junit.After;
 import org.junit.Test;
@@ -69,8 +69,8 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         replier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                     .setPresentation(createPresentation("The end of the world"))
-                    .setField(ID_OUTPUT, AutoFillValue.forText("Y U NO CHANGE ME?"))
-                    .setField(ID_DATE_PICKER, AutoFillValue.forDate(cal.getTimeInMillis()))
+                    .setField(ID_OUTPUT, AutofillValue.forText("Y U NO CHANGE ME?"))
+                    .setField(ID_DATE_PICKER, AutofillValue.forDate(cal.getTimeInMillis()))
                     .build())
                 .setSaveType(SAVE_DATA_TYPE_GENERIC)
                 .build());

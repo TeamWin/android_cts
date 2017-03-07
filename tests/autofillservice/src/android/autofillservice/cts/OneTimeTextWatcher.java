@@ -24,7 +24,7 @@ import android.widget.EditText;
  */
 final class OneTimeTextWatcher extends MultipleTimesTextWatcher {
 
-    OneTimeTextWatcher(String name, EditText editText, CharSequence expectedAutoFillValue) {
-        super(name, 1, editText, expectedAutoFillValue);
+    OneTimeTextWatcher(String name, EditText editText, CharSequence expectedAutofillValue) {
+        super(name, 1, editText, expectedAutofillValue);
     }
 }

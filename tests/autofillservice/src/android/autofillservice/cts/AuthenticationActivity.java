@@ -20,7 +20,7 @@ import android.app.assist.AssistStructure;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.view.autofill.AutoFillManager;
+import android.view.autofill.AutofillManager;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -47,7 +47,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
         // We should get the assist structure
         AssistStructure structure = getIntent().getParcelableExtra(
-                AutoFillManager.EXTRA_ASSIST_STRUCTURE);
+                AutofillManager.EXTRA_ASSIST_STRUCTURE);
         assertWithMessage("structure not called").that(structure).isNotNull();
 
         Parcelable result = null;
@@ -61,7 +61,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
         // Pass on the auth result
         Intent intent = new Intent();
-        intent.putExtra(AutoFillManager.EXTRA_AUTHENTICATION_RESULT, result);
+        intent.putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, result);
         setResult(RESULT_OK, intent);
 
         // Done

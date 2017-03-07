@@ -18,7 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.runShellCommand;
-import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
+import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -60,7 +60,7 @@ abstract class AutoFillServiceTestCase {
     @BeforeClass
     @AfterClass
     public static void disableService() {
-        runShellCommand("settings delete secure %s", AUTO_FILL_SERVICE);
+        runShellCommand("settings delete secure %s", AUTOFILL_SERVICE);
         assertServiceDisabled();
     }
 
@@ -74,7 +74,7 @@ abstract class AutoFillServiceTestCase {
      */
     protected void enableService() {
         runShellCommand(
-                "settings put secure %s %s default", AUTO_FILL_SERVICE, SERVICE_NAME);
+                "settings put secure %s %s default", AUTOFILL_SERVICE, SERVICE_NAME);
         assertServiceEnabled();
     }
 
@@ -120,9 +120,9 @@ abstract class AutoFillServiceTestCase {
     }
 
     private static void assertServiceStatus(boolean enabled) {
-        final String actual = runShellCommand("settings get secure %s", AUTO_FILL_SERVICE);
+        final String actual = runShellCommand("settings get secure %s", AUTOFILL_SERVICE);
         final String expected = enabled ? SERVICE_NAME : "null";
-        assertWithMessage("Invalid value for secure setting %s", AUTO_FILL_SERVICE)
+        assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
     }
 }

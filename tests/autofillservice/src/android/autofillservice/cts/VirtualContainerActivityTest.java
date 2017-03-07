@@ -34,7 +34,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.support.test.rule.ActivityTestRule;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillValue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -90,8 +90,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutoFillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");

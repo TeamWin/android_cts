@@ -34,6 +34,7 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.view.View.AUTOFILL_TYPE_LIST;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -44,8 +45,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.rule.ActivityTestRule;
-import android.view.autofill.AutoFillType;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillValue;
 import android.widget.Spinner;
 
 import org.junit.After;
@@ -84,10 +84,10 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         replier.addResponse(new CannedDataset.Builder()
                 .setPresentation(createPresentation("ACME CC"))
-                .setField(ID_CC_NUMBER, AutoFillValue.forText("4815162342"))
-                .setField(ID_CC_EXPIRATION, AutoFillValue.forList(INDEX_CC_EXPIRATION_NEVER))
-                .setField(ID_ADDRESS, AutoFillValue.forList(1))
-                .setField(ID_SAVE_CC, AutoFillValue.forToggle(true))
+                .setField(ID_CC_NUMBER, AutofillValue.forText("4815162342"))
+                .setField(ID_CC_EXPIRATION, AutofillValue.forList(INDEX_CC_EXPIRATION_NEVER))
+                .setField(ID_ADDRESS, AutofillValue.forList(1))
+                .setField(ID_SAVE_CC, AutofillValue.forToggle(true))
                 .build());
         mCheckoutActivity.expectAutoFill("4815162342", INDEX_CC_EXPIRATION_NEVER, R.id.work_address,
                 true);
@@ -102,8 +102,8 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final ViewNode ccExpirationNode =
                 assertTextIsSanitized(fillRequest.structure, ID_CC_EXPIRATION);
         assertThat(ccExpirationNode.getClassName()).isEqualTo(Spinner.class.getName());
-        assertThat(ccExpirationNode.getAutoFillType()).isEqualTo(AutoFillType.forList());
-        final String[] options = ccExpirationNode.getAutoFillOptions();
+        assertThat(ccExpirationNode.getAutofillType()).isEqualTo(AUTOFILL_TYPE_LIST);
+        final String[] options = ccExpirationNode.getAutofillOptions();
         assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNotNull();
         assertWithMessage("Wrong auto-fill options for spinner").that(options).asList()
                 .containsExactly(

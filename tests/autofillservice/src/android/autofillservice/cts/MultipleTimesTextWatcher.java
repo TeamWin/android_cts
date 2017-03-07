@@ -37,10 +37,10 @@ class MultipleTimesTextWatcher implements TextWatcher {
     private final CharSequence expected;
 
     MultipleTimesTextWatcher(String name, int times, EditText editText,
-            CharSequence expectedAutoFillValue) {
+            CharSequence expectedAutofillValue) {
         this.name = name;
         this.editText = editText;
-        this.expected = expectedAutoFillValue;
+        this.expected = expectedAutofillValue;
         this.latch = new CountDownLatch(times);
     }
 
