@@ -22,6 +22,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_USE_AAPT2 := true
 
+LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_libc++
+
 LOCAL_JAVA_LIBRARIES := android.test.runner
 
 LOCAL_STATIC_JAVA_LIBRARIES :=  android-support-v4 \
@@ -57,3 +59,5 @@ LOCAL_PACKAGE_NAME := CtsContentTestCases
 LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_PACKAGE)
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
