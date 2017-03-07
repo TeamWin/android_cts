@@ -33,6 +33,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             = "com.android.server.cts.device.batterystats/.SimpleJobService";
 
     @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        // Uninstall to clear the history in case it's still on the device.
+        getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
+    }
+
+    @Override
     protected void tearDown() throws Exception {
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
 
@@ -48,6 +56,19 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     protected void batteryOffScreenOn() throws Exception {
         getDevice().executeShellCommand("dumpsys battery reset");
         getDevice().executeShellCommand("dumpsys batterystats disable pretend-screen-off");
+    }
+
+    public void testAlarms() throws Exception {
+        batteryOnScreenOff();
+
+        installPackage(DEVICE_SIDE_TEST_APK, /* grantPermissions= */ true);
+
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsAlarmTest", "testAlarms");
+
+        assertValueRange("wua", "*walarm*:com.android.server.cts.device.batterystats.ALARM",
+                5, 3, 3);
+
+        batteryOffScreenOn();
     }
 
     public void testWakeLockDuration() throws Exception {
