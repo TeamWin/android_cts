@@ -1339,7 +1339,20 @@ public class EncodeVirtualDisplayWithCompositionTest extends AndroidTestCase {
         for (Size sz : standardSizes) {
             MediaFormat format = MediaFormat.createVideoFormat(
                 MIME_TYPE, sz.getWidth(), sz.getHeight());
-            format.setInteger(MediaFormat.KEY_FRAME_RATE, 15); // require at least 15fps
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+            int bitRate = BITRATE_DEFAULT;
+            if (sz.getWidth() == 1920 && sz.getHeight() == 1080) {
+                bitRate = BITRATE_1080p;
+            } else if (sz.getWidth() == 1280 && sz.getHeight() == 720) {
+                bitRate = BITRATE_720p;
+            } else if (sz.getWidth() == 800 && sz.getHeight() == 480) {
+                bitRate = BITRATE_800x480;
+            }
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+            Log.i(TAG,"format = " + format.toString());
             if (mcl.findEncoderForFormat(format) != null) {
                 return sz;
             }
