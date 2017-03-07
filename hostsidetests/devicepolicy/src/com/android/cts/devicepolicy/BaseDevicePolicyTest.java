@@ -58,6 +58,22 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     private static final long TIMEOUT_USER_REMOVED_MILLIS = TimeUnit.SECONDS.toMillis(15);
     private static final long WAIT_SAMPLE_INTERVAL_MILLIS = 200;
 
+    /**
+     * The defined timeout (in milliseconds) is used as a maximum waiting time when expecting the
+     * command output from the device. At any time, if the shell command does not output anything
+     * for a period longer than defined timeout the Tradefed run terminates.
+     */
+    private static final long DEFAULT_SHELL_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(20);
+
+    /** instrumentation test runner argument key used for individual test timeout */
+    protected static final String TEST_TIMEOUT_INST_ARGS_KEY = "timeout_msec";
+
+    /**
+     * Sets timeout (in milliseconds) that will be applied to each test. In the
+     * event of a test timeout it will log the results and proceed with executing the next test.
+     */
+    private static final long DEFAULT_TEST_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(10);
+
     // From the UserInfo class
     protected static final int FLAG_PRIMARY = 0x00000001;
     protected static final int FLAG_GUEST = 0x00000004;
@@ -283,6 +299,9 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
         RemoteAndroidTestRunner testRunner = new RemoteAndroidTestRunner(
                 pkgName, RUNNER, getDevice().getIDevice());
+        testRunner.setMaxTimeToOutputResponse(DEFAULT_SHELL_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        testRunner.addInstrumentationArg(
+                TEST_TIMEOUT_INST_ARGS_KEY, Long.toString(DEFAULT_TEST_TIMEOUT_MILLIS));
         if (testClassName != null && testMethodName != null) {
             testRunner.setMethodName(testClassName, testMethodName);
         } else if (testClassName != null) {
