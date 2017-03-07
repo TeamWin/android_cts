@@ -325,7 +325,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkNetwork(String[] parts) {
-        assertEquals(18, parts.length);
+        assertEquals(26, parts.length);
         long mbRx = assertInteger(parts[4]);  // mobileBytesRx
         long mbTx = assertInteger(parts[5]);  // mobileBytesTx
         long wbRx = assertInteger(parts[6]);  // wifiBytesRx
@@ -340,6 +340,14 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[15]); // btBytesTx
         assertInteger(parts[16]); // mobileWakeup
         assertInteger(parts[17]); // wifiWakeup
+        long mbBgRx = assertInteger(parts[18]);  // mobileBytesRx
+        long mbBgTx = assertInteger(parts[19]);  // mobileBytesTx
+        long wbBgRx = assertInteger(parts[20]);  // wifiBytesRx
+        long wbBgTx = assertInteger(parts[21]);  // wifiBytesTx
+        long mpBgRx = assertInteger(parts[22]);  // mobilePacketsRx
+        long mpBgTx = assertInteger(parts[23]);  // mobilePacketsTx
+        long wpBgRx = assertInteger(parts[24]); // wifiPacketsRx
+        long wpBgTx = assertInteger(parts[25]); // wifiPacketsTx
 
         // Assuming each packet contains some bytes, bytes >= packets >= 0.
         assertTrue("mobileBytesRx must be >= mobilePacketsRx", mbRx >= mpRx);
@@ -350,6 +358,15 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertTrue("wifiPacketsRx must be >= 0", wpRx >= 0);
         assertTrue("wifiBytesTx must be >= wifiPacketsTx", wbTx >= wpTx);
         assertTrue("wifiPacketsTx must be >= 0", wpTx >= 0);
+        // Totals should be greater than or equal to background data numbers
+        assertTrue("mobileBytesRx must be >= mobileBytesBgRx", mbRx >= mbBgRx);
+        assertTrue("mobilePacketsRx must be >= mobilePacketsBgRx", mpRx >= mpBgRx);
+        assertTrue("mobileBytesTx must be >= mobileBytesBgTx", mbTx >= mbBgTx);
+        assertTrue("mobilePacketsTx must be >= mobilePacketsBgTx", mpTx >= mpBgTx);
+        assertTrue("wifiBytesRx must be >= wifiBytesBgRx", wbRx >= wbBgRx);
+        assertTrue("wifiPacketsRx must be >= wifiPacketsBgRx", wpRx >= wpBgRx);
+        assertTrue("wifiBytesTx must be >= wifiBytesBgTx", wbTx >= wbBgTx);
+        assertTrue("wifiPacketsTx must be >= wifiPacketsBgTx", wpTx >= wpBgTx);
     }
 
     private void checkUserActivity(String[] parts) {
