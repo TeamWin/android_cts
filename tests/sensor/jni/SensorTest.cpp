@@ -158,6 +158,30 @@ TestSharedMemory::TestSharedMemory(int type, size_t size)
             success = true;
             break;
         }
+        case ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER: {
+            AHardwareBuffer_Desc desc = {
+                .width = static_cast<uint32_t>(size),
+                .height = 1,
+                .layers = 1,
+                .usage0 = AHARDWAREBUFFER_USAGE0_SENSOR_DIRECT_DATA
+                        | AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN,
+                .usage1 = 0,
+                .format = AHARDWAREBUFFER_FORMAT_BLOB
+            };
+
+            // allocate
+            if (AHardwareBuffer_allocate(&desc, &mHardwareBuffer) == 0) {
+                // lock
+                if (AHardwareBuffer_lock(mHardwareBuffer, AHARDWAREBUFFER_USAGE0_CPU_READ,
+                                         -1, nullptr, reinterpret_cast<void **>(&mBuffer)) == 0) {
+                    if (mBuffer != nullptr) {
+                        mSize = size;
+                        success = true;
+                    }
+                }
+            }
+            break;
+        }
         default:
             break;
     }
@@ -185,10 +209,23 @@ void TestSharedMemory::release() {
             mSize = 0;
             break;
         }
+        case ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER: {
+            if (mHardwareBuffer != nullptr) {
+                if (mBuffer != nullptr) {
+                    int32_t fence = -1;
+                    AHardwareBuffer_unlock(mHardwareBuffer, &fence);
+                    mBuffer = nullptr;
+                }
+                AHardwareBuffer_release(mHardwareBuffer);
+                mHardwareBuffer = nullptr;
+            }
+            mSize = 0;
+            break;
+        }
         default:
             break;
     }
-    if (mSharedMemoryFd > 0 || mSize != 0 || mBuffer != nullptr) {
+    if (mSharedMemoryFd > 0 || mSize != 0 || mBuffer != nullptr || mHardwareBuffer != nullptr) {
         ALOGE("TestSharedMemory %p not properly destructed: "
               "type %d, shared_memory_fd %d, hardware_buffer %p, size %zu, buffer %p",
               this, static_cast<int>(mType), mSharedMemoryFd, mHardwareBuffer, mSize, mBuffer);
