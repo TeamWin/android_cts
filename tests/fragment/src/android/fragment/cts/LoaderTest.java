@@ -16,6 +16,7 @@
 package android.fragment.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -23,12 +24,14 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.Instrumentation;
 import android.app.LoaderManager;
+import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -46,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class LoaderTest {
+    private static final int DELAY_LOADER = 10;
+
     @Rule
     public ActivityTestRule<LoaderActivity> mActivityRule =
             new ActivityTestRule<>(LoaderActivity.class);
@@ -89,6 +94,11 @@ public class LoaderTest {
             return; // can't switch orientation for square screens
         }
 
+        // Wait for everything to settle. We have to make sure that the old Activity
+        // is ready to be collected.
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
         // Now force a garbage collection.
         FragmentTestUtil.forceGC();
         assertNull(weakActivity.get());
@@ -112,25 +122,117 @@ public class LoaderTest {
         assertEquals("Loaded!", activity.textView.getText().toString());
     }
 
+    /**
+     * When a change is interrupted with stop, the data in the LoaderManager remains stale.
+     */
+    @Test
+    public void noStaleData() throws Throwable {
+        final LoaderActivity activity = mActivityRule.getActivity();
+        final String[] value = new String[] { "First Value" };
+
+        final CountDownLatch[] loadedLatch = new CountDownLatch[] { new CountDownLatch(1) };
+        final Loader<String>[] loaders = new Loader[1];
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final Loader<String> loader =
+                        activity.getLoaderManager().initLoader(DELAY_LOADER, null,
+                                new LoaderManager.LoaderCallbacks<String>() {
+                                    @Override
+                                    public Loader<String> onCreateLoader(int id, Bundle args) {
+                                        return new AsyncTaskLoader<String>(activity) {
+                                            @Override
+                                            protected void onStopLoading() {
+                                                cancelLoad();
+                                            }
+
+                                            @Override
+                                            public String loadInBackground() {
+                                                SystemClock.sleep(50);
+                                                return value[0];
+                                            }
+
+                                            @Override
+                                            protected void onStartLoading() {
+                                                if (takeContentChanged()) {
+                                                    forceLoad();
+                                                }
+                                                super.onStartLoading();
+                                            }
+                                        };
+                                    }
+
+                                    @Override
+                                    public void onLoadFinished(Loader<String> loader, String data) {
+                                        activity.textViewB.setText(data);
+                                        loadedLatch[0].countDown();
+                                    }
+
+                                    @Override
+                                    public void onLoaderReset(Loader<String> loader) {
+                                    }
+                                });
+                loader.forceLoad();
+                loaders[0] = loader;
+            }
+        });
+
+        assertTrue(loadedLatch[0].await(1, TimeUnit.SECONDS));
+        assertEquals("First Value", activity.textViewB.getText().toString());
+
+        loadedLatch[0] = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                value[0] = "Second Value";
+                loaders[0].onContentChanged();
+                loaders[0].stopLoading();
+            }
+        });
+
+        // Since the loader was stopped (and canceled), it shouldn't notify the change
+        assertFalse(loadedLatch[0].await(300, TimeUnit.MILLISECONDS));
+
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                loaders[0].startLoading();
+            }
+        });
+
+        // Since the loader was stopped (and canceled), it shouldn't notify the change
+        assertTrue(loadedLatch[0].await(1, TimeUnit.SECONDS));
+        assertEquals("Second Value", activity.textViewB.getText().toString());
+    }
+
     private boolean switchOrientation() throws InterruptedException {
         LoaderActivity activity = LoaderActivity.sActivity;
 
         int currentOrientation = activity.getResources().getConfiguration().orientation;
 
         int nextOrientation;
+        int expectedOrientation;
         if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
             nextOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            expectedOrientation = Configuration.ORIENTATION_PORTRAIT;
         } else if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
             nextOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            expectedOrientation = Configuration.ORIENTATION_LANDSCAPE;
         } else {
             return false; // Don't know what to do with square or unknown orientations
         }
 
         // Now switch the orientation
         LoaderActivity.sResumed = new CountDownLatch(1);
+        LoaderActivity.sDestroyed = new CountDownLatch(1);
 
         activity.setRequestedOrientation(nextOrientation);
         assertTrue(LoaderActivity.sResumed.await(1, TimeUnit.SECONDS));
+        assertTrue(LoaderActivity.sDestroyed.await(1, TimeUnit.SECONDS));
+
+        int switchedOrientation =
+                LoaderActivity.sActivity.getResources().getConfiguration().orientation;
+        assertEquals(expectedOrientation, switchedOrientation);
         return true;
     }
 

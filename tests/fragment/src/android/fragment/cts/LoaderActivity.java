@@ -21,6 +21,7 @@ import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Loader;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.concurrent.CountDownLatch;
@@ -33,12 +34,15 @@ public class LoaderActivity extends Activity {
     // These must be cleared after each test using clearState()
     public static LoaderActivity sActivity;
     public static CountDownLatch sResumed;
+    public static CountDownLatch sDestroyed;
 
     public TextView textView;
+    public TextView textViewB;
 
     public static void clearState() {
         sActivity = null;
         sResumed = null;
+        sDestroyed = null;
     }
 
     @Override
@@ -48,6 +52,11 @@ public class LoaderActivity extends Activity {
 
         setContentView(R.layout.text_a);
         textView = (TextView) findViewById(R.id.textA);
+
+        ViewGroup container = (ViewGroup) textView.getParent();
+        textViewB = new TextView(this);
+        textViewB.setId(R.id.textB);
+        container.addView(textViewB);
     }
 
     @Override
@@ -56,6 +65,14 @@ public class LoaderActivity extends Activity {
         getLoaderManager().initLoader(0, null, new TextLoaderCallback());
         if (sResumed != null) {
             sResumed.countDown();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sDestroyed != null) {
+            sDestroyed.countDown();
         }
     }
 
