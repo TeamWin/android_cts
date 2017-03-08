@@ -62,6 +62,9 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
             = "ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN";
     private static final String ENTERPRISE_PRIVACY_GLOBAL_HTTP_PROXY
             = "ENTERPRISE_PRIVACY_GLOBAL_HTTP_PROXY";
+    private static final String ENTERPRISE_PRIVACY_CA_CERTS = "ENTERPRISE_PRIVACY_CA_CERTS";
+    private static final String ENTERPRISE_PRIVACY_COMP_CA_CERTS
+            = "ENTERPRISE_PRIVACY_COMP_CA_CERTS";
     private static final String ENTERPRISE_PRIVACY_FAILED_PASSWORD_WIPE
             = "ENTERPRISE_PRIVACY_FAILED_PASSWORD_WIPE";
     private static final String ENTERPRISE_PRIVACY_COMP_FAILED_PASSWORD_WIPE
@@ -232,6 +235,32 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                         new ButtonInfo(R.string.enterprise_privacy_clear_proxy,
                                 buildCommandIntent(CommandReceiverActivity
                                         .COMMAND_CLEAR_GLOBAL_HTTP_PROXY))}));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_CA_CERTS,
+                R.string.enterprise_privacy_ca_certs,
+                R.string.enterprise_privacy_ca_certs_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_install_cert,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_INSTALL_CA_CERT)),
+                        new ButtonInfo(R.string.enterprise_privacy_finish,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_CLEAR_CA_CERT))}));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_COMP_CA_CERTS,
+                R.string.enterprise_privacy_comp_ca_certs,
+                R.string.enterprise_privacy_comp_ca_certs_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_start,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_CREATE_MANAGED_PROFILE)),
+                        new ButtonInfo(R.string.enterprise_privacy_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_install_cert,
+                                new Intent(CompHelperActivity.ACTION_INSTALL_CA_CERT)),
+                        new ButtonInfo(R.string.enterprise_privacy_finish,
+                                buildCommandIntent(
+                                        CommandReceiverActivity.COMMAND_REMOVE_MANAGED_PROFILE))}));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_FAILED_PASSWORD_WIPE,
                 R.string.enterprise_privacy_failed_password_wipe,
                 R.string.enterprise_privacy_failed_password_wipe_info,

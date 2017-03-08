@@ -2969,6 +2969,29 @@ You should be prompted to select credentials; choose the ones you just installed
         5) Repeat steps (1) through (3), verifying that in step (2), you are told now that a global HTTP proxy has been set.\n
         6) Press the Clear Proxy button.
     </string>
+    <string name="enterprise_privacy_ca_certs">Trusted CA certs</string>
+    <string name="enterprise_privacy_ca_certs_info">
+        Please do the following:\n
+        1) Press the Open Settings button.\n
+        2) In the screen that opens, verify that you are not told that your administrator installed trusted CA certs.\n
+        3) Use the Back button to return to this page.\n
+        4) Press the Install Cert button to install a trusted CA cert.\n
+        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that the administrator has installed a trusted CA cert.\n
+        6) Press the Finish button to clear the cert.
+    </string>
+    <string name="enterprise_privacy_install_cert">Install Cert</string>
+    <string name="enterprise_privacy_comp_ca_certs">Trusted CA certs (managed profile)</string>
+    <string name="enterprise_privacy_comp_ca_certs_info">
+        Please do the following:\n
+        1) Press the Start button to create a work profile.\n
+        2) Press the Settings button.\n
+        3) In the screen that opens, verify that you are not told that your administrator installed trusted CA certs.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Install Cert button to install a trusted CA cert in your work profile.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that the administrator has installed a trusted CA cert in your work profile.\n
+        7) Press the Finish button to remove the work profile and cert.
+    </string>
+    <string name="enterprise_privacy_settings">Settings</string>
     <string name="enterprise_privacy_set_proxy">Set Proxy</string>
     <string name="enterprise_privacy_clear_proxy">Clear Proxy</string>
     <string name="enterprise_privacy_failed_password_wipe">Wipe on authentication failure</string>
