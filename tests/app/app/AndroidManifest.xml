@@ -312,17 +312,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.app.stubs.PipNotResizeableActivity"
-                  android:label="PipNotResizeableActivity"
-                  android:resizeableActivity="false"
-                  android:supportsPictureInPicture="true"
-                  android:configChanges="smallestScreenSize|orientation|screenSize|screenLayout">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.app.stubs.PipNotSupportedActivity"
                   android:label="PipNotSupportedActivity"
                   android:resizeableActivity="true"

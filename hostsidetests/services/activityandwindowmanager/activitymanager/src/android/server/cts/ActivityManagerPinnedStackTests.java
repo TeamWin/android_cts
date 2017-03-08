@@ -59,6 +59,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     private static final String PIP_ACTIVITY_ACTION_ENTER_PIP =
             "android.server.cts.PipActivity.enter_pip";
+    private static final String PIP_ACTIVITY_ACTION_MOVE_TO_BACK =
+            "android.server.cts.PipActivity.move_to_back";
 
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -483,13 +485,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Remove the stack and ensure that the task is now in the fullscreen stack (when no
         // fullscreen stack existed before)
         removeStacks(PINNED_STACK_ID);
-        mAmWmState.waitForFocusedStack(mDevice, HOME_STACK_ID);
-        mAmWmState.assertFocusedStack("Expect home stack focused", HOME_STACK_ID);
-        mAmWmState.waitForActivityState(mDevice, PIP_ACTIVITY, STATE_STOPPED);
-        assertTrue(mAmWmState.getAmState().hasActivityState(PIP_ACTIVITY, STATE_STOPPED));
-        assertPinnedStackDoesNotExist();
-        assertTrue(mAmWmState.getAmState().getTaskByActivityName(PIP_ACTIVITY,
-                FULLSCREEN_WORKSPACE_STACK_ID) != null);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+                true /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
     public void testRemovePipWithVisibleFullscreenStack() throws Exception {
@@ -503,17 +500,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
         // top fullscreen activity
         removeStacks(PINNED_STACK_ID);
-        mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertFocusedStack("Expect fullscreen stack focused",
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.waitForActivityState(mDevice, PIP_ACTIVITY, STATE_STOPPED);
-        assertTrue(mAmWmState.getAmState().hasActivityState(PIP_ACTIVITY, STATE_STOPPED));
-        assertPinnedStackDoesNotExist();
-        ActivityTask bottomTask = mAmWmState.getAmState().getStackById(
-                FULLSCREEN_WORKSPACE_STACK_ID).getBottomTask();
-        Activity bottomActivity = bottomTask.mActivities.get(0);
-        assertTrue(bottomActivity.name.equals(ActivityManagerTestBase.getActivityComponentName(
-                PIP_ACTIVITY)));
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
     public void testRemovePipWithHiddenFullscreenStack() throws Exception {
@@ -529,16 +517,57 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
         // stack, but that the home stack is still focused
         removeStacks(PINNED_STACK_ID);
-        mAmWmState.waitForFocusedStack(mDevice, HOME_STACK_ID);
-        mAmWmState.assertFocusedStack("Expect home stack focused", HOME_STACK_ID);
-        mAmWmState.waitForActivityState(mDevice, PIP_ACTIVITY, STATE_STOPPED);
-        assertTrue(mAmWmState.getAmState().hasActivityState(PIP_ACTIVITY, STATE_STOPPED));
-        assertPinnedStackDoesNotExist();
-        ActivityTask topTask = mAmWmState.getAmState().getStackById(
-                FULLSCREEN_WORKSPACE_STACK_ID).getTopTask();
-        Activity topActivity = topTask.mActivities.get(0);
-        assertTrue(topActivity.name.equals(ActivityManagerTestBase.getActivityComponentName(
-                PIP_ACTIVITY)));
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+                true /* expectTopTaskHasActivity */, false /* expectBottomTaskHasActivity */);
+    }
+
+    public void testMovePipToBackWithNoFullscreenStack() throws Exception {
+        if (!supportsPip()) return;
+
+        // Start with a clean slate, remove all the stacks but home
+        removeStacks(ALL_STACK_IDS_BUT_HOME);
+
+        // Launch a pip activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+
+        // Remove the stack and ensure that the task is now in the fullscreen stack (when no
+        // fullscreen stack existed before)
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+                true /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+    }
+
+    public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a fullscreen activity, and a pip activity over that
+        launchActivity(TEST_ACTIVITY);
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+
+        // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
+        // top fullscreen activity
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID,
+                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+    }
+
+    public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
+        // launch a pip activity over home
+        launchActivity(TEST_ACTIVITY);
+        launchHomeActivity();
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+
+        // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
+        // stack, but that the home stack is still focused
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
+        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
+                true /* expectTopTaskHasActivity */, false /* expectBottomTaskHasActivity */);
     }
 
     public void testPinnedStackAlwaysOnTop() throws Exception {
@@ -655,6 +684,37 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         clearLogcat();
         launchActivity(PIP_ACTIVITY);
         assertRelaunchOrConfigChanged(PIP_ACTIVITY, 0, 1);
+    }
+
+    /**
+     * Called after the given {@param activityName} has been moved to the fullscreen stack. Ensures
+     * that the {@param focusedStackId} is focused, and checks the top and/or bottom tasks in the
+     * fullscreen stack if {@param expectTopTaskHasActivity} or {@param expectBottomTaskHasActivity}
+     * are set respectively.
+     */
+    private void assertPinnedStackStateOnMoveToFullscreen(String activityName, int focusedStackId,
+            boolean expectTopTaskHasActivity, boolean expectBottomTaskHasActivity)
+                    throws Exception {
+        mAmWmState.waitForFocusedStack(mDevice, focusedStackId);
+        mAmWmState.assertFocusedStack("Wrong focused stack", focusedStackId);
+        mAmWmState.waitForActivityState(mDevice, activityName, STATE_STOPPED);
+        assertTrue(mAmWmState.getAmState().hasActivityState(activityName, STATE_STOPPED));
+        assertPinnedStackDoesNotExist();
+
+        if (expectTopTaskHasActivity) {
+            ActivityTask topTask = mAmWmState.getAmState().getStackById(
+                    FULLSCREEN_WORKSPACE_STACK_ID).getTopTask();
+            Activity topActivity = topTask.mActivities.get(0);
+            assertTrue(topActivity.name.equals(ActivityManagerTestBase.getActivityComponentName(
+                    activityName)));
+        }
+        if (expectBottomTaskHasActivity) {
+            ActivityTask bottomTask = mAmWmState.getAmState().getStackById(
+                    FULLSCREEN_WORKSPACE_STACK_ID).getBottomTask();
+            Activity bottomActivity = bottomTask.mActivities.get(0);
+            assertTrue(bottomActivity.name.equals(ActivityManagerTestBase.getActivityComponentName(
+                    activityName)));
+        }
     }
 
     /**

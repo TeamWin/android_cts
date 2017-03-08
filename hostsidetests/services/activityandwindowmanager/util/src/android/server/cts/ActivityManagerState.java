@@ -626,6 +626,11 @@ class ActivityManagerState {
             while (!doneExtracting(dump, exitPatterns)) {
                 final String line = dump.pop().trim();
 
+                // Break the activity extraction once we hit an empty line
+                if (line.isEmpty()) {
+                    break;
+                }
+
                 Matcher matcher = VISIBILITY_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     log(line);
