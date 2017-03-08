@@ -35,7 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.FileDescriptor;
-import java.util.List;
 
 /**
  * Tests {@link FontManager}.
@@ -57,13 +56,11 @@ public class FontManagerTest {
         final FontConfig config = mFontManager.getSystemFonts();
 
         assertNotNull(config);
-        assertTrue("There should at least be one font family", config.getFamilies().size() > 0);
-        for (int i = 0; i < config.getFamilies().size(); ++i) {
-            final FontConfig.Family family = config.getFamilies().get(i);
+        assertTrue("There should at least be one font family", config.getFamilies().length > 0);
+        for (final FontConfig.Family family : config.getFamilies()) {
             assertTrue("Each font family should have at least one font",
-                    family.getFonts().size() > 0);
-            for (int j = 0; j < family.getFonts().size(); ++j) {
-                final FontConfig.Font font = family.getFonts().get(j);
+                    family.getFonts().length > 0);
+            for (final FontConfig.Font font : family.getFonts()) {
                 assertNotNull("FontManager should provide a FileDescriptor for each system font",
                         font.getFd());
             }
@@ -74,11 +71,9 @@ public class FontManagerTest {
     public void testFileDescriptorsAreReadOnly() throws Exception {
         final FontConfig fc = mFontManager.getSystemFonts();
 
-        final List<FontConfig.Family> families = fc.getFamilies();
-        for (int i = 0; i < families.size(); ++i) {
-            final List<FontConfig.Font> fonts = families.get(i).getFonts();
-            for (int j = 0; j < fonts.size(); ++j) {
-                final ParcelFileDescriptor pfd = fonts.get(j).getFd();
+        for (final FontConfig.Family family : fc.getFamilies()) {
+            for (final FontConfig.Font font : family.getFonts()) {
+                final ParcelFileDescriptor pfd = font.getFd();
                 assertNotNull(pfd);
                 final FileDescriptor fd = pfd.getFileDescriptor();
                 long size = Os.lseek(fd, 0, OsConstants.SEEK_END);
