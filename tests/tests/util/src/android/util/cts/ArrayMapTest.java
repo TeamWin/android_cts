@@ -39,11 +39,11 @@ import java.lang.reflect.Method;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 @SmallTest
@@ -545,16 +545,8 @@ public class ArrayMapTest {
         checkEntrySetToArray(testMap);
     }
 
-    /**
-     * The entrySet Iterator allows iteration past its end without throwing
-     * NoSuchElementException. The Entry returned by {@link Iterator#next()}
-     * removes null key / value, but {@link Iterator#remove()} removes the
-     * last actual entry in the map.
-     * This is unusual behavior for {@link Iterator#next()}; this test ensures that
-     * any future change to this behavior is deliberate.
-     */
     @Test
-    public void testUnusualBehavior_canIteratePastEnd_entrySetIterator() {
+    public void testCanNotIteratePastEnd_entrySetIterator() {
         Map<String, String> map = new ArrayMap<>();
         map.put("key 1", "value 1");
         map.put("key 2", "value 2");
@@ -575,32 +567,11 @@ public class ArrayMapTest {
 
         assertFalse(iterator.hasNext());
 
-        // Now to the unusual part:
-
-        // does not throw NoSuchElementException
-        Map.Entry<String, String> beyondEnd = copyOf(iterator.next());
-        assertEquals(entryOf(null, null), beyondEnd);
-        iterator.remove(); // removes secondEntry from the mapping!
-        assertEqualsBothWays(
-                Collections.singletonMap(firstEntry.getKey(), firstEntry.getValue()), map);
-
-        // doing it again removes the previous value again
-        iterator.next();
-        iterator.remove();
-        assertEqualsBothWays(Collections.emptyMap(), map);
-
-        // Trying to do this again yields ArrayIndexOutOfBoundsException
-        iterator.next();
         try {
-            iterator.remove();
+            iterator.next();
             fail();
-        } catch (ArrayIndexOutOfBoundsException expected) {
+        } catch (NoSuchElementException expected) {
         }
-
-        // But additional calls to next() are tolerated
-        iterator.next();
-        iterator.next();
-        iterator.next();
     }
 
     private static<K, V> Map.Entry<K, V> entryOf(K key, V value) {
@@ -612,7 +583,7 @@ public class ArrayMapTest {
     }
 
     @Test
-    public void testUnusualBehavior_canIteratePastEnd_keySetIterator() {
+    public void testCanNotIteratePastEnd_keySetIterator() {
         Map<String, String> map = new ArrayMap<>();
         map.put("key 1", "value 1");
         map.put("key 2", "value 2");
@@ -630,32 +601,15 @@ public class ArrayMapTest {
 
         assertFalse(iterator.hasNext());
 
-        // Now to the unusual part:
-
-        // does not throw NoSuchElementException
-        String beyondEnd = iterator.next();
-        assertNull(beyondEnd);
-        iterator.remove(); // removes the second entry!
-
-        String firstValue = firstKey.equals("key 1") ? "value 1" : "value 2";
-        assertEqualsBothWays(Collections.singletonMap(firstKey, firstValue), map);
-
-        // doing it again removes the previous value again
-        iterator.next();
-        iterator.remove();
-        assertEqualsBothWays(Collections.emptyMap(), map);
-
-        // Trying to call next() again yields ArrayIndexOutOfBoundsException
-        // This is different from entrySet(), where this was allowed.
         try {
             iterator.next();
             fail();
-        } catch (ArrayIndexOutOfBoundsException expected) {
+        } catch (NoSuchElementException expected) {
         }
     }
 
     @Test
-    public void testUnusualBehavior_canIteratePastEnd_valuesIterator() {
+    public void testCanNotIteratePastEnd_valuesIterator() {
         Map<String, String> map = new ArrayMap<>();
         map.put("key 1", "value 1");
         map.put("key 2", "value 2");
@@ -673,26 +627,10 @@ public class ArrayMapTest {
 
         assertFalse(iterator.hasNext());
 
-        // Now to the unusual part:
-
-        // does not throw NoSuchElementException
-        String beyondEnd = iterator.next();
-        assertNull(beyondEnd);
-        iterator.remove(); // removes the second entry!
-        String firstKey = firstValue.equals("value 1") ? "key 1" : "key 2";
-        assertEqualsBothWays(Collections.singletonMap(firstKey, firstValue), map);
-
-        // doing it again removes the previous value again
-        iterator.next();
-        iterator.remove();
-        assertEqualsBothWays(Collections.emptyMap(), map);
-
-        // Trying to call next() again yields ArrayIndexOutOfBoundsException
-        // This is different from entrySet(), where this was allowed.
         try {
             iterator.next();
             fail();
-        } catch (ArrayIndexOutOfBoundsException expected) {
+        } catch (NoSuchElementException expected) {
         }
     }
 

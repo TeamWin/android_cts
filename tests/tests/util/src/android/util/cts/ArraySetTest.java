@@ -35,6 +35,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 // As is the case with ArraySet itself, ArraySetTest borrows heavily from ArrayMapTest.
 
@@ -516,7 +517,7 @@ public class ArraySetTest {
     }
 
     @Test
-    public void testUnusualBehavior_canIteratePastEnd() {
+    public void testCanNotIteratePastEnd() {
         ArraySet<String> set = new ArraySet<>();
         set.add("value");
         Iterator<String> iterator = set.iterator();
@@ -525,21 +526,11 @@ public class ArraySetTest {
         assertEquals("value", iterator.next());
         assertFalse(iterator.hasNext());
 
-        // Now to the unusual part:
-
-        // does not throw NoSuchElementException
-        String beyondEnd = iterator.next();
-        assertNull(beyondEnd);
-        iterator.remove(); // removes "value"
-        assertEquals(0, set.size());
-        assertFalse(set.iterator().hasNext());
-
-        // Trying to call next() again yields ArrayIndexOutOfBoundsException
-        // This is different from entrySet(), where this was allowed.
         try {
             iterator.next();
             fail();
-        } catch (ArrayIndexOutOfBoundsException expected) {
+        } catch (NoSuchElementException expected) {
         }
     }
+
 }
