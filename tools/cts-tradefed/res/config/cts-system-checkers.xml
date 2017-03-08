@@ -17,4 +17,5 @@
     <system_checker class="com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker" />
     <system_checker class="com.android.tradefed.suite.checker.KeyguardStatusChecker" />
     <system_checker class="com.android.tradefed.suite.checker.SystemServerStatusChecker" />
+    <system_checker class="com.android.tradefed.suite.checker.SystemServerFileDescriptorChecker" />
 </configuration>
