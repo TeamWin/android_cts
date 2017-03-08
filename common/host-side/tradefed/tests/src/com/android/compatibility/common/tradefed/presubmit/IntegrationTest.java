@@ -16,6 +16,7 @@
 package com.android.compatibility.common.tradefed.presubmit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -38,7 +39,6 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
-import com.android.tradefed.util.RunUtil;
 
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -56,6 +56,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Integration tests between {@link CompatibilityTest} and {@link ResultReporter} to ensure proper
@@ -483,7 +484,8 @@ public class IntegrationTest {
             thread.join(1000);
         }
         // Allow some time for ResultReport to finalize the results coming from the threads.
-        RunUtil.getDefault().sleep(200);
+        boolean finalized = mReporter.waitForFinalized(2000, TimeUnit.MILLISECONDS);
+        assertTrue(finalized);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
         IInvocationResult result = mReporter.getResult();
@@ -533,7 +535,8 @@ public class IntegrationTest {
             thread.join(1000);
         }
         // Allow some time for ResultReport to finalize the results coming from the threads.
-        RunUtil.getDefault().sleep(200);
+        boolean finalized = mReporter.waitForFinalized(2000, TimeUnit.MILLISECONDS);
+        assertTrue(finalized);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
         IInvocationResult result = mReporter.getResult();

@@ -66,6 +66,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Collect test results for an entire invocation and output test results to disk.
@@ -111,6 +113,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     private String mReferenceUrl;
     private ILogSaver mLogSaver;
     private int invocationEndedCount = 0;
+    private CountDownLatch mFinalized = null;
 
     private IInvocationResult mResult = new InvocationResult();
     private IModuleResult mCurrentModuleResult;
@@ -145,6 +148,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      */
     public ResultReporter() {
         this(null);
+        mFinalized = new CountDownLatch(1);
     }
 
     /**
@@ -452,6 +456,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
                 return;
             }
             finalizeResults(elapsedTime);
+            mFinalized.countDown();
         }
     }
 
@@ -807,5 +812,13 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @VisibleForTesting
     public IInvocationResult getResult() {
         return mResult;
+    }
+
+    /**
+     * Returns true if the reporter is finalized before the end of the timeout. False otherwise.
+     */
+    @VisibleForTesting
+    public boolean waitForFinalized(long timeout, TimeUnit unit) throws InterruptedException {
+        return mFinalized.await(timeout, unit);
     }
 }
