@@ -42,6 +42,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
     // Intent action that this activity dynamically registers to enter picture-in-picture
     private static final String ACTION_ENTER_PIP = "android.server.cts.PipActivity.enter_pip";
+    // Intent action that this activity dynamically registers to move itself to the back
+    private static final String ACTION_MOVE_TO_BACK = "android.server.cts.PipActivity.move_to_back";
 
     // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
@@ -75,8 +77,15 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent != null && intent.getAction().equals(ACTION_ENTER_PIP)) {
-                enterPictureInPictureMode();
+            if (intent != null) {
+                switch (intent.getAction()) {
+                    case ACTION_ENTER_PIP:
+                        enterPictureInPictureMode();
+                        break;
+                    case ACTION_MOVE_TO_BACK:
+                        moveTaskToBack(false /* nonRoot */);
+                        break;
+                }
             }
         }
     };
@@ -141,9 +150,18 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_ENTER_PIP);
+        filter.addAction(ACTION_MOVE_TO_BACK);
+        registerReceiver(mReceiver, filter);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mReceiver, new IntentFilter(ACTION_ENTER_PIP));
 
         // Finish self if requested
         if (getIntent().hasExtra(EXTRA_FINISH_SELF_ON_RESUME)) {
@@ -154,7 +172,6 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mReceiver);
 
         // Pause if requested
         if (getIntent().hasExtra(EXTRA_ON_PAUSE_DELAY)) {
@@ -170,6 +187,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        unregisterReceiver(mReceiver);
+
         if (getIntent().hasExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP) && !mEnteredPictureInPicture) {
             Log.w("PipActivity", "Unexpected onStop() called before entering picture-in-picture");
             finish();
