@@ -119,6 +119,13 @@ public class PermissionPolicyTest extends AndroidTestCase {
                                 && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE));
             }
         }
+
+        // OEMs cannot define new ephemeral permissions
+        for (String permission : declaredPermissionsMap.keySet()) {
+            PermissionInfo info = declaredPermissionsMap.get(permission);
+            assertFalse("Cannot define new ephemeral permission " + permission,
+                    (info.protectionLevel & PermissionInfo.PROTECTION_FLAG_EPHEMERAL) != 0);
+        }
     }
 
     private List<PermissionInfo> loadExpectedPermissions() throws Exception {
