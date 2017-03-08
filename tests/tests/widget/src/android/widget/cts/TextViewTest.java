@@ -7008,10 +7008,10 @@ public class TextViewTest {
         initTextViewForTypingOnUiThread();
         TextClassifier mockClassifier = mock(TextClassifier.class);
         when(mockClassifier.suggestSelection(
-                any(CharSequence.class), anyInt(), anyInt()))
+                any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
                 .thenReturn(new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build());
         when(mockClassifier.getTextClassificationResult(
-                any(CharSequence.class), anyInt(), anyInt()))
+                any(CharSequence.class), anyInt(), anyInt(), any(LocaleList.class)))
                 .thenReturn(new TextClassificationResult.Builder().build());
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);

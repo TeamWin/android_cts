@@ -18,6 +18,7 @@ package android.view.textclassifier.cts;
 
 import static org.junit.Assert.assertThat;
 
+import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -41,6 +42,8 @@ import java.util.Locale;
 @RunWith(AndroidJUnit4.class)
 public class TextClassificationManagerTest {
 
+    private static final LocaleList LOCALES = LocaleList.forLanguageTags("en");
+
     private TextClassificationManager mTcm;
     private TextClassifier mClassifier;
 
@@ -55,15 +58,15 @@ public class TextClassificationManagerTest {
     public void testSmartSelection() {
         if (isTextClassifierDisabled()) return;
 
-        String text = "Contact me at droid@email.com";
+        String text = "Contact me at droid@android.com";
         String selected = "droid";
-        String suggested = "droid@email.com";
+        String suggested = "droid@android.com";
         int startIndex = text.indexOf(selected);
         int endIndex = startIndex + selected.length();
         int smartStartIndex = text.indexOf(suggested);
         int smartEndIndex = smartStartIndex + suggested.length();
 
-        assertThat(mClassifier.suggestSelection(text, startIndex, endIndex),
+        assertThat(mClassifier.suggestSelection(text, startIndex, endIndex, LOCALES),
                 isTextSelection(smartStartIndex, smartEndIndex, TextClassifier.TYPE_EMAIL));
     }
 
@@ -79,7 +82,7 @@ public class TextClassificationManagerTest {
         int smartStartIndex = text.indexOf(suggested);
         int smartEndIndex = smartStartIndex + suggested.length();
 
-        assertThat(mClassifier.suggestSelection(text, startIndex, endIndex),
+        assertThat(mClassifier.suggestSelection(text, startIndex, endIndex, LOCALES),
                 isTextSelection(smartStartIndex, smartEndIndex, TextClassifier.TYPE_URL));
     }
 
@@ -87,11 +90,11 @@ public class TextClassificationManagerTest {
     public void testTextClassificationResult() {
         if (isTextClassifierDisabled()) return;
 
-        String text = "Contact me at droid@email.com";
-        String classifiedText = "droid@email.com";
+        String text = "Contact me at droid@android.com";
+        String classifiedText = "droid@android.com";
         int startIndex = text.indexOf(classifiedText);
         int endIndex = startIndex + classifiedText.length();
-        assertThat(mClassifier.getTextClassificationResult(text, startIndex, endIndex),
+        assertThat(mClassifier.getTextClassificationResult(text, startIndex, endIndex, LOCALES),
                 isTextClassificationResult(classifiedText, TextClassifier.TYPE_EMAIL));
     }
 
@@ -103,7 +106,7 @@ public class TextClassificationManagerTest {
         String classifiedText = "http://www.android.com";
         int startIndex = text.indexOf(classifiedText);
         int endIndex = startIndex + classifiedText.length();
-        assertThat(mClassifier.getTextClassificationResult(text, startIndex, endIndex),
+        assertThat(mClassifier.getTextClassificationResult(text, startIndex, endIndex, LOCALES),
                 isTextClassificationResult(classifiedText, TextClassifier.TYPE_URL));
     }
 
