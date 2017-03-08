@@ -29,6 +29,8 @@ import android.graphics.Shader.TileMode;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ColorUtils;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -78,5 +80,34 @@ public class LinearGradientTest {
         Canvas canvas = new Canvas(b);
         canvas.drawPaint(paint);
         return b;
+    }
+
+    @Test
+    public void testSet() {
+        // only using 2 pixel wide gradient since we don't care about interpolation here.
+        // Note: we align start/end to be center pixel so colors at those pixels are exact.
+        LinearGradient gradient = new LinearGradient(0.5f, 0, 1.5f, 0,
+                Color.RED, Color.BLUE, TileMode.CLAMP);
+
+        Bitmap bitmap = Bitmap.createBitmap(3, 1, Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint paint = new Paint();
+        paint.setShader(gradient);
+        canvas.drawPaint(paint);
+
+
+        // red, blue, clamped to blue
+        ColorUtils.validateColor(Color.RED, bitmap.getPixel(0, 0), 5);
+        ColorUtils.validateColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
+        ColorUtils.validateColor(Color.BLUE, bitmap.getPixel(2, 0), 5);
+
+        gradient.set(0.5f, 0, 1.5f, 0, Color.GREEN, Color.WHITE, TileMode.MIRROR);
+        canvas.drawPaint(paint);
+
+        // green, white, mirrored to green
+        ColorUtils.validateColor(Color.GREEN, bitmap.getPixel(0, 0), 5);
+        ColorUtils.validateColor(Color.WHITE, bitmap.getPixel(1, 0), 5);
+        ColorUtils.validateColor(Color.GREEN, bitmap.getPixel(2, 0), 5);
     }
 }

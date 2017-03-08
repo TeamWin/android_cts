@@ -30,6 +30,8 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ColorUtils;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -143,5 +145,30 @@ public class SweepGradientTest {
         }
     }
 
+    @Test
+    public void testSet() {
+        // Only use two pixel wide bitmap since we don't care about interpolation here.
+        // Note: we place the gradient in between the two pixels, so both are solid colors.
+        SweepGradient gradient = new SweepGradient(1, 0.5f,
+                new int[] {Color.BLUE, Color.RED, Color.BLUE}, null);
 
+        Bitmap bitmap = Bitmap.createBitmap(2, 1, Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint paint = new Paint();
+        paint.setShader(gradient);
+        canvas.drawPaint(paint);
+
+        // red to left, blue to right
+        ColorUtils.validateColor(Color.RED, bitmap.getPixel(0, 0), 5);
+        ColorUtils.validateColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
+
+        gradient.set(1, 0.5f,
+                new int[] {Color.GREEN, Color.YELLOW, Color.GREEN}, null);
+        canvas.drawPaint(paint);
+
+        // yellow to left, green to right
+        ColorUtils.validateColor(Color.YELLOW, bitmap.getPixel(0, 0), 5);
+        ColorUtils.validateColor(Color.GREEN, bitmap.getPixel(1, 0), 5);
+    }
 }
