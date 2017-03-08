@@ -35,10 +35,6 @@ void SensorTest::TearDown() {
     }
 }
 
-void SensorTest::testInitialized(JNIEnv *env) {
-    ASSERT_TRUE(mManager->isValid());
-}
-
 TestSensorManager::TestSensorManager(const char *package) {
     mManager = ASensorManager_getInstanceForPackage(package);
 }
@@ -211,70 +207,6 @@ TestSharedMemory* TestSharedMemory::create(int type, size_t size) {
         m = nullptr;
     }
     return m;
-}
-
-// Test direct report of gyroscope at normal rate level through ashmem direct channel
-void SensorTest::testGyroscopeSharedMemoryDirectReport(JNIEnv* env) {
-    constexpr int type = ASENSOR_TYPE_GYROSCOPE;
-    constexpr size_t kEventSize = sizeof(ASensorEvent);
-    constexpr size_t kNEvent = 500;
-    constexpr size_t kMemSize = kEventSize * kNEvent;
-
-    TestSensor sensor = mManager->getDefaultSensor(type);
-
-    if (sensor.getHighestDirectReportRateLevel() == ASENSOR_DIRECT_RATE_STOP
-        || !sensor.isDirectChannelTypeSupported(ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY)) {
-        // does not declare support
-        return;
-    }
-
-    std::unique_ptr<TestSharedMemory>
-            mem(TestSharedMemory::create(ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY, kMemSize));
-    ASSERT_NE(mem, nullptr);
-    ASSERT_NE(mem->getBuffer(), nullptr);
-    ASSERT_GT(mem->getSharedMemoryFd(), 0);
-
-    char* buffer = mem->getBuffer();
-    // fill memory with data
-    for (size_t i = 0; i < kMemSize; ++i) {
-        buffer[i] = '\xcc';
-    }
-
-    int32_t channel;
-    channel = mManager->createDirectChannel(*mem);
-    ASSERT_GT(channel, 0);
-
-    // check memory is zeroed
-    for (size_t i = 0; i < kMemSize; ++i) {
-        ASSERT_EQ(buffer[i], '\0');
-    }
-
-    int32_t eventToken;
-    eventToken = mManager->configureDirectReport(sensor, channel, ASENSOR_DIRECT_RATE_NORMAL);
-    usleep(1500000); // sleep 1 sec for data, plus 0.5 sec for initialization
-    auto events = mem->parseEvents();
-
-    // allowed to be between 55% and 220% of nominal freq (50Hz)
-    ASSERT_GT(events.size(), 50 / 2);
-    ASSERT_LT(events.size(), static_cast<size_t>(110*1.5));
-
-    int64_t lastTimestamp = 0;
-    for (auto &e : events) {
-        ASSERT_EQ(e.type, type);
-        ASSERT_EQ(e.sensor, eventToken);
-        ASSERT_GT(e.timestamp, lastTimestamp);
-
-        ASensorVector &gyro = e.vector;
-        double gyroNorm = std::sqrt(gyro.x * gyro.x + gyro.y * gyro.y + gyro.z * gyro.z);
-        // assert not drifting
-        ASSERT_TRUE(gyroNorm < 0.1);  // < ~5 degree/sa
-
-        lastTimestamp = e.timestamp;
-    }
-
-    // stop sensor and unregister channel
-    mManager->configureDirectReport(sensor, channel, ASENSOR_DIRECT_RATE_STOP);
-    mManager->destroyDirectChannel(channel);
 }
 } // namespace SensorTest
 } // namespace android

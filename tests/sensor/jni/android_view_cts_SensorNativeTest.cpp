@@ -40,6 +40,9 @@ void test(JNIEnv* env, jclass, jlong instance) {
     // test if SensorTest is intialized
     test->testInitialized(env);
 
+    // test if SensorTest is intialized
+    test->testInvalidParameter(env);
+
     // test gyro direct report using shared memory buffer
     test->testGyroscopeSharedMemoryDirectReport(env);
 }

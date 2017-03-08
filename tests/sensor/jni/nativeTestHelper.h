@@ -44,5 +44,15 @@
         ASSERT((a) < (b), "assert failed on (" #a " < " #b ") at " __FILE__ ":%d", __LINE__)
 #define ASSERT_LE(a, b) \
         ASSERT((a) <= (b), "assert failed on (" #a " <= " #b ") at " __FILE__ ":%d", __LINE__)
+#define ASSERT_EMPTY_CSTR(a) do { \
+        const char *tmp = a; \
+        ASSERT(tmp != nullptr, \
+               "assert failed on (empty_cstr(" #a "): " #a " != nullptr) " \
+               "at " __FILE__ ":%d", __LINE__); \
+        ASSERT(tmp[0] == '\0', \
+               "assert failed on (empty_cstr(" #a "): strlen() == 0) " \
+               "at " __FILE__ ":%d", __LINE__); \
+    } while (false)
+
 
 void fail(JNIEnv* env, const char* format, ...);
