@@ -225,11 +225,12 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         // Press back
         pressBackButton();
-        mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY);
+
+        mAmWmState.waitForValidState(mDevice, ALT_LAUNCHING_ACTIVITY);
 
         // Ensure the alternate launching activity is in focus
         mAmWmState.assertFocusedActivity("Alt Launching Activity must be focused",
-                LAUNCHING_ACTIVITY);
+                ALT_LAUNCHING_ACTIVITY);
     }
 
     /**
