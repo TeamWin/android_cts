@@ -453,8 +453,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final String targetActivity = " --es target_activity " + THIRD_ACTIVITY_NAME
                 + " --es package_name " + THIRD_PACKAGE_NAME;
         final String includeStoppedPackagesFlag = " -f 0x00000020";
-        executeShellCommand("am broadcast -a " + broadcastAction + targetActivity
-                + includeStoppedPackagesFlag);
+        executeShellCommand("am broadcast -a " + broadcastAction + " -p " + SECOND_PACKAGE_NAME
+                + targetActivity + includeStoppedPackagesFlag);
 
         mAmWmState.waitForValidState(mDevice, new String[] {THIRD_ACTIVITY_NAME},
                 null /* stackIds */, false /* compareTaskAndStackBounds */, THIRD_PACKAGE_NAME);
@@ -490,8 +490,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Launch other activity with same uid as owner and check if is launched on focused stack on
         // secondary display.
         final String broadcastAction = componentName + ".LAUNCH_BROADCAST_ACTION";
-        executeShellCommand("am broadcast -a " + broadcastAction
-                + " --ez new_task true --ez multiple_task true");
+        executeShellCommand("am broadcast -a " + broadcastAction + " -p " + componentName
+                + " --ez launch_activity true --ez new_task true --ez multiple_task true");
 
         mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME);
         mAmWmState.assertFocusedActivity("Focus must be on newly launched app", TEST_ACTIVITY_NAME);
@@ -523,7 +523,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Launch other activity with different uid and check it is launched on primary display.
         final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
         final String includeStoppedPackagesFlag = " -f 0x00000020";
-        executeShellCommand("am broadcast -a " + broadcastAction + includeStoppedPackagesFlag);
+        executeShellCommand("am broadcast -a " + broadcastAction + " -p " + SECOND_PACKAGE_NAME
+                + includeStoppedPackagesFlag);
 
         mAmWmState.waitForValidState(mDevice, new String[] {SECOND_ACTIVITY_NAME},
                 null /* stackIds */, false /* compareTaskAndStackBounds */, SECOND_PACKAGE_NAME);
