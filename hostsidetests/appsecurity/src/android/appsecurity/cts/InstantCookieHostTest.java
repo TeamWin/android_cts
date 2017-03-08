@@ -89,7 +89,7 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
 
     private String installPackage(String apk, boolean replace, boolean instant) throws Exception {
         return getDevice().installPackage(mBuildHelper.getTestFile(apk), replace,
-                instant ? "--ephemeral" : "");
+                instant ? "--instant" : "--full");
     }
 
     private String uninstallPackage(String packageName) throws DeviceNotAvailableException {
