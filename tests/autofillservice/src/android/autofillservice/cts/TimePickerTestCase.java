@@ -22,6 +22,7 @@ import static android.autofillservice.cts.Helper.assertTimeValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.autofillservice.cts.AbstractTimePickerActivity.ID_OUTPUT;
 import static android.autofillservice.cts.AbstractTimePickerActivity.ID_TIME_PICKER;
 
@@ -64,11 +65,15 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         cal.set(Calendar.HOUR_OF_DAY, 4);
         cal.set(Calendar.MINUTE, 20);
 
-        replier.addResponse(new CannedDataset.Builder()
-                .setPresentation(createPresentation("Adventure Time"))
-                .setField(ID_OUTPUT, AutoFillValue.forText("Y U NO CHANGE ME?"))
-                .setField(ID_TIME_PICKER, AutoFillValue.forDate(cal.getTimeInMillis()))
+        replier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                    .setPresentation(createPresentation("Adventure Time"))
+                    .setField(ID_OUTPUT, AutoFillValue.forText("Y U NO CHANGE ME?"))
+                    .setField(ID_TIME_PICKER, AutoFillValue.forDate(cal.getTimeInMillis()))
+                    .build())
+                .setSaveType(SAVE_DATA_TYPE_GENERIC)
                 .build());
+
         activity.expectAutoFill("4:20", 4, 20);
 
         // Trigger auto-fill.
@@ -91,7 +96,7 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         activity.tapOk();
 
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-        sUiBot.saveForAutofill(true);
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_GENERIC, true);
         final SaveRequest saveRequest = replier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
