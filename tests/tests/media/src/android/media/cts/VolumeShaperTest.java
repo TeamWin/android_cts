@@ -27,6 +27,7 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
 import android.media.VolumeShaper;
+import android.os.Parcel;
 import android.os.PowerManager;
 import android.util.Log;
 
@@ -353,6 +354,30 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
             checkEqual(TEST_NAME, testRamp, ramp);
         }
     } // testVolumeShaperConfigurationBuilder
+
+    public void testVolumeShaperConfigurationParcelable() throws Exception {
+        final String TEST_NAME = "testVolumeShaperConfigurationParcelable";
+
+        for (VolumeShaper.Configuration config : ALL_STANDARD_RAMPS) {
+            assertEquals(TEST_NAME + " no parceled file descriptors",
+                    0 /* expected */, config.describeContents());
+
+            final Parcel srcParcel = Parcel.obtain();
+            config.writeToParcel(srcParcel, 0 /* flags */);
+
+            final byte[] marshallBuffer = srcParcel.marshall();
+
+            final Parcel dstParcel = Parcel.obtain();
+            dstParcel.unmarshall(marshallBuffer, 0 /* offset */, marshallBuffer.length);
+            dstParcel.setDataPosition(0);
+
+            final VolumeShaper.Configuration restoredConfig =
+                    VolumeShaper.Configuration.CREATOR.createFromParcel(dstParcel);
+            assertEquals(TEST_NAME +
+                    " marshalled/restored VolumeShaper.Configuration should match",
+                    config, restoredConfig);
+        }
+    } // testVolumeShaperConfigurationParcelable
 
     public void testAudioTrackDuck() throws Exception {
         final String TEST_NAME = "testAudioTrackDuck";
