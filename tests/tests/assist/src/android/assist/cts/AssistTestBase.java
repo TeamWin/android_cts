@@ -233,7 +233,6 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
 
     /**
      * Verifies the view hierarchy of the backgroundApp matches the assist structure.
-     *
      * @param backgroundApp ComponentName of app the assistant is invoked upon
      * @param isSecureWindow Denotes whether the activity has FLAG_SECURE set
      */
@@ -241,7 +240,11 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
         // Check component name matches
         assertEquals(backgroundApp.flattenToString(),
                 mAssistStructure.getActivityComponent().flattenToString());
-
+        long acquisitionStart = mAssistStructure.getAcquisitionStartTime();
+        long acquisitionEnd = mAssistStructure.getAcquisitionEndTime();
+        assertTrue(acquisitionStart > 0);
+        assertTrue(acquisitionEnd > 0);
+        assertTrue(acquisitionEnd >= acquisitionStart);
         Log.i(TAG, "Traversing down structure for: " + backgroundApp.flattenToString());
         mView = mTestActivity.findViewById(android.R.id.content).getRootView();
         verifyHierarchy(mAssistStructure, isSecureWindow);
@@ -404,6 +407,7 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
     private void verifyViewProperties(View parentView, ViewNode parentNode) {
         assertEquals("Left positions do not match.", parentView.getLeft(), parentNode.getLeft());
         assertEquals("Top positions do not match.", parentView.getTop(), parentNode.getTop());
+        assertEquals("Opaque flags do not match.", parentView.isOpaque(), parentNode.isOpaque());
 
         int viewId = parentView.getId();
 
@@ -431,9 +435,11 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
         if (parentView instanceof TextView) {
             if (parentView instanceof EditText) {
                 assertEquals("Text selection start does not match",
-                    ((EditText)parentView).getSelectionStart(), parentNode.getTextSelectionStart());
+                        ((EditText) parentView).getSelectionStart(),
+                        parentNode.getTextSelectionStart());
                 assertEquals("Text selection end does not match",
-                        ((EditText)parentView).getSelectionEnd(), parentNode.getTextSelectionEnd());
+                        ((EditText) parentView).getSelectionEnd(),
+                        parentNode.getTextSelectionEnd());
             }
             TextView textView = (TextView) parentView;
             assertEquals(textView.getTextSize(), parentNode.getTextSize());
