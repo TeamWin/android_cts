@@ -54,6 +54,8 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
             = "ENTERPRISE_PRIVACY_CAMERA_ACCESS";
     private static final String ENTERPRISE_PRIVACY_DEFAULT_APPS
             = "ENTERPRISE_PRIVACY_DEFAULT_APPS";
+    private static final String ENTERPRISE_PRIVACY_DEFAULT_IME
+            = "ENTERPRISE_PRIVACY_DEFAULT_IME";
     private static final String ENTERPRISE_PRIVACY_ALWAYS_ON_VPN
             = "ENTERPRISE_PRIVACY_ALWAYS_ON_VPN";
     private static final String ENTERPRISE_PRIVACY_COMP_ALWAYS_ON_VPN
@@ -180,6 +182,18 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                         new ButtonInfo(R.string.enterprise_privacy_set_default_apps,
                                 buildCommandIntent(CommandReceiverActivity
                                         .COMMAND_ADD_PERSISTENT_PREFERRED_ACTIVITIES))}));
+        adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_DEFAULT_IME,
+                R.string.enterprise_privacy_default_ime,
+                R.string.enterprise_privacy_default_ime_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(R.string.enterprise_privacy_open_settings,
+                                new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
+                        new ButtonInfo(R.string.enterprise_privacy_set_keyboard,
+                                buildCommandIntent(CommandReceiverActivity
+                                        .COMMAND_SET_DEFAULT_IME)),
+                        new ButtonInfo(R.string.enterprise_privacy_finish,
+                                buildCommandIntent(CommandReceiverActivity
+                                        .COMMAND_CLEAR_DEFAULT_IME))}));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ALWAYS_ON_VPN,
                 R.string.enterprise_privacy_always_on_vpn,
                 R.string.enterprise_privacy_always_on_vpn_info,
