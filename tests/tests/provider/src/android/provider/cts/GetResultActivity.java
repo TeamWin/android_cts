@@ -69,4 +69,12 @@ public class GetResultActivity extends Activity {
         }
         return result;
     }
+
+    public Result getResult(long timeout, TimeUnit unit) {
+        try {
+            return mResult.poll(timeout, unit);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
