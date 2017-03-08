@@ -33,6 +33,7 @@ import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -128,7 +129,8 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_CC_NUMBER, ID_CC_EXPIRATION, ID_ADDRESS, ID_SAVE_CC)
+                .setSavableIds(SAVE_DATA_TYPE_CREDIT_CARD,
+                        ID_CC_NUMBER, ID_CC_EXPIRATION, ID_ADDRESS, ID_SAVE_CC)
                 .build());
 
         // Dynamically change view contents
@@ -162,7 +164,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mCheckoutActivity.onSaveCc((v) -> { v.setChecked(true); });
         mCheckoutActivity.tapBuy();
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-        sUiBot.saveForAutofill(true);
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_CREDIT_CARD, true);
         final SaveRequest saveRequest = replier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 

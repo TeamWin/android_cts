@@ -110,19 +110,19 @@ final class UiBot {
     /**
      * Asserts the save snackbar is showing and returns it.
      */
-    UiObject2 assertSaveShowing() {
-        return assertSaveShowing(SAVE_DATA_TYPE_GENERIC, null);
+    UiObject2 assertSaveShowing(int type) {
+        return assertSaveShowing(type, null);
     }
 
     /**
      * Asserts the save snackbar is not showing and returns it.
      */
-    void assertSaveNotShowing() {
+    void assertSaveNotShowing(int type) {
         try {
-            assertSaveShowing();
+            assertSaveShowing(type);
         } catch (Throwable t) {
             // TODO(b/33197203): use a more elegant check than catching the expection because it's
-            // not showing...
+            // not showing (in which case it wouldn't need a type as parameter).
             return;
         }
         throw new AssertionError("snack bar is showing");
@@ -178,11 +178,12 @@ final class UiBot {
     /**
      * Taps an option in the save snackbar.
      *
+     * @param type expected type of save info.
      * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
      */
-    void saveForAutofill(boolean yesDoIt) {
-        final UiObject2 saveSnackBar = assertSaveShowing();
-        saveForAutofill(saveSnackBar, true);
+    void saveForAutofill(int type, boolean yesDoIt) {
+        final UiObject2 saveSnackBar = assertSaveShowing(type, null);
+        saveForAutofill(saveSnackBar, yesDoIt);
     }
 
     /**

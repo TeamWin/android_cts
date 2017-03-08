@@ -24,6 +24,8 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -64,10 +66,13 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         cal.set(Calendar.MONTH, 11);
         cal.set(Calendar.DAY_OF_MONTH, 20);
 
-        replier.addResponse(new CannedDataset.Builder()
-                .setPresentation(createPresentation("The end of the world"))
-                .setField(ID_OUTPUT, AutoFillValue.forText("Y U NO CHANGE ME?"))
-                .setField(ID_DATE_PICKER, AutoFillValue.forDate(cal.getTimeInMillis()))
+        replier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                    .setPresentation(createPresentation("The end of the world"))
+                    .setField(ID_OUTPUT, AutoFillValue.forText("Y U NO CHANGE ME?"))
+                    .setField(ID_DATE_PICKER, AutoFillValue.forDate(cal.getTimeInMillis()))
+                    .build())
+                .setSaveType(SAVE_DATA_TYPE_GENERIC)
                 .build());
         activity.expectAutoFill("2012/11/20", 2012, 11, 20);
 
@@ -92,7 +97,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         activity.tapOk();
 
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-        sUiBot.saveForAutofill(true);
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_GENERIC, true);
         final SaveRequest saveRequest = replier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 

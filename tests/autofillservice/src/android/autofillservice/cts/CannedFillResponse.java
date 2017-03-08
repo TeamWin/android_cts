@@ -17,13 +17,10 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
-
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset.Builder;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
@@ -91,19 +88,21 @@ final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
-        if (savableIds != null) {
+        if (saveType >= 0 ) {
             final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType);
             if (saveDescription != null) {
                 saveInfo.setDescription(saveDescription);
             }
-            for (String resourceId : savableIds) {
-                final ViewNode node = findNodeByResourceId(structure, resourceId);
-                if (node == null) {
-                    dumpStructure("onFillRequest()", structure);
-                    throw new AssertionError("No node with savable resourceId " + resourceId);
+            if (savableIds != null) {
+                for (String resourceId : savableIds) {
+                    final ViewNode node = findNodeByResourceId(structure, resourceId);
+                    if (node == null) {
+                        dumpStructure("onFillRequest()", structure);
+                        throw new AssertionError("No node with savable resourceId " + resourceId);
+                    }
+                    final AutoFillId id = node.getAutoFillId();
+                    saveInfo.addSavableIds(id);
                 }
-                final AutoFillId id = node.getAutoFillId();
-                saveInfo.addSavableIds(id);
             }
             if (negativeActionLabel != null) {
                 saveInfo.setNegativeAction(negativeActionLabel, negativeActionListener);
@@ -130,7 +129,7 @@ final class CannedFillResponse {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
         private String[] mSavableIds;
         private String mSaveDescription;
-        public int mSaveType;
+        public int mSaveType = -1;
         private Bundle mExtras;
         private RemoteViews mPresentation;
         private IntentSender mAuthentication;
@@ -145,7 +144,8 @@ final class CannedFillResponse {
         /**
          * Sets the savable ids based on they {@code resourceId}.
          */
-        public Builder setSavableIds(String... ids) {
+        public Builder setSavableIds(int type, String... ids) {
+            mSaveType = type;
             mSavableIds = ids;
             return this;
         }
@@ -165,6 +165,7 @@ final class CannedFillResponse {
             mSaveType = type;
             return this;
         }
+
         /**
          * Sets the extra passed to {@link
          * android.service.autofill.FillResponse.Builder#setExtras(Bundle)}.

@@ -31,6 +31,7 @@ import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.text.InputType.TYPE_NULL;
 import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
@@ -75,7 +76,7 @@ import java.util.concurrent.TimeUnit;
  *
  *  Save
  *  - test cases where only non-savable-ids are changed
- *  - test case where 'no thanks' is tapped
+ *  - test case where 'no thanks' is tapped (similar to testSaveSnackBarGoesAway())
  *
  *  Other assertions
  *  - illegal state thrown on callback calls
@@ -228,6 +229,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
                         .setPresentation(createPresentation("The Dude"))
                         .build())
+                .setSaveType(SAVE_DATA_TYPE_PASSWORD)
                 .setExtras(extras)
                 .build());
         mLoginActivity.expectAutoFill("dude", "sweet");
@@ -257,7 +259,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Assert the snack bar is shown and tap "Save".
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-        sUiBot.saveForAutofill(true);
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
 
         final SaveRequest saveRequest = replier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
@@ -369,7 +371,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
 
         // Trigger auto-fill.
@@ -395,7 +397,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(true);
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
 
         final SaveRequest saveRequest = replier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
@@ -432,10 +434,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             final Replier replier = new Replier();
             InstrumentedAutoFillService.setReplier(replier);
 
-
             // Set expectations.
             replier.addResponse(new CannedFillResponse.Builder()
-                    .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                    .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                     .build());
 
             // Trigger auto-fill.
@@ -461,10 +462,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
 
             // Assert the snack bar is shown.
-            sUiBot.assertSaveShowing();
+            sUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
             SystemClock.sleep(timeout);
-            sUiBot.assertSaveNotShowing();
-
+            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
 
             // Sanity check: once timed out, session should be finsihed.
             assertNoDanglingSessions();
@@ -474,6 +474,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         } finally {
             setSnackBarLifetimeMs(5000);
         }
+    }
+
+    @Test
+    public void testGenericSave() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_GENERIC);
     }
 
     @Test
@@ -501,9 +506,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         final String saveDescription = "Your data will be saved with love and care...";
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSavableIds(type, ID_USERNAME, ID_PASSWORD)
                 .setSaveDescription(saveDescription)
-                .setSaveType(type)
                 .build());
 
         // Trigger auto-fill.
@@ -662,7 +666,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
 
         // Change view contents.
@@ -691,7 +695,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
         mLoginActivity.tapLogin();
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-        sUiBot.saveForAutofill(true);
+
+        // Assert the snack bar is shown and tap "Save".
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
         final SaveRequest saveRequest = replier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
@@ -716,7 +722,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set no-op behavior.
         final Replier replier = new Replier();
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -742,7 +748,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set no-op behavior.
         final Replier replier = new Replier();
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -775,7 +781,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 getContext(), 0, new Intent(intentAction), 0).getIntentSender();
 
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(ID_USERNAME, ID_PASSWORD)
+                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .setNegativeAction("Foo", listener)
                 .build());
         InstrumentedAutoFillService.setReplier(replier);
@@ -804,7 +810,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }, intentFilter);
 
         // Trigger the negative button.
-        sUiBot.saveForAutofill(false);
+        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, false);
 
         // Wait for the custom action.
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
