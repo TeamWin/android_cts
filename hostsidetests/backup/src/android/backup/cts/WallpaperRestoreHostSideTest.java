@@ -96,8 +96,8 @@ public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
     private void checkDeviceTest(String testName) throws DeviceNotAvailableException {
         boolean result =
                 runDeviceTests(
-                        "android.backup.cts.app",
-                        "android.backup.cts.app.WallpaperRestoreTest",
+                        "android.backup.cts.app2",
+                        "android.backup.cts.app2.WallpaperRestoreTest",
                         testName);
         assertTrue("Device test failed: " + testName, result);
     }

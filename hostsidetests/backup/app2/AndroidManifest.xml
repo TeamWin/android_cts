@@ -16,23 +16,15 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.backup.cts.app">
+    package="android.backup.cts.app2">
 
     <application>
-
-        <service
-                android:name="android.backup.cts.app.DummyLiveWallpaper"
-                android:label="Dummy Live Wallpaper"
-                android:permission="android.permission.BIND_WALLPAPER">
-            <intent-filter>
-                <action android:name="android.service.wallpaper.WallpaperService" />
-            </intent-filter>
-            <meta-data
-                    android:name="android.service.wallpaper"
-                    android:resource="@xml/wallpaper">
-            </meta-data>
-        </service>
+        <uses-library android:name="android.test.runner" />
 
     </application>
+
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:targetPackage="android.backup.cts.app2" />
 
 </manifest>

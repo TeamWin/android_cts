@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.backup.cts.app;
+package android.backup.cts.app2;
 
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
