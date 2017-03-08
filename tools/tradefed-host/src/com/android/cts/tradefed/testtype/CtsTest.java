@@ -523,7 +523,12 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
         try {
             // always collect the device info, even for resumed runs, since test will likely be
             // running on a different device
-            collectDeviceInfo(getDevice(), mCtsBuild, listener);
+            DeviceInfoResultForwarder deviceInfoResultForwarder =
+                    new DeviceInfoResultForwarder(listener);
+            collectDeviceInfo(getDevice(), mCtsBuild, deviceInfoResultForwarder);
+            if (deviceInfoResultForwarder.isFailed()) {
+                throw new RuntimeException("Device Info failed. Please check the device log.");
+            }
             preRebootIfNecessary(mTestPackageList);
 
             mPrevRebootTime = System.currentTimeMillis();
@@ -1188,5 +1193,27 @@ public class CtsTest implements IDeviceTest, IResumableTest, IShardableTest, IBu
         metrics.put(PACKAGE_DIGEST_METRIC, def.getDigest());
         listener.testRunStarted(def.getId(), 0);
         listener.testRunEnded(0, metrics);
+    }
+
+
+    /** Capture information about device info collection. */
+    static class DeviceInfoResultForwarder extends ResultForwarder {
+
+        private boolean mFailed = false;
+
+        DeviceInfoResultForwarder(ITestInvocationListener listener) {
+            super(listener);
+        }
+
+        @Override
+        public void testRunFailed(String arg0) {
+            super.testRunFailed(arg0);
+            mFailed = true;
+        }
+
+        /** Return true if device info failed. */
+        public boolean isFailed() {
+            return mFailed;
+        }
     }
 }
