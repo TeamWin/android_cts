@@ -49,7 +49,7 @@ abstract class AutoFillServiceTestCase {
     @BeforeClass
     public static void removeLockScreen() {
         runShellCommand("input keyevent KEYCODE_WAKEUP");
-        runShellCommand("input keyevent 82");
+        runShellCommand("wm dismiss-keyguard");
     }
 
     @BeforeClass
