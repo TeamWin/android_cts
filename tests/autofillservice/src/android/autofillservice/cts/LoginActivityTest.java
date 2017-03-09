@@ -16,6 +16,10 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
+import static android.autofillservice.cts.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
+import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
@@ -24,13 +28,8 @@ import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
-import static android.autofillservice.cts.LoginActivity.ID_PASSWORD;
-import static android.autofillservice.cts.LoginActivity.ID_PASSWORD_LABEL;
-import static android.autofillservice.cts.LoginActivity.ID_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
-import static android.autofillservice.cts.LoginActivity.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
-import static android.provider.Settings.Secure.AUTO_FILL_SERVICE;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;

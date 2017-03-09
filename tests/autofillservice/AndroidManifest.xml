@@ -37,6 +37,14 @@
         <activity android:name=".TimePickerClockActivity" />
         <activity android:name=".TimePickerSpinnerActivity" />
         <activity android:name=".FatActivity" />
+        <activity android:name=".VirtualContainerActivity" >
+            <intent-filter>
+                <!-- This intent filter is not really needed by CTS, but it maks easier to launch
+                     this app during CTS development... -->
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".InstrumentedAutoFillService"

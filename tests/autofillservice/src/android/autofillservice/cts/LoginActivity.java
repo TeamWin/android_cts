@@ -45,13 +45,8 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private static String WELCOME_TEMPLATE = "Welcome to the new activity, %s!";
     private static final long LOGIN_TIMEOUT_MS = 1000;
 
-    static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
     static final String ID_USERNAME_CONTAINER = "username_container";
-    static final String ID_USERNAME_LABEL = "username_label";
-    static final String ID_USERNAME = "username";
-    static final String ID_PASSWORD_LABEL = "password_label";
-    static final String ID_PASSWORD = "password";
-    static final String ID_LOGIN = "login";
+    static final String AUTHENTICATION_MESSAGE = "Authentication failed. D'OH!";
 
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
