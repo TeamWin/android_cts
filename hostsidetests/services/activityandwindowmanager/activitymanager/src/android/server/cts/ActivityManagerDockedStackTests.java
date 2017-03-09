@@ -365,4 +365,14 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         return newBounds;
     }
+
+    public void testStackListOrderLaunchDockedActivity() throws Exception {
+        launchActivityInDockStack(TEST_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY_NAME});
+
+        final int homeStackIndex = mAmWmState.getStackPosition(HOME_STACK_ID);
+        final int recentsStackIndex = mAmWmState.getStackPosition(RECENTS_STACK_ID);
+        assertTrue("Recents stack should be on top of home stack",
+                recentsStackIndex < homeStackIndex);
+    }
 }

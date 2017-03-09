@@ -498,6 +498,16 @@ public class WindowManagerState {
         return null;
     }
 
+
+    int getStackPosition(int stackId) {
+        for (int i = 0; i < mStacks.size(); i++) {
+            if (stackId == mStacks.get(i).mStackId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     WindowState getInputMethodWindowState() {
         return getWindowStateForAppToken(mInputMethodWindowAppToken);
     }

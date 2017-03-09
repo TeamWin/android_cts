@@ -533,6 +533,14 @@ public class ActivityAndWindowManagersState extends Assert {
         return true;
     }
 
+    int getStackPosition(int stackId) {
+        int wmStackIndex = mWmState.getStackPosition(stackId);
+        int amStackIndex = mAmState.getStackPosition(stackId);
+        assertEquals("Window and activity manager must have the same stack position index",
+                amStackIndex, wmStackIndex);
+        return wmStackIndex;
+    }
+
     boolean stackBoundsInAMAndWMAreEqual() {
         for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;
