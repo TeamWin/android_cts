@@ -27,8 +27,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -60,30 +64,26 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         super.tearDown();
     }
 
-    /**
-     * java.nio.channels.FileChannel#tryLock()
-     *
-     * Obtains a remote lock, then attempts to acquire a local lock on the same file,
-     * and checks the behavior.
-     * checkTryLockBehavior(localLockType, remoteLockType, expectedLocalLockResult)
-     * expectedLockLockResult: {@code true} if the returned lock should be valid,
-     * {@code false} otherwise.
-     */
-    public void test_tryLock() throws Exception {
-        checkTryLockBehavior(LockType.TRY_LOCK, LockType.TRY_LOCK, false /* expectToGetLock */);
-        checkTryLockBehavior(LockType.TRY_LOCK, LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+    public void test_tryLock_syncChannel() throws Exception {
+        doTest_tryLock(ChannelType.SYNC_CHANNEL, ChannelType.SYNC_CHANNEL);
+    }
+
+    public void test_tryLock_asyncChannel() throws Exception {
+        doTest_tryLock(ChannelType.ASYNC_CHANNEL, ChannelType.ASYNC_CHANNEL);
+    }
+
+    public void test_tryLock_differentChannelTypes() throws Exception {
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.TRY_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL,
                 false /* expectToGetLock */);
-        checkTryLockBehavior(LockType.TRY_LOCK, LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                false /* expectToGetLock */);
-        checkTryLockBehavior(LockType.TRY_LOCK, LockType.LOCK, false /* expectToGetLock */);
-        checkTryLockBehavior(LockType.TRY_LOCK, LockType.LOCK_ON_REGION_WITH_LOCK,
-                false /* expectToGetLock */);
-        checkTryLockBehavior(LockType.TRY_LOCK, LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.TRY_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL,
                 false /* expectToGetLock */);
     }
 
     /**
-     * java.nio.channels.FileChannel#tryLock(long, long, boolean)
+     * java.nio.channels.[Asynchronouse]FileChannel#tryLock()
      *
      * Obtains a remote lock, then attempts to acquire a local lock on the same file,
      * and checks the behavior.
@@ -91,34 +91,111 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
      * expectedLockLockResult: {@code true} if the returned lock should be valid,
      * {@code false} otherwise.
      */
-    public void test_tryLockJJZ_Exclusive() throws Exception {
+    private void doTest_tryLock(ChannelType localChannelType, ChannelType remoteChannelType)
+            throws Exception {
+
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.TRY_LOCK, LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+    }
+
+    public void test_tryLockJJZ_Exclusive_syncChannel() throws Exception {
+        doTest_tryLockJJZ_Exclusive(ChannelType.SYNC_CHANNEL, ChannelType.SYNC_CHANNEL);
+    }
+
+    public void test_tryLockJJZ_Exclusive_asyncChannel() throws Exception {
+        doTest_tryLockJJZ_Exclusive(ChannelType.ASYNC_CHANNEL, ChannelType.ASYNC_CHANNEL);
+    }
+
+    public void test_tryLockJJZ_Exclusive_differentChannelTypes() throws Exception {
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK, LockType.TRY_LOCK,
-                false /* expectToGetLock */);
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK, LockType.TRY_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, false /* expectToGetLock */);
+
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_REGION_WITH_TRY_LOCK, false /* expectToGetLock */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, true /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK, true /* expectToGetLock */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, true /* expectToGetLock */);
+    }
+
+    /**
+     * java.nio.channels.[Asynchronous]FileChannel#tryLock(long, long, boolean)
+     *
+     * Obtains a remote lock, then attempts to acquire a local lock on the same file,
+     * and checks the behavior.
+     * checkTryLockBehavior(localLockType, remoteLockType, expectedLocalLockResult)
+     * expectedLockLockResult: {@code true} if the returned lock should be valid,
+     * {@code false} otherwise.
+     */
+    private void doTest_tryLockJJZ_Exclusive(ChannelType localChannelType,
+            ChannelType remoteChannelType) throws Exception {
+        checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK, LockType.TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, false /* expectToGetLock */);
+                LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
+        checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
                 LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
-                true /* expectToGetLock */);
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
 
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK, LockType.LOCK,
-                false /* expectToGetLock */);
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_REGION_WITH_LOCK, false /* expectToGetLock */);
+                LockType.LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK, true /* expectToGetLock */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, false /* expectToGetLock */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
                 LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
-                true /* expectToGetLock */);
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
+    }
+
+    public void test_tryLockJJZ_Shared_syncChannel() throws Exception {
+        doTest_tryLockJJZ_Shared(ChannelType.SYNC_CHANNEL, ChannelType.SYNC_CHANNEL);
+    }
+
+    public void test_tryLockJJZ_Shared_asyncChannel() throws Exception {
+        doTest_tryLockJJZ_Shared(ChannelType.ASYNC_CHANNEL, ChannelType.ASYNC_CHANNEL);
+    }
+
+    public void test_tryLockJJZ_Shared_differentChannelTypes() throws Exception {
+        checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, LockType.TRY_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, false /* expectToGetLock */);
+        checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, LockType.TRY_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, false /* expectToGetLock */);
+
+        checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, true /* expectToGetLock */);
+        checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, true /* expectToGetLock */);
     }
 
     /**
-     * java.nio.channels.FileChannel#tryLock(long, long, boolean)
+     * java.nio.channels.[Asynchronous]FileChannel#tryLock(long, long, boolean)
      *
      * Obtains a remote lock, then attempts to acquire a local lock on the same file,
      * and checks the behavior.
@@ -126,135 +203,228 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
      * expectedLockLockResult: {@code true} if the returned lock should be valid,
      * {@code false} otherwise.
      */
-    public void test_tryLockJJZ_Shared() throws Exception {
+    private void doTest_tryLockJJZ_Shared(ChannelType localChannelType,
+            ChannelType remoteChannelType) throws Exception {
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, LockType.TRY_LOCK,
-                false /* expectToGetLock */);
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_REGION_WITH_TRY_LOCK, false /* expectToGetLock */);
+                LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK, true /* expectToGetLock */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, true /* expectToGetLock */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
                 LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
-                true /* expectToGetLock */);
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
 
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, LockType.LOCK,
-                false /* expectToGetLock */);
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_REGION_WITH_LOCK, false /* expectToGetLock */);
+                LockType.LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK, true /* expectToGetLock */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, true /* expectToGetLock */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
         checkTryLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
                 LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
-                true /* expectToGetLock */);
+                localChannelType, remoteChannelType, true /* expectToGetLock */);
+    }
+
+    public void test_lock_syncChannel() throws Exception {
+        doTest_lock(ChannelType.SYNC_CHANNEL, ChannelType.SYNC_CHANNEL);
+    }
+
+    public void test_lock_asyncChannel() throws Exception {
+        doTest_lock(ChannelType.ASYNC_CHANNEL, ChannelType.ASYNC_CHANNEL);
+    }
+
+    public void test_lock_differentChannelTypes() throws Exception {
+        checkLockBehavior(LockType.LOCK, LockType.LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, true /* expectToWait */);
+        checkLockBehavior(LockType.LOCK, LockType.LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, true /* expectToWait */);
+
+        checkLockBehavior(LockType.LOCK, LockType.TRY_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, true /* expectToWait */);
+        checkLockBehavior(LockType.LOCK, LockType.TRY_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, true /* expectToWait */);
     }
 
     /**
-     * java.nio.channels.FileChannel#lock()
+     * java.nio.channels.[Asynchronous]FileChannel#lock()
      *
      * Obtains a remote lock, then attempts to acquire a local lock on the same file,
      * and checks the behavior.
      * checkTryLockBehavior(localLockType, remoteLockType, expectedLocalLockResult)
      * expectedLockLockResult: {@code true} if it blocks the local thread, {@code false} otherwise.
      */
-    public void test_lock() throws Exception {
-        checkLockBehavior(LockType.LOCK, LockType.LOCK, true /* expectToWait */);
+    private void doTest_lock(ChannelType localChannelType, ChannelType remoteChannelType)
+            throws Exception {
+        checkLockBehavior(LockType.LOCK, LockType.LOCK,
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK, LockType.LOCK_ON_REGION_WITH_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK, LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
 
-        checkLockBehavior(LockType.LOCK, LockType.TRY_LOCK, true /* expectToWait */);
+        checkLockBehavior(LockType.LOCK, LockType.TRY_LOCK,
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK, LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK, LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
+    }
+
+    public void test_lockJJZ_Exclusive_syncChannel() throws Exception {
+        doTest_lockJJZ_Exclusive(ChannelType.SYNC_CHANNEL, ChannelType.SYNC_CHANNEL);
+    }
+
+    public void test_lockJJZ_Exclusive_asyncChannel() throws Exception {
+        doTest_lockJJZ_Exclusive(ChannelType.ASYNC_CHANNEL, ChannelType.ASYNC_CHANNEL);
+    }
+
+    public void test_lockJJZ_Exclusive_differentChannelTypes() throws Exception {
+        checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK, LockType.LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, true /* expectToWait */);
+        checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK, LockType.LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, true /* expectToWait */);
+
+        checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, false /* expectToWait */);
+        checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, false /* expectToWait */);
     }
 
     /**
-     * java.nio.channels.FileChannel#lock(long, long, boolean)
+     * java.nio.channels.[Asynchronous]FileChannel#lock(long, long, boolean)
      *
      * Obtains a remote lock, then attempts to acquire a local lock on the same file,
      * and checks the behavior.
      * checkTryLockBehavior(localLockType, remoteLockType, expectedLocalLockResult)
      * expectedLockLockResult: {@code true} if blocks the local thread, {@code false} otherwise.
      */
-    public void test_lockJJZ_Exclusive() throws Exception {
+    private void doTest_lockJJZ_Exclusive(ChannelType localChannelType,
+            ChannelType remoteChannelType) throws Exception {
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK, LockType.LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK, LockType.LOCK_ON_REGION_WITH_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, true /* expectToWait */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK, false /* expectToWait */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
-                LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK, false /* expectToWait */);
+                LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
 
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK, LockType.TRY_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK, LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, true /* expectToWait */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK, false /* expectToWait */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
         checkLockBehavior(LockType.LOCK_ON_REGION_WITH_LOCK,
                 LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
-                false /* expectToWait */);
+                localChannelType, remoteChannelType, false /* expectToWait */);
+    }
+
+    public void test_lockJJZ_Shared_syncChannel() throws Exception {
+        doTest_lockJJZ_Shared(ChannelType.SYNC_CHANNEL, ChannelType.SYNC_CHANNEL);
+    }
+
+    public void test_lockJJZ_Shared_asyncChannel() throws Exception {
+        doTest_lockJJZ_Shared(ChannelType.ASYNC_CHANNEL, ChannelType.ASYNC_CHANNEL);
+    }
+
+    public void test_lockJJZ_Shared_differentChannelTypes() throws Exception {
+        checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, LockType.LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, true /* expectToWait */);
+        checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, LockType.LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, true /* expectToWait */);
+
+        checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                ChannelType.SYNC_CHANNEL, ChannelType.ASYNC_CHANNEL, false /* expectToWait */);
+        checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                ChannelType.ASYNC_CHANNEL, ChannelType.SYNC_CHANNEL, false /* expectToWait */);
     }
 
     /**
-     * java.nio.channels.FileChannel#lock(long, long, boolean)
+     * java.nio.channels.[Asynchronous]FileChannel#lock(long, long, boolean)
      *
      * Obtains a remote lock, then attempts to acquire a local lock on the same file,
      * and checks the behavior.
      * checkTryLockBehavior(localLockType, remoteLockType, expectedLocalLockResult)
      * expectedLockLockResult: {@code true} if blocks the local thread, {@code false} otherwise.
      */
-    public void test_lockJJZ_Shared() throws Exception {
+    private void doTest_lockJJZ_Shared(ChannelType localChannelType,
+            ChannelType remoteChannelType) throws Exception {
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, LockType.LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.LOCK_ON_REGION_WITH_LOCK, true /* expectToWait */);
+                LockType.LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, false /* expectToWait */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK, false /* expectToWait */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK, false /* expectToWait */);
+                LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
 
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK, LockType.TRY_LOCK,
-                true /* expectToWait */);
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.LOCK_ON_REGION_WITH_TRY_LOCK, true /* expectToWait */);
+                LockType.LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, true /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK, false /* expectToWait */);
+                LockType.SHARED_LOCK_ON_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
-                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK, false /* expectToWait */);
+                LockType.LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
+                localChannelType, remoteChannelType, false /* expectToWait */);
         checkLockBehavior(LockType.SHARED_LOCK_ON_REGION_WITH_LOCK,
                 LockType.SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK,
-                false /* expectToWait */);
+                localChannelType, remoteChannelType, false /* expectToWait */);
     }
 
     /**
-     * Checks the behavior of java.nio.Channels.FileChannel#tryLock() and #tryLock(J, J, Z)
+     * Checks the behavior of java.nio.Channels.[Asynchronous]FileChannel#tryLock()
+     * and #tryLock(J, J, Z)
      *
-     * @param localLockType the type of lock to be acquired by the test
-     * @param remoteLockType the type of lock to be acquired by the remote service
+     * @param localLockType the type of lock to be acquired by the test.
+     * @param remoteLockType the type of lock to be acquired by the remote service.
+     * @param localChannelType the type of the channel that acquires the lock locally.
+     * @param remoteChannelType the type of channel that acquires the lock remotely.
      * @param expectToGetLock {@code true}, if the lock should be acquired even when the
      *         service holds a {@code remoteLockType} lock, false otherwise.
      */
     private void checkTryLockBehavior(LockType localLockType, LockType remoteLockType,
+            ChannelType localChannelType, ChannelType remoteChannelType,
             boolean expectToGetLock) throws Exception {
         IntentReceiver.resetReceiverState();
 
         // Request that the remote lock be obtained.
         getContext().startService(new Intent(getContext(), LockHoldingService.class)
-                .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType));
+                .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType)
+                .putExtra(LockHoldingService.CHANNEL_TYPE_KEY, remoteChannelType));
 
         // Wait for a signal that the remote lock is definitely held.
         assertTrue(IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
@@ -262,25 +432,28 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         // Try to acquire the local lock in all cases and check whether it could be acquired or
         // not as expected.
         if (expectToGetLock) {
-            FileLock fileLock = acquire(localLockType);
+            FileLock fileLock = acquire(localLockType, localChannelType);
             assertNotNull(fileLock);
             assertTrue(fileLock.isValid());
         } else {
-            assertNull(acquire(localLockType));
+            assertNull(acquire(localLockType, localChannelType));
         }
         // Release the remote lock.
         stopService();
     }
 
     /**
-     * Checks the java.nio.channels.FileChannel.lock()/lock(J, J, Z) behavior.
+     * Checks the java.nio.channels.[Asynchronous]FileChannel.lock()/lock(J, J, Z) behavior.
      *
-     * @param localLockType type of lock to be acquired by the test
-     * @param remoteLockType type of lock to be acquired by the remote service.
+     * @param localLockType type of lock to be acquired by the tes.t
+     * @param remoteLockType type of lock to be acquired by the remote service..
+     * @param localChannelType the type of the channel that acquires the lock locally.
+     * @param remoteChannelType the type of channel that acquires the lock remotely.
      * @param expectToWait {@code true}, if the local thread must wait for the remote
      *         service to release the lock, {@code false} otherwise.
      */
     private void checkLockBehavior(LockType localLockType, LockType remoteLockType,
+            ChannelType localChannelType, ChannelType remoteChannelType,
             boolean expectToWait) throws Exception {
         IntentReceiver.resetReceiverState();
 
@@ -298,6 +471,7 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         Intent sendIntent = new Intent(getContext(), LockHoldingService.class)
                 .putExtra(LockHoldingService.TIME_TO_HOLD_LOCK_KEY, remoteLockHoldTimeMillis)
                 .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType)
+                .putExtra(LockHoldingService.CHANNEL_TYPE_KEY, remoteChannelType)
                 .putExtra(LockHoldingService.LOCK_BEHAVIOR_RELEASE_AND_NOTIFY_KEY, true);
 
         getContext().startService(sendIntent);
@@ -308,7 +482,7 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         long localLockNotObtainedTime = System.currentTimeMillis();
 
         // Acquire the lock locally.
-        FileLock fileLock = acquire(localLockType);
+        FileLock fileLock = acquire(localLockType, localChannelType);
         long localLockObtainedTime = System.currentTimeMillis();
 
         // Wait until the remote lock has definitely been released.
@@ -358,11 +532,16 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
      */
     void stopService() throws Exception {
         getContext().stopService(new Intent(getContext(), LockHoldingService.class));
-        assertTrue(IntentReceiver.onStopLatch.await(MAX_WAIT_TIME, SECONDS));
+        // onStopLatch can be null if we never start the service, possibly because of
+        // an earlier failure in the test.
+        if (IntentReceiver.onStopLatch != null) {
+            assertTrue(IntentReceiver.onStopLatch.await(MAX_WAIT_TIME, SECONDS));
+        }
+
         deleteDir();
     }
 
-    enum LockType {
+    static enum LockType {
 
         /** Equivalent to {@code tryLock()} */
         TRY_LOCK,
@@ -407,6 +586,13 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK,
     }
 
+    static enum ChannelType {
+        /** Represents an {@code java.nio.channels.FileChannel} */
+        SYNC_CHANNEL,
+        /** Represents an {@code java.nio.channels.AsynchronousFileChannel} */
+        ASYNC_CHANNEL,
+    }
+
     /**
      * Tries to acquire a lock of {@code lockType} on the file returned by
      * {@link #createFileInDir()} method.
@@ -423,42 +609,87 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
      *         {@link LockType#LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK}
      *         {@link LockType#SHARED_LOCK_ON_REGION_WITH_LOCK}
      *         {@link LockType#SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK}
-     * @return Returns the lock returned by the lock method.
+     * @param channelType the type of channel used to acquire the lock.
+     * @return the lock returned by the lock method.
      * @throws UnsupportedOperationException
      *         If the {@code lockType} is of non recognized type.
      */
-    static FileLock acquire(LockType lockType) throws IOException {
+    static FileLock acquire(LockType lockType, ChannelType channelType) throws
+            IOException, InterruptedException, ExecutionException {
         File file = createFileInDir();
         file.createNewFile();
+
+        FileChannel fc = null;
+        AsynchronousFileChannel afc = null;
+        if (channelType == ChannelType.SYNC_CHANNEL) {
+            fc = FileChannel.open(file.toPath(),
+                    StandardOpenOption.WRITE, StandardOpenOption.READ);
+        } else if (channelType == ChannelType.ASYNC_CHANNEL) {
+            afc = AsynchronousFileChannel.open(file.toPath(),
+                StandardOpenOption.WRITE, StandardOpenOption.READ);
+        }
+
         switch (lockType) {
             case TRY_LOCK:
-                return new FileOutputStream(file).getChannel().tryLock();
+                if (fc != null) {
+                    return fc.tryLock();
+                } else {
+                    return afc.tryLock();
+                }
             case LOCK_ON_REGION_WITH_TRY_LOCK:
-                return new FileOutputStream(file).getChannel()
-                        .tryLock(LOCK_POSITION, LOCK_SIZE, false /*isShared*/);
+                if (fc != null) {
+                    return fc.tryLock(LOCK_POSITION, LOCK_SIZE, false /*isShared*/);
+                } else {
+                    return afc.tryLock(LOCK_POSITION, LOCK_SIZE, false /*isShared*/);
+                }
             case LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK:
-                return new FileOutputStream(file).getChannel()
-                        .tryLock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, false /*isShared*/);
+                if (fc != null) {
+                    return fc.tryLock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, false /*isShared*/);
+                } else {
+                    return afc.tryLock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, false /*isShared*/);
+                }
             case SHARED_LOCK_ON_REGION_WITH_TRY_LOCK:
-                return new FileInputStream(file).getChannel()
-                        .tryLock(LOCK_POSITION, LOCK_SIZE, true /*isShared*/);
+                if (fc != null) {
+                    return fc.tryLock(LOCK_POSITION, LOCK_SIZE, true /*isShared*/);
+                } else {
+                    return afc.tryLock(LOCK_POSITION, LOCK_SIZE, true /*isShared*/);
+                }
             case SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_TRY_LOCK:
-                return new FileInputStream(file).getChannel()
-                        .tryLock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, true /*isShared*/);
+                if (fc != null) {
+                    return fc.tryLock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, true /*isShared*/);
+                } else {
+                    return afc.tryLock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, true /*isShared*/);
+                }
             case LOCK:
-                return new FileOutputStream(file).getChannel().lock();
+                if (fc != null) {
+                    return fc.lock();
+                } else {
+                    return afc.lock().get();
+                }
             case LOCK_ON_REGION_WITH_LOCK:
-                return new FileOutputStream(file).getChannel()
-                        .lock(LOCK_POSITION, LOCK_SIZE, false /*isShared*/);
+                if (fc != null) {
+                    return fc.lock(LOCK_POSITION, LOCK_SIZE, false /*isShared*/);
+                } else {
+                    return afc.lock(LOCK_POSITION, LOCK_SIZE, false /*isShared*/).get();
+                }
             case LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK:
-                return new FileOutputStream(file).getChannel()
-                        .lock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, false /*isShared*/);
+                if (fc != null) {
+                    return fc.lock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, false /*isShared*/);
+                } else {
+                    return afc.lock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, false /*isShared*/).get();
+                }
             case SHARED_LOCK_ON_REGION_WITH_LOCK:
-                return new FileInputStream(file).getChannel()
-                        .lock(LOCK_POSITION, LOCK_SIZE, true /*isShared*/);
+                if (fc != null) {
+                    return fc.lock(LOCK_POSITION, LOCK_SIZE, true /*isShared*/);
+                } else {
+                    return afc.lock(LOCK_POSITION, LOCK_SIZE, true /*isShared*/).get();
+                }
             case SHARED_LOCK_ON_NON_OVERLAPPING_REGION_WITH_LOCK:
-                return new FileInputStream(file).getChannel()
-                        .lock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, true /*isShared*/);
+                if (fc != null) {
+                    return fc.lock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, true /*isShared*/);
+                } else {
+                    return afc.lock(LOCK_POSITION + LOCK_SIZE, LOCK_SIZE, true /*isShared*/).get();
+                }
             default:
                 throw new UnsupportedOperationException("Unknown lock type");
         }

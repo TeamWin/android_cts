@@ -23,6 +23,10 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.nio.channels.FileLock;
+import java.util.concurrent.ExecutionException;
+
+import static android.cts.FileChannelInterProcessLockTest.ChannelType;
+import static android.cts.FileChannelInterProcessLockTest.LockType;
 
 /**
  * A Service that listens for commands from the FileChannelInterProcessLockTest to acquire locks of
@@ -78,6 +82,11 @@ public class LockHoldingService extends Service {
     static final String LOCK_TYPE_KEY = "lockType";
 
     /**
+     * The key of the Bundle extra used for the type of the channel that acquires the lock.
+     */
+    static final String CHANNEL_TYPE_KEY = "channelType";
+
+    /**
      * The key of the Bundle extra used to let he service know whether to release the lock after
      * some time.
      */
@@ -103,7 +112,7 @@ public class LockHoldingService extends Service {
                 acquireLock(intent);
             }
         } catch (Exception e) {
-            Log.e(LOG_MESSAGE_TAG, e.getMessage());
+            Log.e(LOG_MESSAGE_TAG, "Exception acquire lock", e);
         }
         return START_STICKY;
     }
@@ -111,13 +120,13 @@ public class LockHoldingService extends Service {
     /**
      * Acquires the lock asked by the test indefinitely.
      */
-    private void acquireLock(Intent intent) throws IOException {
-        FileChannelInterProcessLockTest.LockType lockType =
-                (FileChannelInterProcessLockTest.LockType)intent.getSerializableExtra(
-                        LOCK_TYPE_KEY);
+    private void acquireLock(Intent intent) throws IOException,
+            InterruptedException, ExecutionException {
+        LockType lockType = (LockType) intent.getSerializableExtra(LOCK_TYPE_KEY);
+        ChannelType channelType = (ChannelType) intent.getSerializableExtra(CHANNEL_TYPE_KEY);
 
         // Acquire the lock based on the information contained in the intent received.
-        this.fileLock = FileChannelInterProcessLockTest.acquire(lockType);
+        this.fileLock = FileChannelInterProcessLockTest.acquire(lockType, channelType);
         Intent responseIntent = new Intent()
                 .setPackage("android.libcorefileio.cts")
                 .putExtra(NOTIFICATION_KEY, NOTIFICATION_LOCK_HELD)
@@ -130,14 +139,13 @@ public class LockHoldingService extends Service {
      * releasing the lock.
      */
     private void acquireLockAndThenWaitThenRelease(Intent intent)
-            throws IOException, InterruptedException {
+            throws IOException, InterruptedException, ExecutionException {
         long lockHoldTimeMillis = intent.getLongExtra(TIME_TO_HOLD_LOCK_KEY, 0);
 
         // Acquire the lock.
-        FileChannelInterProcessLockTest.LockType lockType =
-                (FileChannelInterProcessLockTest.LockType)intent.getSerializableExtra(
-                        LOCK_TYPE_KEY);
-        this.fileLock = FileChannelInterProcessLockTest.acquire(lockType);
+        LockType lockType = (LockType) intent.getSerializableExtra(LOCK_TYPE_KEY);
+        ChannelType channelType = (ChannelType) intent.getSerializableExtra(CHANNEL_TYPE_KEY);
+        this.fileLock = FileChannelInterProcessLockTest.acquire(lockType, channelType);
 
         // Signal the lock is now held.
         Intent heldIntent = new Intent()
