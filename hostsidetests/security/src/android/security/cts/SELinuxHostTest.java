@@ -64,7 +64,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private File aospPcFile;
     private File aospSvcFile;
     private File devicePolicyFile;
-    private File deviceSeappFile;
+    private File devicePlatSeappFile;
+    private File deviceNonplatSeappFile;
     private File deviceFcFile;
     private File devicePcFile;
     private File deviceSvcFile;
@@ -207,9 +208,16 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     public void testValidSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
-        deviceSeappFile = File.createTempFile("seapp_contexts", ".tmp");
-        deviceSeappFile.deleteOnExit();
-        mDevice.pullFile("/seapp_contexts", deviceSeappFile);
+        devicePlatSeappFile = File.createTempFile("plat_seapp_contexts", ".tmp");
+        devicePlatSeappFile.deleteOnExit();
+        deviceNonplatSeappFile = File.createTempFile("nonplat_seapp_contexts", ".tmp");
+        deviceNonplatSeappFile.deleteOnExit();
+        if (mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", devicePlatSeappFile)) {
+            mDevice.pullFile("/vendor/etc/selinux/nonplat_seapp_contexts", deviceNonplatSeappFile);
+        }else {
+            mDevice.pullFile("/plat_seapp_contexts", devicePlatSeappFile);
+            mDevice.pullFile("/nonplat_seapp_contexts", deviceNonplatSeappFile);
+	}
 
         /* retrieve the checkseapp executable from jar */
         checkSeapp = copyResourceToTempFile("/checkseapp");
@@ -222,7 +230,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         ProcessBuilder pb = new ProcessBuilder(checkSeapp.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
                 seappNeverAllowFile.getAbsolutePath(),
-                deviceSeappFile.getAbsolutePath());
+                devicePlatSeappFile.getAbsolutePath(),
+                deviceNonplatSeappFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -288,14 +297,15 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     public void testAospSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
-        deviceSeappFile = File.createTempFile("seapp_contexts", ".tmp");
-        deviceSeappFile.deleteOnExit();
-        mDevice.pullFile("/plat_seapp_contexts", deviceSeappFile);
-
+        devicePlatSeappFile = File.createTempFile("seapp_contexts", ".tmp");
+        devicePlatSeappFile.deleteOnExit();
+        if (!mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", devicePlatSeappFile)) {
+            mDevice.pullFile("/plat_seapp_contexts", devicePlatSeappFile);
+        }
         /* retrieve the AOSP seapp_contexts file from jar */
         aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
 
-        assertFileEquals(aospSeappFile, deviceSeappFile);
+        assertFileEquals(aospSeappFile, devicePlatSeappFile);
     }
 
     /**
@@ -366,7 +376,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* obtain service_contexts file from running device */
         deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
         deviceSvcFile.deleteOnExit();
-        mDevice.pullFile("/plat_service_contexts", deviceSvcFile);
+        if (!mDevice.pullFile("/system/etc/selinux/plat_service_contexts", deviceSvcFile)) {
+            mDevice.pullFile("/plat_service_contexts", deviceSvcFile);
+        }
 
         /* retrieve the AOSP service_contexts file from jar */
         aospSvcFile = copyResourceToTempFile("/plat_service_contexts");
