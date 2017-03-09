@@ -40,7 +40,7 @@ import android.util.Pair;
 import android.util.Range;
 
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
+import org.mockito.compat.ArgumentMatcher;
 
 import static org.mockito.Mockito.*;
 
@@ -651,7 +651,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
 
     private class IsCaptureResultValid extends ArgumentMatcher<TotalCaptureResult> {
         @Override
-        public boolean matches(Object obj) {
+        public boolean matchesObject(Object obj) {
             TotalCaptureResult result = (TotalCaptureResult)obj;
             Long timeStamp = result.get(CaptureResult.SENSOR_TIMESTAMP);
             if (timeStamp != null && timeStamp.longValue() > 0L) {

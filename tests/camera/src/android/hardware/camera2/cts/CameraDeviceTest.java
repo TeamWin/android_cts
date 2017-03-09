@@ -48,7 +48,7 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.utils.StateWaiter;
 
-import org.mockito.ArgumentMatcher;
+import org.mockito.compat.ArgumentMatcher;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -988,7 +988,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
     private class IsCaptureResultNotEmpty
             extends ArgumentMatcher<TotalCaptureResult> {
         @Override
-        public boolean matches(Object obj) {
+        public boolean matchesObject(Object obj) {
             /**
              * Do the simple verification here. Only verify the timestamp for now.
              * TODO: verify more required capture result metadata fields.
