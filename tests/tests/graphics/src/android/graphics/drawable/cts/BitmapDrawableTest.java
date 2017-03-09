@@ -41,6 +41,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.test.InstrumentationTestCase;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.LayoutDirection;
 import android.util.Xml;
 import android.view.Gravity;
 
