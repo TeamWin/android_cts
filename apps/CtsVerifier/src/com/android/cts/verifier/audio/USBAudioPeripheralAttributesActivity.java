@@ -42,6 +42,7 @@ public class USBAudioPeripheralAttributesActivity extends USBAudioPeripheralActi
         mTestStatusTx = (TextView)findViewById(R.id.uap_attribsStatusTx);
 
         setPassFailButtonClickListeners();
+        setInfoResources(R.string.usbaudio_attribs_test, R.string.usbaudio_attribs_info, -1);
     }
 
     //

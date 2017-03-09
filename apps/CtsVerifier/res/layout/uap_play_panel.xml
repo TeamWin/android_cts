@@ -16,10 +16,18 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+         <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"/>
+
         <TextView
             android:text="@string/uapPlayTestInstructions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
+         <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"/>
 
         <Button
             android:text="@string/audio_uap_play_playBtn"
@@ -28,7 +36,13 @@
             android:id="@+id/uap_playPlayBtn"
             android:nextFocusUp="@+id/fail_button"
             android:nextFocusDown="@+id/pass_button"/>
-    </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/usbaudio_results_text"/>
+
+        </LinearLayout>
 
     <include layout="@layout/pass_fail_buttons"/>
 </LinearLayout>

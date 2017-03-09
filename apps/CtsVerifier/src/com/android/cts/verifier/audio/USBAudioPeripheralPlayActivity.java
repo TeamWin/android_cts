@@ -45,6 +45,7 @@ public class USBAudioPeripheralPlayActivity extends USBAudioPeripheralPlayerActi
         setupPlayer();
 
         setPassFailButtonClickListeners();
+        setInfoResources(R.string.usbaudio_play_test, R.string.usbaudio_play_info, -1);
     }
 
     //

@@ -74,4 +74,11 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
     public boolean isPlaying() {
         return mIsPlaying;
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        stopPlay();
+    }
 }

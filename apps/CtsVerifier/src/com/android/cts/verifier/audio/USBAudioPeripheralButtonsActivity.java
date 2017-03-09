@@ -65,6 +65,7 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
         mBtnDStatusTxt = (TextView)findViewById(R.id.uap_buttonsBtnDStatusTx);
 
         setPassFailButtonClickListeners();
+        setInfoResources(R.string.usbaudio_buttons_test, R.string.usbaudio_buttons_info, -1);
     }
 
     private void showButtonsState() {
