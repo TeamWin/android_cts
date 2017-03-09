@@ -41,9 +41,12 @@ public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
     // Value of PackageManager.FEATURE_BACKUP
     private static final String FEATURE_BACKUP = "android.software.backup";
 
+    private static final String DISMISS_KEYGUARD_COMMAND = "wm dismiss-keyguard";
+
     @Before
     public void skipTestUnlessBackupSupported() throws Exception {
         assumeTrue(supportsBackup());
+        getDevice().executeShellCommand(DISMISS_KEYGUARD_COMMAND);
     }
 
     @Test
