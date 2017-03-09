@@ -52,7 +52,7 @@ LOCAL_AAPT_FLAGS = -c small -c normal -c large -c xlarge \
         -c xx_YY
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
+LOCAL_MULTILIB := both
 LOCAL_PACKAGE_NAME := CtsContentTestCases
 
 # Tag this module as a cts test artifact

@@ -20,6 +20,7 @@ import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTes
 import com.android.compatibility.common.tradefed.config.ConfigurationFactoryTest;
 import com.android.compatibility.common.tradefed.presubmit.IntegrationTest;
 import com.android.compatibility.common.tradefed.presubmit.PresubmitSetupValidation;
+import com.android.compatibility.common.tradefed.presubmit.ValidateTestsAbi;
 import com.android.compatibility.common.tradefed.result.ChecksumReporterTest;
 import com.android.compatibility.common.tradefed.result.ConsoleReporterTest;
 import com.android.compatibility.common.tradefed.result.MetadataReporterTest;
@@ -59,6 +60,7 @@ import org.junit.runners.Suite.SuiteClasses;
     // presubmit
     IntegrationTest.class,
     PresubmitSetupValidation.class,
+    ValidateTestsAbi.class,
 
     //result
     ChecksumReporterTest.class,
