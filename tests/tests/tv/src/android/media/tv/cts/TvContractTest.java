@@ -790,6 +790,47 @@ public class TvContractTest extends AndroidTestCase {
         }
     }
 
+    public void testPreviewProgramsTableForModifyChannelId() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        // Set-up: add a channel and preview program.
+        ContentValues values = createDummyChannelValues(mInputId, true);
+        Uri channelUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(channelUri);
+        Uri previewProgramsUri = TvContract.buildPreviewProgramsUriForChannel(channelId);
+        values = createDummyPreviewProgramValues(channelId);
+        Uri previewProgramUri = mContentResolver.insert(previewProgramsUri, values);
+
+        // Channel ID cannot be changed
+        values.put(PreviewPrograms.COLUMN_ITEM_COUNT, 1);
+        values.put(PreviewPrograms.COLUMN_CHANNEL_ID, channelId + 1);
+        int result = mContentResolver.update(previewProgramUri, values, null, null);
+        assertEquals(0, result);
+
+        // Same Channel ID should not fail updating
+        values.put(PreviewPrograms.COLUMN_CHANNEL_ID, channelId);
+        result = mContentResolver.update(previewProgramUri, values, null, null);
+        assertEquals(1, result);
+
+        // Update without Channel ID should not fail
+        values.put(PreviewPrograms.COLUMN_ITEM_COUNT, 2);
+        values.remove(PreviewPrograms.COLUMN_CHANNEL_ID);
+        result = mContentResolver.update(previewProgramUri, values, null, null);
+        assertEquals(1, result);
+
+        // Update channel ID with CONTENT_URI should fail
+        values.put(PreviewPrograms.COLUMN_CHANNEL_ID, channelId);
+        result = mContentResolver.update(PreviewPrograms.CONTENT_URI, values, null, null);
+        assertEquals(0, result);
+
+        mContentResolver.delete(previewProgramUri, null, null);
+        try (Cursor cursor = mContentResolver.query(
+                previewProgramUri, PROGRAMS_PROJECTION, null, null, null)) {
+            assertEquals(0, cursor.getCount());
+        }
+    }
+
     private void verifyOverlap(long startMillis, long endMillis, int expectedCount,
             long channelId, Uri channelUri) {
         try (Cursor cursor = mContentResolver.query(TvContract.buildProgramsUriForChannel(
