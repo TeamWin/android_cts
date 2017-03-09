@@ -46,6 +46,13 @@ final class Helper {
 
     private static final String TAG = "AutoFillCtsHelper";
 
+    static final String ID_USERNAME_LABEL = "username_label";
+    static final String ID_USERNAME = "username";
+    static final String ID_PASSWORD_LABEL = "password_label";
+    static final String ID_PASSWORD = "password";
+    static final String ID_LOGIN = "login";
+    static final String ID_OUTPUT = "output";
+
     /**
      * Timeout (in milliseconds) until framework binds / unbinds from service.
      */
@@ -108,6 +115,7 @@ final class Helper {
             .append("resId=").append(node.getIdEntry())
             .append(" class=").append(node.getClassName())
             .append(" text=").append(node.getText())
+            .append(" class=").append(node.getClassName())
             .append(" #children=").append(childrenSize);
 
         buffer.append("\n").append(prefix)
