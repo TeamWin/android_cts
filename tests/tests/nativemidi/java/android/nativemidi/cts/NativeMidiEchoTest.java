@@ -60,7 +60,8 @@ public class NativeMidiEchoTest extends AndroidTestCase {
     private MidiManager mMidiManager;
 
     private MidiDevice mEchoDevice;
-
+    private long mNativeDeviceHandle;
+    
     // (Native code) attributes associated with a test/EchoServer instance.
     private long mTestContext;
 
@@ -180,7 +181,7 @@ public class NativeMidiEchoTest extends AndroidTestCase {
         NativeMidiEchoTestService echoService = NativeMidiEchoTestService.getInstance();
 
         try {
-            mEchoDevice.mirrorToNative();
+            mNativeDeviceHandle = mEchoDevice.mirrorToNative();
         } catch (IOException ex) {
             Log.i(TAG, "! Failed to mirror to native !" + ex.getMessage() + "\n");
             assertTrue("! Failed to mirror to native !", false);
@@ -191,11 +192,11 @@ public class NativeMidiEchoTest extends AndroidTestCase {
 
         // Open Input
         int result =
-                startWritingMidi(testContext, mEchoDevice.getInfo().getId(), 0/*mPortNumber*/);
+                startWritingMidi(testContext, mNativeDeviceHandle, 0/*mPortNumber*/);
         assertEquals("Bad start writing (native) MIDI", 0, result);
 
         // Open Output
-        result = startReadingMidi(testContext, mEchoDevice.getInfo().getId(), 0/*mPortNumber*/);
+        result = startReadingMidi(testContext, mNativeDeviceHandle, 0/*mPortNumber*/);
         assertEquals("Bad start Reading (native) MIDI", 0, result);
 
         return testContext;
@@ -519,10 +520,10 @@ public class NativeMidiEchoTest extends AndroidTestCase {
     public static native long allocTestContext();
     public static native void freeTestContext(long context);
 
-    public native int startReadingMidi(long ctx, int deviceId, int portNumber);
+    public native int startReadingMidi(long ctx, long deviceHandle, int portNumber);
     public native int stopReadingMidi(long ctx);
 
-    public native int startWritingMidi(long ctx, int deviceId, int portNumber);
+    public native int startWritingMidi(long ctx, long deviceHandle, int portNumber);
     public native int stopWritingMidi(long ctx);
     public native int getMaxWriteBufferSize(long ctx);
 
