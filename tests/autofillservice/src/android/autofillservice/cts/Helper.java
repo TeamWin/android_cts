@@ -33,6 +33,7 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
+import android.view.View;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -275,9 +276,8 @@ final class Helper {
     /**
      * Asserts the auto-fill value of a date-based node.
      */
-    static void assertDateValue(ViewNode node, int year, int month, int day) {
-        final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+    static void assertDateValue(Object object, AutofillValue value, int year, int month, int day) {
+        assertWithMessage("null auto-fill value on %s", object).that(value).isNotNull();
 
         final Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(value.getDateValue());
@@ -291,11 +291,24 @@ final class Helper {
     }
 
     /**
+     * Asserts the auto-fill value of a date-based node.
+     */
+    static void assertDateValue(ViewNode node, int year, int month, int day) {
+        assertDateValue(node, node.getAutofillValue(), year, month, day);
+    }
+
+    /**
+     * Asserts the auto-fill value of a date-based view.
+     */
+    static void assertDateValue(View view, int year, int month, int day) {
+        assertDateValue(view, view.getAutofillValue(), year, month, day);
+    }
+
+    /**
      * Asserts the auto-fill value of a time-based node.
      */
-    static void assertTimeValue(ViewNode node, int hour, int minute) {
-        final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
+    private static void assertTimeValue(Object object, AutofillValue value, int hour, int minute) {
+        assertWithMessage("null auto-fill value on %s", object).that(value).isNotNull();
 
         final Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(value.getDateValue());
@@ -304,6 +317,20 @@ final class Helper {
             .that(cal.get(Calendar.HOUR_OF_DAY)).isEqualTo(hour);
         assertWithMessage("Wrong minute on AutofillValue %s", value)
             .that(cal.get(Calendar.MINUTE)).isEqualTo(minute);
+    }
+
+    /**
+     * Asserts the auto-fill value of a time-based node.
+     */
+    static void assertTimeValue(ViewNode node, int hour, int minute) {
+        assertTimeValue(node, node.getAutofillValue(), hour, minute);
+    }
+
+    /**
+     * Asserts the auto-fill value of a time-based view.
+     */
+    static void assertTimeValue(View view, int hour, int minute) {
+        assertTimeValue(view, view.getAutofillValue(), hour, minute);
     }
 
     /**
