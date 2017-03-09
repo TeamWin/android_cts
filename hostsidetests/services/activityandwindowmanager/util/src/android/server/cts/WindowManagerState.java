@@ -99,12 +99,15 @@ public class WindowManagerState {
     private static final Pattern sDisplayFrozenPattern =
             Pattern.compile("mDisplayFrozen=([a-z]*) .*");
 
+    private static final Pattern sDockedStackMinimizedPattern =
+            Pattern.compile("mMinimizedDock=([a-z]*)");
+
     private static final Pattern[] sExtractStackExitPatterns = {
             sStackIdPattern, sWindowPattern, sStartingWindowPattern, sExitingWindowPattern,
             sDebuggerWindowPattern, sFocusedWindowPattern, sAppErrorFocusedWindowPattern,
             sWaitingForDebuggerFocusedWindowPattern,
             sFocusedAppPattern, sLastAppTransitionPattern, sDefaultPinnedStackBoundsPattern,
-            sPinnedStackMovementBoundsPattern, sDisplayIdPattern };
+            sPinnedStackMovementBoundsPattern, sDisplayIdPattern, sDockedStackMinimizedPattern};
 
     // Windows in z-order with the top most at the front of the list.
     private List<WindowState> mWindowStates = new ArrayList();
@@ -125,6 +128,7 @@ public class WindowManagerState {
     private int mRotation;
     private int mLastOrientation;
     private boolean mDisplayFrozen;
+    private boolean mIsDockedStackMinimized;
 
     void computeState(ITestDevice device) throws DeviceNotAvailableException {
         // It is possible the system is in the middle of transition to the right state when we get
@@ -327,6 +331,13 @@ public class WindowManagerState {
             if (matcher.matches()) {
                 log(line);
                 mDisplayFrozen = Boolean.parseBoolean(matcher.group(1));
+                continue;
+            }
+
+            matcher = sDockedStackMinimizedPattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                mIsDockedStackMinimized = Boolean.parseBoolean(matcher.group(1));
                 continue;
             }
         }
@@ -535,6 +546,10 @@ public class WindowManagerState {
 
     public boolean isDisplayFrozen() {
         return mDisplayFrozen;
+    }
+
+    public boolean isDockedStackMinimized() {
+        return mIsDockedStackMinimized;
     }
 
     private void reset() {
