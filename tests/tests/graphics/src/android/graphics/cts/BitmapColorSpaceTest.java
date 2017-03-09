@@ -16,6 +16,7 @@
 
 package android.graphics.cts;
 
+import android.annotation.ColorInt;
 import android.annotation.NonNull;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -31,7 +32,11 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.util.Arrays;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
@@ -132,28 +137,143 @@ public class BitmapColorSpaceTest {
     }
 
     @Test
-    public void writeColorSpace() {
-        testColorSpaceMarshalling("green-srgb.png", ColorSpace.get(ColorSpace.Named.SRGB));
-        testColorSpaceMarshalling("green-p3.png", ColorSpace.get(ColorSpace.Named.DISPLAY_P3));
-        testColorSpaceMarshalling("prophoto-rgba16f.png",
-                ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB));
-
-        // Special case where the color space will be null in native
-        Bitmap bitmapIn = BitmapFactory.decodeResource(mResources, R.drawable.robot);
-        testParcelUnparcel(bitmapIn, ColorSpace.get(ColorSpace.Named.SRGB));
+    public void getPixel() {
+        verifyGetPixel("green-p3.png", 0x75fb4cff, 0xff03ff00);
+        verifyGetPixel("translucent-green-p3.png", 0x3a7d267f, 0x7f00ff00); // 50% translucent
     }
 
-    private void testColorSpaceMarshalling(
-            @NonNull String fileName, @NonNull ColorSpace colorSpace) {
+    private void verifyGetPixel(@NonNull String fileName,
+            @ColorInt int rawColor, @ColorInt int srgbColor) {
         try (InputStream in = mResources.getAssets().open(fileName)) {
-            Bitmap bitmapIn = BitmapFactory.decodeStream(in);
-            testParcelUnparcel(bitmapIn, colorSpace);
+            Bitmap b = BitmapFactory.decodeStream(in);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
+            b.copyPixelsToBuffer(dst);
+            dst.rewind();
+            // Stored as RGBA
+            assertEquals(rawColor, dst.asIntBuffer().get());
+
+            int srgb = b.getPixel(31, 31);
+            assertEquals(srgbColor, srgb);
         } catch (IOException e) {
             fail();
         }
     }
 
-    private void testParcelUnparcel(Bitmap bitmapIn, ColorSpace expected) {
+    @Test
+    public void getPixels() {
+        verifyGetPixels("green-p3.png", 0xff03ff00);
+        verifyGetPixels("translucent-green-p3.png", 0x7f00ff00); // 50% translucent
+    }
+
+    private void verifyGetPixels(@NonNull String fileName, @ColorInt int expected) {
+        try (InputStream in = mResources.getAssets().open(fileName)) {
+            Bitmap b = BitmapFactory.decodeStream(in);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            int[] pixels = new int[b.getWidth() * b.getHeight()];
+            b.getPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+            for (int pixel : pixels) {
+                assertEquals(expected, pixel);
+            }
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void setPixel() {
+        verifySetPixel("green-p3.png", 0xffff0000, 0xea3424ff);
+        verifySetPixel("translucent-green-p3.png", 0x7fff0000, 0x751a127f);
+    }
+
+    private void verifySetPixel(@NonNull String fileName,
+            @ColorInt int newColor, @ColorInt int expectedColor) {
+        try (InputStream in = mResources.getAssets().open(fileName)) {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inMutable = true;
+
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            b.setPixel(0, 0, newColor);
+
+            ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
+            b.copyPixelsToBuffer(dst);
+            dst.rewind();
+            // Stored as RGBA
+            assertEquals(expectedColor, dst.asIntBuffer().get());
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void setPixels() {
+        verifySetPixels("green-p3.png", 0xffff0000, 0xea3424ff);
+        verifySetPixels("translucent-green-p3.png", 0x7fff0000, 0x751a127f);
+    }
+
+    private void verifySetPixels(@NonNull String fileName,
+            @ColorInt int newColor, @ColorInt int expectedColor) {
+        try (InputStream in = mResources.getAssets().open(fileName)) {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inMutable = true;
+
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            int[] pixels = new int[b.getWidth() * b.getHeight()];
+            Arrays.fill(pixels, newColor);
+            b.setPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+
+            ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
+            b.copyPixelsToBuffer(dst);
+            dst.rewind();
+
+            IntBuffer buffer = dst.asIntBuffer();
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0; i < pixels.length; i++) {
+                // Stored as RGBA
+                assertEquals(expectedColor, buffer.get());
+            }
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void writeColorSpace() {
+        verifyColorSpaceMarshalling("green-srgb.png", ColorSpace.get(ColorSpace.Named.SRGB));
+        verifyColorSpaceMarshalling("green-p3.png", ColorSpace.get(ColorSpace.Named.DISPLAY_P3));
+        verifyColorSpaceMarshalling("prophoto-rgba16f.png",
+                ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB));
+
+        // Special case where the color space will be null in native
+        Bitmap bitmapIn = BitmapFactory.decodeResource(mResources, R.drawable.robot);
+        verifyParcelUnparcel(bitmapIn, ColorSpace.get(ColorSpace.Named.SRGB));
+    }
+
+    private void verifyColorSpaceMarshalling(
+            @NonNull String fileName, @NonNull ColorSpace colorSpace) {
+        try (InputStream in = mResources.getAssets().open(fileName)) {
+            Bitmap bitmapIn = BitmapFactory.decodeStream(in);
+            verifyParcelUnparcel(bitmapIn, colorSpace);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    private void verifyParcelUnparcel(Bitmap bitmapIn, ColorSpace expected) {
         ColorSpace cs = bitmapIn.getColorSpace();
         assertNotNull(cs);
         assertSame(expected, cs);
