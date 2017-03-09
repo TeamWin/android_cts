@@ -24,9 +24,10 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
-import static android.autofillservice.cts.VirtualContainerActivity.BLANK_VALUE;
+import static android.autofillservice.cts.VirtualContainerView.*;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -69,7 +70,19 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testAutofill() throws Exception {
+    public void testAutofillSync() throws Exception {
+        autofillTest(true);
+    }
+
+    @Test
+    public void testAutofillAsync() throws Exception {
+        autofillTest(false);
+    }
+
+    /**
+     * Tests autofillingh the web, using the sync / async version of ViewStructure.addChild
+     */
+    private void autofillTest(boolean sync) throws Exception {
         // Set service.
         enableService();
         final Replier replier = new Replier();
@@ -82,6 +95,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
+        mActivity.setSync(sync);
 
         // Trigger auto-fill.
         mActivity.onUsername((v) -> { v.changeFocus(true); });
@@ -94,10 +108,15 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         final ViewNode passwordLabel = findNodeByResourceId(request.structure, ID_PASSWORD_LABEL);
         final ViewNode password = findNodeByResourceId(request.structure, ID_PASSWORD);
 
-        assertTextAndValue(username, BLANK_VALUE);
+        assertTextIsSanitized(username);
         assertTextIsSanitized(password);
         assertTextAndValue(usernameLabel, "Username");
         assertTextAndValue(passwordLabel, "Password");
+
+        assertThat(usernameLabel.getClassName()).isEqualTo(LABEL_CLASS);
+        assertThat(username.getClassName()).isEqualTo(TEXT_CLASS);
+        assertThat(passwordLabel.getClassName()).isEqualTo(LABEL_CLASS);
+        assertThat(password.getClassName()).isEqualTo(TEXT_CLASS);
 
         // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(username.isFocused()).isTrue();

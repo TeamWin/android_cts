@@ -20,7 +20,6 @@ import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.VirtualContainerView.Line;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -46,6 +45,10 @@ public class VirtualContainerView extends View {
 
     private static final String TAG = "VirtualContainerView";
 
+    static final String LABEL_CLASS = "my.readonly.view";
+    static final String TEXT_CLASS = "my.editable.view";
+
+
     private final ArrayList<Line> mLines = new ArrayList<>();
     private final SparseArray<Item> mItems = new SparseArray<>();
     private final AutoFillManager mAfm;
@@ -60,6 +63,7 @@ public class VirtualContainerView extends View {
     private int mLineLength;
     private int mFocusedColor;
     private int mUnfocusedColor;
+    private boolean mSync;
 
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -152,29 +156,39 @@ public class VirtualContainerView extends View {
         final int childrenSize = mItems.size();
         int index = structure.addChildCount(childrenSize);
         final String packageName = getContext().getPackageName();
+        final String syncMsg = mSync ? "" : " (async)";
         for (int i = 0; i < childrenSize; i++) {
             final Item item = mItems.valueAt(i);
-            Log.d(TAG, "Adding new child at index " + index + ": " + item);
-            final ViewStructure child = structure.newChildForAutoFill(index, item.id, 0);
+            Log.d(TAG, "Adding new child" + syncMsg + " at index " + index + ": " + item);
+            final ViewStructure child = mSync
+                    ? structure.newChildForAutoFill(index, item.id, 0)
+                    : structure.asyncNewChildForAutoFill(index, item.id, 0);
             child.setSanitized(item.sanitized);
             index++;
-            final String className = item.editable ? "my.editable.view" : "my.read-only.view";
+            final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
             child.setClassName(className);
             child.setId(1000 + index, packageName, "id", item.resourceId);
             child.setText(item.text);
             child.setAutoFillValue(AutoFillValue.forText(item.text));
             child.setFocused(item.line.focused);
+            if (!mSync) {
+                Log.d(TAG, "Commiting virtual child");
+                child.asyncCommit();
+            }
         }
     }
 
-    Line addLine(String labelId, String label, String textId, String text,
-            boolean sanitized) {
-        final Line line = new Line(labelId, label, textId, text, sanitized);
+    Line addLine(String labelId, String label, String textId, String text) {
+        final Line line = new Line(labelId, label, textId, text);
         Log.d(TAG, "addLine: " + line);
         mLines.add(line);
         mItems.put(line.label.id, line.label);
         mItems.put(line.text.id, line.text);
         return line;
+    }
+
+    void setSync(boolean sync) {
+        mSync = sync;
     }
 
     private static int nextId;
@@ -188,10 +202,9 @@ public class VirtualContainerView extends View {
 
         private boolean focused;
 
-        private Line(String labelId, String label, String textId, String text,
-                boolean sanitized) {
+        private Line(String labelId, String label, String textId, String text) {
             this.label = new Item(this, ++nextId, labelId, label, false, true);
-            this.text = new Item(this, ++nextId, textId, text, true, sanitized);
+            this.text = new Item(this, ++nextId, textId, text, true, false);
         }
 
         void setBounds(float x, float y) {
@@ -258,7 +271,6 @@ public class VirtualContainerView extends View {
                         .that(actual).isEqualTo(expected.toString());
             }
         }
-
     }
 
     private static final class Item {
