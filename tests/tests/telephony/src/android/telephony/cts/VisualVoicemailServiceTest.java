@@ -47,11 +47,14 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.internal.telephony.SmsConstants;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -315,6 +318,24 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         assertEquals("", result.getFields().getString("key"));
     }
 
+    public void testFilter_originatingNumber_match_filtered() {
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setOriginatingNumbers(Arrays.asList(mPhoneNumber))
+                .build();
+
+        getSmsFromText(settings, "//CTSVVM:SYNC:key=value", true);
+    }
+
+    public void testFilter_originatingNumber_mismatch_notFiltered() {
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setOriginatingNumbers(Arrays.asList("1"))
+                .build();
+
+        getSmsFromText(settings, "//CTSVVM:SYNC:key=value", false);
+    }
+
     public void testGetVisualVoicemailPackageName_isSelf(){
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
@@ -361,6 +382,17 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         return getSmsFromText(clientPrefix, text, true);
     }
 
+    @Nullable
+    private VisualVoicemailSms getSmsFromText(String clientPrefix, String text,
+            boolean expectVvmSms) {
+        return getSmsFromText(
+                new VisualVoicemailSmsFilterSettings.Builder()
+                        .setClientPrefix(clientPrefix)
+                        .build(),
+                text,
+                expectVvmSms);
+    }
+
     private void assertVisualVoicemailSmsNotReceived(String clientPrefix, String text) {
         getSmsFromText(clientPrefix, text, false);
     }
@@ -374,13 +406,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
      * {@code null} be returned.
      */
     @Nullable
-    private VisualVoicemailSms getSmsFromText(String clientPrefix, String text,
+    private VisualVoicemailSms getSmsFromText(VisualVoicemailSmsFilterSettings settings, String text,
             boolean expectVvmSms) {
 
-        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle,
-                new VisualVoicemailSmsFilterSettings.Builder()
-                        .setClientPrefix(clientPrefix)
-                        .build());
+        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle, settings);
 
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
         MockVisualVoicemailService.setSmsFuture(future);
