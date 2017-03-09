@@ -57,6 +57,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
+import android.view.View;
+import android.view.autofill.AutoFillId;
 import android.view.autofill.AutoFillValue;
 
 import org.junit.After;
@@ -178,6 +180,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutoFillOneDatasetAndMoveFocusAround() throws Exception {
         // Set service.
         enableService();
+        // TODO(b/35948916): callback assertions are redundant here because they're tested by
+        // testAutofillCallbacks(), but that test would not detect the extra call.
+        final MyAutofillCallback callback = mLoginActivity.registerCallback();
         final Replier replier = new Replier();
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -192,10 +197,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
         waitUntilConnected();
+        final FillRequest fillRequest = replier.getNextFillRequest();
+        final View username = mLoginActivity.getUsername();
+        final View password = mLoginActivity.getPassword();
+
+        callback.assertUiShownEvent(username);
 
         // Make sure tapping on other fields from the dataset does not trigger it again
         mLoginActivity.onPassword((v) -> { v.requestFocus(); });
+        replier.assertNumberUnhandledFillRequests(0);
+
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        replier.assertNumberUnhandledFillRequests(0);
+
+        callback.assertUiHiddenEvent(password);
+        callback.assertUiShownEvent(username);
+
+        // TODO(b/35948916): temporary hack since UI is sending 2 events instead of 1
+        callback.assertUiShownEvent(username);
+
+        callback.assertNumberUnhandledEvents(0);
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
@@ -208,7 +232,50 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mLoginActivity.onUsername((v) -> { v.requestFocus(); });
 
         // Sanity checks.
-        replier.assertNumberUnhandledFillRequests(1);
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testAutofillCallbacks() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mLoginActivity.registerCallback();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutoFillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutoFillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mLoginActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+        final FillRequest fillRequest = replier.getNextFillRequest();
+        final View username = mLoginActivity.getUsername();
+        final View password = mLoginActivity.getPassword();
+
+        callback.assertUiShownEvent(username);
+
+        mLoginActivity.onPassword((v) -> { v.requestFocus(); });
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mLoginActivity.unregisterCallback();
+        callback.assertNumberUnhandledEvents(0);
+
+        // Auto-fill it.
+        sUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mLoginActivity.assertAutoFilled();
+
+        // Sanity checks.
+        callback.assertNumberUnhandledEvents(0);
         waitUntilDisconnected();
     }
 

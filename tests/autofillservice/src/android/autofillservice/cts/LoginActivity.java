@@ -180,6 +180,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Gets the {@code username} view.
+     */
+    EditText getUsername() {
+        return mUsernameEditText;
+    }
+
+    /**
      * Visits the {@code password_label} in the UiThread.
      */
     void onPasswordLabel(ViewVisitor<TextView> v) {
@@ -195,6 +202,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> {
             v.visit(mPasswordEditText);
         });
+    }
+
+    /**
+     * Gets the {@code password} view.
+     */
+    EditText getPassword() {
+        return mPasswordEditText;
     }
 
     /**
