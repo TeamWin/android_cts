@@ -37,6 +37,9 @@ public class ComparisonTask implements Callable<Boolean> {
 
     private static final int IMAGE_THRESHOLD = 2;
 
+    /** Maximum allowable number of consecutive failed pixels. */
+    private static final int MAX_CONSECUTIVE_FAILURES = 1;
+
     private static final String STORAGE_PATH_DEVICE = "/sdcard/cts-holo-assets/%s.png";
 
     private final ITestDevice mDevice;
@@ -110,6 +113,8 @@ public class ComparisonTask implements Callable<Boolean> {
         }
 
         for (int i = 0; i < w; i++) {
+            int consecutive = 0;
+
             for (int j = 0; j < h; j++) {
                 final int p1 = reference.getRGB(i, j);
                 final int p2 = generated.getRGB(i, j);
@@ -121,7 +126,13 @@ public class ComparisonTask implements Callable<Boolean> {
                 if (Math.abs(db) > threshold ||
                         Math.abs(dg) > threshold ||
                         Math.abs(dr) > threshold) {
-                    return false;
+                    consecutive++;
+
+                    if (consecutive > MAX_CONSECUTIVE_FAILURES) {
+                        return false;
+                    }
+                } else {
+                    consecutive = 0;
                 }
             }
         }
