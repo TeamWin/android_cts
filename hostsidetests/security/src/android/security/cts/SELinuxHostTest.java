@@ -345,11 +345,16 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     public void testAospPropertyContexts() throws Exception {
 
         /* obtain property_contexts file from running device */
-        devicePcFile = File.createTempFile("property_contexts", ".tmp");
+        devicePcFile = File.createTempFile("plat_property_contexts", ".tmp");
         devicePcFile.deleteOnExit();
-        mDevice.pullFile("/plat_property_contexts", devicePcFile);
+        // plat_property_contexts may be either in /system/etc/sepolicy or in /
+        if (!mDevice.pullFile("/system/etc/selinux/plat_property_contexts", devicePcFile)) {
+            mDevice.pullFile("/plat_property_contexts", devicePcFile);
+        }
 
-        /* retrieve the AOSP property_contexts file from jar */
+        // Retrieve the AOSP property_contexts file from JAR.
+        // The location of this file in the JAR has nothing to do with the location of this file on
+        // Android devices. See build script of this CTS module.
         aospPcFile = copyResourceToTempFile("/plat_property_contexts");
 
         assertFileEquals(aospPcFile, devicePcFile);
