@@ -244,14 +244,10 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Each time we compute the state we implicitly assert valid bounds.
         String[] waitForActivitiesVisible =
             new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
-        setDeviceRotation(0);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        setDeviceRotation(1);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        setDeviceRotation(2);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        setDeviceRotation(3);
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        for (int i = 0; i < 4; i++) {
+            setDeviceRotation(i);
+            mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        }
         // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for double
         // step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side.
         setDeviceRotation(1);
@@ -278,29 +274,46 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
         String[] waitForActivitiesVisible =
             new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME};
-        sleepDevice();
-        setDeviceRotation(0);
-        wakeUpAndUnlockDevice();
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        for (int i = 0; i < 4; i++) {
+            sleepDevice();
+            setDeviceRotation(i);
+            wakeUpAndUnlockDevice();
+            mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        }
+    }
 
-        sleepDevice();
+    public void testRotationWhileDockMinimized() throws Exception {
+        launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
+        assertDockMinimized();
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+        mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
+        mAmWmState.assertFocusedStack("Home activity should be focused in minimized mode",
+                HOME_STACK_ID);
+
+        // Rotate device single steps (90°) 0-1-2-3.
+        // Each time we compute the state we implicitly assert valid bounds in minimized mode.
+        String[] waitForActivitiesVisible = new String[] {TEST_ACTIVITY_NAME};
+        for (int i = 0; i < 4; i++) {
+            setDeviceRotation(i);
+            mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        }
+
+        // Double steps (180°) We ended the single step at 3. So, we jump directly to 1 for double
+        // step. So, we are testing 3-1-3 for one side and 0-2-0 for the other side in minimized
+        // mode.
         setDeviceRotation(1);
-        wakeUpAndUnlockDevice();
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-
-        sleepDevice();
-        setDeviceRotation(2);
-        wakeUpAndUnlockDevice();
-        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-
-        sleepDevice();
         setDeviceRotation(3);
-        wakeUpAndUnlockDevice();
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        setDeviceRotation(0);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        setDeviceRotation(2);
+        mAmWmState.computeState(mDevice, waitForActivitiesVisible);
+        setDeviceRotation(0);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
     }
 
     public void testFinishDockActivityWhileMinimized() throws Exception {
-        assertDockNotMinimized();
         launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
         assertDockMinimized();
 
