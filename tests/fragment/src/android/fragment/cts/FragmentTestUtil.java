@@ -36,7 +36,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 public class FragmentTestUtil {
-    public static void waitForExecution(final ActivityTestRule<FragmentTestActivity> rule) {
+    public static void waitForExecution(final ActivityTestRule<? extends Activity> rule) {
         // Wait for two cycles. When starting a postponed transition, it will post to
         // the UI thread and then the execution will be added onto the queue after that.
         // The two-cycle wait makes sure fragments have the opportunity to complete both
