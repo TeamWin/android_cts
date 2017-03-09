@@ -2970,6 +2970,7 @@
         <activity android:name=".managedprovisioning.CompHelperActivity">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.COMP_SET_ALWAYS_ON_VPN" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.COMP_INSTALL_CA_CERT" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.COMP_SET_MAXIMUM_PASSWORD_ATTEMPTS" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
