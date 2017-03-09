@@ -18,7 +18,6 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE:= CtsNativeHardwareTestCases
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
@@ -28,15 +27,17 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
   libnativewindow \
-  libutils \
   liblog \
 
 LOCAL_STATIC_LIBRARIES := \
-  libgtest \
-  libgtest_main \
+  libgtest_ndk_c++ \
+  libgtest_main_ndk_c++ \
 
 LOCAL_CTS_TEST_PACKAGE := android.nativehardware
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-include $(BUILD_CTS_EXECUTABLE)
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
+
+include $(BUILD_NATIVE_TEST)

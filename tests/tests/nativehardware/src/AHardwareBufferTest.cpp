@@ -23,11 +23,10 @@
 #include <sys/un.h>
 
 #include <android/hardware_buffer.h>
-#include <utils/Errors.h>
-
 #include <gtest/gtest.h>
 
-using namespace android;
+#define BAD_VALUE -EINVAL
+#define NO_ERROR 0
 
 static ::testing::AssertionResult BuildHexFailureMessage(uint64_t expected,
         uint64_t actual, const char* type) {
