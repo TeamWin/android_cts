@@ -116,12 +116,12 @@ public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity 
     if (micSupportString.equalsIgnoreCase(getResources().getString(
         R.string.hifi_ultrasound_test_default_false_string))) {
       micSupport = false;
-      getPassButton().setEnabled(true);
       info.append(getResources().getString(R.string.hifi_ultrasound_speaker_test_mic_no_support));
     }
     if (spkrSupportString.equalsIgnoreCase(getResources().getString(
         R.string.hifi_ultrasound_test_default_false_string))) {
       spkrSupport = false;
+      getPassButton().setEnabled(true);
       info.append(getResources().getString(R.string.hifi_ultrasound_speaker_test_spkr_no_support));
     }
 
