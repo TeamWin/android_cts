@@ -16,6 +16,7 @@
 
 package android.server.cts;
 
+import android.platform.test.annotations.Presubmit;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.List;
  * Build: mmma -j32 cts/hostsidetests/services
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsWindowManagerHostTestCases android.server.cts.AlertWindowsTests
  */
+@Presubmit
 public class AlertWindowsTests extends ActivityManagerTestBase {
 
     private static final String PACKAGE_NAME = "android.server.alertwindowapp";

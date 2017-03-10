@@ -23,7 +23,9 @@ LOCAL_MODULE := CtsWindowManagerHostTestCases
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed CtsServicesHostTestCases
-LOCAL_STATIC_JAVA_LIBRARIES := cts-amwm-util
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    cts-amwm-util \
+    platform-test-annotations-host
 
 LOCAL_CTS_TEST_PACKAGE := android.server.cts
 

@@ -29,6 +29,7 @@ import static com.android.app2.AlertWindowService.MSG_REMOVE_ALL_ALERT_WINDOWS;
 import static com.android.app2.AlertWindowService.NOTIFICATION_MESSENGER_EXTRA;
 import static org.junit.Assert.assertEquals;
 
+import android.platform.test.annotations.Presubmit;
 import com.android.app2.AlertWindowService;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -55,6 +56,7 @@ import android.util.Log;
  * Build: mmma -j32 cts/tests/app
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsAppTestCases android.app.cts.AlertWindowsTests
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AlertWindowsTests {
 
