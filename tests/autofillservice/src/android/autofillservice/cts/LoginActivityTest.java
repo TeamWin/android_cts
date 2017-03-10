@@ -297,7 +297,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                         .setPresentation(createPresentation("The Dude"))
                         .build())
-                .setSaveType(SAVE_DATA_TYPE_PASSWORD)
+                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .setExtras(extras)
                 .build());
         mLoginActivity.expectAutoFill("dude", "sweet");

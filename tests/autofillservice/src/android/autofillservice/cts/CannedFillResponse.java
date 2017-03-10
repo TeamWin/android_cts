@@ -88,21 +88,19 @@ final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
-        if (saveType >= 0 ) {
+        if (savableIds != null) {
             final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType);
             if (saveDescription != null) {
                 saveInfo.setDescription(saveDescription);
             }
-            if (savableIds != null) {
-                for (String resourceId : savableIds) {
-                    final ViewNode node = findNodeByResourceId(structure, resourceId);
-                    if (node == null) {
-                        dumpStructure("onFillRequest()", structure);
-                        throw new AssertionError("No node with savable resourceId " + resourceId);
-                    }
-                    final AutofillId id = node.getAutofillId();
-                    saveInfo.addSavableIds(id);
+            for (String resourceId : savableIds) {
+                final ViewNode node = findNodeByResourceId(structure, resourceId);
+                if (node == null) {
+                    dumpStructure("onFillRequest()", structure);
+                    throw new AssertionError("No node with savable resourceId " + resourceId);
                 }
+                final AutofillId id = node.getAutofillId();
+                saveInfo.addSavableIds(id);
             }
             if (negativeActionLabel != null) {
                 saveInfo.setNegativeAction(negativeActionLabel, negativeActionListener);
@@ -155,14 +153,6 @@ final class CannedFillResponse {
          */
         public Builder setSaveDescription(String description) {
             mSaveDescription = description;
-            return this;
-        }
-
-        /**
-         * Sets the type passed to the {@link SaveInfo}.
-         */
-        public Builder setSaveType(int type) {
-            mSaveType = type;
             return this;
         }
 
