@@ -95,6 +95,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         public final boolean hasThumbnail;
         public final int thumbnailWidth;
         public final int thumbnailHeight;
+        public final boolean isThumbnailCompressed;
 
         // GPS information.
         public final boolean hasLatLong;
@@ -134,39 +135,42 @@ public class ExifInterfaceTest extends AndroidTestCase {
         }
 
         public ExpectedValue(TypedArray typedArray) {
+            int index = 0;
+
             // Reads thumbnail information.
-            hasThumbnail = typedArray.getBoolean(0, false);
-            thumbnailWidth = typedArray.getInt(1, 0);
-            thumbnailHeight = typedArray.getInt(2, 0);
+            hasThumbnail = typedArray.getBoolean(index++, false);
+            thumbnailWidth = typedArray.getInt(index++, 0);
+            thumbnailHeight = typedArray.getInt(index++, 0);
+            isThumbnailCompressed = typedArray.getBoolean(index++, false);
 
             // Reads GPS information.
-            hasLatLong = typedArray.getBoolean(3, false);
-            latitude = typedArray.getFloat(4, 0f);
-            longitude = typedArray.getFloat(5, 0f);
-            altitude = typedArray.getFloat(6, 0f);
+            hasLatLong = typedArray.getBoolean(index++, false);
+            latitude = typedArray.getFloat(index++, 0f);
+            longitude = typedArray.getFloat(index++, 0f);
+            altitude = typedArray.getFloat(index++, 0f);
 
             // Reads values.
-            make = getString(typedArray, 7);
-            model = getString(typedArray, 8);
-            aperture = typedArray.getFloat(9, 0f);
-            datetime = getString(typedArray, 10);
-            exposureTime = typedArray.getFloat(11, 0f);
-            flash = typedArray.getFloat(12, 0f);
-            focalLength = getString(typedArray, 13);
-            gpsAltitude = getString(typedArray, 14);
-            gpsAltitudeRef = getString(typedArray, 15);
-            gpsDatestamp = getString(typedArray, 16);
-            gpsLatitude = getString(typedArray, 17);
-            gpsLatitudeRef = getString(typedArray, 18);
-            gpsLongitude = getString(typedArray, 19);
-            gpsLongitudeRef = getString(typedArray, 20);
-            gpsProcessingMethod = getString(typedArray, 21);
-            gpsTimestamp = getString(typedArray, 22);
-            imageLength = typedArray.getInt(23, 0);
-            imageWidth = typedArray.getInt(24, 0);
-            iso = getString(typedArray, 25);
-            orientation = typedArray.getInt(26, 0);
-            whiteBalance = typedArray.getInt(27, 0);
+            make = getString(typedArray, index++);
+            model = getString(typedArray, index++);
+            aperture = typedArray.getFloat(index++, 0f);
+            datetime = getString(typedArray, index++);
+            exposureTime = typedArray.getFloat(index++, 0f);
+            flash = typedArray.getFloat(index++, 0f);
+            focalLength = getString(typedArray, index++);
+            gpsAltitude = getString(typedArray, index++);
+            gpsAltitudeRef = getString(typedArray, index++);
+            gpsDatestamp = getString(typedArray, index++);
+            gpsLatitude = getString(typedArray, index++);
+            gpsLatitudeRef = getString(typedArray, index++);
+            gpsLongitude = getString(typedArray, index++);
+            gpsLongitudeRef = getString(typedArray, index++);
+            gpsProcessingMethod = getString(typedArray, index++);
+            gpsTimestamp = getString(typedArray, index++);
+            imageLength = typedArray.getInt(index++, 0);
+            imageWidth = typedArray.getInt(index++, 0);
+            iso = getString(typedArray, index++);
+            orientation = typedArray.getInt(index++, 0);
+            whiteBalance = typedArray.getInt(index++, 0);
 
             typedArray.recycle();
         }
@@ -250,6 +254,8 @@ public class ExifInterfaceTest extends AndroidTestCase {
             assertNotNull(thumbnailBitmap);
             assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
             assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
+            assertEquals(expectedValue.isThumbnailCompressed,
+                    exifInterface.isThumbnailCompressed());
         } else {
             assertNull(exifInterface.getThumbnail());
         }
