@@ -74,6 +74,14 @@ public class Within implements VerificationMode {
                 "Timed out while waiting " + mTimeout + "ms for " + data.getWanted().toString());
     }
 
+    // TODO: Uncomment once upgraded to 2.7.13
+    // @Override
+    public VerificationMode description(String description) {
+        // Return this for now.
+        // TODO: Return wrapper once upgraded to 2.7.13
+        return this;
+    }
+
     private void markAllInvocationsAsVerified(VerificationData data) {
         for (Invocation invocation : data.getAllInvocations()) {
             invocation.markVerified();

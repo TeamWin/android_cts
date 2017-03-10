@@ -36,9 +36,9 @@ import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import org.mockito.ArgumentMatcher;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.mockito.compat.ArgumentMatcher;
 
 public class DeviceAdminReceiverTest extends AndroidTestCase {
 
@@ -213,7 +213,7 @@ public class DeviceAdminReceiverTest extends AndroidTestCase {
     private Intent actionEq(final String expected) {
         return argThat(new ArgumentMatcher<Intent>() {
             @Override
-            public boolean matches(Object argument) {
+            public boolean matchesObject(Object argument) {
                 return expected.equals(((Intent) argument).getAction());
             }
         });
