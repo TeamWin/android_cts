@@ -128,6 +128,7 @@ public class AnimatorInflaterTest
         WindowManager mWindowManager = (WindowManager) getActivity()
                 .getSystemService(Context.WINDOW_SERVICE);
         Display display = mWindowManager.getDefaultDisplay();
+        int orientation = getActivity().getResources().getConfiguration().orientation;
 
         Instrumentation.ActivityMonitor monitor = new Instrumentation.ActivityMonitor(
                 getActivity().getClass().getName(), null, false);
@@ -158,6 +159,10 @@ public class AnimatorInflaterTest
         }
         if (getActivity().getWindowManager().getDefaultDisplay().getRotation() != nextRotation) {
             Log.e(TAG, "New activity orientation does not match. Canceling test");
+            return false;
+        }
+        if (getActivity().getResources().getConfiguration().orientation == orientation) {
+            Log.e(TAG, "Screen orientation didn't change, test is canceled");
             return false;
         }
         return true;
