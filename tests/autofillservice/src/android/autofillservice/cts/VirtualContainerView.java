@@ -86,16 +86,16 @@ class VirtualContainerView extends View {
     }
 
     @Override
-    public void autofillVirtual(int id, AutofillValue value) {
+    public boolean autofillVirtual(int id, AutofillValue value) {
         Log.d(TAG, "autofillVirtual: id=" + id + ", value=" + value);
         final Item item = mItems.get(id);
         if (item == null) {
             Log.w(TAG, "No item for id " + id);
-            return;
+            return false;
         }
         if (!item.editable) {
             Log.w(TAG, "Item for id " + id + " is not editable: " + item);
-            return;
+            return false;
         }
         item.text = value.getTextValue();
         if (item.listener != null) {
@@ -103,6 +103,7 @@ class VirtualContainerView extends View {
             item.listener.onTextChanged(item.text, 0, 0, 0);
         }
         postInvalidate();
+        return true;
     }
 
     @Override
