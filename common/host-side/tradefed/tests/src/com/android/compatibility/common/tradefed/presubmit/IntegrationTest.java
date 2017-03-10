@@ -481,10 +481,10 @@ public class IntegrationTest {
             st.start();
         }
         for (ShardThread thread : threads) {
-            thread.join(1000);
+            thread.join(5000);
         }
         // Allow some time for ResultReport to finalize the results coming from the threads.
-        boolean finalized = mReporter.waitForFinalized(2000, TimeUnit.MILLISECONDS);
+        boolean finalized = mReporter.waitForFinalized(2, TimeUnit.MINUTES);
         assertTrue(finalized);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
@@ -532,10 +532,10 @@ public class IntegrationTest {
             st.start();
         }
         for (ShardThread thread : threads) {
-            thread.join(1000);
+            thread.join(5000);
         }
         // Allow some time for ResultReport to finalize the results coming from the threads.
-        boolean finalized = mReporter.waitForFinalized(2000, TimeUnit.MILLISECONDS);
+        boolean finalized = mReporter.waitForFinalized(2, TimeUnit.MINUTES);
         assertTrue(finalized);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
