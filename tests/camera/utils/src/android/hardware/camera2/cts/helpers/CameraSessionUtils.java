@@ -33,7 +33,7 @@ import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
 import junit.framework.Assert;
 
-import org.mockito.internal.util.MockUtil;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -181,7 +181,7 @@ public class CameraSessionUtils extends Assert {
         checkCollectionElementsNotNull(outputs, "outputs");
 
         CameraCaptureSession session = listener.getConfiguredSession(device, outputs, handler);
-        if (new MockUtil().isMock(listener)) {
+        if (Mockito.mockingDetails(listener).isMock()) {
             verify(listener, never()).onConfigureFailed(any(CameraCaptureSession.class));
             verify(listener, never()).onClosed(eq(session));
             verify(listener, atLeastOnce()).onConfigured(eq(session));
@@ -219,7 +219,7 @@ public class CameraSessionUtils extends Assert {
 
         Pair<TotalCaptureResult, Long> result = listener.getCapturedResult(session, request,
                 handler);
-        if (new MockUtil().isMock(listener)) {
+        if (Mockito.mockingDetails(listener).isMock()) {
             verify(listener, never()).onCaptureFailed(any(CameraCaptureSession.class),
                     any(CaptureRequest.class), any(CaptureFailure.class));
             verify(listener, atLeastOnce()).onCaptureStarted(eq(session), eq(request),
