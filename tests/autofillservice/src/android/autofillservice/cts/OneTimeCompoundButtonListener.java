@@ -36,10 +36,10 @@ final class OneTimeCompoundButtonListener implements CompoundButton.OnCheckedCha
     private final boolean expected;
 
     OneTimeCompoundButtonListener(String name, CompoundButton button,
-            boolean expectedAutoFillValue) {
+            boolean expectedAutofillValue) {
         this.name = name;
         this.button = button;
-        this.expected = expectedAutoFillValue;
+        this.expected = expectedAutofillValue;
     }
 
     @Override

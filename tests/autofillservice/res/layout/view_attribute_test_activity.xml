@@ -23,36 +23,36 @@
         android:layout_height="wrap_content" />
 
     <EditText android:id="@+id/firstLevelInherit" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillMode="inherit" />
+        android:layout_height="wrap_content" android:autofillMode="inherit" />
 
     <EditText android:id="@+id/firstLevelAuto" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillMode="auto" />
+        android:layout_height="wrap_content" android:autofillMode="auto" />
 
     <EditText android:id="@+id/firstLevelManual" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillMode="manual" />
+        android:layout_height="wrap_content" android:autofillMode="manual" />
 
     <LinearLayout android:id="@+id/manualContainer" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillMode="manual"
+        android:layout_height="wrap_content" android:autofillMode="manual"
         android:orientation="vertical">
         <EditText android:id="@+id/manualContainerDefault" android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <EditText android:id="@+id/manualContainerInherit" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:autoFillMode="inherit" />
+            android:layout_height="wrap_content" android:autofillMode="inherit" />
 
         <EditText android:id="@+id/manualContainerAuto" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:autoFillMode="auto" />
+            android:layout_height="wrap_content" android:autofillMode="auto" />
 
         <EditText android:id="@+id/manualContainerManual" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:autoFillMode="manual" />
+            android:layout_height="wrap_content" android:autofillMode="manual" />
     </LinearLayout>
 
     <TextView android:id="@+id/textViewNoHint" android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <TextView android:id="@+id/textViewHintNone" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillHint="none" />
+        android:layout_height="wrap_content" android:autofillHint="none" />
     <TextView android:id="@+id/textViewPassword" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillHint="password" />
+        android:layout_height="wrap_content" android:autofillHint="password" />
     <TextView android:id="@+id/textViewPhoneName" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autoFillHint="phone|username" />
+        android:layout_height="wrap_content" android:autofillHint="phone|username" />
 </LinearLayout>

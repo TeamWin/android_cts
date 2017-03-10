@@ -28,7 +28,7 @@ import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.service.autofill.AutoFillService;
+import android.service.autofill.AutofillService;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
@@ -43,9 +43,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Implementation of {@link AutoFillService} used in the tests.
+ * Implementation of {@link AutofillService} used in the tests.
  */
-public class InstrumentedAutoFillService extends AutoFillService {
+public class InstrumentedAutoFillService extends AutofillService {
 
     private static final String TAG = "InstrumentedAutoFillService";
 
@@ -64,7 +64,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
         sInstance.set(this);
     }
 
-    public static AutoFillService peekInstance() {
+    public static AutofillService peekInstance() {
         return sInstance.get();
     }
 
@@ -143,7 +143,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     /**
      * POJO representation of the contents of a
-     * {@link AutoFillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
+     * {@link AutofillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
      * android.os.CancellationSignal, android.service.autofill.FillCallback)}
      * that can be asserted at the end of a test case.
      */
@@ -164,7 +164,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     /**
      * POJO representation of the contents of a
-     * {@link AutoFillService#onSaveRequest(AssistStructure, Bundle, SaveCallback)}
+     * {@link AutofillService#onSaveRequest(AssistStructure, Bundle, SaveCallback)}
      * that can be asserted at the end of a test case.
      */
     static final class SaveRequest {
@@ -181,7 +181,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
 
     /**
      * Object used to answer a
-     * {@link AutoFillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
+     * {@link AutofillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
      * android.os.CancellationSignal, android.service.autofill.FillCallback)}
      * on behalf of a unit test method.
      */
@@ -223,7 +223,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
         }
 
         /**
-         * Asserts the total number of {@link AutoFillService#onFillRequest(AssistStructure, Bundle,
+         * Asserts the total number of {@link AutofillService#onFillRequest(AssistStructure, Bundle,
          * CancellationSignal, FillCallback)}, minus those returned by
          * {@link #getNextFillRequest()}.
          */
@@ -246,7 +246,7 @@ public class InstrumentedAutoFillService extends AutoFillService {
         }
 
         /**
-         * Asserts the total number of {@link AutoFillService#onSaveRequest(AssistStructure,
+         * Asserts the total number of {@link AutofillService#onSaveRequest(AssistStructure,
          * Bundle, SaveCallback)} minus those returned by {@link #getNextSaveRequest()}.
          */
         void assertNumberUnhandledSaveRequests(int expected) {

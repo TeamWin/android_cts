@@ -31,8 +31,8 @@ import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.autofill.AutoFillId;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -119,9 +119,9 @@ final class Helper {
             .append(" #children=").append(childrenSize);
 
         buffer.append("\n").append(prefix)
-            .append("   afId=").append(node.getAutoFillId())
-            .append(" afType=").append(node.getAutoFillType())
-            .append(" afValue=").append(node.getAutoFillValue())
+            .append("   afId=").append(node.getAutofillId())
+            .append(" afType=").append(node.getAutofillType())
+            .append(" afValue=").append(node.getAutofillValue())
             .append(" checked=").append(node.isChecked());
 
         prefix += " ";
@@ -213,12 +213,12 @@ final class Helper {
       if (!TextUtils.isEmpty(text)) {
         throw new AssertionError("text on sanitized field " + resourceId + ": " + text);
       }
-      assertNodeHasNoAutoFillValue(node);
+      assertNodeHasNoAutofillValue(node);
     }
 
-    static void assertNodeHasNoAutoFillValue(ViewNode node) {
-        final AutoFillValue value = node.getAutoFillValue();
-        assertWithMessage("node.getAutoFillValue()").that(value).isNull();
+    static void assertNodeHasNoAutofillValue(ViewNode node) {
+        final AutofillValue value = node.getAutofillValue();
+        assertWithMessage("node.getAutofillValue()").that(value).isNull();
     }
 
     /**
@@ -240,13 +240,13 @@ final class Helper {
     private static void assertText(ViewNode node, String expectedValue, boolean isAutofillable) {
         assertWithMessage("wrong text on %s", node).that(node.getText().toString())
                 .isEqualTo(expectedValue);
-        final AutoFillValue value = node.getAutoFillValue();
+        final AutofillValue value = node.getAutofillValue();
         if (isAutofillable) {
             assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
             assertWithMessage("wrong auto-fill value on %s", node)
                     .that(value.getTextValue().toString()).isEqualTo(expectedValue);
         } else {
-            assertWithMessage("node %s should not have AutoFillValue", node).that(value).isNull();
+            assertWithMessage("node %s should not have AutofillValue", node).that(value).isNull();
         }
     }
 
@@ -254,7 +254,7 @@ final class Helper {
      * Asserts the auto-fill value of a list-based node.
      */
     static ViewNode assertListValue(ViewNode node, int expectedIndex) {
-        final AutoFillValue value = node.getAutoFillValue();
+        final AutofillValue value = node.getAutofillValue();
         assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
         assertWithMessage("wrong auto-fill value on %s", node).that(value.getListValue())
                 .isEqualTo(expectedIndex);
@@ -266,7 +266,7 @@ final class Helper {
      *
      */
     static void assertToggleValue(ViewNode node, boolean expectedToggle) {
-        final AutoFillValue value = node.getAutoFillValue();
+        final AutofillValue value = node.getAutofillValue();
         assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
         assertWithMessage("wrong auto-fill value on %s", node).that(value.getToggleValue())
                 .isEqualTo(expectedToggle);
@@ -276,17 +276,17 @@ final class Helper {
      * Asserts the auto-fill value of a date-based node.
      */
     static void assertDateValue(ViewNode node, int year, int month, int day) {
-        final AutoFillValue value = node.getAutoFillValue();
+        final AutofillValue value = node.getAutofillValue();
         assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
 
         final Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(value.getDateValue());
 
-        assertWithMessage("Wrong year on AutoFillValue %s", value)
+        assertWithMessage("Wrong year on AutofillValue %s", value)
             .that(cal.get(Calendar.YEAR)).isEqualTo(year);
-        assertWithMessage("Wrong month on AutoFillValue %s", value)
+        assertWithMessage("Wrong month on AutofillValue %s", value)
             .that(cal.get(Calendar.MONTH)).isEqualTo(month);
-        assertWithMessage("Wrong day on AutoFillValue %s", value)
+        assertWithMessage("Wrong day on AutofillValue %s", value)
              .that(cal.get(Calendar.DAY_OF_MONTH)).isEqualTo(day);
     }
 
@@ -294,15 +294,15 @@ final class Helper {
      * Asserts the auto-fill value of a time-based node.
      */
     static void assertTimeValue(ViewNode node, int hour, int minute) {
-        final AutoFillValue value = node.getAutoFillValue();
+        final AutofillValue value = node.getAutofillValue();
         assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
 
         final Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(value.getDateValue());
 
-        assertWithMessage("Wrong hour on AutoFillValue %s", value)
+        assertWithMessage("Wrong hour on AutofillValue %s", value)
             .that(cal.get(Calendar.HOUR_OF_DAY)).isEqualTo(hour);
-        assertWithMessage("Wrong minute on AutoFillValue %s", value)
+        assertWithMessage("Wrong minute on AutofillValue %s", value)
             .that(cal.get(Calendar.MINUTE)).isEqualTo(minute);
     }
 
@@ -330,7 +330,7 @@ final class Helper {
      */
     static void assertToggleIsSanitized(AssistStructure structure, String resourceId) {
         final ViewNode node = findNodeByResourceId(structure, resourceId);
-        assertNodeHasNoAutoFillValue(node);
+        assertNodeHasNoAutofillValue(node);
         assertWithMessage("ViewNode %s should not be checked", resourceId).that(node.isChecked())
                 .isFalse();
     }

@@ -26,8 +26,8 @@ import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
-import android.view.autofill.AutoFillId;
-import android.view.autofill.AutoFillValue;
+import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
 
 import java.util.ArrayList;
@@ -45,8 +45,8 @@ import java.util.Map;
  * <pre class="prettyprint">
  * InstrumentedAutoFillService.setFillResponse(new CannedFillResponse.Builder()
  *               .addDataset(new CannedDataset.Builder("dataset_name")
- *                   .setField("resource_id1", AutoFillValue.forText("value1"))
- *                   .setField("resource_id2", AutoFillValue.forText("value2"))
+ *                   .setField("resource_id1", AutofillValue.forText("value1"))
+ *                   .setField("resource_id2", AutofillValue.forText("value2"))
  *                   .build())
  *               .build());
  * </pre class="prettyprint">
@@ -100,7 +100,7 @@ final class CannedFillResponse {
                         dumpStructure("onFillRequest()", structure);
                         throw new AssertionError("No node with savable resourceId " + resourceId);
                     }
-                    final AutoFillId id = node.getAutoFillId();
+                    final AutofillId id = node.getAutofillId();
                     saveInfo.addSavableIds(id);
                 }
             }
@@ -215,14 +215,14 @@ final class CannedFillResponse {
      * <pre class="prettyprint">
      * InstrumentedAutoFillService.setFillResponse(new CannedFillResponse.Builder()
      *               .addDataset(new CannedDataset.Builder("dataset_name")
-     *                   .setField("resource_id1", AutoFillValue.forText("value1"))
-     *                   .setField("resource_id2", AutoFillValue.forText("value2"))
+     *                   .setField("resource_id1", AutofillValue.forText("value1"))
+     *                   .setField("resource_id2", AutofillValue.forText("value2"))
      *                   .build())
      *               .build());
      * </pre class="prettyprint">
      */
     static class CannedDataset {
-        final Map<String, AutoFillValue> fields;
+        final Map<String, AutofillValue> fields;
         final RemoteViews presentation;
         final IntentSender authentication;
 
@@ -238,15 +238,15 @@ final class CannedFillResponse {
         Dataset asDataset(AssistStructure structure) {
             final Dataset.Builder builder = new Dataset.Builder(presentation);
             if (fields != null) {
-                for (Map.Entry<String, AutoFillValue> entry : fields.entrySet()) {
+                for (Map.Entry<String, AutofillValue> entry : fields.entrySet()) {
                     final String resourceId = entry.getKey();
                     final ViewNode node = findNodeByResourceId(structure, resourceId);
                     if (node == null) {
                         dumpStructure("asDataset()", structure);
                         throw new AssertionError("No node with resource id " + resourceId);
                     }
-                    final AutoFillId id = node.getAutoFillId();
-                    final AutoFillValue value = entry.getValue();
+                    final AutofillId id = node.getAutofillId();
+                    final AutofillValue value = entry.getValue();
                     builder.setValue(id, value);
                 }
             }
@@ -262,14 +262,14 @@ final class CannedFillResponse {
         }
 
         static class Builder {
-            private final Map<String, AutoFillValue> mFields = new HashMap<>();
+            private final Map<String, AutofillValue> mFields = new HashMap<>();
             private RemoteViews mPresentation;
             private IntentSender mAuthentication;
 
             /**
              * Sets the canned value of a field based on its {@code resourceId}.
              */
-            public Builder setField(String resourceId, AutoFillValue value) {
+            public Builder setField(String resourceId, AutofillValue value) {
                 mFields.put(resourceId, value);
                 return this;
             }
