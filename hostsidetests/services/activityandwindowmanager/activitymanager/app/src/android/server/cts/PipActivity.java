@@ -34,8 +34,6 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.WindowManager;
 
-import java.util.Collections;
-
 public class PipActivity extends AbstractLifecycleLogActivity {
 
     private static final String TAG = "PipActivity";
@@ -44,6 +42,10 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     private static final String ACTION_ENTER_PIP = "android.server.cts.PipActivity.enter_pip";
     // Intent action that this activity dynamically registers to move itself to the back
     private static final String ACTION_MOVE_TO_BACK = "android.server.cts.PipActivity.move_to_back";
+    // Intent action that this activity dynamically registers to expand itself.
+    // If EXTRA_SET_ASPECT_RATIO_WITH_DELAY is set, it will also attempt to apply the aspect ratio
+    // after a short delay.
+    private static final String ACTION_EXPAND_PIP = "android.server.cts.PipActivity.expand_pip";
 
     // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
@@ -53,6 +55,9 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
+    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
+    // fixed delay
+    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY = "set_aspect_ratio_with_delay";
     // Adds a click listener to finish this activity when it is clicked
     private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     // Calls requestAutoEnterPictureInPicture() with the value provided
@@ -84,6 +89,23 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         break;
                     case ACTION_MOVE_TO_BACK:
                         moveTaskToBack(false /* nonRoot */);
+                        break;
+                    case ACTION_EXPAND_PIP:
+                        // Trigger the activity to expand
+                        Intent startIntent = new Intent(PipActivity.this, PipActivity.class);
+                        startIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        startActivity(startIntent);
+
+                        if (intent.hasExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY)) {
+                            // Ugly, but required to wait for the startActivity to actually start
+                            // the activity...
+                            mHandler.postDelayed(() -> {
+                                PictureInPictureArgs args = new PictureInPictureArgs();
+                                args.setAspectRatio(Float.valueOf(intent.getStringExtra(
+                                        EXTRA_SET_ASPECT_RATIO_WITH_DELAY)));
+                                setPictureInPictureArgs(args);
+                            }, 100);
+                        }
                         break;
                 }
             }
@@ -156,6 +178,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_ENTER_PIP);
         filter.addAction(ACTION_MOVE_TO_BACK);
+        filter.addAction(ACTION_EXPAND_PIP);
         registerReceiver(mReceiver, filter);
     }
 
