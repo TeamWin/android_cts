@@ -38,6 +38,36 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             .build();
 
 
+    public void testInvalidAudioFocusRequestDelayNoListener() throws Exception {
+        AudioFocusRequest req = null;
+        Exception ex = null;
+        try {
+            req = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAcceptsDelayedFocusGain(true).build();
+        } catch (Exception e) {
+            // expected
+            ex = e;
+        }
+        assertNotNull("No exception was thrown for an invalid build", ex);
+        assertEquals("Wrong exception thrown", ex.getClass(), IllegalStateException.class);
+        assertNull("Shouldn't be able to create delayed request without listener", req);
+    }
+
+    public void testInvalidAudioFocusRequestPauseOnDuckNoListener() throws Exception {
+        AudioFocusRequest req = null;
+        Exception ex = null;
+        try {
+            req = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setWillPauseWhenDucked(true).build();
+        } catch (Exception e) {
+            // expected
+            ex = e;
+        }
+        assertNotNull("No exception was thrown for an invalid build", ex);
+        assertEquals("Wrong exception thrown", ex.getClass(), IllegalStateException.class);
+        assertNull("Shouldn't be able to create pause-on-duck request without listener", req);
+    }
+
     public void testAudioFocusRequestBuilderDefault() throws Exception {
         final AudioFocusRequest reqDefaults =
                 new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build();
