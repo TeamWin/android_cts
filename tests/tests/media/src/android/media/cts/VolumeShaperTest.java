@@ -109,6 +109,11 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_CUBIC)
                 .build();
 
+    private static final VolumeShaper.Operation[] ALL_STANDARD_OPERATIONS = {
+        VolumeShaper.Operation.PLAY,
+        VolumeShaper.Operation.REVERSE,
+    };
+
     private boolean hasAudioOutput() {
         return getContext().getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
@@ -180,6 +185,19 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 actual.hashCode() != notEqual.hashCode());
         assertTrue(testName + " configuration.toString() should not be equal",
                 !actual.toString().equals(notEqual.toString()));
+    }
+
+    private static void testBuildRamp(int points) {
+        float[] ramp = new float[points];
+        final float fscale = 1.f / (points - 1);
+        for (int i = 0; i < points; ++i) {
+            ramp[i] = i * fscale;
+        }
+        ramp[points - 1] = 1.f;
+        // does it build?
+        final VolumeShaper.Configuration config = new VolumeShaper.Configuration.Builder()
+                .setCurve(ramp, ramp)
+                .build();
     }
 
     public void testVolumeShaperConfigurationBuilder() throws Exception {
@@ -350,6 +368,22 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                     .build();
             checkEqual(TEST_NAME, testRamp, ramp);
         }
+
+        // check that getMaximumCurvePoints() returns the correct value
+        final int maxPoints = VolumeShaper.Configuration.getMaximumCurvePoints();
+
+        testBuildRamp(maxPoints); // no exceptions here.
+
+        if (maxPoints < Integer.MAX_VALUE) {
+            try {
+                testBuildRamp(maxPoints + 1);
+                fail(TEST_NAME + " configuration builder "
+                        + "should fail if getMaximumCurvePoints() exceeded");
+            } catch (IllegalArgumentException e) {
+                ; // expected exception
+            }
+        }
+
     } // testVolumeShaperConfigurationBuilder
 
     public void testVolumeShaperConfigurationParcelable() throws Exception {
@@ -375,6 +409,30 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                     config, restoredConfig);
         }
     } // testVolumeShaperConfigurationParcelable
+
+    public void testVolumeShaperOperationParcelable() throws Exception {
+        final String TEST_NAME = "testVolumeShaperOperationParcelable";
+
+        for (VolumeShaper.Operation operation : ALL_STANDARD_OPERATIONS) {
+            assertEquals(TEST_NAME + " no parceled file descriptors",
+                    0 /* expected */, operation.describeContents());
+
+            final Parcel srcParcel = Parcel.obtain();
+            operation.writeToParcel(srcParcel, 0 /* flags */);
+
+            final byte[] marshallBuffer = srcParcel.marshall();
+
+            final Parcel dstParcel = Parcel.obtain();
+            dstParcel.unmarshall(marshallBuffer, 0 /* offset */, marshallBuffer.length);
+            dstParcel.setDataPosition(0);
+
+            final VolumeShaper.Operation restoredOperation =
+                    VolumeShaper.Operation.CREATOR.createFromParcel(dstParcel);
+            assertEquals(TEST_NAME +
+                    " marshalled/restored VolumeShaper.Operation should match",
+                    operation, restoredOperation);
+        }
+    } // testVolumeShaperOperationParcelable
 
     public void testAudioTrackDuck() throws Exception {
         final String TEST_NAME = "testAudioTrackDuck";
