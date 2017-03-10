@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.provider.FontsContract;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -273,5 +274,21 @@ public class TypefaceTest {
     public void testBadFont() {
         Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), "ft45987.ttf");
         assertNotNull(typeface);
+    }
+
+    @Test
+    public void testTypefaceRequestFailureConstantsAreInSync() {
+        // Error codes from the provider are positive numbers and are in sync
+        assertEquals(FontsContract.Columns.RESULT_CODE_FONT_NOT_FOUND,
+                Typeface.FontRequestCallback.FAIL_REASON_FONT_NOT_FOUND);
+        assertEquals(FontsContract.Columns.RESULT_CODE_FONT_UNAVAILABLE,
+                Typeface.FontRequestCallback.FAIL_REASON_FONT_UNAVAILABLE);
+        assertEquals(FontsContract.Columns.RESULT_CODE_MALFORMED_QUERY,
+                Typeface.FontRequestCallback.FAIL_REASON_MALFORMED_QUERY);
+
+        // Internal errors are negative
+        assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_PROVIDER_NOT_FOUND);
+        assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_WRONG_CERTIFICATES);
+        assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_FONT_LOAD_ERROR);
     }
 }
