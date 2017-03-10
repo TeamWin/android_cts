@@ -42,10 +42,12 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
     private static final String KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD
             = "can_show_with_insecure_keyguard";
     private static final String KEY_PUBLIC_DISPLAY = "public_display";
+    private static final String KEY_RESIZE_DISPLAY = "resize_display";
 
     private DisplayManager mDisplayManager;
     private VirtualDisplay mVirtualDisplay;
     private int mDensityDpi = DEFAULT_DENSITY_DPI;
+    private boolean mResizeDisplay;
 
     private Surface mSurface;
     private SurfaceView mSurfaceView;
@@ -92,6 +94,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             final int width = mSurfaceView.getWidth();
             final int height = mSurfaceView.getHeight();
             mDensityDpi = extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
+            mResizeDisplay = extras.getBoolean(KEY_RESIZE_DISPLAY);
             int flags = 0;
 
             final boolean canShowWithInsecureKeyguard
@@ -131,7 +134,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
-        if (mVirtualDisplay != null) {
+        if (mResizeDisplay && mVirtualDisplay != null) {
             mVirtualDisplay.resize(width, height, mDensityDpi);
         }
     }
