@@ -17,7 +17,7 @@
 package android.widget.cts.util;
 
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.argThat;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import android.annotation.ColorInt;
 import android.annotation.DrawableRes;

@@ -27,9 +27,8 @@ import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 
-import org.hamcrest.Description;
-import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
+import org.mockito.compat.ArgumentMatcher;
 
 public final class CtsMouseUtil {
 
@@ -71,12 +70,14 @@ public final class CtsMouseUtil {
             mAction = action;
         }
 
-        public boolean matches(Object actual) {
+        @Override
+        public boolean matchesObject(Object actual) {
             return (actual instanceof MotionEvent) && ((MotionEvent) actual).getAction() == mAction;
         }
 
-        public void describeTo(Description description) {
-            description.appendText("action=" + MotionEvent.actionToString(mAction));
+        @Override
+        public String toString() {
+            return "action=" + MotionEvent.actionToString(mAction);
         }
     }
 
@@ -90,15 +91,16 @@ public final class CtsMouseUtil {
             mY = y;
         }
 
-        public boolean matches(Object actual) {
-            return super.matches(actual)
+        @Override
+        public boolean matchesObject(Object actual) {
+            return super.matchesObject(actual)
                     && ((int) ((MotionEvent) actual).getX()) == mX
                     && ((int) ((MotionEvent) actual).getY()) == mY;
         }
 
-        public void describeTo(Description description) {
-            super.describeTo(description);
-            description.appendText("@(" + mX + "," + mY + ")");
+        @Override
+        public String toString() {
+            return super.toString() + "@(" + mX + "," + mY + ")";
         }
     }
 

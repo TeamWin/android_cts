@@ -40,7 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static android.view.ViewTreeObserver.*;
-import static org.mockito.Matchers.*;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 /**
  * The useful methods for widget test.
