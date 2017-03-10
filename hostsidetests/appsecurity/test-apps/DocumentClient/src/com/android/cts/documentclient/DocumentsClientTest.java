@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
+import android.provider.DocumentsContract.Path;
 import android.provider.DocumentsProvider;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -466,11 +467,14 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         writeFully(dirPic, "dirPic".getBytes());
 
         // Find the path of a document
-        final List<String> path = DocumentsContract.findDocumentPath(resolver, dirPic);
-        assertEquals(3, path.size());
-        assertEquals(DocumentsContract.getTreeDocumentId(uri), path.get(0));
-        assertEquals(DocumentsContract.getDocumentId(dir), path.get(1));
-        assertEquals(DocumentsContract.getDocumentId(dirPic), path.get(2));
+        Path path = DocumentsContract.findDocumentPath(resolver, dirPic);
+        assertNull(path.getRootId());
+
+        final List<String> docs = path.getPath();
+        assertEquals("Unexpected path: " + path, 3, docs.size());
+        assertEquals(DocumentsContract.getTreeDocumentId(uri), docs.get(0));
+        assertEquals(DocumentsContract.getDocumentId(dir), docs.get(1));
+        assertEquals(DocumentsContract.getDocumentId(dirPic), docs.get(2));
     }
 
     public void testOpenDocumentAtInitialLocation() throws Exception {
