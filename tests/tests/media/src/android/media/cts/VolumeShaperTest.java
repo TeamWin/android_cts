@@ -185,16 +185,13 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     public void testVolumeShaperConfigurationBuilder() throws Exception {
         final String TEST_NAME = "testVolumeShaperConfigurationBuilder";
 
-        // Verify that IllegalArgumentExceptions are properly triggered
+        // Verify that IllegalStateExceptions are properly triggered
         // for methods with no arguments.
-        // Note: The Builder methods return IllegalArgumentExceptions instead
-        // of IllegalStateExceptions for methods with no arguments for
-        // consistency purposes.
         try {
             final VolumeShaper.Configuration config =
                     new VolumeShaper.Configuration.Builder().build();
             fail(TEST_NAME + " configuration builder should fail if no curve is specified");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             ; // expected
         }
 
@@ -204,7 +201,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                     .invertVolumes()
                     .build();
             fail(TEST_NAME + " configuration builder should fail if no curve is specified");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             ; // expected
         }
 
@@ -214,7 +211,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                     .reflectTimes()
                     .build();
             fail(TEST_NAME + " configuration builder should fail if no curve is specified");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             ; // expected
         }
 
