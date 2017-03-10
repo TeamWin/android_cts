@@ -72,7 +72,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
                     .setField(ID_OUTPUT, AutofillValue.forText("Y U NO CHANGE ME?"))
                     .setField(ID_DATE_PICKER, AutofillValue.forDate(cal.getTimeInMillis()))
                     .build())
-                .setSaveType(SAVE_DATA_TYPE_GENERIC)
+                .setSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_DATE_PICKER)
                 .build());
         activity.expectAutoFill("2012/11/20", 2012, 11, 20);
 

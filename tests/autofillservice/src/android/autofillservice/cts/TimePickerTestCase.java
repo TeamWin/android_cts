@@ -71,7 +71,7 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
                     .setField(ID_OUTPUT, AutofillValue.forText("Y U NO CHANGE ME?"))
                     .setField(ID_TIME_PICKER, AutofillValue.forDate(cal.getTimeInMillis()))
                     .build())
-                .setSaveType(SAVE_DATA_TYPE_GENERIC)
+                .setSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_TIME_PICKER)
                 .build());
 
         activity.expectAutoFill("4:20", 4, 20);
