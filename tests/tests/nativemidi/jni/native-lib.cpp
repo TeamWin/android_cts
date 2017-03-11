@@ -399,7 +399,7 @@ static int commonDeviceOpen(int deviceId, AMIDI_Device* device) {
  * Sending API
  */
 JNIEXPORT jint JNICALL Java_android_nativemidi_cts_NativeMidiEchoTest_startWritingMidi(
-        JNIEnv*, jobject, jlong ctx, jint deviceId, jint portNumber) {
+        JNIEnv*, jobject, jlong ctx, jlong deviceHandle, jint portNumber) {
 
     TestContext* context = (TestContext*)ctx;
 
@@ -515,7 +515,7 @@ JNIEXPORT void JNICALL Java_android_nativemidi_cts_NativeMidiEchoTest_clearCount
 }
 
 JNIEXPORT jint JNICALL Java_android_nativemidi_cts_NativeMidiEchoTest_startReadingMidi(
-        JNIEnv*, jobject, jlong ctx, jint deviceId, jint portNumber) {
+        JNIEnv*, jobject, jlong ctx, jlong deviceHandle, jint portNumber) {
 
     TestContext* context = (TestContext*)ctx;
 
