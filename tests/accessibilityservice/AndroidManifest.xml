@@ -32,7 +32,8 @@
 
         <activity
             android:label="@string/accessibility_query_window_test_activity"
-            android:name=".AccessibilityWindowQueryActivity" />
+            android:name=".AccessibilityWindowQueryActivity"
+            android:supportsPictureInPicture="true" />
 
         <activity
             android:label="@string/accessibility_view_tree_reporting_test_activity"

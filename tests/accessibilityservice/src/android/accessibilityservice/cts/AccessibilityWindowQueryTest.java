@@ -16,6 +16,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_SELECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK;
@@ -58,6 +59,14 @@ public class AccessibilityWindowQueryTest
     private static String CONTENT_VIEW_RES_NAME =
             "android.accessibilityservice.cts:id/added_content";
     private static final long TIMEOUT_WINDOW_STATE_IDLE = 500;
+    private final UiAutomation.AccessibilityEventFilter mWindowsChangedFilter =
+            new UiAutomation.AccessibilityEventFilter() {
+                @Override
+                public boolean accept(AccessibilityEvent event) {
+                    return (event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED);
+                }
+            };
+
 
     public AccessibilityWindowQueryTest() {
         super(AccessibilityWindowQueryActivity.class);
@@ -610,22 +619,41 @@ public class AccessibilityWindowQueryTest
                         AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
             }
         };
-        UiAutomation.AccessibilityEventFilter windowsChangedFilter =
-                new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return (event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED);
-            }
-        };
 
-        uiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, windowsChangedFilter,
+        uiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, mWindowsChangedFilter,
                 TIMEOUT_ASYNC_PROCESSING);
         waitForIdle();
         assertTrue(isDividerWindowPresent(uiAutomation));
-        uiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, windowsChangedFilter,
+        uiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, mWindowsChangedFilter,
                 TIMEOUT_ASYNC_PROCESSING);
         waitForIdle();
         assertFalse(isDividerWindowPresent(uiAutomation));
+    }
+
+    public void testFindPictureInPictureWindow() throws Exception {
+        if (!getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(FEATURE_PICTURE_IN_PICTURE)) {
+            return;
+        }
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        uiAutomation.executeAndWaitForEvent(() -> {
+            getInstrumentation().runOnMainSync(() -> {
+                getActivity().enterPictureInPictureMode();
+            });
+        }, mWindowsChangedFilter, TIMEOUT_ASYNC_PROCESSING);
+        waitForIdle();
+
+        // We should be able to find a picture-in-picture window now
+        int numPictureInPictureWindows = 0;
+        final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
+        final int windowCount = windows.size();
+        for (int i = 0; i < windowCount; i++) {
+            final AccessibilityWindowInfo window = windows.get(i);
+            if (window.inPictureInPicture()) {
+                numPictureInPictureWindows++;
+            }
+        }
+        assertEquals(1, numPictureInPictureWindows);
     }
 
     private boolean isDividerWindowPresent(UiAutomation uiAutomation) {
