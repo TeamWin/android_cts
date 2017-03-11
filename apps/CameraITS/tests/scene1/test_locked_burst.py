@@ -44,12 +44,7 @@ def main():
         # Converge 3A prior to capture.
         cam.do_3a(do_af=True, lock_ae=True, lock_awb=True)
 
-        # Capture with fastest format
-        debug = its.caps.debug_mode()
-        if debug:
-            fmt = its.objects.get_largest_yuv_format(props)
-        else:
-            fmt = its.objects.get_smallest_yuv_format(props)
+        fmt = its.objects.get_largest_yuv_format(props)
 
         # After 3A has converged, lock AE+AWB for the duration of the test.
         req = its.objects.fastest_auto_capture_request(props)
