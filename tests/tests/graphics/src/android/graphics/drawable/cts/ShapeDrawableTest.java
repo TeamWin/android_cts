@@ -19,6 +19,7 @@ package android.graphics.drawable.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -41,6 +42,7 @@ import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.ShapeDrawable.ShaderFactory;
+import android.graphics.drawable.shapes.OvalShape;
 import android.graphics.drawable.shapes.RectShape;
 import android.graphics.drawable.shapes.Shape;
 import android.support.test.InstrumentationRegistry;
@@ -350,5 +352,21 @@ public class ShapeDrawableTest {
 
         shapeDrawable.setDither(false);
         assertFalse(shapeDrawable.getPaint().isDither());
+    }
+
+    @Test
+    public void testMutateGetShape() {
+        ShapeDrawable a = new ShapeDrawable();
+        a.setShape(new OvalShape());
+
+        ShapeDrawable b = (ShapeDrawable) a.getConstantState().newDrawable();
+        assertSame(a.getShape(), b.getShape());
+        a.mutate();
+
+        assertNotNull(a.getShape());
+        assertNotNull(b.getShape());
+        assertTrue(a.getShape() instanceof OvalShape);
+        assertTrue(b.getShape() instanceof OvalShape);
+        assertNotSame(a.getShape(), b.getShape());
     }
 }
