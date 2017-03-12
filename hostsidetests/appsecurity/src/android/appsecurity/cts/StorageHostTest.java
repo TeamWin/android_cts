@@ -40,6 +40,8 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
 
+    private static int[] sUsers;
+
     @Override
     public void setAbi(IAbi abi) {
         mAbi = abi;
@@ -73,43 +75,74 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         getDevice().uninstallPackage(PKG_B);
     }
 
+    public void testA() throws Exception {
+        sUsers = Utils.createUsersForTest(getDevice());
+    }
+
     public void testVerifyAppStats() throws Exception {
-        runDeviceTests(PKG_A, CLASS, "testAllocate");
-        runDeviceTests(PKG_A, CLASS, "testVerifySpaceManual");
-        runDeviceTests(PKG_A, CLASS, "testVerifySpaceApi");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_A, CLASS, "testAllocate", user);
+        }
+
+        // TODO: remove this once 34723223 is fixed
+        getDevice().executeShellCommand("sync");
+
+        for (int user : sUsers) {
+            runDeviceTests(PKG_A, CLASS, "testVerifySpaceManual", user);
+            runDeviceTests(PKG_A, CLASS, "testVerifySpaceApi", user);
+        }
     }
 
     public void testVerifyAppQuota() throws Exception {
-        runDeviceTests(PKG_A, CLASS, "testVerifyQuotaApi");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_A, CLASS, "testVerifyQuotaApi", user);
+        }
     }
 
     public void testVerifyAppAllocate() throws Exception {
-        runDeviceTests(PKG_A, CLASS, "testVerifyAllocateApi");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_A, CLASS, "testVerifyAllocateApi", user);
+        }
     }
 
     public void testVerifyStats() throws Exception {
-        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats", user);
+        }
     }
 
     public void testVerifyStatsMultiple() throws Exception {
-        runDeviceTests(PKG_A, CLASS, "testAllocate");
-        runDeviceTests(PKG_A, CLASS, "testAllocate");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_A, CLASS, "testAllocate", user);
+            runDeviceTests(PKG_A, CLASS, "testAllocate", user);
 
-        runDeviceTests(PKG_B, CLASS, "testAllocate");
+            runDeviceTests(PKG_B, CLASS, "testAllocate", user);
+        }
 
-        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsMultiple");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsMultiple", user);
+        }
     }
 
     public void testVerifyStatsExternal() throws Exception {
-        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user);
+        }
     }
 
     public void testVerifyCategory() throws Exception {
-        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory");
+        for (int user : sUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory", user);
+        }
     }
 
-    public void runDeviceTests(String packageName, String testClassName, String testMethodName)
-            throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
+    public void testZ() throws Exception {
+        Utils.removeUsersForTest(getDevice(), sUsers);
+        sUsers = null;
+    }
+
+    public void runDeviceTests(String packageName, String testClassName, String testMethodName,
+            int userId) throws DeviceNotAvailableException {
+        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName, userId);
     }
 }

@@ -61,13 +61,15 @@ public class Utils {
 
     public static void assertAtLeast(long expected, long actual) {
         if (actual < expected) {
-            throw new AssertionFailedError("Expected at least " + expected + " but was " + actual);
+            throw new AssertionFailedError("Expected at least " + expected + " but was " + actual
+                    + " [" + android.os.Process.myUserHandle() + "]");
         }
     }
 
     public static void assertMostlyEquals(long expected, long actual) {
         if (Math.abs(expected - actual) > 500 * KB_IN_BYTES) {
-            throw new AssertionFailedError("Expected roughly " + expected + " but was " + actual);
+            throw new AssertionFailedError("Expected roughly " + expected + " but was " + actual
+                    + " [" + android.os.Process.myUserHandle() + "]");
         }
     }
 

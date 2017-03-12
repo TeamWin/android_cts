@@ -101,22 +101,38 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         final ExternalStorageStats before = stats.queryExternalStatsForUser(null, user);
 
-        useWrite(new File(Environment.getExternalStorageDirectory(), System.nanoTime() + ".jpg"),
-                2 * MB_IN_BYTES);
-        useWrite(new File(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS), System.nanoTime() + ".MP4"),
-                3 * MB_IN_BYTES);
-        useWrite(new File(Environment.getExternalStorageDirectory(), System.nanoTime() + ".png.WaV"),
-                5 * MB_IN_BYTES);
+        final File dir = Environment.getExternalStorageDirectory();
+        final File downloadsDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS);
+        downloadsDir.mkdirs();
 
-        final ExternalStorageStats after = stats.queryExternalStatsForUser(null, user);
+        final File image = new File(dir, System.nanoTime() + ".jpg");
+        final File video = new File(downloadsDir, System.nanoTime() + ".MP4");
+        final File audio = new File(dir, System.nanoTime() + ".png.WaV");
+        final File internal = new File(
+                getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "test.jpg");
 
-        assertMostlyEquals((2 + 3 + 5) * MB_IN_BYTES,
-                after.getTotalBytes() - before.getTotalBytes());
+        useWrite(image, 2 * MB_IN_BYTES);
+        useWrite(video, 3 * MB_IN_BYTES);
+        useWrite(audio, 5 * MB_IN_BYTES);
+        useWrite(internal, 7 * MB_IN_BYTES);
 
-        assertMostlyEquals(5 * MB_IN_BYTES, after.getAudioBytes() - before.getAudioBytes());
-        assertMostlyEquals(3 * MB_IN_BYTES, after.getVideoBytes() - before.getVideoBytes());
-        assertMostlyEquals(2 * MB_IN_BYTES, after.getImageBytes() - before.getImageBytes());
+        final ExternalStorageStats afterInit = stats.queryExternalStatsForUser(null, user);
+
+        assertMostlyEquals(17 * MB_IN_BYTES, afterInit.getTotalBytes() - before.getTotalBytes());
+        assertMostlyEquals(5 * MB_IN_BYTES, afterInit.getAudioBytes() - before.getAudioBytes());
+        assertMostlyEquals(3 * MB_IN_BYTES, afterInit.getVideoBytes() - before.getVideoBytes());
+        assertMostlyEquals(2 * MB_IN_BYTES, afterInit.getImageBytes() - before.getImageBytes());
+
+        // Rename to ensure that stats are updated
+        video.renameTo(new File(dir, System.nanoTime() + ".PnG"));
+
+        final ExternalStorageStats afterRename = stats.queryExternalStatsForUser(null, user);
+
+        assertMostlyEquals(17 * MB_IN_BYTES, afterRename.getTotalBytes() - before.getTotalBytes());
+        assertMostlyEquals(5 * MB_IN_BYTES, afterRename.getAudioBytes() - before.getAudioBytes());
+        assertMostlyEquals(0 * MB_IN_BYTES, afterRename.getVideoBytes() - before.getVideoBytes());
+        assertMostlyEquals(5 * MB_IN_BYTES, afterRename.getImageBytes() - before.getImageBytes());
     }
 
     public void testVerifyCategory() throws Exception {
