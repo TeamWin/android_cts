@@ -19,6 +19,7 @@
         <item>true</item>
         <item>512</item>
         <item>288</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -49,6 +50,7 @@
         <item>false</item>
         <item>0</item>
         <item>0</item>
+        <item>false</item>
         <item>true</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -80,6 +82,7 @@
         <item>256</item>
         <item>144</item>
         <item>true</item>
+        <item>true</item>
         <item>53.834507</item>
         <item>10.69585</item>
         <item>0.0</item>
@@ -109,6 +112,7 @@
         <item>false</item>
         <item>0</item>
         <item>0</item>
+        <item>false</item>
         <item>true</item>
         <item>37.423</item>
         <item>-122.162</item>
@@ -139,6 +143,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -169,6 +174,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -199,6 +205,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -229,6 +236,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>false</item>
         <item>true</item>
         <item>53.83652</item>
         <item>10.69828</item>
@@ -260,6 +268,7 @@
         <item>160</item>
         <item>120</item>
         <item>true</item>
+        <item>true</item>
         <item>0.0</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -289,6 +298,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -319,6 +329,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -349,6 +360,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
@@ -379,6 +391,7 @@
         <item>true</item>
         <item>160</item>
         <item>120</item>
+        <item>true</item>
         <item>false</item>
         <item>0.0</item>
         <item>0.0</item>
