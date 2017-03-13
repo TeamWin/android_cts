@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.Helper.getAutofillIds;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
@@ -55,7 +56,8 @@ final class CannedFillResponse {
 
     final List<CannedDataset> datasets;
     final int saveType;
-    final String[] savableIds;
+    final String[] requiredSavableIds;
+    final String[] optionalSavableIds;
     final String saveDescription;
     final Bundle extras;
     final RemoteViews presentation;
@@ -65,7 +67,8 @@ final class CannedFillResponse {
 
     private CannedFillResponse(Builder builder) {
         datasets = builder.mDatasets;
-        savableIds = builder.mSavableIds;
+        requiredSavableIds = builder.mRequiredSavableIds;
+        optionalSavableIds = builder.mOptionalSavableIds;
         saveDescription = builder.mSaveDescription;
         saveType = builder.mSaveType;
         extras = builder.mExtras;
@@ -82,25 +85,20 @@ final class CannedFillResponse {
     FillResponse asFillResponse(AssistStructure structure) {
         final FillResponse.Builder builder = new FillResponse.Builder();
         if (datasets != null) {
-            for (CannedFillResponse.CannedDataset cannedDataset : datasets) {
+            for (CannedDataset cannedDataset : datasets) {
                 final Dataset dataset = cannedDataset.asDataset(structure);
                 assertWithMessage("Cannot create datase").that(dataset).isNotNull();
                 builder.addDataset(dataset);
             }
         }
-        if (savableIds != null) {
-            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType);
+        if (requiredSavableIds != null) {
+            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType,
+                    getAutofillIds(structure, requiredSavableIds));
+            if (optionalSavableIds != null) {
+                saveInfo.setOptionalIds(getAutofillIds(structure, optionalSavableIds));
+            }
             if (saveDescription != null) {
                 saveInfo.setDescription(saveDescription);
-            }
-            for (String resourceId : savableIds) {
-                final ViewNode node = findNodeByResourceId(structure, resourceId);
-                if (node == null) {
-                    dumpStructure("onFillRequest()", structure);
-                    throw new AssertionError("No node with savable resourceId " + resourceId);
-                }
-                final AutofillId id = node.getAutofillId();
-                saveInfo.addSavableIds(id);
             }
             if (negativeActionLabel != null) {
                 saveInfo.setNegativeAction(negativeActionLabel, negativeActionListener);
@@ -116,7 +114,8 @@ final class CannedFillResponse {
     @Override
     public String toString() {
         return "CannedFillResponse: [datasets=" + datasets
-                + ", savableIds=" + Arrays.toString(savableIds)
+                + ", requiredSavableIds=" + Arrays.toString(requiredSavableIds)
+                + ", optionalSavableIds=" + Arrays.toString(optionalSavableIds)
                 + ", saveDescription=" + saveDescription
                 + ", hasPresentation=" + (presentation != null)
                 + ", hasAuthentication=" + (authentication != null)
@@ -125,7 +124,8 @@ final class CannedFillResponse {
 
     static class Builder {
         private final List<CannedDataset> mDatasets = new ArrayList<>();
-        private String[] mSavableIds;
+        private String[] mRequiredSavableIds;
+        private String[] mOptionalSavableIds;
         private String mSaveDescription;
         public int mSaveType = -1;
         private Bundle mExtras;
@@ -140,11 +140,19 @@ final class CannedFillResponse {
         }
 
         /**
-         * Sets the savable ids based on they {@code resourceId}.
+         * Sets the required savable ids based on they {@code resourceId}.
          */
-        public Builder setSavableIds(int type, String... ids) {
+        public Builder setRequiredSavableIds(int type, String... ids) {
             mSaveType = type;
-            mSavableIds = ids;
+            mRequiredSavableIds = ids;
+            return this;
+        }
+
+        /**
+         * Sets the optional savable ids based on they {@code resourceId}.
+         */
+        public Builder setOptionalSavableIds(String... ids) {
+            mOptionalSavableIds = ids;
             return this;
         }
 

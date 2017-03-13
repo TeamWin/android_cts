@@ -129,7 +129,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(SAVE_DATA_TYPE_CREDIT_CARD,
+                .setRequiredSavableIds(SAVE_DATA_TYPE_CREDIT_CARD,
                         ID_CC_NUMBER, ID_CC_EXPIRATION, ID_ADDRESS, ID_SAVE_CC)
                 .build());
 

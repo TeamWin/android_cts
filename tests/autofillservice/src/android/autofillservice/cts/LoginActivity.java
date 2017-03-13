@@ -159,7 +159,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code username_label} in the UiThread.
      */
-    void onUsernameLabel(ViewVisitor<TextView> v) {
+    void onUsernameLabel(Visitor<TextView> v) {
         syncRunOnUiThread(() -> {
             v.visit(mUsernameLabel);
         });
@@ -168,7 +168,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code username} in the UiThread.
      */
-    void onUsername(ViewVisitor<EditText> v) {
+    void onUsername(Visitor<EditText> v) {
         syncRunOnUiThread(() -> {
             v.visit(mUsernameEditText);
         });
@@ -184,7 +184,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code password_label} in the UiThread.
      */
-    void onPasswordLabel(ViewVisitor<TextView> v) {
+    void onPasswordLabel(Visitor<TextView> v) {
         syncRunOnUiThread(() -> {
             v.visit(mPasswordLabel);
         });
@@ -193,7 +193,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code password} in the UiThread.
      */
-    void onPassword(ViewVisitor<EditText> v) {
+    void onPassword(Visitor<EditText> v) {
         syncRunOnUiThread(() -> {
             v.visit(mPasswordEditText);
         });
