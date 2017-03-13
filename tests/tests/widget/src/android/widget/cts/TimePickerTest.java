@@ -308,23 +308,19 @@ public class TimePickerTest {
         mInstrumentation.waitForIdleSync();
         verifyTimePickerKeyboardTraversal(
                 true /* goForward */,
-                false /* is24HourView */,
-                false /* isSpinner */);
+                false /* is24HourView */);
         verifyTimePickerKeyboardTraversal(
                 false /* goForward */,
-                false /* is24HourView */,
-                false /* isSpinner */);
+                false /* is24HourView */);
 
         mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(true));
         mInstrumentation.waitForIdleSync();
         verifyTimePickerKeyboardTraversal(
                 true /* goForward */,
-                true /* is24HourView */,
-                false /* isSpinner */);
+                true /* is24HourView */);
         verifyTimePickerKeyboardTraversal(
                 false /* goForward */,
-                true /* is24HourView */,
-                false /* isSpinner */);
+                true /* is24HourView */);
     }
 
     @Test
@@ -333,25 +329,21 @@ public class TimePickerTest {
 
         mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(false));
         mInstrumentation.waitForIdleSync();
-        verifyTimePickerKeyboardTraversal(
-                true /* goForward */,
-                false /* is24HourView */,
-                true /* isSpinner */);
-        verifyTimePickerKeyboardTraversal(
-                false /* goForward */,
-                false /* is24HourView */,
-                true /* isSpinner */);
+
+        // Spinner time-picker doesn't explicitly define a focus order. Just make sure inputs
+        // are able to be traversed (added to focusables).
+        ArrayList<View> focusables = new ArrayList<>();
+        mTimePicker.addFocusables(focusables, View.FOCUS_FORWARD);
+        assertTrue(focusables.contains(mTimePicker.getHourView()));
+        assertTrue(focusables.contains(mTimePicker.getMinuteView()));
+        assertTrue(focusables.contains(mTimePicker.getAmView()));
+        focusables.clear();
 
         mActivityRule.runOnUiThread(() -> mTimePicker.setIs24HourView(true));
         mInstrumentation.waitForIdleSync();
-        verifyTimePickerKeyboardTraversal(
-                true /* goForward */,
-                true /* is24HourView */,
-                true /* isSpinner */);
-        verifyTimePickerKeyboardTraversal(
-                false /* goForward */,
-                true /* is24HourView */,
-                true /* isSpinner */);
+        mTimePicker.addFocusables(focusables, View.FOCUS_FORWARD);
+        assertTrue(focusables.contains(mTimePicker.getHourView()));
+        assertTrue(focusables.contains(mTimePicker.getMinuteView()));
     }
 
     @Test
@@ -499,22 +491,20 @@ public class TimePickerTest {
         // Since only 0, 1 or 2 are accepted for AM/PM hour mode after pressing 1, we expect the
         // hour value to be 1.
         assertEquals(1, mTimePicker.getHour());
-        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        assertFalse(mTimePicker.getHourView().hasFocus());
 
         //  Go back to hour view and input valid hour.
-        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
-                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
-        assertTrue(mTimePicker.getHourView().hasFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getHourView().requestFocus());
+        mInstrumentation.waitForIdleSync();
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_1);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
         assertEquals(11, mTimePicker.getHour());
-        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        assertFalse(mTimePicker.getHourView().hasFocus());
 
         // Go back to hour view and exercise UP and DOWN keys.
-        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
-                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
-        assertTrue(mTimePicker.getHourView().hasFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getHourView().requestFocus());
+        mInstrumentation.waitForIdleSync();
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_DOWN);
         assertEquals(12, mTimePicker.getHour());
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_UP);
@@ -609,22 +599,20 @@ public class TimePickerTest {
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
         // Only 2 is accepted (as the only 0, 1, 2, and 3 can form valid hours after pressing 2).
         assertEquals(2, mTimePicker.getHour());
-        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        assertFalse(mTimePicker.getHourView().hasFocus());
 
         //  Go back to hour view and input valid hour.
-        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
-                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
-        assertTrue(mTimePicker.getHourView().hasFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getHourView().requestFocus());
+        mInstrumentation.waitForIdleSync();
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_2);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_3);
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_TAB);
         assertEquals(23, mTimePicker.getHour());
-        assertTrue(mTimePicker.getMinuteView().hasFocus());
+        assertFalse(mTimePicker.getHourView().hasFocus());
 
         // Go back to hour view and exercise UP and DOWN keys.
-        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTimePicker,
-                KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
-        assertTrue(mTimePicker.getHourView().hasFocus());
+        mActivityRule.runOnUiThread(() -> mTimePicker.getHourView().requestFocus());
+        mInstrumentation.waitForIdleSync();
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_DOWN);
         assertEquals(0 /* 24 */, mTimePicker.getHour());
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTimePicker, KeyEvent.KEYCODE_DPAD_UP);
@@ -717,27 +705,20 @@ public class TimePickerTest {
         mInstrumentation.waitForIdleSync();
     }
 
-    private void verifyTimePickerKeyboardTraversal(boolean goForward, boolean is24HourView,
-            boolean isSpinner) throws Throwable {
+    private void verifyTimePickerKeyboardTraversal(boolean goForward, boolean is24HourView)
+            throws Throwable {
         ArrayList<View> forwardViews = new ArrayList<>();
         String summary = (goForward ? " forward " : " backward ")
-                + "traversal, is24HourView=" + is24HourView
-                + (isSpinner ? ", mode spinner" : ", mode clock");
+                + "traversal, is24HourView=" + is24HourView;
         assertNotNull("Unexpected NULL hour view for" + summary, mTimePicker.getHourView());
         forwardViews.add(mTimePicker.getHourView());
         assertNotNull("Unexpected NULL minute view for" + summary, mTimePicker.getMinuteView());
         forwardViews.add(mTimePicker.getMinuteView());
         if (!is24HourView) {
-            if (isSpinner) {
-                // The spinner mode only contains one view for inputting AM/PM.
-                assertNotNull("Unexpected NULL AM/PM view for" + summary, mTimePicker.getAmView());
-                forwardViews.add(mTimePicker.getAmView());
-            } else {
-                assertNotNull("Unexpected NULL AM view for" + summary, mTimePicker.getAmView());
-                forwardViews.add(mTimePicker.getAmView());
-                assertNotNull("Unexpected NULL PM view for" + summary, mTimePicker.getPmView());
-                forwardViews.add(mTimePicker.getPmView());
-            }
+            assertNotNull("Unexpected NULL AM view for" + summary, mTimePicker.getAmView());
+            forwardViews.add(mTimePicker.getAmView());
+            assertNotNull("Unexpected NULL PM view for" + summary, mTimePicker.getPmView());
+            forwardViews.add(mTimePicker.getPmView());
         }
 
         if (!goForward) {
