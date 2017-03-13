@@ -40,10 +40,12 @@ import android.os.SystemClock;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.view.Surface;
+import android.webkit.cts.CtsTestServer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -66,6 +68,10 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add K tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    public void testStagefright_bug_35763994() throws Exception {
+        doStagefrightTest(R.raw.bug_35763994);
+    }
 
     public void testStagefright_bug_33137046() throws Exception {
         doStagefrightTest(R.raw.bug_33137046);
@@ -143,6 +149,16 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
         doStagefrightTestMediaMetadataRetriever(rid);
+
+        Context context = getInstrumentation().getContext();
+        Resources resources =  context.getResources();
+        CtsTestServer server = new CtsTestServer(context);
+        String rname = resources.getResourceEntryName(rid);
+        String url = server.getAssetUrl("raw/" + rname);
+        doStagefrightTestMediaPlayer(url);
+        doStagefrightTestMediaCodec(url);
+        doStagefrightTestMediaMetadataRetriever(url);
+        server.shutdown();
     }
 
     private Surface getDummySurface() {
@@ -242,8 +258,28 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaPlayer(final int rid) throws Exception {
+        doStagefrightTestMediaPlayer(rid, null);
+    }
 
-        String name = getInstrumentation().getContext().getResources().getResourceEntryName(rid);
+    private void doStagefrightTestMediaPlayer(final String url) throws Exception {
+        doStagefrightTestMediaPlayer(-1, url);
+    }
+
+    private void closeQuietly(AutoCloseable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void doStagefrightTestMediaPlayer(final int rid, final String uri) throws Exception {
+
+        String name = uri != null ? uri :
+            getInstrumentation().getContext().getResources().getResourceEntryName(rid);
         Log.i(TAG, "start mediaplayer test for: " + name);
 
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
@@ -258,16 +294,23 @@ public class StagefrightTest extends InstrumentationTestCase {
                 mp.setOnCompletionListener(mpcl);
                 Surface surface = getDummySurface();
                 mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
                 try {
-                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
-                        .openRawResourceFd(rid);
+                    if (uri == null) {
+                        fd = getInstrumentation().getContext().getResources()
+                                .openRawResourceFd(rid);
 
-                    mp.setDataSource(fd.getFileDescriptor(),
-                                     fd.getStartOffset(),
-                                     fd.getLength());
+                        mp.setDataSource(fd.getFileDescriptor(),
+                                         fd.getStartOffset(),
+                                         fd.getLength());
 
+                    } else {
+                        mp.setDataSource(uri);
+                    }
                     mp.prepareAsync();
                 } catch (Exception e) {
+                } finally {
+                    closeQuietly(fd);
                 }
 
                 Looper.loop();
@@ -284,6 +327,14 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     private void doStagefrightTestMediaCodec(final int rid) throws Exception {
+        doStagefrightTestMediaCodec(rid, null);
+    }
+
+    private void doStagefrightTestMediaCodec(final String url) throws Exception {
+        doStagefrightTestMediaCodec(-1, url);
+    }
+
+    private void doStagefrightTestMediaCodec(final int rid, final String url) throws Exception {
 
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
 
@@ -302,6 +353,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     mp.setDataSource(fd.getFileDescriptor(),
                                      fd.getStartOffset(),
                                      fd.getLength());
+                    fd.close();
                 } catch (Exception e) {
                     // this is a known-good file, so no failure should occur
                     fail("setDataSource of known-good file failed");
@@ -321,15 +373,21 @@ public class StagefrightTest extends InstrumentationTestCase {
         }
 
         Resources resources =  getInstrumentation().getContext().getResources();
-        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
         MediaExtractor ex = new MediaExtractor();
-        try {
-            ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-        } catch (IOException e) {
-            // ignore
+        if (url == null) {
+            AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+            try {
+                ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+            } catch (IOException e) {
+                // ignore
+            } finally {
+                closeQuietly(fd);
+            }
+        } else {
+            ex.setDataSource(url);
         }
         int numtracks = ex.getTrackCount();
-        String rname = resources.getResourceEntryName(rid);
+        String rname = url != null ? url: resources.getResourceEntryName(rid);
         Log.i(TAG, "start mediacodec test for: " + rname + ", which has " + numtracks + " tracks");
         for (int t = 0; t < numtracks; t++) {
             // find all the available decoders for this format
@@ -383,6 +441,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     while (true) {
                         int flags = ex.getSampleFlags();
                         long time = ex.getSampleTime();
+                        ex.getCachedDuration();
                         int bufidx = codec.dequeueInputBuffer(5000);
                         if (bufidx >= 0) {
                             int n = ex.readSampleData(inputBuffers[bufidx], 0);
@@ -420,7 +479,17 @@ public class StagefrightTest extends InstrumentationTestCase {
         thr.stopLooper();
         thr.join();
     }
+
     private void doStagefrightTestMediaMetadataRetriever(final int rid) throws Exception {
+        doStagefrightTestMediaMetadataRetriever(rid, null);
+    }
+
+    private void doStagefrightTestMediaMetadataRetriever(final String url) throws Exception {
+        doStagefrightTestMediaMetadataRetriever(-1, url);
+    }
+
+    private void doStagefrightTestMediaMetadataRetriever(
+            final int rid, final String url) throws Exception {
 
         final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
 
@@ -430,8 +499,9 @@ public class StagefrightTest extends InstrumentationTestCase {
 
                 MediaPlayer mp = new MediaPlayer();
                 mp.setOnErrorListener(mpcl);
+                AssetFileDescriptor fd = null;
                 try {
-                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                    fd = getInstrumentation().getContext().getResources()
                         .openRawResourceFd(R.raw.good);
 
                     // the onErrorListener won't receive MEDIA_ERROR_SERVER_DIED until
@@ -439,6 +509,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     mp.setDataSource(fd.getFileDescriptor(),
                                      fd.getStartOffset(),
                                      fd.getLength());
+                    fd.close();
                 } catch (Exception e) {
                     // this is a known-good file, so no failure should occur
                     fail("setDataSource of known-good file failed");
@@ -458,22 +529,30 @@ public class StagefrightTest extends InstrumentationTestCase {
         }
 
         Resources resources =  getInstrumentation().getContext().getResources();
-        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        try {
-            retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-        } catch (IllegalArgumentException e) {
-            // ignore
+        if (url == null) {
+            AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+            try {
+                retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+                fd.close();
+            } catch (IllegalArgumentException e) {
+                // ignore
+            } finally {
+                closeQuietly(fd);
+            }
+        } else {
+            retriever.setDataSource(url, new HashMap<String, String>());
         }
         retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         retriever.getEmbeddedPicture();
         retriever.getFrameAtTime();
 
         retriever.release();
-        String rname = resources.getResourceEntryName(rid);
+        String rname = url != null ? url : resources.getResourceEntryName(rid);
         String cve = rname.replace("_", "-").toUpperCase();
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         thr.stopLooper();
+        thr.join();
     }
 }
