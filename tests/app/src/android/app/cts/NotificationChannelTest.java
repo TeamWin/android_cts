@@ -44,7 +44,6 @@ public class NotificationChannelTest extends AndroidTestCase {
                 new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
         assertEquals("1", channel.getId());
         assertEquals("one", channel.getName());
-        assertEquals(0, channel.getNameResId());
         assertEquals(false, channel.canBypassDnd());
         assertEquals(false, channel.shouldShowLights());
         assertEquals(false, channel.shouldVibrate());
@@ -55,12 +54,6 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
         assertEquals(null, channel.getGroup());
         assertTrue(channel.getLightColor() == 0);
-
-        int resId = 324527;
-        NotificationChannel channel2 =
-                new NotificationChannel("2", resId, NotificationManager.IMPORTANCE_DEFAULT);
-        assertEquals("2", channel2.getId());
-        assertEquals(resId, channel2.getNameResId());
     }
 
     public void testWriteToParcel() {

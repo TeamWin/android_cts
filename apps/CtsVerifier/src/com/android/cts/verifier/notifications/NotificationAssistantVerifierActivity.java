@@ -1486,7 +1486,6 @@ public class NotificationAssistantVerifierActivity extends InteractiveVerifierAc
         }
         pass &= checkEquals(expected.getId(), actual.getId(), msg);
         pass &= checkEquals(expected.getName(), actual.getName(), msg);
-        pass &= checkEquals(expected.getNameResId(), actual.getNameResId(), msg);
         pass &= checkEquals(expected.canShowBadge(), actual.canShowBadge(), msg);
         pass &= checkEquals(expected.shouldVibrate(), actual.shouldVibrate(), msg);
         pass &= checkEquals(expected.shouldShowLights(), actual.shouldShowLights(), msg);

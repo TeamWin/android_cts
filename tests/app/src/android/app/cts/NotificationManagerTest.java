@@ -94,14 +94,20 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertFalse(createdChannel.canBypassDnd());
     }
 
-    public void testCreateChannel_resIdName() throws Exception {
-        final NotificationChannel channel =
-                new NotificationChannel(mId, R.string.text_view_hello,
-                        NotificationManager.IMPORTANCE_DEFAULT);
+    public void testCreateChannel_rename() throws Exception {
+        NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        mNotificationManager.createNotificationChannel(channel);
+        channel.setName("new name");
         mNotificationManager.createNotificationChannel(channel);
         final NotificationChannel createdChannel =
                 mNotificationManager.getNotificationChannel(mId);
         compareChannels(channel, createdChannel);
+
+        channel.setImportance(NotificationManager.IMPORTANCE_HIGH);
+        mNotificationManager.createNotificationChannel(channel);
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT,
+                mNotificationManager.getNotificationChannel(mId).getImportance());
     }
 
     public void testCreateSameChannelDoesNotUpdate() throws Exception {
@@ -391,7 +397,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.getNameResId(), actual.getNameResId());
         assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
         assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
         assertEquals(expected.getImportance(), actual.getImportance());
