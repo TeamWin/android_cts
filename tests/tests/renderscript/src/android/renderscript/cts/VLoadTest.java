@@ -38,7 +38,21 @@ public class VLoadTest extends RSBaseCompute {
         scriptRelaxed = new ScriptC_vload_relaxed(mRS);
     }
 
-
+    @Override
+    protected void tearDown() throws Exception {
+        if (walkAlloc != null) {
+            walkAlloc.destroy();
+        }
+        if (inAlloc != null) {
+            inAlloc.destroy();
+        }
+        if (outAlloc != null) {
+            outAlloc.destroy();
+        }
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
 
     protected void createWalk() {
         int tmp[] = new int[w];
