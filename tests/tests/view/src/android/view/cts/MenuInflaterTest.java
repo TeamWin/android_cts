@@ -59,6 +59,7 @@ public class MenuInflaterTest {
     public ActivityTestRule<MockActivity> mActivityRule =
             new ActivityTestRule<>(MockActivity.class);
 
+    @UiThreadTest
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
