@@ -66,6 +66,12 @@ public class BroadcastReceiverActivity extends Activity {
             if (extras.getBoolean("finish")) {
                 finish();
             }
+            if (extras.getBoolean("moveToBack")) {
+                moveTaskToBack(true);
+            }
+            if (extras.containsKey("orientation")) {
+                setRequestedOrientation(extras.getInt("orientation"));
+            }
             if (extras.getBoolean("dismissKeyguard")) {
                 getWindow().addFlags(FLAG_DISMISS_KEYGUARD);
             }

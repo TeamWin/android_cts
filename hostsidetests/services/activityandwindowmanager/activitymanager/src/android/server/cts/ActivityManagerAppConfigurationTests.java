@@ -29,6 +29,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String PORTRAIT_ACTIVITY_NAME = "PortraitOrientationActivity";
     private static final String LANDSCAPE_ACTIVITY_NAME = "LandscapeOrientationActivity";
 
+    private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
+
     /**
      * Tests that the WindowManager#getDefaultDisplay() and the Configuration of the Activity
      * has an updated size when the Activity is resized from fullscreen to docked state.
@@ -212,6 +214,58 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     }
 
     /**
+     * Test that device handles moving between two tasks with different orientations.
+     */
+    public void testTaskCloseRestoreOrientation() throws Exception {
+        // Start landscape activity.
+        launchActivity(LANDSCAPE_ACTIVITY_NAME);
+        mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
+        assertEquals("Fullscreen app requested landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+
+        // Start another activity in a different task.
+        launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
+
+        // Request portrait
+        executeShellCommand(getOrientationBroadcast(1 /*portrait*/));
+        mAmWmState.waitForRotation(mDevice, 1);
+
+        // Finish activity
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+
+        // Verify that activity brought to front is in originally requested orientation.
+        mAmWmState.waitForValidState(mDevice, LANDSCAPE_ACTIVITY_NAME);
+        assertEquals("Should return to app in landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+    }
+
+    /**
+     * Test that device handles moving between two tasks with different orientations.
+     */
+    public void testTaskMoveToBackOrientation() throws Exception {
+        // Start landscape activity.
+        launchActivity(LANDSCAPE_ACTIVITY_NAME);
+        mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
+        assertEquals("Fullscreen app requested landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+
+        // Start another activity in a different task.
+        launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
+
+        // Request portrait
+        executeShellCommand(getOrientationBroadcast(1 /*portrait*/));
+        mAmWmState.waitForRotation(mDevice, 1);
+
+        // Finish activity
+        executeShellCommand(MOVE_TASK_TO_BACK_BROADCAST);
+
+        // Verify that activity brought to front is in originally requested orientation.
+        mAmWmState.waitForValidState(mDevice, LANDSCAPE_ACTIVITY_NAME);
+        assertEquals("Should return to app in landscape orientation",
+                0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+    }
+
+    /**
      * Test that device doesn't change device orientation by app request while in multi-window.
      */
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
@@ -351,7 +405,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         final String windowName = getWindowName(activityName);
 
         mAmWmState.computeState(mDevice, new String[] {activityName});
-
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
 
         final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();

@@ -104,6 +104,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     static final String FINISH_ACTIVITY_BROADCAST
             = "am broadcast -a trigger_broadcast --ez finish true";
 
+    /** Broadcast shell command for finishing {@link BroadcastReceiverActivity}. */
+    static final String MOVE_TASK_TO_BACK_BROADCAST
+            = "am broadcast -a trigger_broadcast --ez moveToBack true";
+
     private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
     private static final String AM_RESIZE_STACK = "am stack resize ";
 
@@ -146,10 +150,18 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected static String getAmStartCmd(final String activityName, final int displayId) {
         return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000"
                 + " --display " + displayId;
-	}
+    }
+
+    protected static String getAmStartCmdInNewTask(final String activityName) {
+        return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
+    }
 
     protected static String getAmStartCmdOverHome(final String activityName) {
         return "am start --activity-task-on-home -n " + getActivityComponentName(activityName);
+    }
+
+    protected static String getOrientationBroadcast(int orientation) {
+        return "am broadcast -a trigger_broadcast --ei orientation " + orientation;
     }
 
     static String getActivityComponentName(final String activityName) {
@@ -273,6 +285,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
 
+        mAmWmState.waitForValidState(mDevice, targetActivityName);
+    }
+
+    protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
+        executeShellCommand(getAmStartCmdInNewTask(targetActivityName));
         mAmWmState.waitForValidState(mDevice, targetActivityName);
     }
 
