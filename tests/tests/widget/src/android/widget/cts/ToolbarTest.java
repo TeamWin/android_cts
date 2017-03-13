@@ -31,11 +31,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.app.Instrumentation;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -525,5 +527,40 @@ public class ToolbarTest {
         View itemView2 = mActivity.findViewById(menuItem2.getItemId());
         assertEquals(menuItem2.getTitle(), itemView2.getContentDescription());
         assertEquals(menuItem2.getTitle(), itemView2.getTooltipText());
+    }
+
+    @Test
+    public void testKeyShortcuts() throws Throwable {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
+                () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu));
+
+        final Boolean[] shareItemClicked = new Boolean[]{false};
+        mMainToolbar.getMenu().findItem(R.id.action_share).setOnMenuItemClickListener(
+                item -> shareItemClicked[0] = true);
+
+        // Make sure valid menu shortcuts get handled by toolbar menu
+        long now = SystemClock.uptimeMillis();
+        KeyEvent handledShortcutKey = new KeyEvent(now, now, KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_S, 0, KeyEvent.META_CTRL_ON);
+        mInstrumentation.runOnMainSync(() ->
+                assertTrue(mActivity.dispatchKeyShortcutEvent(handledShortcutKey))
+        );
+        assertTrue(shareItemClicked[0]);
+
+        final KeyEvent unhandledShortcutKey = new KeyEvent(now, now, KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_A, 0, KeyEvent.META_CTRL_ON);
+
+        // Make sure we aren't eating unused shortcuts.
+        mInstrumentation.runOnMainSync(() ->
+                assertFalse(mActivity.dispatchKeyShortcutEvent(unhandledShortcutKey))
+        );
+
+        mActivity.resetCounts();
+
+        // Make sure that unhandled shortcuts don't prepare menus (since toolbar is handling that).
+        mInstrumentation.sendKeySync(unhandledShortcutKey);
+        assertEquals(1, mActivity.mKeyShortcutCount);
+        assertEquals(0, mActivity.mPrepareMenuCount);
+        assertEquals(0, mActivity.mCreateMenuCount);
     }
 }
