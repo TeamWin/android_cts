@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class VirtualContainerView extends View {
+class VirtualContainerView extends View {
 
     private static final String TAG = "VirtualContainerView";
 
@@ -63,7 +63,7 @@ public class VirtualContainerView extends View {
     private int mLineLength;
     private int mFocusedColor;
     private int mUnfocusedColor;
-    private boolean mSync;
+    private boolean mSync = true;
 
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -195,10 +195,10 @@ public class VirtualContainerView extends View {
 
     final class Line {
 
-        private final Item label;
-        private final Item text;
+        final Item label;
+        final Item text;
 
-        private Rect bounds;
+        Rect bounds;
 
         private boolean focused;
 
@@ -273,9 +273,9 @@ public class VirtualContainerView extends View {
         }
     }
 
-    private static final class Item {
+    static final class Item {
         private final Line line;
-        private final int id;
+        final int id;
         private final String resourceId;
         private CharSequence text;
         private final boolean editable;

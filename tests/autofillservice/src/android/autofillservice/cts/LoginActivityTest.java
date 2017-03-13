@@ -15,11 +15,11 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
@@ -30,14 +30,15 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilD
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
-import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.text.InputType.TYPE_NULL;
 import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
+import static android.view.View.AUTOFILL_MODE_MANUAL;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
+import static android.view.autofill.AutofillManager.FLAG_MANUAL_REQUEST;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -952,6 +953,50 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Sanity checks.
         replier.assertNumberUnhandledFillRequests(0);
         replier.assertNumberUnhandledSaveRequests(0);
+
+        // Other sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testManualAutofill() throws Exception {
+        // Set service..
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // And activity.
+        mLoginActivity.onUsername((v) -> {
+            v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
+            // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
+            v.setText("");
+        });
+
+        // Set expectations.
+        replier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mLoginActivity.expectAutoFill("dude", "sweet");
+
+        // Long-press field to trigger AUTOFILL menu.
+        sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+
+        waitUntilConnected();
+
+        // Auto-fill it.
+        sUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mLoginActivity.assertAutoFilled();
+
+        // Sanity checks.
+        // Assert flag was properly set.
+
+        final FillRequest request = replier.getNextFillRequest();
+        assertThat(request.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
         // Other sanity checks.
         waitUntilDisconnected();

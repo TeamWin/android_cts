@@ -16,13 +16,15 @@
 
 package android.autofillservice.cts;
 
-import static android.service.autofill.SaveInfo.*;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
-import android.content.Context;
 import android.content.res.Resources;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -30,7 +32,6 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
 import android.util.Log;
 
 /**
@@ -41,6 +42,7 @@ final class UiBot {
     private static final String RESOURCE_ID_DATASET_PICKER = "autofill_dataset_picker";
     private static final String RESOURCE_ID_SAVE_SNACKBAR = "autofill_save";
     private static final String RESOURCE_ID_SAVE_TITLE = "autofill_save_title";
+    private static final String RESOURCE_ID_CONTEXT_MENUITEM = "floating_toolbar_menu_item_text";
 
     private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
@@ -49,15 +51,18 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_TYPE_ADDRESS = "autofill_save_type_address";
     private static final String RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD =
             "autofill_save_type_credit_card";
+    private static final String RESOURCE_STRING_AUTOFILL = "autofill";
 
     private static final String TAG = "AutoFillCtsUiBot";
 
     private final UiDevice mDevice;
     private final int mTimeout;
+    private final String mPackageName;
 
     UiBot(Instrumentation instrumentation, int timeout) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
         mTimeout = timeout;
+        mPackageName = instrumentation.getContext().getPackageName();
     }
 
     /**
@@ -189,7 +194,8 @@ final class UiBot {
     /**
      * Taps an option in the save snackbar.
      *
-     * @param saveSnackBar Save snackbar, typically obtained through {@link #assertSaveShowing()}.
+     * @param saveSnackBar Save snackbar, typically obtained through
+     *            {@link #assertSaveShowing(int)}.
      * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
      */
     void saveForAutofill(UiObject2 saveSnackBar, boolean yesDoIt) {
@@ -198,6 +204,24 @@ final class UiBot {
         final UiObject2 button = saveSnackBar.findObject(By.res("android", id));
         assertWithMessage("save button (%s)", id).that(button).isNotNull();
         button.click();
+    }
+
+    /**
+     * Gets the AUTOFILL contextual menu by long pressing a text field.
+     *
+     * @param id resource id of the field.
+     */
+    UiObject2 getAutofillMenuOption(String id) {
+        final UiObject2 field = waitForObject(By.res(mPackageName, id));
+        // TODO(b/33197203, b/33802548): figure out why obj.longClick() doesn't always work
+        field.click(3000);
+
+        final UiObject2 menuItem = waitForObject(By.res("android", RESOURCE_ID_CONTEXT_MENUITEM));
+        final Resources resources = InstrumentationRegistry.getContext().getResources();
+        final int stringId = resources.getIdentifier(RESOURCE_STRING_AUTOFILL, "string", "android");
+        final String expectedText = resources.getString(stringId);
+        assertThat(menuItem.getText().toUpperCase()).isEqualTo(expectedText.toUpperCase());
+        return menuItem;
     }
 
     /**
