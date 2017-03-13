@@ -27,6 +27,7 @@ import static android.media.AudioManager.RINGER_MODE_NORMAL;
 import static android.media.AudioManager.RINGER_MODE_SILENT;
 import static android.media.AudioManager.RINGER_MODE_VIBRATE;
 import static android.media.AudioManager.STREAM_MUSIC;
+import static android.media.AudioManager.STREAM_ACCESSIBILITY;
 import static android.media.AudioManager.USE_DEFAULT_STREAM_TYPE;
 import static android.media.AudioManager.VIBRATE_SETTING_OFF;
 import static android.media.AudioManager.VIBRATE_SETTING_ON;
@@ -45,6 +46,7 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.provider.Settings.System;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 import android.view.SoundEffectConstants;
 
 public class AudioManagerTest extends InstrumentationTestCase {
@@ -605,6 +607,47 @@ public class AudioManagerTest extends InstrumentationTestCase {
         } finally {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
+        }
+    }
+
+    public void testAccessibilityVolume() throws Exception {
+        if (mUseFixedVolume) {
+            Log.i("AudioManagerTest", "testAccessibilityVolume() skipped: fixed volume");
+            return;
+        }
+        final int maxA11yVol = mAudioManager.getStreamMaxVolume(STREAM_ACCESSIBILITY);
+        assertTrue("Max a11yVol not strictly positive", maxA11yVol > 0);
+        int currentVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+
+        // changing STREAM_ACCESSIBILITY is subject to permission, shouldn't be able to change it
+        // test setStreamVolume
+        final int testSetVol;
+        if (currentVol != maxA11yVol) {
+            testSetVol = maxA11yVol;
+        } else {
+            testSetVol = maxA11yVol - 1;
+        }
+        mAudioManager.setStreamVolume(STREAM_ACCESSIBILITY, testSetVol, 0);
+        Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+        currentVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+        assertTrue("Should not be able to change A11y vol", currentVol != testSetVol);
+
+        // test adjustStreamVolume
+        //        LOWER
+        currentVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+        if (currentVol > 0) {
+            mAudioManager.adjustStreamVolume(STREAM_ACCESSIBILITY, ADJUST_LOWER, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+            int newVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+            assertTrue("Should not be able to lower A11y vol", currentVol == newVol);
+        }
+        //        RAISE
+        currentVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+        if (currentVol < maxA11yVol) {
+            mAudioManager.adjustStreamVolume(STREAM_ACCESSIBILITY, ADJUST_RAISE, 0);
+            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+            int newVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+            assertTrue("Should not be able to raise A11y vol", currentVol == newVol);
         }
     }
 
