@@ -225,9 +225,9 @@ public class VirtualContainerView extends View {
             Log.d(TAG, "changeFocus() on " + text.id + ": " + focused + " bounds: " + bounds);
             this.focused = focused;
             if (focused) {
-                mAfm.startAutofillRequestOnVirtualView(VirtualContainerView.this, text.id, bounds);
+                mAfm.notifyVirtualViewEntered(VirtualContainerView.this, text.id, bounds);
             } else {
-                mAfm.stopAutofillRequestOnVirtualView(VirtualContainerView.this, text.id);
+                mAfm.notifyVirtualViewExited(VirtualContainerView.this, text.id);
             }
         }
 
