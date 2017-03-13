@@ -33,7 +33,9 @@ import android.os.Bundle;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.Fade;
+import android.transition.Transition;
 import android.transition.Transition.TransitionListener;
+import android.transition.TransitionListenerAdapter;
 import android.view.View;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -46,6 +48,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @MediumTest
@@ -61,17 +65,23 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     @Override
     public void setup() {
         super.setup();
-        mExitTransition = new TrackingVisibility();
+        setTransitions(new TrackingVisibility(), new TrackingVisibility(),
+                new TrackingTransition());
+    }
+
+    private void setTransitions(TrackingVisibility exit, TrackingVisibility reenter,
+            TrackingTransition sharedElementReenter) {
+        mExitTransition = exit;
         mExitListener = mock(TransitionListener.class);
         mExitTransition.addListener(mExitListener);
         mActivity.getWindow().setExitTransition(mExitTransition);
 
-        mReenterTransition = new TrackingVisibility();
+        mReenterTransition = reenter;
         mReenterListener = mock(TransitionListener.class);
         mReenterTransition.addListener(mReenterListener);
         mActivity.getWindow().setReenterTransition(mReenterTransition);
 
-        mSharedElementReenterTransition = new TrackingTransition();
+        mSharedElementReenterTransition = sharedElementReenter;
         mSharedElementReenterListener = mock(TransitionListener.class);
         mSharedElementReenterTransition.addListener(mSharedElementReenterListener);
         mActivity.getWindow().setSharedElementReenterTransition(mSharedElementReenterTransition);
@@ -283,6 +293,68 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
         assertTrue(targetActivity.isActivityTransitionRunning());
         assertTrue(mActivity.isActivityTransitionRunning());
+    }
+
+    // Views that are excluded from the exit/enter transition shouldn't change visibility
+    @Test
+    public void untargetedViews() throws Throwable {
+        enterScene(R.layout.scene10);
+
+        final View redSquare = mActivity.findViewById(R.id.redSquare);
+
+        setTransitions(new TrackingVisibilityWithAnimator(), new TrackingVisibilityWithAnimator(),
+                new TrackingTransition());
+        TransitionListener redSquareValidator = new TransitionListenerAdapter() {
+            @Override
+            public void onTransitionStart(Transition transition) {
+                assertEquals(View.VISIBLE, redSquare.getVisibility());
+            }
+
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                assertEquals(View.VISIBLE, redSquare.getVisibility());
+            }
+        };
+        mExitTransition.addListener(redSquareValidator);
+        mReenterTransition.addListener(redSquareValidator);
+
+        mExitTransition.excludeTarget(R.id.redSquare, true);
+        mReenterTransition.excludeTarget(R.id.redSquare, true);
+
+        mActivity.runOnUiThread(() -> {
+            Bundle options = ActivityOptions.makeSceneTransitionAnimation(mActivity).toBundle();
+            Intent intent = new Intent(mActivity, TargetActivity.class);
+            intent.putExtra(TargetActivity.EXTRA_LAYOUT_ID, R.layout.scene12);
+            intent.putExtra(TargetActivity.EXTRA_EXCLUDE_ID, R.id.redSquare);
+            intent.putExtra(TargetActivity.EXTRA_USE_ANIMATOR, true);
+            mActivity.startActivity(intent, options);
+        });
+
+        verify(mExitListener, within(3000)).onTransitionEnd(any());
+
+        TargetActivity targetActivity = waitForTargetActivity();
+
+        assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
+        assertEquals(View.VISIBLE, targetActivity.startVisibility);
+        assertEquals(View.VISIBLE, targetActivity.endVisibility);
+
+        // Reset so that we know that they are modified when returning
+        targetActivity.startVisibility = targetActivity.endVisibility = -1;
+
+        targetActivity.transitionComplete = new CountDownLatch(1);
+
+        mActivity.runOnUiThread(() -> {
+            targetActivity.finishAfterTransition();
+        });
+
+        assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
+        assertEquals(View.VISIBLE, targetActivity.startVisibility);
+        assertEquals(View.VISIBLE, targetActivity.endVisibility);
+
+        assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
+        verify(mReenterListener, within(3000)).onTransitionEnd(any());
+
+        TargetActivity.sLastCreated = null;
     }
 
     private TargetActivity waitForTargetActivity() {
