@@ -49,7 +49,33 @@ public class GetSetTest extends RSBaseCompute {
         scriptRelaxed.set_gHeight(gHeight);
     }
 
-
+    @Override
+    protected void tearDown() throws Exception {
+        if (walkAlloc != null) {
+            walkAlloc.destroy();
+        }
+        if (in1DAlloc != null) {
+            in1DAlloc.destroy();
+        }
+        if (out1DAlloc != null) {
+            out1DAlloc.destroy();
+        }
+        if (in2DAlloc != null) {
+            in2DAlloc.destroy();
+        }
+        if (out2DAlloc != null) {
+            out2DAlloc.destroy();
+        }
+        if (in3DAlloc != null) {
+            in3DAlloc.destroy();
+        }
+        if (out3DAlloc != null) {
+            out3DAlloc.destroy();
+        }
+        script.destroy();
+        scriptRelaxed.destroy();
+        super.tearDown();
+    }
 
     protected void createWalk(int vsize) {
         // We do a random copy order to attempt to get multiple threads
