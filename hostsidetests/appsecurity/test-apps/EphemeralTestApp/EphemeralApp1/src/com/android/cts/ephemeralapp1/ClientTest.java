@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestCase;
@@ -312,6 +313,11 @@ public class ClientTest {
             assertThat(testResult.activityName,
                     is("EphemeralActivity3"));
         }
+    }
+
+    @Test
+    public void testBuildSerialUnknown() throws Exception {
+        assertThat(Build.SERIAL, is(Build.UNKNOWN));
     }
 
     @Test
