@@ -731,7 +731,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
 
-    protected class ReportedSizes {
+    class ReportedSizes {
         int widthDp;
         int heightDp;
         int displayWidth;
@@ -748,9 +748,24 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                     " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight +
                     " smallestWidthDp=" + smallestWidthDp + " densityDpi=" + densityDpi + "}";
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if ( this == obj ) return true;
+            if ( !(obj instanceof ReportedSizes) ) return false;
+            ReportedSizes that = (ReportedSizes) obj;
+            return widthDp == that.widthDp
+                    && heightDp == that.heightDp
+                    && displayWidth == that.displayWidth
+                    && displayHeight == that.displayHeight
+                    && metricsWidth == that.metricsWidth
+                    && metricsHeight == that.metricsHeight
+                    && smallestWidthDp == that.smallestWidthDp
+                    && densityDpi == that.densityDpi;
+        }
     }
 
-    protected ReportedSizes getLastReportedSizesForActivity(String activityName)
+    ReportedSizes getLastReportedSizesForActivity(String activityName)
             throws DeviceNotAvailableException {
         final String[] lines = getDeviceLogsForComponent(activityName);
         for (int i = lines.length - 1; i >= 0; i--) {

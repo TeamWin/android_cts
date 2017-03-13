@@ -298,7 +298,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Create new virtual display.
         final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
                 true /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
-                true /* publicDisplay */, true /* mustBeCreated */);
+                true /* publicDisplay */, true /* mustBeCreated */, true /* resizeDisplay */);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
@@ -565,7 +565,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Create new show-with-insecure-keyguard virtual display.
         final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
                 false /* launchInSplitScreen */, true /* canShowWithInsecureKeyguard */,
-                false /* publicDisplay */, true /* mustBeCreated */);
+                false /* publicDisplay */, true /* mustBeCreated */, true /* resizeDisplay */);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -590,7 +590,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Try to create new show-with-insecure-keyguard public virtual display.
         final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
                 false /* launchInSplitScreen */, true /* canShowWithInsecureKeyguard */,
-                true /* publicDisplay */, false /* mustBeCreated */);
+                true /* publicDisplay */, false /* mustBeCreated */, true /* resizeDisplay */);
 
         // Check that the display is not created.
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -602,9 +602,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         // Create new private virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
-                false /* publicDisplay */, true /* mustBeCreated */);
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activities on new secondary display.
@@ -737,6 +735,50 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         assertMovedToDisplay("LifecycleLogView");
     }
 
+    /**
+     * Tests that when primary display is rotated secondary displays are not affected.
+     */
+    public void testRotationNotAffectingSecondaryScreen() throws Exception {
+        // Create new virtual display.
+        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
+                false /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
+                false /* publicDisplay */, true /* mustBeCreated */, false /* resizeDisplay */);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes initialSizes = getLastReportedSizesForActivity(
+                RESIZEABLE_ACTIVITY_NAME);
+        assertNotNull("Test activity must have reported initial sizes on launch", initialSizes);
+
+        // Rotate primary display and check that activity on secondary display is not affected.
+        rotateAndCheckSameSizes(RESIZEABLE_ACTIVITY_NAME);
+
+        // Launch activity to secondary display when primary one is rotated.
+        final int initialRotation = mAmWmState.getWmState().getRotation();
+        setDeviceRotation((initialRotation + 1) % 4);
+
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
+        mAmWmState.assertFocusedActivity("Focus must be on secondary display",
+                TEST_ACTIVITY_NAME);
+        final ReportedSizes testActivitySizes = getLastReportedSizesForActivity(
+                TEST_ACTIVITY_NAME);
+        assertEquals("Sizes of secondary display must not change after rotation of primary display",
+                initialSizes, testActivitySizes);
+    }
+
+    private void rotateAndCheckSameSizes(String activityName) throws Exception {
+        for (int rotation = 3; rotation >= 0; --rotation) {
+            clearLogcat();
+            setDeviceRotation(rotation);
+            final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName);
+            assertNull("Sizes must not change after rotation", rotatedSizes);
+        }
+    }
+
     /** Assert that component received onMovedToDisplay and onConfigurationChanged callbacks. */
     private void assertMovedToDisplay(String componentName) throws Exception {
         final ActivityLifecycleCounts lifecycleCounts
@@ -786,7 +828,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen) throws Exception {
         return createVirtualDisplay(densityDpi, launchInSplitScreen,
                 false /* canShowWithInsecureKeyguard */, false /* publicDisplay */,
-                true /* mustBeCreated */);
+                true /* mustBeCreated */, true /* resizeDisplay */);
     }
 
     /**
@@ -798,12 +840,13 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      *                                    keyguard.
      * @param publicDisplay make display public.
      * @param mustBeCreated should assert if the display was or wasn't created.
+     * @param resizeDisplay should resize display when surface size changes.
      * @return {@link DisplayState} of newly created display.
      * @throws Exception
      */
     private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen,
-            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean mustBeCreated)
-            throws Exception {
+            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean mustBeCreated,
+            boolean resizeDisplay) throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
             getLaunchActivityBuilder().setToSide(true)
@@ -818,7 +861,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Create virtual display with custom density dpi.
         executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, canShowWithInsecureKeyguard,
-                publicDisplay));
+                publicDisplay, resizeDisplay));
         mVirtualDisplayCreated = true;
 
         // Wait for the virtual display to be created and get configurations.
@@ -976,7 +1019,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     private static String getCreateVirtualDisplayCommand(int densityDpi,
-            boolean canShowWithInsecureKeyguard, boolean publicDisplay) {
+            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean resizeDisplay) {
         final StringBuilder commandBuilder
                 = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
@@ -987,6 +1030,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         commandBuilder.append(" --ez can_show_with_insecure_keyguard ")
                 .append(canShowWithInsecureKeyguard);
         commandBuilder.append(" --ez public_display ").append(publicDisplay);
+        commandBuilder.append(" --ez resize_display ").append(resizeDisplay);
         return commandBuilder.toString();
     }
 
