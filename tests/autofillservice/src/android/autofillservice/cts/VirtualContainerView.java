@@ -151,11 +151,12 @@ public class VirtualContainerView extends View {
 
     @Override
     public void onProvideAutofillVirtualStructure(ViewStructure structure, int flags) {
+        super.onProvideAutofillVirtualStructure(structure, flags);
+
         Log.d(TAG, "onProvideAutofillVirtualStructure(): flags = " + flags);
         structure.setClassName(getClass().getName());
         final int childrenSize = mItems.size();
         int index = structure.addChildCount(childrenSize);
-        final String packageName = getContext().getPackageName();
         final String syncMsg = mSync ? "" : " (async)";
         for (int i = 0; i < childrenSize; i++) {
             final Item item = mItems.valueAt(i);
@@ -167,7 +168,7 @@ public class VirtualContainerView extends View {
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
             child.setClassName(className);
-            child.setId(1000 + index, packageName, "id", item.resourceId);
+            child.setIdEntry(item.resourceId);
             child.setText(item.text);
             child.setAutofillValue(AutofillValue.forText(item.text));
             child.setFocused(item.line.focused);
