@@ -18,11 +18,10 @@ package com.android.compatibility.common.tradefed.command;
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
-import com.android.compatibility.common.tradefed.result.IInvocationResultRepo;
-import com.android.compatibility.common.tradefed.result.InvocationResultRepo;
 import com.android.compatibility.common.tradefed.result.SubPlanCreator;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
+import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.tradefed.command.Console;
 import com.android.tradefed.config.ArgsOptionParser;
@@ -336,16 +335,13 @@ public class CompatibilityConsole extends Console {
     private void listResults() {
         TableFormatter tableFormatter = new TableFormatter();
         List<List<String>> table = new ArrayList<>();
-        IInvocationResultRepo testResultRepo = null;
         List<IInvocationResult> results = null;
         try {
-            testResultRepo = new InvocationResultRepo(getBuildHelper().getResultsDir());
-            results = testResultRepo.getResults();
+            results = ResultHandler.getLightResults(getBuildHelper().getResultsDir());
         } catch (FileNotFoundException e) {
-            printLine(e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Error while parsing results directory", e);
         }
-        if (testResultRepo != null && results.size() > 0) {
+        if (results.size() > 0) {
             for (int i = 0; i < results.size(); i++) {
                 IInvocationResult result = results.get(i);
                 Map<String, String> invocationInfo = result.getInvocationInfo();
@@ -374,7 +370,6 @@ public class CompatibilityConsole extends Console {
                         invocationInfo.get("build_product")
                         ));
             }
-
 
             // add the table header to the beginning of the list
             table.add(0, Arrays.asList("Session", "Pass", "Fail", "Not Executed",
