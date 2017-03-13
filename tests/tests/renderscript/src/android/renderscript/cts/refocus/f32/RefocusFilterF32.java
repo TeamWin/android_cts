@@ -97,6 +97,7 @@ public class RefocusFilterF32 extends
 
     mAllocation.copyTo(mBitmap);
     MediaStoreSaver.savePNG(mBitmap, "sharpF32", name, renderScript.getApplicationContext());
+    mAllocation.destroy();
   }
   /*
    * Utility Method to extract intermediatory result
@@ -110,6 +111,7 @@ public class RefocusFilterF32 extends
 
     mAllocation.copyTo(mBitmap);
     MediaStoreSaver.savePNG(mBitmap, "fuzzyF32", name, renderScript.getApplicationContext());
+    mAllocation.destroy();
   }
 
   @Override

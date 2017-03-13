@@ -64,6 +64,16 @@ public class SingleSourceForEachTest extends RSBaseCompute {
         testInputAlloc2.copyFrom(testInputArray2);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        testInputAlloc.destroy();
+        testInputAlloc2.destroy();
+        testOutputAlloc.destroy();
+        baselineOutputAlloc.destroy();
+        s.destroy();
+        super.tearDown();
+    }
+
     public void testSingleInputKernelLaunch() {
         s.forEach_foo(testInputAlloc, baselineOutputAlloc);
         s.invoke_testSingleInput(testInputAlloc, testOutputAlloc);
