@@ -161,6 +161,35 @@ public class CanvasTest {
     }
 
     @Test
+    public void testSetBitmapCleanClip() {
+        mCanvas.setBitmap(Bitmap.createBitmap(10, 10, Config.ARGB_8888));
+        Rect r = new Rect(2, 2, 8, 8);
+        mCanvas.save();
+        mCanvas.clipRect(r);
+        assertEquals(r, mCanvas.getClipBounds());
+
+        // "reset" the canvas, and then check that the clip is wide open
+        // and not the previous value
+
+        mCanvas.setBitmap(Bitmap.createBitmap(20, 20, Config.ARGB_8888));
+        r = new Rect(0, 0, 20, 20);
+        assertEquals(r, mCanvas.getClipBounds());
+    }
+
+    @Test
+    public void testSetBitmapSaveCount() {
+        Canvas c = new Canvas(Bitmap.createBitmap(10, 10, Config.ARGB_8888));
+        int initialSaveCount = c.getSaveCount();
+
+        c.save();
+        assertEquals(c.getSaveCount(), initialSaveCount + 1);
+
+        // setBitmap should restore the saveCount to its original/base value
+        c.setBitmap(Bitmap.createBitmap(10, 10, Config.ARGB_8888));
+        assertEquals(c.getSaveCount(), initialSaveCount);
+    }
+
+    @Test
     public void testIsOpaque() {
         assertFalse(mCanvas.isOpaque());
     }
