@@ -64,7 +64,7 @@ public class ShadowTests extends ActivityTestBase {
                         Color.rgb(shadowColorValue, shadowColorValue, shadowColorValue),
                         Color.rgb(shadowColorValue, shadowColorValue, shadowColorValue),
                 },
-                48);
+                64);
 
         createTest()
                 .addLayout(R.layout.simple_shadow_layout, null, true/* HW only */)
