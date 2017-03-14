@@ -533,6 +533,22 @@ public class TelephonyManagerTest {
         }
     }
 
+    /**
+     * Tests sendDialerSpecialCode API.
+     * Expects a security exception since the caller does not have carrier privileges or is not the
+     * current default dialer app.
+     */
+    @Test
+    public void testSendDialerSpecialCode() {
+        try {
+            mTelephonyManager.sendDialerSpecialCode("4636");
+            fail("Expected SecurityException. App does not have carrier privileges or is not the "
+                    + "default dialer app");
+        } catch (SecurityException expected) {
+
+        }
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
     }
