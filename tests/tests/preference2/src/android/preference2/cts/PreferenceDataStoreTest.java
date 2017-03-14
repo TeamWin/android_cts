@@ -363,6 +363,7 @@ public class PreferenceDataStoreTest {
     public void testDataStoresHierarchy() {
         mPreference.setPreferenceDataStore(mDataStore);
         PreferenceDataStore secondaryDataStore = mock(PreferenceDataStore.class);
+        mScreen.addPreference(mPreference);
         mManager.setPreferenceDataStore(secondaryDataStore);
         mPreference.putString(TEST_STR);
 
@@ -388,15 +389,34 @@ public class PreferenceDataStoreTest {
     }
 
     /**
-     * When {@link PreferenceDataStore} is assigned, the getter for SharedPreferences have to return
+     * When {@link PreferenceDataStore} is NOT assigned, the getter for SharedPreferences must not
+     * return null for PreferenceManager.
+     */
+    @Test
+    public void testSharedPrefNotNullIfNoDSMgr() {
+        assertNotNull(mManager.getSharedPreferences());
+    }
+
+    /**
+     * When {@link PreferenceDataStore} is assigned, the getter for SharedPreferences has to return
      * null.
      */
     @Test
-    public void testSharedPrefNullIfNoDS() {
+    public void testSharedPrefNullIfWithDS() {
         mScreen.addPreference(mPreference);
         mPreference.setPreferenceDataStore(mDataStore);
         assertNull(mPreference.getSharedPreferences());
         assertNull(mPreference.getEditor());
+    }
+
+    /**
+     * When {@link PreferenceDataStore} is assigned, the getter for SharedPreferences has to return
+     * null for PreferenceManager.
+     */
+    @Test
+    public void testSharedPrefNullIfWithDSMgr() {
+        mManager.setPreferenceDataStore(mDataStore);
+        assertNull(mManager.getSharedPreferences());
     }
 
     /**
