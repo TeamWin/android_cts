@@ -22,6 +22,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.provider.Settings.Secure;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,7 +75,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     @Override
     protected List<InteractiveTestCase> createTestItems() {
-        List<InteractiveTestCase> tests = new ArrayList<>(9);
+        List<InteractiveTestCase> tests = new ArrayList<>(17);
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationRecievedTest());
@@ -88,6 +89,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new SnoozeTest());
         tests.add(new UnsnoozeTest());
         tests.add(new EnableHintsTest());
+        tests.add(new MessageBundleTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotReceivedTest());
@@ -867,6 +869,116 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             deleteChannel();
             MockListener.resetListenerData(mContext);
             delay();
+        }
+    }
+
+    /** Tests that the extras {@link Bundle} in a MessagingStyle#Message is preserved. */
+    private class MessageBundleTest extends InteractiveTestCase {
+        private final String extrasKey1 = "extras_key_1";
+        private final CharSequence extrasValue1 = "extras_value_1";
+        private final String extrasKey2 = "extras_key_2";
+        private final CharSequence extrasValue2 = "extras_value_2";
+
+        @Override
+        View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.msg_extras_preserved);
+        }
+
+        @Override
+        void setUp() {
+            createChannel();
+            sendMessagingNotification();
+            status = READY;
+            // wait for notifications to move through the system
+            delay();
+        }
+
+        @Override
+        void tearDown() {
+            deleteChannel();
+        }
+
+        private void sendMessagingNotification() {
+            mTag1 = UUID.randomUUID().toString();
+            mNm.cancelAll();
+            mWhen1 = System.currentTimeMillis() + 1;
+            mIcon1 = R.drawable.ic_stat_alice;
+            mId1 = NOTIFICATION_ID + 1;
+
+            Notification.MessagingStyle.Message msg1 =
+                    new Notification.MessagingStyle.Message("text1", 0 /* timestamp */, "sender1");
+            msg1.getExtras().putCharSequence(extrasKey1, extrasValue1);
+
+            Notification.MessagingStyle.Message msg2 =
+                    new Notification.MessagingStyle.Message("text2", 1 /* timestamp */, "sender2");
+            msg2.getExtras().putCharSequence(extrasKey2, extrasValue2);
+
+            Notification.MessagingStyle style = new Notification.MessagingStyle("display_name");
+            style.addMessage(msg1);
+            style.addMessage(msg2);
+
+            Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("ClearTest 1")
+                    .setContentText(mTag1.toString())
+                    .setPriority(Notification.PRIORITY_LOW)
+                    .setSmallIcon(mIcon1)
+                    .setWhen(mWhen1)
+                    .setDeleteIntent(makeIntent(1, mTag1))
+                    .setOnlyAlertOnce(true)
+                    .setStyle(style)
+                    .build();
+            mNm.notify(mTag1, mId1, n1);
+            mFlag1 = Notification.FLAG_ONLY_ALERT_ONCE;
+        }
+
+        // Returns true on success.
+        private boolean verifyMessage(
+                NotificationCompat.MessagingStyle.Message message,
+                String extrasKey,
+                CharSequence extrasValue) {
+            return message.getExtras() != null
+                    && message.getExtras().getCharSequence(extrasKey) != null
+                    && message.getExtras().getCharSequence(extrasKey).equals(extrasValue);
+        }
+
+        @Override
+        void test() {
+            MockListener.probeListenerPosted(mContext,
+                    new MockListener.NotificationResultCatcher() {
+                        @Override
+                        public void accept(List<Notification> result) {
+                            if (result == null || result.size() != 1 || result.get(0) == null) {
+                                logFail();
+                                status = FAIL;
+                                next();
+                                return;
+                            }
+                            // Can only read in MessaginStyle using the compat class.
+                            NotificationCompat.MessagingStyle readStyle =
+                                    NotificationCompat.MessagingStyle
+                                        .extractMessagingStyleFromNotification(
+                                              result.get(0));
+                            if (readStyle == null || readStyle.getMessages().size() != 2) {
+                                status = FAIL;
+                                logFail();
+                                next();
+                                return;
+                            }
+
+                            if (!verifyMessage(readStyle.getMessages().get(0), extrasKey1, extrasValue1)
+                                    || !verifyMessage(
+                                    readStyle.getMessages().get(1), extrasKey2, extrasValue2)) {
+                                status = FAIL;
+                                logFail();
+                                next();
+                                return;
+                            }
+
+                            status = PASS;
+                            next();
+                        }
+                    });
+            delay();  // in case the catcher never returns
         }
     }
 }

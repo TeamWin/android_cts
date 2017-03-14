@@ -1437,6 +1437,7 @@
         and disabled, and that once enabled the service is able to receive notifications and
         dismiss them.
     </string>
+    <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
     <string name="vr_tests">VR Tests</string>
     <string name="test_category_vr">VR</string>
     <string name="vr_test_title">VR Listener Test</string>
