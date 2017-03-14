@@ -907,7 +907,7 @@ public class WindowManagerState {
         private static final Pattern sCropPattern =
             Pattern.compile(".+mLastClipRect=" + RECT_STR + ".*");
         private static final Pattern sSurfacePattern =
-                Pattern.compile("Surface: shown=(\\S+) layer=(\\d+) alpha=[\\d.]+ rect=\\([\\d.-]+,[\\d.-]+\\) [\\d.]+ x [\\d.]+");
+                Pattern.compile("Surface: shown=(\\S+) layer=(\\d+) alpha=[\\d.]+ rect=\\([\\d.-]+,[\\d.-]+\\) [\\d.]+ x [\\d.]+.*");
         private static final Pattern sAttrsPattern=
                 Pattern.compile("mAttrs=WM\\.LayoutParams\\{.*ty=(\\d+).*\\}");
 
