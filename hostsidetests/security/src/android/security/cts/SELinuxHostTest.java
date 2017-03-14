@@ -32,6 +32,7 @@ import com.android.compatibility.common.util.CddTest;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,7 +67,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private File devicePolicyFile;
     private File devicePlatSeappFile;
     private File deviceNonplatSeappFile;
-    private File deviceFcFile;
+    private File devicePlatFcFile;
+    private File deviceNonplatFcFile;
     private File devicePcFile;
     private File deviceSvcFile;
     private File seappNeverAllowFile;
@@ -107,6 +109,19 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         os.close();
         tempFile.deleteOnExit();
         return tempFile;
+    }
+
+    private void combineFiles(String Dest, String Src) throws IOException {
+        FileInputStream is = new FileInputStream(new File(Src));
+        FileOutputStream os = new FileOutputStream(new File(Dest), true);
+        int rbyte;
+
+        while ((rbyte = is.read()) != -1){
+            os.write(rbyte);
+        }
+
+        is.close();
+        os.close();
     }
 
     @Override
@@ -322,10 +337,12 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         checkFc = copyResourceToTempFile("/checkfc");
         checkFc.setExecutable(true);
 
-        /* obtain file_contexts.bin file from running device */
-        deviceFcFile = File.createTempFile("file_contexts", ".bin");
-        deviceFcFile.deleteOnExit();
-        mDevice.pullFile("/file_contexts.bin", deviceFcFile);
+        /* obtain file_contexts file(s) from running device */
+        devicePlatFcFile = File.createTempFile("file_contexts", ".tmp");
+        devicePlatFcFile.deleteOnExit();
+        if (!mDevice.pullFile("/system/etc/selinux/plat_file_contexts", devicePlatFcFile)) {
+            mDevice.pullFile("/file_contexts.bin", devicePlatFcFile);
+        }
 
         /* retrieve the AOSP file_contexts file from jar */
         aospFcFile = copyResourceToTempFile("/plat_file_contexts");
@@ -333,14 +350,14 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* run checkfc -c plat_file_contexts file_contexts.bin */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 "-c", aospFcFile.getAbsolutePath(),
-                deviceFcFile.getAbsolutePath());
+                devicePlatFcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
         p.waitFor();
         BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String line = result.readLine();
-        assertTrue("The file_contexts.bin file did not include the AOSP entries:\n"
+        assertTrue("The file_contexts file did not include the AOSP entries:\n"
                    + line + "\n",
                    line.equals("equal") || line.equals("subset"));
     }
@@ -393,7 +410,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
-     * Tests that the file_contexts.bin file on the device is valid.
+     * Tests that the file_contexts file(s) on the device is valid.
      *
      * @throws Exception
      */
@@ -404,15 +421,23 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         checkFc = copyResourceToTempFile("/checkfc");
         checkFc.setExecutable(true);
 
-        /* obtain file_contexts.bin file from running device */
-        deviceFcFile = File.createTempFile("file_contexts", ".bin");
-        deviceFcFile.deleteOnExit();
-        mDevice.pullFile("/file_contexts.bin", deviceFcFile);
+        /* obtain file_contexts file(s) from running device */
+        devicePlatFcFile = File.createTempFile("plat_file_contexts", ".tmp");
+        devicePlatFcFile.deleteOnExit();
+        deviceNonplatFcFile = File.createTempFile("nonplat_file_contexts", ".tmp");
+        deviceNonplatFcFile.deleteOnExit();
+        if (mDevice.pullFile("/system/etc/selinux/plat_file_contexts", devicePlatFcFile)) {
+            mDevice.pullFile("/vendor/etc/selinux/nonplat_file_contexts", deviceNonplatFcFile);
+            combineFiles(devicePlatFcFile.getAbsolutePath(),
+                         deviceNonplatFcFile.getAbsolutePath());
+        } else {
+            mDevice.pullFile("/file_contexts.bin", devicePlatFcFile);
+        }
 
-        /* run checkfc sepolicy file_contexts.bin */
+        /* run checkfc sepolicy file_contexts */
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(),
-                deviceFcFile.getAbsolutePath());
+                devicePlatFcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -424,7 +449,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             errorString.append(line);
             errorString.append("\n");
         }
-        assertTrue("The file_contexts.bin file was invalid:\n"
+        assertTrue("file_contexts was invalid:\n"
                    + errorString, errorString.length() == 0);
     }
 
