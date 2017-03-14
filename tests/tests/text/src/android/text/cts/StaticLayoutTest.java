@@ -1285,6 +1285,25 @@ public class StaticLayoutTest {
        assertNotNull(layout);
     }
 
+    @Test
+    public void testRespectingIndentsOnEllipsizedText() {
+        // test case where word boundary overlaps multiple style spans
+        final String text = "words with indents";
+
+        // +1 to ensure that we won't wrap in the normal case
+        int textWidth = (int) (mDefaultPaint.measureText(text) + 1);
+        StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(),
+                mDefaultPaint, textWidth)
+                .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)  // enable hyphenation
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
+                .setEllipsize(TruncateAt.END)
+                .setEllipsizedWidth(textWidth)
+                .setMaxLines(1)
+                .setIndents(null, new int[] {20})
+                .build();
+        assertTrue(layout.getEllipsisStart(0) != 0);
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void testGetPrimary_shouldFail_whenOffsetIsOutOfBounds_withSpannable() {
         final String text = "1\n2\n3";
