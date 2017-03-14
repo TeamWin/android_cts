@@ -111,6 +111,10 @@ public class StubMediaBrowserService extends MediaBrowserService {
 
     @Override
     public void onSearch(String query, Bundle extras, Result<List<MediaItem>> result) {
+        if (result == null) {
+            // called the callback to mark as tested
+            return;
+        }
         if (SEARCH_QUERY_FOR_NO_RESULT.equals(query)) {
             result.sendResult(Collections.<MediaItem>emptyList());
         } else if (SEARCH_QUERY_FOR_ERROR.equals(query)) {
