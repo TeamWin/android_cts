@@ -71,18 +71,18 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         assertEquals(0, rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
         assertEquals(0, rawContact.getLong(Contacts.TIMES_CONTACTED));
 
-        for (int i = 0; i < 9; i++) {
+        for (int i = 1; i < 10; i++) {
             Contacts.markAsContacted(mResolver, contact.getId());
             contact.load();
             rawContact.load();
 
             assertEquals(System.currentTimeMillis() / 86400 * 86400,
                     contact.getLong(Contacts.LAST_TIME_CONTACTED));
-            assertEquals("#" + i, 1, contact.getLong(Contacts.TIMES_CONTACTED));
+            assertEquals("#" + i, i, contact.getLong(Contacts.TIMES_CONTACTED));
 
             assertEquals(System.currentTimeMillis() / 86400 * 86400,
                     rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
-            assertEquals("#" + i, 1, rawContact.getLong(Contacts.TIMES_CONTACTED));
+            assertEquals("#" + i, i, rawContact.getLong(Contacts.TIMES_CONTACTED));
         }
 
         for (int i = 0; i < 10; i++) {
@@ -228,7 +228,7 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(1L, contact.getLong(Contacts.TIMES_CONTACTED));
+        assertEquals(2L, contact.getLong(Contacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
 
         // This will just be ignored.
@@ -238,7 +238,7 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(1L, contact.getLong(Contacts.TIMES_CONTACTED));
+        assertEquals(2L, contact.getLong(Contacts.TIMES_CONTACTED));
         assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
     }
 
