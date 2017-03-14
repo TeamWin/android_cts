@@ -17,7 +17,6 @@ package android.graphics.cts;
 
 import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
-
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
@@ -48,6 +47,13 @@ public class ColorSpaceTest {
             3.240970f, -0.969244f,  0.055630f,
            -1.537383f,  1.875968f, -0.203977f,
            -0.498611f,  0.041555f,  1.056971f
+    };
+
+    // Column-major RGB->XYZ transform matrix for the sRGB color space and a D50 white point
+    private static final float[] SRGB_TO_XYZ_D50 = {
+            0.4360747f, 0.2225045f, 0.0139322f,
+            0.3850649f, 0.7168786f, 0.0971045f,
+            0.1430804f, 0.0606169f, 0.7141733f
     };
 
     private static final float[] SRGB_PRIMARIES_xyY =
@@ -741,6 +747,9 @@ public class ColorSpaceTest {
                 // match() cannot match extended sRGB
                 if (rgb != ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB) &&
                         rgb != ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)) {
+
+                    // match() uses CIE XYZ D50
+                    rgb = (ColorSpace.Rgb) ColorSpace.adapt(rgb, ColorSpace.ILLUMINANT_D50);
                     assertSame(cs,
                             ColorSpace.match(rgb.getTransform(), rgb.getTransferParameters()));
                 }
@@ -748,7 +757,7 @@ public class ColorSpaceTest {
         }
 
         assertSame(ColorSpace.get(ColorSpace.Named.SRGB),
-                ColorSpace.match(SRGB_TO_XYZ, new ColorSpace.Rgb.TransferParameters(
+                ColorSpace.match(SRGB_TO_XYZ_D50, new ColorSpace.Rgb.TransferParameters(
                         1 / 1.055, 0.055 / 1.055, 1 / 12.92, 0.04045, 2.4)));
     }
 
