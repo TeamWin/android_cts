@@ -163,7 +163,7 @@ public class VirtualContainerView extends View {
             final ViewStructure child = mSync
                     ? structure.newChildForAutofill(index, item.id, 0)
                     : structure.asyncNewChildForAutofill(index, item.id, 0);
-            child.setSanitized(item.sanitized);
+            child.setDataIsSensitive(item.sensitive);
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
             child.setClassName(className);
@@ -203,8 +203,8 @@ public class VirtualContainerView extends View {
         private boolean focused;
 
         private Line(String labelId, String label, String textId, String text) {
-            this.label = new Item(this, ++nextId, labelId, label, false, true);
-            this.text = new Item(this, ++nextId, textId, text, true, false);
+            this.label = new Item(this, ++nextId, labelId, label, false, false);
+            this.text = new Item(this, ++nextId, textId, text, true, true);
         }
 
         void setBounds(float x, float y) {
@@ -279,23 +279,23 @@ public class VirtualContainerView extends View {
         private final String resourceId;
         private CharSequence text;
         private final boolean editable;
-        private final boolean sanitized;
+        private final boolean sensitive;
         private TextWatcher listener;
 
         Item(Line line, int id, String resourceId, CharSequence text, boolean editable,
-                boolean sanitized) {
+                boolean sensitive) {
             this.line = line;
             this.id = id;
             this.resourceId = resourceId;
             this.text = text;
             this.editable = editable;
-            this.sanitized = sanitized;
+            this.sensitive = sensitive;
         }
 
         @Override
         public String toString() {
             return id + "/" + resourceId + ": " + text + (editable ? " (editable)" : " (read-only)"
-                    + (sanitized ? " (sanitized)" : " (sensitive"));
+                    + (sensitive ? " (sensitive)" : " (sanitized"));
         }
     }
 }
