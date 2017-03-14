@@ -49,6 +49,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String EXTRA_ENTER_PIP = "enter_pip";
     private static final String EXTRA_ENTER_PIP_ASPECT_RATIO = "enter_pip_aspect_ratio";
     private static final String EXTRA_SET_ASPECT_RATIO = "set_aspect_ratio";
+    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY = "set_aspect_ratio_with_delay";
     private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
     private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     private static final String EXTRA_START_ACTIVITY = "start_activity";
@@ -61,6 +62,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             "android.server.cts.PipActivity.enter_pip";
     private static final String PIP_ACTIVITY_ACTION_MOVE_TO_BACK =
             "android.server.cts.PipActivity.move_to_back";
+    private static final String PIP_ACTIVITY_ACTION_EXPAND_PIP =
+            "android.server.cts.PipActivity.expand_pip";
 
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -684,6 +687,20 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         clearLogcat();
         launchActivity(PIP_ACTIVITY);
         assertRelaunchOrConfigChanged(PIP_ACTIVITY, 0, 1);
+    }
+
+    public void testPreventSetAspectRatioWhileExpanding() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch the PiP activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+
+        // Trigger it to go back to fullscreen and try to set the aspect ratio, and ensure that the
+        // call to set the aspect ratio did not prevent the PiP from returning to fullscreen
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_EXPAND_PIP + " -e "
+                + EXTRA_SET_ASPECT_RATIO_WITH_DELAY + " 1.23456789");
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        assertPinnedStackDoesNotExist();
     }
 
     /**
