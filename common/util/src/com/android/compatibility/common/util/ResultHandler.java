@@ -117,151 +117,19 @@ public class ResultHandler {
 
 
     /**
-     * @param resultsDir
-     */
-    public static List<IInvocationResult> getResults(File resultsDir) {
-        return getResults(resultsDir, false);
-    }
-
-    /**
+     * Returns IInvocationResults that can be queried for general reporting information, but that
+     * do not store underlying module data. Useful for summarizing invocation history.
      * @param resultsDir
      * @param useChecksum
      */
-    public static List<IInvocationResult> getResults(
-            File resultsDir, Boolean useChecksum) {
+    public static List<IInvocationResult> getLightResults(File resultsDir) {
         List<IInvocationResult> results = new ArrayList<>();
         List<File> files = getResultDirectories(resultsDir);
-
         for (File resultDir : files) {
-            try {
-                File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
-                if (!resultFile.exists()) {
-                    continue;
-                }
-                Boolean invocationUseChecksum = useChecksum;
-                IInvocationResult invocation = new InvocationResult();
-                invocation.setRetryDirectory(resultDir);
-                ChecksumReporter checksumReporter = null;
-                if (invocationUseChecksum) {
-                    try {
-                        checksumReporter = ChecksumReporter.load(resultDir);
-                        invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithChecksum);
-                    } catch (ChecksumValidationException e) {
-                        // Unable to read checksum form previous execution
-                        invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithoutChecksum);
-                        invocationUseChecksum = false;
-                    }
-                }
-                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-                XmlPullParser parser = factory.newPullParser();
-                parser.setInput(new FileReader(resultFile));
-
-                parser.nextTag();
-                parser.require(XmlPullParser.START_TAG, NS, RESULT_TAG);
-                invocation.setStartTime(Long.valueOf(
-                        parser.getAttributeValue(NS, START_TIME_ATTR)));
-                invocation.setTestPlan(parser.getAttributeValue(NS, SUITE_PLAN_ATTR));
-                invocation.setCommandLineArgs(parser.getAttributeValue(NS, COMMAND_LINE_ARGS));
-                String deviceList = parser.getAttributeValue(NS, DEVICES_ATTR);
-                for (String device : deviceList.split(",")) {
-                    invocation.addDeviceSerial(device);
-                }
-
-                parser.nextTag();
-                parser.require(XmlPullParser.START_TAG, NS, BUILD_TAG);
-                invocation.addInvocationInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
-                invocation.addInvocationInfo(BUILD_PRODUCT, parser.getAttributeValue(NS,
-                        BUILD_PRODUCT));
-                invocation.setBuildFingerprint(parser.getAttributeValue(NS, BUILD_FINGERPRINT));
-
-                // TODO(stuartscott): may want to reload these incase the retry was done with
-                // --skip-device-info flag
-                parser.nextTag();
-                parser.require(XmlPullParser.END_TAG, NS, BUILD_TAG);
-                parser.nextTag();
-                parser.require(XmlPullParser.START_TAG, NS, SUMMARY_TAG);
-                parser.nextTag();
-                parser.require(XmlPullParser.END_TAG, NS, SUMMARY_TAG);
-                while (parser.nextTag() == XmlPullParser.START_TAG) {
-                    parser.require(XmlPullParser.START_TAG, NS, MODULE_TAG);
-                    String name = parser.getAttributeValue(NS, NAME_ATTR);
-                    String abi = parser.getAttributeValue(NS, ABI_ATTR);
-                    String moduleId = AbiUtils.createId(abi, name);
-                    boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
-                    IModuleResult module = invocation.getOrCreateModule(moduleId);
-                    module.initializeDone(done);
-                    int notExecuted = Integer.parseInt(
-                            parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
-                    module.setNotExecuted(notExecuted);
-                    long runtime = Long.parseLong(parser.getAttributeValue(NS, RUNTIME_ATTR));
-                    module.addRuntime(runtime);
-                    while (parser.nextTag() == XmlPullParser.START_TAG) {
-                        parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
-                        String caseName = parser.getAttributeValue(NS, NAME_ATTR);
-                        ICaseResult testCase = module.getOrCreateResult(caseName);
-                        while (parser.nextTag() == XmlPullParser.START_TAG) {
-                            parser.require(XmlPullParser.START_TAG, NS, TEST_TAG);
-                            String testName = parser.getAttributeValue(NS, NAME_ATTR);
-                            ITestResult test = testCase.getOrCreateResult(testName);
-                            String result = parser.getAttributeValue(NS, RESULT_ATTR);
-                            String skipped = parser.getAttributeValue(NS, SKIPPED_ATTR);
-                            if (skipped != null && Boolean.parseBoolean(skipped)) {
-                                // mark test passed and skipped
-                                test.skipped();
-                            } else {
-                                // only apply result status directly if test was not skipped
-                                test.setResultStatus(TestStatus.getStatus(result));
-                            }
-                            test.setRetry(true);
-                            while (parser.nextTag() == XmlPullParser.START_TAG) {
-                                if (parser.getName().equals(FAILURE_TAG)) {
-                                    test.setMessage(parser.getAttributeValue(NS, MESSAGE_ATTR));
-                                    if (parser.nextTag() == XmlPullParser.START_TAG) {
-                                        parser.require(XmlPullParser.START_TAG, NS, STACK_TAG);
-                                        test.setStackTrace(parser.nextText());
-                                        parser.require(XmlPullParser.END_TAG, NS, STACK_TAG);
-                                        parser.nextTag();
-                                    }
-                                    parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
-                                } else if (parser.getName().equals(BUGREPORT_TAG)) {
-                                    test.setBugReport(parser.nextText());
-                                    parser.require(XmlPullParser.END_TAG, NS, BUGREPORT_TAG);
-                                } else if (parser.getName().equals(LOGCAT_TAG)) {
-                                    test.setLog(parser.nextText());
-                                    parser.require(XmlPullParser.END_TAG, NS, LOGCAT_TAG);
-                                } else if (parser.getName().equals(SCREENSHOT_TAG)) {
-                                    test.setScreenshot(parser.nextText());
-                                    parser.require(XmlPullParser.END_TAG, NS, SCREENSHOT_TAG);
-                                } else {
-                                    test.setReportLog(ReportLog.parse(parser));
-                                }
-                            }
-                            parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
-                            Boolean checksumMismatch = invocationUseChecksum
-                                && !checksumReporter.containsTestResult(
-                                    test, module, invocation.getBuildFingerprint());
-                            if (checksumMismatch) {
-                                test.removeResult();
-                            }
-                        }
-                        parser.require(XmlPullParser.END_TAG, NS, CASE_TAG);
-                    }
-                    parser.require(XmlPullParser.END_TAG, NS, MODULE_TAG);
-                    Boolean checksumMismatch = invocationUseChecksum
-                        && !checksumReporter.containsModuleResult(
-                                module, invocation.getBuildFingerprint());
-                    if (checksumMismatch) {
-                        module.initializeDone(false);
-                    }
-                }
-                parser.require(XmlPullParser.END_TAG, NS, RESULT_TAG);
-                results.add(invocation);
-            } catch (XmlPullParserException e) {
-                e.printStackTrace();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            IInvocationResult result = getResultFromDir(resultDir, false);
+            if (result != null) {
+                results.add(new LightInvocationResult(result));
+                result = null; // ensure all references are removed to free memory
             }
         }
         // Sort the table entries on each entry's timestamp.
@@ -269,6 +137,149 @@ public class ResultHandler {
                 result1.getStartTime(),
                 result2.getStartTime()));
         return results;
+    }
+
+    /**
+     * @param resultDir
+     * @return an IInvocationResult for this result, or null upon error
+     */
+    public static IInvocationResult getResultFromDir(File resultDir) {
+        return getResultFromDir(resultDir, false);
+    }
+
+    /**
+     * @param resultDir
+     * @param useChecksum
+     * @return an IInvocationResult for this result, or null upon error
+     */
+    public static IInvocationResult getResultFromDir(File resultDir, Boolean useChecksum) {
+        try {
+            File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
+            if (!resultFile.exists()) {
+                return null;
+            }
+            Boolean invocationUseChecksum = useChecksum;
+            IInvocationResult invocation = new InvocationResult();
+            invocation.setRetryDirectory(resultDir);
+            ChecksumReporter checksumReporter = null;
+            if (invocationUseChecksum) {
+                try {
+                    checksumReporter = ChecksumReporter.load(resultDir);
+                    invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithChecksum);
+                } catch (ChecksumValidationException e) {
+                    // Unable to read checksum form previous execution
+                    invocation.setRetryChecksumStatus(RetryChecksumStatus.RetryWithoutChecksum);
+                    invocationUseChecksum = false;
+                }
+            }
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser parser = factory.newPullParser();
+            parser.setInput(new FileReader(resultFile));
+
+            parser.nextTag();
+            parser.require(XmlPullParser.START_TAG, NS, RESULT_TAG);
+            invocation.setStartTime(Long.valueOf(
+                    parser.getAttributeValue(NS, START_TIME_ATTR)));
+            invocation.setTestPlan(parser.getAttributeValue(NS, SUITE_PLAN_ATTR));
+            invocation.setCommandLineArgs(parser.getAttributeValue(NS, COMMAND_LINE_ARGS));
+            String deviceList = parser.getAttributeValue(NS, DEVICES_ATTR);
+            for (String device : deviceList.split(",")) {
+                invocation.addDeviceSerial(device);
+            }
+
+            parser.nextTag();
+            parser.require(XmlPullParser.START_TAG, NS, BUILD_TAG);
+            invocation.addInvocationInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
+            invocation.addInvocationInfo(BUILD_PRODUCT, parser.getAttributeValue(NS,
+                    BUILD_PRODUCT));
+            invocation.setBuildFingerprint(parser.getAttributeValue(NS, BUILD_FINGERPRINT));
+
+            // TODO(stuartscott): may want to reload these incase the retry was done with
+            // --skip-device-info flag
+            parser.nextTag();
+            parser.require(XmlPullParser.END_TAG, NS, BUILD_TAG);
+            parser.nextTag();
+            parser.require(XmlPullParser.START_TAG, NS, SUMMARY_TAG);
+            parser.nextTag();
+            parser.require(XmlPullParser.END_TAG, NS, SUMMARY_TAG);
+            while (parser.nextTag() == XmlPullParser.START_TAG) {
+                parser.require(XmlPullParser.START_TAG, NS, MODULE_TAG);
+                String name = parser.getAttributeValue(NS, NAME_ATTR);
+                String abi = parser.getAttributeValue(NS, ABI_ATTR);
+                String moduleId = AbiUtils.createId(abi, name);
+                boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
+                IModuleResult module = invocation.getOrCreateModule(moduleId);
+                module.initializeDone(done);
+                int notExecuted = Integer.parseInt(
+                        parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
+                module.setNotExecuted(notExecuted);
+                long runtime = Long.parseLong(parser.getAttributeValue(NS, RUNTIME_ATTR));
+                module.addRuntime(runtime);
+                while (parser.nextTag() == XmlPullParser.START_TAG) {
+                    parser.require(XmlPullParser.START_TAG, NS, CASE_TAG);
+                    String caseName = parser.getAttributeValue(NS, NAME_ATTR);
+                    ICaseResult testCase = module.getOrCreateResult(caseName);
+                    while (parser.nextTag() == XmlPullParser.START_TAG) {
+                        parser.require(XmlPullParser.START_TAG, NS, TEST_TAG);
+                        String testName = parser.getAttributeValue(NS, NAME_ATTR);
+                        ITestResult test = testCase.getOrCreateResult(testName);
+                        String result = parser.getAttributeValue(NS, RESULT_ATTR);
+                        String skipped = parser.getAttributeValue(NS, SKIPPED_ATTR);
+                        if (skipped != null && Boolean.parseBoolean(skipped)) {
+                            // mark test passed and skipped
+                            test.skipped();
+                        } else {
+                            // only apply result status directly if test was not skipped
+                            test.setResultStatus(TestStatus.getStatus(result));
+                        }
+                        test.setRetry(true);
+                        while (parser.nextTag() == XmlPullParser.START_TAG) {
+                            if (parser.getName().equals(FAILURE_TAG)) {
+                                test.setMessage(parser.getAttributeValue(NS, MESSAGE_ATTR));
+                                if (parser.nextTag() == XmlPullParser.START_TAG) {
+                                    parser.require(XmlPullParser.START_TAG, NS, STACK_TAG);
+                                    test.setStackTrace(parser.nextText());
+                                    parser.require(XmlPullParser.END_TAG, NS, STACK_TAG);
+                                    parser.nextTag();
+                                }
+                                parser.require(XmlPullParser.END_TAG, NS, FAILURE_TAG);
+                            } else if (parser.getName().equals(BUGREPORT_TAG)) {
+                                test.setBugReport(parser.nextText());
+                                parser.require(XmlPullParser.END_TAG, NS, BUGREPORT_TAG);
+                            } else if (parser.getName().equals(LOGCAT_TAG)) {
+                                test.setLog(parser.nextText());
+                                parser.require(XmlPullParser.END_TAG, NS, LOGCAT_TAG);
+                            } else if (parser.getName().equals(SCREENSHOT_TAG)) {
+                                test.setScreenshot(parser.nextText());
+                                parser.require(XmlPullParser.END_TAG, NS, SCREENSHOT_TAG);
+                            } else {
+                                test.setReportLog(ReportLog.parse(parser));
+                            }
+                        }
+                        parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
+                        Boolean checksumMismatch = invocationUseChecksum
+                            && !checksumReporter.containsTestResult(
+                                test, module, invocation.getBuildFingerprint());
+                        if (checksumMismatch) {
+                            test.removeResult();
+                        }
+                    }
+                    parser.require(XmlPullParser.END_TAG, NS, CASE_TAG);
+                }
+                parser.require(XmlPullParser.END_TAG, NS, MODULE_TAG);
+                Boolean checksumMismatch = invocationUseChecksum
+                    && !checksumReporter.containsModuleResult(
+                            module, invocation.getBuildFingerprint());
+                if (checksumMismatch) {
+                    module.initializeDone(false);
+                }
+            }
+            parser.require(XmlPullParser.END_TAG, NS, RESULT_TAG);
+            return invocation;
+        } catch (XmlPullParserException | IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -500,12 +511,12 @@ public class ResultHandler {
             throw new IllegalArgumentException(
                 String.format("Invalid session id [%d] ", sessionId));
         }
-
-        List<IInvocationResult> results = getResults(resultsDir, useChecksum);
-        if (results == null || sessionId >= results.size()) {
+        File resultDir = getResultDirectory(resultsDir, sessionId);
+        IInvocationResult result = getResultFromDir(resultDir, useChecksum);
+        if (result == null) {
             throw new RuntimeException(String.format("Could not find session [%d]", sessionId));
         }
-        return results.get(sessionId);
+        return result;
     }
 
     /**
