@@ -108,6 +108,15 @@ final class UiBot {
     }
 
     /**
+     * Checks if a View with a certain text exists.
+     */
+    boolean hasViewWithText(String name) {
+        Log.v(TAG, "hasViewWithText(): " + name);
+
+        return mDevice.findObject(By.text(name)) != null;
+    }
+
+    /**
      * Asserts the save snackbar is showing and returns it.
      */
     UiObject2 assertSaveShowing(int type) {
