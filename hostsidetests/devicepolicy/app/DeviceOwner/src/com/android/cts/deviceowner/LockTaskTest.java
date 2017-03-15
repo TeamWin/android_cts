@@ -353,7 +353,11 @@ public class LockTaskTest {
     /**
      * Checks that lock task mode is not active and fails the test if it is.
      */
-    private void assertLockTaskModeInactive() {
+    private void assertLockTaskModeInactive() throws InterruptedException {
+        // Retry 10 times with 200 ms interval.
+        for (int i = 0; i < 10 && mActivityManager.isInLockTaskMode(); i++) {
+            Thread.sleep(200);
+        }
         assertFalse(mActivityManager.isInLockTaskMode());
         assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
     }
