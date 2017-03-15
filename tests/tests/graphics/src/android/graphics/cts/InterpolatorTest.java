@@ -16,19 +16,16 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import junit.framework.TestCase;
 
 import android.graphics.Interpolator;
 import android.graphics.Interpolator.Result;
 import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -287,7 +284,7 @@ public class InterpolatorTest {
             Interpolator interpolator) {
         float[] values = new float[expected.length];
         assertEquals(expectedResult, interpolator.timeToValues(time, values));
-        CtsArrayUtils.verifyArrayEquals(expected, values, TOLERANCE);
+        assertArrayEquals(expected, values, TOLERANCE);
     }
 
     private void verifyValue(float expected, Result expectedResult, Interpolator interpolator) {

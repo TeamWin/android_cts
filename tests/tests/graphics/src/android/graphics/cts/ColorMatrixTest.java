@@ -15,13 +15,12 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.ColorMatrix;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,11 +51,11 @@ public class ColorMatrixTest {
 
         ColorMatrix cM1 = new ColorMatrix(SOURCE);
         float[] fA1 = cM1.getArray();
-        CtsArrayUtils.verifyArrayEquals(SOURCE, fA1, 0.0f);
+        assertArrayEquals(SOURCE, fA1, 0.0f);
 
         ColorMatrix cM2 = new ColorMatrix(cM1);
         float[] fA2 = cM2.getArray();
-        CtsArrayUtils.verifyArrayEquals(fA1, fA2, 0.0f);
+        assertArrayEquals(fA1, fA2, 0.0f);
     }
 
     @Test
@@ -92,7 +91,7 @@ public class ColorMatrixTest {
 
         mColorMatrix.set(fArray);
         ret = mColorMatrix.getArray();
-        CtsArrayUtils.verifyArrayEquals(fArray, ret, 0.0f);
+        assertArrayEquals(fArray, ret, 0.0f);
     }
 
     @Test
@@ -109,7 +108,7 @@ public class ColorMatrixTest {
 
         mColorMatrix.set(new ColorMatrix(fArray));
         ret = mColorMatrix.getArray();
-        CtsArrayUtils.verifyArrayEquals(fArray, ret, 0.0f);
+        assertArrayEquals(fArray, ret, 0.0f);
     }
 
     @Test(expected=RuntimeException.class)
@@ -145,7 +144,7 @@ public class ColorMatrixTest {
         mColorMatrix.setSaturation(0.5f);
         float[] ret = mColorMatrix.getArray();
 
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.6065f, 0.3575f, 0.036f, 0.0f, 0.0f,
                 0.1065f, 0.85749996f, 0.036f, 0.0f, 0.0f,
                 0.1065f, 0.3575f, 0.536f, 0.0f, 0.0f,
@@ -181,7 +180,7 @@ public class ColorMatrixTest {
         mColorMatrix.setRGB2YUV();
         float[] ret = mColorMatrix.getArray();
 
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.299f, 0.587f, 0.114f, 0.0f, 0.0f,
                 -0.16874f, -0.33126f, 0.5f, 0.0f, 0.0f,
                 0.5f, -0.41869f, -0.08131f, 0.0f, 0.0f,
@@ -194,7 +193,7 @@ public class ColorMatrixTest {
         mColorMatrix.setYUV2RGB();
         float[] ret = mColorMatrix.getArray();
 
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 1.0f, 0.0f, 1.402f, 0.0f, 0.0f,
                 1.0f, -0.34414f, -0.71414f, 0.0f, 0.0f,
                 1.0f, 1.772f, 0.0f, 0.0f, 0.0f,
@@ -243,7 +242,7 @@ public class ColorMatrixTest {
         mColorMatrix.setConcat(new ColorMatrix(floatA), new ColorMatrix(floatB));
 
         float[] ret = mColorMatrix.getArray();
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 6.0f, 6.0f, 6.0f, 6.0f, 10.f,
                 26.0f, 26.0f, 26.0f, 26.0f, 35.0f,
                 30.0f, 30.0f, 30.0f, 30.0f, 35.0f,

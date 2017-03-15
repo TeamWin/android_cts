@@ -15,6 +15,7 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,8 +28,6 @@ import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -509,7 +508,7 @@ public class MatrixTest {
         mMatrix.setValues(values);
         values = new float[9];
         mMatrix.getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 9.0f, 100.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
         }, values, 0.0f);
     }
@@ -537,6 +536,6 @@ public class MatrixTest {
         }
         final float[] actualValues = new float[9];
         mMatrix.getValues(actualValues);
-        CtsArrayUtils.verifyArrayEquals(expected, actualValues, 0.0f);
+        assertArrayEquals(expected, actualValues, 0.0f);
     }
 }
