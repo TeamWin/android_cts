@@ -32,7 +32,7 @@ public class SecurityPatchTest extends InstrumentationTestCase {
     private static final String SECURITY_PATCH_DATE_ERROR =
             "ro.build.version.security_patch should be \"%d-%02d\" or later. Found \"%s\"";
     private static final int SECURITY_PATCH_YEAR = 2017;
-    private static final int SECURITY_PATCH_MONTH = 04;
+    private static final int SECURITY_PATCH_MONTH = 05;
 
     private boolean mSkipTests = false;
 
