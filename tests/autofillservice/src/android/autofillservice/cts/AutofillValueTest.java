@@ -145,7 +145,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
     private void autofillEditText(@Nullable AutofillValue value, String expectedText,
             boolean expectAutoFill) throws Exception {
-        mActivity.syncRunOnUiThread(() -> mCompoundButton.setVisibility(View.VISIBLE));
         mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
 
         // Set service.
@@ -157,16 +156,13 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Set expectations.
             replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("editText",
-                    value).setField("compoundButton",
-                    AutofillValue.forToggle(true)).setPresentation(
-                    createPresentation("dataset")).build());
+                    value).setPresentation(createPresentation("dataset")).build());
             OneTimeTextWatcher textWatcher = new OneTimeTextWatcher("editText", mEditText,
                     expectedText);
             mEditText.addTextChangedListener(textWatcher);
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            mActivity.syncRunOnUiThread(() -> mCompoundButton.requestFocus());
             waitUntilConnected();
 
             // Autofill it.
@@ -178,7 +174,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             } else {
                 waitUntilDisconnected();
 
-                assertThat(mEditText.getText().toString()).isEqualTo("");
+                assertThat(mEditText.getText().toString()).isEqualTo(expectedText);
             }
         } finally {
             disableService();
@@ -197,7 +193,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
     @Test
     public void autofillTextWithListValue() throws Exception {
-        autofillEditText(AutofillValue.forList(0), "filled", false);
+        autofillEditText(AutofillValue.forList(0), "", false);
     }
 
     @Test
@@ -209,9 +205,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         assertThat(mEditText.getAutofillValue()).isNull();
     }
 
-    private void autofillCompoundButton(@Nullable AutofillValue value, boolean expectAutoFill)
-            throws Exception {
-        mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
+    private void autofillCompoundButton(@Nullable AutofillValue value, boolean expectedValue,
+            boolean expectAutoFill) throws Exception {
         mActivity.syncRunOnUiThread(() -> mCompoundButton.setVisibility(View.VISIBLE));
 
         // Set service.
@@ -223,16 +218,14 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Set expectations.
             replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
-                    "compoundButton", value).setField("editText",
-                    AutofillValue.forText("filled")).setPresentation(
+                    "compoundButton", value).setPresentation(
                     createPresentation("dataset")).build());
             OneTimeCompoundButtonListener checkedWatcher = new OneTimeCompoundButtonListener(
-                    "compoundButton", mCompoundButton, true);
+                        "compoundButton", mCompoundButton, expectedValue);
             mCompoundButton.setOnCheckedChangeListener(checkedWatcher);
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mCompoundButton.requestFocus());
-            mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
             waitUntilConnected();
 
             // Autofill it.
@@ -244,7 +237,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             } else {
                 waitUntilDisconnected();
 
-                assertThat(mCompoundButton.isChecked()).isFalse();
+                assertThat(mCompoundButton.isChecked()).isEqualTo(expectedValue);
             }
         } finally {
             disableService();
@@ -252,13 +245,18 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void autofillValidToggleValue() throws Exception {
-        autofillCompoundButton(AutofillValue.forToggle(true), true);
+    public void autofillToggleValueWithTrue() throws Exception {
+        autofillCompoundButton(AutofillValue.forToggle(true), true, true);
+    }
+
+    @Test
+    public void autofillToggleValueWithFalse() throws Exception {
+        autofillCompoundButton(AutofillValue.forToggle(false), false, false);
     }
 
     @Test
     public void autofillCompoundButtonWithTextValue() throws Exception {
-        autofillCompoundButton(AutofillValue.forText(""), false);
+        autofillCompoundButton(AutofillValue.forText(""), false, false);
     }
 
     @Test
@@ -270,9 +268,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         assertThat(mCompoundButton.getAutofillValue()).isNull();
     }
 
-    private void autofillListValue(@Nullable AutofillValue value, boolean expectAutoFill)
-            throws Exception {
-        mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
+    private void autofillListValue(@Nullable AutofillValue value, int expectedValue,
+            boolean expectAutoFill) throws Exception {
         mActivity.syncRunOnUiThread(() -> mSpinner.setVisibility(View.VISIBLE));
 
         // Set service.
@@ -284,15 +281,13 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Set expectations.
             replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("spinner",
-                    value).setField("editText", AutofillValue.forText("filled")).setPresentation(
-                    createPresentation("dataset")).build());
+                    value).setPresentation(createPresentation("dataset")).build());
             OneTimeSpinnerListener spinnerWatcher = new OneTimeSpinnerListener(
-                    "spinner", mSpinner, 1);
+                    "spinner", mSpinner, expectedValue);
             mSpinner.setOnItemSelectedListener(spinnerWatcher);
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mSpinner.requestFocus());
-            mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
             waitUntilConnected();
 
             // Autofill it.
@@ -304,7 +299,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             } else {
                 waitUntilDisconnected();
 
-                assertThat(mSpinner.getSelectedItemPosition()).isEqualTo(0);
+                assertThat(mSpinner.getSelectedItemPosition()).isEqualTo(expectedValue);
             }
         } finally {
             disableService();
@@ -312,18 +307,23 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void autofillValidListValueToSpinner() throws Exception {
-        autofillListValue(AutofillValue.forList(1), true);
+    public void autofillZeroListValueToSpinner() throws Exception {
+        autofillListValue(AutofillValue.forList(0), 0, false);
+    }
+
+    @Test
+    public void autofillOneListValueToSpinner() throws Exception {
+        autofillListValue(AutofillValue.forList(1), 1, true);
     }
 
     @Test
     public void autofillInvalidListValueToSpinner() throws Exception {
-        autofillListValue(AutofillValue.forList(-1), false);
+        autofillListValue(AutofillValue.forList(-1), 0, false);
     }
 
     @Test
     public void autofillSpinnerWithTextValue() throws Exception {
-        autofillListValue(AutofillValue.forText(""), false);
+        autofillListValue(AutofillValue.forText(""), 0, false);
     }
 
     @Test
@@ -361,7 +361,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             int nonAutofilledDay = mDatePicker.getDayOfMonth();
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mDatePicker.requestFocus());
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
             waitUntilConnected();
 
@@ -438,7 +437,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             int nonAutofilledMinute = mTimePicker.getMinute();
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mTimePicker.requestFocus());
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
             waitUntilConnected();
 
@@ -480,7 +478,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         assertThat(mTimePicker.getAutofillValue()).isNull();
     }
 
-    private void autofillRadioGroup(@Nullable AutofillValue value,
+    private void autofillRadioGroup(@Nullable AutofillValue value, int expectedValue,
             boolean expectAutoFill) throws Exception {
         mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
         mActivity.syncRunOnUiThread(() -> mRadioGroup.setVisibility(View.VISIBLE));
@@ -498,11 +496,10 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                     AutofillValue.forText("filled")).setPresentation(
                     createPresentation("dataset")).build());
             MultipleTimesRadioGroupListener radioGroupWatcher = new MultipleTimesRadioGroupListener(
-                    "radioGroup", 2, mRadioGroup, 1);
+                    "radioGroup", 2, mRadioGroup, expectedValue);
             mRadioGroup.setOnCheckedChangeListener(radioGroupWatcher);
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mRadioGroup.requestFocus());
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
             waitUntilConnected();
 
@@ -515,8 +512,14 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             } else {
                 waitUntilDisconnected();
 
-                assertThat(mRadioButton1.isChecked()).isEqualTo(true);
-                assertThat(mRadioButton2.isChecked()).isEqualTo(false);
+                if (expectedValue == 0) {
+                    assertThat(mRadioButton1.isChecked()).isEqualTo(true);
+                    assertThat(mRadioButton2.isChecked()).isEqualTo(false);
+                } else {
+                    assertThat(mRadioButton1.isChecked()).isEqualTo(false);
+                    assertThat(mRadioButton2.isChecked()).isEqualTo(true);
+
+                }
             }
         } finally {
             disableService();
@@ -524,18 +527,23 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void autofillValidListValueToRadioGroup() throws Exception {
-        autofillRadioGroup(AutofillValue.forList(1), true);
+    public void autofillZeroListValueToRadioGroup() throws Exception {
+        autofillRadioGroup(AutofillValue.forList(0), 0, false);
+    }
+
+    @Test
+    public void autofillOneListValueToRadioGroup() throws Exception {
+        autofillRadioGroup(AutofillValue.forList(1), 1, true);
     }
 
     @Test
     public void autofillInvalidListValueToRadioGroup() throws Exception {
-        autofillListValue(AutofillValue.forList(-1), false);
+        autofillListValue(AutofillValue.forList(-1), 0, false);
     }
 
     @Test
     public void autofillRadioGroupWithTextValue() throws Exception {
-        autofillRadioGroup(AutofillValue.forText(""), false);
+        autofillRadioGroup(AutofillValue.forText(""), 0, false);
     }
 
     @Test
