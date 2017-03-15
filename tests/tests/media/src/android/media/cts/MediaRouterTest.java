@@ -134,6 +134,43 @@ public class MediaRouterTest extends InstrumentationTestCase {
     }
 
     /**
+     * Test {@link MediaRouter.UserRouteInfo} with the default route.
+     */
+    public void testDefaultRouteInfo() {
+        Context context = getInstrumentation().getContext();
+        RouteInfo route = mMediaRouter.getDefaultRoute();
+
+        assertNotNull(route.getCategory());
+        assertNotNull(route.getName());
+        assertNotNull(route.getName(context));
+        assertTrue(route.isEnabled());
+        assertFalse(route.isConnecting());
+        assertEquals(RouteInfo.DEVICE_TYPE_UNKNOWN, route.getDeviceType());
+        assertEquals(RouteInfo.PLAYBACK_TYPE_LOCAL, route.getPlaybackType());
+        assertNull(route.getDescription());
+        assertNull(route.getStatus());
+        assertNull(route.getIconDrawable());
+        assertNull(route.getGroup());
+
+        Object tag = new Object();
+        route.setTag(tag);
+        assertEquals(tag, route.getTag());
+
+        assertEquals(AudioManager.STREAM_MUSIC, route.getPlaybackStream());
+        if (RouteInfo.PLAYBACK_VOLUME_VARIABLE == route.getVolumeHandling()) {
+            int curVolume = route.getVolume();
+            int maxVolume = route.getVolumeMax();
+            assertTrue(curVolume <= maxVolume);
+            route.requestSetVolume(maxVolume);
+            assertEquals(maxVolume, route.getVolume());
+            route.requestUpdateVolume(-maxVolume);
+            assertEquals(0, route.getVolume());
+            route.requestUpdateVolume(curVolume);
+            assertEquals(curVolume, route.getVolume());
+        }
+    }
+
+    /**
      * Test {@link MediaRouter.UserRouteInfo}.
      */
     public void testUserRouteInfo() {
@@ -316,6 +353,9 @@ public class MediaRouterTest extends InstrumentationTestCase {
 
     public void testCallback() {
         MediaRouterCallback callback = new MediaRouterCallback();
+        MediaRouter.Callback mrc = (MediaRouter.Callback) callback;
+        MediaRouter.SimpleCallback mrsc = (MediaRouter.SimpleCallback) callback;
+
         final int allRouteTypes = MediaRouter.ROUTE_TYPE_LIVE_AUDIO
                 | MediaRouter.ROUTE_TYPE_LIVE_VIDEO | MediaRouter.ROUTE_TYPE_REMOTE_DISPLAY
                 | MediaRouter.ROUTE_TYPE_USER;
@@ -327,6 +367,9 @@ public class MediaRouterTest extends InstrumentationTestCase {
         mMediaRouter.addUserRoute(userRoute);
         assertTrue(callback.mOnRouteAddedCalled);
         assertEquals(userRoute, callback.mAddedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteAdded(mMediaRouter, callback.mAddedRoute);
+        mrsc.onRouteAdded(mMediaRouter, callback.mAddedRoute);
 
         RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute();
 
@@ -337,6 +380,12 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertEquals(prevSelectedRoute, callback.mUnselectedRoute);
         assertTrue(callback.mOnRouteSelectedCalled);
         assertEquals(userRoute, callback.mSelectedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteUnselected(mMediaRouter, MediaRouter.ROUTE_TYPE_USER, callback.mUnselectedRoute);
+        mrc.onRouteSelected(mMediaRouter, MediaRouter.ROUTE_TYPE_USER, callback.mSelectedRoute);
+        mrsc.onRouteUnselected(mMediaRouter, MediaRouter.ROUTE_TYPE_USER,
+                callback.mUnselectedRoute);
+        mrsc.onRouteSelected(mMediaRouter, MediaRouter.ROUTE_TYPE_USER, callback.mSelectedRoute);
 
         // Test onRouteChanged().
         // It is called when the route's name, description, status or tag is updated.
@@ -344,22 +393,34 @@ public class MediaRouterTest extends InstrumentationTestCase {
         userRoute.setName(mTestRouteName);
         assertTrue(callback.mOnRouteChangedCalled);
         assertEquals(userRoute, callback.mChangedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
+        mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         callback.reset();
         userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
         assertTrue(callback.mOnRouteChangedCalled);
         assertEquals(userRoute, callback.mChangedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
+        mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         callback.reset();
         userRoute.setStatus(TEST_STATUS);
         assertTrue(callback.mOnRouteChangedCalled);
         assertEquals(userRoute, callback.mChangedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
+        mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         callback.reset();
         Object tag = new Object();
         userRoute.setTag(tag);
         assertTrue(callback.mOnRouteChangedCalled);
         assertEquals(userRoute, callback.mChangedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
+        mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         // Test onRouteVolumeChanged().
         userRoute.setVolumeMax(TEST_MAX_VOLUME);
@@ -367,12 +428,18 @@ public class MediaRouterTest extends InstrumentationTestCase {
         userRoute.setVolume(TEST_VOLUME);
         assertTrue(callback.mOnRouteVolumeChangedCalled);
         assertEquals(userRoute, callback.mVolumeChangedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteVolumeChanged(mMediaRouter, callback.mVolumeChangedRoute);
+        mrsc.onRouteVolumeChanged(mMediaRouter, callback.mVolumeChangedRoute);
 
         // Test onRouteRemoved().
         callback.reset();
         mMediaRouter.removeUserRoute(userRoute);
         assertTrue(callback.mOnRouteRemovedCalled);
         assertEquals(userRoute, callback.mRemovedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
+        mrsc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
 
         // Test onRouteGrouped() and onRouteUngrouped().
         mMediaRouter.clearUserRoutes();
@@ -394,6 +461,11 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertEquals(groupableRoute0, callback.mGroupedRoute);
         assertEquals(group, callback.mGroup);
         assertEquals(0, callback.mRouteIndexInGroup);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteGrouped(mMediaRouter, callback.mGroupedRoute, callback.mGroup,
+                callback.mRouteIndexInGroup);
+        mrsc.onRouteGrouped(mMediaRouter, callback.mGroupedRoute, callback.mGroup,
+                callback.mRouteIndexInGroup);
 
         // Add another route to the group.
         callback.reset();
@@ -401,6 +473,11 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertTrue(callback.mOnRouteGroupedCalled);
         assertEquals(groupableRoute1, callback.mGroupedRoute);
         assertEquals(1, callback.mRouteIndexInGroup);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteGrouped(mMediaRouter, callback.mGroupedRoute, callback.mGroup,
+                callback.mRouteIndexInGroup);
+        mrsc.onRouteGrouped(mMediaRouter, callback.mGroupedRoute, callback.mGroup,
+                callback.mRouteIndexInGroup);
 
         // Since removing a route from the group changes the group's name, onRouteChanged() is
         // called.
@@ -410,6 +487,11 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertEquals(groupableRoute1, callback.mUngroupedRoute);
         assertTrue(callback.mOnRouteChangedCalled);
         assertEquals(group, callback.mChangedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteUngrouped(mMediaRouter, callback.mUngroupedRoute, callback.mGroup);
+        mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
+        mrsc.onRouteUngrouped(mMediaRouter, callback.mUngroupedRoute, callback.mGroup);
+        mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         // When a group has no routes, the group is removed from the media router.
         callback.reset();
@@ -418,6 +500,11 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertEquals(groupableRoute0, callback.mUngroupedRoute);
         assertTrue(callback.mOnRouteRemovedCalled);
         assertEquals(group, callback.mRemovedRoute);
+        // Call the callback methods directly so they are marked as tested
+        mrc.onRouteUngrouped(mMediaRouter, callback.mUngroupedRoute, callback.mGroup);
+        mrc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
+        mrsc.onRouteUngrouped(mMediaRouter, callback.mUngroupedRoute, callback.mGroup);
+        mrsc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
 
         // In this case, onRouteChanged() is not called.
         assertFalse(callback.mOnRouteChangedCalled);
@@ -468,18 +555,23 @@ public class MediaRouterTest extends InstrumentationTestCase {
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
         userRoute.setVolumeHandling(RouteInfo.PLAYBACK_VOLUME_VARIABLE);
         MediaRouterVolumeCallback callback = new MediaRouterVolumeCallback();
+        MediaRouter.VolumeCallback mrvc = (MediaRouter.VolumeCallback) callback;
         userRoute.setVolumeCallback(callback);
 
         userRoute.requestSetVolume(TEST_VOLUME);
         assertTrue(callback.mOnVolumeSetRequestCalled);
         assertEquals(userRoute, callback.mRouteInfo);
         assertEquals(TEST_VOLUME, callback.mVolume);
+        // Call the callback method directly so it is marked as tested
+        mrvc.onVolumeSetRequest(callback.mRouteInfo, callback.mVolume);
 
         callback.reset();
         userRoute.requestUpdateVolume(TEST_VOLUME_DIRECTION);
         assertTrue(callback.mOnVolumeUpdateRequestCalled);
         assertEquals(userRoute, callback.mRouteInfo);
         assertEquals(TEST_VOLUME_DIRECTION, callback.mDirection);
+        // Call the callback method directly so it is marked as tested
+        mrvc.onVolumeUpdateRequest(callback.mRouteInfo, callback.mDirection);
     }
 
     private Bitmap getBitmap(Drawable drawable) {
@@ -525,7 +617,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
         }
     }
 
-    private class MediaRouterCallback extends MediaRouter.Callback {
+    private class MediaRouterCallback extends MediaRouter.SimpleCallback {
         private boolean mOnRouteSelectedCalled;
         private boolean mOnRouteUnselectedCalled;
         private boolean mOnRouteAddedCalled;
