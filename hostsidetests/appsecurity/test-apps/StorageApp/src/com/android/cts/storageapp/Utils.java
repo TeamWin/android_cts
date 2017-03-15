@@ -16,18 +16,29 @@
 
 package com.android.cts.storageapp;
 
+import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
+import static com.android.cts.storageapp.Utils.makeUniqueFile;
+
 import android.content.Context;
 import android.system.Os;
 import android.system.OsConstants;
 import android.system.StructStat;
+import android.util.Log;
 
 import junit.framework.AssertionFailedError;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
 
 public class Utils {
+    public static final String TAG = "StorageApp";
+
     // You will pry my kibibytes from my cold dead hands! But to make test
     // results easier to debug, we'll use kilobytes...
     public static final long KB_IN_BYTES = 1000;
@@ -98,15 +109,19 @@ public class Utils {
     }
 
     public static long getSizeManual(File dir) throws Exception {
-        long size = 0;
+        long size = getAllocatedSize(dir);
         for (File f : dir.listFiles()) {
-            StructStat stat = Os.stat(f.getAbsolutePath());
-            size += stat.st_blocks * 512;
             if (f.isDirectory()) {
                 size += getSizeManual(f);
+            } else {
+                size += getAllocatedSize(f);
             }
         }
         return size;
+    }
+
+    private static long getAllocatedSize(File f) throws Exception {
+        return Os.stat(f.getAbsolutePath()).st_blocks * 512;
     }
 
     public static boolean deleteContents(File dir) {
@@ -123,5 +138,28 @@ public class Utils {
             }
         }
         return success;
+    }
+
+    public static void logCommand(String... cmd) throws Exception {
+        final Process proc = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+
+        final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        copy(proc.getInputStream(), buf);
+        final int res = proc.waitFor();
+
+        Log.d(TAG, Arrays.toString(cmd) + " result " + res + ":");
+        Log.d(TAG, buf.toString());
+    }
+
+    /** Shamelessly lifted from libcore.io.Streams */
+    public static int copy(InputStream in, OutputStream out) throws IOException {
+        int total = 0;
+        byte[] buffer = new byte[8192];
+        int c;
+        while ((c = in.read(buffer)) != -1) {
+            total += c;
+            out.write(buffer, 0, c);
+        }
+        return total;
     }
 }
