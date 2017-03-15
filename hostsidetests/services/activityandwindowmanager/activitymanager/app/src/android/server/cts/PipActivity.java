@@ -46,6 +46,10 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     // If EXTRA_SET_ASPECT_RATIO_WITH_DELAY is set, it will also attempt to apply the aspect ratio
     // after a short delay.
     private static final String ACTION_EXPAND_PIP = "android.server.cts.PipActivity.expand_pip";
+    // Intent action that this activity dynamically registers to set requested orientation.
+    // Will apply the oriention to the value set in the EXTRA_FIXED_ORIENTATION extra.
+    private static final String ACTION_SET_REQUESTED_ORIENTATION =
+            "android.server.cts.PipActivity.set_requested_orientation";
 
     // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
@@ -106,6 +110,10 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                                 setPictureInPictureArgs(args);
                             }, 100);
                         }
+                        break;
+                    case ACTION_SET_REQUESTED_ORIENTATION:
+                        setRequestedOrientation(Integer.parseInt(intent.getStringExtra(
+                                EXTRA_FIXED_ORIENTATION)));
                         break;
                 }
             }
@@ -179,6 +187,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_ENTER_PIP);
         filter.addAction(ACTION_MOVE_TO_BACK);
         filter.addAction(ACTION_EXPAND_PIP);
+        filter.addAction(ACTION_SET_REQUESTED_ORIENTATION);
         registerReceiver(mReceiver, filter);
     }
 

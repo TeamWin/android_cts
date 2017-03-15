@@ -64,6 +64,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             "android.server.cts.PipActivity.move_to_back";
     private static final String PIP_ACTIVITY_ACTION_EXPAND_PIP =
             "android.server.cts.PipActivity.expand_pip";
+    private static final String ACTION_SET_REQUESTED_ORIENTATION =
+            "android.server.cts.PipActivity.set_requested_orientation";
 
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -701,6 +703,26 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 + EXTRA_SET_ASPECT_RATIO_WITH_DELAY + " 1.23456789");
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
         assertPinnedStackDoesNotExist();
+    }
+
+    public void testSetRequestedOrientationWhilePinned() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch the PiP activity fixed as portrait, and enter picture-in-picture
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_FIXED_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT),
+                EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+
+        // Request that the orientation is set to landscape
+        executeShellCommand("am broadcast -a " + ACTION_SET_REQUESTED_ORIENTATION + " -e "
+                + EXTRA_FIXED_ORIENTATION + " " + String.valueOf(ORIENTATION_LANDSCAPE));
+
+        // Launch the activity back into fullscreen and ensure that it is now in landscape
+        launchActivity(PIP_ACTIVITY);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+        assertPinnedStackDoesNotExist();
+        assertTrue(mAmWmState.getWmState().getLastOrientation() == ORIENTATION_LANDSCAPE);
     }
 
     /**
