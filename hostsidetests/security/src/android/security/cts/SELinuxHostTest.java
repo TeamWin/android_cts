@@ -111,17 +111,16 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         return tempFile;
     }
 
-    private void combineFiles(String Dest, String Src) throws IOException {
-        FileInputStream is = new FileInputStream(new File(Src));
-        FileOutputStream os = new FileOutputStream(new File(Dest), true);
-        int rbyte;
+    private static void appendTo(String dest, String src) throws IOException {
+        try (FileInputStream is = new FileInputStream(new File(src));
+             FileOutputStream os = new FileOutputStream(new File(dest))) {
+            byte[] buf = new byte[1024];
+            int len;
 
-        while ((rbyte = is.read()) != -1){
-            os.write(rbyte);
+            while ((len = is.read(buf)) != -1) {
+                os.write(buf, 0, len);
+            }
         }
-
-        is.close();
-        os.close();
     }
 
     @Override
@@ -427,7 +426,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         deviceNonplatFcFile.deleteOnExit();
         if (mDevice.pullFile("/system/etc/selinux/plat_file_contexts", devicePlatFcFile)) {
             mDevice.pullFile("/vendor/etc/selinux/nonplat_file_contexts", deviceNonplatFcFile);
-            combineFiles(devicePlatFcFile.getAbsolutePath(),
+            appendTo(devicePlatFcFile.getAbsolutePath(),
                          deviceNonplatFcFile.getAbsolutePath());
         } else {
             mDevice.pullFile("/file_contexts.bin", devicePlatFcFile);
