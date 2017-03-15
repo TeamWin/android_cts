@@ -26,6 +26,7 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilC
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -83,7 +84,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     /**
-     * Tests autofillingh the web, using the sync / async version of ViewStructure.addChild
+     * Tests autofilling the virtual views, using the sync / async version of ViewStructure.addChild
      */
     private void autofillTest(boolean sync) throws Exception {
         // Set service.
@@ -101,7 +102,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.setSync(sync);
 
         // Trigger auto-fill.
-        mActivity.onUsername((v) -> { v.changeFocus(true); });
+        mActivity.mUsername.changeFocus(true);
         waitUntilConnected();
 
         // Make sure input was sanitized.
@@ -167,5 +168,85 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         waitUntilDisconnected();
         replier.assertNumberUnhandledFillRequests(1); // Only expected call is not used in the test.
         replier.assertNumberUnhandledSaveRequests(0);
+    }
+
+    @Test
+    public void testAutofillCallbacks() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.mUsername.changeFocus(true);
+        waitUntilConnected();
+
+        callback.assertUiShownEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+
+        // Change focus
+        mActivity.mPassword.changeFocus(true);
+        callback.assertUiHiddenEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+        callback.assertUiShownEvent(mActivity.mCustomView, mActivity.mPassword.text.id);
+
+        // Sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testAutofillCallbackDisabled() throws Exception {
+        // Set service.
+        disableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Trigger auto-fill.
+        mActivity.mUsername.changeFocus(true);
+
+        // Assert callback was called
+        callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+    }
+
+    @Test
+    public void testAutofillCallbackNoDatasets() throws Exception {
+        callbackUnavailableTest(null);
+    }
+
+    @Test
+    public void testAutofillCallbackNoDatasetsButSaveInfo() throws Exception {
+        callbackUnavailableTest(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+    }
+
+    private void callbackUnavailableTest(CannedFillResponse response) throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(response);
+
+        // Trigger auto-fill.
+        mActivity.mUsername.changeFocus(true);
+        waitUntilConnected();
+
+        // Auto-fill it.
+        sUiBot.assertNoDatasets();
+
+        // Assert callback was called
+        callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+
+        // Other sanity checks.
+        waitUntilDisconnected();
     }
 }

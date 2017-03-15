@@ -281,9 +281,63 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testAutoFillOneDatasetAndSave() throws Exception {
-        enableService();
+    public void testAutofillCallbackDisabled() throws Exception {
+        // Set service.
+        disableService();
+        final MyAutofillCallback callback = mLoginActivity.registerCallback();
 
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+
+        // Assert callback was called
+        final View username = mLoginActivity.getUsername();
+        callback.assertUiUnavailableEvent(username);
+    }
+
+    @Test
+    public void testAutofillCallbackNoDatasets() throws Exception {
+        callbackUnavailableTest(null);
+    }
+
+    @Test
+    public void testAutofillCallbackNoDatasetsButSaveInfo() throws Exception {
+        callbackUnavailableTest(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+    }
+
+    private void callbackUnavailableTest(CannedFillResponse response) throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mLoginActivity.registerCallback();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(response);
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        waitUntilConnected();
+        final FillRequest fillRequest = replier.getNextFillRequest();
+
+        // Auto-fill it.
+        sUiBot.assertNoDatasets();
+
+        // Assert callback was called
+        final View username = mLoginActivity.getUsername();
+        callback.assertUiUnavailableEvent(username);
+
+        // Sanity checks.
+        replier.assertNumberUnhandledFillRequests(0);
+        replier.assertNumberUnhandledSaveRequests(0);
+
+        // Other sanity checks.
+        waitUntilDisconnected();
+    }
+
+    @Test
+    public void testAutoFillOneDatasetAndSave() throws Exception {
         // Set service.
         enableService();
         final Replier replier = new Replier();

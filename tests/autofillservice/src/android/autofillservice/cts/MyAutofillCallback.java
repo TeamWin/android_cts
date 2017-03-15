@@ -41,8 +41,7 @@ final class MyAutofillCallback extends AutofillCallback {
 
     @Override
     public void onAutofillEventVirtual(View view, int childId, int event) {
-        throw new UnsupportedOperationException("onAutofillEventVirtual(" + view + ", " + childId
-                + ", " + event);
+        mEvents.offer(new MyEvent(view, childId, event));
     }
 
     /**
@@ -66,23 +65,65 @@ final class MyAutofillCallback extends AutofillCallback {
     /**
      * Convenience method to assert an UI shown event for the given view was received.
      */
-    void assertUiShownEvent(View expectedView) throws InterruptedException {
+    MyEvent assertUiShownEvent(View expectedView) throws InterruptedException {
         final MyEvent event = getEvent();
         assertWithMessage("Invalid type on event %s", event).that(event.event)
                 .isEqualTo(EVENT_INPUT_SHOWN);
         assertWithMessage("Invalid view on event %s", event).that(event.view)
             .isSameAs(expectedView);
+        return event;
+    }
+
+    /**
+     * Convenience method to assert an UI shown event for the given virtual view was received.
+     */
+    void assertUiShownEvent(View expectedView, int expectedChildId) throws InterruptedException {
+        final MyEvent event = assertUiShownEvent(expectedView);
+        assertWithMessage("Invalid child on event %s", event).that(event.childId)
+            .isSameAs(expectedChildId);
     }
 
     /**
      * Convenience method to assert an UI hidden event for the given view was received.
      */
-    void assertUiHiddenEvent(View expectedView) throws InterruptedException {
+    MyEvent assertUiHiddenEvent(View expectedView) throws InterruptedException {
         final MyEvent event = getEvent();
         assertWithMessage("Invalid type on event %s", event).that(event.event)
                 .isEqualTo(EVENT_INPUT_HIDDEN);
         assertWithMessage("Invalid view on event %s", event).that(event.view)
                 .isSameAs(expectedView);
+        return event;
+    }
+
+    /**
+     * Convenience method to assert an UI hidden event for the given view was received.
+     */
+    void assertUiHiddenEvent(View expectedView, int expectedChildId) throws InterruptedException {
+        final MyEvent event = assertUiHiddenEvent(expectedView);
+        assertWithMessage("Invalid child on event %s", event).that(event.childId)
+                .isSameAs(expectedChildId);
+    }
+
+    /**
+     * Convenience method to assert an UI unavailable event for the given view was received.
+     */
+    MyEvent assertUiUnavailableEvent(View expectedView) throws InterruptedException {
+        final MyEvent event = getEvent();
+        assertWithMessage("Invalid type on event %s", event).that(event.event)
+                .isEqualTo(EVENT_INPUT_UNAVAILABLE);
+        assertWithMessage("Invalid view on event %s", event).that(event.view)
+                .isSameAs(expectedView);
+        return event;
+    }
+
+    /**
+     * Convenience method to assert an UI unavailable event for the given view was received.
+     */
+    void assertUiUnavailableEvent(View expectedView, int expectedChildId)
+            throws InterruptedException {
+        final MyEvent event = assertUiUnavailableEvent(expectedView);
+        assertWithMessage("Invalid child on event %s", event).that(event.childId)
+                .isSameAs(expectedChildId);
     }
 
     private static final class MyEvent {
