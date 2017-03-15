@@ -3340,8 +3340,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="uapPeripheralProfileStatus">Peripheral Profile Status</string>
 
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
-    <string name="uapPlayTestInstructions">Connect the USB Audio Peripheral and press the PLAY button below.
-        Verify that a tone is correctly played.</string>
+    <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
+        PLAY button below. Verify that a tone is correctly played.</string>
     <string name="audio_uap_play_playBtn">Play</string>
     <string name="audio_uap_play_stopBtn">Stop</string>
 
@@ -3685,4 +3685,37 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="ringtone_hidden">Ringtone settings does not exist</string>
     <string name="ringtone_not_hidden">Ringtone settings exists</string>
 
+    <!-- USB Audio Peripheral Tests -->
+    <string name="usbaudio_results_text">Results...</string>
+
+    <!-- USB Audio Peripheral Attributes Test -->
+    <string name="usbaudio_attribs_test"> USB Audio Peripheral Attributes Test</string>
+    <string name="usbaudio_attribs_info">
+        This test requires that you have connected a mandated USB Audio Interface peripheral.
+        If the discovered attributes of the peripheral matches the known attributes of the
+        peripheral the test passes and the \"pass\" button will be enabled.
+       </string>
+
+    <!-- USB Audio Peripheral Play Test -->
+    <string name="usbaudio_play_test"> USB Audio Peripheral Play Test</string>
+    <string name="usbaudio_play_info">
+        This test requires that you have connected a mandated USB Audio Interface peripheral and
+        some way to monitor the output. Press the \"Play\" button and verify that a tone is produced.
+       </string>
+
+    <!-- USB Audio Peripheral Record Test -->
+    <string name="usbaudio_record_test"> USB Audio Peripheral Record Test</string>
+    <string name="usbaudio_record_info">
+        This test requires that you have connected a mandated USB Audio Interface peripheral.
+        Connect the outputs to the inputs (with patch cables). Start playback by pressing the
+        \"Record Loopback\" button and verify that the recorded signal is displayed in the wave
+        display view. ()It may be necessary to adjust the input controls on the peripheral).
+       </string>
+
+    <!-- USB Audio Peripheral Buttons Test -->
+    <string name="usbaudio_buttons_test"> USB Audio Peripheral Buttons Test</string>
+    <string name="usbaudio_buttons_info">
+        This test requires that you have connected a mandated USB Audio headset. Press each
+        \"transport\" button and verify that it is recognized by the test.
+       </string>
 </resources>

@@ -129,6 +129,7 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         mWaveView.setTraceColor(Color.WHITE);
 
         setPassFailButtonClickListeners();
+        setInfoResources(R.string.usbaudio_record_test, R.string.usbaudio_record_info, -1);
     }
 
     //
@@ -192,6 +193,13 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
                     break;
             }
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        stopPlay();
     }
 }
 

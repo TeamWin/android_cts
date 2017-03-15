@@ -16,8 +16,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
         <TextView
             android:text="@string/uapButtonTestInstructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
@@ -35,6 +43,10 @@
             android:id="@+id/uap_buttonsBtnAStatusTx"
             android:paddingLeft="16dp"/>
 
+         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
         <TextView
             android:text="@string/uapButtonsBtnBLbl"
             android:id="@+id/uap_buttonsBtnBLabelTx"
@@ -48,6 +60,10 @@
             android:layout_height="wrap_content"
             android:id="@+id/uap_buttonsBtnBStatusTx"
             android:paddingLeft="16dp"/>
+
+         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
 
         <TextView
             android:text="@string/uapButtonsBtnCLbl"
@@ -63,6 +79,10 @@
             android:id="@+id/uap_buttonsBtnCStatusTx"
             android:paddingLeft="16dp"/>
 
+         <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"/>
+
         <TextView
             android:text="@string/uapButtonsBtnDLbl"
             android:id="@+id/uap_buttonsBtnDLabelTx"
@@ -76,7 +96,16 @@
             android:layout_height="wrap_content"
             android:id="@+id/uap_buttonsBtnDStatusTx"
             android:paddingLeft="16dp"/>
+
+         <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"/>
         </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/usbaudio_results_text"/>
 
     <include layout="@layout/pass_fail_buttons"/>
 </LinearLayout>
