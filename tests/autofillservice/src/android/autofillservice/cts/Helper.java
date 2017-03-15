@@ -417,6 +417,25 @@ final class Helper {
         return count;
     }
 
+    /**
+     * Creates an array of {@link AutofillId} mapped from the {@code structure} nodes with the given
+     * {@code resourceIds}.
+     */
+    static AutofillId[] getAutofillIds(AssistStructure structure, String[] resourceIds) {
+        final AutofillId[] requiredIds = new AutofillId[resourceIds.length];
+        for (int i = 0; i < resourceIds.length; i++) {
+            final String resourceId = resourceIds[i];
+            final ViewNode node = findNodeByResourceId(structure, resourceId);
+            if (node == null) {
+                dumpStructure("getAutofillIds()", structure);
+                throw new AssertionError("No node with savable resourceId " + resourceId);
+            }
+            requiredIds[i] = node.getAutofillId();
+
+        }
+        return requiredIds;
+    }
+
     private Helper() {
     }
 }

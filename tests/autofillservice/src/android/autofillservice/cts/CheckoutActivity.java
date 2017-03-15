@@ -158,7 +158,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code ccNumber} in the UiThread.
      */
-    void onCcNumber(ViewVisitor<EditText> v) {
+    void onCcNumber(Visitor<EditText> v) {
         syncRunOnUiThread(() -> {
             v.visit(mCcNumber);
         });
@@ -167,7 +167,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code ccExpirationDate} in the UiThread.
      */
-    void onCcExpiration(ViewVisitor<Spinner> v) {
+    void onCcExpiration(Visitor<Spinner> v) {
         syncRunOnUiThread(() -> {
             v.visit(mCcExpiration);
         });
@@ -176,7 +176,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code address} in the UiThread.
      */
-    void onAddress(ViewVisitor<RadioGroup> v) {
+    void onAddress(Visitor<RadioGroup> v) {
         syncRunOnUiThread(() -> {
             v.visit(mAddress);
         });
@@ -185,7 +185,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code homeAddress} in the UiThread.
      */
-    void onHomeAddress(ViewVisitor<RadioButton> v) {
+    void onHomeAddress(Visitor<RadioButton> v) {
         syncRunOnUiThread(() -> {
             v.visit(mHomeAddress);
         });
@@ -194,7 +194,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code saveCC} in the UiThread.
      */
-    void onSaveCc(ViewVisitor<CheckBox> v) {
+    void onSaveCc(Visitor<CheckBox> v) {
         syncRunOnUiThread(() -> {
             v.visit(mSaveCc);
         });

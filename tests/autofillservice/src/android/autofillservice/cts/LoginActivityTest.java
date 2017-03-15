@@ -297,7 +297,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                         .setPresentation(createPresentation("The Dude"))
                         .build())
-                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .setExtras(extras)
                 .build());
         mLoginActivity.expectAutoFill("dude", "sweet");
@@ -439,7 +439,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
 
         // Trigger auto-fill.
@@ -504,7 +504,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
             // Set expectations.
             replier.addResponse(new CannedFillResponse.Builder()
-                    .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                    .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                     .build());
 
             // Trigger auto-fill.
@@ -574,7 +574,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         final String saveDescription = "Your data will be saved with love and care...";
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(type, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(type, ID_USERNAME, ID_PASSWORD)
                 .setSaveDescription(saveDescription)
                 .build());
 
@@ -734,7 +734,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
 
         // Change view contents.
@@ -790,7 +790,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set no-op behavior.
         final Replier replier = new Replier();
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -816,7 +816,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set no-op behavior.
         final Replier replier = new Replier();
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build());
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -849,7 +849,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 getContext(), 0, new Intent(intentAction), 0).getIntentSender();
 
         replier.addResponse(new CannedFillResponse.Builder()
-                .setSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .setNegativeAction("Foo", listener)
                 .build());
         InstrumentedAutoFillService.setReplier(replier);

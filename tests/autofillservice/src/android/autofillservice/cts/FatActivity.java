@@ -65,7 +65,7 @@ public class FatActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code input} in the UiThread.
      */
-    void onInput(ViewVisitor<EditText> v) {
+    void onInput(Visitor<EditText> v) {
         syncRunOnUiThread(() -> {
             v.visit(mInput);
         });

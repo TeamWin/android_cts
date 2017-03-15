@@ -74,7 +74,7 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code username} in the UiThread.
      */
-    void onUsername(ViewVisitor<Line> v) {
+    void onUsername(Visitor<Line> v) {
         syncRunOnUiThread(() -> {
             v.visit(mUsername);
         });

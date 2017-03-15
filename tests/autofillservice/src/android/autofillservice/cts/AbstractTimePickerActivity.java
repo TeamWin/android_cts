@@ -115,7 +115,7 @@ abstract class AbstractTimePickerActivity extends AbstractAutoFillActivity {
     /**
      * Visits the {@code output} in the UiThread.
      */
-    void onOutput(ViewVisitor<EditText> v) {
+    void onOutput(Visitor<EditText> v) {
         syncRunOnUiThread(() -> {
             v.visit(mOutput);
         });
