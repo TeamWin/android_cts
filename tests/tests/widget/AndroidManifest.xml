@@ -134,6 +134,15 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.widget.cts.ToolbarWithMarginsCtsActivity"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
+                  android:label="ToolbarWithMarginsCtsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.widget.cts.ActionMenuViewCtsActivity"
                   android:label="ActionMenuViewCtsActivity">
             <intent-filter>

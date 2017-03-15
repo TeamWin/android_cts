@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2017 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -24,7 +24,16 @@
         android:id="@+id/toolbar_main"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/actionBarSize"
+        android:titleMargin="5px"
+        android:titleMarginTop="10px"
+        android:titleMarginEnd="15px"
+        android:titleMarginBottom="20px"
         android:popupTheme="@style/PopupWindow.NullTransitions" />
+
+    <Toolbar
+        android:id="@+id/toolbar2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>
 
