@@ -82,7 +82,7 @@ public class SequentialRWTest extends CtsAndroidTestCase {
         if (fileSize == 0) { // not enough space, give up
             return;
         }
-        final int NUMBER_REPETITION = 6;
+        final int NUMBER_REPETITION = 3;
         String streamName = "test_single_sequential_update";
         FileUtil.doSequentialUpdateTest(getContext(), DIR_SEQ_UPDATE, fileSize, BUFFER_SIZE,
                 NUMBER_REPETITION, REPORT_LOG_NAME, streamName);
