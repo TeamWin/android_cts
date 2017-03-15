@@ -61,6 +61,9 @@
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- Needed by the Audio Quality Verifier to store the sound samples that will be mailed. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -1739,6 +1742,16 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
         </activity>
+        <activity android:name=".wifiaware.TestListActivity"
+                  android:label="@string/aware_test"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_networking" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.wifi.aware" />
+        </activity>
 
         <activity android:name=".notifications.NotificationListenerVerifierActivity"
                 android:label="@string/nls_test">
@@ -1921,6 +1934,14 @@
         <activity android:name=".p2p.ServiceResponderTestActivity"
                 android:label="@string/p2p_service_discovery_responder"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOpenUnsolicitedPublishTestActivity"
+                  android:label="@string/aware_data_path_open_unsolicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOpenPassiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_open_passive_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
                 android:targetActivity=".TestListActivity">
