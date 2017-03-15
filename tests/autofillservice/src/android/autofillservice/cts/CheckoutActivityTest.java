@@ -161,7 +161,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mCheckoutActivity.onCcNumber((v) -> { v.setText("4815162342"); });
         mCheckoutActivity.onCcExpiration((v) -> { v.setSelection(INDEX_CC_EXPIRATION_TODAY); });
         mCheckoutActivity.onAddress((v) -> { v.check(R.id.work_address); });
-        mCheckoutActivity.onSaveCc((v) -> { v.setChecked(true); });
+        mCheckoutActivity.onSaveCc((v) -> { v.setChecked(false); });
         mCheckoutActivity.tapBuy();
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_CREDIT_CARD, true);
@@ -176,6 +176,6 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 INDEX_ADDRESS_WORK);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_HOME_ADDRESS), false);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_WORK_ADDRESS), true);
-        assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), true);
+        assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), false);
     }
 }
