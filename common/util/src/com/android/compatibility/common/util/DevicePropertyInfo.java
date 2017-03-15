@@ -50,12 +50,13 @@ public final class DevicePropertyInfo {
     private final String mVersionRelease;
     private final String mVersionSdk;
     private final String mVersionSecurityPatch;
+    private final String mVersionIncremental;
 
     public DevicePropertyInfo(String abi, String abi2, String abis, String abis32, String abis64,
             String board, String brand, String device, String fingerprint, String id,
             String manufacturer, String model, String product, String referenceFigerprint,
             String serial, String tags, String type, String versionBaseOs, String versionRelease,
-            String versionSdk, String versionSecurityPatch) {
+            String versionSdk, String versionSecurityPatch, String versionIncremental) {
         mAbi = abi;
         mAbi2 = abi2;
         mAbis = abis;
@@ -77,6 +78,7 @@ public final class DevicePropertyInfo {
         mVersionRelease = versionRelease;
         mVersionSdk = versionSdk;
         mVersionSecurityPatch = versionSecurityPatch;
+        mVersionIncremental = versionIncremental;
     }
 
     /**
@@ -108,6 +110,7 @@ public final class DevicePropertyInfo {
         propertyMap.put(prefix + "version_release", mVersionRelease);
         propertyMap.put(prefix + "version_sdk", mVersionSdk);
         propertyMap.put(prefix + "version_security_patch", mVersionSecurityPatch);
+        propertyMap.put(prefix + "version_incremental", mVersionIncremental);
 
         return propertyMap;
     }

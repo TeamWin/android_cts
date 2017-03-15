@@ -105,7 +105,7 @@ class TestResultsReport {
                 Build.FINGERPRINT, Build.ID, Build.MANUFACTURER, Build.MODEL, Build.PRODUCT,
                 referenceFingerprint, Build.SERIAL, Build.TAGS, Build.TYPE, versionBaseOs,
                 Build.VERSION.RELEASE, Integer.toString(Build.VERSION.SDK_INT),
-                versionSecurityPatch);
+                versionSecurityPatch, Build.VERSION.INCREMENTAL);
 
         // add device properties to the result with a prefix tag for each key
         for (Entry<String, String> entry :
