@@ -21,7 +21,11 @@ import static org.junit.Assert.fail;
 import android.graphics.Color;
 
 public class ColorUtils {
-    public static void validateColor(int expected, int observed, int errorTolerance) {
+    public static void verifyColor(int expected, int observed) {
+        verifyColor(expected, observed, 0);
+    }
+
+    public static void verifyColor(int expected, int observed, int errorTolerance) {
         int totalError = Math.abs(Color.alpha(observed) - Color.alpha(expected))
                 + Math.abs(Color.red(observed) - Color.red(expected))
                 + Math.abs(Color.green(observed) - Color.green(expected))

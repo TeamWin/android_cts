@@ -37,6 +37,7 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 
+import com.android.compatibility.common.util.ColorUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -272,6 +273,43 @@ public class BitmapTest {
         assertEquals(100, ret.getWidth());
         assertEquals(200, ret.getHeight());
         assertEquals(Config.RGB_565, ret.getConfig());
+    }
+
+    private static void verify2x2BitmapContents(int[] expected, Bitmap observed) {
+        ColorUtils.verifyColor(expected[0], observed.getPixel(0, 0));
+        ColorUtils.verifyColor(expected[1], observed.getPixel(1, 0));
+        ColorUtils.verifyColor(expected[2], observed.getPixel(0, 1));
+        ColorUtils.verifyColor(expected[3], observed.getPixel(1, 1));
+    }
+
+    @Test
+    public void testCreateBitmap_matrix() {
+        int[] colorArray = new int[] { Color.RED, Color.GREEN, Color.BLUE, Color.BLACK };
+        Bitmap src = Bitmap.createBitmap(2, 2, Config.ARGB_8888);
+        src.setPixels(colorArray,0, 2, 0, 0, 2, 2);
+
+        // baseline
+        verify2x2BitmapContents(colorArray, src);
+
+        // null
+        Bitmap dst = Bitmap.createBitmap(src, 0, 0, 2, 2, null, false);
+        verify2x2BitmapContents(colorArray, dst);
+
+        // identity matrix
+        Matrix matrix = new Matrix();
+        dst = Bitmap.createBitmap(src, 0, 0, 2, 2, matrix, false);
+        verify2x2BitmapContents(colorArray, dst);
+
+        // big scale - only red visible
+        matrix.setScale(10, 10);
+        dst = Bitmap.createBitmap(src, 0, 0, 2, 2, matrix, false);
+        verify2x2BitmapContents(new int[] { Color.RED, Color.RED, Color.RED, Color.RED }, dst);
+
+        // rotation
+        matrix.setRotate(90);
+        dst = Bitmap.createBitmap(src, 0, 0, 2, 2, matrix, false);
+        verify2x2BitmapContents(
+                new int[] { Color.BLUE, Color.RED, Color.BLACK, Color.GREEN }, dst);
     }
 
     @Test(expected=IllegalArgumentException.class)

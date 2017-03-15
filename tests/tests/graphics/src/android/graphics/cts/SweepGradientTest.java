@@ -160,15 +160,15 @@ public class SweepGradientTest {
         canvas.drawPaint(paint);
 
         // red to left, blue to right
-        ColorUtils.validateColor(Color.RED, bitmap.getPixel(0, 0), 5);
-        ColorUtils.validateColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
+        ColorUtils.verifyColor(Color.RED, bitmap.getPixel(0, 0), 5);
+        ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
 
         gradient.set(1, 0.5f,
                 new int[] {Color.GREEN, Color.YELLOW, Color.GREEN}, null);
         canvas.drawPaint(paint);
 
         // yellow to left, green to right
-        ColorUtils.validateColor(Color.YELLOW, bitmap.getPixel(0, 0), 5);
-        ColorUtils.validateColor(Color.GREEN, bitmap.getPixel(1, 0), 5);
+        ColorUtils.verifyColor(Color.YELLOW, bitmap.getPixel(0, 0), 5);
+        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(1, 0), 5);
     }
 }

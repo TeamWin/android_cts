@@ -98,16 +98,16 @@ public class LinearGradientTest {
 
 
         // red, blue, clamped to blue
-        ColorUtils.validateColor(Color.RED, bitmap.getPixel(0, 0), 5);
-        ColorUtils.validateColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
-        ColorUtils.validateColor(Color.BLUE, bitmap.getPixel(2, 0), 5);
+        ColorUtils.verifyColor(Color.RED, bitmap.getPixel(0, 0), 5);
+        ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
+        ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(2, 0), 5);
 
         gradient.set(0.5f, 0, 1.5f, 0, Color.GREEN, Color.WHITE, TileMode.MIRROR);
         canvas.drawPaint(paint);
 
         // green, white, mirrored to green
-        ColorUtils.validateColor(Color.GREEN, bitmap.getPixel(0, 0), 5);
-        ColorUtils.validateColor(Color.WHITE, bitmap.getPixel(1, 0), 5);
-        ColorUtils.validateColor(Color.GREEN, bitmap.getPixel(2, 0), 5);
+        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(0, 0), 5);
+        ColorUtils.verifyColor(Color.WHITE, bitmap.getPixel(1, 0), 5);
+        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(2, 0), 5);
     }
 }
