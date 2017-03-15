@@ -731,6 +731,43 @@ public class ResourcesTest extends AndroidTestCase {
         assertNotSame(Typeface.DEFAULT, font);
     }
 
+    public void testGetFont_invalidXmlFile() {
+        try {
+            assertNull(mResources.getFont(R.font.invalid_xmlfamily));
+        } catch (NotFoundException e) {
+            // pass
+        }
+
+        try {
+            assertNull(mResources.getFont(R.font.invalid_xmlempty));
+        } catch (NotFoundException e) {
+            // pass
+        }
+    }
+
+    public void testGetFont_invalidFontFiles() {
+        try {
+            mResources.getFont(R.font.invalid_xmlfont);
+            fail();
+        } catch (RuntimeException e) {
+            // pass
+        }
+
+        try {
+            mResources.getFont(R.font.invalid_font);
+            fail();
+        } catch (RuntimeException e) {
+            // pass
+        }
+
+        try {
+            mResources.getFont(R.font.invalid_xmlfont_contains_invalid_font_file);
+            fail();
+        } catch (RuntimeException e) {
+            // pass
+        }
+    }
+
     public void testGetFont_fontFileIsCached() {
         Typeface font = mResources.getFont(R.font.samplefont);
         Typeface font2 = mResources.getFont(R.font.samplefont);
