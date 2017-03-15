@@ -23,6 +23,7 @@ import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertTextOnly;
+import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
@@ -427,6 +428,94 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Sanity checks.
         waitUntilDisconnected();
+    }
+
+    @Test
+    public void filterText() throws Exception {
+        final String AA = "Two A's";
+        final String AB = "A and B";
+        final String B = "Only B";
+
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("aa"))
+                        .setPresentation(createPresentation(AA))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("ab"))
+                        .setPresentation(createPresentation(AB))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("b"))
+                        .setPresentation(createPresentation(B))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        mLoginActivity.onUsername((v) -> {
+            v.requestFocus();
+        });
+
+        waitUntilConnected();
+
+        // With no filter text all datasets should be shown
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
+            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
+            assertThat(sUiBot.hasViewWithText(B)).isTrue();
+        });
+
+        runShellCommand("input keyevent KEYCODE_A");
+
+        // Only two datasets start with 'a'
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
+            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
+            assertThat(sUiBot.hasViewWithText(B)).isFalse();
+        });
+
+        runShellCommand("input keyevent KEYCODE_A");
+
+        // Only one datasets start with 'aa'
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
+            assertThat(sUiBot.hasViewWithText(AB)).isFalse();
+            assertThat(sUiBot.hasViewWithText(B)).isFalse();
+        });
+
+        runShellCommand("input keyevent KEYCODE_DEL");
+
+        // Only two datasets start with 'a'
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
+            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
+            assertThat(sUiBot.hasViewWithText(B)).isFalse();
+        });
+
+        runShellCommand("input keyevent KEYCODE_DEL");
+
+        // With no filter text all datasets should be shown
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(AA)).isTrue();
+            assertThat(sUiBot.hasViewWithText(AB)).isTrue();
+            assertThat(sUiBot.hasViewWithText(B)).isTrue();
+        });
+
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+        runShellCommand("input keyevent KEYCODE_A");
+
+        // No dataset start with 'aaa'
+        eventually(() -> {
+            assertThat(sUiBot.hasViewWithText(AA)).isFalse();
+            assertThat(sUiBot.hasViewWithText(AB)).isFalse();
+            assertThat(sUiBot.hasViewWithText(B)).isFalse();
+        });
     }
 
     @Test

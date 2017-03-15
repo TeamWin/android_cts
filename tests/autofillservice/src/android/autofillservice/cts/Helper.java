@@ -80,6 +80,35 @@ final class Helper {
     static final int UI_TIMEOUT_MS = 2000;
 
     /**
+     * Time to wait in between retries
+     */
+    static final int RETRY_MS = 100;
+
+    /**
+     * Ignores all {@link RuntimeException} and {@link Error} until the timeout is reached. Returns
+     * if {@link Runnable} passed without exception.
+     *
+     * @param r The runnable to run
+     */
+    public static void eventually(Runnable r) throws Exception {
+        long startTime = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                r.run();
+                break;
+            } catch (RuntimeException | Error e) {
+                if (System.currentTimeMillis() - startTime < UI_TIMEOUT_MS) {
+                    Log.i(TAG, "Ignoring", e);
+                    Thread.sleep(RETRY_MS);
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    /**
      * Runs a Shell command, returning a trimmed response.
      */
     static String runShellCommand(String template, Object...args) {
