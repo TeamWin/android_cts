@@ -16,6 +16,7 @@
 
 package android.bootstats.cts;
 
+import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 import com.android.tradefed.testtype.DeviceTestCase;
 
 import junit.framework.Assert;
@@ -40,12 +41,34 @@ public class BootStatsHostTest extends DeviceTestCase {
         Thread.sleep(10000);
 
         // find logs and parse them
+        // ex: sysui_multi_action: [757,804,799,ota_boot_complete,801,85,802,1]
+        // ex: 757,804,799,counter_name,801,bucket_value,802,increment_value
+        final String bucketTag = Integer.toString(MetricsEvent.RESERVED_FOR_LOGBUILDER_BUCKET);
+        final String counterNameTag = Integer.toString(MetricsEvent.RESERVED_FOR_LOGBUILDER_NAME);
+        final String counterNamePattern = counterNameTag + ",boot_complete,";
+        final String multiActionPattern = "sysui_multi_action: [";
+
         final String log = getDevice().executeShellCommand("logcat --buffer=events -d");
-        int counter = log.indexOf("[boot_complete,");
-        Assert.assertTrue("did not find boot logs", counter != -1);
-        counter += 15;
-        String valueString = log.substring(counter, log.indexOf("]", counter));
-        int bootTime = Integer.valueOf(valueString);
+
+        int counterNameIndex = log.indexOf(counterNamePattern);
+        Assert.assertTrue("did not find boot logs", counterNameIndex != -1);
+
+        int multiLogStart = log.lastIndexOf(multiActionPattern, counterNameIndex);
+        multiLogStart += multiActionPattern.length();
+        int multiLogEnd = log.indexOf("]", multiLogStart);
+        String[] multiLogDataStrings = log.substring(multiLogStart, multiLogEnd).split(",");
+
+        boolean foundBucket = false;
+        int bootTime = 0;
+        for (int i = 0; i < multiLogDataStrings.length; i += 2) {
+            if (bucketTag.equals(multiLogDataStrings[i])) {
+                foundBucket = true;
+                Assert.assertTrue("histogram data was truncated",
+                        (i + 1) < multiLogDataStrings.length);
+                bootTime = Integer.valueOf(multiLogDataStrings[i + 1]);
+            }
+        }
+        Assert.assertTrue("log line did not contain a tag " + bucketTag, foundBucket);
         Assert.assertTrue("reported boot time must be less than observed boot time",
                 bootTime < upperBoundSeconds);
         Assert.assertTrue("reported boot time must be non-zero", bootTime > 0);
