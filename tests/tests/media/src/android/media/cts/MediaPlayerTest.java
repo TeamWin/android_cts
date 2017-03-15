@@ -1118,6 +1118,80 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.stop();
     }
 
+    public void testSeekModes() throws Exception {
+        // This clip has 2 I frames at 66687us and 4299687us.
+        if (!checkLoadResource(
+                R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+            @Override
+            public void onSeekComplete(MediaPlayer mp) {
+                mOnSeekCompleteCalled.signal();
+            }
+        });
+        mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
+        mMediaPlayer.prepare();
+        mOnSeekCompleteCalled.reset();
+        mMediaPlayer.start();
+
+        final int seekPosMs = 3000;
+        final int timeToleranceMs = 100;
+        final int syncTime1Ms = 67;
+        final int syncTime2Ms = 4300;
+
+        // TODO: tighten checking range. For now, ensure mediaplayer doesn't
+        // seek to previous sync or next sync.
+        int cp = runSeekMode(MediaPlayer.SEEK_CLOSEST, seekPosMs);
+        assertTrue("MediaPlayer did not seek to closest position",
+                cp > seekPosMs && cp < syncTime2Ms);
+
+        // TODO: tighten checking range. For now, ensure mediaplayer doesn't
+        // seek to closest position or next sync.
+        cp = runSeekMode(MediaPlayer.SEEK_PREVIOUS_SYNC, seekPosMs);
+        assertTrue("MediaPlayer did not seek to preivous sync position",
+                cp < seekPosMs - timeToleranceMs);
+
+        // TODO: tighten checking range. For now, ensure mediaplayer doesn't
+        // seek to closest position or previous sync.
+        cp = runSeekMode(MediaPlayer.SEEK_NEXT_SYNC, seekPosMs);
+        assertTrue("MediaPlayer did not seek to next sync position",
+                cp > syncTime2Ms - timeToleranceMs);
+
+        // TODO: tighten checking range. For now, ensure mediaplayer doesn't
+        // seek to closest position or previous sync.
+        cp = runSeekMode(MediaPlayer.SEEK_CLOSEST_SYNC, seekPosMs);
+        assertTrue("MediaPlayer did not seek to closest sync position",
+                cp > syncTime2Ms - timeToleranceMs);
+
+        mMediaPlayer.stop();
+    }
+
+    private int runSeekMode(int seekMode, int seekPosMs) throws Exception {
+        final int sleepIntervalMs = 100;
+        int timeRemainedMs = 10000;  // total time for testing
+        final int timeToleranceMs = 100;
+
+        mMediaPlayer.seekTo(seekPosMs, seekMode);
+        mOnSeekCompleteCalled.waitForSignal();
+        mOnSeekCompleteCalled.reset();
+        int cp = -seekPosMs;
+        while (timeRemainedMs > 0) {
+            cp = mMediaPlayer.getCurrentPosition();
+            // Wait till MediaPlayer starts rendering since MediaPlayer caches
+            // seek position as current position.
+            if (cp < seekPosMs - timeToleranceMs || cp > seekPosMs + timeToleranceMs) {
+                break;
+            }
+            timeRemainedMs -= sleepIntervalMs;
+            Thread.sleep(sleepIntervalMs);
+        }
+        assertTrue("MediaPlayer did not finish seeking in time for mode " + seekMode,
+                timeRemainedMs > 0);
+        return cp;
+    }
+
     public void testGetTimestamp() throws Exception {
         final int toleranceUs = 100000;
         final float playbackRate = 1.0f;
