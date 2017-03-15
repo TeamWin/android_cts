@@ -19,22 +19,37 @@ package com.android.cts.storagestatsapp;
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
+import static com.android.cts.storageapp.Utils.TAG;
 import static com.android.cts.storageapp.Utils.assertAtLeast;
 import static com.android.cts.storageapp.Utils.assertMostlyEquals;
+import static com.android.cts.storageapp.Utils.getSizeManual;
+import static com.android.cts.storageapp.Utils.logCommand;
+import static com.android.cts.storageapp.Utils.makeUniqueFile;
 import static com.android.cts.storageapp.Utils.useSpace;
 import static com.android.cts.storageapp.Utils.useWrite;
 
+import android.app.Activity;
 import android.app.usage.ExternalStorageStats;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.UserHandle;
+import android.os.storage.StorageManager;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
+import android.util.MutableLong;
+
+import com.android.cts.storageapp.UtilsReceiver;
 
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests to verify {@link StorageStatsManager} behavior.
@@ -52,7 +67,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
 
         assertAtLeast(Environment.getDataDirectory().getTotalSpace(), stats.getTotalBytes(null));
-        assertAtLeast(Environment.getDataDirectory().getFreeSpace(), stats.getFreeBytes(null));
+        assertAtLeast(Environment.getDataDirectory().getUsableSpace(), stats.getFreeBytes(null));
     }
 
     public void testVerifyStats() throws Exception {
@@ -94,6 +109,10 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertMostlyEquals(CACHE_ALL, bs.getCacheBytes());
     }
 
+    /**
+     * Create some external files of specific media types and ensure that
+     * they're tracked correctly.
+     */
     public void testVerifyStatsExternal() throws Exception {
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
         final int uid = android.os.Process.myUid();
@@ -135,6 +154,34 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertMostlyEquals(5 * MB_IN_BYTES, afterRename.getImageBytes() - before.getImageBytes());
     }
 
+    /**
+     * Measuring external storage manually should always be consistent with
+     * whatever the stats APIs are returning.
+     */
+    public void testVerifyStatsExternalConsistent() throws Exception {
+        final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
+        final UserHandle user = android.os.Process.myUserHandle();
+
+        useSpace(getContext());
+
+        final File top = Environment.getExternalStorageDirectory();
+        final File pics = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        pics.mkdirs();
+
+        useWrite(makeUniqueFile(top), 5 * MB_IN_BYTES);
+        useWrite(makeUniqueFile(pics), 5 * MB_IN_BYTES);
+        useWrite(makeUniqueFile(pics), 5 * MB_IN_BYTES);
+
+        // TODO: remove this once 34723223 is fixed
+        logCommand("sync");
+
+        final long manualSize = getSizeManual(Environment.getExternalStorageDirectory());
+        final long statsSize = stats.queryExternalStatsForUser(null, user).getTotalBytes();
+
+        assertEquals(manualSize, statsSize);
+    }
+
     public void testVerifyCategory() throws Exception {
         final PackageManager pm = getContext().getPackageManager();
         final ApplicationInfo a = pm.getApplicationInfo(PKG_A, 0);
@@ -142,5 +189,80 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         assertEquals(ApplicationInfo.CATEGORY_VIDEO, a.category);
         assertEquals(ApplicationInfo.CATEGORY_UNDEFINED, b.category);
+    }
+
+    public void testCacheClearing() throws Exception {
+        final Context context = getContext();
+        final StorageManager sm = context.getSystemService(StorageManager.class);
+        final StorageStatsManager stats = context.getSystemService(StorageStatsManager.class);
+        final UserHandle user = android.os.Process.myUserHandle();
+
+        final File filesDir = context.getFilesDir();
+
+        final long beforeAllocatable = sm.getAllocatableBytes(filesDir, 0);
+        final long beforeFree = stats.getFreeBytes(null);
+        final long beforeRaw = filesDir.getUsableSpace();
+
+        Log.d(TAG, "Before raw " + beforeRaw + ", free " + beforeFree + ", allocatable "
+                + beforeAllocatable);
+
+        assertMostlyEquals(0, getCacheBytes(PKG_A, user));
+        assertMostlyEquals(0, getCacheBytes(PKG_B, user));
+
+        // Ask apps to allocate some cached data
+        final long targetA = doAllocate(PKG_A, 0.5, 1262304000);
+        final long targetB = doAllocate(PKG_B, 2.0, 1420070400);
+
+        // Apps using up some cache space shouldn't change how much we can
+        // allocate, or how much we think is free; but it should decrease real
+        // disk space.
+        assertMostlyEquals(beforeAllocatable, sm.getAllocatableBytes(filesDir, 0));
+        assertMostlyEquals(beforeFree, stats.getFreeBytes(null));
+        assertMostlyEquals(targetA + targetB, beforeRaw - filesDir.getUsableSpace());
+
+        assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
+        assertMostlyEquals(targetB, getCacheBytes(PKG_B, user));
+
+        // Allocate some space for ourselves, which should trim away at
+        // over-quota app first, even though its files are newer.
+        final long clear1 = filesDir.getUsableSpace() + (targetB / 2);
+        sm.allocateBytes(filesDir, clear1, 0);
+
+        assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
+        assertMostlyEquals(targetB / 2, getCacheBytes(PKG_B, user));
+
+        // Allocate some more space for ourselves, which should now start
+        // trimming away at older app. Since we pivot between the two apps once
+        // they're tied for cache ratios, we expect to clear about half of the
+        // remaining space from each of them.
+        final long clear2 = filesDir.getUsableSpace() + (targetB / 2);
+        sm.allocateBytes(filesDir, clear2, 0);
+
+        assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user));
+        assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user));
+    }
+
+    private long getCacheBytes(String pkg, UserHandle user) {
+        return getContext().getSystemService(StorageStatsManager.class)
+                .queryStatsForPackage(null, pkg, user).getCacheBytes();
+    }
+
+    private long doAllocate(String pkg, double fraction, long time) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Intent intent = new Intent();
+        intent.setComponent(new ComponentName(pkg, UtilsReceiver.class.getName()));
+        intent.putExtra(UtilsReceiver.EXTRA_FRACTION, fraction);
+        intent.putExtra(UtilsReceiver.EXTRA_TIME, time);
+        final MutableLong bytes = new MutableLong(0);
+        getInstrumentation().getTargetContext().sendOrderedBroadcast(intent, null,
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        bytes.value = getResultExtras(false).getLong(UtilsReceiver.EXTRA_BYTES);
+                        latch.countDown();
+                    }
+                }, null, Activity.RESULT_CANCELED, null, null);
+        latch.await(30, TimeUnit.SECONDS);
+        return bytes.value;
     }
 }

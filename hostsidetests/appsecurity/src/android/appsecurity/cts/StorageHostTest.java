@@ -64,6 +64,13 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_STATS), false));
         assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_A), false));
         assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_B), false));
+
+        if (sUsers != null) {
+            for (int user : sUsers) {
+                getDevice().executeShellCommand("appops set --user " + user + " " + PKG_STATS
+                        + " android:get_usage_stats allow");
+            }
+        }
     }
 
     @Override
@@ -105,6 +112,12 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
+    public void testVerifySummary() throws Exception {
+        for (int user : sUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifySummary", user);
+        }
+    }
+
     public void testVerifyStats() throws Exception {
         for (int user : sUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats", user);
@@ -130,9 +143,32 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
+    public void testVerifyStatsExternalConsistent() throws Exception {
+        for (int user : sUsers) {
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternalConsistent", user);
+        }
+    }
+
     public void testVerifyCategory() throws Exception {
         for (int user : sUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory", user);
+        }
+    }
+
+    public void testCacheClearing() throws Exception {
+        // To make the cache clearing logic easier to verify, ignore any cache
+        // and low space reserved space.
+        getDevice().executeShellCommand("settings put global sys_storage_threshold_max_bytes 0");
+        getDevice().executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
+        try {
+            for (int user : sUsers) {
+                // Clear all other cached data to give ourselves a clean slate
+                getDevice().executeShellCommand("pm trim-caches 4096G");
+                runDeviceTests(PKG_STATS, CLASS_STATS, "testCacheClearing", user);
+            }
+        } finally {
+            getDevice().executeShellCommand("settings delete global sys_storage_threshold_max_bytes");
+            getDevice().executeShellCommand("settings delete global sys_storage_cache_max_bytes");
         }
     }
 
