@@ -1214,8 +1214,13 @@ public class ViewTest {
         view.addKeyboardNavigationClusters(viewList, 0);
         assertEquals(0, viewList.size());
 
-        // View is a cluster
+        // View is a cluster (but not focusable, so technically empty)
         view.setKeyboardNavigationCluster(true);
+        view.addKeyboardNavigationClusters(viewList, 0);
+        assertEquals(0, viewList.size());
+        viewList.clear();
+        // a focusable cluster is not-empty
+        view.setFocusableInTouchMode(true);
         view.addKeyboardNavigationClusters(viewList, 0);
         assertEquals(1, viewList.size());
         assertEquals(view, viewList.get(0));
@@ -1225,7 +1230,9 @@ public class ViewTest {
     public void testKeyboardNavigationClusterSearch() {
         mMockParent.setIsRootNamespace(true);
         View v1 = new MockView(mActivity);
+        v1.setFocusableInTouchMode(true);
         View v2 = new MockView(mActivity);
+        v2.setFocusableInTouchMode(true);
         mMockParent.addView(v1);
         mMockParent.addView(v2);
 
