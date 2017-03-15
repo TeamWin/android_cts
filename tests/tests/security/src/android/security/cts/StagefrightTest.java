@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,6 +259,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2015_6608_b_23680780() throws Exception {
+        doStagefrightTest(R.raw.cve_2015_6608_b_23680780);
     }
 
     @SecurityTest
