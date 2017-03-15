@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ConfigurationInfo;
+import android.content.res.Resources;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.test.InstrumentationTestCase;
 
@@ -395,6 +396,20 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Thread.sleep(WAIT_TIME);
     }
 
+   /**
+    * Gets the value of com.android.internal.R.bool.config_noHomeScreen.
+    * @return true if no home screen is supported, false otherwise.
+    */
+   private boolean noHomeScreen() {
+       try {
+           return getInstrumentation().getContext().getResources().getBoolean(
+                   Resources.getSystem().getIdentifier("config_noHomeScreen", "bool", "android"));
+       } catch (Resources.NotFoundException e) {
+           // Assume there's a home screen.
+           return false;
+       }
+    }
+
     /**
      * Verify that the TimeTrackingAPI works properly when starting and ending an activity.
      */
@@ -426,10 +441,20 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertEquals(RESULT_PASS, appEndReceiver.waitForActivity());
         appEndReceiver.close();
 
-        // At this time the timerReceiver should not fire, even though the activity has shut down,
-        // because we are back to the home screen.
-        assertEquals(RESULT_TIMEOUT, timeReceiver.waitForActivity());
-        assertTrue(timeReceiver.mTimeUsed == 0);
+        if (!noHomeScreen()) {
+            // At this time the timerReceiver should not fire, even though the activity has shut
+            // down, because we are back to the home screen. Going to the home screen does not
+            // qualify as the user leaving the activity's flow. The time tracking is considered
+            // complete only when the user switches to another activity that is not part of the
+            // tracked flow.
+            assertEquals(RESULT_TIMEOUT, timeReceiver.waitForActivity());
+            assertTrue(timeReceiver.mTimeUsed == 0);
+        } else {
+            // With platforms that have no home screen, focus is returned to something else that is
+            // considered a completion of the tracked activity flow, and hence time tracking is
+            // triggered.
+            assertEquals(RESULT_PASS, timeReceiver.waitForActivity());
+        }
 
         // Issuing now another activity will trigger the timing information release.
         final Intent dummyIntent = new Intent(context, MockApplicationActivity.class);
@@ -522,9 +547,20 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertEquals(RESULT_PASS, appEndReceiver.waitForActivity());
         appEndReceiver.close();
 
-        // At this time the timerReceiver should not fire, even though the activity has shut down.
-        assertEquals(RESULT_TIMEOUT, timeReceiver.waitForActivity());
-        assertTrue(timeReceiver.mTimeUsed == 0);
+        if (!noHomeScreen()) {
+            // At this time the timerReceiver should not fire, even though the activity has shut
+            // down, because we are back to the home screen. Going to the home screen does not
+            // qualify as the user leaving the activity's flow. The time tracking is considered
+            // complete only when the user switches to another activity that is not part of the
+            // tracked flow.
+            assertEquals(RESULT_TIMEOUT, timeReceiver.waitForActivity());
+            assertTrue(timeReceiver.mTimeUsed == 0);
+        } else {
+            // With platforms that have no home screen, focus is returned to something else that is
+            // considered a completion of the tracked activity flow, and hence time tracking is
+            // triggered.
+            assertEquals(RESULT_PASS, timeReceiver.waitForActivity());
+        }
 
         // Issue another activity so that the timing information gets released.
         final Intent dummyIntent = new Intent(context, MockApplicationActivity.class);
