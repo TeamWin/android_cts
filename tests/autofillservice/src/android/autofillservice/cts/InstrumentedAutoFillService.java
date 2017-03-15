@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.IDLE_UNBIND_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.dumpAutofillService;
 import static android.autofillservice.cts.Helper.dumpStructure;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -107,6 +108,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     static void waitUntilConnected() throws InterruptedException {
         final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (state == null) {
+            dumpAutofillService();
             throw new AssertionError("not connected in " + CONNECTION_TIMEOUT_MS + " ms");
         }
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_CONNECTED);

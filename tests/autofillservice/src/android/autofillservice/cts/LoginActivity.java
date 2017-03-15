@@ -17,11 +17,13 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -36,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  *   <li>Username EditText (id: username, no input-type)
  *   <li>Password EditText (id: "username", input-type textPassword)
  *   <li>Clear Button
+ *   <li>Save Button
  *   <li>Login Button
  * </ul>
  */
@@ -54,6 +57,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     private EditText mPasswordEditText;
     private TextView mOutput;
     private Button mLoginButton;
+    private Button mSaveButton;
     private Button mClearButton;
     private FillExpectation mExpectation;
 
@@ -75,6 +79,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
         setContentView(R.layout.login_activity);
 
         mLoginButton = (Button) findViewById(R.id.login);
+        mSaveButton = (Button) findViewById(R.id.save);
         mClearButton = (Button) findViewById(R.id.clear);
         mUsernameLabel = (TextView) findViewById(R.id.username_label);
         mUsernameEditText = (EditText) findViewById(R.id.username);
@@ -88,21 +93,21 @@ public class LoginActivity extends AbstractAutoFillActivity {
                 login();
             }
         });
+        mSaveButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                save();
+            }
+        });
         mClearButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                resetFields();
+                mUsernameEditText.setText("");
+                mPasswordEditText.setText("");
+                mOutput.setText("");
+                getAutofillManager().cancel();
             }
         });
-    }
-
-    /**
-     * Resets the values of the input fields.
-     */
-    private void resetFields() {
-        mUsernameEditText.setText("");
-        mPasswordEditText.setText("");
-        mOutput.setText("");
     }
 
     /**
@@ -134,6 +139,16 @@ public class LoginActivity extends AbstractAutoFillActivity {
             mLoginMessage = message;
             mLoginLatch.countDown();
         }
+    }
+
+    /**
+     * Explicitly forces the AutofillManager to save the username and password.
+     */
+    private void save() {
+        final InputMethodManager imm = (InputMethodManager) getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mUsernameEditText.getWindowToken(), 0);
+        getAutofillManager().commit();
     }
 
     /**
@@ -218,6 +233,24 @@ public class LoginActivity extends AbstractAutoFillActivity {
         assertWithMessage("Timeout (%s ms) waiting for login", LOGIN_TIMEOUT_MS)
                 .that(called).isTrue();
         return mLoginMessage;
+    }
+
+    /**
+     * Taps the save button in the UI thread.
+     */
+    void tapSave() throws Exception {
+        syncRunOnUiThread(() -> {
+            mSaveButton.performClick();
+        });
+    }
+
+    /**
+     * Taps the clear button in the UI thread.
+     */
+    public void tapClear() {
+        syncRunOnUiThread(() -> {
+            mClearButton.performClick();
+        });
     }
 
     /**

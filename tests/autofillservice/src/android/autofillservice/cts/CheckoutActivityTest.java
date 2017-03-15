@@ -62,11 +62,11 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     public final ActivityTestRule<CheckoutActivity> mActivityRule =
         new ActivityTestRule<CheckoutActivity>(CheckoutActivity.class);
 
-    private CheckoutActivity mCheckoutActivity;
+    private CheckoutActivity mActivity;
 
     @Before
     public void setActivity() {
-        mCheckoutActivity = mActivityRule.getActivity();
+        mActivity = mActivityRule.getActivity();
     }
 
     @After
@@ -89,11 +89,11 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_ADDRESS, AutofillValue.forList(1))
                 .setField(ID_SAVE_CC, AutofillValue.forToggle(true))
                 .build());
-        mCheckoutActivity.expectAutoFill("4815162342", INDEX_CC_EXPIRATION_NEVER, R.id.work_address,
+        mActivity.expectAutoFill("4815162342", INDEX_CC_EXPIRATION_NEVER, R.id.work_address,
                 true);
 
         // Trigger auto-fill.
-        mCheckoutActivity.onCcNumber((v) -> { v.requestFocus(); });
+        mActivity.onCcNumber((v) -> v.requestFocus());
         waitUntilConnected();
 
         final FillRequest fillRequest = replier.getNextFillRequest();
@@ -113,7 +113,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("ACME CC");
 
         // Check the results.
-        mCheckoutActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Sanity checks.
         waitUntilDisconnected();
@@ -134,19 +134,13 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Dynamically change view contents
-        mCheckoutActivity.onCcNumber((v) -> { v.setText("108"); });
-        mCheckoutActivity.onCcExpiration((v) -> {
-            v.setSelection(INDEX_CC_EXPIRATION_TOMORROW, true);
-        });
-        mCheckoutActivity.onHomeAddress((v) -> {
-            v.setChecked(true);
-        });
-        mCheckoutActivity.onSaveCc((v) -> {
-            v.setChecked(true);
-        });
+        mActivity.onCcNumber((v) -> v.setText("108"));
+        mActivity.onCcExpiration((v) -> v.setSelection(INDEX_CC_EXPIRATION_TOMORROW, true));
+        mActivity.onHomeAddress((v) -> v.setChecked(true));
+        mActivity.onSaveCc((v) -> v.setChecked(true));
 
         // Trigger auto-fill.
-        mCheckoutActivity.onCcNumber((v) -> { v.requestFocus(); });
+        mActivity.onCcNumber((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Assert sanitization on fill request: everything should be sanitized!
@@ -158,15 +152,14 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         assertToggleIsSanitized(fillRequest.structure, ID_SAVE_CC);
 
         // Trigger save.
-        mCheckoutActivity.onCcNumber((v) -> { v.setText("4815162342"); });
-        mCheckoutActivity.onCcExpiration((v) -> { v.setSelection(INDEX_CC_EXPIRATION_TODAY); });
-        mCheckoutActivity.onAddress((v) -> { v.check(R.id.work_address); });
-        mCheckoutActivity.onSaveCc((v) -> { v.setChecked(false); });
-        mCheckoutActivity.tapBuy();
+        mActivity.onCcNumber((v) -> v.setText("4815162342"));
+        mActivity.onCcExpiration((v) -> v.setSelection(INDEX_CC_EXPIRATION_TODAY));
+        mActivity.onAddress((v) -> v.check(R.id.work_address));
+        mActivity.onSaveCc((v) -> v.setChecked(false));
+        mActivity.tapBuy();
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_CREDIT_CARD, true);
         final SaveRequest saveRequest = replier.getNextSaveRequest();
-        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert sanitization on save: everything should be available!
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_CC_NUMBER), "4815162342");
@@ -177,5 +170,8 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_HOME_ADDRESS), false);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_WORK_ADDRESS), true);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), false);
+
+        // Sanity checks.
+        waitUntilDisconnected();
     }
 }
