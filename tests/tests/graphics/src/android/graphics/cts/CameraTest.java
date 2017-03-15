@@ -15,6 +15,7 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -23,8 +24,6 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +57,7 @@ public class CameraTest {
         mCamera.getMatrix(m);
         float[] f = new float[9];
         m.getValues(f);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
             1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
         }, f, 0.0f);
     }
@@ -74,7 +73,7 @@ public class CameraTest {
 
         float[] f = new float[9];
         m2.getValues(f);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.22291021f, 0.0f, 2.2291021f, 0.0f, 0.22291021f, -6.241486f, 0.0f, 0.0f, 1.0f
         }, f, 0.0f);
     }
@@ -90,7 +89,7 @@ public class CameraTest {
 
         float[] f = new float[9];
         m2.getValues(f);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.0017361111f, 1.0f
         }, f, 0.0f);
     }
@@ -106,7 +105,7 @@ public class CameraTest {
 
         float[] f = new float[9];
         m2.getValues(f);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0017361111f, 0.0f, 1.0f
         }, f, 0.0f);
     }
@@ -122,7 +121,7 @@ public class CameraTest {
 
         float[] f = new float[9];
         m2.getValues(f);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f
         }, f, 0.0f);
     }
@@ -138,7 +137,7 @@ public class CameraTest {
 
         float[] f = new float[9];
         m2.getValues(f);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.6123724f, 0.6123724f, 0.0f, -0.5915063f, 0.774519f, 0.0f, 0.0009106233f,
                 0.00027516257f, 1.0f
         }, f, 0.0f);

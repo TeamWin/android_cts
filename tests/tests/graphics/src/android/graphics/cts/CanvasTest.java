@@ -15,6 +15,7 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -40,7 +41,6 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Region;
 import android.graphics.Region.Op;
 import android.graphics.Shader;
 import android.support.test.InstrumentationRegistry;
@@ -50,8 +50,6 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 import android.util.DisplayMetrics;
-
-import com.android.compatibility.common.util.CtsArrayUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -192,14 +190,14 @@ public class CanvasTest {
         final Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         final float[] values4 = new float[FLOAT_ARRAY_LEN];
         final Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -218,14 +216,14 @@ public class CanvasTest {
         Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save current clip only, don't know how to get clip saved,
         // but can make sure Matrix can't be saved in this case
@@ -242,14 +240,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values4, 0.0f);
+        assertArrayEquals(values2, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -265,14 +263,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -495,14 +493,14 @@ public class CanvasTest {
         Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
@@ -518,14 +516,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -541,14 +539,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -569,14 +567,14 @@ public class CanvasTest {
         Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
@@ -592,14 +590,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -615,14 +613,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -643,14 +641,14 @@ public class CanvasTest {
         Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
@@ -666,14 +664,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -689,14 +687,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -715,14 +713,14 @@ public class CanvasTest {
         Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save current clip flag only: this should save matrix as well
         m1 = new Matrix();
@@ -738,14 +736,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
 
         // test save everything
         m1 = new Matrix();
@@ -761,14 +759,14 @@ public class CanvasTest {
         m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restore();
         values4 = new float[FLOAT_ARRAY_LEN];
         m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -825,14 +823,14 @@ public class CanvasTest {
         final Matrix m3 = mCanvas.getMatrix();
         m3.getValues(values3);
 
-        CtsArrayUtils.verifyArrayEquals(values2, values3, 0.0f);
+        assertArrayEquals(values2, values3, 0.0f);
 
         mCanvas.restoreToCount(count);
         final float[] values4 = new float[FLOAT_ARRAY_LEN];
         final Matrix m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
-        CtsArrayUtils.verifyArrayEquals(values1, values4, 0.0f);
+        assertArrayEquals(values1, values4, 0.0f);
     }
 
     @Test
@@ -852,7 +850,7 @@ public class CanvasTest {
         final float[] f2 = new float[FLOAT_ARRAY_LEN];
         m2.getValues(f2);
 
-        CtsArrayUtils.verifyArrayEquals(f1, f2, 0.0f);
+        assertArrayEquals(f1, f2, 0.0f);
     }
 
     @Test
@@ -871,7 +869,7 @@ public class CanvasTest {
         final float[] f2 = new float[FLOAT_ARRAY_LEN];
         m2.getValues(f2);
 
-        CtsArrayUtils.verifyArrayEquals(f1, f2, 0.0f);
+        assertArrayEquals(f1, f2, 0.0f);
     }
 
     @Test
@@ -882,7 +880,7 @@ public class CanvasTest {
 
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
             1.0f, 0.0f, 0.1f, 0.0f, 1.0f, 0.28f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
@@ -895,7 +893,7 @@ public class CanvasTest {
 
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.5f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
@@ -908,7 +906,7 @@ public class CanvasTest {
 
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 3.0f, 0.0f, -2.0f, 0.0f, 3.0f, -2.0f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
@@ -921,7 +919,7 @@ public class CanvasTest {
 
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
@@ -934,7 +932,7 @@ public class CanvasTest {
 
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.8660254f, -0.5f, 0.13397461f, 0.5f, 0.8660254f, -0.5f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
@@ -947,7 +945,7 @@ public class CanvasTest {
 
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 1.0f, 1.0f, 0.0f, 3.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
@@ -963,7 +961,7 @@ public class CanvasTest {
         mCanvas.concat(m);
 
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f
         }, values, 0.0f);
     }
@@ -2024,7 +2022,7 @@ public class CanvasTest {
     private void preCompare() {
         final float[] values = new float[FLOAT_ARRAY_LEN];
         mCanvas.getMatrix().getValues(values);
-        CtsArrayUtils.verifyArrayEquals(new float[] {
+        assertArrayEquals(new float[] {
                 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
         }, values, 0.0f);
     }
