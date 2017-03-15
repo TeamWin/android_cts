@@ -1394,6 +1394,33 @@
     <string name="aware_publish">Publish</string>
     <string name="aware_subscribe">Subscribe</string>
 
+    <string name="aware_status_attached">Attached ...</string>
+    <string name="aware_status_attach_fail">Attach failure!</string>
+    <string name="aware_status_attach_timeout">Attach failure - timed out!</string>
+    <string name="aware_status_subscribe_started">Subscribe discovery session started ...</string>
+    <string name="aware_status_subscribe_failed">Subscribe failure!</string>
+    <string name="aware_status_subscribe_timeout">Subscribe failure - timed out!</string>
+    <string name="aware_status_subscribe_null_session">Subscribe failure - null session!</string>
+    <string name="aware_status_publish_started">Publish discovery session started ...</string>
+    <string name="aware_status_publish_failed">Publish failure!</string>
+    <string name="aware_status_publish_timeout">Publish failure - timed out!</string>
+    <string name="aware_status_publish_null_session">Publish failure - null session!</string>
+    <string name="aware_status_discovery">Service discovered ...</string>
+    <string name="aware_status_discovery_timeout">Service discovery failure - timed out!</string>
+    <string name="aware_status_discovery_fail">Service discovery failure - parameter mismatch!</string>
+    <string name="aware_status_send_success">Sent message successfully ...</string>
+    <string name="aware_status_send_failed">Send message failure!</string>
+    <string name="aware_status_send_timeout">Send message failure - timed out!</string>
+    <string name="aware_status_send_fail_parameter">Send message failure - mismatched ids!</string>
+    <string name="aware_status_received">Received message ...</string>
+    <string name="aware_status_receive_timeout">Receive message failure - timed out!</string>
+    <string name="aware_status_receive_failure">Receive message failure - didn\'t receive expected message!</string>
+    <string name="aware_status_network_requested">Network requested ...</string>
+    <string name="aware_status_network_success">Network formed ...</string>
+    <string name="aware_status_network_failed">Network request failure - timed out!</string>
+    <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
+
+
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
     <string name="aware_data_path_open_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Open: Unsolicited/Passive\' / \'Subscribe\' test.</string>
     <string name="aware_data_path_open_passive_subscribe">Data Path: Open: Passive Subscribe</string>
