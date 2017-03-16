@@ -126,36 +126,6 @@ public class ToolbarTest {
                         mActivity, R.style.TextAppearance_WithColor));
     }
 
-    @UiThreadTest
-    @Test
-    public void testGetTitleMargins() {
-        assertEquals(5, mMainToolbar.getTitleMarginStart());
-        assertEquals(10, mMainToolbar.getTitleMarginTop());
-        assertEquals(15, mMainToolbar.getTitleMarginEnd());
-        assertEquals(20, mMainToolbar.getTitleMarginBottom());
-    }
-
-    @UiThreadTest
-    @Test
-    public void testSetTitleMargins() {
-        Toolbar toolbar = (Toolbar) mActivity.findViewById(R.id.toolbar2);
-
-        toolbar.setTitleMargin(5, 10, 15, 20);
-        assertEquals(5, toolbar.getTitleMarginStart());
-        assertEquals(10, toolbar.getTitleMarginTop());
-        assertEquals(15, toolbar.getTitleMarginEnd());
-        assertEquals(20, toolbar.getTitleMarginBottom());
-
-        toolbar.setTitleMarginStart(25);
-        toolbar.setTitleMarginTop(30);
-        toolbar.setTitleMarginEnd(35);
-        toolbar.setTitleMarginBottom(40);
-        assertEquals(25, toolbar.getTitleMarginStart());
-        assertEquals(30, toolbar.getTitleMarginTop());
-        assertEquals(35, toolbar.getTitleMarginEnd());
-        assertEquals(40, toolbar.getTitleMarginBottom());
-    }
-
     @Test
     public void testMenuContent() throws Throwable {
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
