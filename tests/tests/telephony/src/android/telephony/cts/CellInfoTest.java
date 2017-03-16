@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
@@ -96,6 +97,8 @@ public class CellInfoTest extends AndroidTestCase{
                 verifyWcdmaInfo((CellInfoWcdma) cellInfo);
             } else if (cellInfo instanceof CellInfoGsm) {
                 verifyGsmInfo((CellInfoGsm) cellInfo);
+            } else if (cellInfo instanceof CellInfoCdma) {
+                verifyCdmaInfo((CellInfoCdma) cellInfo);
             }
         }
 
@@ -104,6 +107,11 @@ public class CellInfoTest extends AndroidTestCase{
         //       not hit any of these cases yet.
         assertTrue("None or too many registered cells : " + numRegisteredCells,
                 numRegisteredCells > 0 && numRegisteredCells <= 2);
+    }
+
+    private void verifyCdmaInfo(CellInfoCdma cdma) {
+        int level = cdma.getCellSignalStrength().getLevel();
+        assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
     }
 
     // Verify lte cell information is within correct range.
@@ -137,6 +145,8 @@ public class CellInfoTest extends AndroidTestCase{
         int ta = cellSignalStrengthLte.getTimingAdvance();
         assertTrue("getTimingAdvance() invalid [0-1282] | Integer.MAX_VALUE, ta=" + ta,
                 ta == Integer.MAX_VALUE || (ta >= 0 && ta <=1282));
+        int level = cellSignalStrengthLte.getLevel();
+        assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
     }
 
     // Verify wcdma cell information is within correct range.
@@ -151,6 +161,9 @@ public class CellInfoTest extends AndroidTestCase{
         // Reference 3GPP 25.101 Table 5.2
         assertTrue("getUarfcn() out of range [400,11000], uarfcn=" + uarfcn,
             uarfcn >= 400 && uarfcn <= 11000);
+
+        int level = wcdma.getCellSignalStrength().getLevel();
+        assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
     }
 
     // Verify gsm cell information is within correct range.
@@ -169,6 +182,9 @@ public class CellInfoTest extends AndroidTestCase{
         // Reference 3GPP 45.005 Table 2-2
         assertTrue("getArfcn() out of range [0,1024], arfcn=" + arfcn,
             arfcn >= 0 && arfcn <= 1024);
+
+        int level = gsm.getCellSignalStrength().getLevel();
+        assertTrue("getLevel() out of range [0,4], level=" + level, level >=0 && level <= 4);
 
         int bsic = gsm.getCellIdentity().getBsic();
         // TODO(b/32774471) - Bsic should always be valid
