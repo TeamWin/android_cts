@@ -29,7 +29,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner cts-junit
 LOCAL_STATIC_JAVA_LIBRARIES = android-support-v4 ctstestrunner compatibility-device-util \
 	ub-uiautomator android-support-test guava
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
