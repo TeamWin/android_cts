@@ -365,6 +365,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void launchActivityInDockStack(String activityName) throws Exception {
         launchActivity(activityName);
+        // TODO(b/36279415): The way we launch an activity into the docked stack is different from
+        // what the user actually does. Long term we should use
+        // "adb shell input keyevent --longpress _app_swich_key_code_" to trigger a long press on
+        // the recents button which is consistent with what the user does. However, currently sys-ui
+        // does handle FLAG_LONG_PRESS for the app switch key. It just listens for long press on the
+        // view. We need to fix that in sys-ui before we can change this.
         moveActivityToDockStack(activityName);
 
         mAmWmState.waitForValidState(mDevice, activityName, DOCKED_STACK_ID);
