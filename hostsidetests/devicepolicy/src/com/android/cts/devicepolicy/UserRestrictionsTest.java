@@ -86,6 +86,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 "testDefaultRestrictions", mDeviceOwnerUserId);
         runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
+        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+                "testBroadcast", mDeviceOwnerUserId);
     }
 
     public void testUserRestrictions_primaryProfileOwnerOnly() throws Exception {
@@ -103,6 +105,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 "testDefaultRestrictions", mDeviceOwnerUserId);
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
+        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+                "testBroadcast", mDeviceOwnerUserId);
     }
 
     public void testUserRestrictions_secondaryProfileOwnerOnly() throws Exception {
@@ -116,6 +120,8 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 "testDefaultRestrictions", secondaryUserId);
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", secondaryUserId);
+        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+                "testBroadcast", secondaryUserId);
     }
 
     /**
