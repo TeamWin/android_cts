@@ -373,6 +373,31 @@ public class TvContractTest extends AndroidTestCase {
         }
     }
 
+    public void testChannelsTableForModifyChannelType() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        ContentValues values = createDummyChannelValues(mInputId, true);
+        Uri channelUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(channelUri);
+
+        // Test: try to modify channel type should fail
+        values.put(Channels.COLUMN_TYPE, Channels.TYPE_OTHER);
+        values.put(Channels.COLUMN_DISPLAY_NAME, "One dash one");
+        int result = mContentResolver.update(channelUri, values, null, null);
+        assertEquals(0, result);
+
+        // Test: update with same channel type should succeed
+        values.put(Channels.COLUMN_TYPE, Channels.TYPE_PREVIEW);
+        result = mContentResolver.update(channelUri, values, null, null);
+        assertEquals(1, result);
+        verifyChannel(channelUri, values, channelId);
+
+        // Test: update channel type for all channels should fail
+        result = mContentResolver.update(Channels.CONTENT_URI, values, null, null);
+        assertEquals(0, result);
+    }
+
     public void testChannelsTableForIllegalAccess() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
