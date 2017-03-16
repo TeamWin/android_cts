@@ -22,6 +22,7 @@ import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
+import android.content.pm.PackageManager;
 import android.content.Context;
 import android.util.Log;
 import java.io.BufferedReader;
@@ -46,7 +47,13 @@ public class EncryptionTest extends AndroidTestCase {
 
     private boolean isRequired() {
         // Optional before MIN_API_LEVEL
-        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL;
+        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !isTelevision();
+    }
+
+    private boolean isTelevision() {
+        PackageManager pm = getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     public void testEncryption() throws Exception {
