@@ -1391,6 +1391,9 @@
         Test failed.\n\nUnexpected error. Check logcat.</string>
 
     <string name="aware_dp_ib_open_unsolicited">Data Path: Open: Unsolicited/Passive</string>
+    <string name="aware_dp_ib_passphrase_unsolicited">Data Path: Passphrase: Unsolicited/Passive</string>
+    <string name="aware_dp_ib_open_solicited">Data Path: Open: Solicited/Active</string>
+    <string name="aware_dp_ib_passphrase_solicited">Data Path: Passphrase: Solicited/Active</string>
     <string name="aware_publish">Publish</string>
     <string name="aware_subscribe">Subscribe</string>
 
@@ -1420,10 +1423,21 @@
     <string name="aware_status_network_failed">Network request failure - timed out!</string>
     <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
 
-
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
     <string name="aware_data_path_open_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Open: Unsolicited/Passive\' / \'Subscribe\' test.</string>
     <string name="aware_data_path_open_passive_subscribe">Data Path: Open: Passive Subscribe</string>
+
+    <string name="aware_data_path_passphrase_unsolicited_publish">Data Path: Passphrase: Unsolicited Publish</string>
+    <string name="aware_data_path_passphrase_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Passphrase: Unsolicited/Passive\' / \'Subscribe\' test.</string>
+    <string name="aware_data_path_passphrase_passive_subscribe">Data Path: Passphrase: Passive Subscribe</string>
+
+    <string name="aware_data_path_open_solicited_publish">Data Path: Open: Solicited Publish</string>
+    <string name="aware_data_path_open_solicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Open: Solicited/Active\' / \'Subscribe\' test.</string>
+    <string name="aware_data_path_open_active_subscribe">Data Path: Open: Active Subscribe</string>
+
+    <string name="aware_data_path_passphrase_solicited_publish">Data Path: Passphrase: Solicited Publish</string>
+    <string name="aware_data_path_passphrase_solicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Passphrase: Solicited/Active\' / \'Subscribe\' test.</string>
+    <string name="aware_data_path_passphrase_active_subscribe">Data Path: Passphrase: Active Subscribe</string>
 
     <string name="camera_fov_calibration">Camera FOV Calibration</string>
     <string name="camera_fov_calibration_done">Done</string>

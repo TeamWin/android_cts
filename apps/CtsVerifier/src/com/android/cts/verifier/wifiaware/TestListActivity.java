@@ -70,6 +70,36 @@ public class TestListActivity extends PassFailButtons.TestListActivity {
                 R.string.aware_subscribe,
                 DataPathOpenPassiveSubscribeTestActivity.class.getName(),
                 new Intent(this, DataPathOpenPassiveSubscribeTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newCategory(this,
+                R.string.aware_dp_ib_passphrase_unsolicited));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_publish,
+                DataPathPassphraseUnsolicitedPublishTestActivity.class.getName(),
+                new Intent(this, DataPathPassphraseUnsolicitedPublishTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_subscribe,
+                DataPathPassphrasePassiveSubscribeTestActivity.class.getName(),
+                new Intent(this, DataPathPassphrasePassiveSubscribeTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newCategory(this,
+                R.string.aware_dp_ib_open_solicited));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_publish,
+                DataPathOpenSolicitedPublishTestActivity.class.getName(),
+                new Intent(this, DataPathOpenSolicitedPublishTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_subscribe,
+                DataPathOpenActiveSubscribeTestActivity.class.getName(),
+                new Intent(this, DataPathOpenActiveSubscribeTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newCategory(this,
+                R.string.aware_dp_ib_passphrase_solicited));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_publish,
+                DataPathPassphraseSolicitedPublishTestActivity.class.getName(),
+                new Intent(this, DataPathPassphraseSolicitedPublishTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_subscribe,
+                DataPathPassphraseActiveSubscribeTestActivity.class.getName(),
+                new Intent(this, DataPathPassphraseActiveSubscribeTestActivity.class), null));
 
         adapter.registerDataSetObserver(new DataSetObserver() {
             @Override
