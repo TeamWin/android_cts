@@ -29,6 +29,9 @@ import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.CalendarContract;
+import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestCase;
@@ -70,14 +73,35 @@ public class ClientTest {
      * Intents that we expect the system to expose activities to ephemeral apps to handle.
      */
     private static final Intent[] EXPECTED_EXPOSED_SYSTEM_INTENTS = new Intent[] {
-        makeIntent(Intent.ACTION_OPEN_DOCUMENT, Intent.CATEGORY_OPENABLE, "*/*"),
-        makeIntent(Intent.ACTION_OPEN_DOCUMENT, null, "*/*"),
-        makeIntent(Intent.ACTION_GET_CONTENT, Intent.CATEGORY_OPENABLE, "*/*"),
-        makeIntent(Intent.ACTION_GET_CONTENT, null, "*/*"),
-        makeIntent(Intent.ACTION_OPEN_DOCUMENT_TREE, null, null),
-        makeIntent(Intent.ACTION_CREATE_DOCUMENT, Intent.CATEGORY_OPENABLE, "text/plain"),
-        makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain"),
-
+        // Camera
+        makeIntent(MediaStore.ACTION_IMAGE_CAPTURE, null, null, null),
+        makeIntent(MediaStore.ACTION_VIDEO_CAPTURE, null, null, null),
+        // Contacts
+        makeIntent(Intent.ACTION_PICK, null, ContactsContract.Contacts.CONTENT_TYPE, null),
+        makeIntent(Intent.ACTION_PICK, null,
+                ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE, null),
+        makeIntent(Intent.ACTION_PICK, null,
+                ContactsContract.CommonDataKinds.Email.CONTENT_TYPE, null),
+        makeIntent(Intent.ACTION_PICK, null,
+                ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE, null),
+        makeIntent(Intent.ACTION_INSERT, null, ContactsContract.Contacts.CONTENT_TYPE, null),
+        // Email
+        makeIntent(Intent.ACTION_SEND, null, "text/plain", Uri.parse("mailto:")),
+        // File Storage
+        makeIntent(Intent.ACTION_OPEN_DOCUMENT, Intent.CATEGORY_OPENABLE, "*/*", null),
+        makeIntent(Intent.ACTION_OPEN_DOCUMENT, null, "*/*", null),
+        makeIntent(Intent.ACTION_GET_CONTENT, Intent.CATEGORY_OPENABLE, "*/*", null),
+        makeIntent(Intent.ACTION_GET_CONTENT, null, "*/*", null),
+        makeIntent(Intent.ACTION_OPEN_DOCUMENT_TREE, null, null, null),
+        makeIntent(Intent.ACTION_CREATE_DOCUMENT, Intent.CATEGORY_OPENABLE, "text/plain", null),
+        makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain", null),
+        // Phone call
+        makeIntent(Intent.ACTION_DIAL, null, null, Uri.parse("tel:")),
+        // SMS
+        makeIntent(Intent.ACTION_SEND, null, "text/plain", Uri.parse("sms:")),
+        makeIntent(Intent.ACTION_SEND, null, "text/plain", Uri.parse("smsto:")),
+        // Web
+        makeIntent(Intent.ACTION_VIEW, null, "text/html", Uri.parse("https://example.com")),
     };
 
     private BroadcastReceiver mReceiver;
@@ -348,13 +372,16 @@ public class ClientTest {
         return result;
     }
 
-    private static Intent makeIntent(String action, String category, String mimeType) {
+    private static Intent makeIntent(String action, String category, String mimeType, Uri data) {
         Intent intent = new Intent(action);
         if (category != null) {
             intent.addCategory(category);
         }
         if (mimeType != null) {
             intent.setType(mimeType);
+        }
+        if (data != null) {
+            intent.setData(data);
         }
         return intent;
     }
