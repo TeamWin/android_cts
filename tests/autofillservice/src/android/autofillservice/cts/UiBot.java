@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.res.Resources;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -33,6 +34,7 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
+import android.view.accessibility.AccessibilityWindowInfo;
 
 /**
  * Helper for UI-related needs.
@@ -52,17 +54,21 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD =
             "autofill_save_type_credit_card";
     private static final String RESOURCE_STRING_AUTOFILL = "autofill";
+    private static final String RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE =
+            "autofill_picker_accessibility_title";
 
     private static final String TAG = "AutoFillCtsUiBot";
 
     private final UiDevice mDevice;
     private final int mTimeout;
     private final String mPackageName;
+    private final UiAutomation mAutoman;
 
     UiBot(Instrumentation instrumentation, int timeout) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
         mTimeout = timeout;
         mPackageName = instrumentation.getContext().getPackageName();
+        mAutoman = instrumentation.getUiAutomation();
     }
 
     /**
@@ -71,7 +77,7 @@ final class UiBot {
     void assertNoDatasets() {
         final UiObject2 ui;
         try {
-            ui = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
+            ui = findDatasetPicker();
         } catch (Throwable t) {
             // TODO(b/33197203): use a more elegant check than catching the expection because it's
             // not showing...
@@ -84,8 +90,7 @@ final class UiBot {
      * Asserts the dataset chooser is shown and contains the given datasets.
      */
     void assertDatasets(String...names) {
-        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
-
+        final UiObject2 picker = findDatasetPicker();
         for (String name : names) {
             final UiObject2 dataset = picker.findObject(By.text(name));
             assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
@@ -96,7 +101,7 @@ final class UiBot {
      * Selects a dataset that should be visible in the floating UI.
      */
     void selectDataset(String name) {
-        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
+        final UiObject2 picker = findDatasetPicker();
         final UiObject2 dataset = picker.findObject(By.text(name));
         assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
         dataset.click();
@@ -148,13 +153,10 @@ final class UiBot {
         final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
         assertWithMessage("save title (%s)", RESOURCE_ID_SAVE_TITLE).that(titleView).isNotNull();
 
-        final Resources resources = InstrumentationRegistry.getContext().getResources();
         final String serviceLabel = InstrumentedAutoFillService.class.getSimpleName();
         final String expectedTitle;
         if (type == SAVE_DATA_TYPE_GENERIC) {
-            final int titleId = resources.getIdentifier(RESOURCE_STRING_SAVE_TITLE, "string",
-                    "android");
-            expectedTitle = resources.getString(titleId, serviceLabel);
+            expectedTitle = getString(RESOURCE_STRING_SAVE_TITLE, serviceLabel);
         } else {
             final String typeResourceName;
             switch (type) {
@@ -170,11 +172,9 @@ final class UiBot {
                 default:
                     throw new IllegalArgumentException("Unsupported type: " + type);
             }
-            final int typeId = resources.getIdentifier(typeResourceName, "string", "android");
-            final String typeString = resources.getString(typeId);
-            final int titleId = resources.getIdentifier(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE,
-                    "string", "android");
-            expectedTitle = resources.getString(titleId, typeString, serviceLabel);
+            final String typeString = getString(typeResourceName);
+            expectedTitle = getString(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE, typeString,
+                    serviceLabel);
         }
 
         final String actualTitle = titleView.getText();
@@ -226,11 +226,28 @@ final class UiBot {
         field.click(3000);
 
         final UiObject2 menuItem = waitForObject(By.res("android", RESOURCE_ID_CONTEXT_MENUITEM));
-        final Resources resources = InstrumentationRegistry.getContext().getResources();
-        final int stringId = resources.getIdentifier(RESOURCE_STRING_AUTOFILL, "string", "android");
-        final String expectedText = resources.getString(stringId);
+        final String expectedText = getString(RESOURCE_STRING_AUTOFILL);
+
         assertThat(menuItem.getText().toUpperCase()).isEqualTo(expectedText.toUpperCase());
         return menuItem;
+    }
+
+    /**
+     * Gets a string from the Android resources.
+     */
+    private String getString(String id) {
+        final Resources resources = InstrumentationRegistry.getContext().getResources();
+        final int stringId = resources.getIdentifier(id, "string", "android");
+        return resources.getString(stringId);
+    }
+
+    /**
+     * Gets a string from the Android resources.
+     */
+    private String getString(String id, Object... formatArgs) {
+        final Resources resources = InstrumentationRegistry.getContext().getResources();
+        final int stringId = resources.getIdentifier(id, "string", "android");
+        return resources.getString(stringId, formatArgs);
     }
 
     /**
@@ -251,5 +268,29 @@ final class UiBot {
         }
         throw new AssertionError("Object with selector " + selector + " not found in "
                 + mTimeout + " ms");
+    }
+
+    private UiObject2 findDatasetPicker() {
+        final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
+
+        final String expectedTitle = getString(RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE);
+        assertAccessibilityTitle(picker, expectedTitle);
+
+        return picker;
+    }
+
+    /**
+     * Asserts a given object has the expected accessibility title.
+     */
+    private void assertAccessibilityTitle(UiObject2 object, String expectedTitle) {
+        // TODO: ideally it should get the AccessibilityWindowInfo from the object, but UiAutomator
+        // does not expose that.
+        for (AccessibilityWindowInfo window : mAutoman.getWindows()) {
+            final CharSequence title = window.getTitle();
+            if (title != null && title.toString().equals(expectedTitle)) {
+                return;
+            }
+        }
+        throw new AssertionError("Title (" + expectedTitle + ") not found for " + object);
     }
 }
