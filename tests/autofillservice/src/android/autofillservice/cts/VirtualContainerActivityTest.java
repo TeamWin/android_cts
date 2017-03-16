@@ -34,7 +34,9 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.os.Debug;
 import android.support.test.rule.ActivityTestRule;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
 import org.junit.After;
@@ -131,5 +133,39 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Sanity checks.
         waitUntilDisconnected();
+        replier.assertNumberUnhandledFillRequests(0);
+        replier.assertNumberUnhandledSaveRequests(0);
+    }
+
+    @Test
+    public void testAutofillManual() throws Exception {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        InstrumentedAutoFillService.setReplier(replier);
+
+        // Set expectations.
+        replier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.getSystemService(AutofillManager.class).requestAutofill(
+                mActivity.mCustomView, mActivity.mUsername.text.id, mActivity.mUsername.bounds);
+        waitUntilConnected();
+
+        // Auto-fill it.
+        sUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        // Sanity checks.
+        waitUntilDisconnected();
+        replier.assertNumberUnhandledFillRequests(1); // Only expected call is not used in the test.
+        replier.assertNumberUnhandledSaveRequests(0);
     }
 }

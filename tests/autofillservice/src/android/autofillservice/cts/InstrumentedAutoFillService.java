@@ -84,12 +84,12 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     @Override
     public void onFillRequest(AssistStructure structure, Bundle data,
-            CancellationSignal cancellationSignal, FillCallback callback) {
+            int flags, CancellationSignal cancellationSignal, FillCallback callback) {
         if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", structure);
 
         final Replier replier = sReplier.getAndSet(null);
         assertWithMessage("Replier not set").that(replier).isNotNull();
-        replier.onFillRequest(structure, data, cancellationSignal, callback);
+        replier.onFillRequest(structure, data, cancellationSignal, callback, flags);
     }
 
     @Override
@@ -126,7 +126,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     /**
      * Sets the {@link Replier} for the
-     * {@link #onFillRequest(AssistStructure, Bundle, CancellationSignal, FillCallback)} and
+     * {@link #onFillRequest(AssistStructure, Bundle, int, CancellationSignal, FillCallback)} and
      * {@link #onSaveRequest(AssistStructure, Bundle, SaveCallback)} calls.
      */
     static void setReplier(Replier replier) {
@@ -152,14 +152,17 @@ public class InstrumentedAutoFillService extends AutofillService {
         final Bundle data;
         final CancellationSignal cancellationSignal;
         final FillCallback callback;
+        final int flags;
 
         private FillRequest(AssistStructure structure, Bundle data,
-                CancellationSignal cancellationSignal, FillCallback callback) {
+                CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             this.structure = structure;
             this.data = data;
             this.cancellationSignal = cancellationSignal;
             this.callback = callback;
+            this.flags = flags;
         }
+
     }
 
     /**
@@ -182,7 +185,7 @@ public class InstrumentedAutoFillService extends AutofillService {
     /**
      * Object used to answer a
      * {@link AutofillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
-     * android.os.CancellationSignal, android.service.autofill.FillCallback)}
+     * int, android.os.CancellationSignal, android.service.autofill.FillCallback)}
      * on behalf of a unit test method.
      */
     static final class Replier {
@@ -224,7 +227,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
         /**
          * Asserts the total number of {@link AutofillService#onFillRequest(AssistStructure, Bundle,
-         * CancellationSignal, FillCallback)}, minus those returned by
+         * int, CancellationSignal, FillCallback)}, minus those returned by
          * {@link #getNextFillRequest()}.
          */
         void assertNumberUnhandledFillRequests(int expected) {
@@ -255,7 +258,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         private void onFillRequest(AssistStructure structure, Bundle data,
-                CancellationSignal cancellationSignal, FillCallback callback) {
+                CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             try {
                 final CannedFillResponse response = mResponses.remove();
                 if (response == null) {
@@ -268,7 +271,8 @@ public class InstrumentedAutoFillService extends AutofillService {
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);
             } finally {
-                mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback));
+                mFillRequests.offer(new FillRequest(structure, data, cancellationSignal, callback,
+                        flags));
             }
         }
 

@@ -48,10 +48,10 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
     static final String BLANK_VALUE = "        ";
 
-    private VirtualContainerView mCustomView;
+    VirtualContainerView mCustomView;
 
-    private Line mUsername;
-    private Line mPassword;
+    Line mUsername;
+    Line mPassword;
 
     private FillExpectation mExpectation;
 
