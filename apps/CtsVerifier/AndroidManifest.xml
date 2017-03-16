@@ -1250,6 +1250,8 @@
                     android:value="android.hardware.type.television" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.software.leanback" />
+            <meta-data android:name="test_excluded_features"
+                    android:value="android.hardware.type.automotive" />
         </activity>
 
         <receiver android:name="com.android.cts.verifier.sensors.DeviceSuspendTestActivity$AlarmReceiver">
