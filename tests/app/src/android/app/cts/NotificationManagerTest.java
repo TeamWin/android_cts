@@ -74,6 +74,38 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testCreateChannelGroup() throws Exception {
+        final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(ncg.getId());
+        mNotificationManager.createNotificationChannelGroup(ncg);
+        try {
+            mNotificationManager.createNotificationChannel(channel);
+
+            List<NotificationChannelGroup> ncgs =
+                    mNotificationManager.getNotificationChannelGroups();
+            assertEquals(1, ncgs.size());
+            assertEquals(ncg, ncgs.get(0));
+        } finally {
+            mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
+        }
+    }
+
+    public void testDeleteChannelGroup() throws Exception {
+        final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(ncg.getId());
+        mNotificationManager.createNotificationChannelGroup(ncg);
+        mNotificationManager.createNotificationChannel(channel);
+
+        mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
+
+        assertNull(mNotificationManager.getNotificationChannel(channel.getId()));
+        assertEquals(0, mNotificationManager.getNotificationChannelGroups().size());
+    }
+
     public void testCreateChannel() throws Exception {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
@@ -135,11 +167,15 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testCreateChannelWithGroup() throws Exception {
         NotificationChannelGroup ncg = new NotificationChannelGroup("g", "n");
         mNotificationManager.createNotificationChannelGroup(ncg);
-        NotificationChannel channel =
-                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setGroup(ncg.getId());
-        mNotificationManager.createNotificationChannel(channel);
-        compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+        try {
+            NotificationChannel channel =
+                    new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setGroup(ncg.getId());
+            mNotificationManager.createNotificationChannel(channel);
+            compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
+        } finally {
+            mNotificationManager.deleteNotificationChannelGroup(ncg.getId());
+        }
     }
 
     public void testCreateChannelWithBadGroup() throws Exception {
