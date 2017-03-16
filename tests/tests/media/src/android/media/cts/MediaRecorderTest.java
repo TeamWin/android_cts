@@ -30,7 +30,7 @@ import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
-import android.os.Bundle;
+import android.media.MediaMetricsSet;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -229,14 +229,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
 
         // verify some getMetrics() behaviors while we're here.
-        Bundle metricsBundle = mMediaRecorder.getMetrics();
-        if (metricsBundle == null) {
+        MediaMetricsSet metricsSet = mMediaRecorder.getMetrics();
+        if (metricsSet == null) {
             fail("getMetrics() returns no data");
         } else {
             // ensure existence of some known fields
-            int ht = metricsBundle.getInt("ht");
-            int wid = metricsBundle.getInt("wid");
-            int videoBitRate = metricsBundle.getInt("video-bitrate");
+            int ht = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_HEIGHT, -1);
+            int wid = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_WIDTH, -1);
+            int videoBitRate = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_VIDEO_BITRATE, -1);
             if (ht != height) {
                 fail("getMetrics() height set " + height + " got " + ht);
             }
@@ -292,14 +292,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
 
         // verify some getMetrics() behaviors while we're here.
-        Bundle metricsBundle = mMediaRecorder.getMetrics();
-        if (metricsBundle == null) {
+        MediaMetricsSet metricsSet = mMediaRecorder.getMetrics();
+        if (metricsSet == null) {
             fail("getMetrics() returns no data");
         } else {
             // ensure existence of some known fields
-            int ht = metricsBundle.getInt("ht");
-            int wid = metricsBundle.getInt("wid");
-            int videoBitRate = metricsBundle.getInt("video-bitrate");
+            int ht = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_HEIGHT, -1);
+            int wid = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_WIDTH, -1);
+            int videoBitRate = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_VIDEO_BITRATE, -1);
             if (ht != height) {
                 fail("getMetrics() height set " + height + " got " + ht);
             }

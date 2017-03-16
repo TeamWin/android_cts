@@ -20,6 +20,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
+import android.media.MediaMetricsSet;
 import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase2;
 
@@ -320,6 +321,23 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         } else {
             Thread.sleep(playTime);
         }
+
+        // validate a couple of the metrics.
+        MediaMetricsSet metricsSet = mMediaPlayer.getMetrics();
+        if (metricsSet == null) {
+            fail("MediaPlayer returned null metrics");
+        } else {
+            int ht = metricsSet.getInt(MediaMetricsSet.MediaPlayer.KEY_HEIGHT, -1);
+            int wid = metricsSet.getInt(MediaMetricsSet.MediaPlayer.KEY_WIDTH, -1);
+
+            if (ht != height) {
+                fail("getMetrics() height set " + height + " got " + ht);
+            }
+            if (wid != width) {
+                fail("getMetrics() width set " + width + " got " + wid);
+            }
+        }
+
         mMediaPlayer.stop();
     }
 

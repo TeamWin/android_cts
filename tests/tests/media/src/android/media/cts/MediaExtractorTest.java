@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import android.media.cts.R;
+import android.media.MediaMetricsSet;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
@@ -107,5 +108,18 @@ public class MediaExtractorTest extends AndroidTestCase {
             assertTrue(mExtractor.readSampleData(buf, 0) > 0);
             assertTrue(mExtractor.advance());
         }
+
+        // verify some getMetrics() behaviors while we're here.
+        MediaMetricsSet metricsSet = mExtractor.getMetrics();
+        if (metricsSet == null) {
+            fail("getMetrics() returns no data");
+        } else {
+            // ensure existence of some known fields
+            int tracks = metricsSet.getInt(MediaMetricsSet.MediaExtractor.KEY_TRACKS, -1);
+            if (tracks != trackCount) {
+                fail("getMetrics() trackCount expect " + trackCount + " got " + tracks);
+            }
+        }
+
     }
 }
