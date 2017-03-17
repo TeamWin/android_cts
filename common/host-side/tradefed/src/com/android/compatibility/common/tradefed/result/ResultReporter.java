@@ -729,23 +729,28 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
      * directory generated in a previous session by a passing test will not be generated on retry
      * unless copied from the old result directory.
      *
-     * @param oldResultsDir
-     * @param newResultsDir
+     * @param oldDir
+     * @param newDir
      */
-    static void copyRetryFiles(File oldResultsDir, File newResultsDir) {
-        File[] oldFiles = oldResultsDir.listFiles();
-        for (File oldFile : oldFiles) {
-            File newFile = new File (newResultsDir, oldFile.getName());
-            if (!newFile.exists()) {
+    static void copyRetryFiles(File oldDir, File newDir) {
+        File[] oldChildren = oldDir.listFiles();
+        for (File oldChild : oldChildren) {
+            File newChild = new File(newDir, oldChild.getName());
+            if (!newChild.exists()) {
+                // If this old file or directory doesn't exist in new dir, simply copy it
                 try {
-                    if (oldFile.isDirectory()) {
-                        FileUtil.recursiveCopy(oldFile, newFile);
+                    if (oldChild.isDirectory()) {
+                        FileUtil.recursiveCopy(oldChild, newChild);
                     } else {
-                        FileUtil.copyFile(oldFile, newFile);
+                        FileUtil.copyFile(oldChild, newChild);
                     }
                 } catch (IOException e) {
-                    warn("Failed to copy file \"%s\" from previous session", oldFile.getName());
+                    warn("Failed to copy file \"%s\" from previous session", oldChild.getName());
                 }
+            } else if (oldChild.isDirectory() && newChild.isDirectory()) {
+                // If both children exist as directories, make sure the children of the old child
+                // directory exist in the new child directory.
+                copyRetryFiles(oldChild, newChild);
             }
         }
     }
