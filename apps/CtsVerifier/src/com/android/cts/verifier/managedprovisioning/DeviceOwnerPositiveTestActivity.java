@@ -247,21 +247,23 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                         UserManager.DISALLOW_USB_FILE_TRANSFER)),
                 }));
 
-        // setStatusBarDisabled
-        adapter.add(createInteractiveTestItem(this, DISABLE_STATUS_BAR_TEST_ID,
-                R.string.device_owner_disable_statusbar_test,
-                R.string.device_owner_disable_statusbar_test_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(
-                                R.string.device_owner_disable_statusbar_button,
-                                createDeviceOwnerIntentWithBooleanParameter(
-                                        CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
-                                                true)),
-                        new ButtonInfo(
-                                R.string.device_owner_reenable_statusbar_button,
-                                createDeviceOwnerIntentWithBooleanParameter(
-                                        CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
-                                                false))}));
+        // DISABLE_STATUS_BAR_TEST
+        if (isStatusBarEnabled()) {
+            adapter.add(createInteractiveTestItem(this, DISABLE_STATUS_BAR_TEST_ID,
+                    R.string.device_owner_disable_statusbar_test,
+                    R.string.device_owner_disable_statusbar_test_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_disable_statusbar_button,
+                                    createDeviceOwnerIntentWithBooleanParameter(
+                                            CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
+                                                    true)),
+                            new ButtonInfo(
+                                    R.string.device_owner_reenable_statusbar_button,
+                                    createDeviceOwnerIntentWithBooleanParameter(
+                                            CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
+                                                    false))}));
+        }
 
         // setKeyguardDisabled
         adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
@@ -346,5 +348,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_SET_USER_ICON);
+    }
+
+    private boolean isStatusBarEnabled() {
+      // Watches don't support the status bar so this is an ok proxy, but this is not the most
+      // general test for that. TODO: add a test API to do a real check for status bar support.
+      return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
