@@ -125,6 +125,13 @@ public class BaseTileServiceTest extends DeviceTestCase {
     }
 
     protected boolean supportedHardware() throws DeviceNotAvailableException {
+        // Customization by third-party tiles is only a requirement for devices
+        // supporting Quick Settings UI component, according to the CDD:
+        // http://source.android.com/compatibility/7.1/android-7.1-cdd.html#3_13_quick_settings
+        //
+        // As there is no public API to distinguish a device with Quick Settings
+        // from others, the check below, as well as all the tests under
+        // CtsSystemUiHostTestCases relying on the check may have false negatives.
         String features = getDevice().executeShellCommand("pm list features");
         return !features.contains("android.hardware.type.television") &&
                !features.contains("android.hardware.type.watch");
