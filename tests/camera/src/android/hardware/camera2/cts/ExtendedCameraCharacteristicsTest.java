@@ -1200,8 +1200,9 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 // should be advertise by the camera.
                 for (int quality = CamcorderProfile.QUALITY_HIGH_SPEED_480P;
                         quality <= CamcorderProfile.QUALITY_HIGH_SPEED_2160P; quality++) {
-                    if (CamcorderProfile.hasProfile(quality)) {
-                        CamcorderProfile profile = CamcorderProfile.get(quality);
+                    int cameraId = Integer.valueOf(mIds[counter]);
+                    if (CamcorderProfile.hasProfile(cameraId, quality)) {
+                        CamcorderProfile profile = CamcorderProfile.get(cameraId, quality);
                         Size camcorderProfileSize =
                                 new Size(profile.videoFrameWidth, profile.videoFrameHeight);
                         assertTrue("CamcorderPrfile size " + camcorderProfileSize +
