@@ -84,7 +84,7 @@ public class TestUtils {
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
     public static final String REMOTE_ACCOUNT_LABEL = "CTSRemoteConnectionService";
-    public static final String SELF_MANAGED_ACCOUNT_LABEL = "CtsSelfManagedConnectionService";
+    public static final String SELF_MANAGED_ACCOUNT_LABEL = "android.telecom.cts";
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
             .setAddress(Uri.parse("sip:test@test.com"))
@@ -208,6 +208,9 @@ public class TestUtils {
     public static CountDownLatch waitForLock(CountDownLatch lock) {
         boolean success;
         try {
+            if (lock == null) {
+                return null;
+            }
             success = lock.await(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ie) {
             return null;
@@ -286,7 +289,6 @@ public class TestUtils {
                 .stream()
                 .filter(connection -> address.equals(connection.getAddress()))
                 .findFirst();
-
         assert(connectionOptional.isPresent());
         return connectionOptional.get();
     }
