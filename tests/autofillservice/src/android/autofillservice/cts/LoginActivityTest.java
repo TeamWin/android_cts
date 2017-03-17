@@ -19,6 +19,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
@@ -94,11 +95,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public final ActivityTestRule<LoginActivity> mActivityRule =
             new ActivityTestRule<LoginActivity>(LoginActivity.class);
 
-    private LoginActivity mLoginActivity;
+    private LoginActivity mActivity;
 
     @Before
     public void setActivity() {
-        mLoginActivity = mActivityRule.getActivity();
+        mActivity = mActivityRule.getActivity();
         destroyAllSessions();
     }
 
@@ -118,7 +119,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.addResponse((CannedFillResponse) null);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Auto-fill it.
@@ -145,20 +146,20 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Dynamically set password to make sure it's sanitized.
-        mLoginActivity.onPassword((v) -> { v.setText("I AM GROOT"); });
+        mActivity.onPassword((v) -> v.setText("I AM GROOT"));
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Sanity checks.
 
@@ -183,7 +184,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         enableService();
         // TODO(b/35948916): callback assertions are redundant here because they're tested by
         // testAutofillCallbacks(), but that test would not detect the extra call.
-        final MyAutofillCallback callback = mLoginActivity.registerCallback();
+        final MyAutofillCallback callback = mActivity.registerCallback();
         final Replier replier = new Replier();
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -193,25 +194,25 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
         final FillRequest fillRequest = replier.getNextFillRequest();
-        final View username = mLoginActivity.getUsername();
-        final View password = mLoginActivity.getPassword();
+        final View username = mActivity.getUsername();
+        final View password = mActivity.getPassword();
 
         callback.assertUiShownEvent(username);
 
         // Make sure tapping on other fields from the dataset does not trigger it again
-        mLoginActivity.onPassword((v) -> { v.requestFocus(); });
+        mActivity.onPassword((v) -> v.requestFocus());
         replier.assertNumberUnhandledFillRequests(0);
 
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
 
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         replier.assertNumberUnhandledFillRequests(0);
 
         callback.assertUiHiddenEvent(password);
@@ -226,11 +227,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("The Dude");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Make sure tapping on other fields from the dataset does not trigger it again
-        mLoginActivity.onPassword((v) -> { v.requestFocus(); });
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onPassword((v) -> v.requestFocus());
+        mActivity.onUsername((v) -> v.requestFocus());
 
         // Sanity checks.
         waitUntilDisconnected();
@@ -240,7 +241,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutofillCallbacks() throws Exception {
         // Set service.
         enableService();
-        final MyAutofillCallback callback = mLoginActivity.registerCallback();
+        final MyAutofillCallback callback = mActivity.registerCallback();
         final Replier replier = new Replier();
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -250,30 +251,30 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
         final FillRequest fillRequest = replier.getNextFillRequest();
-        final View username = mLoginActivity.getUsername();
-        final View password = mLoginActivity.getPassword();
+        final View username = mActivity.getUsername();
+        final View password = mActivity.getPassword();
 
         callback.assertUiShownEvent(username);
 
-        mLoginActivity.onPassword((v) -> { v.requestFocus(); });
+        mActivity.onPassword((v) -> v.requestFocus());
         callback.assertUiHiddenEvent(username);
         callback.assertUiShownEvent(password);
 
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
-        mLoginActivity.unregisterCallback();
+        mActivity.onUsername((v) -> v.requestFocus());
+        mActivity.unregisterCallback();
         callback.assertNumberUnhandledEvents(0);
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Sanity checks.
         callback.assertNumberUnhandledEvents(0);
@@ -284,13 +285,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutofillCallbackDisabled() throws Exception {
         // Set service.
         disableService();
-        final MyAutofillCallback callback = mLoginActivity.registerCallback();
+        final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
 
         // Assert callback was called
-        final View username = mLoginActivity.getUsername();
+        final View username = mActivity.getUsername();
         callback.assertUiUnavailableEvent(username);
     }
 
@@ -309,7 +310,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     private void callbackUnavailableTest(CannedFillResponse response) throws Exception {
         // Set service.
         enableService();
-        final MyAutofillCallback callback = mLoginActivity.registerCallback();
+        final MyAutofillCallback callback = mActivity.registerCallback();
         final Replier replier = new Replier();
         InstrumentedAutoFillService.setReplier(replier);
 
@@ -317,7 +318,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.addResponse(response);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
         final FillRequest fillRequest = replier.getNextFillRequest();
 
@@ -325,7 +326,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertNoDatasets();
 
         // Assert callback was called
-        final View username = mLoginActivity.getUsername();
+        final View username = mActivity.getUsername();
         callback.assertUiUnavailableEvent(username);
 
         // Sanity checks.
@@ -356,29 +357,29 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .setExtras(extras)
                 .build());
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Try to login, it will fail.
-        final String loginMessage = mLoginActivity.tapLogin();
+        final String loginMessage = mActivity.tapLogin();
 
         assertWithMessage("Wrong login msg").that(loginMessage).isEqualTo(AUTHENTICATION_MESSAGE);
 
         // Set right password...
-        mLoginActivity.onPassword((v) -> { v.setText("dude"); });
+        mActivity.onPassword((v) -> v.setText("dude"));
 
         // ... and try again
         final String expectedMessage = getWelcomeMessage("dude");
-        final String actualMessage = mLoginActivity.tapLogin();
+        final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
@@ -386,7 +387,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
 
         final SaveRequest saveRequest = replier.getNextSaveRequest();
-        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert value of expected fields - should not be sanitized.
         final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
@@ -454,22 +454,22 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         switch (number) {
             case 1:
                 name = "Mr Plow";
-                mLoginActivity.expectAutoFill("mr_plow", "D'OH!");
+                mActivity.expectAutoFill("mr_plow", "D'OH!");
                 break;
             case 2:
                 name = "El Barto";
-                mLoginActivity.expectAutoFill("el barto", "aycaramba!");
+                mActivity.expectAutoFill("el barto", "aycaramba!");
                 break;
             case 3:
                 name = "Mr Sparkle";
-                mLoginActivity.expectAutoFill("mr sparkle", "Aw3someP0wer");
+                mActivity.expectAutoFill("mr sparkle", "Aw3someP0wer");
                 break;
             default:
                 throw new IllegalArgumentException("invalid dataset number: " + number);
         }
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Make sure all datasets are shown.
@@ -479,7 +479,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset(name);
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Sanity checks.
         waitUntilDisconnected();
@@ -512,9 +512,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> {
-            v.requestFocus();
-        });
+        mActivity.onUsername((v) -> v.requestFocus());
 
         waitUntilConnected();
 
@@ -587,7 +585,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Sanity check.
@@ -598,12 +596,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.getNextFillRequest();
 
         // Set credentials...
-        mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
-        mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
 
         // ...and login
         final String expectedMessage = getWelcomeMessage("malkovich");
-        final String actualMessage = mLoginActivity.tapLogin();
+        final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
@@ -612,7 +610,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
 
         final SaveRequest saveRequest = replier.getNextSaveRequest();
-        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert value of expected fields - should not be sanitized.
         final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
@@ -631,7 +628,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertNoDanglingSessions();
     }
 
-    private void setSnackBarLifetimeMs(int timeout) {
+    private void setSnackBarLifetimeMs(long timeout) {
         runShellCommand("cmd autofill set save_timeout %s", timeout);
     }
 
@@ -652,7 +649,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                     .build());
 
             // Trigger auto-fill.
-            mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+            mActivity.onUsername((v) -> v.requestFocus());
             waitUntilConnected();
 
             // Sanity check.
@@ -663,12 +660,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             replier.getNextFillRequest();
 
             // Set credentials...
-            mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
-            mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
+            mActivity.onUsername((v) -> v.setText("malkovich"));
+            mActivity.onPassword((v) -> v.setText("malkovich"));
 
             // ...and login
             final String expectedMessage = getWelcomeMessage("malkovich");
-            final String actualMessage = mLoginActivity.tapLogin();
+            final String actualMessage = mActivity.tapLogin();
             assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
             InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
@@ -723,7 +720,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Sanity check.
@@ -734,12 +731,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.getNextFillRequest();
 
         // Set credentials...
-        mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
-        mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
 
         // ...and login
         final String expectedMessage = getWelcomeMessage("malkovich");
-        final String actualMessage = mLoginActivity.tapLogin();
+        final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
@@ -748,8 +745,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final UiObject2 saveSnackBar = sUiBot.assertSaveShowing(type, saveDescription);
         sUiBot.saveForAutofill(saveSnackBar, true);
 
-        final SaveRequest saveRequest = replier.getNextSaveRequest();
-        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
+        replier.getNextSaveRequest();
 
         // Other sanity checks.
         waitUntilDisconnected();
@@ -757,13 +753,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutoFillOneDatasetAndSaveWhenFlagSecure() throws Exception {
-        mLoginActivity.setFlags(FLAG_SECURE);
+        mActivity.setFlags(FLAG_SECURE);
         testAutoFillOneDatasetAndSave();
     }
 
     @Test
     public void testAutoFillOneDatasetWhenFlagSecure() throws Exception {
-        mLoginActivity.setFlags(FLAG_SECURE);
+        mActivity.setFlags(FLAG_SECURE);
         testAutoFillOneDataset();
     }
 
@@ -795,10 +791,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Set expectation for the activity
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> v.requestFocus());
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Wait for onFill() before proceeding.
@@ -811,7 +807,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("Dataset");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Other sanity checks
         waitUntilDisconnected();
@@ -846,10 +842,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Set expectation for the activity
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> v.requestFocus());
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Wait for onFill() before proceeding.
@@ -862,7 +858,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("Dataset");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Other sanity checks
         waitUntilDisconnected();
@@ -882,11 +878,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Change view contents.
-        mLoginActivity.onUsernameLabel((v) -> { v.setText("DA USER"); });
-        mLoginActivity.onPasswordLabel((v) -> { v.setText(R.string.new_password_label); });
+        mActivity.onUsernameLabel((v) -> v.setText("DA USER"));
+        mActivity.onPasswordLabel((v) -> v.setText(R.string.new_password_label));
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Assert sanitization on fill request:
@@ -903,15 +899,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertTextAndValue(findNodeByResourceId(fillRequest.structure, ID_PASSWORD), "TopSecret");
 
         // Trigger save
-        mLoginActivity.onUsername((v) -> { v.setText("malkovich"); });
-        mLoginActivity.onPassword((v) -> { v.setText("malkovich"); });
-        mLoginActivity.tapLogin();
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+        mActivity.tapLogin();
         InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
 
         // Assert the snack bar is shown and tap "Save".
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
         final SaveRequest saveRequest = replier.getNextSaveRequest();
-        assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert sanitization on save: everything should be available!
         assertTextOnly(findNodeByResourceId(saveRequest.structure, ID_USERNAME_LABEL), "DA USER");
@@ -939,11 +934,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> v.requestFocus());
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Can disable while connected.
-        mLoginActivity.runOnUiThread(() ->
+        mActivity.runOnUiThread(() ->
                 InstrumentedAutoFillService.peekInstance().disableSelf());
 
         // Ensure disabled.
@@ -965,14 +960,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> v.requestFocus());
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Wait until we timeout and disconnect.
         waitUntilDisconnected();
 
         // Cannot disable while disconnected.
-        mLoginActivity.runOnUiThread(() ->
+        mActivity.runOnUiThread(() ->
                 InstrumentedAutoFillService.peekInstance().disableSelf());
 
         // Ensure enabled.
@@ -999,16 +994,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> v.requestFocus());
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
 
         // Wait for onFill() before proceeding.
         replier.getNextFillRequest();
 
         // Trigger save.
-        mLoginActivity.onUsername((v) -> v.setText("foo"));
-        mLoginActivity.onPassword((v) -> v.setText("foo"));
-        mLoginActivity.tapLogin();
+        mActivity.onUsername((v) -> v.setText("foo"));
+        mActivity.onPassword((v) -> v.setText("foo"));
+        mActivity.tapLogin();
 
         // Start watching for the negative intent
         final CountDownLatch latch = new CountDownLatch(1);
@@ -1040,9 +1035,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.addResponse((CannedFillResponse) null);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> {
-            v.requestFocus();
-        });
+        mActivity.onUsername((v) -> v.requestFocus());
 
         // Assert input text on fill request:
         final FillRequest fillRequest = replier.getNextFillRequest();
@@ -1066,13 +1059,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         replier.addResponse((CannedFillResponse) null);
 
         // Trigger auto-fill.
-        mLoginActivity.onUsername((v) -> { v.requestFocus(); });
+        mActivity.onUsername((v) -> v.requestFocus());
         waitUntilConnected();
         sUiBot.assertNoDatasets();
 
         final FillRequest fillRequest = replier.getNextFillRequest();
 
-        // Assert it only has 1 root view with 8 "leaf" nodes:
+        // Assert it only has 1 root view with 9 "leaf" nodes:
         // 1.text view for app title
         // 2.username text label
         // 3.username text field
@@ -1080,12 +1073,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // 5.password text field
         // 6.output text field
         // 7.clear button
-        // 8.login button
+        // 8.save button
+        // 9.login button
         //
         // But it also has an intermediate container (for username) that should be included because
         // it has a resource id.
 
-        assertNumberOfChildren(fillRequest.structure, 10);
+        assertNumberOfChildren(fillRequest.structure, 11);
 
         // Make sure container with a resource id was included:
         final ViewNode usernameContainer =
@@ -1109,7 +1103,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         InstrumentedAutoFillService.setReplier(replier);
 
         // And activity.
-        mLoginActivity.onUsername((v) -> {
+        mActivity.onUsername((v) -> {
             v.setAutofillMode(AUTOFILL_MODE_MANUAL);
             // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
             // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
@@ -1122,7 +1116,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
                 .build());
-        mLoginActivity.expectAutoFill("dude", "sweet");
+        mActivity.expectAutoFill("dude", "sweet");
 
         // Long-press field to trigger AUTOFILL menu.
         sUiBot.getAutofillMenuOption(ID_USERNAME).click();
@@ -1133,7 +1127,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.selectDataset("The Dude");
 
         // Check the results.
-        mLoginActivity.assertAutoFilled();
+        mActivity.assertAutoFilled();
 
         // Sanity checks.
         // Assert flag was properly set.
@@ -1143,5 +1137,120 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Other sanity checks.
         waitUntilDisconnected();
+    }
+
+    @Test
+    public void testCommitMultipleTimes() throws Throwable {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        final CannedFillResponse response = new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build();
+
+        for (int i = 1; i <= 3; i++) {
+            final String username = "user-" + i;
+            final String password = "pass-" + i;
+            try {
+                InstrumentedAutoFillService.setReplier(replier);
+
+                // Set expectations.
+                replier.addResponse(response);
+
+                // Trigger auto-fill.
+                mActivity.onUsername((v) -> v.requestFocus());
+                if (i == 1) {
+                    waitUntilConnected();
+                }
+
+                // Sanity check.
+                sUiBot.assertNoDatasets();
+
+                // Wait for onFill() before proceeding, otherwise the fields might be changed before
+                // the session started
+                replier.getNextFillRequest();
+
+                InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
+
+                // Set credentials...
+                mActivity.onUsername((v) -> v.setText(username));
+                mActivity.onPassword((v) -> v.setText(password));
+
+                // ...and save them
+                mActivity.tapSave();
+
+                // Assert the snack bar is shown and tap "Save".
+                sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
+
+                final SaveRequest saveRequest = replier.getNextSaveRequest();
+
+                // Assert value of expected fields - should not be sanitized.
+                final ViewNode usernameNode = findNodeByResourceId(saveRequest.structure,
+                        ID_USERNAME);
+                assertTextAndValue(usernameNode, username);
+                final ViewNode passwordNode = findNodeByResourceId(saveRequest.structure,
+                        ID_PASSWORD);
+                assertTextAndValue(passwordNode, password);
+
+                assertNoDanglingSessions();
+
+                // Change focus to prepare for next step.
+                mActivity.onPassword((v) -> v.requestFocus());
+            } catch (Throwable t) {
+                throw new Throwable("Error on step " + i, t);
+            }
+        }
+
+        // Sanity checks
+        waitUntilDisconnected();
+        replier.assertNumberUnhandledFillRequests(0);
+        replier.assertNumberUnhandledSaveRequests(0);
+    }
+
+    @Test
+    public void testCancelMultipleTimes() throws Throwable {
+        // Set service.
+        enableService();
+        final Replier replier = new Replier();
+        for (int i = 1; i <= 3; i++) {
+            final String username = "user-" + i;
+            final String password = "pass-" + i;
+            replier.addResponse(new CannedDataset.Builder()
+                    .setField(ID_USERNAME, AutofillValue.forText(username))
+                    .setField(ID_PASSWORD, AutofillValue.forText(password))
+                    .setPresentation(createPresentation("The Dude"))
+                    .build());
+            mActivity.expectAutoFill(username, password);
+            try {
+                InstrumentedAutoFillService.setReplier(replier);
+
+                // Trigger auto-fill.
+                mActivity.onUsername((v) -> v.requestFocus());
+
+                waitUntilConnected();
+                replier.getNextFillRequest();
+
+                // Auto-fill it.
+                sUiBot.selectDataset("The Dude");
+
+                // Check the results.
+                mActivity.assertAutoFilled();
+
+                // Rinse and repeat...
+                mActivity.tapClear();
+
+                waitUntilDisconnected();
+                assertNoDanglingSessions();
+
+                // Change focus to prepare for next step.
+                mActivity.onPassword((v) -> v.requestFocus());
+            } catch (Throwable t) {
+                throw new Throwable("Error on step " + i, t);
+            }
+        }
+
+        // Sanity checks
+        replier.assertNumberUnhandledFillRequests(0);
+        replier.assertNumberUnhandledSaveRequests(0);
     }
 }

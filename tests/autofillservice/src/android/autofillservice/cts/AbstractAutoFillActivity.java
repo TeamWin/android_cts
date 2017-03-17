@@ -59,14 +59,17 @@ abstract class AbstractAutoFillActivity extends Activity {
         }
     }
 
+    protected AutofillManager getAutofillManager() {
+        return getSystemService(AutofillManager.class);
+    }
+
     /**
      * Registers and returns a custom callback for autofill events.
      */
     protected MyAutofillCallback registerCallback() {
         assertWithMessage("already registered").that(mCallback).isNull();
-        final AutofillManager afm = getSystemService(AutofillManager.class);
         mCallback = new MyAutofillCallback();
-        afm.registerCallback(mCallback);
+        getAutofillManager().registerCallback(mCallback);
         return mCallback;
     }
 
@@ -75,7 +78,7 @@ abstract class AbstractAutoFillActivity extends Activity {
      */
     protected void unregisterCallback() {
         assertWithMessage("not registered").that(mCallback).isNotNull();
-        getSystemService(AutofillManager.class).unregisterCallback(mCallback);
+        getAutofillManager().unregisterCallback(mCallback);
         mCallback = null;
     }
 }

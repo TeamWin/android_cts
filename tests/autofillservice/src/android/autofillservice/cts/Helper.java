@@ -62,7 +62,7 @@ final class Helper {
     /**
      * Timeout (in milliseconds) until framework unbinds from a service.
      */
-    static final long IDLE_UNBIND_TIMEOUT_MS = 5 * DateUtils.SECOND_IN_MILLIS;
+    static final long IDLE_UNBIND_TIMEOUT_MS = 5000;
 
     /**
      * Timeout (in milliseconds) for expected auto-fill requests.
@@ -72,7 +72,7 @@ final class Helper {
     /**
      * Timeout (in milliseconds) for expected save requests.
      */
-    static final long SAVE_TIMEOUT_MS = 2000;
+    static final long SAVE_TIMEOUT_MS = 5000;
 
     /**
      * Timeout (in milliseconds) for UI operations. Typically used by {@link UiBot}.
@@ -124,7 +124,7 @@ final class Helper {
     }
 
     /**
-     * Dump the assist structure on {@link System#out}.
+     * Dump the assist structure on logcat.
      */
     static void dumpStructure(String message, AssistStructure structure) {
         final StringBuffer buffer = new StringBuffer(message)
@@ -135,7 +135,14 @@ final class Helper {
             final WindowNode windowNode = structure.getWindowNodeAt(i);
             dump(buffer, windowNode.getRootViewNode(), " ", 0);
         }
-        System.out.println(buffer.toString());
+        Log.i(TAG, buffer.toString());
+    }
+
+    /**
+     * Dumps the state of the autofill service on logcat.
+     */
+    static void dumpAutofillService() {
+        Log.i(TAG, "dumpsys autofill\n\n" + runShellCommand("dumpsys autofill"));
     }
 
     private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {

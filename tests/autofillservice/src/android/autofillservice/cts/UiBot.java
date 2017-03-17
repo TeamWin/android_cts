@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
@@ -60,11 +61,11 @@ final class UiBot {
     private static final String TAG = "AutoFillCtsUiBot";
 
     private final UiDevice mDevice;
-    private final int mTimeout;
+    private final long mTimeout;
     private final String mPackageName;
     private final UiAutomation mAutoman;
 
-    UiBot(Instrumentation instrumentation, int timeout) throws Exception {
+    UiBot(Instrumentation instrumentation, long timeout) throws Exception {
         mDevice = UiDevice.getInstance(instrumentation);
         mTimeout = timeout;
         mPackageName = instrumentation.getContext().getPackageName();
@@ -148,7 +149,8 @@ final class UiBot {
     }
 
     UiObject2 assertSaveShowing(int type, String description) {
-        final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR));
+        final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR),
+                SAVE_TIMEOUT_MS);
 
         final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
         assertWithMessage("save title (%s)", RESOURCE_ID_SAVE_TITLE).that(titleView).isNotNull();
@@ -256,9 +258,19 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      */
     private UiObject2 waitForObject(BySelector selector) {
+        return waitForObject(selector, mTimeout);
+    }
+
+    /**
+     * Waits for and returns an object.
+     *
+     * @param selector {@link BySelector} that identifies the object.
+     * @param timeout timeout in ms
+     */
+    private UiObject2 waitForObject(BySelector selector, long timeout) {
         // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
         final int maxTries = 5;
-        final int napTime = mTimeout / maxTries;
+        final long napTime = timeout / maxTries;
         for (int i = 1; i <= maxTries; i++) {
             final UiObject2 uiObject = mDevice.findObject(selector);
             if (uiObject != null) {
