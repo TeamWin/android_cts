@@ -15,12 +15,8 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.OptionalSaveActivity.ID_ADDRESS1;
 import static android.autofillservice.cts.OptionalSaveActivity.ID_ADDRESS2;
 import static android.autofillservice.cts.OptionalSaveActivity.ID_CITY;
@@ -31,7 +27,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutofillValue;
@@ -51,7 +46,6 @@ import org.junit.Test;
  *   <li>City: optional
  *   <li>Favorite Color: don't care - LOL
  * </ul>
- *
  */
 public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
@@ -116,22 +110,19 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
             throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(newResponseBuilder().build());
+        sReplier.addResponse(newResponseBuilder().build());
 
         // Trigger auto-fill.
-        mActivity.syncRunOnUiThread(() -> { mActivity.mAddress1.requestFocus(); });
-        waitUntilConnected();
+        mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Sanity check.
         sUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
-        replier.getNextFillRequest();
+        sReplier.getNextFillRequest();
 
         // Manually fill fields...
         mActivity.syncRunOnUiThread(changes);
@@ -139,25 +130,16 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         // ...then tap save.
         mActivity.save();
 
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-
         // Assert the snack bar is shown and tap "Save".
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_ADDRESS, true);
 
-        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert value of fields
         assertions.visit(saveRequest.structure);
 
-        // Sanity checks:
-
-        // Make sure service was called the right number of times.
-        replier.assertNumberUnhandledFillRequests(0);
-        replier.assertNumberUnhandledSaveRequests(0);
-
         // Once saved, the session should be finsihed.
-        waitUntilDisconnected();
         assertNoDanglingSessions();
     }
 
@@ -188,22 +170,19 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
     private void noAutofillNoChangeNoSaveTest(Runnable changes) throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(newResponseBuilder().build());
+        sReplier.addResponse(newResponseBuilder().build());
 
         // Trigger auto-fill.
-        mActivity.syncRunOnUiThread(() -> { mActivity.mAddress1.requestFocus(); });
-        waitUntilConnected();
+        mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Sanity check.
         sUiBot.assertNoDatasets();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
-        replier.getNextFillRequest();
+        sReplier.getNextFillRequest();
 
         // Manually fill fields...
         mActivity.syncRunOnUiThread(changes);
@@ -211,19 +190,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         // ...then tap save.
         mActivity.save();
 
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-
         // Assert the snack bar is shown and tap "Save".
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
 
-        // Sanity checks:
-
-        // Make sure service was called the right number of times.
-        replier.assertNumberUnhandledFillRequests(0);
-        replier.assertNumberUnhandledSaveRequests(0);
-
         // Once saved, the session should be finsihed.
-        waitUntilDisconnected();
         assertNoDanglingSessions();
     }
 
@@ -335,21 +305,18 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
             Visitor<AssistStructure> assertions) throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(newResponseBuilder().addDataset(
-                dataset.setPresentation(createPresentation("Da Dataset")).build()
-                ).build());
+        sReplier.addResponse(newResponseBuilder()
+                .addDataset(dataset.setPresentation(createPresentation("Da Dataset")).build())
+                .build());
 
         // Trigger auto-fill.
         mActivity.syncRunOnUiThread(() -> { mActivity.mAddress1.requestFocus(); });
-        waitUntilConnected();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
-        replier.getNextFillRequest();
+        sReplier.getNextFillRequest();
 
         // Auto-fill it.
         sUiBot.selectDataset("Da Dataset");
@@ -363,25 +330,16 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         // ...then tap save.
         mActivity.save();
 
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-
         // Assert the snack bar is shown and tap "Save".
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_ADDRESS, true);
 
-        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert value of fields
         assertions.visit(saveRequest.structure);
 
-        // Sanity checks:
-
-        // Make sure service was called the right number of times.
-        replier.assertNumberUnhandledFillRequests(0);
-        replier.assertNumberUnhandledSaveRequests(0);
-
         // Once saved, the session should be finsihed.
-        waitUntilDisconnected();
         assertNoDanglingSessions();
     }
 
@@ -446,21 +404,18 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
             throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(newResponseBuilder().addDataset(
-                dataset.setPresentation(createPresentation("Da Dataset")).build()
-                ).build());
+        sReplier.addResponse(newResponseBuilder()
+                .addDataset(dataset.setPresentation(createPresentation("Da Dataset")).build())
+                .build());
 
         // Trigger auto-fill.
-        mActivity.syncRunOnUiThread(() -> { mActivity.mAddress1.requestFocus(); });
-        waitUntilConnected();
+        mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
-        replier.getNextFillRequest();
+        sReplier.getNextFillRequest();
 
         // Auto-fill it.
         sUiBot.selectDataset("Da Dataset");
@@ -474,15 +429,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         // ...then tap save.
         mActivity.save();
 
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
-
         // Assert the snack bar is not shown.
         sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
 
-        // Sanity checks:
-        replier.assertNumberUnhandledFillRequests(0);
-        replier.assertNumberUnhandledSaveRequests(0);
-        waitUntilDisconnected();
+        // Once saved, the session should be finsihed.
         assertNoDanglingSessions();
     }
 }

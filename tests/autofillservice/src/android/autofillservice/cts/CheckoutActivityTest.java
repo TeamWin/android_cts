@@ -31,8 +31,6 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.view.View.AUTOFILL_TYPE_LIST;
 
@@ -42,7 +40,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutofillValue;
@@ -78,11 +75,9 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     public void testAutoFill() throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(new CannedDataset.Builder()
+        sReplier.addResponse(new CannedDataset.Builder()
                 .setPresentation(createPresentation("ACME CC"))
                 .setField(ID_CC_NUMBER, AutofillValue.forText("4815162342"))
                 .setField(ID_CC_EXPIRATION, AutofillValue.forList(INDEX_CC_EXPIRATION_NEVER))
@@ -94,9 +89,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.onCcNumber((v) -> v.requestFocus());
-        waitUntilConnected();
-
-        final FillRequest fillRequest = replier.getNextFillRequest();
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
 
         // Assert properties of Spinner field.
         final ViewNode ccExpirationNode =
@@ -114,21 +107,14 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        // Sanity checks.
-        waitUntilDisconnected();
     }
 
     @Test
     public void testSanitization() throws Exception {
         enableService();
 
-        // Set service.
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
-
         // Set expectations.
-        replier.addResponse(new CannedFillResponse.Builder()
+        sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_CREDIT_CARD,
                         ID_CC_NUMBER, ID_CC_EXPIRATION, ID_ADDRESS, ID_SAVE_CC)
                 .build());
@@ -141,10 +127,9 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.onCcNumber((v) -> v.requestFocus());
-        waitUntilConnected();
 
         // Assert sanitization on fill request: everything should be sanitized!
-        final FillRequest fillRequest = replier.getNextFillRequest();
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
 
         assertTextIsSanitized(fillRequest.structure, ID_CC_NUMBER);
         assertTextIsSanitized(fillRequest.structure, ID_CC_EXPIRATION);
@@ -157,9 +142,8 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mActivity.onAddress((v) -> v.check(R.id.work_address));
         mActivity.onSaveCc((v) -> v.setChecked(false));
         mActivity.tapBuy();
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_CREDIT_CARD, true);
-        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
         // Assert sanitization on save: everything should be available!
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_CC_NUMBER), "4815162342");
@@ -170,8 +154,5 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_HOME_ADDRESS), false);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_WORK_ADDRESS), true);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), false);
-
-        // Sanity checks.
-        waitUntilDisconnected();
     }
 }

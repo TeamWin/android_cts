@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
@@ -22,8 +23,6 @@ import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
@@ -34,7 +33,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
@@ -63,7 +61,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-        destroyAllSessions();
     }
 
     @After
@@ -87,11 +84,9 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     private void autofillTest(boolean sync) throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(new CannedDataset.Builder()
+        sReplier.addResponse(new CannedDataset.Builder()
                 .setField(ID_USERNAME, AutofillValue.forText("dude"))
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
@@ -101,10 +96,9 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.mUsername.changeFocus(true);
-        waitUntilConnected();
 
         // Make sure input was sanitized.
-        final FillRequest request = replier.getNextFillRequest();
+        final FillRequest request = sReplier.getNextFillRequest();
         final ViewNode usernameLabel = findNodeByResourceId(request.structure, ID_USERNAME_LABEL);
         final ViewNode username = findNodeByResourceId(request.structure, ID_USERNAME);
         final ViewNode passwordLabel = findNodeByResourceId(request.structure, ID_PASSWORD_LABEL);
@@ -131,20 +125,17 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
 
         // Sanity checks.
-        waitUntilDisconnected();
-        replier.assertNumberUnhandledFillRequests(0);
-        replier.assertNumberUnhandledSaveRequests(0);
+        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNumberUnhandledSaveRequests(0);
     }
 
     @Test
     public void testAutofillManual() throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(new CannedDataset.Builder()
+        sReplier.addResponse(new CannedDataset.Builder()
                 .setField(ID_USERNAME, AutofillValue.forText("dude"))
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
@@ -154,7 +145,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.getSystemService(AutofillManager.class).requestAutofill(
                 mActivity.mCustomView, mActivity.mUsername.text.id, mActivity.mUsername.bounds);
-        waitUntilConnected();
+        sReplier.getNextFillRequest();
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
@@ -163,9 +154,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
 
         // Sanity checks.
-        waitUntilDisconnected();
-        replier.assertNumberUnhandledFillRequests(1); // Only expected call is not used in the test.
-        replier.assertNumberUnhandledSaveRequests(0);
+        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNumberUnhandledSaveRequests(0);
     }
 
     @Test
@@ -173,11 +163,9 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(new CannedDataset.Builder()
+        sReplier.addResponse(new CannedDataset.Builder()
                 .setField(ID_USERNAME, AutofillValue.forText("dude"))
                 .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
                 .setPresentation(createPresentation("The Dude"))
@@ -186,7 +174,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.mUsername.changeFocus(true);
-        waitUntilConnected();
+        sReplier.getNextFillRequest();
 
         callback.assertUiShownEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
 
@@ -194,9 +182,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mActivity.mPassword.changeFocus(true);
         callback.assertUiHiddenEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
         callback.assertUiShownEvent(mActivity.mCustomView, mActivity.mPassword.text.id);
-
-        // Sanity checks.
-        waitUntilDisconnected();
     }
 
     @Test
@@ -214,7 +199,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillCallbackNoDatasets() throws Exception {
-        callbackUnavailableTest(null);
+        callbackUnavailableTest(NO_RESPONSE);
     }
 
     @Test
@@ -228,23 +213,18 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse(response);
+        sReplier.addResponse(response);
 
         // Trigger auto-fill.
         mActivity.mUsername.changeFocus(true);
-        waitUntilConnected();
+        sReplier.getNextFillRequest();
 
         // Auto-fill it.
         sUiBot.assertNoDatasets();
 
         // Assert callback was called
         callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
-
-        // Other sanity checks.
-        waitUntilDisconnected();
     }
 }

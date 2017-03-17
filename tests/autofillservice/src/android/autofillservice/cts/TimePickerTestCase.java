@@ -30,7 +30,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
 import android.view.autofill.AutofillValue;
@@ -57,15 +56,13 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
 
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
         final Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 4);
         cal.set(Calendar.MINUTE, 20);
 
-        replier.addResponse(new CannedFillResponse.Builder()
+        sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                     .setPresentation(createPresentation("Adventure Time"))
                     .setField(ID_OUTPUT, AutofillValue.forText("Y U NO CHANGE ME?"))
@@ -77,10 +74,8 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         activity.expectAutoFill("4:20", 4, 20);
 
         // Trigger auto-fill.
-        activity.onOutput((v) -> { v.requestFocus(); });
-        waitUntilConnected();
-
-        final FillRequest fillRequest = replier.getNextFillRequest();
+        activity.onOutput((v) -> v.requestFocus());
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
 
         // Assert properties of TimePicker field.
         assertTextIsSanitized(fillRequest.structure, ID_TIME_PICKER);
@@ -95,16 +90,12 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         activity.setTime(10, 40);
         activity.tapOk();
 
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_GENERIC, true);
-        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert sanitization on save: everything should be available!
         assertTimeValue(findNodeByResourceId(saveRequest.structure, ID_TIME_PICKER), 10, 40);
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_OUTPUT), "10:40");
-
-        // Sanity checks.
-        waitUntilDisconnected();
     }
 }

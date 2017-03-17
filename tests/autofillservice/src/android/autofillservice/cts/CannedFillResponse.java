@@ -25,6 +25,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
+import android.service.autofill.FillCallback;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
 import android.view.autofill.AutofillId;
@@ -77,6 +78,12 @@ final class CannedFillResponse {
         negativeActionLabel = builder.mNegativeActionLabel;
         negativeActionListener = builder.mNegativeActionListener;
     }
+
+    /**
+     * Constant used to pass a {@code null} response to the
+     * {@link FillCallback#onSuccess(FillResponse)} method.
+     */
+    static final CannedFillResponse NO_RESPONSE = new Builder().build();
 
     /**
      * Creates a new response, replacing the dataset field ids by the real ids from the assist

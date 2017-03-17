@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.CONNECTION_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
@@ -36,8 +37,6 @@ import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +57,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     private static final AtomicReference<InstrumentedAutoFillService> sInstance =
             new AtomicReference<>();
-    private static final AtomicReference<Replier> sReplier = new AtomicReference<>();
+    private static final Replier sReplier = new Replier();
     private static final BlockingQueue<String> sConnectionStates = new LinkedBlockingQueue<>();
 
     public InstrumentedAutoFillService() {
@@ -87,23 +86,22 @@ public class InstrumentedAutoFillService extends AutofillService {
     public void onFillRequest(AssistStructure structure, Bundle data,
             int flags, CancellationSignal cancellationSignal, FillCallback callback) {
         if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", structure);
-
-        final Replier replier = sReplier.getAndSet(null);
-        assertWithMessage("Replier not set").that(replier).isNotNull();
-        replier.onFillRequest(structure, data, cancellationSignal, callback, flags);
+        sReplier.onFillRequest(structure, data, cancellationSignal, callback, flags);
     }
 
     @Override
     public void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
         if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", structure);
-
-        final Replier replier = sReplier.getAndSet(null);
-        assertWithMessage("Replier not set").that(replier).isNotNull();
-        replier.onSaveRequest(structure, data, callback);
+        sReplier.onSaveRequest(structure, data, callback);
     }
 
     /**
      * Waits until {@link #onConnected()} is called, or fails if it times out.
+     *
+     * <p>This method is useful on tests that explicitly verifies the connection, but should be
+     * avoided in other tests, as it adds extra time to the test execution - if a text needs to
+     * block until the service receives a callback, it should use
+     * {@link Replier#getNextFillRequest()} instead.
      */
     static void waitUntilConnected() throws InterruptedException {
         final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -116,6 +114,9 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     /**
      * Waits until {@link #onDisconnected()} is called, or fails if it times out.
+     *
+     * <p>This method is useful on tests that explicitly verifies the connection, but should be
+     * avoided in other tests, as it adds extra time to the test execution.
      */
     static void waitUntilDisconnected() throws InterruptedException {
         final String state = sConnectionStates.poll(2 * IDLE_UNBIND_TIMEOUT_MS,
@@ -127,27 +128,20 @@ public class InstrumentedAutoFillService extends AutofillService {
     }
 
     /**
-     * Sets the {@link Replier} for the
-     * {@link #onFillRequest(AssistStructure, Bundle, int, CancellationSignal, FillCallback)} and
-     * {@link #onSaveRequest(AssistStructure, Bundle, SaveCallback)} calls.
+     * Gets the {@link Replier} singleton.
      */
-    static void setReplier(Replier replier) {
-        final boolean ok = sReplier.compareAndSet(null, replier);
-        if (!ok) {
-            throw new IllegalStateException("already set: " + sReplier.get());
-        }
+    static Replier getReplier() {
+        return sReplier;
     }
 
     static void resetStaticState() {
-        sReplier.set(null);
         sConnectionStates.clear();
     }
 
     /**
      * POJO representation of the contents of a
-     * {@link AutofillService#onFillRequest(android.app.assist.AssistStructure, android.os.Bundle,
-     * android.os.CancellationSignal, android.service.autofill.FillCallback)}
-     * that can be asserted at the end of a test case.
+     * {@link AutofillService#onFillRequest(AssistStructure, Bundle, int, CancellationSignal,
+     * FillCallback)} that can be asserted at the end of a test case.
      */
     static final class FillRequest {
         final AssistStructure structure;
@@ -192,9 +186,12 @@ public class InstrumentedAutoFillService extends AutofillService {
      */
     static final class Replier {
 
-        private final Queue<CannedFillResponse> mResponses = new LinkedList<>();
+        private final BlockingQueue<CannedFillResponse> mResponses = new LinkedBlockingQueue<>();
         private final BlockingQueue<FillRequest> mFillRequests = new LinkedBlockingQueue<>();
         private final BlockingQueue<SaveRequest> mSaveRequests = new LinkedBlockingQueue<>();
+
+        private Replier() {
+        }
 
         /**
          * Sets the expectation for the next {@code onFillRequest} as {@link FillResponse} with just
@@ -222,7 +219,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         FillRequest getNextFillRequest() throws InterruptedException {
             final FillRequest request = mFillRequests.poll(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (request == null) {
-                throw new AssertionError("onFill() not called in " + FILL_TIMEOUT_MS + " ms");
+                throw new AssertionError(
+                        "onFillRequest() not called in " + FILL_TIMEOUT_MS + " ms");
             }
             return request;
         }
@@ -245,7 +243,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         SaveRequest getNextSaveRequest() throws InterruptedException {
             final SaveRequest request = mSaveRequests.poll(SAVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (request == null) {
-                throw new AssertionError("onSave() not called in " + SAVE_TIMEOUT_MS + " ms");
+                throw new AssertionError(
+                        "onSaveRequest() not called in " + SAVE_TIMEOUT_MS + " ms");
             }
             return request;
         }
@@ -259,11 +258,29 @@ public class InstrumentedAutoFillService extends AutofillService {
                     .isEqualTo(expected);
         }
 
+        /**
+         * Resets its internal state.
+         */
+        void reset() {
+            mResponses.clear();
+            mFillRequests.clear();
+            mSaveRequests.clear();
+        }
+
         private void onFillRequest(AssistStructure structure, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags) {
             try {
-                final CannedFillResponse response = mResponses.remove();
+                CannedFillResponse response = null;
+                try {
+                    response = mResponses.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "Interrupted getting CannedResponse: " + e);
+                    Thread.currentThread().interrupt();
+                }
                 if (response == null) {
+                    throw new IllegalStateException("No CannedResponse");
+                }
+                if (response == NO_RESPONSE) {
                     callback.onSuccess(null);
                     return;
                 }

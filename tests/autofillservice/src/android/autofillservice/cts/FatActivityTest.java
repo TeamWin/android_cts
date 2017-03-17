@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.FatActivity.ID_CAPTCHA;
 import static android.autofillservice.cts.FatActivity.ID_IMAGE;
 import static android.autofillservice.cts.FatActivity.ID_IMPORTANT_IMAGE;
@@ -23,14 +24,11 @@ import static android.autofillservice.cts.FatActivity.ID_INPUT_CONTAINER;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByText;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.support.test.rule.ActivityTestRule;
 
 import org.junit.Before;
@@ -57,18 +55,14 @@ public class FatActivityTest extends AutoFillServiceTestCase {
     public void testNoContainers() throws Exception {
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
-        replier.addResponse((CannedFillResponse) null);
+        sReplier.addResponse(NO_RESPONSE);
 
         // Trigger auto-fill.
-        mFatActivity.onInput((v) -> { v.requestFocus(); });
-        waitUntilConnected();
+        mFatActivity.onInput((v) -> v.requestFocus());
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
         sUiBot.assertNoDatasets();
-
-        final FillRequest fillRequest = replier.getNextFillRequest();
 
         // TODO(b/33197203, b/33802548): should only have 5 children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but
@@ -94,12 +88,5 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         assertThat(inputContainer.getChildCount()).isEqualTo(1);
         final ViewNode input = inputContainer.getChildAt(0);
         assertThat(input.getIdEntry()).isEqualTo(ID_INPUT);
-
-        // Sanity checks.
-        replier.assertNumberUnhandledFillRequests(0);
-        replier.assertNumberUnhandledSaveRequests(0);
-
-        // Other sanity checks.
-        waitUntilDisconnected();
     }
 }
