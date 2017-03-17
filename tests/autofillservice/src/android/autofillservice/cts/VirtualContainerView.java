@@ -86,21 +86,25 @@ class VirtualContainerView extends View {
     }
 
     @Override
-    public boolean autofill(int id, AutofillValue value) {
-        Log.d(TAG, "autofillVirtual: id=" + id + ", value=" + value);
-        final Item item = mItems.get(id);
-        if (item == null) {
-            Log.w(TAG, "No item for id " + id);
-            return false;
-        }
-        if (!item.editable) {
-            Log.w(TAG, "Item for id " + id + " is not editable: " + item);
-            return false;
-        }
-        item.text = value.getTextValue();
-        if (item.listener != null) {
-            Log.d(TAG, "Notify listener: " + item.text);
-            item.listener.onTextChanged(item.text, 0, 0, 0);
+    public boolean autofill(SparseArray<AutofillValue> values) {
+        Log.d(TAG, "autofill: " + values);
+        for (int i = 0; i < values.size(); i++) {
+            final int id = values.keyAt(i);
+            final AutofillValue value = values.valueAt(i);
+            final Item item = mItems.get(id);
+            if (item == null) {
+                Log.w(TAG, "No item for id " + id);
+                return false;
+            }
+            if (!item.editable) {
+                Log.w(TAG, "Item for id " + id + " is not editable: " + item);
+                return false;
+            }
+            item.text = value.getTextValue();
+            if (item.listener != null) {
+                Log.d(TAG, "Notify listener: " + item.text);
+                item.listener.onTextChanged(item.text, 0, 0, 0);
+            }
         }
         postInvalidate();
         return true;
