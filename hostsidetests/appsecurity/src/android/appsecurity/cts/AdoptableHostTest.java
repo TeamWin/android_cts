@@ -23,7 +23,6 @@ import static android.appsecurity.cts.SplitTests.APK_xxhdpi;
 import static android.appsecurity.cts.SplitTests.CLASS;
 import static android.appsecurity.cts.SplitTests.PKG;
 
-import android.appsecurity.cts.SplitTests.BaseInstallMultiple;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
