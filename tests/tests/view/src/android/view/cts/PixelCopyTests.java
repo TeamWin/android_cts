@@ -173,6 +173,22 @@ public class PixelCopyTests {
         }
     }
 
+    private void assertNotLeaking(int iteration, MemoryInfo start, MemoryInfo end) {
+        Debug.getMemoryInfo(end);
+        if (Math.abs(start.getTotalPss() - end.getTotalPss()) > 2000 /* kB */) {
+            System.gc();
+            System.gc();
+            Debug.getMemoryInfo(end);
+            if (Math.abs(start.getTotalPss() - end.getTotalPss()) > 2000 /* kB */) {
+                // Guarded by if so we don't continually generate garbage for the
+                // assertion string.
+                assertEquals("Memory leaked, iteration=" + iteration,
+                        start.getTotalPss(), end.getTotalPss(),
+                        2000 /* kb */);
+            }
+        }
+    }
+
     @Test
     @LargeTest
     public void testNotLeaking() {
@@ -193,6 +209,7 @@ public class PixelCopyTests {
 
             // Test a fullsize copy
             Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+            SynchronousPixelCopy copyHelper = new SynchronousPixelCopy();
 
             MemoryInfo meminfoStart = new MemoryInfo();
             MemoryInfo meminfoEnd = new MemoryInfo();
@@ -202,17 +219,14 @@ public class PixelCopyTests {
                     // Not really the "start" but by having done a couple
                     // we've fully initialized any state that may be required,
                     // so memory usage should be stable now
+                    System.gc();
+                    System.gc();
+                    Debug.getMemoryInfo(meminfoEnd);
                     Debug.getMemoryInfo(meminfoStart);
                 }
-                if (i % 10 == 5) {
-                    Debug.getMemoryInfo(meminfoEnd);
-                    if (meminfoEnd.getTotalPss() - meminfoStart.getTotalPss() > 1000 /* kb */) {
-                        assertEquals("Memory leaked, iteration=" + i,
-                                meminfoStart.getTotalPss(), meminfoEnd.getTotalPss(),
-                                1000 /* kb */);
-                    }
+                if (i % 100 == 5) {
+                    assertNotLeaking(i, meminfoStart, meminfoEnd);
                 }
-                SynchronousPixelCopy copyHelper = new SynchronousPixelCopy();
                 int result = copyHelper.request(activity.getView(), bitmap);
                 assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
                 // Make sure nothing messed with the bitmap
@@ -222,6 +236,8 @@ public class PixelCopyTests {
                 assertBitmapQuadColor(bitmap,
                         Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
             }
+
+            assertNotLeaking(1000, meminfoStart, meminfoEnd);
 
         } catch (InterruptedException e) {
             fail("Interrupted, error=" + e.getMessage());
