@@ -26,6 +26,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
@@ -318,6 +320,38 @@ public class ClientTest {
     @Test
     public void testBuildSerialUnknown() throws Exception {
         assertThat(Build.SERIAL, is(Build.UNKNOWN));
+    }
+
+    @Test
+    public void testPackageInfo() throws Exception {
+        PackageInfo info;
+        // Test own package info.
+        info = InstrumentationRegistry.getContext().getPackageManager()
+                .getPackageInfo("com.android.cts.ephemeralapp1", 0);
+        assertThat(info.packageName,
+                is("com.android.cts.ephemeralapp1"));
+
+        // Test exposed app package info.
+        info = InstrumentationRegistry.getContext().getPackageManager()
+                .getPackageInfo("com.android.cts.normalapp", 0);
+        assertThat(info.packageName,
+                is("com.android.cts.normalapp"));
+
+        // Test unexposed app package info not accessible.
+        try {
+            info = InstrumentationRegistry.getContext().getPackageManager()
+                    .getPackageInfo("com.android.cts.unexposedapp", 0);
+            fail("Instant apps should not be able to access PackageInfo for an app that does not" +
+                    " expose itself to Instant Apps.");
+        } catch (PackageManager.NameNotFoundException expected) {
+        }
+        // Test Instant App (with visibleToInstantApp components) still isn't accessible.
+        try {
+            info = InstrumentationRegistry.getContext().getPackageManager()
+                    .getPackageInfo("com.android.cts.ephemeralapp2", 0);
+            fail("Instant apps should not be able to access PackageInfo for another Instant App.");
+        } catch (PackageManager.NameNotFoundException expected) {
+        }
     }
 
     @Test
