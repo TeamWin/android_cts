@@ -15,6 +15,10 @@
  */
 package com.android.cts.deviceandprofileowner.userrestrictions;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.UserManager;
 
 import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest;
@@ -22,6 +26,8 @@ import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
     protected static final String[] ALL_USER_RESTRICTIONS = new String[]{
@@ -247,5 +253,23 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
         for (String r : getAllowedRestrictions()) {
             assertClearUserRestriction(r);
         }
+    }
+
+    public void testBroadcast() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final IntentFilter filter = new IntentFilter(UserManager.ACTION_USER_RESTRICTIONS_CHANGED);
+        mContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        }, filter);
+
+        final String restriction = UserManager.DISALLOW_CONFIG_WIFI;
+        mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, restriction);
+
+        assertTrue("Didn't receive broadcast", latch.await(120, TimeUnit.SECONDS));
+
+        mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT, restriction);
     }
 }
