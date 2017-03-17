@@ -71,8 +71,6 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
 
         setDeviceRotation(4 - rotationStep);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
@@ -90,8 +88,6 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         executeShellCommand(getAmStartCmd(activityName));
         final String[] waitForActivitiesVisible = new String[] {activityName};
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
 
         setFontScale(1.0f);
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
