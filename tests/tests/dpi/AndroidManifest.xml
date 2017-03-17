@@ -18,6 +18,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.dpi.cts">
 
+    <uses-sdk
+        android:minSdkVersion="23"
+        android:targetSdkVersion="23" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <application>
         <uses-library android:name="android.test.runner" />
