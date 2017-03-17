@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import os
 import os.path
 import tempfile
@@ -91,6 +92,8 @@ def main():
     camera_ids = []
     scenes = []
     chart_host_id = None
+    result_device_id = None
+
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
@@ -98,8 +101,11 @@ def main():
             scenes = s[7:].split(',')
         elif s[:6] == 'chart=' and len(s) > 6:
             chart_host_id = s[6:]
+        elif s[:7] == 'result=' and len(s) > 7:
+            result_device_id = s[7:]
 
     auto_scene_switch = chart_host_id is not None
+    merge_result_switch = result_device_id is not None
 
     # Run through all scenes if user does not supply one
     possible_scenes = auto_scenes if auto_scene_switch else all_scenes
@@ -144,6 +150,20 @@ def main():
     device_id_arg = "device=" + device_id
     print "Testing device " + device_id
 
+    #Sanity Check for devices
+    device_bfp = its.device.get_device_fingerprint(device_id)
+    assert device_bfp is not None
+
+    if auto_scene_switch:
+        chart_host_bfp = its.device.get_device_fingerprint(chart_host_id)
+        assert chart_host_bfp is not None
+
+    if merge_result_switch:
+        result_device_bfp = its.device.get_device_fingerprint(result_device_id)
+        assert device_bfp == result_device_bfp, \
+            "Can not merge result to a different build, from %s to %s" \
+             % (device_bfp, result_device_bfp)
+
     # user doesn't specify camera id, run through all cameras
     if not camera_ids:
         camera_ids_path = os.path.join(topdir, "camera_ids.txt")
@@ -160,12 +180,17 @@ def main():
     print "Running ITS on camera: %s, scene %s" % (camera_ids, scenes)
 
     if auto_scene_switch:
-        print 'Waking up chart screen: ', chart_host_id
-        screen_id_arg = ('screen=%s' % chart_host_id)
-        cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
-                                      'wake_up_screen.py'), screen_id_arg]
-        retcode = subprocess.call(cmd)
-        assert retcode == 0
+        # merge_result only supports run_parallel_tests
+        if merge_result_switch and camera_ids[0] == '1':
+            print 'Skip chart screen'
+            time.sleep(1)
+        else:
+            print 'Waking up chart screen: ', chart_host_id
+            screen_id_arg = ('screen=%s' % chart_host_id)
+            cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
+                                          'wake_up_screen.py'), screen_id_arg]
+            retcode = subprocess.call(cmd)
+            assert retcode == 0
 
     for camera_id in camera_ids:
         # Loop capturing images until user confirm test scene is correct
@@ -190,34 +215,42 @@ def main():
             if scene_req[scene] != None:
                 out_path = os.path.join(topdir, camera_id, scene+".jpg")
                 out_arg = "out=" + out_path
+                cmd = None
                 if auto_scene_switch:
-                    scene_arg = "scene=" + scene
-                    cmd = ['python',
-                           os.path.join(os.getcwd(), 'tools/load_scene.py'),
-                           scene_arg, screen_id_arg]
+                    if not merge_result_switch or \
+                            (merge_result_switch and camera_ids[0] == '0'):
+                        scene_arg = "scene=" + scene
+                        cmd = ['python',
+                               os.path.join(os.getcwd(), 'tools/load_scene.py'),
+                               scene_arg, screen_id_arg]
                 else:
-                    scene_arg = "scene=" + scene_req[scene]
-                    extra_args = scene_extra_args.get(scene, [])
-                    cmd = ['python',
-                            os.path.join(os.getcwd(),"tools/validate_scene.py"),
-                            camera_id_arg, out_arg,
-                            scene_arg, device_id_arg] + extra_args
-                retcode = subprocess.call(cmd,cwd=topdir)
-                assert(retcode == 0)
+                    # Skip scene validation for scene 5 running in parallel
+                    if merge_result_switch and scene != 'scene5':
+                        scene_arg = "scene=" + scene_req[scene]
+                        extra_args = scene_extra_args.get(scene, [])
+                        cmd = ['python',
+                                os.path.join(os.getcwd(),"tools/validate_scene.py"),
+                                camera_id_arg, out_arg,
+                                scene_arg, device_id_arg] + extra_args
+
+                if cmd is not None:
+                    retcode = subprocess.call(cmd,cwd=topdir)
+                    assert(retcode == 0)
             print "Start running ITS on camera %s, %s" % (camera_id, scene)
 
             # Run each test, capturing stdout and stderr.
             for (testname,testpath) in tests:
                 if auto_scene_switch:
-                    # Send an input event to keep the screen not dimmed.
-                    # Since we are not using camera of chart screen, FOCUS event
-                    # should does nothing but keep the screen from dimming.
-                    # The "sleep after x minutes of inactivity" display setting
-                    # determines how long this command can keep screen bright.
-                    # Setting it to something like 30 minutes should be enough.
-                    cmd = ('adb -s %s shell input keyevent FOCUS'
-                           % chart_host_id)
-                    subprocess.call(cmd.split())
+                    if merge_result_switch and camera_ids[0] == '0':
+                        # Send an input event to keep the screen not dimmed.
+                        # Since we are not using camera of chart screen, FOCUS event
+                        # should does nothing but keep the screen from dimming.
+                        # The "sleep after x minutes of inactivity" display setting
+                        # determines how long this command can keep screen bright.
+                        # Setting it to something like 30 minutes should be enough.
+                        cmd = ('adb -s %s shell input keyevent FOCUS'
+                               % chart_host_id)
+                        subprocess.call(cmd.split())
                 cmd = ['python', os.path.join(os.getcwd(),testpath)] + \
                       sys.argv[1:] + [camera_id_arg]
                 outdir = os.path.join(topdir,camera_id,scene)
@@ -278,15 +311,24 @@ def main():
             results[scene][ItsSession.SUMMARY_KEY] = summary_path
 
         print "Reporting ITS result to CtsVerifier"
+        if merge_result_switch:
+            # results are modified by report_result
+            results_backup = copy.deepcopy(results)
+            its.device.report_result(result_device_id, camera_id, results_backup)
+
         its.device.report_result(device_id, camera_id, results)
 
     if auto_scene_switch:
-        print 'Shutting down chart screen: ', chart_host_id
-        screen_id_arg = ('screen=%s' % chart_host_id)
-        cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
-                                      'turn_off_screen.py'), screen_id_arg]
-        retcode = subprocess.call(cmd)
-        assert retcode == 0
+        if merge_result_switch:
+            print 'Skip shutting down chart screen'
+        else:
+            print 'Shutting down chart screen: ', chart_host_id
+            screen_id_arg = ('screen=%s' % chart_host_id)
+            cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
+                                          'turn_off_screen.py'), screen_id_arg]
+            retcode = subprocess.call(cmd)
+            assert retcode == 0
+
         print 'Shutting down DUT screen: ', device_id
         screen_id_arg = ('screen=%s' % device_id)
         cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
