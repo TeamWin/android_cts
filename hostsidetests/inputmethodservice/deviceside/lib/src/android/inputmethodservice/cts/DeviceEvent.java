@@ -29,6 +29,7 @@ import android.database.Cursor;
 import android.inputmethodservice.cts.common.DeviceEventConstants;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.common.EventProviderConstants.EventTableConstants;
+import android.inputmethodservice.cts.common.test.TestInfo;
 import android.inputmethodservice.cts.db.Entity;
 import android.inputmethodservice.cts.db.Field;
 import android.inputmethodservice.cts.db.Table;
@@ -145,7 +146,7 @@ public final class DeviceEvent {
     }
 
     /**
-     * Event source, either Input Method class name testClass#testMethod.
+     * Event source, either Input Method class name or {@link TestInfo#getTestName()}.
      */
     @NonNull
     public final String sender;
