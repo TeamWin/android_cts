@@ -21,6 +21,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
 import android.print.PageRange;
@@ -50,6 +51,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +99,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                     WriteResultCallback callback = (WriteResultCallback) args[3];
                     writeBlankPages(printAttributes[0], fd, pages[0].getStart(), pages[0].getEnd());
                     fd.close();
-                    callback.onWriteFinished(pages);
+                    callback.onWriteFinished(new PageRange[]{new PageRange(0, 1)});
                     // Mark write was called.
                     onWriteCalled();
                     return null;
@@ -485,6 +487,90 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         // No other call are expected.
         verifyNoMoreInteractions(adapter);
     }
+
+    /* Disabled @Test, as this will intentionally kill the activity that started the test */
+    public void printCorruptedFile() throws Exception {
+        final boolean[] writeCorruptedFile = new boolean[1];
+        final PrintAttributes[] printAttributes = new PrintAttributes[1];
+
+        // Create a mock print adapter.
+        final PrintDocumentAdapter adapter = createMockPrintDocumentAdapter(
+                invocation -> {
+                    printAttributes[0] = (PrintAttributes) invocation.getArguments()[1];
+                    LayoutResultCallback callback = (LayoutResultCallback)
+                            invocation.getArguments()[3];
+                    Bundle extras = (Bundle) invocation.getArguments()[4];
+                    Log.i(LOG_TAG, "Preview: " + extras.getBoolean(
+                            PrintDocumentAdapter.EXTRA_PRINT_PREVIEW));
+                    PrintDocumentInfo info = new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .build();
+                    callback.onLayoutFinished(info, true);
+                    // Mark layout was called.
+                    onLayoutCalled();
+                    return null;
+                }, invocation -> {
+                    Object[] args = invocation.getArguments();
+                    PageRange[] pages = (PageRange[]) args[0];
+                    ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
+                    WriteResultCallback callback = (WriteResultCallback) args[3];
+
+                    if (writeCorruptedFile[0]) {
+                        Log.i(LOG_TAG, "write corrupted file " + pages);
+
+                        FileOutputStream os = new FileOutputStream(fd.getFileDescriptor());
+                        for (int i = 0; i < 10; i++) {
+                            os.write(i);
+                        }
+                    } else {
+                        Log.i(LOG_TAG, "write good file");
+
+                        writeBlankPages(printAttributes[0], fd, 0, 1);
+                    }
+                    fd.close();
+                    callback.onWriteFinished(new PageRange[]{new PageRange(0, 1)});
+
+                    // Mark write was called.
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
+                    // Mark finish was called.
+                    onFinishCalled();
+                    return null;
+                });
+
+        // Start printing.
+        print(adapter);
+
+        // Wait for write.
+        waitForWriteAdapterCallback(1);
+
+        // Select the second printer.
+        selectPrinter("First printer");
+
+        openPrintOptions();
+        selectPages("1", 2);
+
+        // Wait for write.
+        waitForWriteAdapterCallback(2);
+
+        writeCorruptedFile[0] = true;
+
+        // Click the print button
+        clickPrintButton();
+
+        // Answer the dialog for the print service cloud warning
+        answerPrintServicesWarning(true);
+
+        // Printing will abort automatically
+
+        // Wait for a finish.
+        waitForAdapterFinishCallbackCalled();
+
+        // Wait for the session to be destroyed to isolate tests.
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+    }
+
 
     @Test
     public void printOptionsChangeAndPrinterChange() throws Exception {
