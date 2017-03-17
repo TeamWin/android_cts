@@ -327,14 +327,19 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         if (metricsSet == null) {
             fail("MediaPlayer returned null metrics");
         } else {
-            int ht = metricsSet.getInt(MediaMetricsSet.MediaPlayer.KEY_HEIGHT, -1);
-            int wid = metricsSet.getInt(MediaMetricsSet.MediaPlayer.KEY_WIDTH, -1);
-
-            if (ht != height) {
-                fail("getMetrics() height set " + height + " got " + ht);
+            String vmime = metricsSet.getString(MediaMetricsSet.MediaPlayer.KEY_MIME_VIDEO, null);
+            String amime = metricsSet.getString(MediaMetricsSet.MediaPlayer.KEY_MIME_AUDIO, null);
+            if (vmime == null && amime == null) {
+                fail("getMetrics() returned neither video nor audio mime value");
             }
-            if (wid != width) {
-                fail("getMetrics() width set " + width + " got " + wid);
+
+            long duration = metricsSet.getLong(MediaMetricsSet.MediaPlayer.KEY_DURATION, -2);
+            if (duration == -2) {
+                fail("getMetrics() didn't return a duration");
+            }
+            long playing = metricsSet.getLong(MediaMetricsSet.MediaPlayer.KEY_PLAYING, -2);
+            if (playing == -2) {
+                fail("getMetrics() didn't return a playing time");
             }
         }
 
