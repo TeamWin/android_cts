@@ -22,6 +22,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -51,6 +52,7 @@ import com.android.cts.verifier.location.LocationListenerActivity;
 public class ByodFlowTestActivity extends DialogTestListActivity {
 
     private final String TAG = "ByodFlowTestActivity";
+    private static ConnectivityManager mCm;
     private static final int REQUEST_MANAGED_PROVISIONING = 0;
     private static final int REQUEST_PROFILE_OWNER_STATUS = 1;
     private static final int REQUEST_INTENT_FILTERS_STATUS = 2;
@@ -403,7 +405,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mCredSettingsVisibleTest);
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
-        adapter.add(mCellularDataUsageSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
 
         adapter.add(mCrossProfileIntentFiltersTestFromPersonal);
@@ -429,6 +430,11 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             adapter.add(mWiFiDataUsageSettingsVisibleTest);
+        }
+
+        mCm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) != null) {
+            adapter.add(mCellularDataUsageSettingsVisibleTest);
         }
 
         if (canResolveIntent(new Intent(Settings.ACTION_APPLICATION_SETTINGS))) {
