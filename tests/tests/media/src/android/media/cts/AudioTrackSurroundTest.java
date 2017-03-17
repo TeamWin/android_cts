@@ -44,9 +44,7 @@ import java.util.Random;
 public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackSurroundTest";
 
-    // We typically find tolerance to be within 0.2 percent, but we allow one percent.
     private static final double MAX_RATE_TOLERANCE_FRACTION = 0.01;
-    private static final double MAX_INSTANTANEOUS_RATE_TOLERANCE_FRACTION = 0.15;
     private static final boolean LOG_TIMESTAMPS = false; // set true for debugging
 
     // Set this true to prefer the device that supports the particular encoding.
@@ -236,30 +234,53 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
         void checkIndividualTimestamps(int sampleRate) {
             AudioTimestamp previous = null;
+            double sumDeltaSquared = 0.0;
+            int populationSize = 0;
+            double maxDeltaMillis = 0.0;
             // Make sure the timestamps are smooth and don't go retrograde.
             for (AudioTimestamp timestamp : mTimestamps) {
                 if (previous != null) {
-                    final double TOLERANCE_MILLIS = 2.0;
 
-                    assertTrue("framePosition should be monotonic",
+                    assertTrue("framePosition must be monotonic",
                             timestamp.framePosition >= previous.framePosition);
-                    assertTrue("nanoTime should be monotonic",
+                    assertTrue("nanoTime must be monotonic",
                             timestamp.nanoTime >= previous.nanoTime);
 
                     if (timestamp.framePosition > previous.framePosition) {
+                        // Measure timing jitter.
                         // Calculate predicted duration based on measured rate and compare
                         // it with actual duration.
+                        final double TOLERANCE_MILLIS = 2.0;
                         long elapsedFrames = timestamp.framePosition - previous.framePosition;
                         long elapsedNanos = timestamp.nanoTime - previous.nanoTime;
-                        double expectedNanos = elapsedFrames * (double) NANOS_PER_SECOND / sampleRate;
-                        assertEquals("elapsed time should match predicted duration"
-                                + ", sampleRate = " + sampleRate
-                                + ", framePosition = " + timestamp.framePosition,
-                                expectedNanos, (double) elapsedNanos,
-                                TOLERANCE_MILLIS * NANOS_PER_MILLISECOND);
+                        double measuredMillis = elapsedNanos / (double) NANOS_PER_MILLISECOND;
+                        double expectedMillis = elapsedFrames * (double) MILLIS_PER_SECOND
+                            / sampleRate;
+                        double deltaMillis = measuredMillis - expectedMillis;
+                        sumDeltaSquared += deltaMillis * deltaMillis;
+                        populationSize++;
+                        // We only issue a warning here because the CDD does not mandate a
+                        // specific tolerance.
+                        double absDeltaMillis = Math.abs(deltaMillis);
+                        if (absDeltaMillis > TOLERANCE_MILLIS) {
+                            Log.w(TAG, "measured time exceeds expected"
+                                + ", srate = " + sampleRate
+                                + ", frame = " + timestamp.framePosition
+                                + ", expected = " + expectedMillis
+                                + ", measured = " + measuredMillis + " (msec)"
+                                );
+                        }
+                        if (absDeltaMillis > maxDeltaMillis) {
+                            maxDeltaMillis = absDeltaMillis;
+                        }
                     }
                 }
                 previous = timestamp;
+            }
+            Log.d(TAG, "max abs(delta) from expected duration = " + maxDeltaMillis + " msec");
+            if (populationSize > 0) {
+                double deviation = Math.sqrt(sumDeltaSquared / populationSize);
+                Log.d(TAG, "standard deviation from expected duration = " + deviation + " msec");
             }
         }
 
@@ -413,10 +434,11 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
                 // Estimate the sample rate and compare it with expected.
                 double estimatedRate = mTimestampAnalyzer.estimateSampleRate();
+                Log.d(TAG, "measured sample rate = " + estimatedRate);
                 assertEquals(TEST_NAME + ": measured sample rate" + getPcmWarning(),
                         mSampleRate, estimatedRate, mSampleRate * MAX_RATE_TOLERANCE_FRACTION);
 
-                // Check for jitter of retrograde motion in each timestamp.
+                // Check for jitter or retrograde motion in each timestamp.
                 mTimestampAnalyzer.checkIndividualTimestamps(mSampleRate);
 
             } finally {
