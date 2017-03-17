@@ -624,10 +624,11 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
-            // We're retrying so clear -m and -t options
-            // eventually reset these options with values given in the previous session
-            mModuleName = null;
-            mTestName = null;
+            // Track --module/-m and --test/-t options to ensure we don't overwrite non-null
+            // values on retry
+            String newModuleName = mModuleName;
+            String newTestName = mTestName;
+
             // Load the invocation result
             IInvocationResult result = null;
             try {
@@ -660,6 +661,13 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 } catch (ConfigurationException e) {
                     throw new RuntimeException(e);
                 }
+            }
+
+            if ((mModuleName != null && mModuleName != newModuleName)
+                    || (mTestName != null && mTestName != newTestName)) {
+                // These options cannot be changed on retry if non-null for the previous session
+                CLog.w("Cannot override non-null value(s) from session %d for option(s) \"%s\""
+                        + " or \"%s\" on retry", mRetrySessionId, MODULE_OPTION, TEST_OPTION);
             }
 
             SubPlanCreator retryPlanCreator = new SubPlanCreator();
