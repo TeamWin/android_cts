@@ -53,6 +53,10 @@
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
     <string name="report_saved">Report saved to: %s</string>
 
+    <!-- Strings for IntentDrivenTestActivity -->
+    <string name="intent_not_resolved">Intent Not Resolved</string>
+    <string name="intent_not_resolved_info">The following intent could not be resolved: %1$s</string>
+
     <!-- Strings for ReportViewerActivity -->
     <string name="report_viewer">Report Viewer</string>
 
@@ -2429,11 +2433,14 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_config_vpn_info">
         Please press the Set VPN restriction button to set the VPN restriction.
         Perform tests in order. Mark test as passed if both test cases pass\n\n
-        1. Press Go to open the Vpn settings page.\n
-        Confirm that:\n
+        1. Press Go to attempt to open the VPN settings page.\n
+        You should either see (a) the VPN settings page or (b) that the Intent
+        android.settings.VPN_SETTINGS fails to resolve.\n
+        In the case of (a), confirm that:\n
         - You cannot add a new VPN network.\n
         - You cannot edit, add or remove any existing VPNs.\n
-        - Trying to perform any of the above actions will trigger a support message.\n\n
+        - Trying to perform any of the above actions will trigger a support message.\n
+        In the case of (b) this step is successful.\n\n
         2. Press Check VPN to check programmatic Vpn test.\n
         - Check Vpn setup is not allowed\n
         - If prompted to allow a VPN connection, press OK.\n\n
