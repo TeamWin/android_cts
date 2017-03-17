@@ -35,7 +35,6 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
-import android.os.Debug;
 import android.support.test.rule.ActivityTestRule;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
@@ -51,7 +50,6 @@ import org.junit.Test;
  * TODO(b/33197203, b/33802548): test other scenarios like:
  *
  * - save
- * - async populating structure
  * - move around different views
  */
 public class VirtualContainerActivityTest extends AutoFillServiceTestCase {

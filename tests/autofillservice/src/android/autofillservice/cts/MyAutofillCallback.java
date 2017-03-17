@@ -40,7 +40,7 @@ final class MyAutofillCallback extends AutofillCallback {
     }
 
     @Override
-    public void onAutofillEventVirtual(View view, int childId, int event) {
+    public void onAutofillEvent(View view, int childId, int event) {
         mEvents.offer(new MyEvent(view, childId, event));
     }
 
