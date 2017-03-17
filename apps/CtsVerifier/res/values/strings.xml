@@ -985,6 +985,10 @@
     </string>
     <string name="its_test_passed">All Camera ITS tests passed.  Pass button enabled!</string>
     <string name="its_test_failed">Some Camera ITS tests failed.</string>
+    <string name="its_version_mismatch">
+        CtsVerifier and ITS script version mismatch. Please update CtsVerifier and ITS script.
+    </string>
+    <string name="its_test_progress">ITS test progress will be shown here.</string>
 
     <!-- Strings for the Camera Flashlight test activity -->
     <string name="camera_flashlight_test">Camera Flashlight</string>
