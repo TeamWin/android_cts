@@ -86,7 +86,7 @@ class VirtualContainerView extends View {
     }
 
     @Override
-    public boolean autofillVirtual(int id, AutofillValue value) {
+    public boolean autofill(int id, AutofillValue value) {
         Log.d(TAG, "autofillVirtual: id=" + id + ", value=" + value);
         final Item item = mItems.get(id);
         if (item == null) {
@@ -162,8 +162,8 @@ class VirtualContainerView extends View {
             final Item item = mItems.valueAt(i);
             Log.d(TAG, "Adding new child" + syncMsg + " at index " + index + ": " + item);
             final ViewStructure child = mSync
-                    ? structure.newChildForAutofill(index, item.id, 0)
-                    : structure.asyncNewChildForAutofill(index, item.id, 0);
+                    ? structure.newChild(index, item.id, 0)
+                    : structure.asyncNewChild(index, item.id, 0);
             child.setDataIsSensitive(item.sensitive);
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
@@ -226,9 +226,9 @@ class VirtualContainerView extends View {
             Log.d(TAG, "changeFocus() on " + text.id + ": " + focused + " bounds: " + bounds);
             this.focused = focused;
             if (focused) {
-                mAfm.notifyVirtualViewEntered(VirtualContainerView.this, text.id, bounds);
+                mAfm.notifyViewEntered(VirtualContainerView.this, text.id, bounds);
             } else {
-                mAfm.notifyVirtualViewExited(VirtualContainerView.this, text.id);
+                mAfm.notifyViewExited(VirtualContainerView.this, text.id);
             }
         }
 
