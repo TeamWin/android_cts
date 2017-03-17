@@ -1983,6 +1983,22 @@
                   android:label="@string/aware_data_path_passphrase_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifiaware.DataPathOobOpenResponderTestActivity"
+                  android:label="@string/aware_data_path_oob_open_responder"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobOpenInitiatorTestActivity"
+                  android:label="@string/aware_data_path_oob_open_initiator"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobPassphraseResponderTestActivity"
+                  android:label="@string/aware_data_path_oob_passphrase_responder"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobPassphraseInitiatorTestActivity"
+                  android:label="@string/aware_data_path_oob_passphrase_initiator"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
                 android:targetActivity=".TestListActivity">
             <intent-filter>

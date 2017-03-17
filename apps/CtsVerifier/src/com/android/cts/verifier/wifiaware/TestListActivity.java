@@ -100,6 +100,26 @@ public class TestListActivity extends PassFailButtons.TestListActivity {
                 R.string.aware_subscribe,
                 DataPathPassphraseActiveSubscribeTestActivity.class.getName(),
                 new Intent(this, DataPathPassphraseActiveSubscribeTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newCategory(this,
+                R.string.aware_dp_oob_open));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_responder,
+                DataPathOobOpenResponderTestActivity.class.getName(),
+                new Intent(this, DataPathOobOpenResponderTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_initiator,
+                DataPathOobOpenInitiatorTestActivity.class.getName(),
+                new Intent(this, DataPathOobOpenInitiatorTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newCategory(this,
+                R.string.aware_dp_oob_passphrase));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_responder,
+                DataPathOobPassphraseResponderTestActivity.class.getName(),
+                new Intent(this, DataPathOobPassphraseResponderTestActivity.class), null));
+        adapter.add(TestListAdapter.TestListItem.newTest(this,
+                R.string.aware_initiator,
+                DataPathOobPassphraseInitiatorTestActivity.class.getName(),
+                new Intent(this, DataPathOobPassphraseInitiatorTestActivity.class), null));
 
         adapter.registerDataSetObserver(new DataSetObserver() {
             @Override

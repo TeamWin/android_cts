@@ -20,6 +20,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.wifi.aware.AttachCallback;
 import android.net.wifi.aware.DiscoverySessionCallback;
+import android.net.wifi.aware.IdentityChangedListener;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishDiscoverySession;
 import android.net.wifi.aware.SubscribeDiscoverySession;
@@ -41,7 +42,7 @@ public class CallbackUtils {
     public static final int CALLBACK_TIMEOUT_SEC = 15;
 
     /**
-     * Utility AttachCallback - provides mechanism to block/serialize execution with the
+     * Utility AttachCallback - provides mechanism to block execution with the
      * waitForAttach method.
      */
     public static class AttachCb extends AttachCallback {
@@ -78,6 +79,39 @@ public class CallbackUtils {
             }
 
             return new Pair<>(TIMEOUT, null);
+        }
+    }
+
+    /**
+     * Utility IdentityChangedListener - provides mechanism to block execution with the
+     * waitForIdentity method. Single shot listener - only listens for the first triggered
+     * callback.
+     */
+    public static class IdentityListenerSingleShot extends IdentityChangedListener {
+        private CountDownLatch mBlocker = new CountDownLatch(1);
+        private byte[] mMac = null;
+
+        @Override
+        public void onIdentityChanged(byte[] mac) {
+            if (mMac != null) {
+                return;
+            }
+
+            mMac = mac;
+            mBlocker.countDown();
+        }
+
+        /**
+         * Wait (blocks) for the onIdentityChanged callback or a timeout.
+         *
+         * @return The MAC address returned by the onIdentityChanged() callback, or null on timeout.
+         */
+        public byte[] waitForMac() throws InterruptedException {
+            if (mBlocker.await(CALLBACK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+                return mMac;
+            }
+
+            return null;
         }
     }
 
