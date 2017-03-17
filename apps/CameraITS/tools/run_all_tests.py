@@ -304,6 +304,12 @@ def main():
                                       'turn_off_screen.py'), screen_id_arg]
         retcode = subprocess.call(cmd)
         assert retcode == 0
+        print 'Shutting down DUT screen: ', device_id
+        screen_id_arg = ('screen=%s' % device_id)
+        cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
+                                      'turn_off_screen.py'), screen_id_arg]
+        retcode = subprocess.call(cmd)
+        assert retcode == 0
 
     print "ITS tests finished. Please go back to CtsVerifier and proceed"
 
