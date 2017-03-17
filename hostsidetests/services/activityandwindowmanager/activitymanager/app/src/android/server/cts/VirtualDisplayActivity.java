@@ -16,11 +16,11 @@
 
 package android.server.cts;
 
-import static android.content.Context.DISPLAY_SERVICE;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.hardware.display.DisplayManager
         .VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
@@ -30,6 +30,9 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
+
+import java.util.HashMap;
 
 /**
  * Activity that is able to create and destroy a virtual display.
@@ -43,24 +46,47 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             = "can_show_with_insecure_keyguard";
     private static final String KEY_PUBLIC_DISPLAY = "public_display";
     private static final String KEY_RESIZE_DISPLAY = "resize_display";
+    private static final String KEY_COUNT = "count";
 
     private DisplayManager mDisplayManager;
-    private VirtualDisplay mVirtualDisplay;
-    private int mDensityDpi = DEFAULT_DENSITY_DPI;
-    private boolean mResizeDisplay;
 
-    private Surface mSurface;
-    private SurfaceView mSurfaceView;
+    // Container for details about a pending virtual display creation request.
+    private static class VirtualDisplayRequest {
+        public final SurfaceView surfaceView;
+        public final Bundle extras;
+
+        public VirtualDisplayRequest(SurfaceView surfaceView, Bundle extras) {
+            this.surfaceView = surfaceView;
+            this.extras = extras;
+        }
+    }
+
+    // Container to hold association between an active virtual display and surface view.
+    private static class VirtualDisplayEntry {
+        public final VirtualDisplay display;
+        public final SurfaceView surfaceView;
+        public final boolean resizeDisplay;
+        public final int density;
+
+        public VirtualDisplayEntry(VirtualDisplay display, SurfaceView surfaceView, int density,
+                boolean resizeDisplay) {
+            this.display = display;
+            this.surfaceView = surfaceView;
+            this.density = density;
+            this.resizeDisplay = resizeDisplay;
+        }
+    }
+
+    private HashMap<Surface, VirtualDisplayRequest> mPendingDisplayRequests;
+    private HashMap<Surface, VirtualDisplayEntry> mVirtualDisplays;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.virtual_display_layout);
 
-        mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
-        mSurfaceView.getHolder().addCallback(this);
-        mSurface = mSurfaceView.getHolder().getSurface();
-
+        mVirtualDisplays = new HashMap<>();
+        mPendingDisplayRequests = new HashMap<>();
         mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
     }
 
@@ -78,7 +104,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
                 createVirtualDisplay(extras);
                 break;
             case "destroy_display":
-                destroyVirtualDisplay();
+                destroyVirtualDisplays();
                 break;
         }
     }
@@ -86,56 +112,94 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        destroyVirtualDisplay();
+        destroyVirtualDisplays();
     }
 
     private void createVirtualDisplay(Bundle extras) {
-        if (mVirtualDisplay == null) {
-            final int width = mSurfaceView.getWidth();
-            final int height = mSurfaceView.getHeight();
-            mDensityDpi = extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
-            mResizeDisplay = extras.getBoolean(KEY_RESIZE_DISPLAY);
-            int flags = 0;
+        final int requestedCount = extras.getInt(KEY_COUNT, 1);
+        Log.d(TAG, "createVirtualDisplays. requested count:" + requestedCount);
 
-            final boolean canShowWithInsecureKeyguard
-                    = extras.getBoolean(KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD);
-            if (canShowWithInsecureKeyguard) {
-                flags |= VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
-            }
-
-            final boolean publicDisplay = extras.getBoolean(KEY_PUBLIC_DISPLAY);
-            if (publicDisplay) {
-                flags |= VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
-            }
-
-            Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "
-                    + mDensityDpi + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
-                    + ", publicDisplay=" + publicDisplay);
-            try {
-                mVirtualDisplay = mDisplayManager.createVirtualDisplay("VirtualDisplay", width,
-                        height, mDensityDpi, mSurface, flags);
-            } catch (IllegalArgumentException e) {
-                // This is expected when trying to create show-when-locked public display.
-            }
+        for (int displayCount = 0; displayCount < requestedCount; ++displayCount) {
+            final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+            final SurfaceView surfaceView = new SurfaceView(this);
+            surfaceView.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            surfaceView.getHolder().addCallback(this);
+            mPendingDisplayRequests.put(surfaceView.getHolder().getSurface(),
+                    new VirtualDisplayRequest(surfaceView, extras));
+            root.addView(surfaceView);
         }
     }
 
-    private void destroyVirtualDisplay() {
-        if (mVirtualDisplay != null) {
-            Log.d(TAG, "destroyVirtualDisplay");
-            mVirtualDisplay.release();
-            mVirtualDisplay = null;
+    private void destroyVirtualDisplays() {
+        Log.d(TAG, "destroyVirtualDisplays");
+        final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+
+        for (VirtualDisplayEntry entry : mVirtualDisplays.values()) {
+            Log.d(TAG, "destroying:" + entry.display);
+            entry.display.release();
+            root.removeView(entry.surfaceView);
         }
+
+        mPendingDisplayRequests.clear();
+        mVirtualDisplays.clear();
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        final VirtualDisplayRequest entry =
+                mPendingDisplayRequests.remove(surfaceHolder.getSurface());
+
+        if (entry == null) {
+            return;
+        }
+
+        final int densityDpi = entry.extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
+        final boolean resizeDisplay = entry.extras.getBoolean(KEY_RESIZE_DISPLAY);
+        final Surface surface = surfaceHolder.getSurface();
+
+        // Initially, the surface will not have a set width or height so rely on the parent.
+        // This should be accurate with match parent on both params.
+        final int width = surfaceHolder.getSurfaceFrame().width();
+        final int height = surfaceHolder.getSurfaceFrame().height();
+
+        int flags = 0;
+
+        final boolean canShowWithInsecureKeyguard
+                = entry.extras.getBoolean(KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD);
+        if (canShowWithInsecureKeyguard) {
+            flags |= VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
+        }
+
+        final boolean publicDisplay = entry.extras.getBoolean(KEY_PUBLIC_DISPLAY);
+        if (publicDisplay) {
+            flags |= VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+        }
+
+        Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "
+                + densityDpi + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
+                + ", publicDisplay=" + publicDisplay);
+        try {
+            VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(
+                    "VirtualDisplay" + mVirtualDisplays.size(), width,
+                    height, densityDpi, surface, flags);
+            mVirtualDisplays.put(surface,
+                    new VirtualDisplayEntry(virtualDisplay, entry.surfaceView, densityDpi,
+                            resizeDisplay));
+        } catch (IllegalArgumentException e) {
+            final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+            // This is expected when trying to create show-when-locked public display.
+            root.removeView(entry.surfaceView);
+        }
+
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
-        if (mResizeDisplay && mVirtualDisplay != null) {
-            mVirtualDisplay.resize(width, height, mDensityDpi);
+        final VirtualDisplayEntry entry = mVirtualDisplays.get(surfaceHolder.getSurface());
+
+        if (entry != null && entry.resizeDisplay) {
+            entry.display.resize(width, height, entry.density);
         }
     }
 

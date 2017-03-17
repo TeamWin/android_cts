@@ -19,9 +19,11 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,7 +59,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     @Override
     protected void tearDown() throws Exception {
-        destroyVirtualDisplay();
+        destroyVirtualDisplays();
         super.tearDown();
     }
 
@@ -77,7 +79,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testCreateVirtualDisplayWithCustomConfig() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         // Find the density of created display.
         final int newDensityDpi = newDisplay.getDpi();
@@ -87,12 +89,19 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         executeShellCommand(getDestroyVirtualDisplayCommand());
     }
 
+    public void testCreateMultipleVirtualDisplays() throws Exception {
+        // Create new virtual display.
+        final List<DisplayState> newDisplays = new VirtualDisplayBuilder(this).build(3);
+        destroyVirtualDisplays();
+        getDisplayStateAfterChange(1);
+    }
+
     /**
      * Tests launching an activity on virtual display.
      */
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
@@ -123,7 +132,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testConsequentLaunchActivity() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
@@ -153,7 +162,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         // Launch activity on new secondary display.
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mDisplayId);
@@ -184,8 +193,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         // Start launching activity.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                true /* launchInSplitScreen */);
+        final DisplayState newDisplay =
+                new VirtualDisplayBuilder(this).setLaunchInSplitScreen(true).build();
 
         // Launch activity on secondary display from the app on primary display.
         getLaunchActivityBuilder().setTargetActivityName(TEST_ACTIVITY_NAME)
@@ -214,8 +223,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                true /* launchInSplitScreen */);
+        final DisplayState newDisplay =
+                new VirtualDisplayBuilder(this).setLaunchInSplitScreen(true).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
@@ -240,7 +249,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testMoveTaskBetweenDisplays() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -296,9 +305,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     private void tryCreatingAndRemovingDisplayWithActivity() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                true /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
-                true /* publicDisplay */, true /* mustBeCreated */, true /* resizeDisplay */);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this)
+                .setLaunchInSplitScreen(true)
+                .setPublicDisplay(true)
+                .build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
@@ -310,7 +320,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
         // Destroy virtual display.
-        destroyVirtualDisplay();
+        destroyVirtualDisplays();
         mAmWmState.waitForValidState(mDevice, TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertSanity();
         mAmWmState.assertValidBounds(true /* compareTaskAndStackBounds */);
@@ -333,8 +343,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                true /* launchInSplitScreen */);
+        final DisplayState newDisplay =
+                new VirtualDisplayBuilder(this).setLaunchInSplitScreen(true).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
@@ -364,7 +374,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testStackFocusSwitchOnTouchEvent() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         mAmWmState.computeState(mDevice, new String[] {VIRTUAL_DISPLAY_ACTIVITY});
         mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
@@ -396,7 +406,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /** Test that system is allowed to launch on secondary displays. */
     public void testPermissionLaunchFromSystem() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -427,7 +437,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /** Test that launching from app that is on external display is allowed. */
     public void testPermissionLaunchFromAppOnSecondary() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -467,7 +477,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /** Test that launching from display owner is allowed. */
     public void testPermissionLaunchFromOwner() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -505,7 +515,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testPermissionLaunchFromDifferentApp() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertFocusedActivity("Virtual display activity must be focused",
                 VIRTUAL_DISPLAY_ACTIVITY);
@@ -539,7 +549,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
         // Create new usual virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -563,9 +573,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testShowWhenLockedVirtualDisplay() throws Exception {
         // Create new show-with-insecure-keyguard virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */, true /* canShowWithInsecureKeyguard */,
-                false /* publicDisplay */, true /* mustBeCreated */, true /* resizeDisplay */);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this)
+                .setCanShowWithInsecureKeyguard(true)
+                .build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -588,9 +598,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testShowWhenLockedPublicVirtualDisplay() throws Exception {
         // Try to create new show-with-insecure-keyguard public virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */, true /* canShowWithInsecureKeyguard */,
-                true /* publicDisplay */, false /* mustBeCreated */, true /* resizeDisplay */);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this)
+                .setPublicDisplay(true)
+                .setCanShowWithInsecureKeyguard(true)
+                .setMustBeCreated(false)
+                .build();
 
         // Check that the display is not created.
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -602,7 +614,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         // Create new private virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activities on new secondary display.
@@ -616,7 +628,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Destroy the display and check if activities are removed from system.
         clearLogcat();
-        destroyVirtualDisplay();
+        destroyVirtualDisplays();
         final String activityName1
                 = ActivityManagerTestBase.getActivityComponentName(TEST_ACTIVITY_NAME);
         final String activityName2
@@ -658,8 +670,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         mAmWmState.waitForValidState(mDevice, LAUNCHING_ACTIVITY, DOCKED_STACK_ID);
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                true /* launchInSplitScreen */);
+        final DisplayState newDisplay =
+                new VirtualDisplayBuilder(this).setLaunchInSplitScreen(true).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
@@ -714,7 +726,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testOnMovedToDisplayCallback() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -740,9 +752,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      */
     public void testRotationNotAffectingSecondaryScreen() throws Exception {
         // Create new virtual display.
-        final DisplayState newDisplay = createVirtualDisplay(CUSTOM_DENSITY_DPI,
-                false /* launchInSplitScreen */, false /* canShowWithInsecureKeyguard */,
-                false /* publicDisplay */, true /* mustBeCreated */, false /* resizeDisplay */);
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this)
+                .setResizeDisplay(false)
+                .build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
@@ -801,34 +813,17 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /** Find the display that was not originally reported in oldDisplays and added in newDisplays */
-    private DisplayState findNewDisplayId(ReportedDisplays oldDisplays,
+    private List<DisplayState> findNewDisplayStates(ReportedDisplays oldDisplays,
             ReportedDisplays newDisplays) {
+        final ArrayList<DisplayState> displays = new ArrayList();
+
         for (Integer displayId : newDisplays.mDisplayStates.keySet()) {
             if (!oldDisplays.mDisplayStates.containsKey(displayId)) {
-                return newDisplays.getDisplayState(displayId);
+                displays.add(newDisplays.getDisplayState(displayId));
             }
         }
 
-        return null;
-    }
-
-    /** Create new virtual display with custom density. */
-    private DisplayState createVirtualDisplay(int densityDpi) throws Exception {
-        return createVirtualDisplay(densityDpi, false /* launchInSplitScreen */);
-    }
-
-    /**
-     * Create new virtual display.
-     * @param densityDpi provide custom density for the display.
-     * @param launchInSplitScreen start {@link VirtualDisplayActivity} to side from
-     *                            {@link LaunchingActivity} on primary display.
-     * @return {@link DisplayState} of newly created display.
-     * @throws Exception
-     */
-    private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen) throws Exception {
-        return createVirtualDisplay(densityDpi, launchInSplitScreen,
-                false /* canShowWithInsecureKeyguard */, false /* publicDisplay */,
-                true /* mustBeCreated */, true /* resizeDisplay */);
+        return displays;
     }
 
     /**
@@ -844,9 +839,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * @return {@link DisplayState} of newly created display.
      * @throws Exception
      */
-    private DisplayState createVirtualDisplay(int densityDpi, boolean launchInSplitScreen,
+    private List<DisplayState> createVirtualDisplays(int densityDpi, boolean launchInSplitScreen,
             boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean mustBeCreated,
-            boolean resizeDisplay) throws Exception {
+            boolean resizeDisplay, int displayCount) throws Exception {
         // Start an activity that is able to create virtual displays.
         if (launchInSplitScreen) {
             getLaunchActivityBuilder().setToSide(true)
@@ -861,14 +856,15 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Create virtual display with custom density dpi.
         executeShellCommand(getCreateVirtualDisplayCommand(densityDpi, canShowWithInsecureKeyguard,
-                publicDisplay, resizeDisplay));
+                publicDisplay, resizeDisplay, displayCount));
         mVirtualDisplayCreated = true;
 
         // Wait for the virtual display to be created and get configurations.
-        final ReportedDisplays ds = getDisplaysStateAfterCreation(originalDisplayCount + 1);
+        final ReportedDisplays ds =
+                getDisplayStateAfterChange(originalDisplayCount + displayCount);
         if (mustBeCreated) {
             assertEquals("New virtual display must be created",
-                    originalDisplayCount + 1, ds.mDisplayStates.size());
+                    originalDisplayCount + displayCount, ds.mDisplayStates.size());
         } else {
             assertEquals("New virtual display must not be created",
                     originalDisplayCount, ds.mDisplayStates.size());
@@ -876,16 +872,16 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         }
 
         // Find the newly added display.
-        final DisplayState newDisplay = findNewDisplayId(originalDS, ds);
-        assertNotNull("New virtual display must be created", newDisplay);
+        final List<DisplayState> newDisplays = findNewDisplayStates(originalDS, ds);
+        assertTrue("New virtual display must be created", displayCount == newDisplays.size());
 
-        return newDisplay;
+        return newDisplays;
     }
 
     /**
      * Destroy existing virtual display.
      */
-    private void destroyVirtualDisplay() throws Exception {
+    private void destroyVirtualDisplays() throws Exception {
         if (mVirtualDisplayCreated) {
             executeShellCommand(getDestroyVirtualDisplayCommand());
             mVirtualDisplayCreated = false;
@@ -893,7 +889,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /** Wait for provided number of displays and report their configurations. */
-    private ReportedDisplays getDisplaysStateAfterCreation(int expectedDisplayCount)
+    private ReportedDisplays getDisplayStateAfterChange(int expectedDisplayCount)
             throws DeviceNotAvailableException {
         ReportedDisplays ds = getDisplaysStates();
 
@@ -944,6 +940,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
             return -1;
         }
     }
+
+
 
     /** Contains the configurations applied to attached displays. */
     private static final class ReportedDisplays {
@@ -1018,8 +1016,65 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         }
     }
 
+    private static class VirtualDisplayBuilder {
+        private final ActivityManagerDisplayTests mTests;
+
+        private int mDensityDpi = CUSTOM_DENSITY_DPI;
+        private boolean mLaunchInSplitScreen = false;
+        private boolean mCanShowWithInsecureKeyguard = false;
+        private boolean mPublicDisplay = false;
+        private boolean mMustBeCreated = true;
+        private boolean mResizeDisplay = true;
+
+        public VirtualDisplayBuilder(ActivityManagerDisplayTests tests) {
+            mTests = tests;
+        }
+
+        public VirtualDisplayBuilder setDensityDpi(int densityDpi) {
+            mDensityDpi = densityDpi;
+            return this;
+        }
+
+        public VirtualDisplayBuilder setLaunchInSplitScreen(boolean launchInSplitScreen) {
+            mLaunchInSplitScreen = launchInSplitScreen;
+            return this;
+        }
+
+        public VirtualDisplayBuilder setCanShowWithInsecureKeyguard(
+                boolean canShowWithInsecureKeyguard) {
+            mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
+            return this;
+        }
+
+        public VirtualDisplayBuilder setPublicDisplay(boolean publicDisplay) {
+            mPublicDisplay = publicDisplay;
+            return this;
+        }
+
+        public VirtualDisplayBuilder setMustBeCreated(boolean mustBeCreated) {
+            mMustBeCreated = mustBeCreated;
+            return this;
+        }
+
+        public VirtualDisplayBuilder setResizeDisplay(boolean resizeDisplay) {
+            mResizeDisplay = resizeDisplay;
+            return this;
+        }
+        public DisplayState build() throws Exception {
+            final List<DisplayState> displays = build(1);
+            return displays != null && !displays.isEmpty() ? displays.get(0) : null;
+        }
+
+        public List<DisplayState> build(int count) throws Exception {
+            return mTests.createVirtualDisplays(mDensityDpi, mLaunchInSplitScreen,
+                    mCanShowWithInsecureKeyguard, mPublicDisplay, mMustBeCreated, mResizeDisplay,
+                    count);
+        }
+    }
+
     private static String getCreateVirtualDisplayCommand(int densityDpi,
-            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean resizeDisplay) {
+            boolean canShowWithInsecureKeyguard, boolean publicDisplay, boolean resizeDisplay,
+            int displayCount) {
         final StringBuilder commandBuilder
                 = new StringBuilder(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY));
         commandBuilder.append(" -f 0x20000000");
@@ -1027,6 +1082,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         if (densityDpi != INVALID_DENSITY_DPI) {
             commandBuilder.append(" --ei density_dpi ").append(densityDpi);
         }
+        commandBuilder.append(" --ei count ").append(displayCount);
         commandBuilder.append(" --ez can_show_with_insecure_keyguard ")
                 .append(canShowWithInsecureKeyguard);
         commandBuilder.append(" --ez public_display ").append(publicDisplay);
