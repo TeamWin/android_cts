@@ -487,6 +487,8 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
             resultListener = new SimpleCaptureCallback();
             mSession.setRepeatingRequest(requestBuilder.build(), resultListener, mHandler);
 
+            waitForSettingsApplied(resultListener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+
             verifyPreviewTargetFpsRange(resultListener, NUM_FRAMES_VERIFIED, fpsRange,
                     maxPreviewSz);
             stopPreview();
