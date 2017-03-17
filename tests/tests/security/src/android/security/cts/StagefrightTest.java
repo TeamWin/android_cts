@@ -33,6 +33,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLES11Ext;
@@ -60,6 +61,15 @@ public class StagefrightTest extends InstrumentationTestCase {
     private final long TIMEOUT_NS = 10000000000L;  // 10 seconds.
 
     public StagefrightTest() {
+    }
+
+    /***********************************************************
+     to prevent merge conflicts, add K tests below this comment,
+     before any existing test methods
+     ***********************************************************/
+
+    public void testStagefright_bug_33137046() throws Exception {
+        doStagefrightTest(R.raw.bug_33137046);
     }
 
     public void testStagefright_cve_2015_1538_1() throws Exception {
@@ -185,6 +195,7 @@ public class StagefrightTest extends InstrumentationTestCase {
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
+        doStagefrightTestMediaMetadataRetriever(rid);
     }
 
     private Surface getDummySurface() {
@@ -462,5 +473,61 @@ public class StagefrightTest extends InstrumentationTestCase {
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         thr.stopLooper();
 
+    }
+    private void doStagefrightTestMediaMetadataRetriever(final int rid) throws Exception {
+
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+
+        LooperThread thr = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                try {
+                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                        .openRawResourceFd(R.raw.good);
+
+                    // the onErrorListener won't receive MEDIA_ERROR_SERVER_DIED until
+                    // setDataSource has been called
+                    mp.setDataSource(fd.getFileDescriptor(),
+                                     fd.getStartOffset(),
+                                     fd.getLength());
+                } catch (Exception e) {
+                    // this is a known-good file, so no failure should occur
+                    fail("setDataSource of known-good file failed");
+                }
+
+                synchronized(mpcl) {
+                    mpcl.notify();
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        thr.start();
+        // wait until the thread has initialized the MediaPlayer
+        synchronized(mpcl) {
+            mpcl.wait();
+        }
+
+        Resources resources =  getInstrumentation().getContext().getResources();
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        } catch (IllegalArgumentException e) {
+            // ignore
+        }
+        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        retriever.getEmbeddedPicture();
+        retriever.getFrameAtTime();
+
+        retriever.release();
+        String rname = resources.getResourceEntryName(rid);
+        String cve = rname.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        thr.stopLooper();
     }
 }
