@@ -229,6 +229,15 @@ public abstract class DialogTestListActivity extends PassFailButtons.TestListAct
         getListView().smoothScrollToPosition(mCurrentTestPosition + 1);
     }
 
+    protected void setTestResult(String testName, int result) {
+        // Bundle result in an intent to feed into handleLaunchTestResult
+        Intent resultIntent = new Intent();
+        TestResult.addResultData(resultIntent, result, testName, /* testDetails */ null,
+                /* reportLog */ null);
+        handleLaunchTestResult(RESULT_OK, resultIntent);
+        getListView().smoothScrollToPosition(mCurrentTestPosition + 1);
+    }
+
     protected void showToast(int messageId) {
         String message = getString(messageId);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
@@ -243,6 +252,10 @@ public abstract class DialogTestListActivity extends PassFailButtons.TestListAct
         }
 
         private String mManualInstruction;
+
+        public DialogTestListItem(Context context, String nameId, String testId) {
+            super(nameId, testId, null, null, null, null);
+        }
 
         public DialogTestListItem(Context context, int nameResId, String testId) {
             super(context.getString(nameResId), testId, null, null, null, null);
