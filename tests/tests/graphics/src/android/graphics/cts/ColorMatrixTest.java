@@ -17,6 +17,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import android.graphics.ColorMatrix;
 import android.support.test.filters.SmallTest;
@@ -256,5 +257,43 @@ public class ColorMatrixTest {
         for(int i = 0; i < 20; i++) {
             assertEquals((float) i, ret[i], 0.0f);
         }
+    }
+
+    @Test
+    public void testEquals() {
+        float[] floatA = new float[] {
+                0, 1, 2, 3, 4,
+                5, 6, 7, 8, 9,
+                9, 8, 7, 6, 5,
+                4, 3, 2, 1, 0,
+        };
+
+        float[] floatB = new float[] {
+                1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1,
+        };
+
+        assertEquals(new ColorMatrix(floatA), new ColorMatrix(floatA));
+        assertEquals(new ColorMatrix(floatB), new ColorMatrix(floatB));
+
+        assertNotEquals(new ColorMatrix(floatA), new ColorMatrix(floatB));
+        assertNotEquals(new ColorMatrix(floatB), new ColorMatrix(floatA));
+
+
+        float[] floatC = new float[] {
+                1, Float.NaN, 1, 1, 1,
+                1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1,
+        };
+
+        assertNotEquals(new ColorMatrix(floatA), new ColorMatrix(floatC));
+        assertNotEquals(new ColorMatrix(floatB), new ColorMatrix(floatC));
+        assertNotEquals(new ColorMatrix(floatC), new ColorMatrix(floatC));
+
+        ColorMatrix nanMatrix = new ColorMatrix(floatC);
+        assertNotEquals("same instance, still not equals with NaN present", nanMatrix, nanMatrix);
     }
 }

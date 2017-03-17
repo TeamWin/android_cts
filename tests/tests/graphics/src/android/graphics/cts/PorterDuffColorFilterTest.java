@@ -27,6 +27,8 @@ import android.graphics.PorterDuffColorFilter;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ColorUtils;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -80,5 +82,53 @@ public class PorterDuffColorFilterTest {
         assertEquals(Color.RED, target.getPixel(width / 4, height / 4));
         assertEquals(Color.CYAN, target.getPixel(width / 4, height * 3 / 4));
         assertEquals(Color.CYAN, target.getPixel(width * 3 / 4, height * 3 / 4));
+    }
+
+    @Test
+    public void testGetSet() {
+        PorterDuffColorFilter filter = new PorterDuffColorFilter(
+                Color.RED, PorterDuff.Mode.MULTIPLY);
+
+        assertEquals(Color.RED, filter.getColor());
+        assertEquals(PorterDuff.Mode.MULTIPLY, filter.getMode());
+
+        filter.setColor(Color.GREEN);
+        filter.setMode(PorterDuff.Mode.ADD);
+
+        assertEquals(Color.GREEN, filter.getColor());
+        assertEquals(PorterDuff.Mode.ADD, filter.getMode());
+    }
+
+    @Test
+    public void testSetDraw() {
+        PorterDuffColorFilter filter = new PorterDuffColorFilter(
+                Color.CYAN, PorterDuff.Mode.MULTIPLY);
+
+        Bitmap bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setColorFilter(filter);
+
+        // test initial state
+        paint.setColor(Color.YELLOW);
+        canvas.drawPaint(paint);
+        // Cyan * yellow = green
+        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(0, 0));
+
+
+        // test set color
+        filter.setColor(Color.MAGENTA);
+        paint.setColor(Color.YELLOW);
+        canvas.drawPaint(paint);
+        // Magenta * yellow = red
+        ColorUtils.verifyColor(Color.RED, bitmap.getPixel(0, 0));
+
+
+        // test set mode
+        filter.setMode(PorterDuff.Mode.ADD);
+        paint.setColor(Color.GREEN);
+        canvas.drawPaint(paint);
+        // Magenta + green = white
+        ColorUtils.verifyColor(Color.WHITE, bitmap.getPixel(0, 0));
     }
 }

@@ -16,6 +16,7 @@
 
 package com.android.compatibility.common.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import android.graphics.Color;
@@ -25,16 +26,13 @@ public class ColorUtils {
         verifyColor(expected, observed, 0);
     }
 
-    public static void verifyColor(int expected, int observed, int errorTolerance) {
-        int totalError = Math.abs(Color.alpha(observed) - Color.alpha(expected))
-                + Math.abs(Color.red(observed) - Color.red(expected))
-                + Math.abs(Color.green(observed) - Color.green(expected))
-                + Math.abs(Color.blue(observed) - Color.blue(expected));
-        if (totalError > errorTolerance) {
-            fail("expected " + Integer.toHexString(expected)
-                    + ", observed " + Integer.toHexString(observed)
-                    + ", total error " + totalError
-                    + ", out of a tolerated " + errorTolerance);
-        }
+    public static void verifyColor(int expected, int observed, int tolerance) {
+        String s = "expected " + Integer.toHexString(expected)
+                + ", observed " + Integer.toHexString(observed)
+                + ", tolerated channel error " + tolerance;
+        assertEquals(s, Color.red(expected), Color.red(observed), tolerance);
+        assertEquals(s, Color.green(expected), Color.green(observed), tolerance);
+        assertEquals(s, Color.blue(expected), Color.blue(observed), tolerance);
+        assertEquals(s, Color.alpha(expected), Color.alpha(observed), tolerance);
     }
 }
