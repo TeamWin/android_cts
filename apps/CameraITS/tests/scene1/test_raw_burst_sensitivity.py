@@ -95,7 +95,7 @@ def main():
             variances.append(var)
             print "s=%d, e=%d, var=%e" % (s, e, var)
 
-        x = range(NUM_STEPS)
+        x = range(len(variances))
         pylab.plot(x, variances, "-ro")
         pylab.xticks(x)
         pylab.xlabel("Setting Combination")
