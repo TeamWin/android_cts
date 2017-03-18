@@ -278,6 +278,10 @@
         <activity android:name=".FinishableActivity"
                   android:exported="true"
         />
+        <activity android:name=".NightModeActivity"
+                  android:exported="true"
+                  android:configChanges="uiMode"
+        />
         <receiver
             android:name=".LaunchBroadcastReceiver"
             android:enabled="true"

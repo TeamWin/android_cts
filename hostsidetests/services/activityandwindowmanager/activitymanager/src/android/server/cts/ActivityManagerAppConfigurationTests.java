@@ -15,6 +15,8 @@
  */
 package android.server.cts;
 
+import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String PORTRAIT_ACTIVITY_NAME = "PortraitOrientationActivity";
     private static final String LANDSCAPE_ACTIVITY_NAME = "LandscapeOrientationActivity";
+    private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
 
     /**
      * Tests that the WindowManager#getDefaultDisplay() and the Configuration of the Activity
@@ -368,5 +371,22 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertNotNull("Should be on a display", display);
 
         return display.getDisplayRect();
+    }
+
+    /**
+     * Test launching an activity which requests specific UI mode during creation.
+     */
+    public void testLaunchWithUiModeChange() throws Exception {
+        clearLogcat();
+
+        // Launch activity that changes UI mode and handles this configuration change.
+        launchActivity(NIGHT_MODE_ACTIVITY);
+        mAmWmState.waitForActivityState(mDevice, NIGHT_MODE_ACTIVITY, STATE_RESUMED);
+
+        // Check if activity is launched successfully.
+        mAmWmState.assertVisibility(NIGHT_MODE_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity("Launched activity should be focused",
+                NIGHT_MODE_ACTIVITY);
+        mAmWmState.assertResumedActivity("Launched activity must be resumed", NIGHT_MODE_ACTIVITY);
     }
 }
