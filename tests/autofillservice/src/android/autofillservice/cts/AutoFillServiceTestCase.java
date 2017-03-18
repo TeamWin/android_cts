@@ -22,10 +22,10 @@ import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-
 import android.widget.RemoteViews;
 
 import org.junit.After;
@@ -46,6 +46,8 @@ abstract class AutoFillServiceTestCase {
 
     protected static UiBot sUiBot;
 
+    protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
+
     @BeforeClass
     public static void removeLockScreen() {
         runShellCommand("input keyevent KEYCODE_WAKEUP");
@@ -65,8 +67,16 @@ abstract class AutoFillServiceTestCase {
     }
 
     @Before
-    public void resetServiceState() {
+    public void reset() {
+        destroyAllSessions();
+        sReplier.reset();
         InstrumentedAutoFillService.resetStaticState();
+    }
+
+    @After
+    public void assertNoPendingRequests() {
+        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNumberUnhandledSaveRequests(0);
     }
 
     /**
@@ -106,6 +116,7 @@ abstract class AutoFillServiceTestCase {
      */
     protected void destroyAllSessions() {
         runShellCommand("cmd autofill destroy sessions");
+        assertNoDanglingSessions();
     }
 
     protected static Context getContext() {

@@ -16,12 +16,11 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.support.annotation.NonNull;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -133,11 +132,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
         enableService();
 
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
-            replier.addResponse(new CannedFillResponse.Builder()
+            sReplier.addResponse(new CannedFillResponse.Builder()
                     .addDataset(new CannedFillResponse.CannedDataset.Builder()
                             .setField("firstLevelDefault", AutofillValue.forText("filled"))
                             .setField("firstLevelManual", AutofillValue.forText("filled"))
@@ -157,8 +152,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
             Throwable exceptionDuringAutoFillTrigger = null;
             try {
-                waitUntilConnected();
-
+                sReplier.getNextFillRequest();
                 sUiBot.selectDataset("dataset");
             } catch (Throwable e) {
                 if (expectUI) {
@@ -375,11 +369,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
             runOnUiThreadSync(() -> field.requestFocus());
 
             // Set up auto-fill service and response
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
-            replier.addResponse(new CannedFillResponse.Builder()
+            sReplier.addResponse(new CannedFillResponse.Builder()
                     .addDataset(new CannedFillResponse.CannedDataset.Builder()
                             .setField("field", AutofillValue.forText("filled"))
                             .setPresentation(createPresentation("dataset"))
@@ -400,7 +390,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
             assertThat(container.getResolvedAutofillMode()).isEqualTo(View.AUTOFILL_MODE_AUTO);
 
             // We should now be able to select the data set
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
             sUiBot.selectDataset("dataset");
 
             // Check if auto-fill operation worked

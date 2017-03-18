@@ -16,9 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -150,12 +147,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
             // Set expectations.
-            replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("editText",
+            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("editText",
                     value).setPresentation(createPresentation("dataset")).build());
             OneTimeTextWatcher textWatcher = new OneTimeTextWatcher("editText", mEditText,
                     expectedText);
@@ -163,7 +156,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -172,8 +165,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 // Check the results.
                 textWatcher.assertAutoFilled();
             } else {
-                waitUntilDisconnected();
-
                 assertThat(mEditText.getText().toString()).isEqualTo(expectedText);
             }
         } finally {
@@ -212,12 +203,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
             // Set expectations.
-            replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
+            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
                     "compoundButton", value).setPresentation(
                     createPresentation("dataset")).build());
             OneTimeCompoundButtonListener checkedWatcher = new OneTimeCompoundButtonListener(
@@ -226,7 +213,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mCompoundButton.requestFocus());
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -235,8 +222,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 // Check the results.
                 checkedWatcher.assertAutoFilled();
             } else {
-                waitUntilDisconnected();
-
                 assertThat(mCompoundButton.isChecked()).isEqualTo(expectedValue);
             }
         } finally {
@@ -275,12 +260,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
             // Set expectations.
-            replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("spinner",
+            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField("spinner",
                     value).setPresentation(createPresentation("dataset")).build());
             OneTimeSpinnerListener spinnerWatcher = new OneTimeSpinnerListener(
                     "spinner", mSpinner, expectedValue);
@@ -288,7 +269,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mSpinner.requestFocus());
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -297,8 +278,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 // Check the results.
                 spinnerWatcher.assertAutoFilled();
             } else {
-                waitUntilDisconnected();
-
                 assertThat(mSpinner.getSelectedItemPosition()).isEqualTo(expectedValue);
             }
         } finally {
@@ -343,12 +322,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
             // Set expectations.
-            replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
+            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
                     "datePicker", value).setField("editText",
                     AutofillValue.forText("filled")).setPresentation(
                     createPresentation("dataset")).build());
@@ -362,7 +337,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -371,8 +346,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 // Check the results.
                 dateWatcher.assertAutoFilled();
             } else {
-                waitUntilDisconnected();
-
                 Helper.assertDateValue(mDatePicker, nonAutofilledYear, nonAutofilledMonth,
                         nonAutofilledDay);
             }
@@ -420,12 +393,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
             // Set expectations.
-            replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
+            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
                     "timePicker", value).setField("editText",
                     AutofillValue.forText("filled")).setPresentation(
                     createPresentation("dataset")).build());
@@ -438,7 +407,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -447,8 +416,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 // Check the results.
                 timeWatcher.assertAutoFilled();
             } else {
-                waitUntilDisconnected();
-
                 Helper.assertTimeValue(mTimePicker, nonAutofilledHour, nonAutofilledMinute);
             }
         } finally {
@@ -486,12 +453,8 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
         try {
-            final InstrumentedAutoFillService.Replier replier =
-                    new InstrumentedAutoFillService.Replier();
-            InstrumentedAutoFillService.setReplier(replier);
-
             // Set expectations.
-            replier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
+            sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder().setField(
                     "radioGroup", value).setField("editText",
                     AutofillValue.forText("filled")).setPresentation(
                     createPresentation("dataset")).build());
@@ -501,7 +464,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
 
             // Trigger autofill.
             mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            waitUntilConnected();
+            sReplier.getNextFillRequest();
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -510,8 +473,6 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                 // Check the results.
                 radioGroupWatcher.assertAutoFilled();
             } else {
-                waitUntilDisconnected();
-
                 if (expectedValue == 0) {
                     assertThat(mRadioButton1.isChecked()).isEqualTo(true);
                     assertThat(mRadioButton2.isChecked()).isEqualTo(false);

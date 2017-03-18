@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.CheckoutActivity.ID_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_EXPIRATION;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
@@ -25,11 +26,8 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
-import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 
 import org.junit.Before;
@@ -54,21 +52,17 @@ public class InitializedCheckoutActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testSanitization() throws Exception {
+        // Set service.
         enableService();
 
-        // Set service.
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
-
         // Set expectations.
-        replier.addResponse((CannedFillResponse) null);
+        sReplier.addResponse(NO_RESPONSE);
 
         // Trigger auto-fill.
-        mCheckoutActivity.onCcNumber((v) -> { v.requestFocus(); });
-        waitUntilConnected();
+        mCheckoutActivity.onCcNumber((v) -> v.requestFocus());
 
         // Assert sanitization: most everything should be available...
-        final FillRequest fillRequest = replier.getNextFillRequest();
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
 
         assertTextAndValue(findNodeByResourceId(fillRequest.structure, ID_CC_NUMBER), "4815162342");
         assertListValue(findNodeByResourceId(fillRequest.structure, ID_ADDRESS),

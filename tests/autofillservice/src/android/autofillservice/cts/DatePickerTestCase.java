@@ -30,7 +30,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
 import android.view.autofill.AutofillValue;
@@ -57,8 +56,6 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
 
         // Set service.
         enableService();
-        final Replier replier = new Replier();
-        InstrumentedAutoFillService.setReplier(replier);
 
         // Set expectations.
         final Calendar cal = Calendar.getInstance();
@@ -66,7 +63,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         cal.set(Calendar.MONTH, 11);
         cal.set(Calendar.DAY_OF_MONTH, 20);
 
-        replier.addResponse(new CannedFillResponse.Builder()
+        sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                     .setPresentation(createPresentation("The end of the world"))
                     .setField(ID_OUTPUT, AutofillValue.forText("Y U NO CHANGE ME?"))
@@ -77,10 +74,8 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         activity.expectAutoFill("2012/11/20", 2012, 11, 20);
 
         // Trigger auto-fill.
-        activity.onOutput((v) -> { v.requestFocus(); });
-        waitUntilConnected();
-
-        final FillRequest fillRequest = replier.getNextFillRequest();
+        activity.onOutput((v) -> v.requestFocus());
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
 
         // Assert properties of DatePicker field.
         assertTextIsSanitized(fillRequest.structure, ID_DATE_PICKER);
@@ -96,16 +91,12 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         activity.setDate(2010, 11, 12);
         activity.tapOk();
 
-        InstrumentedAutoFillService.setReplier(replier); // Replier was reset onFill()
         sUiBot.saveForAutofill(SAVE_DATA_TYPE_GENERIC, true);
-        final SaveRequest saveRequest = replier.getNextSaveRequest();
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert sanitization on save: everything should be available!
         assertDateValue(findNodeByResourceId(saveRequest.structure, ID_DATE_PICKER), 2010, 11, 12);
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_OUTPUT), "2010/11/12");
-
-        // Sanity checks.
-        waitUntilDisconnected();
     }
 }
