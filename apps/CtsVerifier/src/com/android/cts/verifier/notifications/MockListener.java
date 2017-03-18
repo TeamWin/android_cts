@@ -16,12 +16,14 @@
 package com.android.cts.verifier.notifications;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.ArrayMap;
@@ -59,6 +61,7 @@ public class MockListener extends NotificationListenerService {
     static final String SERVICE_GET_SNOOZED = SERVICE_BASE + "GET_SNOOZED";
 
     static final String EXTRA_PAYLOAD = "PAYLOAD";
+    static final String EXTRA_POSTED_NOTIFICATIONS = "NOTIFICATION_PAYLOAD";
     static final String EXTRA_INT = "INT";
     static final String EXTRA_TAG = "TAG";
     static final String EXTRA_CODE = "CODE";
@@ -88,6 +91,7 @@ public class MockListener extends NotificationListenerService {
     private Set<String> mTestPackages = new HashSet<>();
     private BroadcastReceiver mReceiver;
     private int mDND = -1;
+    private ArrayList<Notification> mPostedNotifications = new ArrayList<Notification>();
 
     @Override
     public void onCreate() {
@@ -100,6 +104,7 @@ public class MockListener extends NotificationListenerService {
         mPosted = new ArrayList<String>();
         mRemoved = new ArrayList<String>();
         mSnoozed = new ArrayList<String>();
+        mPostedNotifications = new ArrayList<Notification>();
 
         mReceiver = new BroadcastReceiver() {
             @Override
@@ -111,6 +116,7 @@ public class MockListener extends NotificationListenerService {
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_POSTED.equals(action)) {
                     bundle.putStringArrayList(EXTRA_PAYLOAD, mPosted);
+                    bundle.putParcelableArrayList(EXTRA_POSTED_NOTIFICATIONS, mPostedNotifications);
                     setResultExtras(bundle);
                     setResultCode(Activity.RESULT_OK);
                 } else if (SERVICE_DND.equals(action)) {
@@ -229,6 +235,7 @@ public class MockListener extends NotificationListenerService {
         mOrder.clear();
         mRemovedReason.clear();
         mSnoozed.clear();
+        mPostedNotifications.clear();
     }
 
     @Override
@@ -258,6 +265,7 @@ public class MockListener extends NotificationListenerService {
         if (!mTestPackages.contains(sbn.getPackageName())) { return; }
         Log.d(TAG, "posted: " + sbn.getTag());
         mPosted.add(sbn.getTag());
+        mPostedNotifications.add(sbn.getNotification());
         JSONObject notification = new JSONObject();
         try {
             notification.put(JSON_TAG, sbn.getTag());
@@ -315,6 +323,10 @@ public class MockListener extends NotificationListenerService {
 
     public static void probeListenerPosted(Context context, StringListResultCatcher catcher) {
         requestStringListResult(context, SERVICE_POSTED, catcher);
+    }
+
+    public static void probeListenerPosted(Context context, NotificationResultCatcher catcher) {
+        requestNotificationResult(context, SERVICE_POSTED, catcher);
     }
 
     public static void probeListenerSnoozed(Context context, StringListResultCatcher catcher) {
@@ -417,8 +429,34 @@ public class MockListener extends NotificationListenerService {
         abstract public void accept(List<String> result);
     }
 
+    public abstract static class NotificationResultCatcher extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            ArrayList<Parcelable> parcels =
+                    getResultExtras(true).getParcelableArrayList(EXTRA_POSTED_NOTIFICATIONS);
+            if (parcels == null) {
+                parcels = new ArrayList<Parcelable>();
+            }
+            List<Notification> notifications = new ArrayList<Notification>(parcels.size());
+            for (Parcelable parcel : parcels) {
+                if (parcel instanceof Notification) {
+                    notifications.add((Notification) parcel);
+                }
+            }
+            accept(notifications);
+        }
+
+        abstract public void accept(List<Notification> result);
+    }
+
     private static void requestStringListResult(Context context, String action,
             StringListResultCatcher catcher) {
+        Intent broadcast = new Intent(action);
+        context.sendOrderedBroadcast(broadcast, null, catcher, null, RESULT_NO_SERVER, null, null);
+    }
+
+    private static void requestNotificationResult(Context context, String action,
+            NotificationResultCatcher catcher) {
         Intent broadcast = new Intent(action);
         context.sendOrderedBroadcast(broadcast, null, catcher, null, RESULT_NO_SERVER, null, null);
     }
