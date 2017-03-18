@@ -307,13 +307,20 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     private void verifyChannel(Uri channelUri, ContentValues expectedValues, long channelId) {
+        verifyChannel(channelUri, expectedValues, channelId, true);
+    }
+
+    private void verifyChannel(Uri channelUri, ContentValues expectedValues, long channelId,
+            boolean verifyInputId) {
         try (Cursor cursor = mContentResolver.query(
                 channelUri, CHANNELS_PROJECTION, null, null, null)) {
             assertNotNull(cursor);
             assertEquals(cursor.getCount(), 1);
             assertTrue(cursor.moveToNext());
             assertEquals(channelId, cursor.getLong(cursor.getColumnIndex(Channels._ID)));
-            verifyStringColumn(cursor, expectedValues, Channels.COLUMN_INPUT_ID);
+            if (verifyInputId) {
+                verifyStringColumn(cursor, expectedValues, Channels.COLUMN_INPUT_ID);
+            }
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_TYPE);
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_SERVICE_TYPE);
             verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_ORIGINAL_NETWORK_ID);
@@ -396,6 +403,27 @@ public class TvContractTest extends AndroidTestCase {
         // Test: update channel type for all channels should fail
         result = mContentResolver.update(Channels.CONTENT_URI, values, null, null);
         assertEquals(0, result);
+    }
+
+    public void testChannelsTableForInputId() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        ContentValues values = createDummyChannelValues(mInputId, false);
+        values.remove(Channels.COLUMN_INPUT_ID);
+        try {
+            mContentResolver.insert(mChannelsUri, values);
+            fail("Channels.COLUMN_INPUT_ID must not be null for non-preview channels.");
+        } catch (Exception e) {
+            // Expected.
+        }
+
+        // Preview channels can be inserted without input ID
+        values.put(Channels.COLUMN_TYPE, Channels.TYPE_PREVIEW);
+        Uri rowUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(rowUri);
+        Uri channelUri = TvContract.buildChannelUri(channelId);
+        verifyChannel(channelUri, values, channelId, false);
     }
 
     public void testChannelsTableForIllegalAccess() throws Exception {
