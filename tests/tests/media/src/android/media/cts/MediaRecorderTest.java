@@ -53,6 +53,7 @@ import java.lang.InterruptedException;
 import java.lang.Runnable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -231,21 +232,34 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         // verify some getMetrics() behaviors while we're here.
         MediaMetricsSet metricsSet = mMediaRecorder.getMetrics();
         if (metricsSet == null) {
-            fail("getMetrics() returns no data");
+            fail("MediaRecorder.getMetrics() returned null metrics");
+        } else if (metricsSet.isEmpty()) {
+            fail("MediaRecorder.getMetrics() returned empty metrics");
         } else {
+            int size = metricsSet.size();
+            Set<String> keys = metricsSet.keySet();
+
+            if (size == 0) {
+                fail("MediaRecorder.getMetrics().size() reports empty record");
+            }
+
+            if (keys == null) {
+                fail("MediaMetricsSet returned no keys");
+            } else if (keys.size() != size) {
+                fail("MediaMetricsSet.keys().size() mismatch MediaMetricsSet.size()");
+            }
+
             // ensure existence of some known fields
-            int ht = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_HEIGHT, -1);
-            int wid = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_WIDTH, -1);
             int videoBitRate = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_VIDEO_BITRATE, -1);
-            if (ht != height) {
-                fail("getMetrics() height set " + height + " got " + ht);
-            }
-            if (wid != width) {
-                fail("getMetrics() width set " + width + " got " + wid);
-            }
             if (videoBitRate != VIDEO_BIT_RATE_IN_BPS) {
                 fail("getMetrics() videoEncodeBitrate set " +
                      VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
+            }
+
+            // careful when comparing floating point numbers
+            double captureFrameRate = metricsSet.getDouble(MediaMetricsSet.MediaRecorder.KEY_CAPTURE_FPS, -1);
+            if (captureFrameRate < 0) {
+                fail("getMetrics() capture framerate reports " + captureFrameRate);
             }
         }
 
@@ -289,26 +303,37 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.start();
         Thread.sleep(RECORD_TIME_MS);
 
-
-
         // verify some getMetrics() behaviors while we're here.
         MediaMetricsSet metricsSet = mMediaRecorder.getMetrics();
         if (metricsSet == null) {
-            fail("getMetrics() returns no data");
+            fail("MediaRecorder.getMetrics() returned null metrics");
+        } else if (metricsSet.isEmpty()) {
+            fail("MediaRecorder.getMetrics() returned empty metrics");
         } else {
+            int size = metricsSet.size();
+            Set<String> keys = metricsSet.keySet();
+
+            if (size == 0) {
+                fail("MediaRecorder.getMetrics().size() reports empty record");
+            }
+
+            if (keys == null) {
+                fail("MediaMetricsSet returned no keys");
+            } else if (keys.size() != size) {
+                fail("MediaMetricsSet.keys().size() mismatch MediaMetricsSet.size()");
+            }
+
             // ensure existence of some known fields
-            int ht = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_HEIGHT, -1);
-            int wid = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_WIDTH, -1);
             int videoBitRate = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_VIDEO_BITRATE, -1);
-            if (ht != height) {
-                fail("getMetrics() height set " + height + " got " + ht);
-            }
-            if (wid != width) {
-                fail("getMetrics() width set " + width + " got " + wid);
-            }
             if (videoBitRate != VIDEO_BIT_RATE_IN_BPS) {
                 fail("getMetrics() videoEncodeBitrate set " +
                      VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
+            }
+
+            // careful when comparing floating point numbers
+            double captureFrameRate = metricsSet.getDouble(MediaMetricsSet.MediaRecorder.KEY_CAPTURE_FPS, -1);
+            if (captureFrameRate < 0) {
+                fail("getMetrics() capture framerate reports " + captureFrameRate);
             }
         }
 
