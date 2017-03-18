@@ -100,6 +100,7 @@ public class Camera2SurfaceViewTestCase extends
     protected ImageReader mReader;
     protected Surface mReaderSurface;
     protected Surface mPreviewSurface;
+    protected SurfaceHolder mPreviewHolder;
     protected Size mPreviewSize;
     protected List<Size> mOrderedPreviewSizes; // In descending order.
     protected List<Size> m1080pBoundedOrderedPreviewSizes; // In descending order.
@@ -641,6 +642,7 @@ public class Camera2SurfaceViewTestCase extends
                 WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS, mPreviewSize.getWidth(),
                 mPreviewSize.getHeight());
         assertTrue("wait for surface change to " + mPreviewSize.toString() + " timed out", res);
+        mPreviewHolder = holder;
         mPreviewSurface = holder.getSurface();
         assertNotNull("Preview surface is null", mPreviewSurface);
         assertTrue("Preview surface is invalid", mPreviewSurface.isValid());
