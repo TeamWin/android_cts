@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.image
+import math
+
+import its.caps
 import its.device
 import its.objects
 import its.target
-import its.caps
+
 
 def main():
     """Test the validity of some metadata entries.
@@ -82,6 +84,8 @@ def getval(expr, default=None):
         return default
 
 failed = False
+
+
 def check(expr):
     global md, props, failed
     try:

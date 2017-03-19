@@ -23,15 +23,20 @@ def main():
     for s in sys.argv[1:]:
         if s[:7] == 'screen=' and len(s) > 7:
             screen_id = s[7:]
+
+    if not screen_id:
+        print 'Error: need to specify screen serial'
+        assert False
+
     cmd = ('adb -s %s shell dumpsys power | egrep "Display Power"'
            % screen_id)
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     cmd_ret = process.stdout.read()
     screen_state = re.split(r'[s|=]', cmd_ret)[-1]
-    if screen_state == 'OFF\n':
-        print 'Screen OFF. Turning ON.'
+    if 'OFF' in screen_state:
+        print 'Screen already OFF.'
     else:
-        wakeup = ('adb -s %s shell input keyevent POWER' % screen_id)
-        subprocess.Popen(wakeup.split())
+        pwrdn = ('adb -s %s shell input keyevent POWER' % screen_id)
+        subprocess.Popen(pwrdn.split())
 if __name__ == '__main__':
     main()

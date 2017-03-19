@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import its.image
+import its.caps
 import its.device
 import its.objects
 import os.path
@@ -31,15 +32,31 @@ def main():
         fd_modes = props['android.statistics.info.availableFaceDetectModes']
         a = props['android.sensor.info.activeArraySize']
         aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
-        gain, exp, _, _, focus = cam.do_3a(get_results=True)
-        print 'iso = %d' % gain
-        print 'exp = %.2fms' % (exp*1.0E-6)
-        print 'fd = %.2fcm' % (1.0E2/focus)
+        if its.caps.read_3a(props):
+            gain, exp, _, _, focus = cam.do_3a(get_results=True)
+            print 'iso = %d' % gain
+            print 'exp = %.2fms' % (exp*1.0E-6)
+            if focus == 0.0:
+                print 'fd = infinity'
+            else:
+                print 'fd = %.2fcm' % (1.0E2/focus)
         for fd_mode in fd_modes:
             assert(FD_MODE_OFF <= fd_mode <= FD_MODE_FULL)
             req = its.objects.auto_capture_request()
             req['android.statistics.faceDetectMode'] = fd_mode
-            caps = cam.do_capture([req]*NUM_TEST_FRAMES)
+            max_img_size = its.objects.get_available_output_sizes("yuv", props)[0]
+            w = max_img_size[0]
+            h = max_img_size[1]
+            out_surf=None
+            if w * h > 12 * 1024 * 1024:
+                size_to_use = its.objects.get_available_output_sizes("yuv",
+                    props, max_size=(4000, 3000), match_ar_size=(w, h))[0]
+                out_surf = {
+                   "width": size_to_use[0],
+                   "height": size_to_use[1],
+                   "format": "yuv",
+                }
+            caps = cam.do_capture([req]*NUM_TEST_FRAMES, out_surfaces=out_surf)
             for i,cap in enumerate(caps):
                 md = cap['metadata']
                 assert(md['android.statistics.faceDetectMode'] == fd_mode)
