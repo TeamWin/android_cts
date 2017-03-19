@@ -59,6 +59,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
+    private PackageManager mPackageManager;
     private boolean mOnCellLocationChangedCalled = false;
     private ServiceState mServiceState;
     private final Object mLock = new Object();
@@ -72,6 +73,7 @@ public class TelephonyManagerTest {
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mPackageManager = (PackageManager) getContext().getPackageManager();
     }
 
     @After
@@ -202,6 +204,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCreateForPhoneAccountHandle(){
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle handle =
                 telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
@@ -280,9 +286,8 @@ public class TelephonyManagerTest {
 
             case TelephonyManager.PHONE_TYPE_NONE:
                 boolean nwSupported = mCm.isNetworkSupported(mCm.TYPE_WIFI);
-                PackageManager packageManager = getContext().getPackageManager();
                 // only check serial number & MAC address if device report wifi feature
-                if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+                if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
                     assertSerialNumber();
                     assertMacAddress(getWifiMacAddress());
                 } else if (mCm.getNetworkInfo(ConnectivityManager.TYPE_BLUETOOTH) != null) {
@@ -424,9 +429,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetNetworkCountryIso() {
-        PackageManager packageManager = getContext().getPackageManager();
         String countryCode = mTelephonyManager.getNetworkCountryIso();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             assertTrue("Country code '" + countryCode + "' did not match "
                     + ISO_COUNTRY_CODE_PATTERN,
                     Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
@@ -437,9 +441,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetSimCountryIso() {
-        PackageManager packageManager = getContext().getPackageManager();
         String countryCode = mTelephonyManager.getSimCountryIso();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             assertTrue("Country code '" + countryCode + "' did not match "
                     + ISO_COUNTRY_CODE_PATTERN,
                     Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));

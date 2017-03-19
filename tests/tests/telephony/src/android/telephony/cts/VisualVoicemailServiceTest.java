@@ -325,6 +325,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testVoicemailRingtoneSettings(){
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
         TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
 
@@ -337,6 +341,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testVoicemailVibrationSettings(){
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
         TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
 
