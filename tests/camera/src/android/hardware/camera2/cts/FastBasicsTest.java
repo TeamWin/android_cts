@@ -29,9 +29,10 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.media.Image;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 import android.util.Size;
-import android.media.Image;
 
 import java.nio.ByteBuffer;
 
@@ -47,6 +48,7 @@ import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
  * May not take more than a few seconds to run, to be suitable for quick
  * testing.
  */
+@Presubmit
 public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "FastBasicsTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
