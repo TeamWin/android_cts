@@ -227,12 +227,14 @@ final class CannedFillResponse {
      * </pre class="prettyprint">
      */
     static class CannedDataset {
-        final Map<String, AutofillValue> fields;
+        final Map<String, AutofillValue> fieldValues;
+        final Map<String, RemoteViews> fieldPresentations;
         final RemoteViews presentation;
         final IntentSender authentication;
 
         private CannedDataset(Builder builder) {
-            fields = builder.mFields;
+            fieldValues = builder.mFieldValues;
+            fieldPresentations = builder.mFieldPresentations;
             presentation = builder.mPresentation;
             authentication = builder.mAuthentication;
         }
@@ -241,9 +243,12 @@ final class CannedFillResponse {
          * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
          */
         Dataset asDataset(AssistStructure structure) {
-            final Dataset.Builder builder = new Dataset.Builder(presentation);
-            if (fields != null) {
-                for (Map.Entry<String, AutofillValue> entry : fields.entrySet()) {
+            final Dataset.Builder builder = (presentation == null)
+                    ? new Dataset.Builder()
+                    : new Dataset.Builder(presentation);
+
+            if (fieldValues != null) {
+                for (Map.Entry<String, AutofillValue> entry : fieldValues.entrySet()) {
                     final String resourceId = entry.getKey();
                     final ViewNode node = findNodeByResourceId(structure, resourceId);
                     if (node == null) {
@@ -252,7 +257,12 @@ final class CannedFillResponse {
                     }
                     final AutofillId id = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
-                    builder.setValue(id, value);
+                    final RemoteViews presentation = fieldPresentations.get(resourceId);
+                    if (presentation != null) {
+                        builder.setValue(id, value, presentation);
+                    } else {
+                        builder.setValue(id, value);
+                    }
                 }
             }
             builder.setAuthentication(authentication);
@@ -262,20 +272,40 @@ final class CannedFillResponse {
         @Override
         public String toString() {
             return "CannedDataset: [hasPresentation=" + (presentation != null)
+                    + ", fieldPresentations=" + (fieldPresentations)
                     + ", hasAuthentication=" + (authentication != null)
-                    + ", fields=" + fields + "]";
+                    + ", fieldValuess=" + fieldValues + "]";
         }
 
         static class Builder {
-            private final Map<String, AutofillValue> mFields = new HashMap<>();
+            private final Map<String, AutofillValue> mFieldValues = new HashMap<>();
+            private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
             private RemoteViews mPresentation;
             private IntentSender mAuthentication;
+
+            public Builder() {
+
+            }
+
+            public Builder(RemoteViews presentation) {
+                mPresentation = presentation;
+            }
 
             /**
              * Sets the canned value of a field based on its {@code resourceId}.
              */
             public Builder setField(String resourceId, AutofillValue value) {
-                mFields.put(resourceId, value);
+                mFieldValues.put(resourceId, value);
+                return this;
+            }
+
+            /**
+             * Sets the canned value of a field based on its {@code resourceId}.
+             */
+            public Builder setField(String resourceId, AutofillValue value,
+                    RemoteViews presentation) {
+                setField(resourceId, value);
+                mFieldPresentations.put(resourceId, presentation);
                 return this;
             }
 

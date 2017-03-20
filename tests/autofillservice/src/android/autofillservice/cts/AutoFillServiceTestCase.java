@@ -124,7 +124,7 @@ abstract class AutoFillServiceTestCase {
     }
 
     protected static RemoteViews createPresentation(String message) {
-        RemoteViews presentation = new RemoteViews(getContext()
+        final RemoteViews presentation = new RemoteViews(getContext()
                 .getPackageName(), R.layout.list_item);
         presentation.setTextViewText(R.id.text1, message);
         return presentation;
