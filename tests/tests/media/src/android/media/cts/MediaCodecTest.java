@@ -825,7 +825,6 @@ public class MediaCodecTest extends AndroidTestCase {
             // dequeue buffers until not available
             int index = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
             while (index >= 0) {
-                feedMoreFrames = true;
                 indices.add(index);
                 index = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC_SHORT);
             }
