@@ -265,7 +265,7 @@ def get_fastest_manual_capture_settings(props):
     return req, out_spec
 
 
-def get_smallest_yuv_format(props):
+def get_smallest_yuv_format(props, match_ar=None):
     """Return a capture request and format spec for the smallest yuv size.
 
     Args:
@@ -275,7 +275,7 @@ def get_smallest_yuv_format(props):
         fmt:    an output format specification, for the smallest possible yuv
         format for this device.
     """
-    size = get_available_output_sizes("yuv", props)[-1]
+    size = get_available_output_sizes("yuv", props, match_ar_size=match_ar)[-1]
     fmt = {"format":"yuv", "width":size[0], "height":size[1]}
 
     return fmt
