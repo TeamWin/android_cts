@@ -76,7 +76,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.login_activity);
+        setContentView(getContentView());
 
         mLoginButton = (Button) findViewById(R.id.login);
         mSaveButton = (Button) findViewById(R.id.save);
@@ -108,6 +108,10 @@ public class LoginActivity extends AbstractAutoFillActivity {
                 getAutofillManager().cancel();
             }
         });
+    }
+
+    protected int getContentView() {
+        return R.layout.login_activity;
     }
 
     /**
