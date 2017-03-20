@@ -58,6 +58,7 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
 
     private CountDownLatch[] mLocks = new CountDownLatch[NUM_LOCKS];
 
+    private Object mLock = new Object();
     private List<SelfManagedConnection> mConnections = new ArrayList<>();
 
     public static CtsSelfManagedConnectionService getConnectionService() {
@@ -106,13 +107,15 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
     }
 
     public void tearDown() {
-        if (mConnections != null && mConnections.size() > 0) {
-            mConnections.forEach(connection -> {
-                        connection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
-                        connection.destroy();
-                    }
-            );
-            mConnections.clear();
+        synchronized(mLock) {
+            if (mConnections != null && mConnections.size() > 0) {
+                mConnections.forEach(connection -> {
+                            connection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+                            connection.destroy();
+                        }
+                );
+                mConnections.clear();
+            }
         }
         sBindingLock = new CountDownLatch(1);
     }
@@ -130,13 +133,17 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
         connection.putExtras(moreExtras);
         connection.setVideoState(request.getVideoState());
 
-        mConnections.add(connection);
+        synchronized(mLock) {
+            mConnections.add(connection);
+        }
         mLocks[CONNECTION_CREATED_LOCK].countDown();
         return connection;
     }
 
     public List<SelfManagedConnection> getConnections() {
-        return mConnections;
+        synchronized(mLock) {
+            return new ArrayList<>(mConnections);
+        }
     }
 
     /**
