@@ -126,6 +126,30 @@ public class BitmapTest {
         WidgetTestUtils.assertEquals(mBitmap, bitmap);
     }
 
+    @Test
+    public void testCopyConfigs() {
+        Config[] supportedConfigs = new Config[] {
+                Config.ALPHA_8, Config.RGB_565, Config.ARGB_8888
+        };
+        for (Config src : supportedConfigs) {
+            for (Config dst : supportedConfigs) {
+                Bitmap srcBitmap = Bitmap.createBitmap(1, 1, src);
+                srcBitmap.eraseColor(Color.WHITE);
+                Bitmap dstBitmap = srcBitmap.copy(dst, false);
+                assertNotNull("Should support copying from " + src + " to " + dst,
+                        dstBitmap);
+                if (Config.ALPHA_8 == dst || Config.ALPHA_8 == src) {
+                    // Color will be opaque but color information will be lost.
+                    assertEquals("Color should be black when copying from " + src + " to "
+                            + dst, Color.BLACK, dstBitmap.getPixel(0, 0));
+                } else {
+                    assertEquals("Color should be preserved when copying from " + src + " to "
+                            + dst, Color.WHITE, dstBitmap.getPixel(0, 0));
+                }
+            }
+        }
+    }
+
     @Test(expected=IllegalArgumentException.class)
     public void testCopyMutableHwBitmap() {
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
@@ -524,15 +548,13 @@ public class BitmapTest {
         // normal case A_8
         mBitmap = Bitmap.createBitmap(10, 10, Config.ALPHA_8);
         mBitmap.setPixel(5, 5, 0xFFFFFFFF);
-        assertEquals(0xFFFFFFFF, mBitmap.getPixel(5, 5));
+        assertEquals(0xFF000000, mBitmap.getPixel(5, 5));
         mBitmap.setPixel(5, 5, 0xA8A8A8A8);
-        assertEquals(0xA8A8A8A8, mBitmap.getPixel(5, 5));
+        assertEquals(0xA8000000, mBitmap.getPixel(5, 5));
         mBitmap.setPixel(5, 5, 0x00000000);
         assertEquals(0x00000000, mBitmap.getPixel(5, 5));
-
-        // test reconstructing color channels
         mBitmap.setPixel(5, 5, 0x1F000000);
-        assertEquals(0x1F1F1F1F, mBitmap.getPixel(5, 5));
+        assertEquals(0x1F000000, mBitmap.getPixel(5, 5));
     }
 
     @Test
