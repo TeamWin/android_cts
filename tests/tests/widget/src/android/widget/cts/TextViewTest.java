@@ -6278,6 +6278,62 @@ public class TextViewTest {
     }
 
     @Test
+    public void testAutoSize_setEllipsize() throws Throwable {
+        final TextView textView = (TextView) mActivity.findViewById(
+                R.id.textview_autosize_uniform_predef_sizes);
+        final int initialAutoSizeType = textView.getAutoSizeTextType();
+        final int initialMinTextSize = textView.getAutoSizeMinTextSize();
+        final int initialMaxTextSize = textView.getAutoSizeMaxTextSize();
+        final int initialAutoSizeGranularity = textView.getAutoSizeStepGranularity();
+        final int initialSizes = textView.getAutoSizeTextAvailableSizes().length;
+
+        assertEquals(null, textView.getEllipsize());
+        // Verify styled attributes.
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, initialAutoSizeType);
+        assertNotEquals(-1, initialMinTextSize);
+        assertNotEquals(-1, initialMaxTextSize);
+        // Because this TextView has been configured to use predefined sizes.
+        assertEquals(-1, initialAutoSizeGranularity);
+        assertNotEquals(0, initialSizes);
+
+        final TextUtils.TruncateAt newEllipsizeValue = TextUtils.TruncateAt.END;
+        mActivityRule.runOnUiThread(() ->
+                textView.setEllipsize(newEllipsizeValue));
+        mInstrumentation.waitForIdleSync();
+        assertEquals(newEllipsizeValue, textView.getEllipsize());
+        // Beside the ellipsis no auto-size attribute has changed.
+        assertEquals(initialAutoSizeType, textView.getAutoSizeTextType());
+        assertEquals(initialMinTextSize, textView.getAutoSizeMinTextSize());
+        assertEquals(initialMaxTextSize, textView.getAutoSizeMaxTextSize());
+        assertEquals(initialAutoSizeGranularity, textView.getAutoSizeStepGranularity());
+        assertEquals(initialSizes, textView.getAutoSizeTextAvailableSizes().length);
+    }
+
+    @Test
+    public void testEllipsize_setAutoSize() throws Throwable {
+        TextView textView = findTextView(R.id.textview_text);
+        final TextUtils.TruncateAt newEllipsizeValue = TextUtils.TruncateAt.END;
+        mActivityRule.runOnUiThread(() ->
+                textView.setEllipsize(newEllipsizeValue));
+        assertEquals(newEllipsizeValue, textView.getEllipsize());
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
+        assertEquals(-1, textView.getAutoSizeMinTextSize());
+        assertEquals(-1, textView.getAutoSizeMaxTextSize());
+        assertEquals(-1, textView.getAutoSizeStepGranularity());
+        assertEquals(0, textView.getAutoSizeTextAvailableSizes().length);
+
+        mActivityRule.runOnUiThread(() ->
+                textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM));
+        assertEquals(newEllipsizeValue, textView.getEllipsize());
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
+        // The auto-size defaults have been used.
+        assertNotEquals(-1, textView.getAutoSizeMinTextSize());
+        assertNotEquals(-1, textView.getAutoSizeMaxTextSize());
+        assertNotEquals(-1, textView.getAutoSizeStepGranularity());
+        assertNotEquals(0, textView.getAutoSizeTextAvailableSizes().length);
+    }
+
+    @Test
     public void testAutoSizeCallers_setCompoundDrawables() throws Throwable {
         final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_uniform, false);
