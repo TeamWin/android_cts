@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.ColorFilter;
@@ -38,6 +39,7 @@ import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.Xfermode;
 import android.os.LocaleList;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.SpannedString;
@@ -902,13 +904,54 @@ public class PaintTest {
     @Test
     public void testSetGetFontVariationSettings() {
         Paint p = new Paint();
+        Context context = InstrumentationRegistry.getTargetContext();
+        Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");
+        p.setTypeface(typeface);
+
+        // multiaxis.ttf supports "aaaa", "BBBB", "a b ", " C D" axes.
 
         // The default variation settings should be null.
         assertNull(p.getFontVariationSettings());
 
-        final String settings = "'wdth' 1.0";
-        p.setFontVariationSettings(settings);
-        assertEquals(settings, p.getFontVariationSettings());
+        final String[] nonEffectiveSettings = {
+                "invalid syntax",
+                "'aaa' 1.0",  // tag is not 4 ascii chars
+                "'bbbb' 1.0",  // unsupported tag
+                "'    ' 1.0",  // unsupported tag
+                "'AAAA' 0.7",  // unsupported tag (case sensitive)
+                "' a b' 1.3",  // unsupported tag (white space should not be ignored)
+                "'C D ' 1.3",  // unsupported tag (white space should not be ignored)
+                "'bbbb' 1.0, 'cccc' 2.0",  // none of them are supported.
+        };
+
+        for (String notEffectiveSetting : nonEffectiveSettings) {
+            assertFalse("Must return false for " + notEffectiveSetting,
+                    p.setFontVariationSettings(notEffectiveSetting));
+            assertNull("Must not change settings for " + notEffectiveSetting,
+                    p.getFontVariationSettings());
+        }
+
+        String retainSettings = "'aaaa' 1.0";
+        assertTrue(p.setFontVariationSettings(retainSettings));
+        for (String notEffectiveSetting : nonEffectiveSettings) {
+            assertFalse(p.setFontVariationSettings(notEffectiveSetting));
+            assertEquals("Must not change settings for " + notEffectiveSetting,
+                    retainSettings, p.getFontVariationSettings());
+        }
+
+        // At least one axis is supported, the settings should be applied.
+        final String[] effectiveSettings = {
+                "'aaaa' 1.0",  // supported tag
+                "'a b ' .7",  // supported tag (contains whitespace)
+                "'aaaa' 1.0, 'BBBB' 0.5",  // both are supported
+                "'aaaa' 1.0, ' C D' 0.5",  // both are supported
+                "'aaaa' 1.0, 'bbbb' 0.4",  // 'bbbb' is unspported.
+        };
+
+        for (String effectiveSetting : effectiveSettings) {
+            assertTrue(p.setFontVariationSettings(effectiveSetting));
+            assertEquals(effectiveSetting, p.getFontVariationSettings());
+        }
 
         p.setFontVariationSettings("");
         assertNull(p.getFontVariationSettings());

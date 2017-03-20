@@ -3330,13 +3330,54 @@ public class TextViewTest {
     @Test
     public void testSetGetFontVariationSettings() {
         mTextView = new TextView(mActivity);
+        Context context = InstrumentationRegistry.getTargetContext();
+        Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");
+        mTextView.setTypeface(typeface);
 
-        // The default font variation settings should be null.
+        // multiaxis.ttf supports "aaaa", "BBBB", "a b ", " C D" axes.
+
+        // The default variation settings should be null.
         assertNull(mTextView.getFontVariationSettings());
 
-        final String setting = "'wdth' 2.0";
-        mTextView.setFontVariationSettings(setting);
-        assertEquals(setting, mTextView.getFontVariationSettings());
+        final String[] nonEffectiveSettings = {
+                "invalid syntax",
+                "'aaa' 1.0",  // tag is not 4 ascii chars
+                "'bbbb' 1.0",  // unsupported tag
+                "'    ' 1.0",  // unsupported tag
+                "'AAAA' 0.7",  // unsupported tag (case sensitive)
+                "' a b' 1.3",  // unsupported tag (white space should not be ignored)
+                "'C D ' 1.3",  // unsupported tag (white space should not be ignored)
+                "'bbbb' 1.0, 'cccc' 2.0",  // none of them are supported.
+        };
+
+        for (String notEffectiveSetting : nonEffectiveSettings) {
+            assertFalse("Must return false for " + notEffectiveSetting,
+                    mTextView.setFontVariationSettings(notEffectiveSetting));
+            assertNull("Must not change settings for " + notEffectiveSetting,
+                    mTextView.getFontVariationSettings());
+        }
+
+        String retainSettings = "'aaaa' 1.0";
+        assertTrue(mTextView.setFontVariationSettings(retainSettings));
+        for (String notEffectiveSetting : nonEffectiveSettings) {
+            assertFalse(mTextView.setFontVariationSettings(notEffectiveSetting));
+            assertEquals("Must not change settings for " + notEffectiveSetting,
+                    retainSettings, mTextView.getFontVariationSettings());
+        }
+
+        // At least one axis is supported, the settings should be applied.
+        final String[] effectiveSettings = {
+                "'aaaa' 1.0",  // supported tag
+                "'a b ' .7",  // supported tag (contains whitespace)
+                "'aaaa' 1.0, 'BBBB' 0.5",  // both are supported
+                "'aaaa' 1.0, ' C D' 0.5",  // both are supported
+                "'aaaa' 1.0, 'bbbb' 0.4",  // 'bbbb' is unspported.
+        };
+
+        for (String effectiveSetting : effectiveSettings) {
+            assertTrue(mTextView.setFontVariationSettings(effectiveSetting));
+            assertEquals(effectiveSetting, mTextView.getFontVariationSettings());
+        }
 
         mTextView.setFontVariationSettings("");
         assertNull(mTextView.getFontVariationSettings());
