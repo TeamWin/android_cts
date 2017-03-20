@@ -88,6 +88,10 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
                 .childSelector(new UiSelector().resourceId("android:id/button1")));
     }
 
+    private UiObject findPositiveButton() throws UiObjectNotFoundException {
+        return new UiObject(new UiSelector().resourceId("android:id/button1"));
+    }
+
     public void testOpenSimple() throws Exception {
         if (!supportedHardware()) return;
 
@@ -221,6 +225,9 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         mDevice.waitForIdle();
         findSaveButton().click();
+
+        mDevice.waitForIdle();
+        findPositiveButton().click();
 
         final Result result = mActivity.getResult();
         final Uri uri = result.data.getData();
