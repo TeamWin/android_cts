@@ -31,6 +31,7 @@ import java.net.HttpCookie;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for tests which use MediaPlayer to play audio or video.
@@ -322,11 +323,24 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
             Thread.sleep(playTime);
         }
 
-        // validate a couple of the metrics.
+        // validate a few MediaMetrics.
         MediaMetricsSet metricsSet = mMediaPlayer.getMetrics();
         if (metricsSet == null) {
-            fail("MediaPlayer returned null metrics");
+            fail("MediaPlayer.getMetrics() returned null metrics");
+        } else if (metricsSet.isEmpty()) {
+            fail("MediaPlayer.getMetrics() returned empty metrics");
         } else {
+
+            int size = metricsSet.size();
+            Set<String> keys = metricsSet.keySet();
+
+            if (keys == null) {
+                fail("MediaMetricsSet returned no keys");
+            } else if (keys.size() != size) {
+                fail("MediaMetricsSet.keys().size() mismatch MediaMetricsSet.size()");
+            }
+
+            // we played something; so one of these should be non-null
             String vmime = metricsSet.getString(MediaMetricsSet.MediaPlayer.KEY_MIME_VIDEO, null);
             String amime = metricsSet.getString(MediaMetricsSet.MediaPlayer.KEY_MIME_AUDIO, null);
             if (vmime == null && amime == null) {
@@ -340,6 +354,9 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
             long playing = metricsSet.getLong(MediaMetricsSet.MediaPlayer.KEY_PLAYING, -2);
             if (playing == -2) {
                 fail("getMetrics() didn't return a playing time");
+            }
+            if (!keys.contains(MediaMetricsSet.MediaPlayer.KEY_PLAYING)) {
+                fail("MediaMetricsSet.keys() missing: " + MediaMetricsSet.MediaPlayer.KEY_PLAYING);
             }
         }
 
