@@ -2891,8 +2891,11 @@ You should be prompted to select credentials; choose the ones you just installed
         3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your location.\n
         4) Use the Back button to return to this page.\n
         5) Press the Grant button.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your location.\n
-        7) Press the Reset button.
+        6) Press the Open Settings button.\n
+        7) In the screen that opens, verify that you are told now that your administrator has allowed one app to access your location.\n
+        8) Tap on that information. Verify that a list of apps that have access to your location shows, and it contains the app CTS Verifier marked as "Enabled by administrator".\n
+        9) Use the Back button to return to this page.\n
+        10) Press the Reset button.
     </string>
     <string name="enterprise_privacy_reset">Reset</string>
     <string name="enterprise_privacy_grant">Grant</string>
@@ -2904,8 +2907,11 @@ You should be prompted to select credentials; choose the ones you just installed
         3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your microphone.\n
         4) Use the Back button to return to this page.\n
         5) Press the Grant button.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your microphone.\n
-        7) Press the Reset button.
+        6) Press the Open Settings button.\n
+        7) In the screen that opens, verify that you are told now that your administrator has allowed one app to access your microphone.\n
+        8) Tap on that information. Verify that a list of apps that have access to your microphone shows, and it contains the app CTS Verifier marked as "Enabled by administrator".\n
+        9) Use the Back button to return to this page.\n
+        10) Press the Reset button.
     </string>
     <string name="enterprise_privacy_admin_granted_camera_access">Camera access permission</string>
     <string name="enterprise_privacy_admin_granted_camera_access_info">
@@ -2915,8 +2921,11 @@ You should be prompted to select credentials; choose the ones you just installed
         3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your camera.\n
         4) Use the Back button to return to this page.\n
         5) Press the Grant button.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has allowed one app to access your camera.\n
-        7) Press the Reset button.
+        6) Press the Open Settings button.\n
+        7) In the screen that opens, verify that you are told now that your administrator has allowed one app to access your camera.\n
+        8) Tap on that information. Verify that a list of apps that have access to your camera shows, and it contains the app CTS Verifier marked as "Enabled by administrator".\n
+        9) Use the Back button to return to this page.\n
+        10) Press the Reset button.
     </string>
     <string name="enterprise_privacy_default_apps">Default apps</string>
     <string name="enterprise_privacy_default_apps_info">
