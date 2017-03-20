@@ -17,12 +17,11 @@
 
     <include name="cts-automated" />
 
-    <option name="plan" value="cts" />
-
-    <!-- Include modules with presubmit test cases. -->
-    <option name="compatibility:include-filter" value="CtsAccountManagerTestCases" />
-
-    <!-- Only run tests with @Presubmit annotation. -->
+    <!-- Only run tests with @Presubmit annotation -->
+    <!-- This serve as a base config for CTS tests used for presubmit;
+         additional filtering parameters should be applied to further narrow
+         down the choice of tests, e.g. module filter
+    -->
     <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:include-annotation:android.platform.test.annotations.Presubmit" />
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:include-annotation:android.platform.test.annotations.Presubmit" />
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.HostTest:include-annotation:android.platform.test.annotations.Presubmit" />
