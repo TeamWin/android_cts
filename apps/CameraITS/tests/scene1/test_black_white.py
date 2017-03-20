@@ -36,10 +36,13 @@ def main():
                              its.caps.per_frame_control(props))
 
         debug = its.caps.debug_mode()
+        largest_yuv = its.objects.get_largest_yuv_format(props)
         if debug:
-            fmt = its.objects.get_largest_yuv_format(props)
+            fmt = largest_yuv
         else:
-            fmt = its.objects.get_smallest_yuv_format(props)
+            match_ar = (largest_yuv['width'], largest_yuv['height'])
+            fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
+
         expt_range = props['android.sensor.info.exposureTimeRange']
         sens_range = props['android.sensor.info.sensitivityRange']
 
