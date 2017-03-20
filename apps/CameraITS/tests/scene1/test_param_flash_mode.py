@@ -38,10 +38,12 @@ def main():
         # it should be obvious whether the flash fired or not, and use a
         # linear tonemap.
         debug = its.caps.debug_mode()
+        largest_yuv = its.objects.get_largest_yuv_format(props)
         if debug:
-            fmt = its.objects.get_largest_yuv_format(props)
+            fmt = largest_yuv
         else:
-            fmt = its.objects.get_smallest_yuv_format(props)
+            match_ar = (largest_yuv['width'], largest_yuv['height'])
+            fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
 
         e, s = its.target.get_target_exposure_combos(cam)["midExposureTime"]
         e /= 4
