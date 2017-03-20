@@ -38,10 +38,12 @@ def main():
 
         # Converge 3A and get the estimates.
         debug = its.caps.debug_mode()
+        largest_yuv = its.objects.get_largest_yuv_format(props)
         if debug:
-            fmt = its.objects.get_largest_yuv_format(props)
+            fmt = largest_yuv
         else:
-            fmt = its.objects.get_smallest_yuv_format(props)
+            match_ar = (largest_yuv['width'], largest_yuv['height'])
+            fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
         sens, exp, gains, xform, focus = cam.do_3a(get_results=True)
         xform_rat = its.objects.float_to_rational(xform)
         print "AE sensitivity %d, exposure %dms" % (sens, exp/1000000.0)
