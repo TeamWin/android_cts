@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.server.cts.tools.ActivityLauncher;
 import android.util.Log;
 import android.view.WindowManager;
 
@@ -73,6 +74,8 @@ public class BroadcastReceiverActivity extends Activity {
                 getSystemService(KeyguardManager.class).dismissKeyguard(
                         BroadcastReceiverActivity.this, new KeyguardDismissLoggerCallback(), null);
             }
+
+            ActivityLauncher.launchActivityFromExtras(BroadcastReceiverActivity.this, extras);
         }
     }
 }

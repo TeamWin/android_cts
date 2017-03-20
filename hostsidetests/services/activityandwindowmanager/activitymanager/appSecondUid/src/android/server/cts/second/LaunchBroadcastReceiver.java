@@ -16,14 +16,18 @@
 
 package android.server.cts.second;
 
+import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 /** Broadcast receiver that can launch activities. */
 public class LaunchBroadcastReceiver extends BroadcastReceiver {
+    private static final String TAG = LaunchBroadcastReceiver.class.getSimpleName();
+
     @Override
     public void onReceive(Context context, Intent intent) {
         final Bundle extras = intent.getExtras();
@@ -38,6 +42,19 @@ public class LaunchBroadcastReceiver extends BroadcastReceiver {
             newIntent.setClass(context, SecondActivity.class);
         }
 
-        context.startActivity(newIntent);
+        ActivityOptions options = ActivityOptions.makeBasic();
+        int displayId = extras.getInt("target_display", -1);
+        if (displayId != -1) {
+            options.setLaunchDisplayId(displayId);
+            newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        } else {
+            newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+
+        try {
+            context.startActivity(newIntent, options.toBundle());
+        } catch (SecurityException e) {
+            Log.i(TAG, "SecurityException launching activity");
+        }
     }
 }
