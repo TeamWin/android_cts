@@ -151,6 +151,12 @@ public class BatteryConstraintTest extends ConstraintTest {
 
         assertFalse("Job with charging constraint fired while not on power.",
                 kTestEnvironment.awaitExecution());
+
+        // And for good measure, ensure the job runs once the device is plugged in.
+        kTestEnvironment.setExpectedExecutions(1);
+        setBatteryState(true, 100);
+        assertTrue("Job with charging constraint did not fire on power.",
+                kTestEnvironment.awaitExecution());
     }
 
     /**
@@ -164,6 +170,12 @@ public class BatteryConstraintTest extends ConstraintTest {
         mJobScheduler.schedule(mBuilder.setRequiresBatteryNotLow(true).build());
 
         assertFalse("Job with battery not low constraint fired while level critical.",
+                kTestEnvironment.awaitExecution());
+
+        // And for good measure, ensure the job runs once the device's battery level is not low.
+        kTestEnvironment.setExpectedExecutions(1);
+        setBatteryState(false, 50);
+        assertTrue("Job with not low constraint did not fire when charge increased.",
                 kTestEnvironment.awaitExecution());
     }
 }
