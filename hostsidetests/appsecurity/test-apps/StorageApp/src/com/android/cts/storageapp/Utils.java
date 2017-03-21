@@ -16,13 +16,9 @@
 
 package com.android.cts.storageapp;
 
-import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
-import static com.android.cts.storageapp.Utils.makeUniqueFile;
-
 import android.content.Context;
 import android.system.Os;
 import android.system.OsConstants;
-import android.system.StructStat;
 import android.util.Log;
 
 import junit.framework.AssertionFailedError;
@@ -78,7 +74,11 @@ public class Utils {
     }
 
     public static void assertMostlyEquals(long expected, long actual) {
-        if (Math.abs(expected - actual) > 500 * KB_IN_BYTES) {
+        assertMostlyEquals(expected, actual, 500 * KB_IN_BYTES);
+    }
+
+    public static void assertMostlyEquals(long expected, long actual, long delta) {
+        if (Math.abs(expected - actual) > delta) {
             throw new AssertionFailedError("Expected roughly " + expected + " but was " + actual
                     + " [" + android.os.Process.myUserHandle() + "]");
         }

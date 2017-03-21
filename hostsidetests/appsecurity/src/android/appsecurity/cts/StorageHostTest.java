@@ -40,7 +40,7 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
 
-    private static int[] sUsers;
+    private int[] mUsers;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -56,6 +56,18 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     protected void setUp() throws Exception {
         super.setUp();
 
+        mUsers = Utils.createUsersForTest(getDevice());
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+
+        Utils.removeUsersForTest(getDevice(), mUsers);
+        mUsers = null;
+    }
+
+    private void prepareTestApps() throws Exception {
         getDevice().uninstallPackage(PKG_STATS);
         getDevice().uninstallPackage(PKG_A);
         getDevice().uninstallPackage(PKG_B);
@@ -65,103 +77,101 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_A), false));
         assertNull(getDevice().installPackage(buildHelper.getTestFile(APK_B), false));
 
-        if (sUsers != null) {
-            for (int user : sUsers) {
-                getDevice().executeShellCommand("appops set --user " + user + " " + PKG_STATS
-                        + " android:get_usage_stats allow");
-            }
+        for (int user : mUsers) {
+            getDevice().executeShellCommand("appops set --user " + user + " " + PKG_STATS
+                    + " android:get_usage_stats allow");
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-
-        getDevice().uninstallPackage(PKG_STATS);
-        getDevice().uninstallPackage(PKG_A);
-        getDevice().uninstallPackage(PKG_B);
+    public void testEverything() throws Exception {
+        prepareTestApps(); doVerifyAppStats();
+        prepareTestApps(); doVerifyAppQuota();
+        prepareTestApps(); doVerifyAppAllocate();
+        prepareTestApps(); doVerifySummary();
+        prepareTestApps(); doVerifyStats();
+        prepareTestApps(); doVerifyStatsMultiple();
+        prepareTestApps(); doVerifyStatsExternal();
+        prepareTestApps(); doVerifyStatsExternalConsistent();
+        prepareTestApps(); doVerifyCategory();
+        prepareTestApps(); doCacheClearing();
     }
 
-    public void testA() throws Exception {
-        sUsers = Utils.createUsersForTest(getDevice());
-    }
-
-    public void testVerifyAppStats() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyAppStats() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
         }
 
         // TODO: remove this once 34723223 is fixed
         getDevice().executeShellCommand("sync");
 
-        for (int user : sUsers) {
+        for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifySpaceManual", user);
             runDeviceTests(PKG_A, CLASS, "testVerifySpaceApi", user);
         }
     }
 
-    public void testVerifyAppQuota() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyAppQuota() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifyQuotaApi", user);
         }
     }
 
-    public void testVerifyAppAllocate() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyAppAllocate() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifyAllocateApi", user);
         }
     }
 
-    public void testVerifySummary() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifySummary() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifySummary", user);
         }
     }
 
-    public void testVerifyStats() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyStats() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats", user);
         }
     }
 
-    public void testVerifyStatsMultiple() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyStatsMultiple() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
 
             runDeviceTests(PKG_B, CLASS, "testAllocate", user);
         }
 
-        for (int user : sUsers) {
+        for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsMultiple", user);
         }
     }
 
-    public void testVerifyStatsExternal() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyStatsExternal() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user);
         }
     }
 
-    public void testVerifyStatsExternalConsistent() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyStatsExternalConsistent() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternalConsistent", user);
         }
     }
 
-    public void testVerifyCategory() throws Exception {
-        for (int user : sUsers) {
+    public void doVerifyCategory() throws Exception {
+        for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory", user);
         }
     }
 
-    public void testCacheClearing() throws Exception {
+    public void doCacheClearing() throws Exception {
         // To make the cache clearing logic easier to verify, ignore any cache
         // and low space reserved space.
         getDevice().executeShellCommand("settings put global sys_storage_threshold_max_bytes 0");
         getDevice().executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
         try {
-            for (int user : sUsers) {
+            for (int user : mUsers) {
                 // Clear all other cached data to give ourselves a clean slate
                 getDevice().executeShellCommand("pm trim-caches 4096G");
                 runDeviceTests(PKG_STATS, CLASS_STATS, "testCacheClearing", user);
@@ -170,11 +180,6 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
             getDevice().executeShellCommand("settings delete global sys_storage_threshold_max_bytes");
             getDevice().executeShellCommand("settings delete global sys_storage_cache_max_bytes");
         }
-    }
-
-    public void testZ() throws Exception {
-        Utils.removeUsersForTest(getDevice(), sUsers);
-        sUsers = null;
     }
 
     public void runDeviceTests(String packageName, String testClassName, String testMethodName,
