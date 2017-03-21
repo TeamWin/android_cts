@@ -17,7 +17,7 @@
 package android.os.cts;
 
 import android.app.ActivityManager;
-import android.app.RecoverableSecurityException;
+import android.app.AuthenticationRequiredException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class RecoverableSecurityExceptionTest extends AndroidTestCase {
+public class CrossProcessExceptionTest extends AndroidTestCase {
 
     private Intent greenIntent;
     private PeerConnection greenConn;
@@ -67,7 +67,7 @@ public class RecoverableSecurityExceptionTest extends AndroidTestCase {
         // Bring up both remote processes and wire them to each other
         greenIntent = new Intent();
         greenIntent.setComponent(new ComponentName(
-                "android.os.cts", "android.os.cts.RecoverableSecurityExceptionService"));
+                "android.os.cts", "android.os.cts.CrossProcessExceptionService"));
         greenConn = new PeerConnection();
         context.startService(greenIntent);
         getContext().bindService(greenIntent, greenConn, 0);
@@ -99,20 +99,17 @@ public class RecoverableSecurityExceptionTest extends AndroidTestCase {
         }
     }
 
-    public void testRSE() throws Exception {
+    public void testARE() throws Exception {
         try {
-            doCommand("RSE");
+            doCommand("ARE");
             fail("Missing SecurityException!");
         } catch (SecurityException e) {
-            if (e instanceof RecoverableSecurityException) {
-                final RecoverableSecurityException rse = (RecoverableSecurityException) e;
-                assertEquals("FNFE", rse.getMessage());
-                assertEquals("RSE", rse.getUserMessage());
-                assertEquals("title", rse.getUserAction().getTitle());
-                assertEquals(android.os.Process.myUid(),
-                        rse.getUserAction().getActionIntent().getCreatorUid());
+            if (e instanceof AuthenticationRequiredException) {
+                final AuthenticationRequiredException are = (AuthenticationRequiredException) e;
+                assertEquals("FNFE", are.getMessage());
+                assertEquals(android.os.Process.myUid(), are.getUserAction().getCreatorUid());
             } else {
-                fail("Odd, expected RSE but found " + e);
+                fail("Odd, expected ARE but found " + e);
             }
         }
     }

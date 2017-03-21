@@ -17,11 +17,9 @@
 package android.os.cts;
 
 import android.app.PendingIntent;
-import android.app.RecoverableSecurityException;
-import android.app.RemoteAction;
+import android.app.AuthenticationRequiredException;
 import android.app.Service;
 import android.content.Intent;
-import android.graphics.drawable.Icon;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -30,7 +28,7 @@ import android.os.Parcelable;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 
-public class RecoverableSecurityExceptionService extends Service {
+public class CrossProcessExceptionService extends Service {
     public static class CustomException extends IllegalArgumentException implements Parcelable {
         public CustomException(String message) {
             super(message);
@@ -69,13 +67,11 @@ public class RecoverableSecurityExceptionService extends Service {
                         return;
                     case "SE":
                         throw new SecurityException("SE");
-                    case "RSE":
-                        final Icon icon = Icon.createWithContentUri("content://android/");
+                    case "ARE":
                         final PendingIntent pi = PendingIntent.getActivity(
-                                RecoverableSecurityExceptionService.this, 12, new Intent(),
+                                CrossProcessExceptionService.this, 12, new Intent(),
                                 PendingIntent.FLAG_CANCEL_CURRENT);
-                        throw new RecoverableSecurityException(new FileNotFoundException("FNFE"),
-                                "RSE", new RemoteAction(icon, "title", "title", pi));
+                        throw new AuthenticationRequiredException(new FileNotFoundException("FNFE"), pi);
                     case "RE":
                         throw new RuntimeException("RE");
                     case "custom":
