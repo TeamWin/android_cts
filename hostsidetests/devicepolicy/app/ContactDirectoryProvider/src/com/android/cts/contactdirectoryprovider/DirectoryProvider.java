@@ -33,6 +33,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,6 +43,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class DirectoryProvider extends ContentProvider {
+    private static final String TAG = "DirectoryProvider";
     private static final String CONFIG_NAME = "config";
     private static final String SET_CUSTOM_PREFIX = "set_prefix";
     private static final String AUTHORITY = "com.android.cts.contact.directory.provider";
@@ -113,6 +115,7 @@ public class DirectoryProvider extends ContentProvider {
                 final MatrixCursor cursor = new MatrixCursor(projection);
                 final AccountManager am = getContext().getSystemService(AccountManager.class);
                 Account[] accounts = am.getAccountsByType(TEST_ACCOUNT_TYPE);
+                Log.i(TAG, "Query GAL directories account size: " + accounts.length);
                 if (accounts != null) {
                     for (Account account : accounts) {
                         final Object[] row = new Object[projection.length];
@@ -205,6 +208,7 @@ public class DirectoryProvider extends ContentProvider {
         // Set custom display name, so primary directory and corp directory will have different
         // display name
         if (method.equals(SET_CUSTOM_PREFIX)) {
+            Log.i(TAG, "Set directory name prefix: " + arg);
             mSharedPrefs.edit().putString(SET_CUSTOM_PREFIX, arg).apply();
             // Force update the content in CP2
             final long token = Binder.clearCallingIdentity();
