@@ -23,6 +23,8 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioRecordingConfiguration;
 import android.media.MediaRecorder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Parcel;
 import android.util.Log;
@@ -135,39 +137,64 @@ public class AudioRecordingConfigurationTest extends CtsAndroidTestCase {
         if (!hasMicrophone()) {
             return;
         }
-        AudioManager am = new AudioManager(getContext());
-        assertNotNull("Could not create AudioManager", am);
+        doCallbackTest(false /* no custom Handler for callback */);
+    }
 
-        MyAudioRecordingCallback callback = new MyAudioRecordingCallback(
-                mAudioRecord.getAudioSessionId(), TEST_AUDIO_SOURCE);
-        am.registerAudioRecordingCallback(callback, null /*handler*/);
+    public void testCallbackHandler() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+        doCallbackTest(true /* use custom Handler for callback */);
+    }
 
-        assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
-        mAudioRecord.startRecording();
-        assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+    private void doCallbackTest(boolean useHandlerInCallback) throws Exception {
+        final Handler h;
+        if (useHandlerInCallback) {
+            HandlerThread handlerThread = new HandlerThread(TAG);
+            handlerThread.start();
+            h = new Handler(handlerThread.getLooper());
+        } else {
+            h = null;
+        }
+        try {
+            AudioManager am = new AudioManager(getContext());
+            assertNotNull("Could not create AudioManager", am);
 
-        assertTrue("AudioRecordingCallback not called", callback.mCalled);
-        assertTrue("Expected record configuration was not found", callback.mParamMatch);
+            MyAudioRecordingCallback callback = new MyAudioRecordingCallback(
+                    mAudioRecord.getAudioSessionId(), TEST_AUDIO_SOURCE);
+            am.registerAudioRecordingCallback(callback, h /*handler*/);
 
-        // stopping recording: callback is called with no match
-        callback.reset();
-        mAudioRecord.stop();
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-        assertTrue("AudioRecordingCallback not called", callback.mCalled);
-        assertFalse("Should not have found test record configuration", callback.mParamMatch);
+            assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
+            mAudioRecord.startRecording();
+            assertEquals(AudioRecord.RECORDSTATE_RECORDING, mAudioRecord.getRecordingState());
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
-        // unregister callback and start recording again
-        am.unregisterAudioRecordingCallback(callback);
-        callback.reset();
-        mAudioRecord.startRecording();
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-        assertFalse("Unregistered callback was called", callback.mCalled);
+            assertTrue("AudioRecordingCallback not called", callback.mCalled);
+            assertTrue("Expected record configuration was not found", callback.mParamMatch);
 
-        // just call the callback once directly so it's marked as tested
-        final AudioManager.AudioRecordingCallback arc =
-                (AudioManager.AudioRecordingCallback) callback;
-        arc.onRecordingConfigChanged(new ArrayList<AudioRecordingConfiguration>());
+            // stopping recording: callback is called with no match
+            callback.reset();
+            mAudioRecord.stop();
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertTrue("AudioRecordingCallback not called", callback.mCalled);
+            assertFalse("Should not have found test record configuration", callback.mParamMatch);
+
+            // unregister callback and start recording again
+            am.unregisterAudioRecordingCallback(callback);
+            callback.reset();
+            mAudioRecord.startRecording();
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertFalse("Unregistered callback was called", callback.mCalled);
+
+            // just call the callback once directly so it's marked as tested
+            final AudioManager.AudioRecordingCallback arc =
+                    (AudioManager.AudioRecordingCallback) callback;
+            arc.onRecordingConfigChanged(new ArrayList<AudioRecordingConfiguration>());
+        } finally {
+            if (h != null) {
+                h.getLooper().quit();
+            }
+        }
     }
 
     public void testParcel() throws Exception {

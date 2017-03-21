@@ -21,6 +21,8 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Parcel;
 import android.util.Log;
 import android.media.AudioPlaybackConfiguration;
@@ -156,58 +158,81 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
 
     public void testCallbackMediaPlayer() throws Exception {
         if (!isValidPlatform("testCallbackMediaPlayer")) return;
+        doTestCallbackMediaPlayer(false /* no custom Handler for callback */);
+    }
 
-        AudioManager am = new AudioManager(getContext());
-        assertNotNull("Could not create AudioManager", am);
+    public void testCallbackMediaPlayerHandler() throws Exception {
+        if (!isValidPlatform("testCallbackMediaPlayerHandler")) return;
+        doTestCallbackMediaPlayer(true /* use custom Handler for callback */);
+    }
 
-        final AudioAttributes aa = (new AudioAttributes.Builder())
-                .setUsage(TEST_USAGE)
-                .setContentType(TEST_CONTENT)
-                .build();
+    private void doTestCallbackMediaPlayer(boolean useHandlerInCallback) throws Exception {
+        final Handler h;
+        if (useHandlerInCallback) {
+            HandlerThread handlerThread = new HandlerThread(TAG);
+            handlerThread.start();
+            h = new Handler(handlerThread.getLooper());
+        } else {
+            h = null;
+        }
 
-        mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
-                aa, am.generateAudioSessionId());
+        try {
+            AudioManager am = new AudioManager(getContext());
+            assertNotNull("Could not create AudioManager", am);
 
-        MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
-        am.registerAudioPlaybackCallback(callback, null /*handler*/);
+            final AudioAttributes aa = (new AudioAttributes.Builder())
+                    .setUsage(TEST_USAGE)
+                    .setContentType(TEST_CONTENT)
+                    .build();
 
-        // query how many active players before starting the MediaPlayer
-        List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
-        final int nbActivePlayersBeforeStart = configs.size();
+            mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
+                    aa, am.generateAudioSessionId());
 
-        mMp.start();
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
+            am.registerAudioPlaybackCallback(callback, h /*handler*/);
 
-        assertEquals("onPlaybackConfigChanged call count not expected",
-                1/*expected*/, callback.getCbInvocationNumber()); //only one start call
-        assertEquals("number of active players not expected",
-                // one more player active
-                nbActivePlayersBeforeStart + 1/*expected*/, callback.getNbConfigs());
-        assertTrue("Active player, attributes not found", hasAttr(callback.getConfigs(), aa));
+            // query how many active players before starting the MediaPlayer
+            List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
+            final int nbActivePlayersBeforeStart = configs.size();
 
-        // stopping recording: callback is called with no match
-        callback.reset();
-        mMp.pause();
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            mMp.start();
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
-        assertEquals("onPlaybackConfigChanged call count not expected after pause",
-                1/*expected*/, callback.getCbInvocationNumber()); //only one pause call since reset
-        assertEquals("number of active players not expected after pause",
-                nbActivePlayersBeforeStart/*expected*/, callback.getNbConfigs());
+            assertEquals("onPlaybackConfigChanged call count not expected",
+                    1/*expected*/, callback.getCbInvocationNumber()); //only one start call
+            assertEquals("number of active players not expected",
+                    // one more player active
+                    nbActivePlayersBeforeStart + 1/*expected*/, callback.getNbConfigs());
+            assertTrue("Active player, attributes not found", hasAttr(callback.getConfigs(), aa));
 
-        // unregister callback and start recording again
-        am.unregisterAudioPlaybackCallback(callback);
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-        callback.reset();
-        mMp.start();
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-        assertEquals("onPlaybackConfigChanged call count not expected after unregister",
-                0/*expected*/, callback.getCbInvocationNumber()); //callback is unregistered
+            // stopping recording: callback is called with no match
+            callback.reset();
+            mMp.pause();
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
-        // just call the callback once directly so it's marked as tested
-        final AudioManager.AudioPlaybackCallback apc =
-                (AudioManager.AudioPlaybackCallback) callback;
-        apc.onPlaybackConfigChanged(new ArrayList<AudioPlaybackConfiguration>());
+            assertEquals("onPlaybackConfigChanged call count not expected after pause",
+                    1/*expected*/, callback.getCbInvocationNumber());//only 1 pause call since reset
+            assertEquals("number of active players not expected after pause",
+                    nbActivePlayersBeforeStart/*expected*/, callback.getNbConfigs());
+
+            // unregister callback and start recording again
+            am.unregisterAudioPlaybackCallback(callback);
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            callback.reset();
+            mMp.start();
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("onPlaybackConfigChanged call count not expected after unregister",
+                    0/*expected*/, callback.getCbInvocationNumber()); //callback is unregistered
+
+            // just call the callback once directly so it's marked as tested
+            final AudioManager.AudioPlaybackCallback apc =
+                    (AudioManager.AudioPlaybackCallback) callback;
+            apc.onPlaybackConfigChanged(new ArrayList<AudioPlaybackConfiguration>());
+        } finally {
+            if (h != null) {
+                h.getLooper().quit();
+            }
+        }
     }
 
     public void testGetterSoundPool() throws Exception {
