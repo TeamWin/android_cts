@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.util.Log;
 
 public class TestActivity extends AbstractLifecycleLogActivity {
 
@@ -57,7 +58,9 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver(mReceiver, new IntentFilter(ACTION_FINISH_SELF));
-        dumpDisplaySize(getResources().getConfiguration());
+        final Configuration config = getResources().getConfiguration();
+        dumpDisplaySize(config);
+        dumpConfiguration(config);
     }
 
     @Override
@@ -70,6 +73,11 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         dumpDisplaySize(newConfig);
+        dumpConfiguration(newConfig);
+    }
+
+    private void dumpConfiguration(Configuration config) {
+        Log.i(getTag(), "Configuration: " + config);
     }
 
     @Override
