@@ -331,6 +331,9 @@
         <activity android:name="android.app.stubs.DisplayTestActivity"
             android:configChanges="smallestScreenSize|orientation|screenSize|screenLayout" />
 
+        <activity android:name="android.app.stubs.ToolbarActivity"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+
         <service
             android:name="android.app.stubs.LiveWallpaper"
             android:icon="@drawable/robot"
