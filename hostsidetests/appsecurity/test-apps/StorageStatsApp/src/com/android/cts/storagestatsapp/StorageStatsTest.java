@@ -216,9 +216,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real
         // disk space.
-        assertMostlyEquals(beforeAllocatable, sm.getAllocatableBytes(filesDir, 0));
-        assertMostlyEquals(beforeFree, stats.getFreeBytes(null));
-        assertMostlyEquals(targetA + targetB, beforeRaw - filesDir.getUsableSpace());
+        assertMostlyEquals(beforeAllocatable, sm.getAllocatableBytes(filesDir, 0),
+                10 * MB_IN_BYTES);
+        assertMostlyEquals(beforeFree, stats.getFreeBytes(null),
+                10 * MB_IN_BYTES);
+        assertMostlyEquals(targetA + targetB, beforeRaw - filesDir.getUsableSpace(),
+                10 * MB_IN_BYTES);
 
         assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
         assertMostlyEquals(targetB, getCacheBytes(PKG_B, user));
@@ -229,7 +232,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         sm.allocateBytes(filesDir, clear1, 0);
 
         assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
-        assertMostlyEquals(targetB / 2, getCacheBytes(PKG_B, user));
+        assertMostlyEquals(targetB / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
 
         // Allocate some more space for ourselves, which should now start
         // trimming away at older app. Since we pivot between the two apps once
@@ -238,8 +241,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final long clear2 = filesDir.getUsableSpace() + (targetB / 2);
         sm.allocateBytes(filesDir, clear2, 0);
 
-        assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user));
-        assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user));
+        assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user), 2 * MB_IN_BYTES);
+        assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
     }
 
     private long getCacheBytes(String pkg, UserHandle user) {
@@ -250,6 +253,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
     private long doAllocate(String pkg, double fraction, long time) throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         intent.setComponent(new ComponentName(pkg, UtilsReceiver.class.getName()));
         intent.putExtra(UtilsReceiver.EXTRA_FRACTION, fraction);
         intent.putExtra(UtilsReceiver.EXTRA_TIME, time);
