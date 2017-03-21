@@ -67,10 +67,6 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
         mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
     }
 
-    void setSync(boolean sync) {
-        mCustomView.setSync(sync);
-    }
-
     /**
      * Sets the expectation for an auto-fill request, so it can be asserted through
      * {@link #assertAutoFilled()} later.

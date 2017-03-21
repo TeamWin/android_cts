@@ -78,6 +78,12 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         autofillTest(false);
     }
 
+    @Test
+    public void testAutofillOverrideDispatchProvideAutofillStructure() throws Exception {
+        mActivity.mCustomView.setOverrideDispatchProvideAutofillStructure(true);
+        autofillTest(true);
+    }
+
     /**
      * Tests autofilling the virtual views, using the sync / async version of ViewStructure.addChild
      */
@@ -92,7 +98,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
-        mActivity.setSync(sync);
+        mActivity.mCustomView.setSync(sync);
 
         // Trigger auto-fill.
         mActivity.mUsername.changeFocus(true);

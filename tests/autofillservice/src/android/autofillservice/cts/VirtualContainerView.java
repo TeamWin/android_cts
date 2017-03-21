@@ -64,6 +64,7 @@ class VirtualContainerView extends View {
     private int mFocusedColor;
     private int mUnfocusedColor;
     private boolean mSync = true;
+    private boolean mOverrideDispatchProvideAutofillStructure = false;
 
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -155,10 +156,21 @@ class VirtualContainerView extends View {
     }
 
     @Override
+    public void dispatchProvideAutofillStructure(ViewStructure structure, int flags) {
+        if (mOverrideDispatchProvideAutofillStructure) {
+            Log.d(TAG, "Overriding dispatchProvideAutofillStructure");
+            onProvideAutofillVirtualStructure(structure, flags);
+        } else {
+            super.dispatchProvideAutofillStructure(structure, flags);
+        }
+    }
+
+    @Override
     public void onProvideAutofillVirtualStructure(ViewStructure structure, int flags) {
         super.onProvideAutofillVirtualStructure(structure, flags);
 
         Log.d(TAG, "onProvideAutofillVirtualStructure(): flags = " + flags);
+        super.onProvideAutofillVirtualStructure(structure, flags);
         structure.setClassName(getClass().getName());
         final int childrenSize = mItems.size();
         int index = structure.addChildCount(childrenSize);
@@ -167,8 +179,9 @@ class VirtualContainerView extends View {
             final Item item = mItems.valueAt(i);
             Log.d(TAG, "Adding new child" + syncMsg + " at index " + index + ": " + item);
             final ViewStructure child = mSync
-                    ? structure.newChild(index, item.id, 0)
-                    : structure.asyncNewChild(index, item.id, 0);
+                    ? structure.newChild(index)
+                    : structure.asyncNewChild(index);
+            child.setAutofillId(structure, item.id);
             child.setDataIsSensitive(item.sensitive);
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
@@ -195,6 +208,10 @@ class VirtualContainerView extends View {
 
     void setSync(boolean sync) {
         mSync = sync;
+    }
+
+    void setOverrideDispatchProvideAutofillStructure(boolean flag) {
+        mOverrideDispatchProvideAutofillStructure = flag;
     }
 
     private static int nextId;
