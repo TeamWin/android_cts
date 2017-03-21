@@ -25,6 +25,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.icu.util.Calendar;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.support.test.InstrumentationRegistry;
@@ -46,6 +47,8 @@ import java.util.Map;
 final class Helper {
 
     private static final String TAG = "AutoFillCtsHelper";
+
+    static final boolean VERBOSE = false;
 
     static final String ID_USERNAME_LABEL = "username_label";
     static final String ID_USERNAME = "username";
@@ -85,12 +88,18 @@ final class Helper {
     static final int RETRY_MS = 100;
 
     /**
-     * Ignores all {@link RuntimeException} and {@link Error} until the timeout is reached. Returns
-     * if {@link Runnable} passed without exception.
-     *
-     * @param r The runnable to run
+     * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
+     * {@link #UI_TIMEOUT_MS} is reached.
      */
-    public static void eventually(Runnable r) throws Exception {
+    static void eventually(Runnable r) throws Exception {
+        eventually(r, UI_TIMEOUT_MS);
+    }
+
+    /**
+     * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
+     * {@code timeout} is reached.
+     */
+    static void eventually(Runnable r, int timeout) throws Exception {
         long startTime = System.currentTimeMillis();
 
         while (true) {
@@ -98,11 +107,11 @@ final class Helper {
                 r.run();
                 break;
             } catch (RuntimeException | Error e) {
-                if (System.currentTimeMillis() - startTime < UI_TIMEOUT_MS) {
-                    Log.i(TAG, "Ignoring", e);
+                if (System.currentTimeMillis() - startTime < timeout) {
+                    if (VERBOSE) Log.v(TAG, "Ignoring", e);
                     Thread.sleep(RETRY_MS);
                 } else {
-                    throw e;
+                    throw new Exception("Timedout out after " + timeout + " ms", e);
                 }
             }
         }
@@ -143,6 +152,13 @@ final class Helper {
      */
     static void dumpAutofillService() {
         Log.i(TAG, "dumpsys autofill\n\n" + runShellCommand("dumpsys autofill"));
+    }
+
+    /**
+     * Sets the {@link UserManager#DISALLOW_AUTOFILL} for the current user.
+     */
+    static void setUserRestrictionForAutofill(boolean restricted) {
+        runShellCommand("pm set-user-restriction no_autofill %d", restricted ? 1 : 0);
     }
 
     private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {

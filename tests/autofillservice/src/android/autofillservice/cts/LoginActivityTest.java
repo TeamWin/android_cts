@@ -25,6 +25,7 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.Helper.setUserRestrictionForAutofill;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
@@ -58,6 +59,7 @@ import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
 import org.junit.After;
@@ -233,7 +235,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.onUsername((v) -> v.requestFocus());
-        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         final View password = mActivity.getPassword();
 
@@ -1328,6 +1330,60 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             } catch (Throwable t) {
                 throw new Throwable("Error on step " + i, t);
             }
+        }
+    }
+
+    @Test
+    public void testUserRestriction() throws Exception {
+        // Set service.
+        setUserRestrictionForAutofill(false);
+        enableService();
+
+        final AutofillManager afm = mActivity.getAutofillManager();
+        assertThat(afm.isEnabled()).isTrue();
+
+        // Set expectations.
+        final CannedDataset dataset = new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setPresentation(createPresentation("The Dude"))
+                .build();
+        sReplier.addResponse(dataset);
+
+        // Trigger auto-fill.
+        mActivity.onUsername((v) -> v.requestFocus());
+        waitUntilConnected();
+
+        sReplier.getNextFillRequest();
+
+        // Make sure UI is shown initially.
+        sUiBot.assertDatasets("The Dude");
+
+        // Disable it...
+        setUserRestrictionForAutofill(true);
+        try {
+            waitUntilDisconnected();
+            assertNoDanglingSessions();
+            assertThat(afm.isEnabled()).isFalse();
+
+            // ...and then assert is not shown.
+            sUiBot.assertNoDatasets();
+
+            // Re-enable and try again.
+            setUserRestrictionForAutofill(false);
+            sReplier.addResponse(dataset);
+
+            // Must reset session on app's side
+            mActivity.tapClear();
+            mActivity.expectAutoFill("dude", "sweet");
+            mActivity.onPassword((v) -> v.requestFocus());
+            sReplier.getNextFillRequest();
+            sUiBot.selectDataset("The Dude");
+
+            // Check the results.
+            mActivity.assertAutoFilled();
+        } finally {
+            setUserRestrictionForAutofill(false);
         }
     }
 }
