@@ -34,6 +34,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.support.test.rule.ActivityTestRule;
+import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
@@ -139,7 +140,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testAutofillManual() throws Exception {
+    public void testAutofillManuallyOneDataset() throws Exception {
         // Set service.
         enableService();
 
@@ -156,8 +157,59 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 mActivity.mCustomView, mActivity.mUsername.text.id, mActivity.mUsername.bounds);
         sReplier.getNextFillRequest();
 
+        // Should have been automatically filled.
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        // Sanity checks.
+        sReplier.assertNumberUnhandledFillRequests(0);
+        sReplier.assertNumberUnhandledSaveRequests(0);
+    }
+
+    @Test
+    public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
+        autofillManuallyTwoDatasets(true);
+    }
+
+    @Test
+    public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
+        autofillManuallyTwoDatasets(false);
+    }
+
+    private void autofillManuallyTwoDatasets(boolean pickFirst) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("jenny"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("8675309"))
+                        .setPresentation(createPresentation("Jenny"))
+                        .build())
+                .build());
+        if (pickFirst) {
+            mActivity.expectAutoFill("dude", "sweet");
+        } else {
+            mActivity.expectAutoFill("jenny", "8675309");
+
+        }
+
+        // Trigger auto-fill.
+        mActivity.getSystemService(AutofillManager.class).requestAutofill(
+                mActivity.mCustomView, mActivity.mUsername.text.id, mActivity.mUsername.bounds);
+        sReplier.getNextFillRequest();
+
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        final UiObject2 picker = sUiBot.assertDatasets("The Dude", "Jenny");
+        sUiBot.selectDataset(picker, pickFirst? "The Dude" : "Jenny");
 
         // Check the results.
         mActivity.assertAutoFilled();

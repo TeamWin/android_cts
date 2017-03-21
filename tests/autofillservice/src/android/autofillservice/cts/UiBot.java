@@ -89,13 +89,16 @@ final class UiBot {
 
     /**
      * Asserts the dataset chooser is shown and contains the given datasets.
+     *
+     * @return the dataset picker object.
      */
-    void assertDatasets(String...names) {
+    UiObject2 assertDatasets(String...names) {
         final UiObject2 picker = findDatasetPicker();
         for (String name : names) {
             final UiObject2 dataset = picker.findObject(By.text(name));
             assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
         }
+        return picker;
     }
 
     /**
@@ -103,6 +106,13 @@ final class UiBot {
      */
     void selectDataset(String name) {
         final UiObject2 picker = findDatasetPicker();
+        selectDataset(picker, name);
+    }
+
+    /**
+     * Selects a dataset that should be visible in the floating UI.
+     */
+    void selectDataset(UiObject2 picker, String name) {
         final UiObject2 dataset = picker.findObject(By.text(name));
         assertWithMessage("no dataset named %s", name).that(dataset).isNotNull();
         dataset.click();

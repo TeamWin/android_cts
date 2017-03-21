@@ -182,7 +182,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.onUsername((v) -> v.requestFocus());
-        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
         final View password = mActivity.getPassword();
 
@@ -424,10 +424,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure all datasets are shown.
-        sUiBot.assertDatasets("Mr Plow", "El Barto", "Mr Sparkle");
+        final UiObject2 picker = sUiBot.assertDatasets("Mr Plow", "El Barto", "Mr Sparkle");
 
         // Auto-fill it.
-        sUiBot.selectDataset(name);
+        sUiBot.selectDataset(picker, name);
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -1145,7 +1145,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testManualAutofill() throws Exception {
+    public void testAutofillManuallyOneDataset() throws Exception {
         // Set service.
         enableService();
 
@@ -1171,8 +1171,64 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
 
+        // Should have been automatically filled.
+        sUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
+        autofillManuallyTwoDatasets(true);
+    }
+
+    @Test
+    public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
+        autofillManuallyTwoDatasets(false);
+    }
+
+    private void autofillManuallyTwoDatasets(boolean pickFirst) throws Exception {
+        // Set service.
+        enableService();
+
+        // And activity.
+        mActivity.onUsername((v) -> {
+            v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
+            // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
+            v.setText("");
+        });
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("dude"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("jenny"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("8675309"))
+                        .setPresentation(createPresentation("Jenny"))
+                        .build())
+                .build());
+        if (pickFirst) {
+            mActivity.expectAutoFill("dude", "sweet");
+        } else {
+            mActivity.expectAutoFill("jenny", "8675309");
+
+        }
+
+        // Long-press field to trigger AUTOFILL menu.
+        sUiBot.getAutofillMenuOption(ID_USERNAME).click();
+
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        assertThat(fillRequest.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+
         // Auto-fill it.
-        sUiBot.selectDataset("The Dude");
+        final UiObject2 picker = sUiBot.assertDatasets("The Dude", "Jenny");
+        sUiBot.selectDataset(picker, pickFirst? "The Dude" : "Jenny");
 
         // Check the results.
         mActivity.assertAutoFilled();
