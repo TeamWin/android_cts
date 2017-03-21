@@ -25,7 +25,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 public class GetResultActivity extends Activity {
-    private final SynchronousQueue<Result> mResult = new SynchronousQueue<>();
+    private static SynchronousQueue<Result> sResult;
 
     public static class Result {
         public final int requestCode;
@@ -51,16 +51,20 @@ public class GetResultActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
-            mResult.offer(new Result(requestCode, resultCode, data), 5, TimeUnit.SECONDS);
+            sResult.offer(new Result(requestCode, resultCode, data), 5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public void clearResult() {
+        sResult = new SynchronousQueue<>();
+    }
+
     public Result getResult() {
         final Result result;
         try {
-            result = mResult.poll(30, TimeUnit.SECONDS);
+            result = sResult.poll(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -72,7 +76,7 @@ public class GetResultActivity extends Activity {
 
     public Result getResult(long timeout, TimeUnit unit) {
         try {
-            return mResult.poll(timeout, unit);
+            return sResult.poll(timeout, unit);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

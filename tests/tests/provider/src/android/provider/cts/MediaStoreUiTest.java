@@ -72,6 +72,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
         final Context context = getInstrumentation().getContext();
         mActivity = launchActivity(context.getPackageName(), GetResultActivity.class, null);
+        mActivity.clearResult();
     }
 
     @Override
