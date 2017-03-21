@@ -61,6 +61,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
     private static final String VERSION_RELEASE = "ro.build.version.release";
     private static final String VERSION_SDK = "ro.build.version.sdk";
     private static final String VERSION_SECURITY_PATCH = "ro.build.version.security_patch";
+    private static final String VERSION_INCREMENTAL = "ro.build.version.incremental";
 
     private static final String PREFIX_TAG = "cts:build_";
 
@@ -94,7 +95,7 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer {
         DevicePropertyInfo devicePropertyInfo = new DevicePropertyInfo(ABI, ABI2, ABIS, ABIS_32,
                 ABIS_64, BOARD, BRAND, DEVICE, FINGERPRINT, ID, MANUFACTURER, MODEL, PRODUCT,
                 REFERENCE_FINGERPRINT, SERIAL, TAGS, TYPE, VERSION_BASE_OS, VERSION_RELEASE,
-                VERSION_SDK, VERSION_SECURITY_PATCH);
+                VERSION_SDK, VERSION_SECURITY_PATCH, VERSION_INCREMENTAL);
 
         // add device properties to the result with a prefix tag for each key
         for (Entry<String, String> entry :
