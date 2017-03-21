@@ -34,17 +34,6 @@ import java.lang.reflect.Method;
 public class UsesLibraryTest extends InstrumentationTestCase {
     private static final String TAG = "UsesLibraryTest";
 
-    public void testUsesLibrary() throws Exception {
-        ClassLoader loader = getClass().getClassLoader();
-        if (loader instanceof BaseDexClassLoader) {
-            Object[] dexElements = getDexElementsFromClassLoader((BaseDexClassLoader) loader);
-            for (Object dexElement : dexElements) {
-                DexFile dexFile = getDexFileFromDexElement(dexElement);
-                assertTrue(isDexFileBackedByOatFile(dexFile));
-            }
-        }
-    }
-
     public void testMissingLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
         if (loader instanceof BaseDexClassLoader) {
