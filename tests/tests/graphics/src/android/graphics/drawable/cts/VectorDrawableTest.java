@@ -101,6 +101,7 @@ public class VectorDrawableTest {
             R.drawable.vector_icon_stroke_3,
             R.drawable.vector_icon_scale_1,
             R.drawable.vector_icon_scale_2,
+            R.drawable.vector_icon_scale_3,
             R.drawable.vector_icon_group_clip,
     };
 
@@ -118,6 +119,7 @@ public class VectorDrawableTest {
             R.drawable.vector_icon_stroke_3_golden,
             R.drawable.vector_icon_scale_1_golden,
             R.drawable.vector_icon_scale_2_golden,
+            R.drawable.vector_icon_scale_3_golden,
             R.drawable.vector_icon_group_clip_golden,
     };
 
