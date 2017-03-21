@@ -19,11 +19,9 @@ import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.runShellCommand;
@@ -765,53 +763,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-    }
-
-    @Test
-    public void testSanitization() throws Exception {
-        // Set service.
-        enableService();
-
-        // Set expectations.
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .build());
-
-        // Change view contents.
-        mActivity.onUsernameLabel((v) -> v.setText("DA USER"));
-        mActivity.onPasswordLabel((v) -> v.setText(R.string.new_password_label));
-
-        // Trigger auto-fill.
-        mActivity.onUsername((v) -> v.requestFocus());
-
-        // Assert sanitization on fill request:
-        final FillRequest fillRequest = sReplier.getNextFillRequest();
-
-        // ...dynamic text should be sanitized.
-        assertTextIsSanitized(fillRequest.structure, ID_USERNAME_LABEL);
-
-        // ...password label should be ok because it was set from other resource id
-        assertTextOnly(findNodeByResourceId(fillRequest.structure, ID_PASSWORD_LABEL),
-                "DA PASSWORD");
-
-        // ...password should be ok because it came from a resource id.
-        assertTextAndValue(findNodeByResourceId(fillRequest.structure, ID_PASSWORD), "TopSecret");
-
-        // Trigger save
-        mActivity.onUsername((v) -> v.setText("malkovich"));
-        mActivity.onPassword((v) -> v.setText("malkovich"));
-        mActivity.tapLogin();
-
-        // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
-        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
-
-        // Assert sanitization on save: everything should be available!
-        assertTextOnly(findNodeByResourceId(saveRequest.structure, ID_USERNAME_LABEL), "DA USER");
-        assertTextOnly(findNodeByResourceId(saveRequest.structure, ID_PASSWORD_LABEL),
-                "DA PASSWORD");
-        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_USERNAME), "malkovich");
-        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "malkovich");
     }
 
     @Test
