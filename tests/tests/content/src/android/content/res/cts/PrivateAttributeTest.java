@@ -17,6 +17,7 @@
 package android.content.res.cts;
 
 import android.content.res.Resources;
+import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.TypedValue;
 
@@ -29,6 +30,12 @@ public class PrivateAttributeTest extends AndroidTestCase {
     private static final int sLastPublicAttr = 0x01010530;
 
     public void testNoAttributesAfterLastPublicAttribute() throws Exception {
+        if (!Build.VERSION.CODENAME.equals("REL")) {
+            // Skip the test if this is not a release build.
+            // (resource IDs are not finalized until the OS API number is frozen).
+            return;
+        }
+
         final Resources res = getContext().getResources();
 
         final String lastPublicName;
