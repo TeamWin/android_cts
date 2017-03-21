@@ -16,6 +16,8 @@
 
 package com.android.cts.managedprofile;
 
+import static android.provider.Settings.Secure.SYNC_PARENT_SOUNDS;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.media.RingtoneManager;
@@ -27,15 +29,12 @@ import android.provider.Settings;
  */
 public class RingtoneSyncTest extends BaseManagedProfileTest {
 
-    private ContentResolver mContentResolver;
-
-    // TODO: Expose this as SystemApi in android.provider.Settings
-    private final String SETTING_SYNC_PARENT_SOUNDS = "sync_parent_sounds";
-
     private static final int[] RINGTONE_TYPES = {
             RingtoneManager.TYPE_RINGTONE, RingtoneManager.TYPE_NOTIFICATION,
             RingtoneManager.TYPE_ALARM
     };
+
+    private ContentResolver mContentResolver;
 
     @Override
     protected void setUp() throws Exception {
@@ -53,7 +52,7 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
      */
     public void testRingtoneSync() throws Exception {
         // Managed profile was just created, so sync should be active by default
-        assertEquals(1, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
+        assertEquals(1, Settings.Secure.getInt(mContentResolver, SYNC_PARENT_SOUNDS));
 
         String defaultRingtone = Settings.System.getString(mContentResolver,
                 Settings.System.RINGTONE);
@@ -86,14 +85,14 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
         assertTrue(Settings.System.canWrite(mContext));
 
         // Explicitly set a work sound, to stop syncing ringtones between profiles.
-        assertEquals(1, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
+        assertEquals(1, Settings.Secure.getInt(mContentResolver, SYNC_PARENT_SOUNDS));
         try {
             RingtoneManager.setActualDefaultRingtoneUri(mContext, ringtoneType, null);
-            assertEquals(0, Settings.Secure.getInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS));
+            assertEquals(0, Settings.Secure.getInt(mContentResolver, SYNC_PARENT_SOUNDS));
             validateRingtoneManagerGetRingtone(null, ringtoneType);
         } finally {
             // Reset the setting we just changed.
-            Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 1);
+            Settings.Secure.putInt(mContentResolver, SYNC_PARENT_SOUNDS, 1);
         }
 
         // After re-unifying, the uri should be the same as the parent's uri.
@@ -103,10 +102,10 @@ public class RingtoneSyncTest extends BaseManagedProfileTest {
         // Manually disabling sync again, without changing settings, should put the ringtone uri
         // back to its earlier value of null.
         try {
-            Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 0);
+            Settings.Secure.putInt(mContentResolver, SYNC_PARENT_SOUNDS, 0);
             assertNull(RingtoneManager.getActualDefaultRingtoneUri(mContext, ringtoneType));
         } finally {
-            Settings.Secure.putInt(mContentResolver, SETTING_SYNC_PARENT_SOUNDS, 1);
+            Settings.Secure.putInt(mContentResolver, SYNC_PARENT_SOUNDS, 1);
         }
     }
 
