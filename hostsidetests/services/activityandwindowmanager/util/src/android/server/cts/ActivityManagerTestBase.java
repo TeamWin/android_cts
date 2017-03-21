@@ -843,6 +843,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         private final ITestDevice mDevice;
 
         private String mTargetActivityName;
+        private String mTargetPackage = componentName;
         private boolean mToSide;
         private boolean mRandomData;
         private boolean mMultipleTask;
@@ -881,6 +882,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             return this;
         }
 
+        public LaunchActivityBuilder setTargetPackage(String pkg) {
+            mTargetPackage = pkg;
+            return this;
+        }
+
         public LaunchActivityBuilder setDisplayId(int id) {
             mDisplayId = id;
             return this;
@@ -912,13 +918,15 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
             }
             if (mTargetActivityName != null) {
                 commandBuilder.append(" --es target_activity ").append(mTargetActivityName);
+                commandBuilder.append(" --es package_name ").append(mTargetPackage);
             }
             if (mDisplayId != INVALID_DISPLAY_ID) {
                 commandBuilder.append(" --ei display_id ").append(mDisplayId);
             }
             executeShellCommand(mDevice, commandBuilder.toString());
 
-            mAmWmState.waitForValidState(mDevice, mTargetActivityName);
+            mAmWmState.waitForValidState(mDevice, new String[]{mTargetActivityName},
+                    null /* stackIds */, false /* compareTaskAndStackBounds */, mTargetPackage);
         }
     }
 }
