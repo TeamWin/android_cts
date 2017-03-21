@@ -92,6 +92,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Set a PIN for this user
+        mDevice.executeShellCommand("settings put global require_password_to_decrypt 0");
         mDevice.executeShellCommand("locksettings set-pin 12345");
     }
 
@@ -105,6 +106,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
         // Clear PIN for this user
         mDevice.executeShellCommand("locksettings clear --old 12345");
+        mDevice.executeShellCommand("settings delete global require_password_to_decrypt");
     }
 
     public void doBootCountBefore() throws Exception {
