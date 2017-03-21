@@ -43,6 +43,7 @@ public class SimpleJobService extends JobService {
     final Handler mHandler = new Handler();
     final Runnable mWorker = new Runnable() {
         @Override public void run() {
+            Log.i(TAG, "Running job");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

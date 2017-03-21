@@ -15,7 +15,6 @@
  */
 package com.android.server.cts;
 
-
 import com.android.tradefed.log.LogUtil;
 
 /**
@@ -209,12 +208,16 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         String dumpsys = getDevice().executeShellCommand("dumpsys batterystats --checkin");
         String[] lines = dumpsys.split("\n");
         long value = 0;
+        if (optionalAfterTag == null) {
+            optionalAfterTag = "";
+        }
         for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines[i];
-            if (line.contains(uid + ",l," + tag + "," + optionalAfterTag)) {
+            if (line.contains(uid + ",l," + tag + "," + optionalAfterTag)
+                    || (!optionalAfterTag.equals("") &&
+                        line.contains(uid + ",l," + tag + ",\"" + optionalAfterTag))) {
                 String[] wlParts = line.split(",");
                 value = Long.parseLong(wlParts[index]);
-                //System.err.println("Found match: " + line);
             }
         }
         return value;
