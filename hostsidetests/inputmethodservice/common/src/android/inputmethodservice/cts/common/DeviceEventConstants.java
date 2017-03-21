@@ -39,8 +39,8 @@ public final class DeviceEventConstants {
 
     /**
      * Intent extra key for who sends a device event.
-     * Values are Input Method class name or device test method name
-     * {@code testClassName#testMethodName}.
+     * Values are Input Method class name, for example {@link Ime1Constants#CLASS}, or device test
+     * method name {@code testClassName#testMethodName}.
      *
      * @see android.content.Intent#putExtra(String,String)
      * @see android.content.Intent#getStringExtra(String)
