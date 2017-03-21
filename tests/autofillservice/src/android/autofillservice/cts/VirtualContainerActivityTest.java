@@ -114,6 +114,9 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertThat(passwordLabel.getClassName()).isEqualTo(LABEL_CLASS);
         assertThat(password.getClassName()).isEqualTo(TEXT_CLASS);
 
+        assertThat(username.getIdEntry()).isEqualTo(ID_USERNAME);
+        assertThat(password.getIdEntry()).isEqualTo(ID_PASSWORD);
+
         // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(username.isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(password.isFocused()).isFalse();
