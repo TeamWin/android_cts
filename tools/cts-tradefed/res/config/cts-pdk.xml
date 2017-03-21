@@ -13,28 +13,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs Tests useful on validating a PDK fusion build">
+<configuration description="Runs a subset of CTS tests for the Treble 'CTS on AOSP' requirement">
 
     <include name="cts" />
 
     <option name="plan" value="cts-pdk" />
 
     <!-- Include test modules -->
-    <option name="compatibility:include-filter" value="CtsAadbHostTestCases" />
-    <option name="compatibility:include-filter" value="CtsBluetoothTestCases" />
-    <option name="compatibility:include-filter" value="CtsGraphicsTestCases" />
-    <option name="compatibility:include-filter" value="CtsGraphics2TestCases" />
-    <option name="compatibility:include-filter" value="CtsHardwareTestCases" />
-    <option name="compatibility:include-filter" value="CtsMediaTestCases" />
-    <option name="compatibility:include-filter" value="CtsNetTestCases" />
-    <option name="compatibility:include-filter" value="CtsDeqpTestCases" />
-    <option name="compatibility:include-filter" value="CtsRenderscriptTestCases" />
-    <option name="compatibility:include-filter" value="CtsRenderscriptLegacyTestCases" />
-    <option name="compatibility:include-filter" value="CtsSensorTestCases" />
-    <option name="compatibility:include-filter" value="CtsTelephonyTestCases" />
-    <option name="compatibility:include-filter" value="CtsTelephony2TestCases" />
-    <option name="compatibility:include-filter" value="CtsRsBlasTestCases" />
-    <option name="compatibility:include-filter" value="CtsNativeMediaSlTestCases" />
-    <option name="compatibility:include-filter" value="CtsNativeMediaXaTestCases" />
+    <option name="compatibility:include-filter" value="CtsAccelerationTestCases" />
 
 </configuration>
