@@ -597,12 +597,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testAppOpsDenyPipOnPause() throws Exception {
         if (!supportsPip()) return;
 
-        // Disable enter-pip-on-hide and try to enter pip
+        // Disable enter-pip and try to enter pip
         setAppOpsOpToMode(ActivityManagerTestBase.componentName,
                 APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE, APP_OPS_MODE_IGNORED);
 
         // Launch the PIP activity on pause
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         assertPinnedStackDoesNotExist();
 
         // Go home and ensure that there is no pinned stack
