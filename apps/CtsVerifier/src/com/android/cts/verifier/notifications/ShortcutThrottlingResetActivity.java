@@ -43,8 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ShortcutThrottlingResetActivity extends InteractiveVerifierActivity {
     private static final String TAG = "ShortcutThrottlingReset";
 
-    private static final String NOTIFICATION_BOT_PACKAGE
-            = PackagePriorityVerifierActivity.NOTIFICATION_BOT_PACKAGE;
+    private static final String NOTIFICATION_BOT_PACKAGE = "com.android.cts.robot";
 
     private static final String ACTION_RESET_SETUP_NOTIFICATION =
             "com.android.cts.robot.ACTION_RESET_SETUP_NOTIFICATION";

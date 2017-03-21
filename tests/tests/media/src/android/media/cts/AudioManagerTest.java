@@ -756,7 +756,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testMuteDndUnaffectedStreams() throws Exception {
-        if (mUseFixedVolume) {
+        if (mUseFixedVolume  || mIsTelevision) {
             return;
         }
         int[] streams = {
