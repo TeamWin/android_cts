@@ -28,6 +28,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.nullable;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -41,7 +42,6 @@ import android.preference.Preference;
 import android.preference.PreferenceDataStore;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -50,7 +50,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.internal.util.ObjectMethodsGuru;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -109,7 +108,7 @@ public class PreferenceDataStoreTest {
     private void putStringTestCommon() {
         mPreference.putString(TEST_STR);
 
-        verify(mDataStore, atLeast(0)).getString(eq(KEY), anyString());
+        verify(mDataStore, atLeast(0)).getString(eq(KEY), nullable(String.class));
         verify(mDataStore, atLeastOnce()).putString(eq(KEY), anyString());
         verifyNoMoreInteractions(mDataStore);
 
