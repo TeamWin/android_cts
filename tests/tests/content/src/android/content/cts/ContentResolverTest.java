@@ -25,6 +25,7 @@ import android.content.cts.R;
 import android.content.res.AssetFileDescriptor;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.PageViewCursor;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -425,7 +426,7 @@ public class ContentResolverTest extends AndroidTestCase {
      * Verifies that paging arguments are handled correctly
      * when the provider supports paging.
      */
-    public void testQuery_PagingSupport() {
+    public void testQuery_InProcessProvider_NoAutoPaging() {
 
         mContentResolver.delete(TABLE1_URI, null, null);
         ContentValues values = new ContentValues();
@@ -442,8 +443,43 @@ public class ContentResolverTest extends AndroidTestCase {
         mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
         int col = mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME);
 
+        Bundle extras = mCursor.getExtras();
+        extras = extras != null ? extras : Bundle.EMPTY;
+
+        assertEquals(100, mCursor.getCount());
+        assertFalse(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
+
+        mCursor.close();
+    }
+
+    /**
+     * Verifies that paging arguments are handled correctly
+     * when the provider supports paging.
+     */
+    public void testQuery_OutOfProcessProvider_AutoPaging() {
+
+        mContentResolver.delete(REMOTE_TABLE1_URI, null, null);
+        ContentValues values = new ContentValues();
+
+        for (int i = 0; i < 100; i++) {
+            values.put(COLUMN_KEY_NAME, i);
+            mContentResolver.insert(REMOTE_TABLE1_URI, values);
+        }
+
+        Bundle queryArgs = new Bundle();
+        queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 10);
+        queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 3);
+
+        mCursor = mContentResolver.query(REMOTE_TABLE1_URI, null, queryArgs, null);
+
+        Bundle extras = mCursor.getExtras();
+        extras = extras != null ? extras : Bundle.EMPTY;
+
         assertEquals(3, mCursor.getCount());
-        assertEquals(100, mCursor.getExtras().getInt(ContentResolver.EXTRA_TOTAL_SIZE));
+        assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
+        assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_SIZE));
+
+        int col = mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME);
 
         mCursor.moveToNext();
         assertEquals(10, mCursor.getInt(col));
