@@ -166,9 +166,9 @@ public final class TestMeasurementUtil {
         int state = measurement.getState();
         softAssert.assertTrue("state: Satellite code sync state",
                 timeInNs,
-                "X > 0",
+                "X >= 0",
                 String.valueOf(state),
-                state > 0);
+                state >= 0);
 
         // Check received_gps_tow_uncertainty_ns
         softAssert.assertTrueAsWarning("received_gps_tow_uncertainty_ns:" +
