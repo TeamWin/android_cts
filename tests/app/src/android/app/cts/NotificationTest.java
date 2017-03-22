@@ -74,7 +74,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testBuilderConstructor() {
         mNotification = new Notification.Builder(mContext, CHANNEL.getId()).build();
         assertEquals(CHANNEL.getId(), mNotification.getChannel());
-        assertEquals(Notification.BADGE_ICON_LARGE, mNotification.getBadgeIcon());
+        assertEquals(Notification.BADGE_ICON_NONE, mNotification.getBadgeIconType());
         assertNull(mNotification.getShortcutId());
         assertEquals((long) 0, mNotification.getTimeout());
     }
@@ -88,7 +88,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testWriteToParcel() {
 
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
-                .chooseBadgeIcon(Notification.BADGE_ICON_SMALL)
+                .chooseBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
                 .build();
@@ -142,7 +142,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.ledOffMS, result.ledOffMS);
         assertEquals(mNotification.iconLevel, result.iconLevel);
         assertEquals(mNotification.getShortcutId(), result.getShortcutId());
-        assertEquals(mNotification.getBadgeIcon(), result.getBadgeIcon());
+        assertEquals(mNotification.getBadgeIconType(), result.getBadgeIconType());
         assertEquals(mNotification.getTimeout(), result.getTimeout());
         assertEquals(mNotification.getChannel(), result.getChannel());
 
@@ -200,7 +200,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
                 .setContentIntent(contentIntent)
-                .chooseBadgeIcon(Notification.BADGE_ICON_NONE)
+                .chooseBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
                 .build();
@@ -209,7 +209,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(1, mNotification.icon);
         assertEquals(contentIntent, mNotification.contentIntent);
         assertEquals(CHANNEL.getId(), mNotification.getChannel());
-        assertEquals(Notification.BADGE_ICON_NONE, mNotification.getBadgeIcon());
+        assertEquals(Notification.BADGE_ICON_SMALL, mNotification.getBadgeIconType());
         assertEquals(SHORTCUT_ID, mNotification.getShortcutId());
         assertEquals(TIMEOUT, mNotification.getTimeout());
     }
