@@ -290,7 +290,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.onUsername((v) -> v.requestFocus());
-        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        sReplier.getNextFillRequest();
 
         // Auto-fill it.
         sUiBot.assertNoDatasets();
@@ -428,6 +428,230 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Auto-fill it.
         sUiBot.selectDataset(name);
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    /**
+     * Tests the scenario where the service uses custom remote views for different fields (username
+     * and password).
+     */
+    @Test
+    public void testAutofillOneDatasetCustomPresentation() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, AutofillValue.forText("dude"),
+                        createPresentation("The Dude"))
+                .setField(ID_PASSWORD, AutofillValue.forText("sweet"),
+                        createPresentation("Dude's password"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Check initial field.
+        sUiBot.assertDatasets("The Dude");
+
+        // Then move around...
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.assertDatasets("Dude's password");
+        mActivity.onUsername((v) -> v.requestFocus());
+        sUiBot.assertDatasets("The Dude");
+
+        // Auto-fill it.
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.selectDataset("Dude's password");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    /**
+     * Tests the scenario where the service uses custom remote views for different fields (username
+     * and password) and the dataset itself, and each dataset has the same number of fields.
+     *
+     */
+    @Test
+    public void testAutofillMultipleDatasetsCustomPresentations() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder(createPresentation("Dataset1"))
+                        .setField(ID_USERNAME, AutofillValue.forText("user1")) // no presentation
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass1"),
+                                createPresentation("Pass1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("user2"),
+                                createPresentation("User2"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass2")) // no presentation
+                        .setPresentation(createPresentation("Dataset2"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("user1", "pass1");
+
+        // Trigger auto-fill.
+        mActivity.onUsername((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Check initial field.
+        sUiBot.assertDatasets("Dataset1", "User2");
+
+        // Then move around...
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.assertDatasets("Pass1", "Dataset2");
+        mActivity.onUsername((v) -> v.requestFocus());
+        sUiBot.assertDatasets("Dataset1", "User2");
+
+        // Auto-fill it.
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.selectDataset("Pass1");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    /**
+     * Tests the scenario where the service uses custom remote views for different fields (username
+     * and password), and each dataset has the same number of fields.
+     *
+     */
+    @Test
+    public void testAutofillMultipleDatasetsCustomPresentationSameFields() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("user1"),
+                                createPresentation("User1"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass1"),
+                                createPresentation("Pass1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("user2"),
+                                createPresentation("User2"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass2"),
+                                createPresentation("Pass2"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("user1", "pass1");
+
+        // Trigger auto-fill.
+        mActivity.onUsername((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Check initial field.
+        sUiBot.assertDatasets("User1", "User2");
+
+        // Then move around...
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.assertDatasets("Pass1", "Pass2");
+        mActivity.onUsername((v) -> v.requestFocus());
+        sUiBot.assertDatasets("User1", "User2");
+
+        // Auto-fill it.
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.selectDataset("Pass1");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    /**
+     * Tests the scenario where the service uses custom remote views for different fields (username
+     * and password), but each dataset has a different number of fields.
+     */
+    @Test
+    public void testAutofillMultipleDatasetsCustomPresentationFirstDatasetMissingSecondField()
+            throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("user1"),
+                                createPresentation("User1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("user2"),
+                                createPresentation("User2"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass2"),
+                                createPresentation("Pass2"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("user2", "pass2");
+
+        // Trigger auto-fill.
+        mActivity.onUsername((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Check initial field.
+        sUiBot.assertDatasets("User1", "User2");
+
+        // Then move around...
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.assertDatasets("Pass2");
+        mActivity.onUsername((v) -> v.requestFocus());
+        sUiBot.assertDatasets("User1", "User2");
+
+        // Auto-fill it.
+        sUiBot.selectDataset("User2");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    /**
+     * Tests the scenario where the service uses custom remote views for different fields (username
+     * and password), but each dataset has a different number of fields.
+     */
+    @Test
+    public void testAutofillMultipleDatasetsCustomPresentationSecondDatasetMissingFirstField()
+            throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, AutofillValue.forText("user1"),
+                                createPresentation("User1"))
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass1"),
+                                createPresentation("Pass1"))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_PASSWORD, AutofillValue.forText("pass2"),
+                                createPresentation("Pass2"))
+                        .build())
+                .build());
+        mActivity.expectAutoFill("user1", "pass1");
+
+        // Trigger auto-fill.
+        mActivity.onUsername((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Check initial field.
+        sUiBot.assertDatasets("User1");
+
+        // Then move around...
+        mActivity.onPassword((v) -> v.requestFocus());
+        sUiBot.assertDatasets("Pass1", "Pass2");
+        mActivity.onUsername((v) -> v.requestFocus());
+        sUiBot.assertDatasets("User1");
+
+        // Auto-fill it.
+        sUiBot.selectDataset("User1");
 
         // Check the results.
         mActivity.assertAutoFilled();
