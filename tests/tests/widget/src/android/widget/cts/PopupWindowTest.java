@@ -854,20 +854,28 @@ public class PopupWindowTest {
     }
 
     @Test
+    public void testEnterExitInterruption() throws Throwable {
+        final View anchorView = mActivity.findViewById(R.id.anchor_upper);
+        verifyEnterExitTransition(
+                () -> mPopupWindow.showAsDropDown(anchorView, 0, 0), true);
+    }
+
+    @Test
     public void testEnterExitTransitionAsDropDown() throws Throwable {
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
         verifyEnterExitTransition(
-                () -> mPopupWindow.showAsDropDown(anchorView, 0, 0));
+                () -> mPopupWindow.showAsDropDown(anchorView, 0, 0), false);
     }
 
     @Test
     public void testEnterExitTransitionAtLocation() throws Throwable {
         final View anchorView = mActivity.findViewById(R.id.anchor_upper);
         verifyEnterExitTransition(
-                () -> mPopupWindow.showAtLocation(anchorView, Gravity.BOTTOM, 0, 0));
+                () -> mPopupWindow.showAtLocation(anchorView, Gravity.BOTTOM, 0, 0), false);
     }
 
-    private void verifyEnterExitTransition(Runnable showRunnable) throws Throwable {
+    private void verifyEnterExitTransition(Runnable showRunnable, boolean showAgain)
+            throws Throwable {
         TransitionListener enterListener = mock(TransitionListener.class);
         Transition enterTransition = new BaseTransition();
         enterTransition.addListener(enterListener);
@@ -890,10 +898,23 @@ public class PopupWindowTest {
         verify(dismissListener, never()).onDismiss();
 
         mActivityRule.runOnUiThread(mPopupWindow::dismiss);
+
+        int times;
+        if (showAgain) {
+            // Interrupt dismiss by calling show again, then actually dismiss.
+            mActivityRule.runOnUiThread(showRunnable);
+            mInstrumentation.waitForIdleSync();
+            mActivityRule.runOnUiThread(mPopupWindow::dismiss);
+
+            times = 2;
+        } else {
+            times = 1;
+        }
+
         mInstrumentation.waitForIdleSync();
-        verify(enterListener, times(1)).onTransitionStart(any(Transition.class));
-        verify(exitListener, times(1)).onTransitionStart(any(Transition.class));
-        verify(dismissListener, times(1)).onDismiss();
+        verify(enterListener, times(times)).onTransitionStart(any(Transition.class));
+        verify(exitListener, times(times)).onTransitionStart(any(Transition.class));
+        verify(dismissListener, times(times)).onDismiss();
     }
 
     @Test
