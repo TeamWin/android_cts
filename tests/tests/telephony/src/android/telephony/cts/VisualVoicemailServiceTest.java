@@ -38,6 +38,7 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.telephony.VisualVoicemailService;
 import android.telephony.VisualVoicemailSms;
@@ -148,7 +149,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
         PermissionlessVisualVoicemailService.setSmsFuture(future);
 
-        setupSmsReceiver();
+        setupSmsReceiver(text);
 
         SmsManager.getDefault().sendTextMessage(mPhoneNumber, null, text, null, null);
 
@@ -376,7 +377,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
         MockVisualVoicemailService.setSmsFuture(future);
 
-        setupSmsReceiver();
+        setupSmsReceiver(text);
         try (SentSmsObserver observer = new SentSmsObserver(mContext)) {
             VisualVoicemailService
                     .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, (short) 0,
@@ -407,18 +408,32 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         }
     }
 
-    private void setupSmsReceiver() {
-        mSmsReceiver = new SmsBroadcastReceiver();
+    private void setupSmsReceiver(String text) {
+        mSmsReceiver = new SmsBroadcastReceiver(text);
         IntentFilter filter = new IntentFilter(Intents.SMS_RECEIVED_ACTION);
         mContext.registerReceiver(mSmsReceiver, filter);
     }
 
     private static class SmsBroadcastReceiver extends BroadcastReceiver {
 
+        private final String mText;
+
         private CompletableFuture<Boolean> mFuture = new CompletableFuture<>();
+
+        public SmsBroadcastReceiver(String text){
+            mText = text;
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            SmsMessage[] messages = Sms.Intents.getMessagesFromIntent(intent);
+            StringBuilder messageBody = new StringBuilder();
+            for(SmsMessage message : messages){
+                messageBody.append(message.getMessageBody());
+            }
+            if(!TextUtils.equals(mText, messageBody.toString())){
+                return;
+            }
             mFuture.complete(true);
         }
 
