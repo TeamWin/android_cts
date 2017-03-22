@@ -646,6 +646,33 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Verify prepare call behaves properly when sharing surfaces.
+     *
+     */
+    public void testPrepareForSharedSurfaces() throws Exception {
+        for (int i = 0; i < mCameraIds.length; i++) {
+            try {
+                openDevice(mCameraIds[i], mCameraMockListener);
+                waitForDeviceState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
+                if (mStaticInfo.isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] + " is legacy, skipping");
+                    continue;
+                }
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + mCameraIds[i] +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+
+                prepareTestForSharedSurfacesByCamera();
+            }
+            finally {
+                closeDevice(mCameraIds[i], mCameraMockListener);
+            }
+        }
+    }
+
+    /**
      * Verify creating sessions back to back.
      */
     public void testCreateSessions() throws Exception {
@@ -969,6 +996,54 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
 
     }
 
+    private void prepareTestForSharedSurfacesByCamera() throws Exception {
+        final int PREPARE_TIMEOUT_MS = 10000;
+
+        mSessionMockListener = spy(new BlockingSessionCallback());
+
+        SurfaceTexture output1 = new SurfaceTexture(1);
+        Surface output1Surface = new Surface(output1);
+        SurfaceTexture output2 = new SurfaceTexture(2);
+        Surface output2Surface = new Surface(output2);
+
+        List<Surface> outputSurfaces = new ArrayList<>(
+            Arrays.asList(output1Surface, output2Surface));
+        OutputConfiguration surfaceSharedConfig = new OutputConfiguration(
+            OutputConfiguration.SURFACE_GROUP_ID_NONE, output1Surface);
+        surfaceSharedConfig.enableSurfaceSharing();
+        surfaceSharedConfig.addSurface(output2Surface);
+
+        List<OutputConfiguration> outputConfigurations = new ArrayList<>();
+        outputConfigurations.add(surfaceSharedConfig);
+        mCamera.createCaptureSessionByOutputConfigurations(
+                outputConfigurations, mSessionMockListener, mHandler);
+
+        mSession = mSessionMockListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+
+        // Try prepare on output1Surface
+        mSession.prepare(output1Surface);
+
+        verify(mSessionMockListener, timeout(PREPARE_TIMEOUT_MS).times(1))
+                .onSurfacePrepared(eq(mSession), eq(output1Surface));
+        verify(mSessionMockListener, timeout(PREPARE_TIMEOUT_MS).times(1))
+                .onSurfacePrepared(eq(mSession), eq(output2Surface));
+
+        // Try prepare on output2Surface
+        mSession.prepare(output2Surface);
+
+        verify(mSessionMockListener, timeout(PREPARE_TIMEOUT_MS).times(2))
+                .onSurfacePrepared(eq(mSession), eq(output1Surface));
+        verify(mSessionMockListener, timeout(PREPARE_TIMEOUT_MS).times(2))
+                .onSurfacePrepared(eq(mSession), eq(output2Surface));
+
+        // Try prepare on output1Surface again
+        mSession.prepare(output1Surface);
+
+        verify(mSessionMockListener, timeout(PREPARE_TIMEOUT_MS).times(3))
+                .onSurfacePrepared(eq(mSession), eq(output1Surface));
+        verify(mSessionMockListener, timeout(PREPARE_TIMEOUT_MS).times(3))
+                .onSurfacePrepared(eq(mSession), eq(output2Surface));
+    }
 
     private void invalidRequestCaptureTestByCamera() throws Exception {
         if (VERBOSE) Log.v(TAG, "invalidRequestCaptureTestByCamera");
