@@ -19,11 +19,15 @@ import android.content.res.Resources;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.DrmInitData;
+import android.media.MediaCas;
+import android.media.MediaCasException;
+import android.media.MediaCasException.UnsupportedCasException;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
+import android.media.MediaDescrambler;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
@@ -60,6 +64,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private boolean mEncryptedVideo;
     private volatile boolean mThreadStarted = false;
     private byte[] mSessionId;
+    private boolean mScrambled;
     private CodecState mAudioTrackState;
     private int mMediaFormatHeight;
     private int mMediaFormatWidth;
@@ -72,6 +77,8 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private Map<String, String> mVideoHeaders;
     private Map<UUID, byte[]> mPsshInitData;
     private MediaCrypto mCrypto;
+    private MediaCas mMediaCas;
+    private MediaDescrambler mDescrambler;
     private MediaExtractor mAudioExtractor;
     private MediaExtractor mVideoExtractor;
     private SurfaceHolder mSurfaceHolder;
@@ -91,6 +98,19 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             "00000000"            // Size of Data, must be zero
             );
 
+    // ClearKey CAS/Descrambler test provision string
+    private static final String sProvisionStr =
+            "{                                                   " +
+            "  \"id\": 21140844,                                 " +
+            "  \"name\": \"Test Title\",                         " +
+            "  \"lowercase_organization_name\": \"Android\",     " +
+            "  \"asset_key\": {                                  " +
+            "  \"encryption_key\": \"nezAr3CHFrmBR9R8Tedotw==\"  " +
+            "  },                                                " +
+            "  \"cas_type\": 1,                                  " +
+            "  \"track_types\": [ ]                              " +
+            "}                                                   " ;
+
     /**
      * Convert a hex string into byte array.
      */
@@ -108,8 +128,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
      * Media player class to stream CENC content using MediaCodec class.
      */
     public MediaCodecClearKeyPlayer(
-            SurfaceHolder holder, byte[] sessionId, Resources resources) {
+            SurfaceHolder holder, byte[] sessionId, boolean scrambled, Resources resources) {
         mSessionId = sessionId;
+        mScrambled = scrambled;
         mSurfaceHolder = holder;
         mResources = resources;
         mState = STATE_IDLE;
@@ -126,6 +147,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     } catch (InterruptedException ex) {
                         Log.d(TAG, "Thread interrupted");
                     }
+                }
+                if (mAudioTrackState != null) {
+                    mAudioTrackState.stop();
                 }
             }
         });
@@ -206,6 +230,8 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private void prepareVideo() throws IOException {
         boolean hasVideo = false;
 
+        android.media.DrmInitData drmInitData = mVideoExtractor.getDrmInitData();
+
         for (int i = mVideoExtractor.getTrackCount(); i-- > 0;) {
             MediaFormat format = mVideoExtractor.getTrackFormat(i);
             String mime = format.getString(MediaFormat.KEY_MIME);
@@ -217,6 +243,14 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             mMediaFormatWidth = getMediaFormatInteger(format, MediaFormat.KEY_WIDTH);
             Log.d(TAG, "video track #" + i + " " + format + " " + mime +
                   " Width:" + mMediaFormatWidth + ", Height:" + mMediaFormatHeight);
+
+            if (mScrambled && drmInitData != null && mime.startsWith("video/")) {
+                android.media.DrmInitData.SchemeInitData schemeInitData =
+                        drmInitData.get(new UUID(0, i));
+                if (schemeInitData != null) {
+                    mDescrambler.setMediaCasSession(schemeInitData.data);
+                }
+            }
 
             if (!hasVideo) {
                 mVideoExtractor.selectTrack(i);
@@ -239,11 +273,10 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                 }
             }
         }
-        return;
     }
 
     private void setDataSource(MediaExtractor extractor, Uri uri, Map<String, String> headers)
-            throws IOException {
+            throws IOException, MediaCasException {
         String scheme = uri.getScheme();
         if (scheme.startsWith("http")) {
             extractor.setDataSource(uri.toString(), headers);
@@ -256,26 +289,30 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         }
     }
 
-    public void prepare() throws IOException, MediaCryptoException {
-        if (null == mAudioExtractor) {
-            mAudioExtractor = new MediaExtractor();
-            if (null == mAudioExtractor) {
-                Log.e(TAG, "Cannot create Audio extractor.");
-                return;
+    private void initCasAndDescrambler(MediaExtractor extractor) throws MediaCasException {
+        int trackCount = extractor.getTrackCount();
+        android.media.DrmInitData drmInitData = extractor.getDrmInitData();
+        for (int trackId = 0; trackId < trackCount; trackId++) {
+            android.media.MediaFormat format = extractor.getTrackFormat(trackId);
+            String mime = format.getString(android.media.MediaFormat.KEY_MIME);
+            Log.d(TAG, "track "+ trackId + ": " + mime);
+            if ("video/scrambled".equals(mime) || "audio/scrambled".equals(mime)) {
+                if (drmInitData == null) {
+                    throw new IllegalArgumentException("found scrambled track without drmInitData!");
+                }
+                android.media.DrmInitData.SchemeInitData schemeInitData =
+                        drmInitData.get(new UUID(0, trackId));
+                int CA_system_id = (schemeInitData.data[0] & 0xff)
+                                | ((schemeInitData.data[1] & 0xff) << 8);
+                mMediaCas = new MediaCas(CA_system_id);
+                mDescrambler = new MediaDescrambler(CA_system_id);
+                mMediaCas.provision(sProvisionStr);
+                extractor.setMediaCas(mMediaCas);
             }
         }
+    }
 
-        if (null == mVideoExtractor){
-            mVideoExtractor = new MediaExtractor();
-            if (null == mVideoExtractor) {
-                Log.e(TAG, "Cannot create Video extractor.");
-                return;
-            }
-        }
-
-        setDataSource(mAudioExtractor, mAudioUri, mAudioHeaders);
-        setDataSource(mVideoExtractor, mVideoUri, mVideoHeaders);
-
+    public void prepare() throws IOException, MediaCryptoException, MediaCasException {
         if (null == mCrypto && (mEncryptedVideo || mEncryptedAudio)) {
             try {
                 byte[] initData = new byte[0];
@@ -288,8 +325,29 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             mCrypto.setMediaDrmSession(mSessionId);
         } else {
             reset();
-            mCrypto.release();
-            mCrypto = null;
+        }
+
+        if (null == mAudioExtractor) {
+            mAudioExtractor = new MediaExtractor();
+            if (null == mAudioExtractor) {
+                Log.e(TAG, "Cannot create Audio extractor.");
+                return;
+            }
+        }
+        setDataSource(mAudioExtractor, mAudioUri, mAudioHeaders);
+
+        if (mScrambled) {
+            initCasAndDescrambler(mAudioExtractor);
+            mVideoExtractor = mAudioExtractor;
+        } else {
+            if (null == mVideoExtractor){
+                mVideoExtractor = new MediaExtractor();
+                if (null == mVideoExtractor) {
+                    Log.e(TAG, "Cannot create Video extractor.");
+                    return;
+                }
+            }
+            setDataSource(mVideoExtractor, mVideoUri, mVideoHeaders);
         }
 
         if (null == mVideoCodecStates) {
@@ -325,11 +383,19 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             codec = MediaCodec.createDecoderByType(mime);
         }
 
-        codec.configure(
-                format,
-                isVideo ? mSurfaceHolder.getSurface() : null,
-                mCrypto,
-                0);
+        if (!mScrambled) {
+            codec.configure(
+                    format,
+                    isVideo ? mSurfaceHolder.getSurface() : null,
+                    mCrypto,
+                    0);
+        } else {
+            codec.configure(
+                    format,
+                    isVideo ? mSurfaceHolder.getSurface() : null,
+                    0,
+                    isVideo ? mDescrambler : null);
+        }
 
         CodecState state;
         if (isVideo) {
@@ -481,6 +547,16 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         if (mCrypto != null) {
             mCrypto.release();
             mCrypto = null;
+        }
+
+        if (mMediaCas != null) {
+            mMediaCas.release();
+            mMediaCas = null;
+        }
+
+        if (mDescrambler != null) {
+            mDescrambler.release();
+            mDescrambler = null;
         }
 
         mDurationUs = -1;
