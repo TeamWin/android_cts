@@ -27,6 +27,7 @@ import android.content.OperationApplicationException;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -529,37 +530,40 @@ public class ContactsTest extends AndroidTestCase {
             boolean hasPrimaryDirectory = false;
             boolean hasManagedDirectory = false;
 
-            while(cursor.moveToNext()) {
-                final long directoryId = cursor.getLong(0);
-                if (directoryId == Directory.DEFAULT) {
-                    hasPrimaryDefault = true;
-                } else if (directoryId == Directory.LOCAL_INVISIBLE) {
-                    hasPrimaryInvisible = true;
-                } else if (directoryId == Directory.ENTERPRISE_DEFAULT) {
-                    hasManagedDefault = true;
-                } else if (directoryId == Directory.ENTERPRISE_LOCAL_INVISIBLE) {
-                    hasManagedInvisible = true;
-                } else {
-                    final String displayName = cursor.getString(1);
-                    if (Directory.isEnterpriseDirectoryId(directoryId)
-                            && displayName.equals(MANAGED_DIRECTORY_NAME)) {
-                        hasManagedDirectory = true;
-                    }
-                    if (!Directory.isEnterpriseDirectoryId(directoryId)
-                            && displayName.equals(PRIMARY_DIRECTORY_NAME)) {
-                        hasPrimaryDirectory = true;
+            try {
+                while(cursor.moveToNext()) {
+                    final long directoryId = cursor.getLong(0);
+                    if (directoryId == Directory.DEFAULT) {
+                        hasPrimaryDefault = true;
+                    } else if (directoryId == Directory.LOCAL_INVISIBLE) {
+                        hasPrimaryInvisible = true;
+                    } else if (directoryId == Directory.ENTERPRISE_DEFAULT) {
+                        hasManagedDefault = true;
+                    } else if (directoryId == Directory.ENTERPRISE_LOCAL_INVISIBLE) {
+                        hasManagedInvisible = true;
+                    } else {
+                        final String displayName = cursor.getString(1);
+                        if (Directory.isEnterpriseDirectoryId(directoryId)
+                                && displayName.equals(MANAGED_DIRECTORY_NAME)) {
+                            hasManagedDirectory = true;
+                        }
+                        if (!Directory.isEnterpriseDirectoryId(directoryId)
+                                && displayName.equals(PRIMARY_DIRECTORY_NAME)) {
+                            hasPrimaryDirectory = true;
+                        }
                     }
                 }
-            }
-            cursor.close();
-
-            if (i + 1 == MAX_RETRY_DIRECTORY_QUERY) {
-                assertTrue(hasPrimaryDefault);
-                assertTrue(hasPrimaryInvisible);
-                assertTrue(hasManagedDefault);
-                assertTrue(hasManagedInvisible);
-                assertTrue(hasPrimaryDirectory);
-                assertTrue(hasManagedDirectory);
+                if (i + 1 == MAX_RETRY_DIRECTORY_QUERY) {
+                    DatabaseUtils.dumpCursor(cursor);
+                    assertTrue(hasPrimaryDefault);
+                    assertTrue(hasPrimaryInvisible);
+                    assertTrue(hasManagedDefault);
+                    assertTrue(hasManagedInvisible);
+                    assertTrue(hasPrimaryDirectory);
+                    assertTrue(hasManagedDirectory);
+                }
+            } finally {
+                cursor.close();
             }
             if (hasPrimaryDefault && hasPrimaryInvisible && hasManagedDefault
                     && hasManagedInvisible && hasPrimaryDirectory && hasManagedDirectory) {
