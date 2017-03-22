@@ -32,6 +32,7 @@ import static android.server.cts.ActivityAndWindowManagersState.DEFAULT_DISPLAY_
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 import static android.server.cts.StateLogger.log;
+import static android.server.cts.StateLogger.logE;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -39,6 +40,8 @@ import static android.server.cts.StateLogger.log;
  */
 public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private static final String DUMPSYS_ACTIVITY_PROCESSES = "dumpsys activity processes";
+    private static final String WM_SIZE = "wm size";
+    private static final String WM_DENSITY = "wm density";
 
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
@@ -57,10 +60,38 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     private boolean mVirtualDisplayCreated;
 
+    /** Physical display metrics and overrides in the beginning of the test. */
+    private ReportedDisplayMetrics mInitialDisplayMetrics;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mInitialDisplayMetrics = getDisplayMetrics();
+    }
+
     @Override
     protected void tearDown() throws Exception {
-        destroyVirtualDisplays();
+        try {
+            destroyVirtualDisplays();
+            restoreDisplayMetricsOverrides();
+        } catch (DeviceNotAvailableException e) {
+            logE(e.getMessage());
+        }
         super.tearDown();
+    }
+
+    private void restoreDisplayMetricsOverrides() throws Exception {
+        if (mInitialDisplayMetrics.sizeOverrideSet) {
+            executeShellCommand(WM_SIZE + " " + mInitialDisplayMetrics.overrideWidth + "x"
+                    + mInitialDisplayMetrics.overrideHeight);
+        } else {
+            executeShellCommand("wm size reset");
+        }
+        if (mInitialDisplayMetrics.densityOverrideSet) {
+            executeShellCommand(WM_DENSITY + " " + mInitialDisplayMetrics.overrideDensity);
+        } else {
+            executeShellCommand("wm density reset");
+        }
     }
 
     /**
@@ -387,17 +418,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedActivity("Activity launched on secondary display must be focused",
                 TEST_ACTIVITY_NAME);
 
-        String displaySize = executeShellCommand("wm size").trim();
-        Pattern pattern = Pattern.compile("Physical size: (\\d+)x(\\d+)");
-        Matcher matcher = pattern.matcher(displaySize);
-        if (matcher.matches()) {
-            int width = Integer.parseInt(matcher.group(1));
-            int height = Integer.parseInt(matcher.group(2));
-
-            executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
-        } else {
-            throw new RuntimeException("Couldn't find display size \"" + displaySize + "\"");
-        }
+        final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+        final int width = displayMetrics.getWidth();
+        final int height = displayMetrics.getHeight();
+        executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
 
         mAmWmState.computeState(mDevice, new String[] {VIRTUAL_DISPLAY_ACTIVITY});
         mAmWmState.assertFocusedActivity("Focus must be switched back to primary display",
@@ -938,6 +962,143 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
             setDeviceRotation(rotation);
             final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName);
             assertNull("Sizes must not change after rotation", rotatedSizes);
+        }
+    }
+
+    /**
+     * Test that display overrides apply correctly and won't be affected by display changes.
+     * This sets overrides to display size and density, initiates a display changed event by locking
+     * and unlocking the phone and verifies that overrides are kept.
+     * */
+    public void testForceDisplayMetrics() throws Exception {
+        launchHomeActivity();
+
+        // Read initial sizes.
+        final ReportedDisplayMetrics originalDisplayMetrics = getDisplayMetrics();
+
+        // Apply new override values that don't match the physical metrics.
+        final int overrideWidth = (int) (originalDisplayMetrics.physicalWidth * 1.5);
+        final int overrideHeight = (int) (originalDisplayMetrics.physicalHeight * 1.5);
+        executeShellCommand(WM_SIZE + " " + overrideWidth + "x" + overrideHeight);
+        final int overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
+        executeShellCommand(WM_DENSITY + " " + overrideDensity);
+
+        // Check if overrides applied correctly.
+        ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+        assertEquals(overrideWidth, displayMetrics.overrideWidth);
+        assertEquals(overrideHeight, displayMetrics.overrideHeight);
+        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+
+        // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
+        // might update the metrics.
+        sleepDevice();
+        wakeUpAndUnlockDevice();
+        mAmWmState.waitForHomeActivityVisible(mDevice);
+
+        // Check if overrides are still applied.
+        displayMetrics = getDisplayMetrics();
+        assertEquals(overrideWidth, displayMetrics.overrideWidth);
+        assertEquals(overrideHeight, displayMetrics.overrideHeight);
+        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+
+        // All overrides will be cleared in tearDown.
+    }
+
+    /** Get physical and override display metrics from WM. */
+    private ReportedDisplayMetrics getDisplayMetrics() throws Exception {
+        mDumpLines.clear();
+        final CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        mDevice.executeShellCommand(WM_SIZE, outputReceiver);
+        mDevice.executeShellCommand(WM_DENSITY, outputReceiver);
+        final String dump = outputReceiver.getOutput();
+        mDumpLines.clear();
+        Collections.addAll(mDumpLines, dump.split("\\n"));
+        return ReportedDisplayMetrics.create(mDumpLines);
+    }
+
+    private static class ReportedDisplayMetrics {
+        private static final Pattern sPhysicalSizePattern =
+                Pattern.compile("Physical size: (\\d+)x(\\d+)");
+        private static final Pattern sOverrideSizePattern =
+                Pattern.compile("Override size: (\\d+)x(\\d+)");
+        private static final Pattern sPhysicalDensityPattern =
+                Pattern.compile("Physical density: (\\d+)");
+        private static final Pattern sOverrideDensityPattern =
+                Pattern.compile("Override density: (\\d+)");
+
+        int physicalWidth;
+        int physicalHeight;
+        int physicalDensity;
+
+        boolean sizeOverrideSet;
+        int overrideWidth;
+        int overrideHeight;
+        boolean densityOverrideSet;
+        int overrideDensity;
+
+        /** Get width that WM operates with. */
+        int getWidth() {
+            return sizeOverrideSet ? overrideWidth : physicalWidth;
+        }
+
+        /** Get height that WM operates with. */
+        int getHeight() {
+            return sizeOverrideSet ? overrideHeight : physicalHeight;
+        }
+
+        /** Get density that WM operates with. */
+        int getDensity() {
+            return densityOverrideSet ? overrideDensity : physicalDensity;
+        }
+
+        static ReportedDisplayMetrics create(LinkedList<String> dump) {
+            final ReportedDisplayMetrics result = new ReportedDisplayMetrics();
+
+            boolean physicalSizeFound = false;
+            boolean physicalDensityFound = false;
+
+            while (!dump.isEmpty()) {
+                final String line = dump.pop().trim();
+
+                Matcher matcher = sPhysicalSizePattern.matcher(line);
+                if (matcher.matches()) {
+                    physicalSizeFound = true;
+                    log(line);
+                    result.physicalWidth = Integer.parseInt(matcher.group(1));
+                    result.physicalHeight = Integer.parseInt(matcher.group(2));
+                    continue;
+                }
+
+                matcher = sOverrideSizePattern.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    result.overrideWidth = Integer.parseInt(matcher.group(1));
+                    result.overrideHeight = Integer.parseInt(matcher.group(2));
+                    result.sizeOverrideSet = true;
+                    continue;
+                }
+
+                matcher = sPhysicalDensityPattern.matcher(line);
+                if (matcher.matches()) {
+                    physicalDensityFound = true;
+                    log(line);
+                    result.physicalDensity = Integer.parseInt(matcher.group(1));
+                    continue;
+                }
+
+                matcher = sOverrideDensityPattern.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    result.overrideDensity = Integer.parseInt(matcher.group(1));
+                    result.densityOverrideSet = true;
+                    continue;
+                }
+            }
+
+            assertTrue("Physical display size must be reported", physicalSizeFound);
+            assertTrue("Physical display density must be reported", physicalDensityFound);
+
+            return result;
         }
     }
 
