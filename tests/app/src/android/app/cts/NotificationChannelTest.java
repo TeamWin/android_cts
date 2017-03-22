@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -35,20 +37,21 @@ public class NotificationChannelTest extends AndroidTestCase {
     public void testDescribeContents() {
         final int expected = 0;
         NotificationChannel channel =
-                new NotificationChannel("1", "1", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "1", IMPORTANCE_DEFAULT);
         assertEquals(expected, channel.describeContents());
     }
 
     public void testConstructor() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         assertEquals("1", channel.getId());
         assertEquals("one", channel.getName());
+        assertEquals(null, channel.getDescription());
         assertEquals(false, channel.canBypassDnd());
         assertEquals(false, channel.shouldShowLights());
         assertEquals(false, channel.shouldVibrate());
         assertEquals(null, channel.getVibrationPattern());
-        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, channel.getImportance());
+        assertEquals(IMPORTANCE_DEFAULT, channel.getImportance());
         assertEquals(null, channel.getSound());
         assertTrue(channel.canShowBadge());
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
@@ -58,7 +61,7 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testWriteToParcel() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         Parcel parcel = Parcel.obtain();
         channel.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -66,9 +69,21 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(channel, channel1);
     }
 
+    public void testName() {
+        NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
+        channel.setName("new name");
+        assertEquals("new name", channel.getName());
+    }
+
+    public void testDescription() {
+        NotificationChannel channel = new NotificationChannel("a", "ab", IMPORTANCE_DEFAULT);
+        channel.setDescription("success");
+        assertEquals("success", channel.getDescription());
+    }
+
     public void testLights() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.enableLights(true);
         assertTrue(channel.shouldShowLights());
         channel.enableLights(false);
@@ -77,7 +92,7 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testLightColor() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setLightColor(Color.RED);
         assertFalse(channel.shouldShowLights());
         assertEquals(Color.RED, channel.getLightColor());
@@ -85,7 +100,7 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testVibration() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.enableVibration(true);
         assertTrue(channel.shouldVibrate());
         channel.enableVibration(false);
@@ -95,7 +110,7 @@ public class NotificationChannelTest extends AndroidTestCase {
     public void testVibrationPattern() {
         final long[] pattern = new long[] {1, 7, 1, 7, 3};
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         assertNull(channel.getVibrationPattern());
         channel.setVibrationPattern(pattern);
         assertEquals(pattern, channel.getVibrationPattern());
@@ -117,7 +132,7 @@ public class NotificationChannelTest extends AndroidTestCase {
                 .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
                 .build();
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setSound(expected, attributes);
         assertEquals(expected, channel.getSound());
         assertEquals(attributes, channel.getAudioAttributes());
@@ -125,14 +140,14 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testShowBadge() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setShowBadge(true);
         assertTrue(channel.canShowBadge());
     }
 
     public void testGroup() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", NotificationManager.IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setGroup("banana");
         assertEquals("banana", channel.getGroup());
     }

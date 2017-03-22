@@ -109,6 +109,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testCreateChannel() throws Exception {
         final NotificationChannel channel =
                 new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("bananas");
         channel.enableVibration(true);
         channel.setVibrationPattern(new long[] {5, 8, 2, 1});
         channel.setSound(new Uri.Builder().scheme("test").build(),
@@ -433,6 +434,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
         assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
         assertEquals(expected.getImportance(), actual.getImportance());
