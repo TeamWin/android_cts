@@ -47,6 +47,7 @@ public class FileSystemPermissionTest extends DeviceTestCase {
             "/dev/galcore",
             "/dev/genlock",    // b/9035217
             "/dev/graphics/galcore",
+            "/dev/hwbinder",   // b/30886151
             "/dev/ion",
             "/dev/kgsl-2d0",   // b/11271533
             "/dev/kgsl-2d1",   // b/11271533
