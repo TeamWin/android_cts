@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,35 +16,20 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# don't include this package in any target
-LOCAL_MODULE_TAGS := optional
-# and when built explicitly put it in the data partition
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_JAVA_LIBRARIES := android.test.runner telephony-common voip-common org.apache.http.legacy
+# Don't include this package in any target.
+LOCAL_MODULE_TAGS := tests
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
-    ctstestrunner \
-    ctstestserver \
-    mockito-target-minus-junit4 \
-    android-support-test \
-    platform-test-annotations
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
-    $(call all-java-files-under, app2/src) \
-    $(call all-java-files-under, appSdk25/src) \
+
+LOCAL_SDK_VERSION := 25
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
-LOCAL_PACKAGE_NAME := CtsAppTestCases
+LOCAL_PACKAGE_NAME := CtsAppTestSdk25
 
-LOCAL_INSTRUMENTATION_FOR := CtsAppTestStubs
-
-LOCAL_SDK_VERSION := test_current
-
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_SUPPORT_PACKAGE)
