@@ -44,6 +44,8 @@ class ActivityManagerState {
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
 
+    public static final String RESIZE_MODE_RESIZEABLE = "RESIZE_MODE_RESIZEABLE";
+
     private static final String DUMPSYS_ACTIVITY_ACTIVITIES = "dumpsys activity activities";
 
     // Copied from ActivityRecord.java
@@ -315,22 +317,22 @@ class ActivityManagerState {
         return activity.name;
     }
 
-    private Activity getHomeActivity() {
-        for (ActivityStack stack : mStacks) {
-            if (stack.mStackId != HOME_STACK_ID) {
-                continue;
-            }
-
-            for (ActivityTask task : stack.mTasks) {
-                if (task.mTaskType != HOME_ACTIVITY_TYPE) {
-                    continue;
+    ActivityTask getHomeTask() {
+        ActivityStack homeStack = getStackById(HOME_STACK_ID);
+        if (homeStack != null) {
+            for (ActivityTask task : homeStack.mTasks) {
+                if (task.mTaskType == HOME_ACTIVITY_TYPE) {
+                    return task;
                 }
-                return task.mActivities.get(task.mActivities.size() - 1);
             }
-
             return null;
         }
         return null;
+    }
+
+    private Activity getHomeActivity() {
+        final ActivityTask homeTask = getHomeTask();
+        return homeTask != null ? homeTask.mActivities.get(homeTask.mActivities.size() - 1) : null;
     }
 
     ActivityTask getTaskByActivityName(String activityName) {
@@ -482,6 +484,9 @@ class ActivityManagerState {
                 + "isPersistable=(\\S+) numFullscreen=(\\d+) taskType=(\\d+) "
                 + "mTaskToReturnTo=(\\d+)");
 
+        private static final Pattern RESIZABLE_PATTERN = Pattern.compile(
+                ".*mResizeMode=([^\\s]+).*");
+
         int mTaskId;
         int mStackId;
         Rectangle mLastNonFullscreenBounds;
@@ -490,6 +495,7 @@ class ActivityManagerState {
         ArrayList<Activity> mActivities = new ArrayList();
         int mTaskType = -1;
         int mReturnToType = -1;
+        private String mResizeMode;
 
         private ActivityTask() {
         }
@@ -587,7 +593,19 @@ class ActivityManagerState {
                     mReturnToType = Integer.valueOf(matcher.group(5));
                     continue;
                 }
+
+                matcher = RESIZABLE_PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    log(line);
+                    mResizeMode = matcher.group(1);
+                    log(mResizeMode);
+                    continue;
+                }
             }
+        }
+
+        public String getResizeMode() {
+            return mResizeMode;
         }
     }
 

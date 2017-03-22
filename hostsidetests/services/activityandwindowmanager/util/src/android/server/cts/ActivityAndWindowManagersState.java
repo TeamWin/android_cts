@@ -16,7 +16,10 @@
 
 package android.server.cts;
 
+import static android.server.cts.ActivityManagerState.RESIZE_MODE_RESIZEABLE;
+import static android.server.cts.ActivityManagerTestBase.DOCKED_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.FREEFORM_WORKSPACE_STACK_ID;
+import static android.server.cts.ActivityManagerTestBase.HOME_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.PINNED_STACK_ID;
 import static android.server.cts.ActivityManagerTestBase.componentName;
 import static android.server.cts.StateLogger.log;
@@ -587,6 +590,11 @@ public class ActivityAndWindowManagersState extends Assert {
     }
 
     void assertValidBounds(boolean compareTaskAndStackBounds) {
+        // Cycle through the stacks and tasks to figure out if the home stack is resizable
+        final ActivityTask homeTask = mAmState.getHomeTask();
+        final boolean homeStackIsResizable = homeTask != null
+                && homeTask.getResizeMode().equals(RESIZE_MODE_RESIZEABLE);
+
         for (ActivityStack aStack : mAmState.getStacks()) {
             final int stackId = aStack.mStackId;
             final WindowStack wStack = mWmState.getStack(stackId);
@@ -618,10 +626,36 @@ public class ActivityAndWindowManagersState extends Assert {
 
                 final Rectangle aTaskBounds = aTask.getBounds();
                 final Rectangle wTaskBounds = wTask.getBounds();
+                final Rectangle displayRect = mWmState.getDisplay(aStack.mDisplayId)
+                        .getDisplayRect();
 
                 if (aTaskIsFullscreen) {
                     assertNull("Task bounds in AM must be null for fullscreen taskId=" + taskId,
                             aTaskBounds);
+                } else if (!homeStackIsResizable && mWmState.isDockedStackMinimized()
+                        && displayRect.getWidth() > displayRect.getHeight()) {
+                    // When minimized using non-resizable launcher in landscape mode, it will move
+                    // the task offscreen in the negative x direction unlike portrait that crops.
+                    // The x value in the task bounds will not match the stack bounds since the
+                    // only the task was moved.
+                    assertEquals("Task bounds in AM and WM must match width taskId=" + taskId
+                            + ", stackId" + stackId, aTaskBounds.getWidth(),
+                            wTaskBounds.getWidth());
+                    assertEquals("Task bounds in AM and WM must match height taskId=" + taskId
+                                    + ", stackId" + stackId, aTaskBounds.getHeight(),
+                            wTaskBounds.getHeight());
+                    assertEquals("Task bounds must match stack bounds y taskId=" + taskId
+                                    + ", stackId" + stackId, aTaskBounds.getY(),
+                            wTaskBounds.getY());
+                    assertEquals("Task and stack bounds must match width taskId=" + taskId
+                                    + ", stackId" + stackId, aStackBounds.getWidth(),
+                            wTaskBounds.getWidth());
+                    assertEquals("Task and stack bounds must match height taskId=" + taskId
+                                    + ", stackId" + stackId, aStackBounds.getHeight(),
+                            wTaskBounds.getHeight());
+                    assertEquals("Task and stack bounds must match y taskId=" + taskId
+                                    + ", stackId" + stackId, aStackBounds.getY(),
+                            wTaskBounds.getY());
                 } else {
                     assertEquals("Task bounds in AM and WM must be equal taskId=" + taskId
                             + ", stackId=" + stackId, aTaskBounds, wTaskBounds);
@@ -651,6 +685,30 @@ public class ActivityAndWindowManagersState extends Assert {
                             // bounds must be equal.
                             assertEquals("Task bounds must be equal to stack bounds taskId="
                                     + taskId + ", stackId=" + stackId, aStackBounds, wTaskBounds);
+                        } else if (stackId == DOCKED_STACK_ID && homeStackIsResizable
+                                && mWmState.isDockedStackMinimized()) {
+                            // Portrait if the display height is larger than the width
+                            if (displayRect.getHeight() > displayRect.getWidth()) {
+                                assertEquals("Task width must be equal to stack width taskId="
+                                        + taskId + ", stackId=" + stackId,
+                                        aStackBounds.getWidth(), wTaskBounds.getWidth());
+                                assertTrue("Task height must be greater than stack height "
+                                        + "taskId=" + taskId + ", stackId=" + stackId,
+                                        aStackBounds.getHeight() < wTaskBounds.getHeight());
+                                assertEquals("Task and stack x position must be equal taskId="
+                                        + taskId + ", stackId=" + stackId,
+                                        wTaskBounds.getX(), wStackBounds.getX());
+                            } else {
+                                assertTrue("Task width must be greater than stack width taskId="
+                                        + taskId + ", stackId=" + stackId,
+                                        aStackBounds.getWidth() < wTaskBounds.getWidth());
+                                assertEquals("Task height must be equal to stack height taskId="
+                                        + taskId + ", stackId=" + stackId,
+                                        aStackBounds.getHeight(), wTaskBounds.getHeight());
+                                assertEquals("Task and stack y position must be equal taskId="
+                                        + taskId + ", stackId=" + stackId, wTaskBounds.getY(),
+                                        wStackBounds.getY());
+                            }
                         } else {
                             // Minimal dimensions affect task size, so bounds of task and stack must
                             // be different - will compare dimensions instead.
