@@ -323,6 +323,28 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         assertDockNotMinimized();
     }
 
+    public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
+        launchActivityInDockStack(TEST_ACTIVITY_NAME);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+        sleepDevice();
+        wakeUpAndUnlockDevice();
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+        assertDockMinimized();
+    }
+
+    public void testMinimizedStateWhenUnlockedAndUnMinimized() throws Exception {
+        launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
+        assertDockMinimized();
+
+        sleepDevice();
+        wakeUpAndUnlockDevice();
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+
+        // Unminimized back to splitscreen
+        pressAppSwitchButton();
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+    }
+
     public void testResizeDockedStack() throws Exception {
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {DOCKED_ACTIVITY_NAME});

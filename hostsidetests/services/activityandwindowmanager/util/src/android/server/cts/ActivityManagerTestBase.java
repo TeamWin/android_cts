@@ -115,6 +115,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
     private static final String INPUT_KEYEVENT_BACK = "input keyevent 4";
+    private static final String INPUT_KEYEVENT_APP_SWITCH = "input keyevent 187";
 
     private static final String LOCK_CREDENTIAL = "1234";
 
@@ -443,6 +444,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     protected void pressBackButton() throws DeviceNotAvailableException {
         executeShellCommand(INPUT_KEYEVENT_BACK);
+    }
+
+    protected void pressAppSwitchButton() throws DeviceNotAvailableException {
+        executeShellCommand(INPUT_KEYEVENT_APP_SWITCH);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
