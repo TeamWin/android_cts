@@ -16,6 +16,8 @@
 
 package com.android.cts.documentclient;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -46,11 +48,14 @@ import java.util.List;
 public class DocumentsClientTest extends DocumentsClientTestCase {
     private static final String TAG = "DocumentsClientTest";
 
-    private UiObject findRoot(String label) throws UiObjectNotFoundException {
-        final UiSelector rootsList = new UiSelector().resourceId(
+    private UiSelector findRootListSelector() throws UiObjectNotFoundException {
+        return new UiSelector().resourceId(
                 "com.android.documentsui:id/container_roots").childSelector(
                 new UiSelector().resourceId("com.android.documentsui:id/roots_list"));
 
+    }
+
+    private void revealRoot(UiSelector rootsList, String label) throws UiObjectNotFoundException {
         // We might need to expand drawer if not visible
         if (!new UiObject(rootsList).waitForExists(TIMEOUT)) {
             Log.d(TAG, "Failed to find roots list; trying to expand");
@@ -66,7 +71,25 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         // Now scroll around to find our item
         new UiScrollable(rootsList).scrollIntoView(new UiSelector().text(label));
+    }
+
+    private UiObject findRoot(String label) throws UiObjectNotFoundException {
+        final UiSelector rootsList = findRootListSelector();
+        revealRoot(rootsList, label);
+
         return new UiObject(rootsList.childSelector(new UiSelector().text(label)));
+    }
+
+    private UiObject findEjectIcon(String rootLabel) throws UiObjectNotFoundException {
+        final UiSelector rootsList = findRootListSelector();
+        revealRoot(rootsList, rootLabel);
+
+        final UiScrollable rootsListObject = new UiScrollable(rootsList);
+        final UiObject rootItem =
+                rootsListObject.getChildByText(new UiSelector(), rootLabel, false);
+        final UiSelector ejectIcon =
+                new UiSelector().resourceId("com.android.documentsui:id/eject_icon");
+        return new UiObject(rootItem.getSelector().childSelector(ejectIcon));
     }
 
     private UiObject findDocument(String label) throws UiObjectNotFoundException {
@@ -585,4 +608,23 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertEquals("http://www.foobar.com/shared/SW33TCH3RR13S", webLinkUri.toString());
     }
 
+    public void testEject() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setDataAndType(
+                DocumentsContract.buildChildDocumentsUri(PROVIDER_PACKAGE, "doc:dir1"),
+                Document.MIME_TYPE_DIR);
+        mActivity.startActivity(intent);
+
+        findEjectIcon("eject").click();
+
+        try {
+            findRoot("eject").click();
+            fail("Root eject was not ejected");
+        } catch(UiObjectNotFoundException e) {
+            // expected
+        }
+    }
 }

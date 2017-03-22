@@ -45,9 +45,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyDocumentsProvider extends DocumentsProvider {
     private static final String TAG = "TestDocumentsProvider";
+
+    private static final String AUTHORITY = "com.android.cts.documentprovider";
 
     private static final int WEB_LINK_REQUEST_CODE = 321;
 
@@ -68,6 +71,8 @@ public class MyDocumentsProvider extends DocumentsProvider {
     private static String[] resolveDocumentProjection(String[] projection) {
         return projection != null ? projection : DEFAULT_DOCUMENT_PROJECTION;
     }
+
+    private boolean mEjected = false;
 
     @Override
     public boolean onCreate() {
@@ -92,6 +97,15 @@ public class MyDocumentsProvider extends DocumentsProvider {
         row.add(Root.COLUMN_TITLE, "CtsCreate");
         row.add(Root.COLUMN_DOCUMENT_ID, "doc:create");
 
+        if (!mEjected) {
+            row = result.newRow();
+            row.add(Root.COLUMN_ROOT_ID, "eject");
+            row.add(Root.COLUMN_FLAGS, Root.FLAG_SUPPORTS_EJECT);
+            row.add(Root.COLUMN_TITLE, "eject");
+            // Reuse local docs, but not used for testing
+            row.add(Root.COLUMN_DOCUMENT_ID, "doc:local");
+        }
+
         return result;
     }
 
@@ -99,6 +113,7 @@ public class MyDocumentsProvider extends DocumentsProvider {
 
     private Doc mLocalRoot;
     private Doc mCreateRoot;
+    private final AtomicInteger mNextDocId = new AtomicInteger(0);
 
     private Doc buildDoc(String docId, String displayName, String mimeType,
             String[] streamTypes) {
@@ -113,6 +128,8 @@ public class MyDocumentsProvider extends DocumentsProvider {
 
     public void resetRoots() {
         Log.d(TAG, "resetRoots()");
+
+        mEjected = false;
 
         mDocs.clear();
 
@@ -222,7 +239,7 @@ public class MyDocumentsProvider extends DocumentsProvider {
     @Override
     public String createDocument(String parentDocumentId, String mimeType, String displayName)
             throws FileNotFoundException {
-        final String docId = "doc:" + System.currentTimeMillis();
+        final String docId = "doc:" + mNextDocId.getAndIncrement();
         final Doc doc = buildDoc(docId, displayName, mimeType, null);
         doc.flags = Document.FLAG_SUPPORTS_WRITE | Document.FLAG_SUPPORTS_RENAME;
         mDocs.get(parentDocumentId).children.add(doc);
@@ -463,6 +480,17 @@ public class MyDocumentsProvider extends DocumentsProvider {
                 getContext(), WEB_LINK_REQUEST_CODE, intent,
                 PendingIntent.FLAG_ONE_SHOT);
         return pendingIntent.getIntentSender();
+    }
+
+    @Override
+    public void ejectRoot(String rootId) {
+        if ("eject".equals(rootId)) {
+            mEjected = true;
+            getContext().getContentResolver()
+                    .notifyChange(DocumentsContract.buildRootsUri(AUTHORITY), null);
+        }
+
+        throw new IllegalStateException("Root " + rootId + " doesn't support ejection.");
     }
 
     private static byte[] readFullyNoClose(InputStream in) throws IOException {
