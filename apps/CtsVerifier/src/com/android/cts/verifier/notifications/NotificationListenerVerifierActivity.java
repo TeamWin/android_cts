@@ -88,7 +88,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new EnableHintsTest());
         tests.add(new SnoozeTest());
         tests.add(new UnsnoozeTest());
-        tests.add(new EnableHintsTest());
         tests.add(new MessageBundleTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
@@ -186,6 +185,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         void tearDown() {
+            mNm.cancelAll();
+            MockListener.resetListenerData(mContext);
+            delay();
             deleteChannel();
         }
 
@@ -212,6 +214,14 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_payload_intact);
+        }
+
+        @Override
+        void setUp() {
+            createChannel();
+            sendNotifications();
+            status = READY;
+            delay();
         }
 
         @Override
