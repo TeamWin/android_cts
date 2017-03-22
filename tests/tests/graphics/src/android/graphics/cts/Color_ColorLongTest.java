@@ -36,6 +36,8 @@ import static android.graphics.Color.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 @SmallTest
@@ -210,11 +212,32 @@ public class Color_ColorLongTest {
         // Make sure we received a copy
         components[0] = 127.0f;
         assertNotEquals(c.red(), components[0]);
+
+        float[] componentsRet = c.getComponents(components);
+        assertSame(components, componentsRet);
+        assertEquals(c.getComponentCount(), componentsRet.length);
+        assertEquals(c.red(), componentsRet[0], 0.0f);
+        assertEquals(c.green(), componentsRet[1], 0.0f);
+        assertEquals(c.blue(), componentsRet[2], 0.0f);
+        assertEquals(c.alpha(), componentsRet[3], 0.0f);
+
+        componentsRet = c.getComponents(null);
+        assertNotNull(componentsRet);
+        assertEquals(c.getComponentCount(), componentsRet.length);
+        assertEquals(c.red(), componentsRet[0], 0.0f);
+        assertEquals(c.green(), componentsRet[1], 0.0f);
+        assertEquals(c.blue(), componentsRet[2], 0.0f);
+        assertEquals(c.alpha(), componentsRet[3], 0.0f);
     }
 
     @Test(expected = ArrayIndexOutOfBoundsException.class)
     public void testComponentOutOfBounds() {
         valueOf(0.1f, 0.2f, 0.3f, 0.4f).getComponent(4);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetComponentOutOfBounds() {
+        valueOf(0.1f, 0.2f, 0.3f, 0.4f).getComponents(new float[3]);
     }
 
     @Test
