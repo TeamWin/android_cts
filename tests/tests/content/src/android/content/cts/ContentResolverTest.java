@@ -447,6 +447,7 @@ public class ContentResolverTest extends AndroidTestCase {
         extras = extras != null ? extras : Bundle.EMPTY;
 
         assertEquals(100, mCursor.getCount());
+        assertFalse(extras.containsKey(PageViewCursor.EXTRA_AUTO_PAGED));
         assertFalse(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
 
         mCursor.close();
@@ -476,6 +477,7 @@ public class ContentResolverTest extends AndroidTestCase {
         extras = extras != null ? extras : Bundle.EMPTY;
 
         assertEquals(3, mCursor.getCount());
+        assertTrue(extras.getBoolean(PageViewCursor.EXTRA_AUTO_PAGED));
         assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
         assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_SIZE));
 
