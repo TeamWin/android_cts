@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.tradefed.presubmit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -28,7 +29,10 @@ import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,6 +49,14 @@ public class ValidateTestsAbi {
      *  Excluding it for now to have the test setup.
      */
     private String MODULE_EXCEPTION = "CtsSplitApp";
+
+    private static Set<String> BINARY_EXCEPTIONS = new HashSet<>();
+    static {
+        /**
+         * This binary is a host side helper, so we do not need to check it.
+         */
+        BINARY_EXCEPTIONS.add("sepolicy-analyze");
+    }
 
     /**
      * Test that all apks have the same supported abis.
@@ -102,5 +114,57 @@ public class ValidateTestsAbi {
         }
     }
 
-    // TODO: add a test for test binary
+    /**
+     * Test that when CTS has multiple abis, we have binary for each ABI. In this case the abi will
+     * be the same with different bitness (only case supported by build system).
+     * <p/>
+     * If there is only one bitness, then we check that it's the right one.
+     */
+    @Test
+    public void testBinariesAbis() {
+        String ctsRoot = System.getProperty("CTS_ROOT");
+        File testcases = new File(ctsRoot, "/android-cts/testcases/");
+        if (!testcases.exists()) {
+            fail(String.format("%s does not exist", testcases));
+            return;
+        }
+        String[] listBinaries = testcases.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                if (name.contains(".")) {
+                    return false;
+                }
+                if (BINARY_EXCEPTIONS.contains(name)) {
+                    return false;
+                }
+                File file = new File(dir, name);
+                if (file.isDirectory()) {
+                    return false;
+                }
+                if (!file.canExecute()) {
+                    return false;
+                }
+                return true;
+            }
+        });
+        assertTrue(listBinaries.length > 0);
+        List<String> orderedList = Arrays.asList(listBinaries);
+        // we sort to have binary starting with same name, next to each other. The last two
+        // characters of their name with be the bitness (32 or 64).
+        Collections.sort(orderedList);
+        Set<String> buildTarget = AbiUtils.getAbisForArch(SuiteInfo.TARGET_ARCH);
+        // We expect one binary per abi of CTS, they should be appended with 32 or 64
+        for (int i = 0; i < orderedList.size(); i=i + buildTarget.size()) {
+            List<String> subSet = orderedList.subList(i, i + buildTarget.size());
+            if (subSet.size() > 1) {
+                String base = subSet.get(0).substring(0, subSet.get(0).length() - 2);
+                for (int j = 0; j < subSet.size(); j++) {
+                    assertEquals(base, subSet.get(j).substring(0, subSet.get(j).length() - 2));
+                }
+            } else {
+                String bitness = AbiUtils.getBitness(buildTarget.iterator().next());
+                assertTrue(subSet.get(i).endsWith(bitness));
+            }
+        }
+    }
 }
