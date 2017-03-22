@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -290,5 +291,99 @@ public class TypefaceTest {
         assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_PROVIDER_NOT_FOUND);
         assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_WRONG_CERTIFICATES);
         assertTrue(0 > Typeface.FontRequestCallback.FAIL_REASON_FONT_LOAD_ERROR);
+    }
+
+    @Test
+    public void testTypefaceBuilder_AssetSource() {
+        Typeface.Builder builder = Typeface.Builder.obtain();
+        try {
+            Typeface typeface1 =
+                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf").build();
+            assertNotNull(typeface1);
+
+            builder.reset();
+            Typeface typeface2 =
+                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf").build();
+            assertNotNull(typeface2);
+            assertSame("Same font asset should return same Typeface object", typeface1, typeface2);
+
+            builder.reset();
+            Typeface typeface3 =
+                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont2.ttf").build();
+            assertNotNull(typeface3);
+            assertNotSame("Different font asset should return different Typeface object",
+                    typeface2, typeface3);
+
+            builder.reset();
+            Typeface typeface4 =
+                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont3.ttf").build();
+            assertNotNull(typeface4);
+            assertNotSame("Different font asset should return different Typeface object",
+                    typeface2, typeface4);
+            assertNotSame("Different font asset should return different Typeface object",
+                    typeface3, typeface4);
+
+            builder.reset();
+            Typeface typeface5 =
+                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf")
+                    .setFontVariationSettings("'wdth' 1.0").build();
+            assertNotNull(typeface5);
+            assertNotSame("Different font font variation should return different Typeface object",
+                    typeface2, typeface5);
+
+            builder.reset();
+            Typeface typeface6 =
+                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf")
+                    .setFontVariationSettings("'wdth' 2.0").build();
+            assertNotNull(typeface6);
+            assertNotSame("Different font font variation should return different Typeface object",
+                    typeface2, typeface6);
+            assertNotSame("Different font font variation should return different Typeface object",
+                    typeface5, typeface6);
+
+            // TODO: Add ttc index case. Need TTC file for CTS.
+        } finally {
+            builder.recycle();
+        }
+    }
+
+    @Test
+    public void testTypefaceBuilder_FileSource() {
+        Typeface.Builder builder = Typeface.Builder.obtain();
+        try {
+            File file = new File(obtainPath());
+            Typeface typeface1 = builder.setSourceFromFile(file).build();
+            assertNotNull(typeface1);
+
+            builder.reset();
+            Typeface typeface2 = builder.setSourceFromFilePath(file.getAbsolutePath()).build();
+            assertNotNull(typeface2);
+
+            builder.reset();
+            Typeface typeface3 = builder.setSourceFromFile(file)
+                    .setFontVariationSettings("'wdth' 1.0")
+                    .build();
+            assertNotNull(typeface3);
+            assertNotSame(typeface1, typeface3);
+            assertNotSame(typeface2, typeface3);
+
+            // TODO: Add ttc index case. Need TTC file for CTS.
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            builder.recycle();
+        }
+    }
+
+    @Test
+    public void testTypefaceBuilder_FileSourceFD() {
+        Typeface.Builder builder = Typeface.Builder.obtain();
+        try (FileInputStream fis = new FileInputStream(obtainPath())) {
+            assertNotNull(builder.setSourceFromFile(fis.getFD()).build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            builder.recycle();
+        }
     }
 }
