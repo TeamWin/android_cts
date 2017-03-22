@@ -391,12 +391,16 @@ public abstract class BasePermissionsTest {
                 if (result != null) {
                     return result;
                 }
-                while (child.getActionList().contains(AccessibilityAction.ACTION_SCROLL_FORWARD)) {
-                    scrollForward(child);
-                    result = getNodeTimed(() -> findByText(child, text));
-                    if (result != null) {
-                        return result;
+                try {
+                    while (child.getActionList().contains(AccessibilityAction.ACTION_SCROLL_FORWARD)) {
+                        scrollForward(child);
+                        result = getNodeTimed(() -> findByText(child, text));
+                        if (result != null) {
+                            return result;
+                        }
                     }
+                } catch (TimeoutException e) {
+                     /* ignore */
                 }
             } else {
                 result = findByTextInCollection(child, text);
@@ -419,11 +423,7 @@ public abstract class BasePermissionsTest {
     }
 
     private static void scrollForward(AccessibilityNodeInfo node) throws Exception {
-        try {
             scroll(node, true);
-        } catch (TimeoutException e) {
-            /* ignore */
-        }
     }
 
     private static void scroll(AccessibilityNodeInfo node, boolean forward) throws Exception {
