@@ -29,6 +29,10 @@ import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.Instrumentation.ActivityResult;
 import android.app.PendingIntent;
+import android.app.cts.android.app.cts.tools.ServiceConnectionHandler;
+import android.app.cts.android.app.cts.tools.ServiceProcessController;
+import android.app.cts.android.app.cts.tools.SyncOrderedBroadcast;
+import android.app.cts.android.app.cts.tools.UidImportanceListener;
 import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
 import android.app.stubs.MockApplicationActivity;
@@ -65,6 +69,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     static final String SIMPLE_ACTIVITY_CHAIN_EXIT = ".SimpleActivityChainExit";
     static final String SIMPLE_SERVICE = ".SimpleService";
     static final String SIMPLE_SERVICE2 = ".SimpleService2";
+    static final String SIMPLE_RECEIVER_START_SERVICE = ".SimpleReceiverStartService";
     static final String SIMPLE_RECEIVER = ".SimpleReceiver";
     static final String SIMPLE_REMOTE_RECEIVER = ".SimpleRemoteReceiver";
     // The action sent back by the SIMPLE_APP after a restart.
@@ -411,174 +416,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Thread.sleep(WAIT_TIME);
     }
 
-    static final class UidImportanceListener implements ActivityManager.OnUidImportanceListener {
-        final int mUid;
-
-        int mLastValue = -1;
-
-        UidImportanceListener(int uid) {
-            mUid = uid;
-        }
-
-        @Override
-        public void onUidImportance(int uid, int importance) {
-            synchronized (this) {
-                Log.d("XXXXX", "Got importance for uid " + uid + ": " + importance);
-                if (uid == mUid) {
-                    mLastValue = importance;
-                    notifyAll();
-                }
-            }
-        }
-
-        public int waitForValue(int minValue, int maxValue, long timeout) {
-            final long endTime = SystemClock.uptimeMillis()+timeout;
-
-            synchronized (this) {
-                while (mLastValue < minValue || mLastValue > maxValue) {
-                    final long now = SystemClock.uptimeMillis();
-                    if (now >= endTime) {
-                        throw new IllegalStateException("Timed out waiting for importance "
-                                + minValue + "-" + maxValue + ", last was " + mLastValue);
-                    }
-                    try {
-                        wait(endTime-now);
-                    } catch (InterruptedException e) {
-                    }
-                }
-                Log.d("XXXX", "waitForValue " + minValue + "-" + maxValue + ": " + mLastValue);
-                return mLastValue;
-            }
-        }
-    }
-
-    static final class ServiceConnectionHandler implements ServiceConnection {
-        final Context mContext;
-        final Intent mIntent;
-        boolean mMonitoring;
-        boolean mBound;
-        IBinder mService;
-
-        final ServiceConnection mMainBinding = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-            }
-        };
-
-        ServiceConnectionHandler(Context context, Intent intent) {
-            mContext = context;
-            mIntent = intent;
-        }
-
-        public void startMonitoring() {
-            if (mMonitoring) {
-                throw new IllegalStateException("Already monitoring");
-            }
-            if (!mContext.bindService(mIntent, this, Context.BIND_WAIVE_PRIORITY)) {
-                throw new IllegalStateException("Failed to bind " + mIntent);
-            }
-            mMonitoring = true;
-            mService = null;
-        }
-
-        public void waitForConnect(long timeout) {
-            final long endTime = SystemClock.uptimeMillis() + timeout;
-
-            synchronized (this) {
-                while (mService == null) {
-                    final long now = SystemClock.uptimeMillis();
-                    if (now >= endTime) {
-                        throw new IllegalStateException("Timed out binding to " + mIntent);
-                    }
-                    try {
-                        wait(endTime - now);
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-        }
-
-        public void waitForDisconnect(long timeout) {
-            final long endTime = SystemClock.uptimeMillis() + timeout;
-
-            synchronized (this) {
-                while (mService != null) {
-                    final long now = SystemClock.uptimeMillis();
-                    if (now >= endTime) {
-                        throw new IllegalStateException("Timed out unbinding from " + mIntent);
-                    }
-                    try {
-                        wait(endTime - now);
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-        }
-
-        public void stopMonitoring() {
-            if (!mMonitoring) {
-                throw new IllegalStateException("Not monitoring");
-            }
-            mContext.unbindService(this);
-            mMonitoring = false;
-        }
-
-        public void bind(long timeout) {
-            synchronized (this) {
-                if (mBound) {
-                    throw new IllegalStateException("Already bound");
-                }
-                // Here's the trick: the first binding allows us to to see the service come
-                // up and go down but doesn't actually cause it to run or impact process management.
-                // The second binding actually brings it up.
-                startMonitoring();
-                if (!mContext.bindService(mIntent, mMainBinding, Context.BIND_AUTO_CREATE)) {
-                    throw new IllegalStateException("Failed to bind " + mIntent);
-                }
-                mBound = true;
-                waitForConnect(timeout);
-            }
-        }
-
-        public void unbind(long timeout) {
-            synchronized (this) {
-                if (!mBound) {
-                    throw new IllegalStateException("Not bound");
-                }
-                // This allows the service to go down.  We maintain the second binding to be
-                // able to see the connection go away which is what we want to wait on.
-                mContext.unbindService(mMainBinding);
-                mBound = false;
-
-                try {
-                    waitForDisconnect(timeout);
-                } finally {
-                    stopMonitoring();
-                }
-            }
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            synchronized (this) {
-                mService = service;
-                notifyAll();
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            synchronized (this) {
-                mService = null;
-                notifyAll();
-            }
-        }
-    }
-
     public void testUidImportanceListener() throws Exception {
         final Parcel data = Parcel.obtain();
         Intent serviceIntent = new Intent();
@@ -632,11 +469,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         conn.bind(WAIT_TIME);
         conn2.bind(WAIT_TIME);
         try {
-            conn.mService.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+            conn.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
         }
         try {
-            conn2.mService.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+            conn2.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
         }
         conn.unbind(WAIT_TIME);
@@ -656,7 +493,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 am.getPackageImportance(SIMPLE_PACKAGE_NAME));
 
         // Pull out the service IBinder for a kludy hack...
-        IBinder service = conn.mService;
+        IBinder service = conn.getServiceIBinder();
 
         // Now unbind and see if we get told about it going to the background.
         conn.unbind(WAIT_TIME);
@@ -763,7 +600,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         // First kill the process to start out in a stable state.
         conn.bind(WAIT_TIME);
         try {
-            conn.mService.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
+            conn.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
         } catch (RemoteException e) {
         }
         conn.unbind(WAIT_TIME);
@@ -857,6 +694,109 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             am.removeOnUidImportanceListener(uidForegroundListener);
 
             data.recycle();
+        }
+    }
+
+    public void testBackgroundCheckBroadcastService() throws Exception {
+        final Intent serviceIntent = new Intent();
+        serviceIntent.setClassName(SIMPLE_PACKAGE_NAME,
+                SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE);
+        final Intent broadcastIntent = new Intent();
+        broadcastIntent.setClassName(SIMPLE_PACKAGE_NAME,
+                SIMPLE_PACKAGE_NAME + SIMPLE_RECEIVER_START_SERVICE);
+
+        final ServiceProcessController controller = new ServiceProcessController(mContext,
+                getInstrumentation(), STUB_PACKAGE_NAME, serviceIntent);
+        final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, serviceIntent);
+
+        // First kill the process to start out in a stable state.
+        controller.ensureProcessGone(WAIT_TIME);
+
+        String cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We don't want to wait for the uid to actually go idle, we can force it now.
+        cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // Make sure app is not yet on whitelist
+        cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
+        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+        // We will use this to monitor when the service is running.
+        conn.startMonitoring();
+
+        try {
+            // Try sending broadcast to start the service.  Should fail!
+            SyncOrderedBroadcast br = new SyncOrderedBroadcast();
+            broadcastIntent.putExtra("service", serviceIntent);
+            br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
+            int brCode = br.getReceivedCode();
+            if (brCode != Activity.RESULT_CANCELED) {
+                fail("Didn't fail starting service, result=" + brCode);
+            }
+
+            // Put app on temporary whitelist to see if this allows the service start.
+            cmd = "cmd deviceidle tempwhitelist -d 2000 " + SIMPLE_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+            // Try starting the service now that the app is whitelisted...  should work!
+            br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
+            brCode = br.getReceivedCode();
+            if (brCode != Activity.RESULT_FIRST_USER) {
+                fail("Failed starting service, result=" + brCode);
+            }
+            conn.waitForConnect(WAIT_TIME);
+
+            // Good, now stop the service and give enough time to get off the temp whitelist.
+            mContext.stopService(serviceIntent);
+            conn.waitForDisconnect(WAIT_TIME);
+            Thread.sleep(3000);
+
+            // Make sure the process is gone so we start over fresh.
+            controller.ensureProcessGone(WAIT_TIME);
+
+            // We don't want to wait for the uid to actually go idle, we can force it now.
+            cmd = "am make-uid-idle " + SIMPLE_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+            // Now that we should be off the temp whitelist, make sure we again can't start.
+            br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
+            brCode = br.getReceivedCode();
+            if (brCode != Activity.RESULT_CANCELED) {
+                fail("Didn't fail starting service, result=" + brCode);
+            }
+
+            // Work around bug in the platform.
+            conn.stopMonitoring();
+            conn.startMonitoring();
+
+            // Now put app on whitelist, should allow service to run.
+            cmd = "cmd deviceidle whitelist +" + SIMPLE_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+            // Try starting the service now that the app is whitelisted...  should work!
+            br.sendAndWait(mContext, broadcastIntent, Activity.RESULT_OK, null, null, WAIT_TIME);
+            brCode = br.getReceivedCode();
+            if (brCode != Activity.RESULT_FIRST_USER) {
+                fail("Failed starting service, result=" + brCode);
+            }
+            conn.waitForConnect(WAIT_TIME);
+
+            // Okay, bring down the service.
+            mContext.stopService(serviceIntent);
+            conn.waitForDisconnect(WAIT_TIME);
+
+        } finally {
+            mContext.stopService(serviceIntent);
+            conn.stopMonitoring();
+
+            cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND allow";
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+            cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
+            result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+
+            controller.cleanup();
         }
     }
 
