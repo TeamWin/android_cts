@@ -258,7 +258,6 @@ final class UiBot {
             }
             menuNames.append("'").append(menuName).append("' ");
         }
-
         throw new AssertionError("no '" + expectedText + "' on " + menuNames);
     }
 
