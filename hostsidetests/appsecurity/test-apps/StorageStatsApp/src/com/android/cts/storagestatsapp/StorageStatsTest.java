@@ -25,6 +25,7 @@ import static com.android.cts.storageapp.Utils.assertMostlyEquals;
 import static com.android.cts.storageapp.Utils.getSizeManual;
 import static com.android.cts.storageapp.Utils.logCommand;
 import static com.android.cts.storageapp.Utils.makeUniqueFile;
+import static com.android.cts.storageapp.Utils.useFallocate;
 import static com.android.cts.storageapp.Utils.useSpace;
 import static com.android.cts.storageapp.Utils.useWrite;
 
@@ -41,6 +42,8 @@ import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
+import android.system.Os;
+import android.system.StructUtsname;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.util.MutableLong;
@@ -50,6 +53,8 @@ import com.android.cts.storageapp.UtilsReceiver;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Tests to verify {@link StorageStatsManager} behavior.
@@ -61,6 +66,29 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
     private Context getContext() {
         return getInstrumentation().getContext();
+    }
+
+    /**
+     * Require that quota support be fully enabled on kernel 3.18 or newer. This
+     * test verifies that both kernel options and the fstab 'quota' option are
+     * enabled.
+     */
+    public void testVerifyQuota() throws Exception {
+        // Linux 3.18 was the first kernel with solid quota support, so we don't
+        // require it on older kernels.
+        final StructUtsname uname = Os.uname();
+        final Matcher matcher = Pattern.compile("(\\d+)\\.(\\d+)").matcher(uname.release);
+        assertTrue(matcher.find());
+        final int major = Integer.parseInt(matcher.group(1));
+        final int minor = Integer.parseInt(matcher.group(2));
+
+        if (major > 3 || (major == 3 && minor >= 18)) {
+            final StorageStatsManager stats = getContext()
+                    .getSystemService(StorageStatsManager.class);
+            assertTrue("You're running kernel 3.18 or newer (" + uname.release + ") which "
+                    + "means that CONFIG_QUOTA, CONFIG_QFMT_V2, CONFIG_QUOTACTL and the "
+                    + "'quota' fstab option on /data are required", stats.isQuotaSupported(null));
+        }
     }
 
     public void testVerifySummary() throws Exception {
@@ -243,6 +271,58 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user), 2 * MB_IN_BYTES);
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
+    }
+
+    public void testCacheBehavior() throws Exception {
+        final Context context = getContext();
+        final StorageManager sm = context.getSystemService(StorageManager.class);
+
+        final File normal = new File(context.getCacheDir(), "normal");
+        final File group = new File(context.getCacheDir(), "group");
+        final File tomb = new File(context.getCacheDir(), "tomb");
+
+        final long size = 2 * MB_IN_BYTES;
+
+        final long normalTime = 1262304000;
+        final long groupTime = 1262303000;
+        final long tombTime = 1262302000;
+
+        normal.mkdir();
+        group.mkdir();
+        tomb.mkdir();
+
+        sm.setCacheBehaviorGroup(group, true);
+        sm.setCacheBehaviorTombstone(tomb, true);
+
+        final File a = useFallocate(makeUniqueFile(normal), size, normalTime);
+        final File b = useFallocate(makeUniqueFile(normal), size, normalTime);
+        final File c = useFallocate(makeUniqueFile(normal), size, normalTime);
+
+        final File d = useFallocate(makeUniqueFile(group), size, groupTime);
+        final File e = useFallocate(makeUniqueFile(group), size, groupTime);
+        final File f = useFallocate(makeUniqueFile(group), size, groupTime);
+
+        final File g = useFallocate(makeUniqueFile(tomb), size, tombTime);
+        final File h = useFallocate(makeUniqueFile(tomb), size, tombTime);
+        final File i = useFallocate(makeUniqueFile(tomb), size, tombTime);
+
+        normal.setLastModified(normalTime);
+        group.setLastModified(groupTime);
+        tomb.setLastModified(tombTime);
+
+        final long clear1 = group.getUsableSpace() + (8 * MB_IN_BYTES);
+        sm.allocateBytes(group, clear1, 0);
+
+        assertTrue(a.exists());
+        assertTrue(b.exists());
+        assertTrue(c.exists());
+        assertFalse(group.exists());
+        assertFalse(d.exists());
+        assertFalse(e.exists());
+        assertFalse(f.exists());
+        assertTrue(g.exists()); assertEquals(0, g.length());
+        assertTrue(h.exists()); assertEquals(0, h.length());
+        assertTrue(i.exists()); assertEquals(0, i.length());
     }
 
     private long getCacheBytes(String pkg, UserHandle user) {
