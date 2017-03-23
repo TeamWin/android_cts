@@ -7093,6 +7093,21 @@ public class TextViewTest {
     }
 
     @Test
+    public void testFontResourcesXml_setInXmlWithStyle() {
+        mTextView = findTextView(R.id.textview_fontxmlresource_fontfamily);
+        Typeface expected = mActivity.getResources().getFont(R.font.samplexmlfont);
+
+        assertEquals(expected, mTextView.getTypeface());
+
+        mTextView = findTextView(R.id.textview_fontxmlresource_withStyle);
+
+        Typeface resultTypeface = mTextView.getTypeface();
+        assertNotEquals(resultTypeface, expected);
+        assertEquals(Typeface.create(expected, Typeface.ITALIC), resultTypeface);
+        assertEquals(Typeface.ITALIC, resultTypeface.getStyle());
+    }
+
+    @Test
     public void testFontResourcesXml_setInXmlTextAppearance() {
         mTextView = findTextView(R.id.textview_fontxmlresource_textAppearance);
         Typeface expected = mActivity.getResources().getFont(R.font.samplexmlfont);
