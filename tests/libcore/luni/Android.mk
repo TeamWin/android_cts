@@ -24,6 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     core-tests \
     cts-core-test-runner \
     mockito-target-minus-junit4 \
+    tzdata_shared2-tests \
     tzdata_update2-tests
 
 # Don't include this package in any target
