@@ -319,13 +319,35 @@ public class PixelCopyTest {
         } while (activity.rotate());
     }
 
+    private void runGcAndFinalizersSync() {
+        final CountDownLatch fence = new CountDownLatch(1);
+        new Object() {
+            @Override
+            protected void finalize() throws Throwable {
+                try {
+                    fence.countDown();
+                } finally {
+                    super.finalize();
+                }
+            }
+        };
+        try {
+            do {
+                Runtime.getRuntime().gc();
+                Runtime.getRuntime().runFinalization();
+            } while (!fence.await(100, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+        Runtime.getRuntime().gc();
+    }
+
     private void assertNotLeaking(int iteration, MemoryInfo start, MemoryInfo end) {
         Debug.getMemoryInfo(end);
-        if (Math.abs(start.getTotalPss() - end.getTotalPss()) > 2000 /* kB */) {
-            System.gc();
-            System.gc();
+        if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
+            runGcAndFinalizersSync();
             Debug.getMemoryInfo(end);
-            if (Math.abs(start.getTotalPss() - end.getTotalPss()) > 2000 /* kB */) {
+            if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
                 // Guarded by if so we don't continually generate garbage for the
                 // assertion string.
                 assertEquals("Memory leaked, iteration=" + iteration,
@@ -360,9 +382,7 @@ public class PixelCopyTest {
                     // Not really the "start" but by having done a couple
                     // we've fully initialized any state that may be required,
                     // so memory usage should be stable now
-                    System.gc();
-                    System.gc();
-                    Debug.getMemoryInfo(meminfoEnd);
+                    runGcAndFinalizersSync();
                     Debug.getMemoryInfo(meminfoStart);
                 }
                 if (i % 100 == 5) {
