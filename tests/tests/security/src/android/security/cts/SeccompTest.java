@@ -36,10 +36,16 @@ public class SeccompTest extends AndroidTestCase {
             testBlocked(217); // __NR_add_key
             testBlocked(219); // __NR_keyctl
             testAllowed(56); // __NR_openat
+
+            // b/35034743 - do not remove test without reading bug
+            testAllowed(267); // __NR_fstatfs64
         } else if (CpuFeatures.isArmCpu()) {
             testBlocked(309); // __NR_add_key
             testBlocked(311); // __NR_keyctl
             testAllowed(322); // __NR_openat
+
+            // b/35906875 - do not remove test without reading bug
+            testAllowed(316); // __NR_inotify_init
         } else if (CpuFeatures.isX86_64Cpu()) {
             testBlocked(248); // __NR_add_key
             testBlocked(250); // __NR_keyctl
