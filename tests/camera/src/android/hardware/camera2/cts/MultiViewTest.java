@@ -22,6 +22,7 @@ import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.cts.CameraTestUtils.ImageVerifierListener;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2MultiViewTestCase;
 import android.hardware.camera2.cts.testcases.Camera2MultiViewTestCase.CameraPreviewListener;
 import android.hardware.camera2.params.OutputConfiguration;
@@ -395,6 +396,31 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             fail("No error for invalid output config created deferred class with different type");
         } catch (IllegalArgumentException e) {
             // expected;
+        }
+
+        // Verify that non implementation-defined formats sharing are not supported.
+        int[] unsupportedFormats =
+                {ImageFormat.YUV_420_888, ImageFormat.DEPTH16, ImageFormat.DEPTH_POINT_CLOUD,
+                 ImageFormat.JPEG, ImageFormat.RAW_SENSOR, ImageFormat.RAW_PRIVATE};
+        for (int format : unsupportedFormats) {
+            Size[] availableSizes = getStaticInfo(cameraId).getAvailableSizesForFormatChecked(
+                    format, StaticMetadata.StreamDirection.Output);
+            if (availableSizes.length == 0) {
+                continue;
+            }
+            Size size = availableSizes[0];
+
+            imageReader = makeImageReader(size, format, MAX_READER_IMAGES,
+                    new ImageDropperListener(), mHandler);
+            configuration = new OutputConfiguration(OutputConfiguration.SURFACE_GROUP_ID_NONE,
+                    imageReader.getSurface());
+            configuration.enableSurfaceSharing();
+
+            List<OutputConfiguration> outputConfigs = new ArrayList<>();
+            outputConfigs.add(configuration);
+
+            verifyCreateSessionWithConfigsFailure(cameraId, outputConfigs);
+
         }
     }
 
