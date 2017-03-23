@@ -88,7 +88,7 @@ public class Utils {
         return new File(dir, Long.toString(System.nanoTime()));
     }
 
-    public static void useWrite(File file, long size) throws Exception {
+    public static File useWrite(File file, long size) throws Exception {
         try (FileOutputStream os = new FileOutputStream(file)) {
             final byte[] buf = new byte[1024];
             while (size > 0) {
@@ -96,9 +96,16 @@ public class Utils {
                 size -= buf.length;
             }
         }
+        return file;
     }
 
-    public static void useFallocate(File file, long length) throws Exception {
+    public static File useFallocate(File file, long length, long time) throws Exception {
+        final File res = useFallocate(file, length);
+        file.setLastModified(time);
+        return res;
+    }
+
+    public static File useFallocate(File file, long length) throws Exception {
         final FileDescriptor fd = Os.open(file.getAbsolutePath(),
                 OsConstants.O_CREAT | OsConstants.O_RDWR | OsConstants.O_TRUNC, 0700);
         try {
@@ -106,6 +113,7 @@ public class Utils {
         } finally {
             Os.close(fd);
         }
+        return file;
     }
 
     public static long getSizeManual(File dir) throws Exception {

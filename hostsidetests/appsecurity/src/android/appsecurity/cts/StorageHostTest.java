@@ -84,6 +84,7 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     }
 
     public void testEverything() throws Exception {
+        prepareTestApps(); doVerifyQuota();
         prepareTestApps(); doVerifyAppStats();
         prepareTestApps(); doVerifyAppQuota();
         prepareTestApps(); doVerifyAppAllocate();
@@ -93,7 +94,11 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         prepareTestApps(); doVerifyStatsExternal();
         prepareTestApps(); doVerifyStatsExternalConsistent();
         prepareTestApps(); doVerifyCategory();
-        prepareTestApps(); doCacheClearing();
+        prepareTestApps(); doCache();
+    }
+
+    public void doVerifyQuota() throws Exception {
+        runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyQuota", Utils.USER_OWNER);
     }
 
     public void doVerifyAppStats() throws Exception {
@@ -165,7 +170,7 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         }
     }
 
-    public void doCacheClearing() throws Exception {
+    public void doCache() throws Exception {
         // To make the cache clearing logic easier to verify, ignore any cache
         // and low space reserved space.
         getDevice().executeShellCommand("settings put global sys_storage_threshold_max_bytes 0");
@@ -175,6 +180,9 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
                 // Clear all other cached data to give ourselves a clean slate
                 getDevice().executeShellCommand("pm trim-caches 4096G");
                 runDeviceTests(PKG_STATS, CLASS_STATS, "testCacheClearing", user);
+
+                getDevice().executeShellCommand("pm trim-caches 4096G");
+                runDeviceTests(PKG_STATS, CLASS_STATS, "testCacheBehavior", user);
             }
         } finally {
             getDevice().executeShellCommand("settings delete global sys_storage_threshold_max_bytes");

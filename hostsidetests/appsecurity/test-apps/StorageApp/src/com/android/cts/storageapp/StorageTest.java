@@ -34,6 +34,7 @@ import android.os.storage.StorageManager;
 import android.test.InstrumentationTestCase;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Client app for verifying storage behaviors.
@@ -108,21 +109,27 @@ public class StorageTest extends InstrumentationTestCase {
 
         final File dir = makeUniqueFile(getContext().getCacheDir());
         dir.mkdir();
-        assertFalse(sm.isCacheBehaviorAtomic(dir));
+        assertFalse(sm.isCacheBehaviorGroup(dir));
         assertFalse(sm.isCacheBehaviorTombstone(dir));
 
-        // TODO: verify that files are purged normally
+        final File ext = makeUniqueFile(getContext().getExternalCacheDir());
+        ext.mkdir();
+        try { sm.isCacheBehaviorGroup(ext); fail(); } catch (IOException expected) { }
+        try { sm.isCacheBehaviorTombstone(ext); fail(); } catch (IOException expected) { }
     }
 
-    public void testBehaviorAtomic() throws Exception {
+    public void testBehaviorGroup() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
 
         final File dir = makeUniqueFile(getContext().getCacheDir());
         dir.mkdir();
-        sm.setCacheBehaviorAtomic(dir, true);
-        assertTrue(sm.isCacheBehaviorAtomic(dir));
+        sm.setCacheBehaviorGroup(dir, true);
+        assertTrue(sm.isCacheBehaviorGroup(dir));
 
-        // TODO: verify that directory is purged atomically
+        final File ext = makeUniqueFile(getContext().getExternalCacheDir());
+        ext.mkdir();
+        try { sm.setCacheBehaviorGroup(ext, true); fail(); } catch (IOException expected) { }
+        try { sm.setCacheBehaviorGroup(ext, false); fail(); } catch (IOException expected) { }
     }
 
     public void testBehaviorTombstone() throws Exception {
@@ -133,6 +140,9 @@ public class StorageTest extends InstrumentationTestCase {
         sm.setCacheBehaviorTombstone(dir, true);
         assertTrue(sm.isCacheBehaviorTombstone(dir));
 
-        // TODO: verify that directory is purged with tombstones
+        final File ext = makeUniqueFile(getContext().getExternalCacheDir());
+        ext.mkdir();
+        try { sm.setCacheBehaviorTombstone(ext, true); fail(); } catch (IOException expected) { }
+        try { sm.setCacheBehaviorTombstone(ext, false); fail(); } catch (IOException expected) { }
     }
 }
