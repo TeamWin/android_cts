@@ -2748,7 +2748,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_fun">Disallow fun</string>
     <string name="disallow_fun_action">Opening android easter egg game by tapping repeatedly on the \'Android version\' option</string>
     <string name="disallow_install_unknown_sources">Disallow install unknown sources</string>
-    <string name="disallow_install_unknown_sources_action">Enabling \'Unknown sources\' setting</string>
+    <string name="disallow_install_unknown_sources_action">Enabling \'Cts Verifier\' to install apps</string>
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
     <string name="disallow_modify_accounts_action">Adding an account or removing an account (if you have already added one)</string>
     <string name="disallow_network_reset">Disallow network reset</string>
