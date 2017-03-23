@@ -66,7 +66,14 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
                 mAmWmState.getAmState().getTaskByActivityName(NON_RESIZEABLE_ACTIVITY);
         final ActivityStack stack = mAmWmState.getAmState().getStackById(task.mStackId);
 
-        // Assert that activity fills the entire display.
+        if (task.isFullscreen()) {
+            // If the task is on the fullscreen stack, then we know that it will have bounds that
+            // fill the entire display.
+            return;
+        }
+
+        // If the task is not on the fullscreen stack, then compare the task bounds to the display
+        // bounds.
         assertEquals(mAmWmState.getWmState().getDisplay(stack.mDisplayId).getDisplayRect(),
                 task.getBounds());
     }
