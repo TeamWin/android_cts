@@ -31,6 +31,11 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiSelector;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -60,6 +65,8 @@ public class CapturedActivity extends Activity {
     private SurfacePixelValidator mSurfacePixelValidator;
 
     public static final long CAPTURE_DURATION_MS = 10000;
+    private static final int PERMISSION_DIALOG_WAIT_MS = 1000;
+    private static final int RETRY_COUNT = 2;
 
     private static final long START_CAPTURE_DELAY_MS = 4000;
     private static final long END_CAPTURE_DELAY_MS = START_CAPTURE_DELAY_MS + CAPTURE_DURATION_MS;
@@ -91,6 +98,17 @@ public class CapturedActivity extends Activity {
 
         mMediaPlayer = MediaPlayer.create(this, R.raw.colors_video);
         mMediaPlayer.setLooping(true);
+    }
+
+    public void dismissPermissionDialog() throws UiObjectNotFoundException {
+        // The permission dialog will be auto-opened by the activity - find it and accept
+        UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        UiSelector acceptButtonSelector = new UiSelector().resourceId("android:id/button1");
+        UiObject acceptButton = uiDevice.findObject(acceptButtonSelector);
+            if (acceptButton.waitForExists(PERMISSION_DIALOG_WAIT_MS)) {
+            boolean success = acceptButton.click();
+            Log.d(TAG, "found permission dialog, click attempt success = " + success);
+        }
     }
 
     /**
@@ -128,7 +146,7 @@ public class CapturedActivity extends Activity {
         mCountDownLatch.countDown();
     }
 
-    public TestResult runTest(AnimationTestCase animationTestCase) throws InterruptedException {
+    public TestResult runTest(AnimationTestCase animationTestCase) throws Throwable {
         TestResult testResult = new TestResult();
         if (mOnWatch) {
             /**
@@ -143,8 +161,17 @@ public class CapturedActivity extends Activity {
             return testResult;
         }
 
-        assertTrue("Can't initialize mediaProjection",
-                mCountDownLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+        int count = 0;
+        // Sometimes system decides to rotate the permission activity to another orientation
+        // right after showing it. This results in: uiautomation thinks that accept button appears,
+        // we successfully click it in terms of uiautomation, but nothing happens,
+        // because permission activity is already recreated.
+        // Thus, we try to click that button multiple times.
+        do {
+            assertTrue("Can't get the permission", count <= RETRY_COUNT);
+            dismissPermissionDialog();
+            count++;
+        } while (!mCountDownLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
 
         mHandler.post(() -> {
             Log.d(TAG, "Setting up test case");
