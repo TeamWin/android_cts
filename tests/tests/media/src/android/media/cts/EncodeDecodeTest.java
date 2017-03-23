@@ -29,6 +29,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -81,7 +82,6 @@ public class EncodeDecodeTest extends AndroidTestCase {
     private static final int TEST_R1_BT709 = 250;           // RGB equivalent of {120,160,200} (BT.709)
     private static final int TEST_G1_BT709 = 76;
     private static final int TEST_B1_BT709 = 189;
-    private static final boolean USE_NDK = true;
 
     // size of a frame, in pixels
     private int mWidth = -1;
@@ -214,19 +214,15 @@ public class EncodeDecodeTest extends AndroidTestCase {
      */
     public void testEncodeDecodeVideoFromSurfaceToSurfaceQCIF() throws Throwable {
         setParameters(176, 144, 1000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
+        SurfaceToSurfaceWrapper.runTest(this, false);
     }
     public void testEncodeDecodeVideoFromSurfaceToSurfaceQVGA() throws Throwable {
         setParameters(320, 240, 2000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
+        SurfaceToSurfaceWrapper.runTest(this, false);
     }
     public void testEncodeDecodeVideoFromSurfaceToSurface720p() throws Throwable {
         setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testEncodeDecodeVideoFromSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, USE_NDK);
+        SurfaceToSurfaceWrapper.runTest(this, false);
     }
 
     /**
@@ -235,19 +231,15 @@ public class EncodeDecodeTest extends AndroidTestCase {
      */
     public void testEncodeDecodeVideoFromPersistentSurfaceToSurfaceQCIF() throws Throwable {
         setParameters(176, 144, 1000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
+        SurfaceToSurfaceWrapper.runTest(this, true);
     }
     public void testEncodeDecodeVideoFromPersistentSurfaceToSurfaceQVGA() throws Throwable {
         setParameters(320, 240, 2000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
+        SurfaceToSurfaceWrapper.runTest(this, true);
     }
     public void testEncodeDecodeVideoFromPersistentSurfaceToSurface720p() throws Throwable {
         setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testEncodeDecodeVideoFromPersistentSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, USE_NDK);
+        SurfaceToSurfaceWrapper.runTest(this, true);
     }
 
     /**
@@ -256,19 +248,15 @@ public class EncodeDecodeTest extends AndroidTestCase {
      */
     public void testVP8EncodeDecodeVideoFromSurfaceToSurfaceQCIF() throws Throwable {
         setParameters(176, 144, 1000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
+        SurfaceToSurfaceWrapper.runTest(this, false);
     }
     public void testVP8EncodeDecodeVideoFromSurfaceToSurfaceQVGA() throws Throwable {
         setParameters(320, 240, 2000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
+        SurfaceToSurfaceWrapper.runTest(this, false);
     }
     public void testVP8EncodeDecodeVideoFromSurfaceToSurface720p() throws Throwable {
         setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testVP8EncodeDecodeVideoFromSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, USE_NDK);
+        SurfaceToSurfaceWrapper.runTest(this, false);
     }
 
     /**
@@ -277,19 +265,15 @@ public class EncodeDecodeTest extends AndroidTestCase {
      */
     public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurfaceQCIF() throws Throwable {
         setParameters(176, 144, 1000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
+        SurfaceToSurfaceWrapper.runTest(this, true);
     }
     public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurfaceQVGA() throws Throwable {
         setParameters(320, 240, 2000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
+        SurfaceToSurfaceWrapper.runTest(this, true);
     }
     public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurface720p() throws Throwable {
         setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, USE_NDK);
+        SurfaceToSurfaceWrapper.runTest(this, true);
     }
 
     /** Wraps testEncodeDecodeVideoFromSurfaceToSurface() */
@@ -297,12 +281,10 @@ public class EncodeDecodeTest extends AndroidTestCase {
         private Throwable mThrowable;
         private EncodeDecodeTest mTest;
         private boolean mUsePersistentInput;
-        private boolean mUseNdk;
 
-        private SurfaceToSurfaceWrapper(EncodeDecodeTest test, boolean persistent, boolean useNdk) {
+        private SurfaceToSurfaceWrapper(EncodeDecodeTest test, boolean persistent) {
             mTest = test;
             mUsePersistentInput = persistent;
-            mUseNdk = useNdk;
         }
 
         @Override
@@ -311,21 +293,18 @@ public class EncodeDecodeTest extends AndroidTestCase {
                 return;
             }
 
-            InputSurfaceInterface inputSurface = null;
+            InputSurface inputSurface = null;
             try {
                 if (!mUsePersistentInput) {
-                    mTest.encodeDecodeVideoFromSurfaceToSurface(null, mUseNdk);
+                    mTest.encodeDecodeVideoFromSurfaceToSurface(null);
                 } else {
                     Log.d(TAG, "creating persistent surface");
-                    if (mUseNdk) {
-                        inputSurface = NdkMediaCodec.createPersistentInputSurface();
-                    } else {
-                        inputSurface = new InputSurface(MediaCodec.createPersistentInputSurface());
-                    }
+                    inputSurface = new InputSurface(
+                            MediaCodec.createPersistentInputSurface());
 
                     for (int i = 0; i < 3; i++) {
                         Log.d(TAG, "test persistent surface - round " + i);
-                        mTest.encodeDecodeVideoFromSurfaceToSurface(inputSurface, mUseNdk);
+                        mTest.encodeDecodeVideoFromSurfaceToSurface(inputSurface);
                     }
                 }
             } catch (Throwable th) {
@@ -340,10 +319,10 @@ public class EncodeDecodeTest extends AndroidTestCase {
         /**
          * Entry point.
          */
-        public static void runTest(EncodeDecodeTest obj, boolean persisent, boolean useNdk)
+        public static void runTest(EncodeDecodeTest obj, boolean persisent)
                 throws Throwable {
             SurfaceToSurfaceWrapper wrapper =
-                    new SurfaceToSurfaceWrapper(obj, persisent, useNdk);
+                    new SurfaceToSurfaceWrapper(obj, persisent);
             Thread th = new Thread(wrapper, "codec test");
             th.start();
             th.join();
@@ -356,7 +335,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
     /**
      * Sets the desired frame size and bit rate.
      */
-    protected void setParameters(int width, int height, int bitRate, String mimeType,
+    private void setParameters(int width, int height, int bitRate, String mimeType,
 	        boolean allowBT601, boolean allowBT709) {
         if ((width % 16) != 0 || (height % 16) != 0) {
             Log.w(TAG, "WARNING: width or height not multiple of 16");
@@ -467,10 +446,10 @@ public class EncodeDecodeTest extends AndroidTestCase {
      * We encode several frames of a video test pattern using MediaCodec, then decode the
      * output with MediaCodec and do some simple checks.
      */
-    private void encodeDecodeVideoFromSurfaceToSurface(InputSurfaceInterface inSurf, boolean useNdk) throws Exception {
-        MediaCodecWrapper encoder = null;
+    private void encodeDecodeVideoFromSurfaceToSurface(InputSurface inSurf) throws Exception {
+        MediaCodec encoder = null;
         MediaCodec decoder = null;
-        InputSurfaceInterface inputSurface = inSurf;
+        InputSurface inputSurface = inSurf;
         OutputSurface outputSurface = null;
 
         mLargestColorDelta = -1;
@@ -515,18 +494,14 @@ public class EncodeDecodeTest extends AndroidTestCase {
 
             // Create a MediaCodec for the desired codec, then configure it as an encoder with
             // our desired properties.  Request a Surface to use for input.
-            if (useNdk) {
-                encoder = new NdkMediaCodec(codec);
-            }else {
-                encoder = new SdkMediaCodec(MediaCodec.createByCodecName(codec));
-            }
-            encoder.configure(format, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            encoder = MediaCodec.createByCodecName(codec);
+            encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             if (inSurf != null) {
                 Log.d(TAG, "using persistent surface");
-                encoder.setInputSurface(inputSurface);
+                encoder.setInputSurface(inputSurface.getSurface());
                 inputSurface.updateSize(mWidth, mHeight);
             } else {
-                inputSurface = encoder.createInputSurface();
+                inputSurface = new InputSurface(encoder.createInputSurface());
             }
             encoder.start();
 
@@ -682,7 +657,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
                     } else {
                         generateFrame(generateIndex, encoderColorFormat, frameData);
 
-                        ByteBuffer inputBuf = encoder.getInputBuffer(inputBufIndex);
+                        ByteBuffer inputBuf = encoderInputBuffers[inputBufIndex];
                         // the buffer should be sized to hold one full frame
                         assertTrue(inputBuf.capacity() >= frameData.length);
                         inputBuf.clear();
@@ -723,7 +698,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
                 } else if (encoderStatus < 0) {
                     fail("unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
                 } else { // encoderStatus >= 0
-                    ByteBuffer encodedData = encoder.getOutputBuffer(encoderStatus);
+                    ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
                     if (encodedData == null) {
                         fail("encoderOutputBuffer " + encoderStatus + " was null");
                     }
@@ -902,8 +877,8 @@ public class EncodeDecodeTest extends AndroidTestCase {
     /**
      * Does the actual work for encoding and decoding from Surface to Surface.
      */
-    private void doEncodeDecodeVideoFromSurfaceToSurface(MediaCodecWrapper encoder,
-            InputSurfaceInterface inputSurface, MediaCodec decoder,
+    private void doEncodeDecodeVideoFromSurfaceToSurface(MediaCodec encoder,
+            InputSurface inputSurface, MediaCodec decoder,
             OutputSurface outputSurface) {
         final int TIMEOUT_USEC = 10000;
         ByteBuffer[] encoderOutputBuffers = encoder.getOutputBuffers();
@@ -1021,12 +996,12 @@ public class EncodeDecodeTest extends AndroidTestCase {
                         if (VERBOSE) Log.d(TAG, "encoder output buffers changed");
                     } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                         // expected on API 18+
-                        String newFormat = encoder.getOutputFormatString();
+                        MediaFormat newFormat = encoder.getOutputFormat();
                         if (VERBOSE) Log.d(TAG, "encoder output format changed: " + newFormat);
                     } else if (encoderStatus < 0) {
                         fail("unexpected result from encoder.dequeueOutputBuffer: " + encoderStatus);
                     } else { // encoderStatus >= 0
-                        ByteBuffer encodedData = encoder.getOutputBuffer(encoderStatus);
+                        ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
                         if (encodedData == null) {
                             fail("encoderOutputBuffer " + encoderStatus + " was null");
                         }

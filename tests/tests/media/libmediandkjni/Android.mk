@@ -31,10 +31,10 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_C_INCLUDES += $(call include-path-for, mediandk)
 
-LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libmediandk libEGL
+LOCAL_SHARED_LIBRARIES := libandroid libnativehelper_compat_libc++ liblog libmediandk
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 23
 
-LOCAL_CFLAGS := -Werror -Wall -DEGL_EGLEXT_PROTOTYPES
+LOCAL_CFLAGS := -Werror -Wall
 
 include $(BUILD_SHARED_LIBRARY)
