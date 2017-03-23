@@ -79,7 +79,10 @@ def main():
         for proc in procs:
             proc.join()
 
+    shut_down_device_screen(device0_id)
+    shut_down_device_screen(device1_id)
     shut_down_device_screen(chart_host_id)
+
     print ">>> End the test at %s" % time.strftime('%Y/%m/%d %H:%M:%S')
 
 def build_cmd(device_id, chart_host_id, result_device_id, camera_id, scene_id):
