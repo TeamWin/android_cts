@@ -43,6 +43,7 @@ public class ExposedActivity extends Activity {
 
         final Intent broadcastIntent = new Intent(ACTION_START_ACTIVITY);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent.addFlags(Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
         broadcastIntent.putExtra(Intent.EXTRA_PACKAGE_NAME, "com.android.cts.normalapp");
         broadcastIntent.putExtra(EXTRA_ACTIVITY_NAME, "ExposedActivity");
         String result = "FAIL";
