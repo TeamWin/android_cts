@@ -20,6 +20,8 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.os.Handler;
+import android.os.HandlerThread;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
@@ -112,27 +114,45 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
     public void testAudioFocusRequestGainLoss() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
-        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN, attributes);
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN, attributes, false /*no handler*/);
+    }
+
+    public void testAudioFocusRequestGainLossHandler() throws Exception {
+        final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN, attributes, true /*with handler*/);
     }
 
 
     public void testAudioFocusRequestGainLossTransient() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
-        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT, attributes);
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT, attributes,
+                false /*no handler*/);
     }
 
+    public void testAudioFocusRequestGainLossTransientHandler() throws Exception {
+        final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT, attributes,
+                true /*with handler*/);
+    }
 
     public void testAudioFocusRequestGainLossTransientDuck() throws Exception {
         final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
-        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes);
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes,
+                false /*no handler*/);
+    }
+
+    public void testAudioFocusRequestGainLossTransientDuckHandler() throws Exception {
+        final AudioAttributes[] attributes = { ATTR_DRIVE_DIR, ATTR_MEDIA };
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes,
+                true /*with handler*/);
     }
 
     /**
      * Test focus request and abandon between two focus owners
      * @param gainType focus gain of the focus owner on top (== 2nd focus requester)
      */
-    private void doTestTwoPlayersGainLoss(int gainType, AudioAttributes[] attributes)
-            throws Exception {
+    private void doTestTwoPlayersGainLoss(int gainType, AudioAttributes[] attributes,
+            boolean useHandlerInListener) throws Exception {
         final int NB_FOCUS_OWNERS = 2;
         if (NB_FOCUS_OWNERS != attributes.length) {
             throw new IllegalArgumentException("Invalid test: invalid number of attributes");
@@ -156,12 +176,21 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         }
         final AudioManager am = new AudioManager(getContext());
 
+        final Handler h;
+        if (useHandlerInListener) {
+            HandlerThread handlerThread = new HandlerThread(TAG);
+            handlerThread.start();
+            h = new Handler(handlerThread.getLooper());
+        } else {
+            h = null;
+        }
+
         try {
             for (int i = 0 ; i < NB_FOCUS_OWNERS ; i++) {
                 focusListeners[i] = new FocusChangeListener();
                 focusRequests[i] = new AudioFocusRequest.Builder(focusGains[i])
                         .setAudioAttributes(attributes[i])
-                        .setOnAudioFocusChangeListener(focusListeners[i], null /*handler*/)
+                        .setOnAudioFocusChangeListener(focusListeners[i], h /*handler*/)
                         .build();
             }
 
@@ -191,6 +220,9 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 if (focusRequests[i] != null) {
                     am.abandonAudioFocusRequest(focusRequests[i]);
                 }
+            }
+            if (h != null) {
+                h.getLooper().quit();
             }
         }
     }
