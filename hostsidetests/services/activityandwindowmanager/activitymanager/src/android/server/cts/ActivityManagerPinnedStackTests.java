@@ -35,6 +35,7 @@ import java.util.List;
  */
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY = "TestActivity";
+    private static final String TRANSLUCENT_TEST_ACTIVITY = "TranslucentTestActivity";
     private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
     private static final String RESUME_WHILE_PAUSING_ACTIVITY = "ResumeWhilePausingActivity";
     private static final String PIP_ACTIVITY = "PipActivity";
@@ -43,7 +44,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
     private static final String LAUNCH_IME_WITH_PIP_ACTIVITY = "LaunchImeWithPipActivity";
-    private static final String LAUNCHER_ENTER_PIP_ACTIVITY = "LaunchEnterPipActivity";
+    private static final String LAUNCH_ENTER_PIP_ACTIVITY = "LaunchEnterPipActivity";
     private static final String PIP_ON_STOP_ACTIVITY = "PipOnStopActivity";
 
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
@@ -65,8 +66,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             "android.server.cts.PipActivity.move_to_back";
     private static final String PIP_ACTIVITY_ACTION_EXPAND_PIP =
             "android.server.cts.PipActivity.expand_pip";
-    private static final String ACTION_SET_REQUESTED_ORIENTATION =
+    private static final String PIP_ACTIVITY_ACTION_SET_REQUESTED_ORIENTATION =
             "android.server.cts.PipActivity.set_requested_orientation";
+    private static final String PIP_ACTIVITY_ACTION_FINISH =
+            "android.server.cts.PipActivity.finish";
+    private static final String TEST_ACTIVITY_ACTION_FINISH =
+            "android.server.cts.TestActivity.finish_self";
 
     private static final int APP_OPS_OP_ENTER_PICTURE_IN_PICTURE_ON_HIDE = 67;
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -677,7 +682,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Try to enter picture-in-picture from an activity that has more than one activity in the
         // task and ensure that it works
-        launchActivity(LAUNCHER_ENTER_PIP_ACTIVITY);
+        launchActivity(LAUNCH_ENTER_PIP_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
     }
@@ -811,7 +816,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Request that the orientation is set to landscape
-        executeShellCommand("am broadcast -a " + ACTION_SET_REQUESTED_ORIENTATION + " -e "
+        executeShellCommand("am broadcast -a "
+                + PIP_ACTIVITY_ACTION_SET_REQUESTED_ORIENTATION + " -e "
                 + EXTRA_FIXED_ORIENTATION + " " + String.valueOf(ORIENTATION_LANDSCAPE));
 
         // Launch the activity back into fullscreen and ensure that it is now in landscape
@@ -829,6 +835,53 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         pressWindowButton();
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
+    }
+
+    public void testFinishPipActivityWithTaskOverlay() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch PiP activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+        int taskId = mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getTopTask().mTaskId;
+
+        // Launch task overlay activity into PiP activity task
+        launchActivityAsTaskOverlay(TRANSLUCENT_TEST_ACTIVITY, taskId, PINNED_STACK_ID);
+
+        // Finish the PiP activity and ensure that there is no pinned stack
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_FINISH);
+        mAmWmState.waitForWithAmState(mDevice, (amState) -> {
+            ActivityStack stack = amState.getStackById(PINNED_STACK_ID);
+            if (stack != null) {
+                return false;
+            }
+            return true;
+        }, "Waiting for pinned stack to be removed...");
+        assertPinnedStackDoesNotExist();
+    }
+
+    public void testNoResumeAfterTaskOverlayFinishes() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch PiP activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+        int taskId = mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getTopTask().mTaskId;
+
+        // Launch task overlay activity into PiP activity task
+        launchActivityAsTaskOverlay(TRANSLUCENT_TEST_ACTIVITY, taskId, PINNED_STACK_ID);
+
+        // Finish the task overlay activity while animating and ensure that the PiP activity never
+        // got resumed
+        String logSeparator = clearLogcat();
+        executeShellCommand("am stack resize-animated 4 20 20 500 500");
+        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH);
+        mAmWmState.waitFor(mDevice, (amState, wmState) -> !amState.containsActivity(
+                TRANSLUCENT_TEST_ACTIVITY), "Waiting for test activity to finish...");
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY,
+                logSeparator);
+        assertTrue(lifecycleCounts.mResumeCount == 0);
+        assertTrue(lifecycleCounts.mPauseCount == 0);
     }
 
     /**
@@ -976,6 +1029,16 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         int tapX = pinnedStackBounds.x + pinnedStackBounds.width - 100;
         int tapY = pinnedStackBounds.y + pinnedStackBounds.height - 100;
         executeShellCommand(String.format("input tap %d %d", tapX, tapY));
+    }
+
+    /**
+     * Launches the given {@param activityName} into the {@param taskId} as a task overlay.
+     */
+    private void launchActivityAsTaskOverlay(String activityName, int taskId, int stackId)
+            throws Exception {
+        executeShellCommand(getAmStartCmd(activityName) + " --task " + taskId + " --task-overlay");
+
+        mAmWmState.waitForValidState(mDevice, activityName, stackId);
     }
 
     /**
