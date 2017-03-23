@@ -169,7 +169,8 @@ public class VoicemailContractTest extends InstrumentationTestCase {
         assertEquals(updateDate, cursor.getLong(DATE_INDEX));
         assertEquals(updateCallsDuration, cursor.getLong(DURATION_INDEX));
         assertEquals(updateSourceData, cursor.getString(SOURCE_DATA_INDEX));
-        assertEquals(1,cursor.getInt(DIRTY_INDEX));
+        // Self modifying so DIRTY should be overridden to 0
+        assertEquals(0,cursor.getInt(DIRTY_INDEX));
         assertEquals(1,cursor.getInt(DELETED_INDEX));
         assertEquals(1,cursor.getInt(BACKED_UP_INDEX));
         assertEquals(1,cursor.getInt(RESTORED_INDEX));
