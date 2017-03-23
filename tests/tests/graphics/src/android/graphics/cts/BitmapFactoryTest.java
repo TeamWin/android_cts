@@ -37,6 +37,9 @@ import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
@@ -52,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.util.concurrent.CountDownLatch;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -724,6 +728,77 @@ public class BitmapFactoryTest {
         assertNotNull(hardwareBitmap);
         // Test that checks that correct bitmap was obtained is in uirendering/HardwareBitmapTests
         assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
+    }
+
+    @Test
+    public void testDecodePngFromPipe() {
+        // This test verifies that we can send a PNG over a pipe and
+        // successfully decode it. This behavior worked in N, so this
+        // verifies that do not break it for backwards compatibility.
+        // This was already not supported for the other Bitmap.CompressFormats
+        // (JPEG and WEBP), so we do not test those.
+        Bitmap source = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        source.eraseColor(Color.RED);
+        try {
+            Bitmap result = sendOverPipe(source, CompressFormat.PNG);
+            assertTrue(source.sameAs(result));
+        } catch (Exception e) {
+            fail(e.toString());
+        }
+    }
+
+    private Bitmap sendOverPipe(Bitmap source, CompressFormat format)
+            throws IOException, ErrnoException, InterruptedException {
+        FileDescriptor[] pipeFds = Os.pipe();
+        final FileDescriptor readFd = pipeFds[0];
+        final FileDescriptor writeFd = pipeFds[1];
+        final Throwable[] compressErrors = new Throwable[1];
+        final CountDownLatch writeFinished = new CountDownLatch(1);
+        final CountDownLatch readFinished = new CountDownLatch(1);
+        final Bitmap[] decodedResult = new Bitmap[1];
+        Thread writeThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    FileOutputStream output = new FileOutputStream(writeFd, false);
+                    source.compress(format, 100, output);
+                    output.close();
+                } catch (Throwable t) {
+                    compressErrors[0] = t;
+                    // Try closing the FD to unblock the test thread
+                    try {
+                        Os.close(writeFd);
+                    } catch (Throwable ignore) {}
+                } finally {
+                    writeFinished.countDown();
+                }
+            }
+        };
+        Thread readThread = new Thread() {
+            @Override
+            public void run() {
+                decodedResult[0] = BitmapFactory.decodeFileDescriptor(readFd);
+            }
+        };
+        writeThread.start();
+        readThread.start();
+        writeThread.join(1000);
+        readThread.join(1000);
+        assertFalse(writeThread.isAlive());
+        if (compressErrors[0] != null) {
+            fail(compressErrors[0].toString());
+        }
+        if (readThread.isAlive()) {
+            // Test failure, try to clean up
+            Os.close(writeFd);
+            readThread.join(500);
+            fail("Read timed out");
+        }
+        assertTrue(Os.fcntlVoid(readFd, OsConstants.F_GETFD) != -1);
+        assertTrue(Os.fcntlVoid(writeFd, OsConstants.F_GETFD) != -1);
+        Os.close(readFd);
+        Os.close(writeFd);
+        return decodedResult[0];
     }
 
     private void decodeConfigs(int id, int width, int height, boolean hasAlpha, boolean isGray,
