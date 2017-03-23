@@ -434,7 +434,6 @@ public class ByodHelperActivity extends LocationListenerActivity
 
     @Override
     protected void onDestroy() {
-        mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
         cleanUpTempUris();
         super.onDestroy();
     }
