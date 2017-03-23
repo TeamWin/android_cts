@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.LocaleList;
 import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
@@ -106,6 +107,7 @@ public class WebViewTest extends AssistTestBase {
         verifyAssistStructure(Utils.getTestAppComponent(TEST_CASE_TYPE),
                 false /*FLAG_SECURE set*/);
         verifyAssistStructureHasUrl(Utils.WEBVIEW_HTML_URL);
+        verifyAssistStructureHasLocaleList(Utils.WEBVIEW_LOCALE_LIST);
     }
 
     private class WebViewTestBroadcastReceiver extends BroadcastReceiver {

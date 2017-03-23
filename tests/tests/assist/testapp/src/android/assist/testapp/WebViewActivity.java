@@ -45,6 +45,7 @@ public class WebViewActivity extends Activity {
             }
         });
         webview.myLoadData(Utils.WEBVIEW_HTML_URL, Utils.WEBVIEW_HTML, "text/html", "UTF-8");
+        webview.setLocaleList(Utils.WEBVIEW_LOCALE_LIST);
         //webview.loadUrl(
         //        "https://android-developers.blogspot.com/2015/08/m-developer-preview-3-final-sdk.html");
     }
