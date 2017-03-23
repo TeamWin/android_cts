@@ -66,6 +66,7 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.android.cts.deviceandprofileowner.AutofillActivity"/>
     </application>
 
     <instrumentation

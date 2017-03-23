@@ -93,6 +93,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String CUSTOMIZATION_APP_PKG = "com.android.cts.customizationapp";
     private static final String CUSTOMIZATION_APP_APK = "CtsCustomizationApp.apk";
 
+    private static final String AUTOFILL_APP_PKG = "com.android.cts.devicepolicy.autofillapp";
+    private static final String AUTOFILL_APP_APK = "CtsDevicePolicyAutofillApp.apk";
+
     private static final String ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES
             = "enabled_notification_policy_access_packages";
 
@@ -114,6 +117,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
+            getDevice().uninstallPackage(AUTOFILL_APP_APK);
             getDevice().uninstallPackage(TEST_APP_PKG);
 
             // Press the HOME key to close any alart dialog that may be shown.
@@ -506,6 +510,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         executeDeviceTestMethod(".CustomizationRestrictionsTest",
                 "testDisallowSetUserIcon_allowed");
+    }
+
+    public void testDisallowAutofill_allowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(AUTOFILL_APP_APK, mUserId);
+
+        executeDeviceTestMethod(".AutofillRestrictionsTest",
+                "testDisallowAutofill_allowed");
     }
 
     public void testPackageInstallUserRestrictions() throws Exception {

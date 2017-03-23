@@ -41,7 +41,8 @@ public class SecondaryProfileOwnerUserRestrictionsTest extends BaseUserRestricti
             UserManager.DISALLOW_CROSS_PROFILE_COPY_PASTE,
             UserManager.DISALLOW_OUTGOING_BEAM,
             UserManager.ALLOW_PARENT_PROFILE_APP_LINKING,
-            UserManager.DISALLOW_SET_USER_ICON
+            UserManager.DISALLOW_SET_USER_ICON,
+            UserManager.DISALLOW_AUTOFILL
     };
 
     public static final String[] DISALLOWED = new String[] {
