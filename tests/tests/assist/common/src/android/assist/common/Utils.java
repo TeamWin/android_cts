@@ -17,10 +17,12 @@ package android.assist.common;
 
 import android.content.ComponentName;
 import android.os.Bundle;
+import android.os.LocaleList;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class Utils {
     public static final String TESTCASE_TYPE = "testcase_type";
@@ -104,6 +106,7 @@ public class Utils {
 
     /** Stub html view to load into WebView */
     public static final String WEBVIEW_HTML_URL = "http://dev/null!";
+    public static final LocaleList WEBVIEW_LOCALE_LIST = new LocaleList(Locale.ROOT, Locale.US);
     public static final String WEBVIEW_HTML_GREETING = "Hello WebView!";
     public static final String WEBVIEW_HTML = "<html><body><div><p>" + WEBVIEW_HTML_GREETING
             + "</p></div></body></html>";

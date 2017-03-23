@@ -29,6 +29,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.LocaleList;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
@@ -384,17 +385,30 @@ public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartAc
      * Return true if the expected URL is found in the WebView, else fail.
      */
     protected void verifyAssistStructureHasUrl(String url) {
-        assertTrue(traverseWebViewForUrl(
-                mAssistStructure.getWindowNodeAt(0).getRootViewNode(), url));
+        assertTrue(traverse(mAssistStructure.getWindowNodeAt(0).getRootViewNode(), (n) -> {
+            return n.getUrl() != null && url.equals(n.getUrl());
+        }));
     }
 
-    private boolean traverseWebViewForUrl(ViewNode parentNode, String url) {
-        if (parentNode.getUrl() != null
-                && parentNode.getUrl().toString().equals(url)) {
+    /**
+     * Return true if the expected LocaleList is found in the WebView, else fail.
+     */
+    protected void verifyAssistStructureHasLocaleList(LocaleList localeList) {
+        assertTrue(traverse(mAssistStructure.getWindowNodeAt(0).getRootViewNode(), (n) -> {
+            return n.getLocaleList() != null && localeList.equals(n.getLocaleList());
+        }));
+    }
+
+    interface ViewNodeVisitor {
+        boolean visit(ViewNode node);
+    }
+
+    private boolean traverse(ViewNode parentNode, ViewNodeVisitor visitor) {
+        if (visitor.visit(parentNode)) {
             return true;
         }
         for (int i = parentNode.getChildCount() - 1; i >= 0; i--) {
-            if (traverseWebViewForUrl(parentNode.getChildAt(i), url)) {
+            if (traverse(parentNode.getChildAt(i), visitor)) {
                 return true;
             }
         }

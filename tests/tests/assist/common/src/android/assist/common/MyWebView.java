@@ -16,6 +16,7 @@
 package android.assist.common;
 
 import android.content.Context;
+import android.os.LocaleList;
 import android.util.AttributeSet;
 import android.view.ViewStructure;
 import android.webkit.WebView;
@@ -26,6 +27,7 @@ import android.webkit.WebView;
 public final class MyWebView extends WebView {
 
     private String mUrl;
+    private LocaleList mLocaleList;
 
     public MyWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -37,6 +39,14 @@ public final class MyWebView extends WebView {
     public void myLoadData(String url, String data, String mimeType, String encoding) {
         mUrl = url;
         super.loadData(data, mimeType, encoding);
+    }
+
+    public void setLocaleList(LocaleList localeList) {
+        this.mLocaleList = localeList;
+    }
+
+    public LocaleList getLocaleList() {
+        return mLocaleList;
     }
 
     @Override
@@ -56,6 +66,9 @@ public final class MyWebView extends WebView {
     private void onProvideStructureForAssistOrAutofill(ViewStructure structure) {
         if (mUrl != null) {
             structure.setUrl(mUrl);
+        }
+        if (mLocaleList != null) {
+            structure.setLocaleList(mLocaleList);
         }
     }
 }
