@@ -223,6 +223,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <provider android:name="android.content.cts.TestPagingContentProvider"
+            android:authorities="android.content.cts.testpagingprovider"
+            android:process=":testpagingprovider"
+            android:multiprocess="false" />
+
         <service android:name="android.content.cts.MockService" />
 
         <service android:name="android.content.cts.MockSyncAdapterService" android:exported="true">
