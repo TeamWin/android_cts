@@ -33,7 +33,7 @@ LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_PACKAGE_NAME := CtsSpeechTestCases
 
-# Needed for testing M API
-#LOCAL_SDK_VERSION := current
+# Needed for testing O API
+#LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
