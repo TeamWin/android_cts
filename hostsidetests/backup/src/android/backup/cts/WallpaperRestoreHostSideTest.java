@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
@@ -80,10 +81,12 @@ public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
     private void restoreBackup(final String filename) throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
+        CountDownLatch restoreStarted = new CountDownLatch(1);
         Thread restore =
                 new Thread() {
                     @Override
                     public void run() {
+                        restoreStarted.countDown();
                         try {
                             device.executeAdbCommand("restore", createTestFile(filename));
                         } catch (Exception e) {
@@ -92,6 +95,7 @@ public class WallpaperRestoreHostSideTest extends CompatibilityHostTestBase {
                     }
                 };
         restore.start();
+        restoreStarted.await();
         checkDeviceTest("clickBackupConfirmButton");
         restore.join();
     }
