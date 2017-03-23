@@ -1614,7 +1614,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_nonmarket_allow_info">
         This test verifies that non-market apps can be installed if permitted.\n
         1. A package installation UI should appear.\n
-        2. Accept the package and verify that it installs.
+        2. If \'Cts Verifier\' is not allowed to install apps, a warning dialog will appear
+        blocking the install. In this case go to step 3, else skip to step 4.\n
+        3. Allow \'Cts Verifier\' to install apps. Return to package installer.\n
+        4. Accept the package and verify that it installs.
     </string>
 
     <string name="provisioning_byod_nonmarket_deny">Disable non-market apps</string>
