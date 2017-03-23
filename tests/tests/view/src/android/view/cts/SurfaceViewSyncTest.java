@@ -27,14 +27,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.os.Environment;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
@@ -66,7 +62,6 @@ import java.util.concurrent.TimeUnit;
 @SuppressLint("RtlHardcoded")
 public class SurfaceViewSyncTest {
     private static final String TAG = "SurfaceViewSyncTests";
-    private static final int PERMISSION_DIALOG_WAIT_MS = 1000;
 
     @Rule
     public ActivityTestRule<CapturedActivity> mActivityRule =
@@ -78,25 +73,19 @@ public class SurfaceViewSyncTest {
     private CapturedActivity mActivity;
     private MediaPlayer mMediaPlayer;
 
-
-    /**
-     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss both
-     * before and after test.
-     */
     @Before
-    @After
-    public void setup() throws UiObjectNotFoundException {
-        // The permission dialog will be auto-opened by the activity - find it and accept
-        UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        UiSelector acceptButtonSelector = new UiSelector().resourceId("android:id/button1");
-        UiObject acceptButton = uiDevice.findObject(acceptButtonSelector);
-        if (acceptButton.waitForExists(PERMISSION_DIALOG_WAIT_MS)) {
-            boolean success = acceptButton.click();
-            Log.d(TAG, "found permission dialog, click attempt success = " + success);
-        }
-
+    public void setup() {
         mActivity = mActivityRule.getActivity();
         mMediaPlayer = mActivity.getMediaPlayer();
+    }
+
+    /**
+     * Want to be especially sure we don't leave up the permission dialog, so try and dismiss
+     * after test.
+     */
+    @After
+    public void tearDown() throws UiObjectNotFoundException {
+        mActivity.dismissPermissionDialog();
     }
 
     private static ValueAnimator makeInfinite(ValueAnimator a) {
@@ -242,7 +231,7 @@ public class SurfaceViewSyncTest {
     // Tests
     ///////////////////////////////////////////////////////////////////////////
 
-    private void verifyTest(AnimationTestCase testCase) throws InterruptedException {
+    private void verifyTest(AnimationTestCase testCase) throws Throwable {
         CapturedActivity.TestResult result = mActivity.runTest(testCase);
         saveFailureCaptures(result.failures);
 
@@ -262,7 +251,7 @@ public class SurfaceViewSyncTest {
 
     /** Draws a moving 10x10 black rectangle, validates 100 pixels of black are seen each frame */
     @Test
-    public void testSmallRect() throws InterruptedException {
+    public void testSmallRect() throws Throwable {
         verifyTest(new AnimationTestCase(
                 context -> new View(context) {
                     // draw a single pixel
@@ -291,7 +280,7 @@ public class SurfaceViewSyncTest {
      * approximate to avoid rounding brittleness.
      */
     @Test
-    public void testEmptySurfaceView() throws InterruptedException {
+    public void testEmptySurfaceView() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sEmptySurfaceViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
@@ -301,7 +290,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testSurfaceViewSmallScale() throws InterruptedException {
+    public void testSurfaceViewSmallScale() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(320, 240, Gravity.LEFT | Gravity.TOP),
@@ -310,7 +299,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testSurfaceViewBigScale() throws InterruptedException {
+    public void testSurfaceViewBigScale() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
@@ -319,7 +308,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewTranslate() throws InterruptedException {
+    public void testVideoSurfaceViewTranslate() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
@@ -328,7 +317,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewRotated() throws InterruptedException {
+    public void testVideoSurfaceViewRotated() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
@@ -340,7 +329,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewEdgeCoverage() throws InterruptedException {
+    public void testVideoSurfaceViewEdgeCoverage() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
@@ -358,7 +347,7 @@ public class SurfaceViewSyncTest {
     }
 
     @Test
-    public void testVideoSurfaceViewCornerCoverage() throws InterruptedException {
+    public void testVideoSurfaceViewCornerCoverage() throws Throwable {
         verifyTest(new AnimationTestCase(
                 sVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
