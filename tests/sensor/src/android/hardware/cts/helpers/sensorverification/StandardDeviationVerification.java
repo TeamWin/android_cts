@@ -111,7 +111,7 @@ public class StandardDeviationVerification extends AbstractSensorVerification {
             // Max magnetometer deviation: 0.1uT/√Hz
             DEFAULTS.put(Sensor.TYPE_MAGNETIC_FIELD, new float[]{mMagNoise, mMagNoise, mMagNoise});
             // Max pressure deviation: 2Pa/√Hz
-            DEFAULTS.put(Sensor.TYPE_PRESSURE, new float[]{mPressureNoise,mPressureNoise,mPressureNoise});
+            DEFAULTS.put(Sensor.TYPE_PRESSURE, new float[]{mPressureNoise});
         }
         return new StandardDeviationVerification(DEFAULTS.get(sensorType));
     }
