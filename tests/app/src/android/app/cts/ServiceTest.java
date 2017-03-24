@@ -20,6 +20,7 @@ import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.stubs.ActivityTestsBase;
 import android.app.stubs.LocalDeniedService;
 import android.app.stubs.LocalForegroundService;
@@ -501,9 +502,19 @@ public class ServiceTest extends ActivityTestsBase {
         bindExpectResult(mLocalService);
     }
 
+    /* Just the Intent for a foreground service */
+    private Intent foregroundServiceIntent(int command) {
+        return new Intent(mLocalForegroundService)
+                .putExtras(LocalForegroundService.newCommand(mStateReceiver, command));
+    }
+
     private void startForegroundService(int command) {
-        mContext.startService(new Intent(mLocalForegroundService).putExtras(LocalForegroundService
-                .newCommand(mStateReceiver, command)));
+        mContext.startService(foregroundServiceIntent(command));
+    }
+
+    /* Start the service in a way that promises to go into the foreground */
+    private void startRequiredForegroundService(int command) {
+        mContext.startForegroundService(foregroundServiceIntent(command));
     }
 
     @MediumTest
@@ -701,6 +712,43 @@ public class ServiceTest extends ActivityTestsBase {
             assertNoNotification(1);
         }
         assertNoNotification(2);
+    }
+
+    class TestSendCallback implements PendingIntent.OnFinished {
+        public volatile int result = -1;
+
+        @Override
+        public void onSendFinished(PendingIntent pendingIntent, Intent intent, int resultCode,
+                String resultData, Bundle resultExtras) {
+            Log.i(TAG, "foreground service PendingIntent callback got " + resultCode);
+            this.result = resultCode;
+        }
+    }
+
+    @MediumTest
+    public void testForegroundService_pendingIntentForeground() throws Exception {
+        boolean success = false;
+
+        PendingIntent pi = PendingIntent.getForegroundService(mContext, 1,
+                foregroundServiceIntent(LocalForegroundService.COMMAND_START_FOREGROUND), 0);
+        TestSendCallback callback = new TestSendCallback();
+
+        try {
+            mExpectedServiceState = STATE_START_1;
+            pi.send(5038, callback, null);
+            waitForResultOrThrow(DELAY, "service to start first time");
+            assertTrue(callback.result > -1);
+
+            success = true;
+        } finally {
+            if (!success) {
+                mContext.stopService(mLocalForegroundService);
+            }
+        }
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "pendingintent service to be destroyed");
     }
 
     @MediumTest
