@@ -21,8 +21,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -95,12 +93,8 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
                 .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mCcExpiration.setAdapter(expirationValuesAdapter);
 
-        mBuyButton.setOnClickListener((v) -> {
-            buy();
-        });
-        mClearButton.setOnClickListener((v) ->{
-            resetFields();
-        });
+        mBuyButton.setOnClickListener((v) -> buy());
+        mClearButton.setOnClickListener((v) -> resetFields());
     }
 
     protected int getContentView() {
@@ -145,7 +139,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
 
     /**
      * Asserts the activity was auto-filled with the values passed to
-     * {@link #expectAutoFill(String, String, int, boolean)}.
+     * {@link #expectAutoFill(String, int, int, boolean)}.
      */
     void assertAutoFilled() throws Exception {
         assertWithMessage("expectAutoFill() not called").that(mExpectation).isNotNull();
@@ -159,45 +153,35 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
      * Visits the {@code ccNumber} in the UiThread.
      */
     void onCcNumber(Visitor<EditText> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mCcNumber);
-        });
+        syncRunOnUiThread(() -> v.visit(mCcNumber));
     }
 
     /**
      * Visits the {@code ccExpirationDate} in the UiThread.
      */
     void onCcExpiration(Visitor<Spinner> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mCcExpiration);
-        });
+        syncRunOnUiThread(() -> v.visit(mCcExpiration));
     }
 
     /**
      * Visits the {@code address} in the UiThread.
      */
     void onAddress(Visitor<RadioGroup> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mAddress);
-        });
+        syncRunOnUiThread(() -> v.visit(mAddress));
     }
 
     /**
      * Visits the {@code homeAddress} in the UiThread.
      */
     void onHomeAddress(Visitor<RadioButton> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mHomeAddress);
-        });
+        syncRunOnUiThread(() -> v.visit(mHomeAddress));
     }
 
     /**
      * Visits the {@code saveCC} in the UiThread.
      */
     void onSaveCc(Visitor<CheckBox> v) {
-        syncRunOnUiThread(() -> {
-            v.visit(mSaveCc);
-        });
+        syncRunOnUiThread(() -> v.visit(mSaveCc));
     }
 
     /**
@@ -205,9 +189,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
      */
     void tapBuy() throws Exception {
         mBuyLatch = new CountDownLatch(1);
-        syncRunOnUiThread(() -> {
-            mBuyButton.performClick();
-        });
+        syncRunOnUiThread(() -> mBuyButton.performClick());
         boolean called = mBuyLatch.await(BUY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) waiting for buy action", BUY_TIMEOUT_MS)
                 .that(called).isTrue();
