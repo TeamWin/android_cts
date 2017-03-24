@@ -43,19 +43,21 @@ import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
-import com.android.internal.telephony.PhoneConstants;
 
-import java.util.regex.Pattern;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.regex.Pattern;
+
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
+    private PackageManager mPackageManager;
     private boolean mOnCellLocationChangedCalled = false;
     private ServiceState mServiceState;
     private final Object mLock = new Object();
@@ -69,6 +71,8 @@ public class TelephonyManagerTest {
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        mPackageManager = getContext().getPackageManager();
     }
 
     @After
@@ -234,75 +238,55 @@ public class TelephonyManagerTest {
     }
 
     /**
-     * Tests that the device properly reports either a valid IMEI if
-     * GSM, a valid MEID or ESN if CDMA, or a valid MAC address if
-     * only a WiFi device.
+     * Tests that the device properly reports either a valid IMEI, MEID/ESN, or a valid MAC address
+     * if only a WiFi device. At least one of them must be valid.
      */
     @Test
     public void testGetDeviceId() {
-        String deviceId = mTelephonyManager.getDeviceId();
-        verifyDeviceId(deviceId);
+        verifyDeviceId(mTelephonyManager.getDeviceId());
     }
 
     /**
-     * Tests that the device properly reports either a valid IMEI if
-     * GSM, a valid MEID or ESN if CDMA, or a valid MAC address if
-     * only a WiFi device.
+     * Tests that the device properly reports either a valid IMEI, MEID/ESN, or a valid MAC address
+     * if only a WiFi device. At least one of them must be valid.
      */
     @Test
-    public void testGetDeviceIdForSlotId() {
+    public void testGetDeviceIdForSlot() {
         String deviceId = mTelephonyManager.getDeviceId(mTelephonyManager.getDefaultSim());
         verifyDeviceId(deviceId);
-        // Also verify that no exception is thrown for any slot id (including invalid ones)
+        // Also verify that no exception is thrown for any slot index (including invalid ones)
         for (int i = -1; i <= mTelephonyManager.getPhoneCount(); i++) {
             mTelephonyManager.getDeviceId(i);
         }
     }
 
     private void verifyDeviceId(String deviceId) {
-        int phoneType = mTelephonyManager.getPhoneType();
-        switch (phoneType) {
-            case TelephonyManager.PHONE_TYPE_GSM:
-                assertGsmDeviceId(deviceId);
-                break;
-
-            case TelephonyManager.PHONE_TYPE_CDMA:
-                // LTE device is using IMEI as device id
-                if (mTelephonyManager.getLteOnCdmaMode() == PhoneConstants.LTE_ON_CDMA_TRUE) {
-                    assertGsmDeviceId(deviceId);
-                } else {
-                    assertCdmaDeviceId(deviceId);
-                }
-                break;
-
-            case TelephonyManager.PHONE_TYPE_NONE:
-                boolean nwSupported = mCm.isNetworkSupported(mCm.TYPE_WIFI);
-                PackageManager packageManager = getContext().getPackageManager();
-                // only check serial number & MAC address if device report wifi feature
-                if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
-                    assertSerialNumber();
-                    assertMacAddress(getWifiMacAddress());
-                } else if (mCm.getNetworkInfo(ConnectivityManager.TYPE_BLUETOOTH) != null) {
-                    assertSerialNumber();
-                    assertMacAddress(getBluetoothMacAddress());
-                } else {
-                    assertTrue(mCm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET) != null);
-                }
-                break;
-
-            default:
-                throw new IllegalArgumentException("Did you add a new phone type? " + phoneType);
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            // Either IMEI or MEID need to be valid.
+            try {
+                assertImei(deviceId);
+            } catch (AssertionError e) {
+                assertMeidEsn(deviceId);
+            }
+        } else if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            assertSerialNumber();
+            assertMacAddress(getWifiMacAddress());
+        } else if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+            assertSerialNumber();
+            assertMacAddress(getBluetoothMacAddress());
+        } else if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_ETHERNET)) {
+            assertTrue(mCm.getNetworkInfo(ConnectivityManager.TYPE_ETHERNET) != null);
         }
     }
 
-    private static void assertGsmDeviceId(String deviceId) {
+    private static void assertImei(String id) {
         // IMEI may include the check digit
         String imeiPattern = "[0-9]{14,15}";
-        assertTrue("IMEI device id " + deviceId + " does not match pattern " + imeiPattern,
-                Pattern.matches(imeiPattern, deviceId));
-        if (deviceId.length() == 15) {
+        assertTrue("IMEI " + id + " does not match pattern " + imeiPattern,
+                Pattern.matches(imeiPattern, id));
+        if (id.length() == 15) {
             // if the ID is 15 digits, the 15th must be a check digit.
-            assertImeiCheckDigit(deviceId);
+            assertImeiCheckDigit(id);
         }
     }
 
@@ -343,14 +327,14 @@ public class TelephonyManagerTest {
         return sum == 0 ? 0 : 10 - sum;
     }
 
-    private static void assertCdmaDeviceId(String deviceId) {
+    private static void assertMeidEsn(String id) {
         // CDMA device IDs may either be a 14-hex-digit MEID or an
         // 8-hex-digit ESN.  If it's an ESN, it may not be a
         // pseudo-ESN.
-        if (deviceId.length() == 14) {
-            assertMeidFormat(deviceId);
-        } else if (deviceId.length() == 8) {
-            assertHexadecimalEsnFormat(deviceId);
+        if (id.length() == 14) {
+            assertMeidFormat(id);
+        } else if (id.length() == 8) {
+            assertHexadecimalEsnFormat(id);
         } else {
             fail("device id on CDMA must be 14-digit hex MEID or 8-digit hex ESN.");
         }
@@ -489,56 +473,81 @@ public class TelephonyManagerTest {
     }
 
     /**
-     * Tests that the device properly reports either a valid IMEI if GSM or null.
+     * Tests that the device properly reports either a valid IMEI or null.
      */
     @Test
     public void testGetImei() {
         String imei = mTelephonyManager.getImei();
-        if (mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_ABSENT && imei == null) {
-            // If no SIM card is present, IMEI can be null.
-            return;
+
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (!TextUtils.isEmpty(imei)) {
+                assertImei(imei);
+            } else {
+                // If IMEI is empty, then MEID must not be empty. A phone should have either a
+                // IMEI or MEID. The validation of MEID will be checked by testGetMeid().
+                assertFalse(TextUtils.isEmpty(mTelephonyManager.getMeid()));
+            }
         }
-        verifyImei(imei, mTelephonyManager.getDeviceId());
     }
 
     /**
-     * Tests that the device properly reports either a valid IMEI if GSM or null.
+     * Tests that the device properly reports either a valid IMEI or null.
      */
     @Test
-    public void testGetImeiForSlotId() {
-        // Test for slot id = 0.
-        String imei = mTelephonyManager.getImei(0);
-        verifyImei(imei, mTelephonyManager.getDeviceId(0));
-        // Also verify that no exception is thrown for any slot id (including invalid ones)
-        for (int i = -1; i <= mTelephonyManager.getPhoneCount(); i++) {
-            mTelephonyManager.getImei(i);
+    public void testGetImeiForSlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
+            String imei = mTelephonyManager.getImei(i);
+            if (!TextUtils.isEmpty(imei)) {
+                assertImei(imei);
+            }
+        }
+
+        // Also verify that no exception is thrown for any slot index (including invalid ones)
+        mTelephonyManager.getImei(-1);
+        mTelephonyManager.getImei(mTelephonyManager.getPhoneCount());
+    }
+
+    /**
+     * Tests that the device properly reports either a valid MEID or null.
+     */
+    @Test
+    public void testGetMeid() {
+        String meid = mTelephonyManager.getMeid();
+
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (!TextUtils.isEmpty(meid)) {
+                assertImei(meid);
+            } else {
+                // If MEID is empty, then IMEI must not be empty. A phone should have either a
+                // IMEI or MEID. The validation of IMEI will be checked by testGetImei().
+                assertFalse(TextUtils.isEmpty(mTelephonyManager.getImei()));
+            }
         }
     }
 
-    private void verifyImei(String imei, String deviceId) {
-        int phoneType = mTelephonyManager.getPhoneType();
-        switch (phoneType) {
-            case TelephonyManager.PHONE_TYPE_GSM:
-                assertGsmDeviceId(imei);
-                assertEquals(imei, deviceId);
-                break;
-            case TelephonyManager.PHONE_TYPE_CDMA:
-                // LTE device is using IMEI as device id
-                if (mTelephonyManager.getLteOnCdmaMode() == PhoneConstants.LTE_ON_CDMA_TRUE) {
-                    assertGsmDeviceId(imei);
-                    assertEquals(imei, deviceId);
-                    break;
-                }
-                // Fall through
-            case TelephonyManager.PHONE_TYPE_NONE:
-                if (imei != null) {
-                    assertGsmDeviceId(imei);
-                }
-                // An IMEI is not required for PHONE_TYPE_NONE or non-LTE PHONE_TYPE_CDMA
-                break;
-            default:
-                throw new IllegalArgumentException("Did you add a new phone type? " + phoneType);
+    /**
+     * Tests that the device properly reports either a valid MEID or null.
+     */
+    @Test
+    public void testGetMeidForSlot() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
         }
+
+        for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
+            String meid = mTelephonyManager.getMeid(i);
+            if (!TextUtils.isEmpty(meid)) {
+                assertMeidEsn(meid);
+            }
+        }
+
+        // Also verify that no exception is thrown for any slot index (including invalid ones)
+        mTelephonyManager.getMeid(-1);
+        mTelephonyManager.getMeid(mTelephonyManager.getPhoneCount());
     }
 
     private static Context getContext() {
