@@ -30,6 +30,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -363,5 +364,54 @@ public class FocusFinderTest {
         verifyNextFocus(boxes[0], View.FOCUS_FORWARD, buttons[1]);
         verifyNextFocus(buttons[1], View.FOCUS_FORWARD, boxes[1]);
         verifyNextFocus(boxes[1], View.FOCUS_FORWARD, buttons[2]);
+    }
+
+    @Test
+    public void testBasicFocusOrder() {
+        // Sanity check to make sure sorter is behaving
+        FrameLayout layout = new FrameLayout(mLayout.getContext());
+        Button button1 = new Button(mLayout.getContext());
+        Button button2 = new Button(mLayout.getContext());
+        button1.setLeftTopRightBottom(0, 0, 10, 10);
+        button2.setLeftTopRightBottom(0, 0, 10, 10);
+        layout.addView(button1);
+        layout.addView(button2);
+        View[] views = new View[]{button2, button1};
+        // empty shouldn't crash or anything
+        FocusFinder.sort(views, 0, 0, layout, false);
+        // one view should work
+        FocusFinder.sort(views, 0, 1, layout, false);
+        assertEquals(button2, views[0]);
+        // exactly overlapping views should remain in original order
+        FocusFinder.sort(views, 0, 2, layout, false);
+        assertEquals(button2, views[0]);
+        assertEquals(button1, views[1]);
+        // make sure it will actually mutate input array.
+        button2.setLeftTopRightBottom(20, 0, 30, 10);
+        FocusFinder.sort(views, 0, 2, layout, false);
+        assertEquals(button1, views[0]);
+        assertEquals(button2, views[1]);
+
+        // While we don't want to test details, we should at least verify basic correctness
+        // like "left-to-right" ordering in well-behaved layouts
+        assertEquals(mLayout.findFocus(), mTopLeft);
+        verifyNextFocus(mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mTopRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_FORWARD, mBottomRight);
+
+        // Should still work intuitively even if some views are slightly shorter.
+        mBottomLeft.setBottom(mBottomLeft.getBottom() - 3);
+        mBottomLeft.offsetTopAndBottom(3);
+        verifyNextFocus(mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mTopRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_FORWARD, mBottomRight);
+
+        // RTL layout should work right-to-left
+        mActivityRule.getActivity().runOnUiThread(
+                () -> mLayout.setLayoutDirection(View.LAYOUT_DIRECTION_RTL));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        verifyNextFocus(mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextFocus(mTopRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextFocus(mBottomLeft, View.FOCUS_FORWARD, mBottomRight);
     }
 }
