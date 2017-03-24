@@ -185,7 +185,7 @@ public class TvContractTest extends AndroidTestCase {
         values.put(PreviewPrograms.COLUMN_PREVIEW_VIDEO_URI, "http://test.com/preview.mp4");
         values.put(PreviewPrograms.COLUMN_LAST_PLAYBACK_POSITION_MILLIS, 5000);
         values.put(PreviewPrograms.COLUMN_DURATION_MILLIS, 60000);
-        values.put(PreviewPrograms.COLUMN_APP_LINK_INTENT_URI, "app_link_intent");
+        values.put(PreviewPrograms.COLUMN_INTENT_URI, "intent_for_video");
         values.put(PreviewPrograms.COLUMN_TITLE, "program_title");
         values.put(PreviewPrograms.COLUMN_SHORT_DESCRIPTION, "short_description");
         values.put(PreviewPrograms.COLUMN_EPISODE_DISPLAY_NUMBER , "1A");
@@ -582,7 +582,7 @@ public class TvContractTest extends AndroidTestCase {
             verifyIntegerColumn(cursor, expectedValues,
                     PreviewPrograms.COLUMN_LAST_PLAYBACK_POSITION_MILLIS);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_DURATION_MILLIS);
-            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_APP_LINK_INTENT_URI);
+            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTENT_URI);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_WEIGHT);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_TYPE);
             verifyStringColumn(cursor, expectedValues,
