@@ -129,19 +129,9 @@ public class TvContractTest extends AndroidTestCase {
             super.tearDown();
             return;
         }
-        // Clean up, just in case we failed to delete the entry when a test failed.
-        // The cotentUris are specific to this package, so this will delete only the
-        // entries inserted by this package.
-        String[] projection = { Channels._ID };
-        try (Cursor cursor = mContentResolver.query(mChannelsUri, projection, null, null, null)) {
-            while (cursor != null && cursor.moveToNext()) {
-                long channelId = cursor.getLong(0);
-                mContentResolver.delete(
-                        TvContract.buildProgramsUriForChannel(channelId), null, null);
-            }
-        }
-        mContentResolver.delete(mChannelsUri, null, null);
+        mContentResolver.delete(Channels.CONTENT_URI, null, null);
         mContentResolver.delete(RecordedPrograms.CONTENT_URI, null, null);
+        mContentResolver.delete(WatchNextPrograms.CONTENT_URI, null, null);
         super.tearDown();
     }
 
@@ -409,18 +399,15 @@ public class TvContractTest extends AndroidTestCase {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
         }
+        // Non-preview channels should not be inserted without input ID
         ContentValues values = createDummyChannelValues(mInputId, false);
         values.remove(Channels.COLUMN_INPUT_ID);
-        try {
-            mContentResolver.insert(mChannelsUri, values);
-            fail("Channels.COLUMN_INPUT_ID must not be null for non-preview channels.");
-        } catch (Exception e) {
-            // Expected.
-        }
+        Uri rowUri = mContentResolver.insert(Channels.CONTENT_URI, values);
+        assertNull(rowUri);
 
         // Preview channels can be inserted without input ID
         values.put(Channels.COLUMN_TYPE, Channels.TYPE_PREVIEW);
-        Uri rowUri = mContentResolver.insert(mChannelsUri, values);
+        rowUri = mContentResolver.insert(Channels.CONTENT_URI, values);
         long channelId = ContentUris.parseId(rowUri);
         Uri channelUri = TvContract.buildChannelUri(channelId);
         verifyChannel(channelUri, values, channelId, false);
