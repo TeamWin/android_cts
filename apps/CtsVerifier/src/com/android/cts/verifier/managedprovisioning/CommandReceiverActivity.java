@@ -282,7 +282,9 @@ public class CommandReceiverActivity extends Activity {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
                     }
+                    mDpm.setSecurityLoggingEnabled(mAdmin, true);
                     mDpm.retrieveSecurityLogs(mAdmin);
+                    mDpm.setSecurityLoggingEnabled(mAdmin, false);
                 } break;
                 case COMMAND_SET_ORGANIZATION_NAME: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
@@ -506,6 +508,7 @@ public class CommandReceiverActivity extends Activity {
         mDpm.setStatusBarDisabled(mAdmin, false);
         mDpm.setOrganizationName(mAdmin, null);
         mDpm.setNetworkLoggingEnabled(mAdmin, false);
+        mDpm.setSecurityLoggingEnabled(mAdmin, false);
         mDpm.setPermissionGrantState(mAdmin, getPackageName(),
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
