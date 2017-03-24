@@ -512,6 +512,7 @@ public abstract class DisplayModifier {
 
                 modifierMapIndex--;
             }
+            getModifierList(); // Just to update mDebugString
             return true;
         }
 

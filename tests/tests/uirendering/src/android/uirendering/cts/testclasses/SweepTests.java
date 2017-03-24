@@ -118,10 +118,15 @@ public class SweepTests extends ActivityTestBase {
         // Create the test cases with each combination
         do {
             int arrIndex = Math.min(index, bitmapComparers.length - 1);
-            createTest() // picture mode is disable due to bug:34871089
-                    .addCanvasClientWithoutUsingPicture(
-                            modifierAccessor.getDebugString(), canvasClient)
-                    .runWithComparer(bitmapComparers[arrIndex]);
+            TestCaseBuilder builder = createTest();
+            String debugString = modifierAccessor.getDebugString();
+            if (debugString.contains("bitmapMesh")) {
+                // picture mode is disabled due to bug:34871089
+                builder.addCanvasClientWithoutUsingPicture(debugString, canvasClient);
+            } else {
+                builder.addCanvasClient(debugString, canvasClient);
+            }
+            builder.runWithComparer(bitmapComparers[arrIndex]);
             index++;
         } while (modifierAccessor.step());
     }
