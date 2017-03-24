@@ -137,6 +137,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         switchUser(mPrimaryUserId);
         removeOwners();
         removeTestUsers();
+        // Unlock keyguard before test
+        executeShellCommand("wm dismiss-keyguard");
     }
 
     @Override
