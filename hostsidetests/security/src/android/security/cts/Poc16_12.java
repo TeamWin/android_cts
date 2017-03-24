@@ -133,7 +133,8 @@ public class Poc16_12 extends SecurityTestCase {
     @SecurityTest
     public void testPocCVE_2016_8434() throws Exception {
         if(containsDriver(getDevice(), "/dev/kgsl-3d0")) {
-            AdbUtils.runPoc("CVE-2016-8434", getDevice(), 60);
+            // This poc is very verbose so we ignore the output to avoid using a lot of memory.
+            AdbUtils.runPocNoOutput("CVE-2016-8434", getDevice(), 60);
         }
     }
 
