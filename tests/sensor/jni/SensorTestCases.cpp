@@ -114,15 +114,16 @@ void SensorTest::testInvalidParameter(JNIEnv *env) {
     ASSERT_EQ(ASensorEventQueue_getEvents(nonNullQueue, nullptr, 1), -EINVAL)
     ASSERT_EQ(ASensorEventQueue_getEvents(nonNullQueue, nullptr, 0), -EINVAL);
 
-    ASSERT_EMPTY_CSTR(ASensor_getName(nullptr));
-    ASSERT_EMPTY_CSTR(ASensor_getVendor(nullptr));
-    ASSERT_EQ(ASensor_getType(nullptr), -1);
-    ASSERT_EQ(ASensor_getResolution(nullptr), -1.f);
-    ASSERT_EQ(ASensor_getMinDelay(nullptr), -1);
-    ASSERT_EQ(ASensor_getFifoMaxEventCount(nullptr), -1);
-    ASSERT_EQ(ASensor_getFifoReservedEventCount(nullptr), -1);
-    ASSERT_EMPTY_CSTR(ASensor_getStringType(nullptr));
-    ASSERT_EQ(ASensor_getReportingMode(nullptr), -1);
+    ASSERT_NULL(ASensor_getName(nullptr));
+    ASSERT_NULL(ASensor_getVendor(nullptr));
+    ASSERT_EQ(ASensor_getType(nullptr), ASENSOR_TYPE_INVALID);
+    // cannot use ASSERT_EQ as nan compare always returns false
+    ASSERT_NAN(ASensor_getResolution(nullptr));
+    ASSERT_EQ(ASensor_getMinDelay(nullptr), ASENSOR_DELAY_INVALID);
+    ASSERT_EQ(ASensor_getFifoMaxEventCount(nullptr), ASENSOR_FIFO_COUNT_INVALID);
+    ASSERT_EQ(ASensor_getFifoReservedEventCount(nullptr), ASENSOR_FIFO_COUNT_INVALID);
+    ASSERT_NULL(ASensor_getStringType(nullptr));
+    ASSERT_EQ(ASensor_getReportingMode(nullptr), AREPORTING_MODE_INVALID);
     ASSERT_EQ(ASensor_isWakeUpSensor(nullptr), false);
     ASSERT_EQ(ASensor_isDirectChannelTypeSupported(
             nullptr, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY), false);
