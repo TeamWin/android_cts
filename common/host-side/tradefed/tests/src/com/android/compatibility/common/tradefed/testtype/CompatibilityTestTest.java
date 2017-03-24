@@ -33,6 +33,7 @@ import org.easymock.EasyMock;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -282,8 +283,8 @@ public class CompatibilityTestTest extends TestCase {
                 return true;
             }
             @Override
-            public List<IModuleDef> getModules(String serial, int shardIndex) {
-                return new ArrayList<IModuleDef>();
+            public LinkedList<IModuleDef> getModules(String serial, int shardIndex) {
+                return new LinkedList<IModuleDef>();
             }
         }, 0);
         mTest.setDevice(mMockDevice);

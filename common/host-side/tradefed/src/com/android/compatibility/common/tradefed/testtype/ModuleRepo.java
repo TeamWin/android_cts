@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -441,11 +442,11 @@ public class ModuleRepo implements IModuleRepo {
      * {@inheritDoc}
      */
     @Override
-    public List<IModuleDef> getModules(String serial, int shardIndex) {
+    public LinkedList<IModuleDef> getModules(String serial, int shardIndex) {
         Collections.sort(mNonTokenModules, new ExecutionOrderComparator());
         List<IModuleDef> modules = getShard(mNonTokenModules, shardIndex, mTotalShards);
         if (modules == null) {
-            modules = new ArrayList<IModuleDef>();
+            modules = new LinkedList<IModuleDef>();
         }
         long estimatedTime = 0;
         for (IModuleDef def : modules) {
@@ -475,7 +476,9 @@ public class ModuleRepo implements IModuleRepo {
         Collections.sort(modules, new ExecutionOrderComparator());
         CLog.logAndDisplay(LogLevel.INFO, "%s running %s modules, expected to complete in %s: %s",
                 serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime), modules);
-        return modules;
+        LinkedList<IModuleDef> tests = new LinkedList<>();
+        tests.addAll(modules);
+        return tests;
     }
 
     /**
@@ -568,5 +571,18 @@ public class ModuleRepo implements IModuleRepo {
     protected void resetModuleRepo() {
         mInitCount = 0;
         mTokenModuleScheduled = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void tearDown() {
+        mNonTokenModules.clear();
+        mTokenModules.clear();
+        mIncludeFilters.clear();
+        mExcludeFilters.clear();
+        mTestArgs.clear();
+        mModuleArgs.clear();
     }
 }
