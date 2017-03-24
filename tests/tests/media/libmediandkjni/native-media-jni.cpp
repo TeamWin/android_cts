@@ -848,16 +848,26 @@ extern "C" jboolean Java_android_media_cts_NdkMediaCodec_AMediaCodecReleaseOutpu
 
 }
 
-extern "C" jobject Java_android_media_cts_NdkMediaCodec_AMediaCodecGetOutputBuffer(
-        JNIEnv* env, jclass /*clazz*/, jlong codec, jint index) {
+static jobject AMediaCodecGetBuffer(
+        JNIEnv* env,
+        jlong codec,
+        jint index,
+        uint8_t *(*getBuffer)(AMediaCodec*, size_t, size_t*)) {
 
     size_t bufsize;
-    uint8_t *buf = AMediaCodec_getOutputBuffer(
+    uint8_t *buf = getBuffer(
             reinterpret_cast<AMediaCodec *>(codec),
             index,
             &bufsize);
 
     return env->NewDirectByteBuffer(buf, bufsize);
+
+}
+
+extern "C" jobject Java_android_media_cts_NdkMediaCodec_AMediaCodecGetOutputBuffer(
+        JNIEnv* env, jclass /*clazz*/, jlong codec, jint index) {
+
+    return AMediaCodecGetBuffer(env, codec, index, AMediaCodec_getOutputBuffer);
 
 }
 
@@ -881,6 +891,68 @@ extern "C" jlongArray Java_android_media_cts_NdkMediaCodec_AMediaCodecDequeueOut
     jlongArray jret = env->NewLongArray(5);
     env->SetLongArrayRegion(jret, 0, 5, ret);
     return jret;
+
+}
+
+extern "C" jobject Java_android_media_cts_NdkMediaCodec_AMediaCodecGetInputBuffer(
+        JNIEnv* env, jclass /*clazz*/, jlong codec, jint index) {
+
+    return AMediaCodecGetBuffer(env, codec, index, AMediaCodec_getInputBuffer);
+
+}
+
+extern "C" jint Java_android_media_cts_NdkMediaCodec_AMediaCodecDequeueInputBuffer(
+        JNIEnv* /*env*/, jclass /*clazz*/, jlong codec, jlong timeoutUs) {
+
+    return AMediaCodec_dequeueInputBuffer(
+            reinterpret_cast<AMediaCodec *>(codec),
+            timeoutUs);
+
+}
+
+extern "C" jboolean Java_android_media_cts_NdkMediaCodec_AMediaCodecQueueInputBuffer(
+        JNIEnv* /*env*/,
+        jclass /*clazz*/,
+        jlong codec,
+        jint index,
+        jint offset,
+        jint size,
+        jlong presentationTimeUs,
+        jint flags) {
+
+    media_status_t err = AMediaCodec_queueInputBuffer(
+            reinterpret_cast<AMediaCodec *>(codec),
+            index,
+            offset,
+            size,
+            presentationTimeUs,
+            flags);
+
+    return err == AMEDIA_OK;
+
+}
+
+extern "C" jboolean Java_android_media_cts_NdkMediaCodec_AMediaCodecSetParameter(
+        JNIEnv* env, jclass /*clazz*/, jlong codec, jstring jkey, jint value) {
+
+    AMediaFormat* params = AMediaFormat_new();
+    if (params == NULL) {
+        return false;
+    }
+
+    const char *key = env->GetStringUTFChars(jkey, NULL);
+    if (key == NULL) {
+        AMediaFormat_delete(params);
+        return false;
+    }
+
+    AMediaFormat_setInt32(params, key, value);
+    media_status_t err = AMediaCodec_setParameters(
+            reinterpret_cast<AMediaCodec *>(codec),
+            params);
+    env->ReleaseStringUTFChars(jkey, key);
+    AMediaFormat_delete(params);
+    return err == AMEDIA_OK;
 
 }
 

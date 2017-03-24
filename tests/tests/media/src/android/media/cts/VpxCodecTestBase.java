@@ -230,6 +230,8 @@ public class VpxCodecTestBase extends AndroidTestCase {
         long timeoutDequeue;
         // Flag if encoder should run in Looper thread.
         boolean runInLooperThread;
+        // Flag if use NdkMediaCodec
+        boolean useNdk;
     }
 
     /**
@@ -815,8 +817,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
      */
     protected class MediaEncoderAsync extends Thread {
         private int mId;
-        private MediaCodec mCodec;
-        private MediaFormat mFormat;
+        private MediaCodecWrapper mCodec;
         private ByteBuffer[] mInputBuffers;
         private ByteBuffer[] mOutputBuffers;
         private int mInputFrameIndex;
@@ -1014,9 +1015,8 @@ public class VpxCodecTestBase extends AndroidTestCase {
         }
 
         private void createCodecInternal(final String name,
-                final MediaFormat format, final long timeout) throws Exception {
+                final MediaFormat format, final long timeout, boolean useNdk) throws Exception {
             mBufferInfo = new MediaCodec.BufferInfo();
-            mFormat = format;
             mFrameRate = format.getInteger(MediaFormat.KEY_FRAME_RATE);
             mTimeout = timeout;
             mInputFrameIndex = 0;
@@ -1024,11 +1024,15 @@ public class VpxCodecTestBase extends AndroidTestCase {
             mInPresentationTimeUs = 0;
             mOutPresentationTimeUs = 0;
 
-            mCodec = MediaCodec.createByCodecName(name);
+            if (useNdk) {
+                mCodec = new NdkMediaCodec(name);
+            } else {
+                mCodec = new SdkMediaCodec(MediaCodec.createByCodecName(name), mAsync);
+            }
             if (mAsync) {
                 mCodec.setCallback(mCallback);
             }
-            mCodec.configure(mFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            mCodec.configure(format, MediaCodec.CONFIGURE_FLAG_ENCODE);
             mCodec.start();
 
             // get the cached input/output only in sync mode
@@ -1039,7 +1043,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
         }
 
         public void createCodec(int id, final String name, final MediaFormat format,
-                final long timeout, boolean async)  throws Exception {
+                final long timeout, boolean async, final boolean useNdk)  throws Exception {
             mId = id;
             mAsync = async;
             if (mAsync) {
@@ -1048,7 +1052,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
             runCallable( new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
-                    createCodecInternal(name, format, timeout);
+                    createCodecInternal(name, format, timeout, useNdk);
                     return null;
                 }
             } );
@@ -1060,9 +1064,10 @@ public class VpxCodecTestBase extends AndroidTestCase {
             mInputBufIndex = mCodec.dequeueInputBuffer(mTimeout);
 
             if (mInputBufIndex >= 0) {
-                mInputBuffers[mInputBufIndex].clear();
-                mInputBuffers[mInputBufIndex].put(encFrame);
-                mInputBuffers[mInputBufIndex].rewind();
+                ByteBuffer inputBuffer = mCodec.getInputBuffer(mInputBufIndex);
+                inputBuffer.clear();
+                inputBuffer.put(encFrame);
+                inputBuffer.rewind();
                 int encFrameLength = encFrame.length;
                 int flags = 0;
                 if (inputEOS) {
@@ -1114,8 +1119,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
                 if (result == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     mOutputBuffers = mCodec.getOutputBuffers();
                 } else if (result == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    mFormat = mCodec.getOutputFormat();
-                    Log.d(TAG, "Format changed: " + mFormat.toString());
+                    Log.d(TAG, "Format changed: " + mCodec.getOutputFormatString());
                 }
                 result = mCodec.dequeueOutputBuffer(mBufferInfo, mTimeout);
             }
@@ -1126,8 +1130,9 @@ public class VpxCodecTestBase extends AndroidTestCase {
             if (result >= 0) {
                 int outputBufIndex = result;
                 mOutput.buffer = new byte[mBufferInfo.size];
-                mOutputBuffers[outputBufIndex].position(mBufferInfo.offset);
-                mOutputBuffers[outputBufIndex].get(mOutput.buffer, 0, mBufferInfo.size);
+                ByteBuffer outputBuffer = mCodec.getOutputBuffer(outputBufIndex);
+                outputBuffer.position(mBufferInfo.offset);
+                outputBuffer.get(mOutput.buffer, 0, mBufferInfo.size);
                 mOutPresentationTimeUs = mBufferInfo.presentationTimeUs;
 
                 String logStr = "Enc" + mId + ". Frame # " + mOutputFrameIndex;
@@ -1318,7 +1323,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
         Log.d(TAG, "  Output ivf:" + streamParams.outputIvfFilename);
         MediaEncoderAsync codec = new MediaEncoderAsync();
         codec.createCodec(0, properties.codecName, format,
-                streamParams.timeoutDequeue, streamParams.runInLooperThread);
+                streamParams.timeoutDequeue, streamParams.runInLooperThread, streamParams.useNdk);
 
         // encode loop
         boolean sawInputEOS = false;  // no more data
@@ -1498,7 +1503,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
 
         codec.setAsyncHelper(helper);
         codec.createCodec(0, properties.codecName, format,
-                streamParams.timeoutDequeue, streamParams.runInLooperThread);
+                streamParams.timeoutDequeue, streamParams.runInLooperThread, streamParams.useNdk);
         codec.waitForCompletion(DEFAULT_ENCODE_TIMEOUT_MS);
 
         codec.deleteCodec();
@@ -1620,7 +1625,7 @@ public class VpxCodecTestBase extends AndroidTestCase {
             // Create encoder
             codec[i] = new MediaEncoderAsync();
             codec[i].createCodec(i, properties.codecName, format[i],
-                    params.timeoutDequeue, params.runInLooperThread);
+                    params.timeoutDequeue, params.runInLooperThread, params.useNdk);
             codecProperties[i] = new CodecProperties(properties.codecName, properties.colorFormat);
 
             inputConsumed[i] = true;

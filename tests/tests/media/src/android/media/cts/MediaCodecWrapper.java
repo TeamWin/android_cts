@@ -18,12 +18,14 @@ package android.media.cts;
 
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.Callback;
 import android.media.MediaFormat;
+import android.os.Bundle;
 import java.nio.ByteBuffer;
 
 /**
- * This interface exposes the minimum set of {@link MediaCodec} APIs used in surface to surface
- * tests in {@link EncodeDecodeTest}.
+ * This interface exposes the minimum set of {@link MediaCodec} APIs tested in {@link EncodeDecodeTest}
+ * and {@link VpxEncoderTest}.
  */
 public interface MediaCodecWrapper {
 
@@ -50,5 +52,22 @@ public interface MediaCodecWrapper {
   ByteBuffer getOutputBuffer(int index);
 
   ByteBuffer[] getOutputBuffers();
+
+  ByteBuffer getInputBuffer(int index);
+
+  ByteBuffer[] getInputBuffers();
+
+  void queueInputBuffer(
+          int index,
+          int offset,
+          int size,
+          long presentationTimeUs,
+          int flags);
+
+  int dequeueInputBuffer(long timeoutUs);
+
+  void setParameters(Bundle params);
+
+  void setCallback(Callback mCallback);
 
 }

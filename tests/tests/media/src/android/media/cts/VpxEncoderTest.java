@@ -196,7 +196,7 @@ public class VpxEncoderTest extends VpxCodecTestBase {
      * Encodes 9 seconds of raw stream and requests a sync frame every second (30 frames).
      * The test does not verify the output stream.
      */
-    private void internalTestSyncFrame(String codecMimeType) throws Exception {
+    private void internalTestSyncFrame(String codecMimeType, boolean useNdk) throws Exception {
         int encodeSeconds = 9;
 
         EncoderOutputStreamParameters params = getDefaultEncodingParameters(
@@ -212,6 +212,7 @@ public class VpxEncoderTest extends VpxCodecTestBase {
                 true);
         params.syncFrameInterval = encodeSeconds * FPS;
         params.syncForceFrameInterval = FPS;
+        params.useNdk = useNdk;
         ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
         if (bufInfo == null) {
             Log.i(TAG, "SKIPPING testSyncFrame(): no suitable encoder found");
@@ -246,7 +247,7 @@ public class VpxEncoderTest extends VpxCodecTestBase {
      * Run the the encoder for 12 seconds. Request changes to the
      * bitrate after 6 seconds and ensure the encoder responds.
      */
-    private void internalTestDynamicBitrateChange(String codecMimeType) throws Exception {
+    private void internalTestDynamicBitrateChange(String codecMimeType, boolean useNdk) throws Exception {
         int encodeSeconds = 12;    // Encoding sequence duration in seconds.
         int[] bitrateTargetValues = { 400000, 800000 };  // List of bitrates to test.
 
@@ -273,6 +274,7 @@ public class VpxEncoderTest extends VpxCodecTestBase {
                     bitrateTargetValues[i]);
         }
 
+        params.useNdk = useNdk;
         ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
         if (bufInfo == null) {
             Log.i(TAG, "SKIPPING testDynamicBitrateChange(): no suitable encoder found");
@@ -514,14 +516,22 @@ public class VpxEncoderTest extends VpxCodecTestBase {
     public void testAsyncEncodingVP8() throws Exception { internalTestAsyncEncoding(VP8_MIME); }
     public void testAsyncEncodingVP9() throws Exception { internalTestAsyncEncoding(VP9_MIME); }
 
-    public void testSyncFrameVP8() throws Exception { internalTestSyncFrame(VP8_MIME); }
-    public void testSyncFrameVP9() throws Exception { internalTestSyncFrame(VP9_MIME); }
+    public void testSyncFrameVP8() throws Exception { internalTestSyncFrame(VP8_MIME, false); }
+    public void testSyncFrameVP8Ndk() throws Exception { internalTestSyncFrame(VP8_MIME, true); }
+    public void testSyncFrameVP9() throws Exception { internalTestSyncFrame(VP9_MIME, false); }
+    public void testSyncFrameVP9Ndk() throws Exception { internalTestSyncFrame(VP9_MIME, true); }
 
     public void testDynamicBitrateChangeVP8() throws Exception {
-        internalTestDynamicBitrateChange(VP8_MIME);
+        internalTestDynamicBitrateChange(VP8_MIME, false);
+    }
+    public void testDynamicBitrateChangeVP8Ndk() throws Exception {
+        internalTestDynamicBitrateChange(VP8_MIME, true);
     }
     public void testDynamicBitrateChangeVP9() throws Exception {
-        internalTestDynamicBitrateChange(VP9_MIME);
+        internalTestDynamicBitrateChange(VP9_MIME, false);
+    }
+    public void testDynamicBitrateChangeVP9Ndk() throws Exception {
+        internalTestDynamicBitrateChange(VP9_MIME, true);
     }
 
     public void testParallelEncodingAndDecodingVP8() throws Exception {

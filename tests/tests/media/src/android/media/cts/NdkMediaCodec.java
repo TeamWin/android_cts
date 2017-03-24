@@ -16,8 +16,11 @@
 
 package android.media.cts;
 
+import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.Callback;
 import android.media.MediaFormat;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
 import java.nio.ByteBuffer;
@@ -26,6 +29,7 @@ public class NdkMediaCodec implements MediaCodecWrapper {
 
     private static final String CSD_0 = "csd-0";
     private long mNdkMediaCodec;
+    private final String mName;
 
     static {
         Log.i("@@@", "before loadlibrary");
@@ -46,6 +50,9 @@ public class NdkMediaCodec implements MediaCodecWrapper {
     private static native boolean AMediaCodecReleaseOutputBuffer(long ndkMediaCodec, int index, boolean render);
     private static native ByteBuffer AMediaCodecGetOutputBuffer(long ndkMediaCodec, int index);
     private static native long[] AMediaCodecDequeueOutputBuffer(long ndkMediaCodec, long timeoutUs);
+    private static native ByteBuffer AMediaCodecGetInputBuffer(long ndkMediaCodec, int index);
+    private static native int AMediaCodecDequeueInputBuffer(long ndkMediaCodec, long timeoutUs);
+    private static native boolean AMediaCodecSetParameter(long ndkMediaCodec, String key, int value);
 
     private static native boolean AMediaCodecConfigure(
             long ndkMediaCodec,
@@ -59,7 +66,16 @@ public class NdkMediaCodec implements MediaCodecWrapper {
             ByteBuffer csd,
             int flags);
 
+    private static native boolean AMediaCodecQueueInputBuffer(
+            long ndkMediaCodec,
+            int index,
+            int offset,
+            int size,
+            long presentationTimeUs,
+            int flags);
+
     public NdkMediaCodec(String name) {
+        mName = name;
         mNdkMediaCodec = AMediaCodecCreateCodecByName(name);
     }
 
@@ -174,4 +190,56 @@ public class NdkMediaCodec implements MediaCodecWrapper {
         return null;
     }
 
+    @Override
+    public ByteBuffer getInputBuffer(int index) {
+        return AMediaCodecGetInputBuffer(mNdkMediaCodec, index);
+    }
+
+    @Override
+    public ByteBuffer[] getInputBuffers() {
+        return null;
+    }
+
+    @Override
+    public void queueInputBuffer(
+            int index,
+            int offset,
+            int size,
+            long presentationTimeUs,
+            int flags) {
+
+        AMediaCodecQueueInputBuffer(mNdkMediaCodec, index, offset, size, presentationTimeUs, flags);
+
+    }
+
+    @Override
+    public int dequeueInputBuffer(long timeoutUs) {
+        return AMediaCodecDequeueInputBuffer(mNdkMediaCodec, timeoutUs);
+    }
+
+    @Override
+    public void setParameters(Bundle params) {
+
+        String keys[] = new String[] {
+                MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME,
+                MediaCodec.PARAMETER_KEY_VIDEO_BITRATE};
+
+        for (String key : keys) {
+            if (params.containsKey(key)) {
+                int value = params.getInt(key);
+                AMediaCodecSetParameter(mNdkMediaCodec, key, value);
+            }
+        }
+
+    }
+
+    @Override
+    public void setCallback(Callback mCallback) {
+        throw new UnsupportedOperationException(mCallback.toString());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s(%s, %x)", getClass(), mName, mNdkMediaCodec);
+    }
 }
