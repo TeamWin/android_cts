@@ -2810,13 +2810,13 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
 
     <!-- Strings used for enterprise privacy tests -->
-    <string name="enterprise_privacy_test">Privacy info test</string>
-    <string name="enterprise_privacy_page">Privacy info page</string>
+    <string name="enterprise_privacy_test">Managed device info tests</string>
+    <string name="enterprise_privacy_page">Managed device info page</string>
     <string name="enterprise_privacy_page_info">
         Please press the Go button to open Settings. Verify that:\n
-        1) There is an entry for system privacy.\n
+        1) There is an entry for managed device information.\n
         2) Tapping that entry opens a screen.\n
-        3) In this screen, you are told your organization can:\n
+        3) In this screen, at a minimum, you are told your organization can:\n
         * Change settings on this device.\n
         * See data associated with your work account.\n
         * See the list of all apps on your device.\n
@@ -2874,7 +2874,7 @@ You should be prompted to select credentials; choose the ones you just installed
         5) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
         6) Use the Back button to return to this page.\n
         7) Press the Install button.\n
-        8) Repeat steps (4) through (6), verifying that in step (5), you are told now that your administrator installed one app.\n
+        8) Repeat steps (4) through (6), verifying that in step (5), you are told now that your administrator installed at least one app.\n
         9) Press the Uninstall button.\n
         10) Issue the following command on the host:\n
             adb shell rm /sdcard/NotificationBot.apk
@@ -2886,14 +2886,15 @@ You should be prompted to select credentials; choose the ones you just installed
         Please do the following:\n
         1) Press the Reset button.\n
         2) Press the Open Settings button.\n
-        3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your location.\n
+        3) In the screen that opens, verify that you are not told that your administrator has granted location access to any apps.\n
         4) Use the Back button to return to this page.\n
         5) Press the Grant button.\n
         6) Press the Open Settings button.\n
-        7) In the screen that opens, verify that you are told now that your administrator has allowed one app to access your location.\n
-        8) Tap on that information. Verify that a list of apps that have access to your location shows, and it contains the app CTS Verifier marked as "Enabled by administrator".\n
-        9) Use the Back button to return to this page.\n
-        10) Press the Reset button.
+        7) In the screen that opens, verify that you are told now that your administrator has granted location access to at least one app.\n
+        8) Tap on that information. Verify that a list of apps which have location access shows.\n
+        9) Verify that the list indicates CTS Verifier\'s location access was enabled by your administrator.\n
+        10) Use the Back button to return to this page.\n
+        11) Press the Reset button.
     </string>
     <string name="enterprise_privacy_reset">Reset</string>
     <string name="enterprise_privacy_grant">Grant</string>
@@ -2902,28 +2903,30 @@ You should be prompted to select credentials; choose the ones you just installed
         Please do the following:\n
         1) Press the Reset button.\n
         2) Press the Open Settings button.\n
-        3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your microphone.\n
+        3) In the screen that opens, verify that you are not told that your administrator has granted microphone access to any apps.\n
         4) Use the Back button to return to this page.\n
         5) Press the Grant button.\n
         6) Press the Open Settings button.\n
-        7) In the screen that opens, verify that you are told now that your administrator has allowed one app to access your microphone.\n
-        8) Tap on that information. Verify that a list of apps that have access to your microphone shows, and it contains the app CTS Verifier marked as "Enabled by administrator".\n
-        9) Use the Back button to return to this page.\n
-        10) Press the Reset button.
+        7) In the screen that opens, verify that you are told now that your administrator has granted microphone access to at least one app.\n
+        8) Tap on that information. Verify that a list of apps that have microphone access shows.\n
+        9) Verify that the list indicates CTS Verifier\'s microphone access was enabled by your administrator.\n
+        10) Use the Back button to return to this page.\n
+        11) Press the Reset button.
     </string>
     <string name="enterprise_privacy_admin_granted_camera_access">Camera access permission</string>
     <string name="enterprise_privacy_admin_granted_camera_access_info">
         Please do the following:\n
         1) Press the Reset button.\n
         2) Press the Open Settings button.\n
-        3) In the screen that opens, verify that you are not told that your administrator has allowed any apps to access your camera.\n
+        3) In the screen that opens, verify that you are not told that your administrator has granted camera access to any apps.\n
         4) Use the Back button to return to this page.\n
         5) Press the Grant button.\n
         6) Press the Open Settings button.\n
-        7) In the screen that opens, verify that you are told now that your administrator has allowed one app to access your camera.\n
-        8) Tap on that information. Verify that a list of apps that have access to your camera shows, and it contains the app CTS Verifier marked as "Enabled by administrator".\n
-        9) Use the Back button to return to this page.\n
-        10) Press the Reset button.
+        7) In the screen that opens, verify that you are told now that your administrator has granted camera access to at least one app.\n
+        8) Tap on that information. Verify that a list of apps that have camera access shows.\n
+        9) Verify that the list indicates CTS Verifier\'s camera access was enabled by your administrator.\n
+        10) Use the Back button to return to this page.\n
+        11) Press the Reset button.
     </string>
     <string name="enterprise_privacy_default_apps">Default apps</string>
     <string name="enterprise_privacy_default_apps_info">
@@ -2989,7 +2992,7 @@ You should be prompted to select credentials; choose the ones you just installed
         2) In the screen that opens, verify that you are not told that your administrator installed trusted CA certs.\n
         3) Use the Back button to return to this page.\n
         4) Press the Install Cert button to install a trusted CA cert.\n
-        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that the administrator has installed a trusted CA cert.\n
+        5) Repeat steps (1) through (3), verifying that in step (2), you are told now that the administrator has installed at least one trusted CA cert.\n
         6) Press the Finish button to clear the cert.
     </string>
     <string name="enterprise_privacy_install_cert">Install Cert</string>
@@ -3001,7 +3004,7 @@ You should be prompted to select credentials; choose the ones you just installed
         3) In the screen that opens, verify that you are not told that your administrator installed trusted CA certs.\n
         4) Use the Back button to return to this page.\n
         5) Press the Install Cert button to install a trusted CA cert in your work profile.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that the administrator has installed a trusted CA cert in your work profile.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that the administrator has installed at least one trusted CA cert in your work profile.\n
         7) Press the Finish button to remove the work profile and cert.
     </string>
     <string name="enterprise_privacy_settings">Settings</string>
@@ -3026,7 +3029,7 @@ You should be prompted to select credentials; choose the ones you just installed
         3) In the screen that opens, verify that you are not told work profile data will be deleted if you mistype your password too many times.\n
         4) Use the Back button to return to this page.\n
         5) Press the Set Limit button to set the maximum number of password attempts.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that work profile device data will be deleted if you mistype your password 100 times.\n
+        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that work profile data will be deleted if you mistype your password 100 times.\n
         7) Press the Finish button to remove the work profile.
     </string>
     <string name="enterprise_privacy_quick_settings">Quick settings disclosure</string>
