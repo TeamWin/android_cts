@@ -57,7 +57,7 @@ public class WallpaperRestoreTest {
     private static final int MAX_COLOR_DISTANCE = 12;
 
     // How long we'll wait for the confirm dialog to show.
-    private static final int CONFIRM_DIALOG_TIMEOUT_MS = 10000;
+    private static final int CONFIRM_DIALOG_TIMEOUT_MS = 30000;
 
     private UiDevice mDevice;
     private WallpaperManager mWallpaperManager;
