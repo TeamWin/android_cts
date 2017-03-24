@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 extern int register_android_cts_FileUtils(JNIEnv*);
+extern int register_android_cts_CpuFeatures(JNIEnv*);
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env = NULL;
@@ -27,6 +28,10 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
 
     if (register_android_cts_FileUtils(env)) {
+      return JNI_ERR;
+    }
+
+    if (register_android_cts_CpuFeatures(env)) {
       return JNI_ERR;
     }
 

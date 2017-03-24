@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.os.cts;
+package com.android.compatibility.common.util;
 
 import android.os.Build;
 
@@ -41,7 +41,7 @@ public class CpuFeatures {
     public static final int HWCAP_IDIVT = (1 << 18);
 
     static {
-        System.loadLibrary("ctsos_jni");
+        System.loadLibrary("cts_jni");
     }
 
     public static native boolean isArmCpu();
