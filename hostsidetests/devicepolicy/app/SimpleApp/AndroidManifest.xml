@@ -49,6 +49,8 @@
         </service>
         <service android:name=".SimpleService2" android:exported="true" android:process=":other">
         </service>
+        <receiver android:name=".SimpleReceiverStartService" android:exported="true">
+        </receiver>
         <receiver android:name=".SimpleReceiver" android:exported="true">
         </receiver>
         <receiver android:name=".SimpleRemoteReceiver" android:process=":receiver"
