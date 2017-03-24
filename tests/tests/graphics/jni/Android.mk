@@ -22,15 +22,16 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_SRC_FILES := \
 	CtsGraphicsJniOnLoad.cpp \
-	android_graphics_cts_VulkanFeaturesTest.cpp \
-	android_graphics_cts_BitmapTest.cpp
+	android_graphics_cts_ANativeWindowTest.cpp \
+	android_graphics_cts_BitmapTest.cpp \
+	android_graphics_cts_VulkanFeaturesTest.cpp
 
 LOCAL_CFLAGS += -Wall -Werror
 
 LOCAL_STATIC_LIBRARIES := libvkjson_ndk
-LOCAL_SHARED_LIBRARIES := libvulkan liblog libdl libjnigraphics
+LOCAL_SHARED_LIBRARIES := libandroid libvulkan libnativewindow liblog libdl libjnigraphics
 LOCAL_NDK_STL_VARIANT := c++_static
 
-LOCAL_SDK_VERSION := 24
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_SHARED_LIBRARY)
