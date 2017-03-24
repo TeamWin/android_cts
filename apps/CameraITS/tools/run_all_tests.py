@@ -225,7 +225,7 @@ def main():
                                scene_arg, screen_id_arg]
                 else:
                     # Skip scene validation for scene 5 running in parallel
-                    if merge_result_switch and scene != 'scene5':
+                    if not merge_result_switch or scene != 'scene5':
                         scene_arg = "scene=" + scene_req[scene]
                         extra_args = scene_extra_args.get(scene, [])
                         cmd = ['python',
