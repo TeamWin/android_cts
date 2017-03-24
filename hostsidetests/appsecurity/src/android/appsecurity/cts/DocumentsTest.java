@@ -89,4 +89,8 @@ public class DocumentsTest extends DocumentsTestCase {
     public void testCreateWebLink() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testCreateWebLink");
     }
+
+    public void testEject() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testEject");
+    }
 }
