@@ -19,6 +19,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.audiofx.AudioEffect;
+import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -28,6 +29,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.UUID;
 
+@SecurityTest
 public class AudioSecurityTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioSecurityTest";
 

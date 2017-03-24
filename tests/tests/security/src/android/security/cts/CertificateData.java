@@ -17,12 +17,14 @@
  */
 
 package android.security.cts;
+import android.platform.test.annotations.SecurityTest;
 
 /**
  * Run "./cts/tools/utils/java-cert-list-generator.sh >
  * cts/tests/tests/security/src/android/security/cts/CertificateData.java"
  * to generate this file.
  */
+@SecurityTest
 class CertificateData {
   static final String[] CERTIFICATE_DATA = {
       "91:C6:D6:EE:3E:8A:C8:63:84:E5:48:C2:99:29:5C:75:6C:81:7B:81",

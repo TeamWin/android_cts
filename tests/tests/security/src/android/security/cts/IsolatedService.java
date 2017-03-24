@@ -19,6 +19,7 @@ package android.security.cts;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+@SecurityTest
 public class IsolatedService extends Service {
 
     private static final String TAG = IsolatedService.class.getSimpleName();

@@ -20,6 +20,7 @@ import android.platform.test.annotations.SecurityTest;
 
 import junit.framework.TestCase;
 
+@SecurityTest
 public class NativeCodeTest extends TestCase {
 
     static {

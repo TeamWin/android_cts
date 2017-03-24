@@ -23,12 +23,14 @@ import android.graphics.Movie;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 
 import java.io.InputStream;
 
 import android.security.cts.R;
 
+@SecurityTest
 public class Movie33897722 extends AndroidTestCase {
     /**
      * Verifies that decoding a particular GIF file does not read out out of bounds.

@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.platform.test.annotations.RestrictedBuildTest;
+import android.platform.test.annotations.SecurityTest;
 
 import com.android.compatibility.common.util.FileUtils;
 
@@ -28,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+@SecurityTest
 public class BannedFilesTest extends TestCase {
 
     /**

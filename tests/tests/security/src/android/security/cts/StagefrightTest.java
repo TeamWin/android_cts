@@ -59,6 +59,7 @@ import android.security.cts.R;
  * Verify that the device is not vulnerable to any known Stagefright
  * vulnerabilities.
  */
+@SecurityTest
 public class StagefrightTest extends InstrumentationTestCase {
     static final String TAG = "StagefrightTest";
 
