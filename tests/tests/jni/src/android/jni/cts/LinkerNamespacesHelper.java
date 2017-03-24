@@ -34,9 +34,10 @@ import java.util.List;
 class LinkerNamespacesHelper {
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
+        "libaaudio.so",
         "libandroid.so",
-        "libcamera2ndk.so",
         "libc.so",
+        "libcamera2ndk.so",
         "libdl.so",
         "libEGL.so",
         "libGLESv1_CM.so",
@@ -48,11 +49,12 @@ class LinkerNamespacesHelper {
         "liblog.so",
         "libmediandk.so",
         "libm.so",
-        "liboboe.so",
+        "libnativewindow.so",
         "libOpenMAXAL.so",
         "libOpenSLES.so",
         "libRS.so",
         "libstdc++.so",
+        "libsync.so",
         "libvulkan.so",
         "libz.so"
     };
