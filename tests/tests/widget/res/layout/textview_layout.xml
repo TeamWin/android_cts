@@ -333,6 +333,14 @@
                 android:textAppearance="@style/TextView_FontXmlResource" />
 
             <TextView
+                android:id="@+id/textview_fontxmlresource_withStyle"
+                android:text="@string/text_view_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/samplexmlfont"
+                android:textStyle="italic"/>
+
+            <TextView
                 android:id="@+id/textview_autosize_uniform_predef_sizes"
                 android:layout_width="100dp"
                 android:layout_height="200dp"
