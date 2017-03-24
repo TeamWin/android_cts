@@ -188,21 +188,4 @@ public class SparseArrayTest {
         assertEquals(20L, sparseArray.valueAt(2).longValue());
         assertEquals(Long.MIN_VALUE, sparseArray.valueAt(3).longValue());
     }
-
-    @Test
-    public void testIndexOfValueByValue() {
-        SparseArray<String> sparseArray = new SparseArray<>();
-        // Insert a number of String Objects into array
-        sparseArray.put(1, "Index 0");
-        sparseArray.put(15, "Index 1");
-        sparseArray.put(25, "Index 2");
-        sparseArray.put(50, "Index 3");
-        sparseArray.put(51, "Index 4");
-
-        assertTrue(sparseArray.indexOfValueByValue("Index 0") == 0);
-        assertTrue(sparseArray.indexOfValueByValue("Index 1") == 1);
-        assertTrue(sparseArray.indexOfValueByValue("Index 2") == 2);
-        assertTrue(sparseArray.indexOfValueByValue("Index 3") == 3);
-        assertTrue(sparseArray.indexOfValueByValue("Index 4") == 4);
-    }
 }
