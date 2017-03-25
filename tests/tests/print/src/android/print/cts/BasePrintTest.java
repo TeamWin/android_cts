@@ -18,6 +18,7 @@ package android.print.cts;
 
 import static android.print.cts.Utils.getPrintManager;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -129,6 +130,7 @@ public abstract class BasePrintTest {
     private CallCounter mCancelOperationCounter;
     private CallCounter mLayoutCallCounter;
     private CallCounter mWriteCallCounter;
+    private CallCounter mWriteCancelCallCounter;
     private CallCounter mFinishCallCounter;
     private CallCounter mPrintJobQueuedCallCounter;
     private CallCounter mCreateSessionCallCounter;
@@ -244,6 +246,7 @@ public abstract class BasePrintTest {
         mLayoutCallCounter = new CallCounter();
         mFinishCallCounter = new CallCounter();
         mWriteCallCounter = new CallCounter();
+        mWriteCancelCallCounter = new CallCounter();
         mFinishCallCounter = new CallCounter();
         mPrintJobQueuedCallCounter = new CallCounter();
         mCreateSessionCallCounter = new CallCounter();
@@ -345,6 +348,10 @@ public abstract class BasePrintTest {
         mWriteCallCounter.call();
     }
 
+    protected void onWriteCancelCalled() {
+        mWriteCancelCallCounter.call();
+    }
+
     void onFinishCalled() {
         mFinishCallCounter.call();
     }
@@ -393,6 +400,11 @@ public abstract class BasePrintTest {
 
     void waitForWriteAdapterCallback(int count) {
         waitForCallbackCallCount(mWriteCallCounter, count, "Did not get expected call to write.");
+    }
+
+    void waitForWriteCancelCallback(int count) {
+        waitForCallbackCallCount(mWriteCancelCallCounter, count,
+                "Did not get expected cancel of write.");
     }
 
     private static void waitForCallbackCallCount(CallCounter counter, int count, String message) {
@@ -453,6 +465,7 @@ public abstract class BasePrintTest {
         mCancelOperationCounter.reset();
         mLayoutCallCounter.reset();
         mWriteCallCounter.reset();
+        mWriteCancelCallCounter.reset();
         mFinishCallCounter.reset();
         mPrintJobQueuedCallCounter.reset();
         mCreateSessionCallCounter.reset();
@@ -617,6 +630,10 @@ public abstract class BasePrintTest {
             dumpWindowHierarchy();
             throw e;
         }
+    }
+
+    void assertNoPrintButton() throws UiObjectNotFoundException, IOException {
+        assertFalse(sUiDevice.hasObject(By.res("com.android.printspooler:id/print_button")));
     }
 
     void clickPrintButton() throws UiObjectNotFoundException, IOException {
