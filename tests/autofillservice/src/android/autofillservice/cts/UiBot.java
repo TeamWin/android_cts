@@ -129,6 +129,14 @@ final class UiBot {
     }
 
     /**
+     * Asserts a text is now shown.
+     */
+    public void assertNotShownByText(String text) {
+        final UiObject2 uiObject = mDevice.findObject(By.text(text));
+        assertWithMessage(text).that(uiObject).isNull();
+    }
+
+    /**
      * Checks if a View with a certain text exists.
      */
     boolean hasViewWithText(String name) {

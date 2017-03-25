@@ -170,9 +170,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testAutoFillOneDatasetAndMoveFocusAround() throws Exception {
         // Set service.
         enableService();
-        // TODO(b/35948916): callback assertions are redundant here because they're tested by
-        // testAutofillCallbacks(), but that test would not detect the extra call.
-        final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
@@ -185,28 +182,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.onUsername((v) -> v.requestFocus());
         sReplier.getNextFillRequest();
-        final View username = mActivity.getUsername();
-        final View password = mActivity.getPassword();
-
-        callback.assertUiShownEvent(username);
 
         // Make sure tapping on other fields from the dataset does not trigger it again
         mActivity.onPassword((v) -> v.requestFocus());
         sReplier.assertNumberUnhandledFillRequests(0);
 
-        callback.assertUiHiddenEvent(username);
-        callback.assertUiShownEvent(password);
-
         mActivity.onUsername((v) -> v.requestFocus());
         sReplier.assertNumberUnhandledFillRequests(0);
-
-        callback.assertUiHiddenEvent(password);
-        callback.assertUiShownEvent(username);
-
-        // TODO(b/35948916): temporary hack since UI is sending 2 events instead of 1
-        callback.assertUiShownEvent(username);
-
-        callback.assertNumberUnhandledEvents(0);
 
         // Auto-fill it.
         sUiBot.selectDataset("The Dude");
@@ -906,6 +888,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testFillResponseAuth() throws Exception {
         // Set service.
         enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
         AuthenticationActivity.setResponse(
@@ -924,7 +907,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setAuthentication(authentication)
-                .setPresentation(createPresentation("Auth"))
+                .setPresentation(createPresentation("Tap to auth response"))
                 .build());
 
         // Set expectation for the activity
@@ -935,12 +918,19 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
 
         // Authenticate
-        sUiBot.selectByText("Auth");
+        callback.assertUiShownEvent(username);
+        sUiBot.selectByText("Tap to auth response");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNotShownByText("Tap to auth response");
 
         // Select the dataset
+        callback.assertUiShownEvent(username);
         sUiBot.selectDataset("Dataset");
+        callback.assertUiHiddenEvent(username);
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -950,6 +940,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     public void testDatasetAuth() throws Exception {
         // Set service.
         enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
         AuthenticationActivity.setDataset(new CannedDataset.Builder()
@@ -967,7 +958,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, AutofillValue.forText("dude"))
                         .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
-                        .setPresentation(createPresentation("Auth"))
+                        .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())
                 .build());
@@ -980,12 +971,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
 
         // Authenticate
-        sUiBot.selectByText("Auth");
-
-        // Select the dataset
-        sUiBot.selectDataset("Dataset");
+        callback.assertUiShownEvent(username);
+        sUiBot.selectByText("Tap to auth dataset");
+        callback.assertUiHiddenEvent(username);
+        sUiBot.assertNotShownByText("Tap to auth dataset");
 
         // Check the results.
         mActivity.assertAutoFilled();
