@@ -18,16 +18,25 @@ package android.media.cts;
 
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
+import android.media.MediaCodec.Callback;
 import android.media.MediaFormat;
+import android.os.Bundle;
 import java.nio.ByteBuffer;
 
 public class SdkMediaCodec implements MediaCodecWrapper {
 
     private final MediaCodec mCodec;
+    private final boolean mAsync;
     private ByteBuffer[] mOutputBuffers;
+    private ByteBuffer[] mInputBuffers;
 
-    public SdkMediaCodec(MediaCodec mCodec) {
-        this.mCodec = mCodec;
+    public SdkMediaCodec(MediaCodec codec, boolean async) {
+        this.mCodec = codec;
+        this.mAsync = async;
+    }
+
+    public SdkMediaCodec(MediaCodec codec) {
+        this(codec, false);
     }
 
     public MediaCodec getMediaCodec() {
@@ -91,7 +100,42 @@ public class SdkMediaCodec implements MediaCodecWrapper {
 
     @Override
     public ByteBuffer getOutputBuffer(int index) {
-        return mOutputBuffers[index];
+        return mAsync? mCodec.getOutputBuffer(index) : mOutputBuffers[index];
+    }
+
+    @Override
+    public ByteBuffer[] getInputBuffers() {
+        return mInputBuffers = mCodec.getInputBuffers();
+    }
+
+    @Override
+    public ByteBuffer getInputBuffer(int index) {
+        return mAsync? mCodec.getInputBuffer(index) : mInputBuffers[index];
+    }
+
+    @Override
+    public void queueInputBuffer(
+            int index,
+            int offset,
+            int size,
+            long presentationTimeUs,
+            int flags) {
+        mCodec.queueInputBuffer(index, offset, size, presentationTimeUs, flags);
+    }
+
+    @Override
+    public int dequeueInputBuffer(long timeoutUs) {
+        return mCodec.dequeueInputBuffer(timeoutUs);
+    }
+
+    @Override
+    public void setParameters(Bundle params) {
+        mCodec.setParameters(params);
+    }
+
+    @Override
+    public void setCallback(Callback mCallback) {
+        mCodec.setCallback(mCallback);
     }
 
 }
