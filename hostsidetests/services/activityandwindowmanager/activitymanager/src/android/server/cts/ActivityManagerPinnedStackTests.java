@@ -84,8 +84,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     private static final float FLOAT_COMPARE_EPSILON = 0.005f;
 
-    private static final float VALID_ASPECT_RATIO = 2f;
-    private static final float EXTREME_ASPECT_RATIO = 3f;
+    // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio
+    private static final float MIN_ASPECT_RATIO = 1f / 2.39f;
+    private static final float BELOW_MIN_ASPECT_RATIO = MIN_ASPECT_RATIO - FLOAT_COMPARE_EPSILON;
+    // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMaxAspectRatio
+    private static final float MAX_ASPECT_RATIO = 2.39f;
+    private static final float ABOVE_MAX_ASPECT_RATIO = MAX_ASPECT_RATIO + FLOAT_COMPARE_EPSILON;
 
     public void testEnterPictureInPictureMode() throws Exception {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"),
@@ -256,27 +260,43 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
 
-    public void testEnterPipAspectRatio() throws Exception {
+    public void testEnterPipAspectRatioMin() throws Exception {
+        testEnterPipAspectRatio(MAX_ASPECT_RATIO);
+    }
+
+    public void testEnterPipAspectRatioMax() throws Exception {
+        testEnterPipAspectRatio(MIN_ASPECT_RATIO);
+    }
+
+    private void testEnterPipAspectRatio(float aspectRatio) throws Exception {
         if (!supportsPip()) return;
 
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
-                EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
+                EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(aspectRatio));
+        assertPinnedStackExists();
 
         // Assert that we have entered PIP and that the aspect ratio is correct
-        assertPinnedStackExists();
         Rectangle pinnedStackBounds =
                 mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
         assertTrue(floatEquals((float) pinnedStackBounds.width / pinnedStackBounds.height,
-                VALID_ASPECT_RATIO));
+                aspectRatio));
     }
 
-    public void testResizePipAspectRatio() throws Exception {
+    public void testResizePipAspectRatioMin() throws Exception {
+        testResizePipAspectRatio(MIN_ASPECT_RATIO);
+    }
+
+    public void testResizePipAspectRatioMax() throws Exception {
+        testResizePipAspectRatio(MAX_ASPECT_RATIO);
+    }
+
+    private void testResizePipAspectRatio(float aspectRatio) throws Exception {
         if (!supportsPip()) return;
 
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
-                EXTRA_SET_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
+                EXTRA_SET_ASPECT_RATIO, Float.toString(aspectRatio));
         assertPinnedStackExists();
 
         // Hacky, but we need to wait for the enterPictureInPicture animation to complete and
@@ -285,37 +305,53 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState(mDevice, (state) -> {
             Rectangle pinnedStackBounds = state.getStackById(PINNED_STACK_ID).getBounds();
             boolean isValidAspectRatio = floatEquals(
-                    (float) pinnedStackBounds.width / pinnedStackBounds.height, VALID_ASPECT_RATIO);
+                    (float) pinnedStackBounds.width / pinnedStackBounds.height, aspectRatio);
             result[0] = isValidAspectRatio;
             return isValidAspectRatio;
         }, "Waiting for pinned stack to be resized");
         assertTrue(result[0]);
     }
 
-    public void testEnterPipExtremeAspectRatios() throws Exception {
+    public void testEnterPipExtremeAspectRatioMin() throws Exception {
+        testEnterPipExtremeAspectRatio(BELOW_MIN_ASPECT_RATIO);
+    }
+
+    public void testEnterPipExtremeAspectRatioMax() throws Exception {
+        testEnterPipExtremeAspectRatio(ABOVE_MAX_ASPECT_RATIO);
+    }
+
+    private void testEnterPipExtremeAspectRatio(float aspectRatio) throws Exception {
         if (!supportsPip()) return;
 
         // Assert that we could not create a pinned stack with an extreme aspect ratio
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
-                EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(EXTREME_ASPECT_RATIO));
+                EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(aspectRatio));
         assertPinnedStackDoesNotExist();
     }
 
-    public void testSetPipExtremeAspectRatios() throws Exception {
+    public void testSetPipExtremeAspectRatioMin() throws Exception {
+        testSetPipExtremeAspectRatio(BELOW_MIN_ASPECT_RATIO);
+    }
+
+    public void testSetPipExtremeAspectRatioMax() throws Exception {
+        testSetPipExtremeAspectRatio(ABOVE_MAX_ASPECT_RATIO);
+    }
+
+    private void testSetPipExtremeAspectRatio(float aspectRatio) throws Exception {
         if (!supportsPip()) return;
 
         // Try to resize the a normal pinned stack to an extreme aspect ratio and ensure that
         // fails (the aspect ratio remains the same)
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
-                EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO),
-                EXTRA_SET_ASPECT_RATIO, Float.toString(EXTREME_ASPECT_RATIO));
+                EXTRA_ENTER_PIP_ASPECT_RATIO, Float.toString(MAX_ASPECT_RATIO),
+                EXTRA_SET_ASPECT_RATIO, Float.toString(aspectRatio));
         assertPinnedStackExists();
         Rectangle pinnedStackBounds =
                 mAmWmState.getAmState().getStackById(PINNED_STACK_ID).getBounds();
         assertTrue(floatEquals((float) pinnedStackBounds.width / pinnedStackBounds.height,
-                VALID_ASPECT_RATIO));
+                MAX_ASPECT_RATIO));
     }
 
     public void testDisallowPipLaunchFromStoppedActivity() throws Exception {
@@ -389,7 +425,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch the PIP activity on pause, and set the aspect ratio
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP_ON_PAUSE, "true",
-                EXTRA_SET_ASPECT_RATIO, Float.toString(VALID_ASPECT_RATIO));
+                EXTRA_SET_ASPECT_RATIO, Float.toString(MAX_ASPECT_RATIO));
 
         // Go home while the pip activity is open to trigger auto-PIP
         launchHomeActivity();
@@ -401,7 +437,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState(mDevice, (state) -> {
             Rectangle pinnedStackBounds = state.getStackById(PINNED_STACK_ID).getBounds();
             boolean isValidAspectRatio = floatEquals(
-                    (float) pinnedStackBounds.width / pinnedStackBounds.height, VALID_ASPECT_RATIO);
+                    (float) pinnedStackBounds.width / pinnedStackBounds.height, MAX_ASPECT_RATIO);
             result[0] = isValidAspectRatio;
             return isValidAspectRatio;
         }, "Waiting for pinned stack to be resized");
