@@ -37,6 +37,7 @@ import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
 import android.view.ViewGroup;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -58,6 +59,12 @@ public class TextureViewTests extends ActivityTestBase {
     public static void teardownClass() {
         sRedTexture.release();
         sRedTexture = null;
+    }
+
+    @After
+    public void tearDown() {
+        // TODO: Workaround for b/34231066
+        DrawCountDown.cancelPending();
     }
 
     @Test
