@@ -32,7 +32,6 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
-import android.view.autofill.AutofillValue;
 
 import org.junit.After;
 import org.junit.Test;
@@ -65,8 +64,8 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                     .setPresentation(createPresentation("Adventure Time"))
-                    .setField(ID_OUTPUT, AutofillValue.forText("Y U NO CHANGE ME?"))
-                    .setField(ID_TIME_PICKER, AutofillValue.forDate(cal.getTimeInMillis()))
+                    .setField(ID_OUTPUT, "Y U NO CHANGE ME?")
+                    .setField(ID_TIME_PICKER, cal.getTimeInMillis())
                     .build())
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_TIME_PICKER)
                 .build());

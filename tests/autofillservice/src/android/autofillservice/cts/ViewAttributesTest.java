@@ -25,7 +25,6 @@ import android.support.annotation.NonNull;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
-import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -134,14 +133,14 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
         try {
             sReplier.addResponse(new CannedFillResponse.Builder()
                     .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                            .setField("firstLevelDefault", AutofillValue.forText("filled"))
-                            .setField("firstLevelManual", AutofillValue.forText("filled"))
-                            .setField("firstLevelAuto", AutofillValue.forText("filled"))
-                            .setField("firstLevelInherit", AutofillValue.forText("filled"))
-                            .setField("manualContainerDefault", AutofillValue.forText("filled"))
-                            .setField("manualContainerManual", AutofillValue.forText("filled"))
-                            .setField("manualContainerAuto", AutofillValue.forText("filled"))
-                            .setField("manualContainerInherit", AutofillValue.forText("filled"))
+                            .setField("firstLevelDefault", "filled")
+                            .setField("firstLevelManual", "filled")
+                            .setField("firstLevelAuto", "filled")
+                            .setField("firstLevelInherit", "filled")
+                            .setField("manualContainerDefault", "filled")
+                            .setField("manualContainerManual", "filled")
+                            .setField("manualContainerAuto", "filled")
+                            .setField("manualContainerInherit", "filled")
                             .setPresentation(createPresentation("dataset"))
                             .build())
                     .build());
@@ -371,7 +370,7 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
             // Set up auto-fill service and response
             sReplier.addResponse(new CannedFillResponse.Builder()
                     .addDataset(new CannedFillResponse.CannedDataset.Builder()
-                            .setField("field", AutofillValue.forText("filled"))
+                            .setField("field", "filled")
                             .setPresentation(createPresentation("dataset"))
                             .build())
                     .build());

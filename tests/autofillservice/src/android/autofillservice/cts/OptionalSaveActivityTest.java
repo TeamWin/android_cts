@@ -29,7 +29,6 @@ import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.rule.ActivityTestRule;
-import android.view.autofill.AutofillValue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -203,10 +202,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
                 "Shelbyville", "Lemon");
         autofillAndSaveOnChangeTest(new CannedDataset.Builder()
                 // Initial dataset
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")),
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"),
                 // Changes
                 () -> {
                     mActivity.mAddress1.setText("742 Evergreen Terrace"); // required
@@ -228,10 +227,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
                 "Shelbyville", "Lemon");
         autofillAndSaveOnChangeTest(new CannedDataset.Builder()
                 // Initial dataset
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")),
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"),
                 // Changes
                 () -> {
                     mActivity.mAddress1.setText("742 Evergreen Terrace"); // required
@@ -252,10 +251,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
                 "Shelbyville", "Lemon");
         autofillAndSaveOnChangeTest(new CannedDataset.Builder()
                 // Initial dataset
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")),
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"),
                 // Changes
                 () -> {
                     mActivity.mCity.setText("Springfield"); // required
@@ -276,10 +275,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
                 "Shelbyville", "Lemon");
         autofillAndSaveOnChangeTest(new CannedDataset.Builder()
                 // Initial dataset
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")),
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"),
                 // Changes
                 () -> {
                     mActivity.mAddress2.setText("Simpsons House"); // not required
@@ -348,10 +347,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("Shelbyville Nuclear Power Plant", "Shelbyville Bluffs",
                 "Shelbyville", "Lemon");
         autofillNoChangeNoSaveTest(new CannedDataset.Builder()
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")), () -> {
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"), () -> {
                     mActivity.mFavoriteColor.setText("Yellow"); // lol
                 });
     }
@@ -361,10 +360,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("Shelbyville Nuclear Power Plant", "Shelbyville Bluffs",
                 "Shelbyville", "Lemon");
         autofillNoChangeNoSaveTest(new CannedDataset.Builder()
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")), () -> {
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"), () -> {
                     mActivity.mAddress1.setText("");
                 });
     }
@@ -374,10 +373,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("Shelbyville Nuclear Power Plant", "Shelbyville Bluffs",
                 "Shelbyville", "Lemon");
         autofillNoChangeNoSaveTest(new CannedDataset.Builder()
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")), () -> {
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"), () -> {
                     mActivity.mCity.setText(null);
                 });
     }
@@ -387,10 +386,10 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.expectAutoFill("Shelbyville Nuclear Power Plant", "Shelbyville Bluffs",
                 "Shelbyville", "Lemon");
         autofillNoChangeNoSaveTest(new CannedDataset.Builder()
-                .setField(ID_ADDRESS1, AutofillValue.forText("Shelbyville Nuclear Power Plant"))
-                .setField(ID_ADDRESS2, AutofillValue.forText("Shelbyville Bluffs"))
-                .setField(ID_CITY, AutofillValue.forText("Shelbyville"))
-                .setField(ID_FAVORITE_COLOR, AutofillValue.forText("Lemon")), () -> {
+                .setField(ID_ADDRESS1, "Shelbyville Nuclear Power Plant")
+                .setField(ID_ADDRESS2, "Shelbyville Bluffs")
+                .setField(ID_CITY, "Shelbyville")
+                .setField(ID_FAVORITE_COLOR, "Lemon"), () -> {
                     mActivity.mAddress1.setText("I'm different");
                     mActivity.mAddress1.setText("Shelbyville Nuclear Power Plant");
                 });

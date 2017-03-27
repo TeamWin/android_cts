@@ -292,7 +292,35 @@ final class CannedFillResponse {
             }
 
             /**
-             * Sets the canned value of a field based on its {@code resourceId}.
+             * Sets the canned value of a text field based on its {@code resourceId}.
+             */
+            public Builder setField(String resourceId, String text) {
+                return setField(resourceId, AutofillValue.forText(text));
+            }
+
+            /**
+             * Sets the canned value of a list field based on its {@code resourceId}.
+             */
+            public Builder setField(String resourceId, int index) {
+                return setField(resourceId, AutofillValue.forList(index));
+            }
+
+            /**
+             * Sets the canned value of a toggle field based on its {@code resourceId}.
+             */
+            public Builder setField(String resourceId, boolean toggled) {
+                return setField(resourceId, AutofillValue.forToggle(toggled));
+            }
+
+            /**
+             * Sets the canned value of a date field based on its {@code resourceId}.
+             */
+            public Builder setField(String resourceId, long date) {
+                return setField(resourceId, AutofillValue.forDate(date));
+            }
+
+            /**
+             * Sets the canned value of a date field based on its {@code resourceId}.
              */
             public Builder setField(String resourceId, AutofillValue value) {
                 mFieldValues.put(resourceId, value);
@@ -302,9 +330,8 @@ final class CannedFillResponse {
             /**
              * Sets the canned value of a field based on its {@code resourceId}.
              */
-            public Builder setField(String resourceId, AutofillValue value,
-                    RemoteViews presentation) {
-                setField(resourceId, value);
+            public Builder setField(String resourceId, String text, RemoteViews presentation) {
+                setField(resourceId, text);
                 mFieldPresentations.put(resourceId, presentation);
                 return this;
             }
