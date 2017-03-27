@@ -18,7 +18,8 @@ import sys
 import time
 
 DISPLAY_LEVEL = 96  # [0:255] Depends on tablet model. Adjust for best result.
-DISPLAY_WAIT = 0.5  # seconds. Screen commands take time to have effect
+DISPLAY_CMD_WAIT = 0.5  # seconds. Screen commands take time to have effect
+DISPLAY_TIMEOUT = 1800000  # ms.
 
 
 def main():
@@ -38,23 +39,32 @@ def main():
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     cmd_ret = process.stdout.read()
     screen_state = re.split(r'[s|=]', cmd_ret)[-1]
-    if 'OFF' in screen_state:
-        print 'Screen OFF. Turning ON.'
-        wakeup = ('adb -s %s shell input keyevent POWER' % screen_id)
-        subprocess.Popen(wakeup.split())
-        time.sleep(DISPLAY_WAIT)
+    power_event = ('adb -s %s shell input keyevent POWER' % screen_id)
+    subprocess.Popen(power_event.split())
+    time.sleep(DISPLAY_CMD_WAIT)
+    if 'ON' in screen_state:
+        print 'Screen was ON. Toggling to refresh.'
+        subprocess.Popen(power_event.split())
+        time.sleep(DISPLAY_CMD_WAIT)
+    else:
+        print 'Screen was OFF. Powered ON.'
     unlock = ('adb -s %s wait-for-device shell wm dismiss-keyguard'
               % screen_id)
     subprocess.Popen(unlock.split())
-    time.sleep(DISPLAY_WAIT)
+    time.sleep(DISPLAY_CMD_WAIT)
 
     # set brightness
     print 'Tablet display brightness set to %d' % DISPLAY_LEVEL
     bright = ('adb -s %s shell settings put system screen_brightness %d'
               % (screen_id, DISPLAY_LEVEL))
     subprocess.Popen(bright.split())
-    time.sleep(DISPLAY_WAIT)
+    time.sleep(DISPLAY_CMD_WAIT)
 
+    # set screen to dim at max time (30min)
+    stay_bright = ('adb -s %s shell settings put system screen_off_timeout %d'
+                   % (screen_id, DISPLAY_TIMEOUT))
+    subprocess.Popen(stay_bright.split())
+    time.sleep(DISPLAY_CMD_WAIT)
 
 if __name__ == '__main__':
     main()
