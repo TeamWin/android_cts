@@ -1014,6 +1014,7 @@ public class LocationManagerTest extends BaseMockLocationTest {
         updateLocationAndWait(TEST_MOCK_PROVIDER_NAME, realProviderToFool, latitude, longitude);
     }
 
+    @UiThreadTest
     public void testGpsStatusListener() {
         MockGpsStatusListener listener = new MockGpsStatusListener();
         mManager.addGpsStatusListener(listener);
