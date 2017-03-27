@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import android.app.Activity;
 import android.app.stubs.MaxAspectRatioActivity;
 import android.app.stubs.MaxAspectRatioResizeableActivity;
+import android.app.stubs.MaxAspectRatioUnsetActivity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
@@ -76,6 +77,11 @@ public class AspectRatioTests {
             new ActivityTestRule<>(MaxAspectRatioResizeableActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
 
+    @Rule
+    public ActivityTestRule<MaxAspectRatioUnsetActivity> mMaxAspectRatioUnsetActivity =
+            new ActivityTestRule<>(MaxAspectRatioUnsetActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
+
     // TODO: Can't use this to start an activity in a different process...sigh.
     @Rule
     public ActivityTestRule<Sdk25MaxAspectRatioActivity> mSdk25MaxAspectRatioActivity =
@@ -96,6 +102,7 @@ public class AspectRatioTests {
         finishActivity(mMaxAspectRatioActivity);
         finishActivity(mMaxAspectRatioResizeableActivity);
         finishActivity(mSdk25MaxAspectRatioActivity);
+        finishActivity(mMaxAspectRatioUnsetActivity);
     }
 
     @Test
@@ -139,6 +146,23 @@ public class AspectRatioTests {
 
         // Since this activity is resizeable, its aspect ratio shouldn't be less than the device's
         runTest(launchActivity(mMaxAspectRatioResizeableActivity),
+                actual -> {
+                    if (aspectRatioEqual(expected, actual) || expected < actual) return;
+                    fail("actual=" + actual + " is less than expected=" + expected);
+                });
+    }
+
+    @Test
+    public void testMaxAspectRatioUnsetActivity() throws Exception {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final Configuration config = context.getResources().getConfiguration();
+        final float longSide = Math.max(config.screenHeightDp, config.screenWidthDp);
+        final float shortSide = Math.min(config.screenHeightDp, config.screenWidthDp);
+        final float expected = longSide / shortSide;
+
+        // Since this activity didn't set an aspect ratio, its aspect ratio shouldn't be less than
+        // the device's
+        runTest(launchActivity(mMaxAspectRatioUnsetActivity),
                 actual -> {
                     if (aspectRatioEqual(expected, actual) || expected < actual) return;
                     fail("actual=" + actual + " is less than expected=" + expected);

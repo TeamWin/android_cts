@@ -354,6 +354,15 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.app.stubs.MaxAspectRatioUnsetActivity"
+                  android:label="MaxAspectRatioUnsetActivity"
+                  android:resizeableActivity="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name="android.app.stubs.LiveWallpaper"
             android:icon="@drawable/robot"
