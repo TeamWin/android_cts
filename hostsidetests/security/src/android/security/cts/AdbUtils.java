@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -59,7 +60,7 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
-     * @param pathToPoc a string path to poc from the /res folder
+     * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @return the console output from the binary
@@ -70,6 +71,21 @@ public class AdbUtils {
         device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout, TimeUnit.SECONDS, 0);
         String output = receiver.getOutput();
         return output;
+    }
+
+    /**
+     * Pushes and runs a binary to the selected device and ignores any of its output.
+     *
+     * @param pocName a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     */
+    public static void runPocNoOutput(String pocName, ITestDevice device, int timeout)
+            throws Exception {
+        device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+        NullOutputReceiver receiver = new NullOutputReceiver();
+        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
+                TimeUnit.SECONDS, 0);
     }
 
     /**
