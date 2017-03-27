@@ -36,7 +36,6 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillManager;
-import android.view.autofill.AutofillValue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -94,8 +93,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -146,8 +145,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -185,13 +184,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentation("The Dude"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("jenny"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("8675309"))
+                        .setField(ID_USERNAME, "jenny")
+                        .setField(ID_PASSWORD, "8675309")
                         .setPresentation(createPresentation("Jenny"))
                         .build())
                 .build());
@@ -227,8 +226,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");

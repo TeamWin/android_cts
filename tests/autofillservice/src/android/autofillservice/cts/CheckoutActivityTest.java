@@ -45,7 +45,6 @@ import android.content.Context;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.autofill.AutofillValue;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
@@ -87,10 +86,10 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
                 .setPresentation(createPresentation("ACME CC"))
-                .setField(ID_CC_NUMBER, AutofillValue.forText("4815162342"))
-                .setField(ID_CC_EXPIRATION, AutofillValue.forList(INDEX_CC_EXPIRATION_NEVER))
-                .setField(ID_ADDRESS, AutofillValue.forList(1))
-                .setField(ID_SAVE_CC, AutofillValue.forToggle(true))
+                .setField(ID_CC_NUMBER, "4815162342")
+                .setField(ID_CC_EXPIRATION, INDEX_CC_EXPIRATION_NEVER)
+                .setField(ID_ADDRESS, 1)
+                .setField(ID_SAVE_CC, true)
                 .build());
         mActivity.expectAutoFill("4815162342", INDEX_CC_EXPIRATION_NEVER, R.id.work_address,
                 true);
@@ -130,10 +129,10 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
                 .setPresentation(createPresentation("ACME CC"))
-                .setField(ID_CC_NUMBER, AutofillValue.forText("4815162342"))
-                .setField(ID_CC_EXPIRATION, AutofillValue.forList(INDEX_CC_EXPIRATION_NEVER))
-                .setField(ID_ADDRESS, AutofillValue.forList(1))
-                .setField(ID_SAVE_CC, AutofillValue.forToggle(true))
+                .setField(ID_CC_NUMBER, "4815162342")
+                .setField(ID_CC_EXPIRATION, INDEX_CC_EXPIRATION_NEVER)
+                .setField(ID_ADDRESS, 1)
+                .setField(ID_SAVE_CC, true)
                 .build());
         mActivity.expectAutoFill("4815162342", INDEX_CC_EXPIRATION_NEVER, R.id.work_address,
                 true);
@@ -176,10 +175,10 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         final int autoFilledIndex = 2; // NEVER
         sReplier.addResponse(new CannedDataset.Builder()
                 .setPresentation(createPresentation("ACME CC"))
-                .setField(ID_CC_NUMBER, AutofillValue.forText("4815162342"))
-                .setField(ID_CC_EXPIRATION, AutofillValue.forList(autoFilledIndex))
-                .setField(ID_ADDRESS, AutofillValue.forList(1))
-                .setField(ID_SAVE_CC, AutofillValue.forToggle(true))
+                .setField(ID_CC_NUMBER, "4815162342")
+                .setField(ID_CC_EXPIRATION, autoFilledIndex)
+                .setField(ID_ADDRESS, 1)
+                .setField(ID_SAVE_CC, true)
                 .build());
         mActivity.expectAutoFill("4815162342", autoFilledIndex, R.id.work_address, true);
 

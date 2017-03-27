@@ -60,7 +60,6 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillManager;
-import android.view.autofill.AutofillValue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -134,8 +133,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -173,8 +172,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -209,8 +208,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -295,8 +294,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentation("The Dude"))
                         .build())
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
@@ -369,18 +368,18 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("mr_plow"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("D'OH!"))
+                        .setField(ID_USERNAME, "mr_plow")
+                        .setField(ID_PASSWORD, "D'OH!")
                         .setPresentation(createPresentation("Mr Plow"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("el barto"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("aycaramba!"))
+                        .setField(ID_USERNAME, "el barto")
+                        .setField(ID_PASSWORD, "aycaramba!")
                         .setPresentation(createPresentation("El Barto"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("mr sparkle"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("Aw3someP0wer"))
+                        .setField(ID_USERNAME, "mr sparkle")
+                        .setField(ID_PASSWORD, "Aw3someP0wer")
                         .setPresentation(createPresentation("Mr Sparkle"))
                         .build())
                 .build());
@@ -428,9 +427,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"),
+                .setField(ID_USERNAME, "dude",
                         createPresentation("The Dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"),
+                .setField(ID_PASSWORD, "sweet",
                         createPresentation("Dude's password"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -469,14 +468,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder(createPresentation("Dataset1"))
-                        .setField(ID_USERNAME, AutofillValue.forText("user1")) // no presentation
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass1"),
-                                createPresentation("Pass1"))
+                        .setField(ID_USERNAME, "user1") // no presentation
+                        .setField(ID_PASSWORD, "pass1", createPresentation("Pass1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("user2"),
-                                createPresentation("User2"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass2")) // no presentation
+                        .setField(ID_USERNAME, "user2", createPresentation("User2"))
+                        .setField(ID_PASSWORD, "pass2") // no presentation
                         .setPresentation(createPresentation("Dataset2"))
                         .build())
                 .build());
@@ -516,16 +513,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("user1"),
-                                createPresentation("User1"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass1"),
-                                createPresentation("Pass1"))
+                        .setField(ID_USERNAME, "user1", createPresentation("User1"))
+                        .setField(ID_PASSWORD, "pass1", createPresentation("Pass1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("user2"),
-                                createPresentation("User2"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass2"),
-                                createPresentation("Pass2"))
+                        .setField(ID_USERNAME, "user2", createPresentation("User2"))
+                        .setField(ID_PASSWORD, "pass2", createPresentation("Pass2"))
                         .build())
                 .build());
         mActivity.expectAutoFill("user1", "pass1");
@@ -564,14 +557,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("user1"),
-                                createPresentation("User1"))
+                        .setField(ID_USERNAME, "user1", createPresentation("User1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("user2"),
-                                createPresentation("User2"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass2"),
-                                createPresentation("Pass2"))
+                        .setField(ID_USERNAME, "user2", createPresentation("User2"))
+                        .setField(ID_PASSWORD, "pass2", createPresentation("Pass2"))
                         .build())
                 .build());
         mActivity.expectAutoFill("user2", "pass2");
@@ -609,14 +599,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("user1"),
-                                createPresentation("User1"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass1"),
-                                createPresentation("Pass1"))
+                        .setField(ID_USERNAME, "user1", createPresentation("User1"))
+                        .setField(ID_PASSWORD, "pass1", createPresentation("Pass1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_PASSWORD, AutofillValue.forText("pass2"),
-                                createPresentation("Pass2"))
+                        .setField(ID_PASSWORD, "pass2", createPresentation("Pass2"))
                         .build())
                 .build());
         mActivity.expectAutoFill("user1", "pass1");
@@ -652,15 +639,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("aa"))
+                        .setField(ID_USERNAME, "aa")
                         .setPresentation(createPresentation(AA))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("ab"))
+                        .setField(ID_USERNAME, "ab")
                         .setPresentation(createPresentation(AB))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("b"))
+                        .setField(ID_USERNAME, "b")
                         .setPresentation(createPresentation(B))
                         .build())
                 .build());
@@ -894,8 +881,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         AuthenticationActivity.setResponse(
                 new CannedFillResponse.Builder()
             .addDataset(new CannedDataset.Builder()
-                    .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                    .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                    .setField(ID_USERNAME, "dude")
+                    .setField(ID_PASSWORD, "sweet")
                     .setPresentation(createPresentation("Dataset"))
                     .build())
             .build());
@@ -944,8 +931,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Prepare the authenticated response
         AuthenticationActivity.setDataset(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("Dataset"))
                 .build());
 
@@ -956,8 +943,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentation("Tap to auth dataset"))
                         .setAuthentication(authentication)
                         .build())
@@ -1153,8 +1140,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
@@ -1197,13 +1184,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
                         .setPresentation(createPresentation("The Dude"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, AutofillValue.forText("jenny"))
-                        .setField(ID_PASSWORD, AutofillValue.forText("8675309"))
+                        .setField(ID_USERNAME, "jenny")
+                        .setField(ID_PASSWORD, "8675309")
                         .setPresentation(createPresentation("Jenny"))
                         .build())
                 .build());
@@ -1293,8 +1280,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             final String username = "user-" + i;
             final String password = "pass-" + i;
             sReplier.addResponse(new CannedDataset.Builder()
-                    .setField(ID_USERNAME, AutofillValue.forText(username))
-                    .setField(ID_PASSWORD, AutofillValue.forText(password))
+                    .setField(ID_USERNAME, username)
+                    .setField(ID_PASSWORD, password)
                     .setPresentation(createPresentation("The Dude"))
                     .build());
             mActivity.expectAutoFill(username, password);
@@ -1336,8 +1323,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         final CannedDataset dataset = new CannedDataset.Builder()
-                .setField(ID_USERNAME, AutofillValue.forText("dude"))
-                .setField(ID_PASSWORD, AutofillValue.forText("sweet"))
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
                 .setPresentation(createPresentation("The Dude"))
                 .build();
         sReplier.addResponse(dataset);
