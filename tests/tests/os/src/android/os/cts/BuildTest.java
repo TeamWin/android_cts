@@ -223,7 +223,21 @@ public class BuildTest extends TestCase {
         assertTrue(TYPE_PATTERN.matcher(Build.TYPE).matches());
 
         assertNotEmpty(Build.USER);
+    }
 
+    public void testBuildConstants_forPrereleaseOrRelease() {
+        checkBuildConstants(CUR_DEVELOPMENT);
+    }
+
+    @RestrictedBuildTest // Expected to fail on prelease/dev builds, http://b/35922665
+    public void testBuildConstants_forRelease() {
+        checkBuildConstants(CUR_DEVELOPMENT - 1);
+    }
+
+    /**
+     * @param maxAllowedValue the maximum permitted value for constants other than CUR_DEVELOPMENT
+     */
+    private static void checkBuildConstants(int maxAllowedValue) {
         // CUR_DEVELOPMENT must be larger than any released version.
         Field[] fields = Build.VERSION_CODES.class.getDeclaredFields();
         for (Field field : fields) {
@@ -240,8 +254,8 @@ public class BuildTest extends TestCase {
                     // should at least be a conscious decision.
                     assertEquals(10000, fieldValue);
                 } else {
-                    assertTrue("Expected " + fieldName + " value to be < " + CUR_DEVELOPMENT
-                            + ", got " + fieldValue, fieldValue < CUR_DEVELOPMENT);
+                    assertTrue("Expected " + fieldName + " value to be <= " + maxAllowedValue
+                            + ", got " + fieldValue, fieldValue <= maxAllowedValue);
                 }
             }
         }
