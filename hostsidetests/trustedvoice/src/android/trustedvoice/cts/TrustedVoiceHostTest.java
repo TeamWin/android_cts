@@ -99,6 +99,8 @@ public class TrustedVoiceHostTest extends DeviceTestCase {
             getDevice().executeShellCommand(SLEEP_COMMAND);
             // Start the APK and wait for it to complete.
             getDevice().executeShellCommand(START_COMMAND);
+            // Give the activity some time to start
+            Thread.sleep(500);
             // Dump logcat.
             String logs = getDevice().executeAdbCommand(
                     "logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
