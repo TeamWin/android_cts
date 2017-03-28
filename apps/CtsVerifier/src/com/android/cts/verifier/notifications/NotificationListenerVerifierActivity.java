@@ -403,7 +403,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         void tearDown() {
             mNm.cancelAll();
             deleteChannel();
-            MockAssistant.resetListenerData(mContext);
+            MockListener.resetListenerData(mContext);
             delay();
         }
     }
