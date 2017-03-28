@@ -22,6 +22,7 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
@@ -122,6 +123,14 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         assertThat(username.getIdEntry()).isEqualTo(ID_USERNAME);
         assertThat(password.getIdEntry()).isEqualTo(ID_PASSWORD);
+
+        try {
+            VirtualContainerView.assertHtmlInfo(username);
+            VirtualContainerView.assertHtmlInfo(password);
+        } catch (AssertionError e) {
+            dumpStructure("HtmlInfo failed", request.structure);
+            throw e;
+        }
 
         // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(username.isFocused()).isTrue();
