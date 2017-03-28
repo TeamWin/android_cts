@@ -16,6 +16,11 @@
 
 package android.mediastress.cts;
 
+import android.media.MediaCodecList;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecInfo.VideoCapabilities;
+
 public class HEVCR1080pAacLongPlayerTest extends MediaPlayerStressTest {
     private static final String VIDEO_PATH_MIDDLE = "bbb_full/1920x1080/mp4_libx265_libfaac/";
     private final String[] mMedias = {
@@ -23,7 +28,27 @@ public class HEVCR1080pAacLongPlayerTest extends MediaPlayerStressTest {
     };
 
     public void testPlay00() throws Exception {
+        if (!isSupported()) {
+            return;
+        }
         doTestVideoPlaybackLong(0);
+    }
+
+    private boolean isSupported() {
+        final int CONTEXT_BIT_RATE = 6500000;
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if(info.getName().toLowerCase().equalsIgnoreCase("OMX.google.hevc.decoder")) {
+                try {
+                    return info.getCapabilitiesForType("video/hevc").getVideoCapabilities().
+                       getBitrateRange().contains(CONTEXT_BIT_RATE);
+                } catch (IllegalArgumentException e) {
+                    continue;
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override
