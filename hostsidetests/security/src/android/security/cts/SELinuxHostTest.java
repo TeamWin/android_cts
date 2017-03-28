@@ -19,6 +19,7 @@ package android.security.cts;
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -30,6 +31,7 @@ import com.android.tradefed.testtype.IDeviceTest;
 import com.android.compatibility.common.util.CddTest;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileInputStream;
@@ -40,6 +42,7 @@ import java.io.InputStreamReader;
 import java.lang.String;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -185,18 +188,78 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *  The type name.
      */
     private void assertNotInAttribute(String attribute, String badtype) throws Exception {
-        /* run sepolicy-analyze attribute check on policy file */
-        ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
-                devicePolicyFile.getAbsolutePath(), "attribute", attribute);
+        Set<String> actualTypes = sepolicyAnalyzeGetTypesAssociatedWithAttribute(attribute);
+        if (actualTypes.contains(badtype)) {
+            fail("Attribute " + attribute + " includes " + badtype);
+        }
+    }
+
+    private static final byte[] readFully(InputStream in) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        byte[] buf = new byte[65536];
+        int chunkSize;
+        while ((chunkSize = in.read(buf)) != -1) {
+            result.write(buf, 0, chunkSize);
+        }
+        return result.toByteArray();
+    }
+
+    /**
+     * Runs sepolicy-analyze against the device's SELinux policy and returns the set of types
+     * associated with the provided attribute.
+     */
+    private Set<String> sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+            String attribute) throws Exception {
+        ProcessBuilder pb =
+                new ProcessBuilder(
+                        sepolicyAnalyze.getAbsolutePath(),
+                        devicePolicyFile.getAbsolutePath(),
+                        "attribute",
+                        attribute);
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String type;
-        while ((type = result.readLine()) != null) {
-            assertFalse("Attribute " + attribute + " includes " + type + "\n",
-                        type.equals(badtype));
+        int errorCode = p.waitFor();
+        if (errorCode != 0) {
+            fail("sepolicy-analyze attribute " + attribute + " failed with error code " + errorCode
+                    + ": " + new String(readFully(p.getInputStream())));
+        }
+        try (BufferedReader in =
+                new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+            Set<String> types = new HashSet<>();
+            String type;
+            while ((type = in.readLine()) != null) {
+                types.add(type.trim());
+            }
+            return types;
+        }
+    }
+
+    private boolean isFullTrebleDevice() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) > 25) {
+            return true;
+        }
+        return mDevice.getFileEntry("/system/etc/selinux/plat_sepolicy.cil") != null;
+    }
+
+    /**
+     * Asserts that no vendor domains are exempted from the prohibition on Binder use.
+     *
+     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
+     * during Android O development. This test will be removed before Android O.
+     * TODO(b/35870313): Remove this test once b/35870313 is fixed.
+     */
+    public void testNoExemptionsForBinderInVendorBan() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        Set<String> types =
+            sepolicyAnalyzeGetTypesAssociatedWithAttribute("binder_in_vendor_violators");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts vendor domains from ban on Binder: " + sortedTypes);
         }
     }
 
