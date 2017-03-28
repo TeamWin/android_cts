@@ -1351,6 +1351,33 @@
     <string name="p2p_waiting_for_peer_to_disconnect">Waiting for peer
         to disconnect ...</string>
 
+    <!-- Strings for TestListActivity -->
+    <string name="aware_test">Wi-Fi Aware Test</string>
+    <string name="aware_test_info">
+        The Wi-Fi Aware tests require two devices with Wi-Fi enabled. One device must
+        be the candidate device running the software build to be tested, while the other
+        device must be an implementation already known to be compatible.\n\nThere are
+        tests for Publisher and Subscriber, Responder and Initiator. One device should
+        start in a role, and the other should start in the complementary
+        role. Your device must pass the tests in all roles.
+    </string>
+    <string name="aware_not_enabled">Wi-Fi is not enabled</string>
+    <string name="aware_not_enabled_message">These tests require Wi-Fi to be enabled.
+        Click the button below to go to system settings and enable Wi-Fi.</string>
+    <string name="aware_settings">Wi-Fi Settings</string>
+    <string name="aware_setup_error">
+        Test failed.\n\nSet up error. Check whether Wi-Fi is enabled.</string>
+    <string name="aware_unexpected_error">
+        Test failed.\n\nUnexpected error. Check logcat.</string>
+
+    <string name="aware_dp_ib_open_unsolicited">Data Path: Open: Unsolicited/Passive</string>
+    <string name="aware_publish">Publish</string>
+    <string name="aware_subscribe">Subscribe</string>
+
+    <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
+    <string name="aware_data_path_open_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Open: Unsolicited/Passive\' / \'Subscribe\' test.</string>
+    <string name="aware_data_path_open_passive_subscribe">Data Path: Open: Passive Subscribe</string>
+
     <string name="camera_fov_calibration">Camera FOV Calibration</string>
     <string name="camera_fov_calibration_done">Done</string>
     <string name="camera_fov_general_settings">General settings</string>
