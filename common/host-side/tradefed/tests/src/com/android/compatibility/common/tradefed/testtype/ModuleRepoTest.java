@@ -172,7 +172,6 @@ public class ModuleRepoTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         FileUtil.recursiveDelete(mTestsDir);
-        mRepo.resetModuleRepo();
         tearDownConfigs(mTestsDir);
         tearDownConfigs(mRootDir);
     }
@@ -218,7 +217,8 @@ public class ModuleRepoTest extends TestCase {
         assertEquals("armeabi-v7a FooModuleA", shard1.get(0).getId());
         assertEquals("arm64-v8a FooModuleA", shard1.get(1).getId());
         List<IModuleDef> shard2 = mRepo.getModules(SERIAL2, 1);
-        assertEquals(2, shard2.size());
+        // last shard gets the token modules too
+        assertEquals(4, shard2.size());
         assertEquals("armeabi-v7a FooModuleB", shard2.get(0).getId());
         assertEquals("arm64-v8a FooModuleB", shard2.get(1).getId());
     }
@@ -240,7 +240,37 @@ public class ModuleRepoTest extends TestCase {
     }
 
     /**
-     * Test sharding with 4 shards of the 6 non token modules.
+     * Test running with only token modules, with sharded local run, we specify a token module
+     * for each device, tests should go in the right place.
+     */
+    public void testGetModules_TokenModules_multiDevices() throws Exception {
+        createConfig(mTestsDir, "FooModuleD", "foobar2");
+        Set<String> includes = new HashSet<>();
+        includes.add(MODULE_NAME_C);
+        includes.add("FooModuleD");
+        List<String> tokens = new ArrayList<>();
+        tokens.add(String.format("%s:%s", SERIAL1, FOOBAR_TOKEN));
+        tokens.add(String.format("%s:%s", SERIAL2, "foobar2"));
+        mRepo.initialize(2, null, mTestsDir, ABIS, tokens, TEST_ARGS, MODULE_ARGS,
+                includes, EXCLUDES, mMockBuildInfo);
+        assertTrue("Should be initialized", mRepo.isInitialized());
+        assertEquals("Wrong number of tokens", 4, mRepo.getTokenModules().size());
+        assertEquals("Wrong number of tokens", 0, mRepo.getNonTokenModules().size());
+        List<IModuleDef> modules1 = mRepo.getModules(SERIAL1, 0);
+        assertNotNull(modules1);
+        assertEquals(2, modules1.size());
+        // Only module C tokens with serial 1.
+        assertTrue(modules1.get(0).getId().contains(MODULE_NAME_C));
+        assertTrue(modules1.get(1).getId().contains(MODULE_NAME_C));
+        List<IModuleDef> modules2 = mRepo.getModules(SERIAL2, 1);
+        assertNotNull(modules2);
+        assertEquals(2, modules2.size());
+        assertTrue(modules2.get(0).getId().contains("FooModuleD"));
+        assertTrue(modules2.get(1).getId().contains("FooModuleD"));
+    }
+
+    /**
+     * Test sharding with 4 shards of the 6 non token modules + 2 token modules.
      */
     public void testGetModulesSharded_uneven() throws Exception {
         createConfig(mTestsDir, "FooModuleD", null);
@@ -264,9 +294,11 @@ public class ModuleRepoTest extends TestCase {
         assertEquals("arm64-v8a FooModuleB", shard3.get(1).getId());
 
         List<IModuleDef> shard4 = mRepo.getModules(SERIAL2, 3);
-        assertEquals(2, shard4.size());
-        assertEquals("armeabi-v7a FooModuleD", shard4.get(0).getId());
-        assertEquals("arm64-v8a FooModuleD", shard4.get(1).getId());
+        assertEquals(4, shard4.size());
+        assertEquals("armeabi-v7a FooModuleC", shard4.get(0).getId());
+        assertEquals("arm64-v8a FooModuleC", shard4.get(1).getId());
+        assertEquals("armeabi-v7a FooModuleD", shard4.get(2).getId());
+        assertEquals("arm64-v8a FooModuleD", shard4.get(3).getId());
     }
 
     public void testConfigFilter() throws Exception {
