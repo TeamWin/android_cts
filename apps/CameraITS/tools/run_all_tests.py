@@ -57,7 +57,10 @@ def main():
             "test_yuv_plus_jpeg"
         ],
         "scene2":[],
-        "scene3":[],
+        "scene3":[
+            "test_lens_movement_reporting",
+            "test_lens_position"
+        ],
         "scene4":[],
         "scene5":[],
         "sensor_fusion":[]
