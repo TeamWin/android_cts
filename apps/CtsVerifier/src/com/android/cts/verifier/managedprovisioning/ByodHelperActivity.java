@@ -16,36 +16,25 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
-import android.app.Activity;
+import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
+
 import android.app.NotificationChannel;
 import android.app.admin.DevicePolicyManager;
-import android.app.Dialog;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.os.UserManager;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.support.v4.content.FileProvider;
 import android.support.v4.util.Pair;
 import android.util.Log;
-import android.widget.Toast;
-
-import static android.provider.Settings.Secure.INSTALL_NON_MARKET_APPS;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -94,7 +83,7 @@ public class ByodHelperActivity extends LocationListenerActivity
 
     // Primary -> managed intent: set unknown sources restriction and install package
     public static final String ACTION_INSTALL_APK = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK";
-    public static final String EXTRA_ALLOW_NON_MARKET_APPS = INSTALL_NON_MARKET_APPS;
+    public static final String EXTRA_ALLOW_NON_MARKET_APPS = "allow_non_market_apps";
 
     // Primary -> managed intent: check if the required cross profile intent filters are set.
     public static final String ACTION_CHECK_INTENT_FILTERS =
@@ -154,13 +143,13 @@ public class ByodHelperActivity extends LocationListenerActivity
     private static final int REQUEST_AUDIO_CAPTURE = 6;
     private static final int REQUEST_LOCATION_UPDATE = 7;
 
-    private static final String ORIGINAL_SETTINGS_NAME = "original settings";
+    private static final String ORIGINAL_RESTRICTIONS_NAME = "original restrictions";
 
     private static final int NOTIFICATION_ID = 7;
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
 
     private NotificationManager mNotificationManager;
-    private Bundle mOriginalSettings;
+    private Bundle mOriginalRestrictions;
 
     private ComponentName mAdminReceiverComponent;
     private DevicePolicyManager mDevicePolicyManager;
@@ -188,9 +177,9 @@ public class ByodHelperActivity extends LocationListenerActivity
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
             Log.w(TAG, "Restored state");
-            mOriginalSettings = savedInstanceState.getBundle(ORIGINAL_SETTINGS_NAME);
+            mOriginalRestrictions = savedInstanceState.getBundle(ORIGINAL_RESTRICTIONS_NAME);
         } else {
-            mOriginalSettings = new Bundle();
+            mOriginalRestrictions = new Bundle();
         }
 
         mAdminReceiverComponent = new ComponentName(this, DeviceAdminTestReceiver.class.getName());
@@ -225,11 +214,12 @@ public class ByodHelperActivity extends LocationListenerActivity
             }
         } else if (action.equals(ACTION_INSTALL_APK)) {
             boolean allowNonMarket = intent.getBooleanExtra(EXTRA_ALLOW_NON_MARKET_APPS, false);
-            boolean wasAllowed = getAllowNonMarket();
+            boolean wasAllowed = !isUnknownSourcesRestrictionSet();
 
-            // Update permission to install non-market apps
-            setAllowNonMarket(allowNonMarket);
-            mOriginalSettings.putBoolean(INSTALL_NON_MARKET_APPS, wasAllowed);
+            if (wasAllowed != allowNonMarket) {
+                setUnknownSourcesRestriction(!allowNonMarket);
+                mOriginalRestrictions.putBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES, !wasAllowed);
+            }
 
             // Request to install a non-market application- easiest way is to reinstall ourself
             final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
@@ -369,7 +359,7 @@ public class ByodHelperActivity extends LocationListenerActivity
     protected void onSaveInstanceState(final Bundle savedState) {
         super.onSaveInstanceState(savedState);
 
-        savedState.putBundle(ORIGINAL_SETTINGS_NAME, mOriginalSettings);
+        savedState.putBundle(ORIGINAL_RESTRICTIONS_NAME, mOriginalRestrictions);
     }
 
     @Override
@@ -377,10 +367,11 @@ public class ByodHelperActivity extends LocationListenerActivity
         switch (requestCode) {
             case REQUEST_INSTALL_PACKAGE: {
                 Log.w(TAG, "Received REQUEST_INSTALL_PACKAGE, resultCode = " + resultCode);
-                if (mOriginalSettings.containsKey(INSTALL_NON_MARKET_APPS)) {
+                if (mOriginalRestrictions.containsKey(DISALLOW_INSTALL_UNKNOWN_SOURCES)) {
                     // Restore original setting
-                    setAllowNonMarket(mOriginalSettings.getBoolean(INSTALL_NON_MARKET_APPS));
-                    mOriginalSettings.remove(INSTALL_NON_MARKET_APPS);
+                    setUnknownSourcesRestriction(
+                            mOriginalRestrictions.getBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES));
+                    mOriginalRestrictions.remove(DISALLOW_INSTALL_UNKNOWN_SOURCES);
                 }
                 finish();
                 break;
@@ -474,14 +465,21 @@ public class ByodHelperActivity extends LocationListenerActivity
                 mDevicePolicyManager.isProfileOwnerApp(mAdminReceiverComponent.getPackageName());
     }
 
-    private boolean getAllowNonMarket() {
-        String value = Settings.Secure.getString(getContentResolver(), INSTALL_NON_MARKET_APPS);
-        return "1".equals(value);
+    private boolean isUnknownSourcesRestrictionSet() {
+        // We only care about restrictions set by Cts Verifier. In other cases, we cannot modify
+        // it and the test will fail anyway.
+        Bundle restrictions = mDevicePolicyManager.getUserRestrictions(mAdminReceiverComponent);
+        return restrictions.getBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES, false);
     }
 
-    private void setAllowNonMarket(boolean allow) {
-        mDevicePolicyManager.setSecureSetting(mAdminReceiverComponent, INSTALL_NON_MARKET_APPS,
-                (allow ? "1" : "0"));
+    private void setUnknownSourcesRestriction(boolean enabled) {
+        if (enabled) {
+            mDevicePolicyManager.addUserRestriction(mAdminReceiverComponent,
+                    DISALLOW_INSTALL_UNKNOWN_SOURCES);
+        } else {
+            mDevicePolicyManager.clearUserRestriction(mAdminReceiverComponent,
+                    DISALLOW_INSTALL_UNKNOWN_SOURCES);
+        }
     }
 
     private void startActivityInPrimary(Intent intent) {
