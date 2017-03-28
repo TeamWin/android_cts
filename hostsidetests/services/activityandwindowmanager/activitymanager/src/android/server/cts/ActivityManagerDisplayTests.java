@@ -829,6 +829,61 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Tests that when an activity is launched with displayId specified and there is an existing
+     * matching task on some other display - that task will moved to the target display.
+     */
+    public void testMoveToDisplayOnLaunch() throws Exception {
+        // Launch activity with unique affinity, so it will the only one in its task.
+        launchActivity(LAUNCHING_ACTIVITY);
+
+        // Create new virtual display.
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        final int defaultDisplayStackId = mAmWmState.getAmState().getFocusedStackId();
+        // Launch something to that display so that a new stack is created. We need this to be able
+        // to compare task numbers in stacks later.
+        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
+
+        final int taskNum = mAmWmState.getAmState().getStackById(defaultDisplayStackId)
+                .getTasks().size();
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
+        final int taskNumOnSecondary = mAmWmState.getAmState().getStackById(frontStackId)
+                .getTasks().size();
+
+        // Launch activity on new secondary display.
+        // Using custom command here, because normally we add flags Intent#FLAG_ACTIVITY_NEW_TASK
+        // and Intent#FLAG_ACTIVITY_MULTIPLE_TASK when launching on some specific display. We don't
+        // do it here as we want an existing task to be used.
+        final String launchCommand = "am start -n " + getActivityComponentName(LAUNCHING_ACTIVITY)
+                + " --display " + newDisplay.mDisplayId;
+        executeShellCommand(launchCommand);
+        mAmWmState.waitForActivityState(mDevice, LAUNCHING_ACTIVITY, STATE_RESUMED);
+
+        // Check that activity is brought to front.
+        mAmWmState.assertFocusedActivity("Existing task must be brought to front",
+                LAUNCHING_ACTIVITY);
+        mAmWmState.assertResumedActivity("Existing task must be resumed", LAUNCHING_ACTIVITY);
+
+        // Check that activity is on the right display.
+        final ActivityManagerState.ActivityStack firstFrontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Activity must be moved to the secondary display",
+                getActivityComponentName(LAUNCHING_ACTIVITY), firstFrontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
+
+        // Check that task has moved from primary display to secondary.
+        final int taskNumFinal = mAmWmState.getAmState().getStackById(defaultDisplayStackId)
+                .getTasks().size();
+        mAmWmState.assertEquals("Task number in fullscreen stack must be decremented.", taskNum - 1,
+                taskNumFinal);
+        final int taskNumFinalOnSecondary = mAmWmState.getAmState().getStackById(frontStackId)
+                .getTasks().size();
+        mAmWmState.assertEquals("Task number in stack on external display must be incremented.",
+                taskNumOnSecondary + 1, taskNumFinalOnSecondary);
+    }
+
+    /**
      * Tests that when primary display is rotated secondary displays are not affected.
      */
     public void testRotationNotAffectingSecondaryScreen() throws Exception {
