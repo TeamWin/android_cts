@@ -16,11 +16,15 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.eventually;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 import android.icu.util.Calendar;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.rule.ActivityTestRule;
 import android.view.View;
@@ -140,6 +144,28 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
         assertThrows(IllegalStateException.class, v::getListValue);
     }
 
+    /**
+     * Trigger autofill on a view. This might have to be tried multiple times as the service might
+     * not be completely initialized yet and therefor autofill is not enabled while the focus is
+     * changed.
+     *
+     * @param view The view to trigger the autofill on
+     */
+    private void startAutoFill(@NonNull View view) throws Exception {
+        eventually(() -> {
+            mActivity.syncRunOnUiThread(() -> {
+                view.clearFocus();
+                view.requestFocus();
+            });
+
+            try {
+                sReplier.getNextFillRequest();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }, (int) (FILL_TIMEOUT_MS * 3));
+    }
+
     private void autofillEditText(@Nullable AutofillValue value, String expectedText,
             boolean expectAutoFill) throws Exception {
         mActivity.syncRunOnUiThread(() -> mEditText.setVisibility(View.VISIBLE));
@@ -155,8 +181,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             mEditText.addTextChangedListener(textWatcher);
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            sReplier.getNextFillRequest();
+            startAutoFill(mEditText);
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -211,9 +236,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                         "compoundButton", mCompoundButton, expectedValue);
             mCompoundButton.setOnCheckedChangeListener(checkedWatcher);
 
-            // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mCompoundButton.requestFocus());
-            sReplier.getNextFillRequest();
+            startAutoFill(mCompoundButton);
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -267,9 +290,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
                     "spinner", mSpinner, expectedValue);
             mSpinner.setOnItemSelectedListener(spinnerWatcher);
 
-            // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mSpinner.requestFocus());
-            sReplier.getNextFillRequest();
+            startAutoFill(mSpinner);
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -336,8 +357,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             int nonAutofilledDay = mDatePicker.getDayOfMonth();
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            sReplier.getNextFillRequest();
+            startAutoFill(mEditText);
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -406,8 +426,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             int nonAutofilledMinute = mTimePicker.getMinute();
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            sReplier.getNextFillRequest();
+            startAutoFill(mEditText);
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
@@ -463,8 +482,7 @@ public class AutofillValueTest extends AutoFillServiceTestCase {
             mRadioGroup.setOnCheckedChangeListener(radioGroupWatcher);
 
             // Trigger autofill.
-            mActivity.syncRunOnUiThread(() -> mEditText.requestFocus());
-            sReplier.getNextFillRequest();
+            startAutoFill(mEditText);
 
             // Autofill it.
             sUiBot.selectDataset("dataset");
