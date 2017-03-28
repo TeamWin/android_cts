@@ -235,13 +235,20 @@ public class FocusFinderTest {
         assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
     }
 
-    // Tests for finding new cluster don't look at geometrical properties of the views. For them,
-    // only tab order is important, which is mTopLeft, mTopRight, mBottomLeft. mBottomRight isn't
-    // used.
     private void verifyNextCluster(View currentCluster, int direction, View expectedNextCluster) {
         View actualNextCluster = mFocusFinder.findNextKeyboardNavigationCluster(
                 mLayout, currentCluster, direction);
         assertEquals(expectedNextCluster, actualNextCluster);
+    }
+
+    private void verifyNextClusterView(View currentCluster, int direction, View expectedNextView) {
+        View actualNextView = mFocusFinder.findNextKeyboardNavigationCluster(
+                mLayout, currentCluster, direction);
+        if (actualNextView == mLayout) {
+            actualNextView =
+                    mFocusFinder.findNextKeyboardNavigationCluster(mLayout, null, direction);
+        }
+        assertEquals(expectedNextView, actualNextView);
     }
 
     @Test
@@ -269,5 +276,62 @@ public class FocusFinderTest {
         verifyNextCluster(mTopRight, View.FOCUS_BACKWARD, mTopLeft);
         verifyNextCluster(mBottomLeft, View.FOCUS_BACKWARD, mTopRight);
         verifyNextCluster(mBottomRight, View.FOCUS_BACKWARD, mLayout);
+    }
+
+    @Test
+    public void testFindNextAndPrevClusterAvoidingChain() {
+        // Basically a duplicate of normal focus test above. The same logic should be used for both.
+        mTopLeft.setKeyboardNavigationCluster(true);
+        mTopRight.setKeyboardNavigationCluster(true);
+        mBottomLeft.setKeyboardNavigationCluster(true);
+        mBottomRight.setKeyboardNavigationCluster(true);
+        mBottomRight.setNextClusterForwardId(mBottomLeft.getId());
+        mBottomLeft.setNextClusterForwardId(mTopRight.getId());
+        // Follow the chain
+        verifyNextCluster(mBottomRight, View.FOCUS_FORWARD, mBottomLeft);
+        verifyNextCluster(mBottomLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextCluster(mTopRight, View.FOCUS_BACKWARD, mBottomLeft);
+        verifyNextCluster(mBottomLeft, View.FOCUS_BACKWARD, mBottomRight);
+
+        // Now go to the one not in the chain
+        verifyNextClusterView(mTopRight, View.FOCUS_FORWARD, mTopLeft);
+        verifyNextClusterView(mBottomRight, View.FOCUS_BACKWARD, mTopLeft);
+
+        // Now go back to the top of the chain
+        verifyNextClusterView(mTopLeft, View.FOCUS_FORWARD, mBottomRight);
+        verifyNextClusterView(mTopLeft, View.FOCUS_BACKWARD, mTopRight);
+
+        // Now make the chain a circle -- this is the pathological case
+        mTopRight.setNextClusterForwardId(mBottomRight.getId());
+        // Fall back to the next one in a chain.
+        verifyNextClusterView(mTopLeft, View.FOCUS_FORWARD, mTopRight);
+        verifyNextClusterView(mTopLeft, View.FOCUS_BACKWARD, mBottomRight);
+
+        //Now do branching focus changes
+        mTopRight.setNextClusterForwardId(View.NO_ID);
+        mBottomRight.setNextClusterForwardId(mTopRight.getId());
+        assertEquals(mBottomRight.getNextClusterForwardId(), mTopRight.getId());
+        verifyNextClusterView(mBottomRight, View.FOCUS_FORWARD, mTopRight);
+        verifyNextClusterView(mBottomLeft, View.FOCUS_FORWARD, mTopRight);
+        // From the tail, it jumps out of the chain
+        verifyNextClusterView(mTopRight, View.FOCUS_FORWARD, mTopLeft);
+
+        // Back from the head of a tree goes out of the tree
+        // We don't know which is the head of the focus chain since it is branching.
+        View prevFocus1 = mFocusFinder.findNextKeyboardNavigationCluster(mLayout, mBottomLeft,
+                View.FOCUS_BACKWARD);
+        View prevFocus2 = mFocusFinder.findNextKeyboardNavigationCluster(mLayout, mBottomRight,
+                View.FOCUS_BACKWARD);
+        assertTrue(prevFocus1 == mTopLeft || prevFocus2 == mTopLeft);
+
+        // From outside, it chooses an arbitrary head of the chain
+        View nextFocus = mFocusFinder.findNextKeyboardNavigationCluster(mLayout, mTopLeft,
+                View.FOCUS_FORWARD);
+        assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
+
+        // Going back from the tail of the split chain, it chooses an arbitrary head
+        nextFocus = mFocusFinder.findNextKeyboardNavigationCluster(mLayout, mTopRight,
+                View.FOCUS_BACKWARD);
+        assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
     }
 }
