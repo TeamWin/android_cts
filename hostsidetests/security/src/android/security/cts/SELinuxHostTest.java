@@ -264,6 +264,30 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Asserts that no domains are exempted from the prohibition on initiating socket communications
+     * between core and vendor domains.
+     *
+     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
+     * during Android O development. This test will be removed before Android O.
+     * TODO(b/36577153): Remove this test once b/36577153 is fixed.
+     */
+    public void testNoExemptionsForSocketsBetweenCoreAndVendorBan() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        Set<String> types =
+                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                        "socket_between_core_and_vendor_violators");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts domains from ban on socket communications between core and"
+                    + " vendor: " + sortedTypes);
+        }
+    }
+
+    /**
      * Tests that mlstrustedsubject does not include untrusted_app
      * and that mlstrustedobject does not include app_data_file.
      * This helps prevent circumventing the per-user isolation of
