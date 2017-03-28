@@ -67,6 +67,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
     private static final String DELEGATION_BLOCK_UNINSTALL = "delegation-block-uninstall";
+    private static final String DELEGATION_PERMISSION_GRANT = "delegation-permission-grant";
+    private static final String DELEGATION_PACKAGE_ACCESS = "delegation-package-access";
+    private static final String DELEGATION_ENABLE_SYSTEM_APP = "delegation-enable-system-app";
 
     private static final String TEST_APP_APK = "CtsSimpleApp.apk";
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
@@ -183,7 +186,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final String delegationTests[] = {
             ".AppRestrictionsDelegateTest",
             ".CertInstallDelegateTest",
-            ".BlockUninstallDelegateTest"
+            ".BlockUninstallDelegateTest",
+            ".PermissionGrantDelegateTest",
+            ".PackageAccessDelegateTest",
+            ".EnableSystemAppDelegateTest"
         };
 
         // Set a device lockscreen password (precondition for installing private key pairs).
@@ -202,7 +208,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             setDelegatedScopes(DELEGATE_APP_PKG, Arrays.asList(
                     DELEGATION_APP_RESTRICTIONS,
                     DELEGATION_CERT_INSTALL,
-                    DELEGATION_BLOCK_UNINSTALL));
+                    DELEGATION_BLOCK_UNINSTALL,
+                    DELEGATION_PERMISSION_GRANT,
+                    DELEGATION_PACKAGE_ACCESS,
+                    DELEGATION_ENABLE_SYSTEM_APP));
             runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest", mUserId);
             executeDelegationTests(delegationTests, true /* positive result */);
 
@@ -214,7 +223,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestClass(".DelegationTest");
 
         } finally {
-            // Clear lockscreen password previously set for installing private key pairs (DO only).
+            // Clear lockscreen password previously set for installing private key pairs.
             changeUserCredential(null, "1234", mPrimaryUserId);
             // Remove any remaining delegations.
             setDelegatedScopes(DELEGATE_APP_PKG, null);
