@@ -192,12 +192,8 @@ public class ListPopupWindowTest {
         assertEquals(height, mPopupWindow.getHeight());
 
         height = -getDisplay().getHeight() / 2;
-        try {
-            mPopupWindow.setHeight(height);
-            fail("should throw IllegalArgumentException for negative height.");
-        } catch (IllegalArgumentException e) {
-            // expected exception.
-        }
+        mPopupWindow.setHeight(height);
+        assertEquals(height, mPopupWindow.getHeight());
     }
 
     /**
