@@ -1749,15 +1749,6 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
         </activity>
 
-        <activity android:name=".notifications.NotificationAssistantVerifierActivity"
-                  android:label="@string/nas_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
-        </activity>
-
         <activity android:name=".notifications.ConditionProviderVerifierActivity"
                   android:label="@string/cp_test">
             <intent-filter>
