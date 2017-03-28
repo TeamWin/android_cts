@@ -37,6 +37,8 @@ import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import java.util.List;
+
 /**
  * Helper for UI-related needs.
  */
@@ -245,11 +247,19 @@ final class UiBot {
         // TODO(b/33197203, b/33802548): figure out why obj.longClick() doesn't always work
         field.click(3000);
 
-        final UiObject2 menuItem = waitForObject(By.res("android", RESOURCE_ID_CONTEXT_MENUITEM));
+        final List<UiObject2> menuItems = waitForObjects(
+                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM));
         final String expectedText = getString(RESOURCE_STRING_AUTOFILL);
+        final StringBuffer menuNames = new StringBuffer();
+        for (UiObject2 menuItem : menuItems) {
+            final String menuName = menuItem.getText();
+            if (menuName.equalsIgnoreCase(expectedText)) {
+                return menuItem;
+            }
+            menuNames.append("'").append(menuName).append("' ");
+        }
 
-        assertThat(menuItem.getText().toUpperCase()).isEqualTo(expectedText.toUpperCase());
-        return menuItem;
+        throw new AssertionError("no '" + expectedText + "' on " + menuNames);
     }
 
     /**
@@ -300,6 +310,35 @@ final class UiBot {
                 + mTimeout + " ms");
     }
 
+    /**
+     * Waits for and returns a list of objects.
+     *
+     * @param selector {@link BySelector} that identifies the object.
+     */
+    private List<UiObject2> waitForObjects(BySelector selector) {
+        return waitForObjects(selector, mTimeout);
+    }
+
+    /**
+     * Waits for and returns a list of objects.
+     *
+     * @param selector {@link BySelector} that identifies the object.
+     * @param timeout timeout in ms
+     */
+    private List<UiObject2> waitForObjects(BySelector selector, long timeout) {
+        // NOTE: mDevice.wait does not work for the save snackbar, so we need a polling approach.
+        final int maxTries = 5;
+        final long napTime = timeout / maxTries;
+        for (int i = 1; i <= maxTries; i++) {
+            final List<UiObject2> uiObjects = mDevice.findObjects(selector);
+            if (uiObjects != null && !uiObjects.isEmpty()) {
+                return uiObjects;
+            }
+            SystemClock.sleep(napTime);
+        }
+        throw new AssertionError("Objects with selector " + selector + " not found in "
+                + mTimeout + " ms");
+    }
     private UiObject2 findDatasetPicker() {
         final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
 
