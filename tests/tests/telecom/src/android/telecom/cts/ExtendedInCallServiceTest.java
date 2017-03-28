@@ -18,6 +18,7 @@ package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.*;
 
+import android.app.UiModeManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -218,6 +219,99 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         assertCallState(call, Call.STATE_ACTIVE);
         assertConnectionState(connection, Connection.STATE_ACTIVE);
+    }
+
+    public void testAcceptRingingCall() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        MockConnection connection = verifyConnectionForIncomingCall(0);
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+        final Call call = inCallService.getLastCall();
+
+        assertCallState(call, Call.STATE_RINGING);
+        assertConnectionState(connection, Connection.STATE_RINGING);
+
+        mTelecomManager.acceptRingingCall();
+
+        assertCallState(call, Call.STATE_ACTIVE);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+    }
+
+
+    /**
+     * Tests that if there is the device is in a call and a second call comes in,
+     * answering the call immediately answers second call without blocking.
+     */
+    public void testAcceptRingingCallTwoCalls() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        MockConnection connection1 = verifyConnectionForIncomingCall(0);
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+        final Call call1 = inCallService.getLastCall();
+
+        call1.answer(VideoProfile.STATE_AUDIO_ONLY);
+
+        assertCallState(call1, Call.STATE_ACTIVE);
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        final MockConnection connection2 = verifyConnectionForIncomingCall(1);
+        final Call call2 = inCallService.getLastCall();
+
+        assertCallState(call2, Call.STATE_RINGING);
+        assertConnectionState(connection2, Connection.STATE_RINGING);
+
+        mTelecomManager.acceptRingingCall();
+
+        // The second call must now be active
+        assertCallState(call2, Call.STATE_ACTIVE);
+        assertConnectionState(connection2, Connection.STATE_ACTIVE);
+    }
+
+    /**
+     * Tests that if there is the device is in a call and a second call comes in,
+     * answering the call immediately answers second call while in carMode.
+     */
+    public void testAcceptRingingCallTwoCallsCarMode() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        MockConnection connection1 = verifyConnectionForIncomingCall(0);
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+        final Call call1 = inCallService.getLastCall();
+
+        call1.answer(VideoProfile.STATE_AUDIO_ONLY);
+
+        assertCallState(call1, Call.STATE_ACTIVE);
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        final MockConnection connection2 = verifyConnectionForIncomingCall(1);
+        final Call call2 = inCallService.getLastCall();
+
+        assertCallState(call2, Call.STATE_RINGING);
+        assertConnectionState(connection2, Connection.STATE_RINGING);
+
+        UiModeManager manager = (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
+        try {
+            manager.enableCarMode(0);
+
+            mTelecomManager.acceptRingingCall();
+
+            // The second call should now be active
+            assertCallState(call2, Call.STATE_ACTIVE);
+            assertConnectionState(connection2, Connection.STATE_ACTIVE);
+
+        } finally {
+            // Set device back to normal
+            manager.disableCarMode(0);
+        }
     }
 
     public void testIncomingCallFromBlockedNumber_IsRejected() throws Exception {
