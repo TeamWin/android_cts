@@ -66,7 +66,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "PerformanceTest";
     private static final String REPORT_LOG_NAME = "CtsCameraTestCases";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
-    private static final int NUM_TEST_LOOPS = 5;
+    private static final int NUM_TEST_LOOPS = 10;
     private static final int NUM_MAX_IMAGES = 4;
     private static final int NUM_RESULTS_WAIT = 30;
     private static final int[] REPROCESS_FORMATS = {ImageFormat.YUV_420_888, ImageFormat.PRIVATE};
@@ -205,6 +205,21 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             }
             counter++;
             mReportLog.submit(getInstrumentation());
+
+            if (VERBOSE) {
+                Log.v(TAG, "Camera " + id + " device open times: "
+                        + Arrays.toString(cameraOpenTimes));
+                Log.v(TAG, "Camera " + id + " configure stream times: "
+                        + Arrays.toString(configureStreamTimes));
+                Log.v(TAG, "Camera " + id + " start preview times: "
+                        + Arrays.toString(startPreviewTimes));
+                Log.v(TAG, "Camera " + id + " stop preview times: "
+                        + Arrays.toString(stopPreviewTimes));
+                Log.v(TAG, "Camera " + id + " device close times: "
+                        + Arrays.toString(cameraCloseTimes));
+                Log.v(TAG, "Camera " + id + " camera launch times: "
+                        + Arrays.toString(cameraLaunchTimes));
+            }
         }
         if (mCameraIds.length != 0) {
             String streamName = "test_camera_launch_average";
