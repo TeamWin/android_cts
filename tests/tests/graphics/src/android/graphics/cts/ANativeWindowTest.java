@@ -27,17 +27,17 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.view.Surface;
 import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.BlockJUnit4ClassRunner;
 
 
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(BlockJUnit4ClassRunner.class)
 public class ANativeWindowTest {
 
     static {
