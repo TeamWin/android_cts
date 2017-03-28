@@ -158,6 +158,10 @@ public class BundledTvInputServiceTest
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
+        if (mPassthroughInputList.size() == 0) {
+            // The device does not have any passthrough inputs. Skipping the stress test.
+            return;
+        }
         // Tuning should be completed within 3 seconds on average, therefore, we set 100 iterations
         // here to fit the test case running time in 5 minutes limitation of CTS test cases.
         final int ITERATIONS = 100;
