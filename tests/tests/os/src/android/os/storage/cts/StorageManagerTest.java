@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ProxyFileDescriptorCallback;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
@@ -43,6 +45,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.SyncFailedException;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -50,7 +53,8 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.SynchronousQueue;
 import junit.framework.AssertionFailedError;
 
 public class StorageManagerTest extends AndroidTestCase {
@@ -506,6 +510,83 @@ public class StorageManagerTest extends AndroidTestCase {
             callback.onFsyncError = null;
             fd.getFileDescriptor().sync();
         }
+    }
+
+    public void testOpenProxyFileDescriptor_async() throws Exception {
+        final CountDownLatch blockReadLatch = new CountDownLatch(1);
+        final CountDownLatch readBlockedLatch = new CountDownLatch(1);
+        final CountDownLatch releaseLatch = new CountDownLatch(2);
+        final TestProxyFileDescriptorCallback blockCallback =
+                new TestProxyFileDescriptorCallback(1024 * 1024, "Block") {
+            @Override
+            public int onRead(long offset, int size, byte[] data) throws ErrnoException {
+                try {
+                    readBlockedLatch.countDown();
+                    blockReadLatch.await();
+                } catch (InterruptedException e) {
+                    fail(e.getMessage());
+                }
+                return super.onRead(offset, size, data);
+            }
+
+            @Override
+            public void onRelease() {
+                releaseLatch.countDown();
+            }
+        };
+        final TestProxyFileDescriptorCallback asyncCallback =
+                new TestProxyFileDescriptorCallback(1024 * 1024, "Async") {
+            @Override
+            public void onRelease() {
+                releaseLatch.countDown();
+            }
+        };
+        final SynchronousQueue<Handler> handlerChannel = new SynchronousQueue<>();
+        final Thread looperThread = new Thread(() -> {
+            Looper.prepare();
+            try {
+                handlerChannel.put(new Handler());
+            } catch (InterruptedException e) {
+                fail(e.getMessage());
+            }
+            Looper.loop();
+        });
+        looperThread.start();
+
+        final Handler handler = handlerChannel.take();
+
+        try (final ParcelFileDescriptor blockFd =
+                    mStorageManager.openProxyFileDescriptor(
+                            ParcelFileDescriptor.MODE_READ_ONLY, blockCallback);
+             final ParcelFileDescriptor asyncFd =
+                    mStorageManager.openProxyFileDescriptor(
+                            ParcelFileDescriptor.MODE_READ_ONLY, asyncCallback, handler)) {
+            final Thread readingThread = new Thread(() -> {
+                final byte[] bytes = new byte[128];
+                try {
+
+                    Os.read(blockFd.getFileDescriptor(), bytes, 0, 128);
+                } catch (ErrnoException | InterruptedIOException e) {
+                    fail(e.getMessage());
+                }
+            });
+            readingThread.start();
+
+            readBlockedLatch.countDown();
+            assertEquals(Thread.State.RUNNABLE, readingThread.getState());
+
+            final byte[] bytes = new byte[128];
+            Log.d("StorageManagerTest", "start read async");
+            assertEquals(128, Os.read(asyncFd.getFileDescriptor(), bytes, 0, 128));
+            Log.d("StorageManagerTest", "stop read async");
+
+            blockReadLatch.countDown();
+            readingThread.join();
+        }
+
+        releaseLatch.await();
+        handler.getLooper().quit();
+        looperThread.join();
     }
 
     private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)
