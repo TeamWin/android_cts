@@ -447,6 +447,7 @@ public class StagefrightTest extends InstrumentationTestCase {
                     codec.release();
                 }
             }
+            ex.unselectTrack(t);
         }
         ex.release();
         String cve = rname.replace("_", "-").toUpperCase();
