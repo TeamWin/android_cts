@@ -17,7 +17,7 @@ package com.android.compatibility.common.tradefed.result;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.compatibility.common.tradefed.testtype.CompatibilityTest.RetryType;
+import com.android.compatibility.common.tradefed.util.RetryType;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.IModuleResult;

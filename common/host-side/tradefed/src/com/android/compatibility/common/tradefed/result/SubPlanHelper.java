@@ -33,11 +33,15 @@ import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
+import com.android.tradefed.util.StreamUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +54,9 @@ import java.util.Set;
 /**
  * Class for creating subplans from compatibility result XML.
  */
-public class SubPlanCreator {
+public class SubPlanHelper {
+
+    private static final String XML_EXT = ".xml";
 
     // result types
     public static final String PASSED = "passed";
@@ -108,20 +114,43 @@ public class SubPlanCreator {
     IInvocationResult mResult = null;
 
     /**
-     * Create an empty {@link SubPlanCreator}.
+     * Create an empty {@link SubPlanHelper}.
      * <p/>
      * All {@link Option} fields must be populated via
      * {@link com.android.tradefed.config.ArgsOptionParser}
      */
-    public SubPlanCreator() {}
+    public SubPlanHelper() {}
 
     /**
-     * Create a {@link SubPlanCreator} using the specified option values.
+     * Create a {@link SubPlanHelper} using the specified option values.
      */
-    public SubPlanCreator(String name, int session, Collection<String> resultTypes) {
+    public SubPlanHelper(String name, int session, Collection<String> resultTypes) {
         mSubPlanName = name;
         mSessionId = session;
         mResultTypes.addAll(resultTypes);
+    }
+
+    public static ISubPlan getSubPlanByName(CompatibilityBuildHelper buildHelper, String name) {
+        if (!name.endsWith(XML_EXT)) {
+            name = name + XML_EXT; // only append XML extension to name if not already there
+        }
+        InputStream subPlanInputStream = null;
+        try {
+            File subPlanFile = new File(buildHelper.getSubPlansDir(), name);
+            if (!subPlanFile.exists()) {
+                throw new IllegalArgumentException(
+                        String.format("Could not retrieve subplan \"%s\"", name));
+            }
+            subPlanInputStream = new FileInputStream(subPlanFile);
+            ISubPlan subPlan = new SubPlan();
+            subPlan.parse(subPlanInputStream);
+            return subPlan;
+        } catch (FileNotFoundException | ParseException e) {
+            throw new RuntimeException(
+                    String.format("Unable to find or parse subplan %s", name), e);
+        } finally {
+            StreamUtil.closeStream(subPlanInputStream);
+        }
     }
 
     /**
@@ -333,7 +362,7 @@ public class SubPlanCreator {
             mSubPlanName = createPlanName();
         }
         try {
-            mSubPlanFile = new File(buildHelper.getSubPlansDir(), mSubPlanName + ".xml");
+            mSubPlanFile = new File(buildHelper.getSubPlansDir(), mSubPlanName + XML_EXT);
             if (mSubPlanFile.exists()) {
                 throw new ConfigurationException(String.format("Subplan %s already exists",
                         mSubPlanName));
