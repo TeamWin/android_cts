@@ -67,17 +67,7 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
                 srcAttr.equals(targetAttr));
     }
 
-    // Test case 3: verify going from AudioAttributes to stream type with null arg
-    public void testGetVolumeControlStreamNull() throws Exception {
-        try {
-            int streamType = AudioAttributes.getVolumeControlStream(null);
-            fail("null AudioAttributes are not allowed");
-        } catch (IllegalArgumentException e) {
-            // test success
-        }
-    }
-
-    // Test case 4: verify going from AudioAttributes to stream type, with attributes built from
+    // Test case 3: verify going from AudioAttributes to stream type, with attributes built from
     //    stream type.
     public void testGetVolumeControlStreamVsLegacyStream() throws Exception {
         for (int testType : new int[] { AudioManager.STREAM_ALARM, AudioManager.STREAM_MUSIC,
@@ -85,7 +75,7 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
                 AudioManager.STREAM_SYSTEM, AudioManager.STREAM_VOICE_CALL}) {
             final AudioAttributes aa = new AudioAttributes.Builder().setLegacyStreamType(testType)
                     .build();
-            final int stream = AudioAttributes.getVolumeControlStream(aa);
+            final int stream = aa.getVolumeControlStream();
             assertEquals("Volume control from attributes, stream doesn't match", testType, stream);
         }
     }
