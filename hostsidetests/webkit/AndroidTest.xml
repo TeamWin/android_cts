@@ -17,6 +17,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsWebViewStartupApp.apk" />
+        <option name="test-file-name" value="CtsWebViewRendererCrash.apk" />
     </target_preparer>
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
