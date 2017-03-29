@@ -50,11 +50,11 @@
     <TextView android:id="@+id/textViewNoHint" android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <TextView android:id="@+id/textViewHintCustom" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillHint="@string/new_password_label" />
+        android:layout_height="wrap_content" android:autofillHints="@string/new_password_label" />
     <TextView android:id="@+id/textViewPassword" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillHint="password" />
+        android:layout_height="wrap_content" android:autofillHints="password" />
     <TextView android:id="@+id/textViewPhoneName" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillHint=" phone, username     " />
+        android:layout_height="wrap_content" android:autofillHints=" phone, username     " />
     <TextView android:id="@+id/textViewHintsFromArray" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillHint="@array/cc_expiration_values" />
+        android:layout_height="wrap_content" android:autofillHints="@array/cc_expiration_values" />
 </LinearLayout>
