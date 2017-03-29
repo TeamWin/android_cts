@@ -33,6 +33,7 @@ import android.annotation.NonNull;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -1509,10 +1510,17 @@ public class ViewGroupTest implements CTSResult {
         public Button c2view1 = new Button(mContext);
         public Button c2view2 = new Button(mContext);
         TestClusterHier() {
+            this(true);
+        }
+        TestClusterHier(boolean inTouchMode) {
             for (Button bt : new Button[]{c1view1, c1view2, c2view1, c2view2}) {
                 // Otherwise this test won't work during suite-run.
-                bt.setFocusableInTouchMode(true);
+                bt.setFocusableInTouchMode(inTouchMode);
             }
+            for (MockViewGroup mvg : new MockViewGroup[]{top, cluster1, cluster2, nestedGroup}) {
+                mvg.returnActualFocusSearchResult = true;
+            }
+            top.setIsRootNamespace(true);
             cluster1.setKeyboardNavigationCluster(true);
             cluster2.setKeyboardNavigationCluster(true);
             cluster1.addView(c1view1);
@@ -1741,6 +1749,48 @@ public class ViewGroupTest implements CTSResult {
         h.c1view1.setFocusedInCluster();
         h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
         assertSame(h.c1view1, h.top.findFocus());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testTouchscreenBlocksFocus() {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
+            return;
+        }
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
+
+        // Can't focus/default-focus an element in touchscreenBlocksFocus
+        TestClusterHier h = new TestClusterHier(false);
+        h.cluster1.setTouchscreenBlocksFocus(true);
+        h.c1view2.setFocusedByDefault(true);
+        h.top.restoreDefaultFocus();
+        assertSame(h.c2view1, h.top.findFocus());
+        ArrayList<View> views = new ArrayList<>();
+        h.top.addFocusables(views, View.FOCUS_DOWN);
+        for (View v : views) {
+            assertFalse(v.getParent() == h.cluster1);
+        }
+        views.clear();
+
+        // Can cluster navigate into it though
+        h.top.addKeyboardNavigationClusters(views, View.FOCUS_DOWN);
+        assertTrue(views.contains(h.cluster1));
+        views.clear();
+        h.cluster1.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c1view2, h.top.findFocus());
+        // can normal-navigate around once inside
+        h.top.addFocusables(views, View.FOCUS_DOWN);
+        assertTrue(views.contains(h.c1view1));
+        h.c1view1.requestFocus();
+        assertSame(h.c1view1, h.top.findFocus());
+        // focus loops within cluster (doesn't leave)
+        h.c1view2.requestFocus();
+        View next = h.top.focusSearch(h.c1view2, View.FOCUS_FORWARD);
+        assertSame(h.c1view1, next);
+        // but once outside, can no-longer navigate in.
+        h.c2view2.requestFocus();
+        h.c1view1.requestFocus();
+        assertSame(h.c2view2, h.top.findFocus());
     }
 
     @UiThreadTest
