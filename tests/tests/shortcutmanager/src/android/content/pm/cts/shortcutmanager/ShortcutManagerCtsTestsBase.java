@@ -22,7 +22,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.LauncherApps;
 import android.content.pm.LauncherApps.ShortcutQuery;
 import android.content.pm.PackageManager;
@@ -350,8 +349,7 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected ShortcutInfo makeShortcutWithRank(String id, int rank) {
         return makeShortcut(
                 id, "Title-" + id, /* activity =*/ null, /* icon =*/ null,
-                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), rank,
-                /* chooserFilters */ null, /* chooserComponents */ null);
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), rank);
     }
 
     /**
@@ -360,15 +358,13 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected ShortcutInfo makeShortcut(String id, String shortLabel) {
         return makeShortcut(
                 id, shortLabel, /* activity =*/ null, /* icon =*/ null,
-                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                /* chooserFilters */ null, /* chooserComponents */ null);
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0);
     }
 
     protected ShortcutInfo makeShortcut(String id, ComponentName activity) {
         return makeShortcut(
                 id, "Title-" + id, activity, /* icon =*/ null,
-                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                /* chooserFilters */ null, /* chooserComponents */ null);
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0);
     }
 
     /**
@@ -377,32 +373,8 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected ShortcutInfo makeShortcutWithIcon(String id, Icon icon) {
         return makeShortcut(
                 id, "Title-" + id, /* activity =*/ null, icon,
-                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                /* chooserFilters */ null, /* chooserComponents */ null);
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0);
     }
-
-    /**
-     * Make a chooser shortcut.
-     */
-    protected ShortcutInfo makeChooserShortcut(String id, int i, boolean includeIntent) {
-        List<IntentFilter> filters = new ArrayList<>();
-        List<ComponentName> componentNames = new ArrayList<>();
-        for(int j = 0; j < i; j++) {
-            final IntentFilter filter = new IntentFilter();
-            filter.addAction("view");
-            filters.add(filter);
-
-            componentNames.add(new ComponentName("xxxx", "yy" + i));
-        }
-        Intent intent = null;
-        if (includeIntent) {
-            intent = makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class);
-        }
-        return makeShortcut(
-                id, "Title-" + id, /* activity =*/ null, /* icon */ null,
-                intent, /* rank =*/ 0, filters, componentNames);
-    }
-
 
     /**
      * Make multiple shortcuts with IDs.
@@ -423,14 +395,11 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
      * Make a shortcut with details.
      */
     protected ShortcutInfo makeShortcut(String id, String shortLabel, ComponentName activity,
-            Icon icon, Intent intent, int rank, List<IntentFilter> filters,
-            List<ComponentName> componentNames) {
+            Icon icon, Intent intent, int rank) {
         final ShortcutInfo.Builder b = makeShortcutBuilder(id)
                 .setShortLabel(shortLabel)
-                .setRank(rank);
-        if (intent != null) {
-            b.setIntent(intent);
-        }
+                .setRank(rank)
+                .setIntent(intent);
         if (activity != null) {
             b.setActivity(activity);
         } else if (mTargetActivityOverride != null) {
@@ -438,15 +407,6 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         }
         if (icon != null) {
             b.setIcon(icon);
-        }
-        if (filters != null && componentNames != null) {
-            if (filters.size() != componentNames.size()) {
-                throw new IllegalArgumentException(
-                        "inconsistently sized filters and components given");
-            }
-            for (int i = 0; i < filters.size(); i++) {
-                b.addChooserIntentFilter(filters.get(i), componentNames.get(i));
-            }
         }
         return b.build();
     }
