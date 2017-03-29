@@ -1815,6 +1815,7 @@
         </activity>
 
         <activity android:name=".vr.VrListenerVerifierActivity"
+            android:configChanges="uiMode"
             android:label="@string/vr_tests">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1828,6 +1829,7 @@
         <activity android:name=".vr.MockVrActivity"
             android:label="@string/vr_tests"
             android:exported="false"
+            android:configChanges="uiMode"
             android:process=":TestVrActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1838,6 +1840,7 @@
         <activity android:name=".vr.MockVrActivity2"
             android:label="@string/vr_tests"
             android:exported="false"
+            android:configChanges="uiMode"
             android:process=":TestVrActivity2">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
