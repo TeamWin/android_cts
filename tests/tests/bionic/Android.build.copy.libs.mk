@@ -103,6 +103,8 @@ my_bionic_testlib_files := \
   prebuilt-elf-files/libtest_invalid-zero_shstrndx.so \
   prebuilt-elf-files/libtest_invalid-textrels.so \
   prebuilt-elf-files/libtest_invalid-textrels2.so \
+  preinit_getauxval_test_helper/preinit_getauxval_test_helper \
+  preinit_syscall_test_helper/preinit_syscall_test_helper \
   private_namespace_libs_external/libnstest_private_external.so \
   private_namespace_libs/libnstest_dlopened.so \
   private_namespace_libs/libnstest_private.so \
