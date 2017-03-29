@@ -19,8 +19,8 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.IAbi;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,9 +41,10 @@ public interface IModuleRepo {
             Set<String> mIncludeFilters, Set<String> mExcludeFilters, IBuildInfo buildInfo);
 
     /**
-     * @return a {@link Map} of all modules to run on the device referenced by the given serial.
+     * @return a {@link LinkedList} of all modules to run on the device referenced by the given
+     * serial.
      */
-    List<IModuleDef> getModules(String serial, int shardIndex);
+    LinkedList<IModuleDef> getModules(String serial, int shardIndex);
 
     /**
      * @return the number of shards this repo is initialized for.
@@ -64,4 +65,9 @@ public interface IModuleRepo {
      * @return An array of all module ids in the repo.
      */
     String[] getModuleIds();
+
+    /**
+     * Clean up all internal references.
+     */
+    void tearDown();
 }

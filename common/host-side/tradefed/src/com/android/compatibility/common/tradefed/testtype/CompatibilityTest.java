@@ -348,7 +348,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
             // FIXME: Each shard will do a full initialization which is not optimal. Need a way
             // to be more specific on what to initialize.
-            List<IModuleDef> modules;
+            LinkedList<IModuleDef> modules;
             synchronized (mModuleRepo) {
                 if (!mModuleRepo.isInitialized()) {
                     setupFilters();
@@ -387,6 +387,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
                         (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
             }
+
             if (mRebootBeforeTest) {
                 CLog.d("Rebooting device before test starts as requested.");
                 mDevice.reboot();
@@ -435,10 +436,14 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     throw new RuntimeException(e);
                 }
             }
+            // Module Repo is not useful anymore
+            mModuleRepo.tearDown();
+            mModuleRepo = null;
             // Run the tests
-            for (int i = 0; i < moduleCount; i++) {
-
-                IModuleDef module = modules.get(i);
+            while (!modules.isEmpty()) {
+                // Make sure we remove the modules from the reference list when we are done with
+                // them.
+                IModuleDef module = modules.poll();
                 long start = System.currentTimeMillis();
 
                 if (mRebootPerModule) {
@@ -457,9 +462,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     runPreModuleCheck(module.getName(), checkers, mDevice, listener);
                 }
                 try {
-                    if (module.getTest() instanceof IBuildReceiver) {
-                        ((IBuildReceiver)module.getTest()).setBuild(mBuildHelper.getBuildInfo());
-                    }
                     module.run(listener);
                 } catch (DeviceUnresponsiveException due) {
                     // being able to catch a DeviceUnresponsiveException here implies that recovery
@@ -487,6 +489,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 if (checkers != null && !checkers.isEmpty()) {
                     runPostModuleCheck(module.getName(), checkers, mDevice, listener);
                 }
+                module = null;
             }
         } catch (FileNotFoundException fnfe) {
             throw new RuntimeException("Failed to initialize modules", fnfe);
