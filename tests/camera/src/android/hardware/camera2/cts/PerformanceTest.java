@@ -207,18 +207,36 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             mReportLog.submit(getInstrumentation());
 
             if (VERBOSE) {
-                Log.v(TAG, "Camera " + id + " device open times: "
-                        + Arrays.toString(cameraOpenTimes));
-                Log.v(TAG, "Camera " + id + " configure stream times: "
-                        + Arrays.toString(configureStreamTimes));
-                Log.v(TAG, "Camera " + id + " start preview times: "
-                        + Arrays.toString(startPreviewTimes));
-                Log.v(TAG, "Camera " + id + " stop preview times: "
-                        + Arrays.toString(stopPreviewTimes));
-                Log.v(TAG, "Camera " + id + " device close times: "
-                        + Arrays.toString(cameraCloseTimes));
-                Log.v(TAG, "Camera " + id + " camera launch times: "
-                        + Arrays.toString(cameraLaunchTimes));
+                Log.v(TAG, "Camera " + id + " device open times(ms): "
+                        + Arrays.toString(cameraOpenTimes)
+                        + ". Average(ms): " + Stat.getAverage(cameraOpenTimes)
+                        + ". Min(ms): " + Stat.getMin(cameraOpenTimes)
+                        + ". Max(ms): " + Stat.getMax(cameraOpenTimes));
+                Log.v(TAG, "Camera " + id + " configure stream times(ms): "
+                        + Arrays.toString(configureStreamTimes)
+                        + ". Average(ms): " + Stat.getAverage(configureStreamTimes)
+                        + ". Min(ms): " + Stat.getMin(configureStreamTimes)
+                        + ". Max(ms): " + Stat.getMax(configureStreamTimes));
+                Log.v(TAG, "Camera " + id + " start preview times(ms): "
+                        + Arrays.toString(startPreviewTimes)
+                        + ". Average(ms): " + Stat.getAverage(startPreviewTimes)
+                        + ". Min(ms): " + Stat.getMin(startPreviewTimes)
+                        + ". Max(ms): " + Stat.getMax(startPreviewTimes));
+                Log.v(TAG, "Camera " + id + " stop preview times(ms): "
+                        + Arrays.toString(stopPreviewTimes)
+                        + ". Average(ms): " + Stat.getAverage(stopPreviewTimes)
+                        + ". nMin(ms): " + Stat.getMin(stopPreviewTimes)
+                        + ". nMax(ms): " + Stat.getMax(stopPreviewTimes));
+                Log.v(TAG, "Camera " + id + " device close times(ms): "
+                        + Arrays.toString(cameraCloseTimes)
+                        + ". Average(ms): " + Stat.getAverage(cameraCloseTimes)
+                        + ". Min(ms): " + Stat.getMin(cameraCloseTimes)
+                        + ". Max(ms): " + Stat.getMax(cameraCloseTimes));
+                Log.v(TAG, "Camera " + id + " camera launch times(ms): "
+                        + Arrays.toString(cameraLaunchTimes)
+                        + ". Average(ms): " + Stat.getAverage(cameraLaunchTimes)
+                        + ". Min(ms): " + Stat.getMin(cameraLaunchTimes)
+                        + ". Max(ms): " + Stat.getMax(cameraLaunchTimes));
             }
         }
         if (mCameraIds.length != 0) {
@@ -1100,7 +1118,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
 
             if (imageAvailable.block(timeout)) {
                 imageAvailable.close();
-                imageReceived = false;
+                imageReceived = true;
             } else {
                 throw new TimeoutRuntimeException("Unable to get the first image after "
                         + CameraTestUtils.CAPTURE_IMAGE_TIMEOUT_MS + "ms");
