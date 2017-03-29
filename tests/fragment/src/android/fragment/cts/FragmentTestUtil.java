@@ -76,11 +76,11 @@ public class FragmentTestUtil {
         return ret[0];
     }
 
-    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule) {
+    public static boolean popBackStackImmediate(final ActivityTestRule<? extends Activity> rule) {
         return popBackStackImmediate(rule, rule.getActivity().getFragmentManager());
     }
 
-    public static boolean popBackStackImmediate(final ActivityTestRule<FragmentTestActivity> rule,
+    public static boolean popBackStackImmediate(final ActivityTestRule<? extends Activity> rule,
             final FragmentManager fm) {
         final boolean[] ret = new boolean[1];
         runOnUiThreadRethrow(rule, new Runnable() {
