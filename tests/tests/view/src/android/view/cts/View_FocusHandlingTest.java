@@ -344,7 +344,7 @@ public class View_FocusHandlingTest {
 
     @Test
     public void testNoInitialFocus() throws Throwable {
-        Assume.assumeTrue(ViewRootImpl.sAlwaysAssignFocus);
+        Assume.assumeFalse(ViewRootImpl.sAlwaysAssignFocus);
         Activity activity = mActivityRule.getActivity();
         View[] result = getInitialAndFirstFocus(R.layout.focus_handling_focusables);
         assertNull(result[0]);
@@ -353,7 +353,7 @@ public class View_FocusHandlingTest {
 
     @Test
     public void testDefaultFocus() throws Throwable {
-        Assume.assumeTrue(ViewRootImpl.sAlwaysAssignFocus);
+        Assume.assumeFalse(ViewRootImpl.sAlwaysAssignFocus);
         Activity activity = mActivityRule.getActivity();
         View[] result = getInitialAndFirstFocus(R.layout.focus_handling_default_focus);
         assertNull(result[0]);
@@ -362,7 +362,7 @@ public class View_FocusHandlingTest {
 
     @Test
     public void testInitialFocus() throws Throwable {
-        Assume.assumeTrue(ViewRootImpl.sAlwaysAssignFocus);
+        Assume.assumeFalse(ViewRootImpl.sAlwaysAssignFocus);
         Activity activity = mActivityRule.getActivity();
         View[] result = getInitialAndFirstFocus(R.layout.focus_handling_initial_focus);
         assertSame(result[0], activity.findViewById(R.id.focusable3));
