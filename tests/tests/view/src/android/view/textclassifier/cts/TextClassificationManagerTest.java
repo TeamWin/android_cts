@@ -16,7 +16,9 @@
 
 package android.view.textclassifier.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
@@ -51,7 +53,8 @@ public class TextClassificationManagerTest {
     public void setup() {
         mTcm = InstrumentationRegistry.getTargetContext()
                 .getSystemService(TextClassificationManager.class);
-        mClassifier = mTcm.getDefaultTextClassifier();
+        mTcm.setTextClassifier(null);
+        mClassifier = mTcm.getTextClassifier();
     }
 
     @Test
@@ -124,6 +127,13 @@ public class TextClassificationManagerTest {
         assertThat(mTcm.detectLanguages(text), isDetectedLanguage("ja"));
     }
 
+    @Test
+    public void testSetTextClassifier() {
+        TextClassifier classifier = mock(TextClassifier.class);
+        mTcm.setTextClassifier(classifier);
+        assertEquals(classifier, mTcm.getTextClassifier());
+    }
+
     private boolean isTextClassifierDisabled() {
         return mClassifier == TextClassifier.NO_OP;
     }
@@ -146,7 +156,7 @@ public class TextClassificationManagerTest {
             @Override
             public void describeTo(Description description) {
                 description.appendValue(
-                        String.format("%d, %d, %s=1.0", startIndex, endIndex, type));
+                        String.format("%d, %d, %s", startIndex, endIndex, type));
             }
         };
     }
@@ -195,7 +205,7 @@ public class TextClassificationManagerTest {
 
             @Override
             public void describeTo(Description description) {
-                description.appendValue(String.format("%s=1.0", language));
+                description.appendValue(String.format("%s", language));
             }
         };
     }
