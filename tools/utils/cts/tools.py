@@ -215,6 +215,35 @@ class TestPlan(object):
     doc.writexml(stream, addindent='  ', newl='\n', encoding='UTF-8')
     stream.close()
 
+class AnnotationTestPlan(TestPlan):
+  """A CTS test plan generator by the pressence of annotations."""
+
+  def __init__(self, all_packages, descriptions, annotation):
+    """Instantiate a test plan with an annotation and a list of package names
+
+    Args:
+      all_packages: The full list of available packages. Subsequent calls to Exclude() and
+          Include() select from the packages given here.
+      descriptions: the list of xml files from which the test plans are made.
+      annotation: a string of the annotation attribute in the description files
+    """
+
+    TestPlan.__init__(self, all_packages)
+    self.annotation = annotation
+    self.descriptions = descriptions
+
+  def MakeAnnotationPlan(self):
+    """Creates the plan by looking at all of the description files for the specific annotation."""
+
+    for description in self.descriptions:
+      try:
+        package_xml = XmlFile(description)
+        security_test_list = package_xml.GetTestsWithAttr("security")
+        if security_test_list:
+          self.Include(package_xml.GetPackage())
+          self.IncludeTests(package_xml.GetPackage(), security_test_list)
+      except IOError:
+        continue
 
 class XmlFile(object):
   """This class parses Xml files and allows reading attribute values by tag and attribute name."""
@@ -236,6 +265,15 @@ class XmlFile(object):
     element = self.doc.getElementsByTagName(tag)[0]
     return element.getAttributeNS('http://schemas.android.com/apk/res/android', attr_name)
 
+  def GetPackage(self):
+    """Get the pack of a specific xml file.
+
+    Returns:
+      The name of the package in this file.
+    """
+
+    return self.doc.getElementsByTagName("TestPackage")[0].getAttribute("appPackageName")
+
   def GetAttr(self, tag, attr_name):
     """Return the value of the given attribute in the first matching tag.
 
@@ -248,3 +286,19 @@ class XmlFile(object):
     """
     element = self.doc.getElementsByTagName(tag)[0]
     return element.getAttribute(attr_name)
+
+  def GetTestsWithAttr(self, attr_name):
+    """Finds all of the tests with a specific attribute.
+
+    Args:
+      attr_name: Name of an attribute to look for.
+
+    Returns:
+      A list of tests with the desired attribute.
+    """
+    to_return = []
+    tests = self.doc.getElementsByTagName("Test")
+    for test in tests:
+      if test.hasAttribute(attr_name):
+        to_return.append(test.parentNode.getAttribute("name") + "#" + test.getAttribute("name"))
+    return to_return
