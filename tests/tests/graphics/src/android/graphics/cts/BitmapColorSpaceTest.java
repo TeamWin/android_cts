@@ -289,4 +289,34 @@ public class BitmapColorSpaceTest {
 
         p.recycle();
     }
+
+    @Test
+    public void p3rgb565() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredConfig = Bitmap.Config.RGB_565;
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void p3hardware() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredConfig = Bitmap.Config.HARDWARE;
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
 }

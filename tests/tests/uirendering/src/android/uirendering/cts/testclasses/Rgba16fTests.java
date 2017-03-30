@@ -20,12 +20,15 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Shader;
 import android.support.test.filters.MediumTest;
+import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -51,6 +54,64 @@ public class Rgba16fTests extends ActivityTestBase {
                 .runWithVerifier(new SamplePointVerifier(
                         new Point[] { new Point(0, 0) },
                         new int[] { 0xffbbbbbb }
+                ));
+    }
+
+    @Test
+    public void testAlpha() {
+        createTest()
+                .addCanvasClient("RGBA16F_TransferFunctions", (canvas, width, height) -> {
+                    AssetManager assets = getActivity().getResources().getAssets();
+                    try (InputStream in = assets.open("linear-rgba16f.png")) {
+                        Bitmap bitmap = BitmapFactory.decodeStream(in);
+                        canvas.scale(
+                                width / (float) bitmap.getWidth(),
+                                height / (float) bitmap.getHeight());
+                        Paint p = new Paint();
+                        p.setAlpha(127);
+                        canvas.drawColor(0xffff0000);
+                        canvas.drawBitmap(bitmap, 0, 0, p);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Test failed: ", e);
+                    }
+                }, true)
+                .runWithVerifier(new SamplePointVerifier(
+                        new Point[] { new Point(0, 0) },
+                        new int[] { 0xffdd5d5d }
+                ));
+    }
+
+    @Test
+    public void testMasked() {
+        createTest()
+                .addCanvasClient("RGBA16F_Masked", (canvas, width, height) -> {
+                    AssetManager assets = getActivity().getResources().getAssets();
+                    try (InputStream in = assets.open("linear-rgba16f.png")) {
+                        Bitmap bitmap = BitmapFactory.decodeStream(in);
+
+                        Bitmap res = BitmapFactory.decodeResource(getActivity().getResources(),
+                                R.drawable.alpha_mask);
+                        Bitmap mask = Bitmap.createBitmap(res.getWidth(), res.getHeight(),
+                                Bitmap.Config.ALPHA_8);
+                        Canvas c = new Canvas(mask);
+                        c.drawBitmap(res, 0, 0, null);
+
+                        Paint p = new Paint();
+                        p.setShader(new BitmapShader(bitmap,
+                                Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+
+                        canvas.scale(
+                                width / (float) bitmap.getWidth(),
+                                height / (float) bitmap.getHeight());
+
+                        canvas.drawBitmap(mask, 0, 0, p);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Test failed: ", e);
+                    }
+                }, true)
+                .runWithVerifier(new SamplePointVerifier(
+                        new Point[] { new Point(0, 0), new Point(31, 31) },
+                        new int[] { 0xffffffff, 0xffbbbbbb }
                 ));
     }
 
