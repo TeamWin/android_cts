@@ -17,23 +17,36 @@
 package com.android.server.cts;
 
 import android.service.battery.BatteryServiceDumpProto;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
-import java.util.Scanner;
-
-/**
- * Test to check that the battery manager properly outputs its dump state.
- */
+/** Test to check that the battery manager properly outputs its dump state. */
 public class BatteryIncidentTest extends ProtoDumpTestCase {
-    public void testBatteryServiceDump() throws Exception {
-        final BatteryServiceDumpProto dump = getDump(BatteryServiceDumpProto.parser(),
-                                                     "dumpsys battery --proto");
+    private final String LEANBACK_FEATURE = "android.software.leanback";
 
-        assertTrue(dump.getPlugged()!=BatteryServiceDumpProto.BatteryPlugged.BATTERY_PLUGGED_WIRELESS);
+    public void testBatteryServiceDump() throws Exception {
+        final BatteryServiceDumpProto dump =
+                getDump(BatteryServiceDumpProto.parser(), "dumpsys battery --proto");
+
+        if (!dump.getIsPresent()) {
+            /* If the battery isn't present, no need to run this test. */
+            return;
+        }
+
+        if (isLeanback()) {
+            /* Android TV reports that it has a battery, but it doesn't really. */
+            return;
+        }
+
+        assertTrue(
+                dump.getPlugged()
+                        != BatteryServiceDumpProto.BatteryPlugged.BATTERY_PLUGGED_WIRELESS);
         assertTrue(dump.getMaxChargingCurrent() > 0);
         assertTrue(dump.getMaxChargingVoltage() > 0);
         assertTrue(dump.getChargeCounter() > 0);
-        assertTrue(dump.getStatus()!=BatteryServiceDumpProto.BatteryStatus.BATTERY_STATUS_INVALID);
-        assertTrue(dump.getHealth()!=BatteryServiceDumpProto.BatteryHealth.BATTERY_HEALTH_INVALID);
+        assertTrue(
+                dump.getStatus() != BatteryServiceDumpProto.BatteryStatus.BATTERY_STATUS_INVALID);
+        assertTrue(
+                dump.getHealth() != BatteryServiceDumpProto.BatteryHealth.BATTERY_HEALTH_INVALID);
         int scale = dump.getScale();
         assertTrue(scale > 0);
         int level = dump.getLevel();
@@ -41,5 +54,10 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
         assertTrue(dump.getVoltage() > 0);
         assertTrue(dump.getTemperature() > 0);
         assertNotNull(dump.getTechnology());
+    }
+
+    private boolean isLeanback() throws DeviceNotAvailableException {
+        final String commandOutput = getDevice().executeShellCommand("pm list features");
+        return commandOutput.contains(LEANBACK_FEATURE);
     }
 }
