@@ -280,6 +280,10 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     public void testSetSecureSetting_failForInstallNonMarketApps() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetSecureSetting_failForInstallNonMarketApps");
+            return;
+        }
         ComponentName profileOwner = DeviceAdminInfoTest.getProfileOwnerComponent();
         try {
             mDevicePolicyManager.setSecureSetting(profileOwner,
