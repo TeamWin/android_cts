@@ -878,6 +878,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Prepare the authenticated response
+        final Bundle extras = new Bundle();
+        extras.putString("numbers", "4815162342");
         AuthenticationActivity.setResponse(
                 new CannedFillResponse.Builder()
             .addDataset(new CannedDataset.Builder()
@@ -888,13 +890,14 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
             .build());
 
         // Create the authentication intent
-        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
                 new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
 
         // Configure the service behavior
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setAuthentication(authentication)
                 .setPresentation(createPresentation("Tap to auth response"))
+                .setExtras(extras)
                 .build());
 
         // Set expectation for the activity
@@ -921,6 +924,11 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+
+        final Bundle data = AuthenticationActivity.getData();
+        assertThat(data).isNotNull();
+        final String extraValue = data.getString("numbers");
+        assertThat(extraValue).isEqualTo("4815162342");
     }
 
     @Test
