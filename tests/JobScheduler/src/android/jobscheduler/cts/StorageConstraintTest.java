@@ -24,7 +24,7 @@ import android.os.SystemClock;
 import com.android.compatibility.common.util.SystemUtil;
 
 /**
- * Schedules jobs with the {@link android.app.job.JobScheduler} that have battery constraints.
+ * Schedules jobs with the {@link android.app.job.JobScheduler} that have storage constraints.
  */
 @TargetApi(26)
 public class StorageConstraintTest extends ConstraintTest {
@@ -63,7 +63,7 @@ public class StorageConstraintTest extends ConstraintTest {
         int seq = Integer.parseInt(res.trim());
         long startTime = SystemClock.elapsedRealtime();
 
-        // Wait for the battery update to be processed by job scheduler before proceeding.
+        // Wait for the storage update to be processed by job scheduler before proceeding.
         int curSeq;
         do {
             curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
