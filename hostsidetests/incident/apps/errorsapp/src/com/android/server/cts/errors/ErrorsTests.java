@@ -41,6 +41,10 @@ import org.junit.runner.RunWith;
 public class ErrorsTests {
     private static final String TAG = "ErrorsTests";
 
+    private static final String CRASH_TAG = "data_app_crash";
+    private static final String ANR_TAG = "data_app_anr";
+    private static final String NATIVE_CRASH_TAG = "SYSTEM_TOMBSTONE";
+
     private CountDownLatch mResultsReceivedSignal;
     private DropBoxManager mDropbox;
     private long mStartMs;
@@ -51,7 +55,6 @@ public class ErrorsTests {
         mContext = InstrumentationRegistry.getTargetContext();
         mDropbox = (DropBoxManager) mContext.getSystemService(Context.DROPBOX_SERVICE);
         mResultsReceivedSignal = new CountDownLatch(1);
-        registerReceiver(mContext, mResultsReceivedSignal);
         mStartMs = System.currentTimeMillis();
     }
 
@@ -59,12 +62,13 @@ public class ErrorsTests {
     public void testException() throws Exception {
         Log.i(TAG, "testException");
 
+        registerReceiver(mContext, mResultsReceivedSignal, CRASH_TAG);
         Intent intent = new Intent();
         intent.setClass(mContext, ExceptionActivity.class);
         mContext.startActivity(intent);
 
         mResultsReceivedSignal.await(10, TimeUnit.SECONDS);
-        assertDropboxContains("data_app_crash", mContext.getPackageName() + ":TestProcess",
+        assertDropboxContains(CRASH_TAG, mContext.getPackageName() + ":TestProcess",
                 "java.lang.RuntimeException: This is a test exception");
     }
 
@@ -72,12 +76,13 @@ public class ErrorsTests {
     public void testANR() throws Exception {
         Log.i(TAG, "testANR");
 
+        registerReceiver(mContext, mResultsReceivedSignal, ANR_TAG);
         Intent intent = new Intent();
         intent.setClass(mContext, ANRActivity.class);
         mContext.startActivity(intent);
 
         mResultsReceivedSignal.await(60, TimeUnit.SECONDS);
-        assertDropboxContains("data_app_anr", mContext.getPackageName() + ":TestProcess",
+        assertDropboxContains(ANR_TAG, mContext.getPackageName() + ":TestProcess",
                 "Subject: Broadcast of Intent { act=android.intent.action.SCREEN_ON");
     }
 
@@ -85,20 +90,27 @@ public class ErrorsTests {
     public void testNativeCrash() throws Exception {
         Log.i(TAG, "testNativeCrash");
 
+        registerReceiver(mContext, mResultsReceivedSignal, NATIVE_CRASH_TAG);
         Intent intent = new Intent();
         intent.setClass(mContext, NativeActivity.class);
         mContext.startActivity(intent);
 
         mResultsReceivedSignal.await(10, TimeUnit.SECONDS);
-        assertDropboxContains("SYSTEM_TOMBSTONE", mContext.getPackageName() + ":TestProcess",
+        assertDropboxContains(NATIVE_CRASH_TAG, mContext.getPackageName() + ":TestProcess",
                 "backtrace:");
     }
 
-    static void registerReceiver(Context ctx, CountDownLatch onReceiveLatch) {
+    void registerReceiver(Context ctx, CountDownLatch onReceiveLatch, String wantTag) {
         ctx.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                onReceiveLatch.countDown();
+                // DropBox might receive other entries while we're waiting for the error
+                // entry, so we need to check the tag before continuing.
+                DropBoxManager.Entry entry = mDropbox.getNextEntry(wantTag, mStartMs);
+                if (entry != null) {
+                    entry.close();
+                    onReceiveLatch.countDown();
+                }
             }
         }, new IntentFilter(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED));
     }
