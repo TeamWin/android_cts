@@ -14,25 +14,31 @@
  * limitations under the License.
  */
 
-
 package android.fragment.cts;
 
-
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Collection;
 
 /**
  * Tests usage of the {@link FragmentTransaction} class.
@@ -205,6 +211,83 @@ public class FragmentTransactionTest {
         });
     }
 
+    // Ensure that getFragments() works during transactions, even if it is run off thread
+    @Test
+    public void getFragmentsOffThread() throws Throwable {
+        final FragmentManager fm = mActivity.getFragmentManager();
+
+        // Make sure that adding a fragment works
+        Fragment fragment = new FragmentWithView();
+        fm.beginTransaction()
+                .add(android.R.id.content, fragment)
+                .addToBackStack(null)
+                .commit();
+
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        Collection<Fragment> fragments = fm.getFragments();
+        assertEquals(1, fragments.size());
+        assertTrue(fragments.contains(fragment));
+
+        // Removed fragments shouldn't show
+        fm.beginTransaction()
+                .remove(fragment)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertTrue(fm.getFragments().isEmpty());
+
+        // Now try detached fragments
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        fm.beginTransaction()
+                .detach(fragment)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        assertTrue(fm.getFragments().isEmpty());
+
+        // Now try hidden fragments
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        fm.beginTransaction()
+                .hide(fragment)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.executePendingTransactions(mActivityRule);
+        fragments = fm.getFragments();
+        assertEquals(1, fragments.size());
+        assertTrue(fragments.contains(fragment));
+
+        // And showing it again shouldn't change anything:
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        fragments = fm.getFragments();
+        assertEquals(1, fragments.size());
+        assertTrue(fragments.contains(fragment));
+
+        // Now pop back to the start state
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+
+        // We can't force concurrency, but we can do it lots of times and hope that
+        // we hit it.
+        for (int i = 0; i < 100; i++) {
+            Fragment fragment2 = new FragmentWithView();
+            fm.beginTransaction()
+                    .add(android.R.id.content, fragment2)
+                    .addToBackStack(null)
+                    .commit();
+            getFragmentsUntilSize(1);
+
+            fm.popBackStack();
+            getFragmentsUntilSize(0);
+        }
+    }
+
+    private void getFragmentsUntilSize(int expectedSize) {
+        final long endTime = SystemClock.uptimeMillis() + 3000;
+
+        do {
+            assertTrue(SystemClock.uptimeMillis() < endTime);
+        } while (mActivity.getFragmentManager().getFragments().size() != expectedSize);
+    }
+
     public static class CorrectFragment extends Fragment {}
 
     private static class PrivateFragment extends Fragment {}
@@ -212,4 +295,12 @@ public class FragmentTransactionTest {
     static class PackagePrivateFragment extends Fragment {}
 
     private class NonStaticFragment extends Fragment {}
+
+    public static class FragmentWithView extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.text_a, container, false);
+        }
+    }
 }
