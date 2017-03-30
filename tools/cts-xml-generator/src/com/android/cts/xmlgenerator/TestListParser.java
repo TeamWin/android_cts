@@ -27,7 +27,7 @@ import java.util.Scanner;
  * suite:android.holo.cts
  * case:HoloTest
  * test:testHolo
- * test:testHoloDialog[:timeout_value]
+ * test:testHoloDialog[:timeout_value][:security]
  */
 class TestListParser {
 
@@ -53,10 +53,20 @@ class TestListParser {
                     currentCase = handleCase(currentSuite, value);
                 } else if ("test".equals(key)) {
                     int timeout = -1;
-                    if (tokens.length == 3) {
-                        timeout = Integer.parseInt(tokens[2]);
+                    boolean security = false;
+                    if (tokens.length >= 3) {
+                        // security will always come second if both are present
+                        if(tokens[2].equals("security")) {
+                            security = true;
+                        }
+                        else {
+                            timeout = Integer.parseInt(tokens[2]);
+                        }
+                        if(tokens.length == 4) {
+                            security = true;
+                        }
                     }
-                    handleTest(currentCase, value, timeout);
+                    handleTest(currentCase, value, timeout, security);
                 }
             }
         } finally {
@@ -99,7 +109,7 @@ class TestListParser {
         return testCase;
     }
 
-    private void handleTest(TestCase testCase, String test, int timeout) {
-        testCase.addTest(test, timeout);
+    private void handleTest(TestCase testCase, String test, int timeout, boolean security) {
+      testCase.addTest(test, timeout, security);
     }
 }
