@@ -456,7 +456,7 @@ public class CollectAllTests extends DescriptionGenerator {
         }
 
         testClass.mCases.add(new TestMethod(testName, "", "", supportedAbis,
-              knownFailure, false, false));
+                knownFailure, false, false, false));
     }
 
     private static boolean isJunit3Test(Class<?> klass) {

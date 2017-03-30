@@ -19,10 +19,12 @@ package com.android.cts.xmlgenerator;
 public class Test implements Comparable<Test> {
     private String mName;
     private int mTimeout;
+    private boolean mSecurity;
 
-    public Test(String name, int timeout) {
+    public Test(String name, int timeout, boolean security) {
         mName = name;
         mTimeout = timeout;
+        mSecurity = security;
     }
 
     public String getName() {
@@ -31,6 +33,10 @@ public class Test implements Comparable<Test> {
 
     public int getTimeout() {
         return mTimeout;
+    }
+
+    public boolean isSecurity() {
+        return mSecurity;
     }
 
     @Override
