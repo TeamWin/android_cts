@@ -68,6 +68,7 @@ public class DescriptionGenerator extends Doclet {
     static final String KNOWN_FAILURE = "dalvik.annotation.KnownFailure";
     static final String BROKEN_TEST = "dalvik.annotation.BrokenTest";
     static final String SIDE_EFFECT = "dalvik.annotation.SideEffect";
+    static final String SECURITY_ANNOTATION = "android.security.cts.SecurityTest";
     static final String SUPPRESSED_TEST = "android.test.suitebuilder.annotation.Suppress";
     static final String CTS_EXPECTATION_DIR = "cts/tests/expectations";
 
@@ -85,6 +86,7 @@ public class DescriptionGenerator extends Doclet {
 
     static final String ATTRIBUTE_NAME = "name";
     static final String ATTRIBUTE_HOST_CONTROLLER = "HostController";
+    static final String ATTRIBUTE_SECURITY = "security";
 
     static final String XML_OUTPUT_PATH = "./description.xml";
 
@@ -425,6 +427,9 @@ public class DescriptionGenerator extends Doclet {
                     if ((caze.mController != null) && (caze.mController.length() != 0)) {
                         setAttribute(caseNode, ATTRIBUTE_HOST_CONTROLLER, caze.mController);
                     }
+                    if (caze.mSecurity) {
+                        setAttribute(caseNode, ATTRIBUTE_SECURITY, "true");
+                    }
 
                     if (caze.mDescription != null && !caze.mDescription.equals("")) {
                         caseNode.appendChild(mDoc.createElement(TAG_DESCRIPTION))
@@ -538,6 +543,7 @@ public class DescriptionGenerator extends Doclet {
                 String knownFailure = null;
                 boolean isBroken = false;
                 boolean isSuppressed = false;
+                boolean isSecurity = false;
                 for (AnnotationDesc cAnnot : annotations) {
 
                     AnnotationTypeDoc atype = cAnnot.annotationType();
@@ -549,7 +555,10 @@ public class DescriptionGenerator extends Doclet {
                         isBroken = true;
                     } else if (atype.toString().equals(SUPPRESSED_TEST)) {
                         isSuppressed = true;
+                    } else if (atype.toString().equals(SECURITY_ANNOTATION)) {
+                        isSecurity = true;
                     }
+
                 }
 
                 if (VogarUtils.isVogarKnownFailure(expectationStore, clazz.toString(), name)) {
@@ -558,7 +567,7 @@ public class DescriptionGenerator extends Doclet {
 
                 if (name.startsWith("test")) {
                     cases.add(new TestMethod(name, method.commentText(), controller, knownFailure,
-                            isBroken, isSuppressed));
+                            isBroken, isSuppressed, isSecurity));
                 }
             }
 
@@ -617,6 +626,7 @@ public class DescriptionGenerator extends Doclet {
         String mKnownFailure;
         boolean mIsBroken;
         boolean mIsSuppressed;
+        boolean mSecurity;
 
         /**
          * Construct an test case object.
@@ -626,13 +636,14 @@ public class DescriptionGenerator extends Doclet {
          * @param knownFailure The reason of known failure.
          */
         TestMethod(String name, String description, String controller, String knownFailure,
-                boolean isBroken, boolean isSuppressed) {
+            boolean isBroken, boolean isSuppressed, boolean isSecurity) {
             mName = name;
             mDescription = description;
             mController = controller;
             mKnownFailure = knownFailure;
             mIsBroken = isBroken;
             mIsSuppressed = isSuppressed;
+            mSecurity = isSecurity;
         }
     }
 }

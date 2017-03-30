@@ -438,7 +438,7 @@ public class CollectAllTests extends DescriptionGenerator {
             testCases.put(testClassName, testClass);
         }
 
-        testClass.mCases.add(new TestMethod(testName, "", "", knownFailure, false, false));
+        testClass.mCases.add(new TestMethod(testName, "", "", knownFailure, false, false, false));
     }
 
     /**

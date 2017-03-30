@@ -79,6 +79,7 @@ public class CtsJavaScannerDoclet extends Doclet {
             writer.append("case:").println(clazz.name());
             for (; clazz != null; clazz = clazz.superclass()) {
                 for (MethodDoc method : clazz.methods()) {
+                    boolean security = false;
                     if (!method.name().startsWith("test")) {
                         continue;
                     }
@@ -95,14 +96,20 @@ public class CtsJavaScannerDoclet extends Doclet {
                                     timeout = ((Integer)value.value());
                                 }
                             }
+                            if (atype.equals("com.android.cts.util.SecurityTest")) {
+                                security = true;
+                            }
                         }
                     }
                     writer.append("test:");
+                    writer.append(method.name());
                     if (timeout >= 0) {
-                        writer.append(method.name()).println(":" + timeout);
-                    } else {
-                        writer.println(method.name());
+                        writer.append(":" + timeout);
                     }
+                    if (security) {
+                        writer.append(":" + "security");
+                    }
+                    writer.println();
                 }
             }
         }

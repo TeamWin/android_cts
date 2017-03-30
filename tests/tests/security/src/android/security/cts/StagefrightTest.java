@@ -42,6 +42,8 @@ import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
+import com.android.cts.util.SecurityTest;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -68,7 +70,7 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add K tests below this comment,
      before any existing test methods
      ***********************************************************/
-
+    @SecurityTest
     public void testStagefright_bug_35763994() throws Exception {
         doStagefrightTest(R.raw.bug_35763994);
     }
