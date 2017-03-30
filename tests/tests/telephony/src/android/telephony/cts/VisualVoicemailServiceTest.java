@@ -51,7 +51,11 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -130,7 +134,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
                 new ComponentName(mContext, PermissionlessVisualVoicemailService.class),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
         String clientPrefix = "//CTSVVM";
-        String text =  "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1";
+        String text = "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1";
 
         VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle,
                 new VisualVoicemailSmsFilterSettings.Builder()
@@ -142,7 +146,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
                     .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, (short) 0,
                             text, null);
             fail("SecurityException expected");
-        } catch (SecurityException e){
+        } catch (SecurityException e) {
             // Expected
         }
 
@@ -183,6 +187,34 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         assertEquals("eg@example.com", result.getFields().getString("u"));
         assertEquals("1", result.getFields().getString("pw"));
     }
+
+    public void testFilter_data() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+        if (!hasDataSms(mContext)) {
+            Log.d(TAG, "skipping test that requires data SMS feature");
+            return;
+        }
+
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .build();
+        VisualVoicemailSms result = getSmsFromData(settings, (short) 1000,
+                "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", true);
+
+        assertEquals("STATUS", result.getPrefix());
+        assertEquals("R", result.getFields().getString("st"));
+        assertEquals("0", result.getFields().getString("rc"));
+        assertEquals("1", result.getFields().getString("srv"));
+        assertEquals("1", result.getFields().getString("dn"));
+        assertEquals("1", result.getFields().getString("ipt"));
+        assertEquals("0", result.getFields().getString("spt"));
+        assertEquals("eg@example.com", result.getFields().getString("u"));
+        assertEquals("1", result.getFields().getString("pw"));
+    }
+
 
     public void testFilter_TrailingSemiColon() {
         if (!hasTelephony(mContext)) {
@@ -315,7 +347,100 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         assertEquals("", result.getFields().getString("key"));
     }
 
-    public void testGetVisualVoicemailPackageName_isSelf(){
+    public void testFilter_originatingNumber_match_filtered() {
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setOriginatingNumbers(Arrays.asList(mPhoneNumber))
+                .build();
+
+        getSmsFromText(settings, "//CTSVVM:SYNC:key=value", true);
+    }
+
+    public void testFilter_originatingNumber_mismatch_notFiltered() {
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setOriginatingNumbers(Arrays.asList("1"))
+                .build();
+
+        getSmsFromText(settings, "//CTSVVM:SYNC:key=value", false);
+    }
+
+    public void testFilter_port_match() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+        if (!hasDataSms(mContext)) {
+            Log.d(TAG, "skipping test that requires data SMS feature");
+            return;
+        }
+
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setDestinationPort(1000)
+                .build();
+        getSmsFromData(settings, (short) 1000,
+                "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", true);
+    }
+
+    public void testFilter_port_mismatch() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+        if (!hasDataSms(mContext)) {
+            Log.d(TAG, "skipping test that requires data SMS feature");
+            return;
+        }
+
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setDestinationPort(1001)
+                .build();
+        getSmsFromData(settings, (short) 1000,
+                "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", false);
+    }
+
+    public void testFilter_port_anydata() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+        if (!hasDataSms(mContext)) {
+            Log.d(TAG, "skipping test that requires data SMS feature");
+            return;
+        }
+
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setDestinationPort(VisualVoicemailSmsFilterSettings.DESTINATION_PORT_DATA_SMS)
+                .build();
+        getSmsFromData(settings, (short) 1000,
+                "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", true);
+    }
+
+    /**
+     * Text SMS should not be filtered with DESTINATION_PORT_DATA_SMS
+     */
+    public void testFilter_port_anydata_notData() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
+        if (!hasDataSms(mContext)) {
+            Log.d(TAG, "skipping test that requires data SMS feature");
+            return;
+        }
+
+        VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
+                .setClientPrefix("//CTSVVM")
+                .setDestinationPort(VisualVoicemailSmsFilterSettings.DESTINATION_PORT_DATA_SMS)
+                .build();
+        getSmsFromText(settings,
+                "//CTSVVM:STATUS:st=R;rc=0;srv=1;dn=1;ipt=1;spt=0;u=eg@example.com;pw=1", false);
+    }
+
+    public void testGetVisualVoicemailPackageName_isSelf() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
@@ -325,7 +450,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         assertEquals(PACKAGE, telephonyManager.getVisualVoicemailPackageName());
     }
 
-    public void testVoicemailRingtoneSettings(){
+    public void testVoicemailRingtoneSettings() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
@@ -341,7 +466,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         assertEquals(uri, telephonyManager.getVoicemailRingtoneUri(defaultAccount));
     }
 
-    public void testVoicemailVibrationSettings(){
+    public void testVoicemailVibrationSettings() {
         if (!hasTelephony(mContext)) {
             Log.d(TAG, "skipping test that requires telephony feature");
             return;
@@ -351,14 +476,25 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
 
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
-        telephonyManager.setVoicemailVibrationEnabled(defaultAccount,true);
+        telephonyManager.setVoicemailVibrationEnabled(defaultAccount, true);
         assertTrue(telephonyManager.isVoicemailVibrationEnabled(defaultAccount));
-        telephonyManager.setVoicemailVibrationEnabled(defaultAccount,false);
+        telephonyManager.setVoicemailVibrationEnabled(defaultAccount, false);
         assertFalse(telephonyManager.isVoicemailVibrationEnabled(defaultAccount));
     }
 
     private VisualVoicemailSms getSmsFromText(String clientPrefix, String text) {
         return getSmsFromText(clientPrefix, text, true);
+    }
+
+    @Nullable
+    private VisualVoicemailSms getSmsFromText(String clientPrefix, String text,
+            boolean expectVvmSms) {
+        return getSmsFromText(
+                new VisualVoicemailSmsFilterSettings.Builder()
+                        .setClientPrefix(clientPrefix)
+                        .build(),
+                text,
+                expectVvmSms);
     }
 
     private void assertVisualVoicemailSmsNotReceived(String clientPrefix, String text) {
@@ -374,13 +510,11 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
      * {@code null} be returned.
      */
     @Nullable
-    private VisualVoicemailSms getSmsFromText(String clientPrefix, String text,
+    private VisualVoicemailSms getSmsFromText(VisualVoicemailSmsFilterSettings settings,
+            String text,
             boolean expectVvmSms) {
 
-        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle,
-                new VisualVoicemailSmsFilterSettings.Builder()
-                        .setClientPrefix(clientPrefix)
-                        .build());
+        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle, settings);
 
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
         MockVisualVoicemailService.setSmsFuture(future);
@@ -416,9 +550,47 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         }
     }
 
+    @Nullable
+    private VisualVoicemailSms getSmsFromData(VisualVoicemailSmsFilterSettings settings, short port,
+            String text, boolean expectVvmSms) {
+
+        VisualVoicemailService.setSmsFilterSettings(mContext, mPhoneAccountHandle, settings);
+
+        CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
+        MockVisualVoicemailService.setSmsFuture(future);
+
+        setupSmsReceiver(text);
+        VisualVoicemailService
+                .sendVisualVoicemailSms(mContext, mPhoneAccountHandle, mPhoneNumber, port,
+                        text, null);
+
+        if (expectVvmSms) {
+            VisualVoicemailSms sms;
+            try {
+                sms = future.get(EVENT_RECEIVED_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                throw new RuntimeException(e);
+            }
+            mSmsReceiver.assertNotReceived(EVENT_NOT_RECEIVED_TIMEOUT_MILLIS);
+            return sms;
+        } else {
+            mSmsReceiver.assertReceived(EVENT_RECEIVED_TIMEOUT_MILLIS);
+            try {
+                future.get(EVENT_NOT_RECEIVED_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+                throw new RuntimeException("Unexpected visual voicemail SMS received");
+            } catch (TimeoutException e) {
+                // expected
+                return null;
+            } catch (ExecutionException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private void setupSmsReceiver(String text) {
         mSmsReceiver = new SmsBroadcastReceiver(text);
         IntentFilter filter = new IntentFilter(Intents.SMS_RECEIVED_ACTION);
+        filter.addAction(Intents.DATA_SMS_RECEIVED_ACTION);
         mContext.registerReceiver(mSmsReceiver, filter);
     }
 
@@ -428,7 +600,7 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
 
         private CompletableFuture<Boolean> mFuture = new CompletableFuture<>();
 
-        public SmsBroadcastReceiver(String text){
+        public SmsBroadcastReceiver(String text) {
             mText = text;
         }
 
@@ -436,10 +608,20 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         public void onReceive(Context context, Intent intent) {
             SmsMessage[] messages = Sms.Intents.getMessagesFromIntent(intent);
             StringBuilder messageBody = new StringBuilder();
-            for(SmsMessage message : messages){
-                messageBody.append(message.getMessageBody());
+            CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+            for (SmsMessage message : messages) {
+                if (message.getMessageBody() != null) {
+                    messageBody.append(message.getMessageBody());
+                } else if (message.getUserData() != null) {
+                    ByteBuffer byteBuffer = ByteBuffer.wrap(message.getUserData());
+                    try {
+                        messageBody.append(decoder.decode(byteBuffer).toString());
+                    } catch (CharacterCodingException e) {
+                        return;
+                    }
+                }
             }
-            if(!TextUtils.equals(mText, messageBody.toString())){
+            if (!TextUtils.equals(mText, messageBody.toString())) {
                 return;
             }
             mFuture.complete(true);
@@ -512,6 +694,11 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
         final PackageManager packageManager = context.getPackageManager();
         return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
                 packageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE);
+    }
+
+    private static boolean hasDataSms(Context context) {
+        String mccmnc = context.getSystemService(TelephonyManager.class).getSimOperator();
+        return !CarrierCapability.UNSUPPORT_DATA_SMS_MESSAGES.contains(mccmnc);
     }
 
     private static String setDefaultDialer(Instrumentation instrumentation, String packageName)
