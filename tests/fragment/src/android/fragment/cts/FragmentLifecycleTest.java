@@ -761,6 +761,53 @@ public class FragmentLifecycleTest {
         one.setTargetFragment(null, 0);
     }
 
+    /**
+     * When a fragment is saved in non-config, it should be restored to the same index.
+     */
+    @Test
+    public void restoreNonConfig() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, null);
+            FragmentManager fm = fc.getFragmentManager();
+
+            Fragment fragment1 = new StrictFragment();
+            fm.beginTransaction()
+                    .add(fragment1, "1")
+                    .addToBackStack(null)
+                    .commit();
+            fm.executePendingTransactions();
+            Fragment fragment2 = new StrictFragment();
+            fragment2.setRetainInstance(true);
+            fragment2.setTargetFragment(fragment1, 0);
+            Fragment fragment3 = new StrictFragment();
+            fm.beginTransaction()
+                    .remove(fragment1)
+                    .add(fragment2, "2")
+                    .add(fragment3, "3")
+                    .addToBackStack(null)
+                    .commit();
+            fm.executePendingTransactions();
+
+            Pair<Parcelable, FragmentManagerNonConfig> savedState =
+                    FragmentTestUtil.destroy(mActivityRule, fc);
+
+            fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, savedState);
+            boolean foundFragment2 = false;
+            for (Fragment fragment : fc.getFragmentManager().getFragments()) {
+                if (fragment == fragment2) {
+                    foundFragment2 = true;
+                    assertNotNull(fragment.getTargetFragment());
+                    assertEquals("1", fragment.getTargetFragment().getTag());
+                } else {
+                    assertFalse("2".equals(fragment.getTag()));
+                }
+            }
+            assertTrue(foundFragment2);
+        });
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override
