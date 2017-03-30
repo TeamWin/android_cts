@@ -73,28 +73,36 @@ public class InstantAppUserTest extends DeviceTestCase
         assertNotNull(mAbi);
         assertNotNull(mBuildInfo);
 
-        mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
-        mPrimaryUserId = getDevice().getPrimaryUserId();
-        mFixedUsers = new ArrayList<>();
-        mFixedUsers.add(mPrimaryUserId);
-        if (mPrimaryUserId != USER_SYSTEM) {
-            mFixedUsers.add(USER_SYSTEM);
-        }
-        getDevice().switchUser(mPrimaryUserId);
-        removeTestUsers();
-        createTestUsers();
+        mSupportsMultiUser =
+                getDevice().getMaxNumberOfUsersSupported() - getDevice().listUsers().size() >= 2;
+        if (mSupportsMultiUser) {
+            mPrimaryUserId = getDevice().getPrimaryUserId();
+            mFixedUsers = new ArrayList<>();
+            mFixedUsers.add(mPrimaryUserId);
+            if (mPrimaryUserId != USER_SYSTEM) {
+                mFixedUsers.add(USER_SYSTEM);
+            }
+            getDevice().switchUser(mPrimaryUserId);
+            removeTestUsers();
+            createTestUsers();
 
-        uninstallTestPackages();
-        installTestPackages();
+            uninstallTestPackages();
+            installTestPackages();
+        }
     }
 
     public void tearDown() throws Exception {
-        removeTestUsers();
-        uninstallTestPackages();
+        if (mSupportsMultiUser) {
+            removeTestUsers();
+            uninstallTestPackages();
+        }
         super.tearDown();
     }
 
     public void testInstallInstant() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
         installInstantApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
@@ -102,6 +110,9 @@ public class InstantAppUserTest extends DeviceTestCase
     }
 
     public void testInstallFull() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
         installApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mPrimaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[0]);
@@ -109,6 +120,9 @@ public class InstantAppUserTest extends DeviceTestCase
     }
 
     public void testInstallMultiple() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
         installAppAsUser(USER_APK, mPrimaryUserId);
         installExistingInstantAppAsUser(USER_PKG, mTestUser[0]);
         installExistingFullAppAsUser(USER_PKG, mTestUser[1]);
@@ -118,6 +132,9 @@ public class InstantAppUserTest extends DeviceTestCase
     }
 
     public void testUpgradeExisting() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
         installInstantApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
@@ -135,6 +152,9 @@ public class InstantAppUserTest extends DeviceTestCase
     }
 
     public void testReplaceExisting() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
         installInstantApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
