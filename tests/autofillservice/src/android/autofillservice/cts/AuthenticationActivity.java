@@ -30,6 +30,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 public class AuthenticationActivity extends AbstractAutoFillActivity {
     private static CannedFillResponse sResponse;
     private static CannedFillResponse.CannedDataset sDataset;
+    private static Bundle sData;
 
     public static void setResponse(CannedFillResponse response) {
         sResponse = response;
@@ -41,16 +42,25 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         sResponse = null;
     }
 
+    public static Bundle getData() {
+        final Bundle data = sData;
+        sData = null;
+        return data;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // We should get the assist structure
-        AssistStructure structure = getIntent().getParcelableExtra(
+        // We should get the assist structure...
+        final AssistStructure structure = getIntent().getParcelableExtra(
                 AutofillManager.EXTRA_ASSIST_STRUCTURE);
         assertWithMessage("structure not called").that(structure).isNotNull();
 
-        Parcelable result = null;
+        // and the bundle
+        sData = getIntent().getBundleExtra(AutofillManager.EXTRA_DATA_EXTRAS);
+
+        final Parcelable result;
         if (sResponse != null) {
             result = sResponse.asFillResponse(structure);
         } else if (sDataset != null) {
@@ -60,7 +70,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         }
 
         // Pass on the auth result
-        Intent intent = new Intent();
+        final Intent intent = new Intent();
         intent.putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, result);
         setResult(RESULT_OK, intent);
 
