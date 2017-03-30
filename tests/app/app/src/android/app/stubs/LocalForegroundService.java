@@ -40,6 +40,7 @@ public class LocalForegroundService extends LocalService {
     public static final int COMMAND_STOP_FOREGROUND_DONT_REMOVE_NOTIFICATION = 3;
     public static final int COMMAND_STOP_FOREGROUND_DETACH_NOTIFICATION = 4;
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION_USING_FLAGS = 5;
+    public static final int COMMAND_START_NO_FOREGROUND = 6;
 
     private int mNotificationId = 0;
 
@@ -82,9 +83,18 @@ public class LocalForegroundService extends LocalService {
                 Log.d(TAG, "Detaching foreground service notification");
                 stopForeground(Service.STOP_FOREGROUND_DETACH);
                 break;
+            case COMMAND_START_NO_FOREGROUND:
+                Log.d(TAG, "Starting without calling startForeground()");
+                break;
             default:
                 Log.e(TAG, "Unknown command: " + command);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "service destroyed");
+        super.onDestroy();
     }
 
     public static Bundle newCommand(IBinder stateReceiver, int command) {
