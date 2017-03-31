@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.devicepolicy.cts.emptydeviceadmin;
+package com.android.cts.emptydeviceadmin;
 
 import android.app.admin.DeviceAdminReceiver;
 
+/**
+ *  This is used as a test device admin for
+ *  com.android.cts.verifier.admin.DeviceAdminUninstallTestActivity
+ */
 public class EmptyDeviceAdmin extends DeviceAdminReceiver {
 }
