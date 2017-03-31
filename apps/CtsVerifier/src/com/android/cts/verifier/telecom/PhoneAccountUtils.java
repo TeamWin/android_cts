@@ -43,6 +43,20 @@ public class PhoneAccountUtils {
             .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
             .build();
 
+    public static final String TEST_SELF_MAANGED_PHONE_ACCOUNT_ID = "selfMgdTest";
+    public static final String TEST_SELF_MANAGED_PHONE_ACCOUNT_LABEL = "CTSVerifier";
+    public static final Uri TEST_SELF_MANAGED_PHONE_ACCOUNT_ADDRESS =
+            Uri.parse("sip:sekf@android.com");
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE =
+            new PhoneAccountHandle(new ComponentName(
+                    PassFailButtons.class.getPackage().getName(),
+                    CtsConnectionService.class.getName()), TEST_SELF_MAANGED_PHONE_ACCOUNT_ID);
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT = new PhoneAccount.Builder(
+            TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE, TEST_SELF_MANAGED_PHONE_ACCOUNT_LABEL)
+            .setAddress(TEST_SELF_MANAGED_PHONE_ACCOUNT_ADDRESS)
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .build();
+
     /**
      * Registers the test phone account.
      * @param context The context.
@@ -72,5 +86,26 @@ public class PhoneAccountUtils {
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(
                 Context.TELECOM_SERVICE);
         telecomManager.unregisterPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
+    }
+
+    /**
+     * Registers the test self-managed phone account.
+     * @param context The context.
+     */
+    public static void registerTestSelfManagedPhoneAccount(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(
+                Context.TELECOM_SERVICE);
+        telecomManager.registerPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT);
+    }
+
+    /**
+     * Retrieves the test phone account, or null if not registered.
+     * @param context The context.
+     * @return The Phone Account.
+     */
+    public static PhoneAccount getSelfManagedPhoneAccount(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(
+                Context.TELECOM_SERVICE);
+        return telecomManager.getPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE);
     }
 }

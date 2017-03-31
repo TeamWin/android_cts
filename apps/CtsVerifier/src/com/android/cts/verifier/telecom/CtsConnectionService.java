@@ -16,12 +16,98 @@
 
 package com.android.cts.verifier.telecom;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.telecom.Connection;
+import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
+import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CTS Verifier ConnectionService implementation.
  */
 public class CtsConnectionService extends ConnectionService {
 
+    private CtsConnection.Listener mConnectionListener =
+            new CtsConnection.Listener() {
+                @Override
+                void onDestroyed(CtsConnection connection) {
+                    mConnections.remove(connection);
+                }
+            };
 
+    private static CtsConnectionService sConnectionService;
+
+    private List<CtsConnection> mConnections = new ArrayList<>();
+
+    public static CtsConnectionService getConnectionService() {
+        return sConnectionService;
+    }
+
+    public CtsConnectionService() throws Exception {
+        super();
+        sConnectionService = this;
+    }
+
+    public List<CtsConnection> getConnections() {
+        return mConnections;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        sConnectionService = null;
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public Connection onCreateOutgoingConnection(PhoneAccountHandle connectionManagerAccount,
+                                                 final ConnectionRequest request) {
+
+        return createManagedConnection(request, false);
+    }
+
+    @Override
+    public Connection onCreateIncomingConnection(PhoneAccountHandle connectionManagerPhoneAccount,
+                                                 ConnectionRequest request) {
+
+        return createManagedConnection(request, true);
+    }
+
+    @Override
+    public void onCreateIncomingConnectionFailed(PhoneAccountHandle connectionManagerHandle,
+                                                 ConnectionRequest request) {
+    }
+
+    @Override
+    public void onCreateOutgoingConnectionFailed(PhoneAccountHandle connectionManagerHandle,
+                                                 ConnectionRequest request) {
+    }
+
+    private Connection createManagedConnection(ConnectionRequest request, boolean isIncoming) {
+        boolean isSelfManaged = request.getAccountHandle().equals(
+                PhoneAccountUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE);
+
+        CtsConnection connection = new CtsConnection(isIncoming,
+                mConnectionListener);
+        if (isSelfManaged) {
+            connection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
+        }
+        connection.setConnectionCapabilities(Connection.CAPABILITY_SUPPORT_HOLD |
+                Connection.CAPABILITY_HOLD);
+        connection.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
+        connection.setExtras(request.getExtras());
+
+        Bundle moreExtras = new Bundle();
+        moreExtras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                request.getAccountHandle());
+        connection.putExtras(moreExtras);
+        connection.setVideoState(request.getVideoState());
+
+        mConnections.add(connection);
+        return connection;
+    }
 }
