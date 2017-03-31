@@ -88,7 +88,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testWriteToParcel() {
 
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
-                .chooseBadgeIconType(Notification.BADGE_ICON_SMALL)
+                .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
                 .build();
@@ -200,7 +200,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setContentTitle(CONTENT_TITLE)
                 .setContentText(CONTENT_TEXT)
                 .setContentIntent(contentIntent)
-                .chooseBadgeIconType(Notification.BADGE_ICON_SMALL)
+                .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
                 .build();
