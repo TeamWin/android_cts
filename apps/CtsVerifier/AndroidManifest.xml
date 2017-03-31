@@ -2981,6 +2981,28 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".telecom.EnablePhoneAccountTestActivity"
+            android:label="@string/telecom_enable_phone_account_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telecom"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+        </activity>
+
+        <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
+            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" >
+            <intent-filter>
+                <action android:name="android.telecom.ConnectionService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
