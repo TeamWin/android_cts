@@ -28,9 +28,6 @@ LOCAL_SRC_FILES := cts_agent.cpp \
 # Tagging.
 LOCAL_SRC_FILES += tagging.cpp
 
-# Tracking.
-LOCAL_SRC_FILES += tracking.cpp
-
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_HEADER_LIBRARIES := libopenjdkjvmti_headers
 

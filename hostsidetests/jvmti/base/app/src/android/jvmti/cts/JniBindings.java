@@ -46,9 +46,4 @@ public class JniBindings {
     // Load the given class with the given classloader, and bind all native methods to corresponding
     // C methods in the agent. Will abort if any of the steps fail.
     public static native void bindAgentJNI(String className, ClassLoader classLoader);
-
-    // General functionality shared between tests.
-    public static native void setTag(Object o, long tag);
-
-    public static native long getTag(Object o);
 }
