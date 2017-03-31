@@ -105,10 +105,11 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 "testDefaultRestrictions", mDeviceOwnerUserId);
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
-        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+        runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testBroadcast", mDeviceOwnerUserId);
     }
 
+    // Checks restrictions for managed user (NOT managed profile).
     public void testUserRestrictions_secondaryProfileOwnerOnly() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
@@ -120,8 +121,28 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
                 "testDefaultRestrictions", secondaryUserId);
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", secondaryUserId);
-        runTests("userrestrictions.DeviceOwnerUserRestrictionsTest",
+        runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                 "testBroadcast", secondaryUserId);
+    }
+
+    // Checks restrictions for managed profile.
+    public void testUserRestrictions_managedProfileOwnerOnly() throws Exception {
+        if (!mHasFeature || !mSupportsMultiUser) {
+            return;
+        }
+
+        // Create managed profile.
+        final int profileUserId = createManagedProfile(mDeviceOwnerUserId /* parentUserId */);
+        // createManagedProfile doesn't start the user automatically.
+        startUser(profileUserId);
+        setPoAsUser(profileUserId);
+
+        runTests("userrestrictions.ManagedProfileOwnerUserRestrictionsTest",
+                "testDefaultRestrictions", profileUserId);
+        runTests("userrestrictions.ManagedProfileOwnerUserRestrictionsTest",
+                "testSetAllRestrictions", profileUserId);
+        runTests("userrestrictions.ManagedProfileOwnerUserRestrictionsTest",
+                "testBroadcast", profileUserId);
     }
 
     /**
