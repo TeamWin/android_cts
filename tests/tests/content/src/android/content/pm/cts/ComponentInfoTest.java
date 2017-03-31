@@ -24,6 +24,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
+import android.util.LauncherIcons;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
 
@@ -68,6 +69,8 @@ public class ComponentInfoTest extends AndroidTestCase {
     }
 
     public void testLoadIcon() {
+
+        LauncherIcons launcherIcons = new LauncherIcons(getContext());
         mComponentInfo = new ComponentInfo();
         mComponentInfo.applicationInfo = new ApplicationInfo();
 
@@ -80,14 +83,14 @@ public class ComponentInfoTest extends AndroidTestCase {
         d = mComponentInfo.loadIcon(pm);
         assertNotNull(d);
         assertNotSame(d, defaultIcon);
-        WidgetTestUtils.assertEquals(((BitmapDrawable) d).getBitmap(),
-                ((BitmapDrawable) defaultIcon).getBitmap());
+        WidgetTestUtils.assertEquals(launcherIcons.createIconBitmap(d),
+                launcherIcons.createIconBitmap(defaultIcon));
 
         d2 = mComponentInfo.loadIcon(pm);
         assertNotNull(d2);
         assertNotSame(d, d2);
-        WidgetTestUtils.assertEquals(((BitmapDrawable) d).getBitmap(),
-                ((BitmapDrawable) d2).getBitmap());
+        WidgetTestUtils.assertEquals(launcherIcons.createIconBitmap(d),
+                launcherIcons.createIconBitmap(d2));
 
         try {
             mComponentInfo.loadIcon(null);
