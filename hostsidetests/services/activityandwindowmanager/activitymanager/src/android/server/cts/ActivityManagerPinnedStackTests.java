@@ -761,6 +761,16 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertTrue(mAmWmState.getWmState().getLastOrientation() == ORIENTATION_LANDSCAPE);
     }
 
+    public void testWindowButtonEntersPip() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch the PiP activity trigger the window button, ensure that we have entered PiP
+        launchActivity(PIP_ACTIVITY);
+        pressWindowButton();
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
+        assertPinnedStackExists();
+    }
+
     /**
      * Called after the given {@param activityName} has been moved to the fullscreen stack. Ensures
      * that the {@param focusedStackId} is focused, and checks the top and/or bottom tasks in the
@@ -883,6 +893,13 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private void setAppOpsOpToMode(String packageName, int op, int mode) throws Exception {
         executeShellCommand(String.format("appops set %s %d %d", packageName, op, mode));
+    }
+
+    /**
+     * Triggers the window keycode.
+     */
+    private void pressWindowButton() throws Exception {
+        executeShellCommand(INPUT_KEYEVENT_WINDOW);
     }
 
     private void pinnedStackTester(String startActivityCmd, String topActivityName,
