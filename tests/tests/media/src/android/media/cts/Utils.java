@@ -20,15 +20,28 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.media.AudioManager;
+import android.media.AudioPlaybackConfiguration;
+import android.media.MediaPlayer;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import junit.framework.Assert;
 
 public class Utils {
+    private static final String TAG = "CtsMediaTestUtil";
+    private static final int TEST_TIMING_TOLERANCE_MS = 50;
+
     public static void enableAppOps(String packageName, String operation,
             Instrumentation instrumentation) {
         setAppOps(packageName, operation, instrumentation, true);
@@ -112,5 +125,54 @@ public class Utils {
             while (in.read(buffer) > 0) ;
         }
         uiAutomation.destroy();
+    }
+
+    /**
+     * Assert that a media playback is started and an active {@link AudioPlaybackConfiguration}
+     * is created once. The playback will be stopped immediately after that.
+     * <p>For a media session to receive media button events, an actual playback is needed.
+     */
+    static void assertMediaPlaybackStarted(Context context) {
+        final AudioManager am = new AudioManager(context);
+        final HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        final TestAudioPlaybackCallback callback = new TestAudioPlaybackCallback();
+        MediaPlayer mediaPlayer = null;
+
+        try {
+            final int activeConfigSizeBeforeStart = am.getActivePlaybackConfigurations().size();
+            final Handler handler = new Handler(handlerThread.getLooper());
+
+            am.registerAudioPlaybackCallback(callback, handler);
+            mediaPlayer = MediaPlayer.create(context, R.raw.sine1khzs40dblong);
+            mediaPlayer.start();
+            if (!callback.mCountDownLatch.await(TEST_TIMING_TOLERANCE_MS, TimeUnit.MILLISECONDS)
+                    || callback.mActiveConfigSize != activeConfigSizeBeforeStart + 1) {
+                Assert.fail("Failed to create an active AudioPlaybackConfiguration");
+            }
+        } catch (InterruptedException e) {
+            Assert.fail("Failed to create an active AudioPlaybackConfiguration");
+        } finally {
+            am.unregisterAudioPlaybackCallback(callback);
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            handlerThread.quitSafely();
+        }
+    }
+
+    private static class TestAudioPlaybackCallback extends AudioManager.AudioPlaybackCallback {
+        private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
+        private int mActiveConfigSize;
+
+        @Override
+        public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
+            // For non-framework apps, only anonymized active AudioPlaybackCallbacks will be
+            // notified.
+            mActiveConfigSize = configs.size();
+            mCountDownLatch.countDown();
+        }
     }
 }
