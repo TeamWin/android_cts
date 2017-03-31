@@ -5763,11 +5763,11 @@ public class TextViewTest {
     public void testSetGetJustify() {
         TextView tv = new TextView(mActivity);
 
-        assertFalse(tv.getJustify());
-        tv.setJustify(true);
-        assertTrue(tv.getJustify());
-        tv.setJustify(false);
-        assertFalse(tv.getJustify());
+        assertEquals(Layout.JUSTIFICATION_MODE_NONE, tv.getJustificationMode());
+        tv.setJustificationMode(Layout.JUSTIFICATION_MODE_INTER_WORD);
+        assertEquals(Layout.JUSTIFICATION_MODE_INTER_WORD, tv.getJustificationMode());
+        tv.setJustificationMode(Layout.JUSTIFICATION_MODE_NONE);
+        assertEquals(Layout.JUSTIFICATION_MODE_NONE, tv.getJustificationMode());
     }
 
     @Test
