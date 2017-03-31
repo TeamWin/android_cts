@@ -105,6 +105,18 @@
                     android:value="android.software.device_admin" />
         </activity>
 
+        <activity android:name=".admin.DeviceAdminUninstallTestActivity"
+                  android:label="@string/da_uninstall_test"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.device_admin" />
+        </activity>
+
         <!-- A generic activity for intent based tests -->
         <activity android:name=".IntentDrivenTestActivity"/>
 
@@ -2404,6 +2416,15 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
+        </provider>
+
+        <provider
+            android:name="com.android.cts.verifier.admin.DeviceAdminUninstallTestActivity$DeviceAdminApkFileProvider"
+            android:authorities="com.android.cts.verifier.admin.fileprovider"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths_admin" />
         </provider>
 
         <activity android:name=".managedprovisioning.ByodIconSamplerActivity">
