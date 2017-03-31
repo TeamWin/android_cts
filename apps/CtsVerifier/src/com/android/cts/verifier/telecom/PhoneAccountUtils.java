@@ -57,6 +57,19 @@ public class PhoneAccountUtils {
             .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
             .build();
 
+    public static final String TEST_SELF_MAANGED_PHONE_ACCOUNT2_ID = "selfMgdTest2";
+    public static final String TEST_SELF_MANAGED_PHONE_ACCOUNT2_LABEL = "CTSVerifier2";
+
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE_2 =
+            new PhoneAccountHandle(new ComponentName(
+                    PassFailButtons.class.getPackage().getName(),
+                    CtsConnectionService.class.getName()), TEST_SELF_MAANGED_PHONE_ACCOUNT2_ID);
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = new PhoneAccount.Builder(
+            TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE_2, TEST_SELF_MANAGED_PHONE_ACCOUNT2_LABEL)
+            .setAddress(TEST_SELF_MANAGED_PHONE_ACCOUNT_ADDRESS)
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .build();
+
     /**
      * Registers the test phone account.
      * @param context The context.
@@ -96,6 +109,7 @@ public class PhoneAccountUtils {
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(
                 Context.TELECOM_SERVICE);
         telecomManager.registerPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT);
+        telecomManager.registerPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_2);
     }
 
     /**
@@ -113,5 +127,16 @@ public class PhoneAccountUtils {
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(
                 Context.TELECOM_SERVICE);
         return telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+    }
+
+    /**
+     * Retrieves the test phone account, or null if not registered.
+     * @param context The context.
+     * @return The Phone Account.
+     */
+    public static PhoneAccount getSelfManagedPhoneAccount2(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(
+                Context.TELECOM_SERVICE);
+        return telecomManager.getPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE_2);
     }
 }

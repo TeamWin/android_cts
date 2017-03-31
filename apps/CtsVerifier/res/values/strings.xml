@@ -3831,4 +3831,22 @@ You should be prompted to select credentials; choose the ones you just installed
         audio was audible.
     </string>
     <string name="telecom_incoming_call_confirm_button">Confirm</string>
+    <string name="telecom_incoming_self_mgd_test"> Incoming Self-Managed Connection Test</string>
+    <string name="telecom_incoming_self_mgd_info">
+        This test verifies that incoming calls from a Self-Managed Connection Service will trigger
+        a Telecom-managed incoming call UI when there is already an ongoing call on the device.
+    </string>
+    <string name="telecom_incoming_self_mgd_step_1">
+        Click the button below to register a test self-managed ConnectionService.
+    </string>
+    <string name="telecom_incoming_self_mgd_register_button">Register Self-Managed ConnectionService</string>
+    <string name="telecom_incoming_self_mgd_step_2">
+        Click the button below to test that the system incoming call notification shows.  When the
+        notification shows, "answer" the call.
+    </string>
+    <string name="telecom_incoming_self_mgd_show_ui_button">Show System Incoming UI</string>
+    <string name="telecom_incoming_self_mgd_step_3">
+        Click the button below to confirm that the incoming call was answered.
+    </string>
+    <string name="telecom_incoming_self_mgd_confirm_answer_button">Confirm Answer</string>
 </resources>

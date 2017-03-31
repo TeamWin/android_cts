@@ -69,6 +69,9 @@
     <!-- Needed by the Audio Quality Verifier to store the sound samples that will be mailed. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <!-- Needed for Telecom self-managed ConnectionService tests. -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
     <application android:label="@string/app_name"
             android:icon="@drawable/icon"
             android:backupAgent="VerifierBackupAgent"
@@ -3000,6 +3003,22 @@
         <activity
             android:name=".telecom.OutgoingCallTestActivity"
             android:label="@string/telecom_outgoing_call_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.cts.intent.category.MANUAL_TEST"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/test_category_telecom"/>
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.telephony"/>
+            </activity>
+
+        <activity
+            android:name=".telecom.SelfManagedIncomingCallTestActivity"
+            android:label="@string/telecom_incoming_self_mgd_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>

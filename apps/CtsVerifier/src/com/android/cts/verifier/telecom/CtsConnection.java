@@ -20,11 +20,15 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.VideoProfile;
 
 import com.android.cts.verifier.R;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An implementation of the {@link android.telecom.Connection} class used by the
@@ -51,6 +55,7 @@ public class CtsConnection extends Connection {
     private final Listener mListener;
     private final MediaPlayer mMediaPlayer;
     private final Context mContext;
+    private CountDownLatch mWaitForCallAudioStateChanged = new CountDownLatch(1);
 
     public CtsConnection(Context context, boolean isIncomingCall,
             Listener listener, boolean hasAudio) {
@@ -128,6 +133,20 @@ public class CtsConnection extends Connection {
     public void onShowIncomingCallUi() {
         if (mListener != null) {
             mListener.onShowIncomingCallUi(this);
+        }
+    }
+
+    public void onCallAudioStateChanged(CallAudioState state) {
+        mWaitForCallAudioStateChanged.countDown();
+        mWaitForCallAudioStateChanged = new CountDownLatch(1);
+
+    }
+
+    public void waitForAudioStateChanged() {
+        try {
+            mWaitForCallAudioStateChanged.await(CtsConnectionService.TIMEOUT_MILLIS,
+                    TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
         }
     }
 
