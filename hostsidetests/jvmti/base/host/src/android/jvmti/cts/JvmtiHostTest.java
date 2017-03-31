@@ -132,13 +132,22 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             }
         }
 
+        File getTestFile(String filename) throws java.io.FileNotFoundException {
+            File testFile = new File(mBuildHelper.getTestsDir(), filename);
+            if (!testFile.exists()) {
+                throw new java.io.FileNotFoundException(String.format(
+                        "Compatibility test file %s does not exist", filename));
+            }
+            return testFile;
+        }
+
         String installLibToDataData(String dataData, String library) throws Exception {
             ZipFile zf = null;
             File tmpFile = null;
             try {
                 String libInDataData = dataData + "/" + library;
 
-                File apkFile = mBuildHelper.getTestFile(mApk);
+                File apkFile = getTestFile(mApk);
                 zf = new ZipFile(apkFile);
 
                 String libPathInApk = "lib/" + mAbi.getName() + "/" + library;
