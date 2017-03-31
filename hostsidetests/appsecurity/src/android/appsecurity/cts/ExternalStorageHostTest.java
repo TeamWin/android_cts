@@ -280,6 +280,49 @@ public class ExternalStorageHostTest extends DeviceTestCase
         }
     }
 
+    /** Verify that app without READ_EXTERNAL can play default URIs in external storage. */
+    public void testExternalStorageReadDefaultUris() throws Exception {
+        final int[] users = createUsersForTest();
+        try {
+            wipePrimaryExternalStorage();
+
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+            final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            enableWriteSettings(WRITE_PKG);
+            runDeviceTests(
+                    WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testChangeDefaultUris", users[0]);
+
+            assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
+
+            for (int user : users) {
+                runDeviceTests(
+                        NONE_PKG, NONE_PKG + ".ReadDefaultUris", "testPlayDefaultUris", user);
+            }
+        } finally {
+            // Make sure the provider and uris are reset on failure.
+            runDeviceTests(
+                    WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testResetDefaultUris", users[0]);
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+            removeUsersForTest(users);
+        }
+    }
+
+    private void enableWriteSettings(String packageName) throws DeviceNotAvailableException {
+        StringBuilder cmd = new StringBuilder();
+        cmd.append("appops set ");
+        cmd.append(packageName);
+        cmd.append(" android:write_settings allow");
+        getDevice().executeShellCommand(cmd.toString());
+        try {
+            Thread.sleep(2200);
+        } catch (InterruptedException e) {
+        }
+    }
+
     private void wipePrimaryExternalStorage() throws DeviceNotAvailableException {
         getDevice().executeShellCommand("rm -rf /sdcard/Android");
         getDevice().executeShellCommand("rm -rf /sdcard/DCIM");
