@@ -116,6 +116,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
     private static final String INPUT_KEYEVENT_BACK = "input keyevent 4";
     private static final String INPUT_KEYEVENT_APP_SWITCH = "input keyevent 187";
+    public static final String INPUT_KEYEVENT_WINDOW = "input keyevent 171";
 
     private static final String LOCK_CREDENTIAL = "1234";
 
