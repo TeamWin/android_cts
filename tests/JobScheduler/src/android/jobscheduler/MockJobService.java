@@ -19,6 +19,10 @@ package android.jobscheduler;
 import android.annotation.TargetApi;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.content.ClipData;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Process;
 import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +50,17 @@ public class MockJobService extends JobService {
     public boolean onStartJob(JobParameters params) {
         Log.i(TAG, "Test job executing: " + params.getJobId());
 
-        TestEnvironment.getTestEnvironment().notifyExecution(params);
+        int permCheckRead = PackageManager.PERMISSION_DENIED;
+        int permCheckWrite = PackageManager.PERMISSION_DENIED;
+        ClipData clip = params.getClipData();
+        if (clip != null) {
+            permCheckRead = checkUriPermission(clip.getItemAt(0).getUri(), Process.myPid(),
+                    Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            permCheckWrite = checkUriPermission(clip.getItemAt(0).getUri(), Process.myPid(),
+                    Process.myUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        }
+
+        TestEnvironment.getTestEnvironment().notifyExecution(params, permCheckRead, permCheckWrite);
         return false;  // No work to do.
     }
 
@@ -67,6 +81,8 @@ public class MockJobService extends JobService {
 
         private CountDownLatch mLatch;
         private JobParameters mExecutedJobParameters;
+        private int mExecutedPermCheckRead;
+        private int mExecutedPermCheckWrite;
 
         public static TestEnvironment getTestEnvironment() {
             if (kTestEnvironment == null) {
@@ -77,6 +93,14 @@ public class MockJobService extends JobService {
 
         public JobParameters getLastJobParameters() {
             return mExecutedJobParameters;
+        }
+
+        public int getLastPermCheckRead() {
+            return mExecutedPermCheckRead;
+        }
+
+        public int getLastPermCheckWrite() {
+            return mExecutedPermCheckWrite;
         }
 
         /**
@@ -97,9 +121,11 @@ public class MockJobService extends JobService {
             return !mLatch.await(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
 
-        private void notifyExecution(JobParameters params) {
-            Log.d(TAG, "Job executed:" + params.getJobId());
+        private void notifyExecution(JobParameters params, int permCheckRead, int permCheckWrite) {
+            //Log.d(TAG, "Job executed:" + params.getJobId());
             mExecutedJobParameters = params;
+            mExecutedPermCheckRead = permCheckRead;
+            mExecutedPermCheckWrite = permCheckWrite;
             mLatch.countDown();
         }
 
