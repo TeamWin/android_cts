@@ -17,9 +17,11 @@
 
     <include name="cts" />
 
-    <option name="plan" value="cts-pdk" />
+    <option name="plan" value="cts-vendor-interface" />
 
     <!-- Include test modules -->
     <option name="compatibility:include-filter" value="CtsAccelerationTestCases" />
+    <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:include-annotation:com.android.compatibility.common.util.VendorInterfaceTest" />
+    <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:include-annotation:com.android.compatibility.common.util.VendorInterfaceTest" />
 
 </configuration>
