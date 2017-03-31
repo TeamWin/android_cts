@@ -371,16 +371,12 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         if (!hasCamera()) {
             return;
         }
-        mCamera = Camera.open(0);
-        setSupportedResolution(mCamera);
-        mCamera.unlock();
-
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
         mMediaRecorder.setOutputFile(OUTPUT_PATH2);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
         mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
-        mMediaRecorder.setVideoSize(mVideoWidth, mVideoHeight);
+        mMediaRecorder.setVideoSize(VIDEO_WIDTH, VIDEO_HEIGHT);
 
         FileOutputStream fos = new FileOutputStream(OUTPUT_PATH2);
         FileDescriptor fd = fos.getFD();
@@ -533,16 +529,12 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             MediaUtils.skipTest("no microphone, camera, or codecs");
             return;
         }
-        mCamera = Camera.open(0);
-        setSupportedResolution(mCamera);
-        mCamera.unlock();
-
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mMediaRecorder.setVideoSize(mVideoWidth, mVideoHeight);
+        mMediaRecorder.setVideoSize(VIDEO_WIDTH, VIDEO_HEIGHT);
         mMediaRecorder.setVideoEncodingBitRate(256000);
         mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
         mMediaRecorder.setMaxFileSize(fileSize);
@@ -590,7 +582,6 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             mCamera = Camera.open(0);
             Camera.Parameters params = mCamera.getParameters();
             frameRate = params.getPreviewFrameRate();
-            setSupportedResolution(mCamera);
             mCamera.unlock();
             mMediaRecorder.setCamera(mCamera);
             mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
@@ -608,7 +599,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mMediaRecorder.setVideoFrameRate(frameRate);
-        mMediaRecorder.setVideoSize(mVideoWidth, mVideoHeight);
+        mMediaRecorder.setVideoSize(VIDEO_WIDTH, VIDEO_HEIGHT);
 
         if (hasAudio) {
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
