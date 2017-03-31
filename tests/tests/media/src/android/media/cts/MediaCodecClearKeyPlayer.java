@@ -230,8 +230,6 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private void prepareVideo() throws IOException {
         boolean hasVideo = false;
 
-        android.media.DrmInitData drmInitData = mVideoExtractor.getDrmInitData();
-
         for (int i = mVideoExtractor.getTrackCount(); i-- > 0;) {
             MediaFormat format = mVideoExtractor.getTrackFormat(i);
             String mime = format.getString(MediaFormat.KEY_MIME);
@@ -244,11 +242,10 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             Log.d(TAG, "video track #" + i + " " + format + " " + mime +
                   " Width:" + mMediaFormatWidth + ", Height:" + mMediaFormatHeight);
 
-            if (mScrambled && drmInitData != null && mime.startsWith("video/")) {
-                android.media.DrmInitData.SchemeInitData schemeInitData =
-                        drmInitData.get(new UUID(0, i));
-                if (schemeInitData != null) {
-                    mDescrambler.setMediaCasSession(schemeInitData.data);
+            if (mScrambled && mime.startsWith("video/")) {
+                MediaExtractor.CasInfo casInfo = mVideoExtractor.getCasInfo(i);
+                if (casInfo != null && casInfo.getSession() != null) {
+                    mDescrambler.setMediaCasSession(casInfo.getSession());
                 }
             }
 
@@ -291,23 +288,18 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
 
     private void initCasAndDescrambler(MediaExtractor extractor) throws MediaCasException {
         int trackCount = extractor.getTrackCount();
-        android.media.DrmInitData drmInitData = extractor.getDrmInitData();
         for (int trackId = 0; trackId < trackCount; trackId++) {
             android.media.MediaFormat format = extractor.getTrackFormat(trackId);
             String mime = format.getString(android.media.MediaFormat.KEY_MIME);
             Log.d(TAG, "track "+ trackId + ": " + mime);
             if ("video/scrambled".equals(mime) || "audio/scrambled".equals(mime)) {
-                if (drmInitData == null) {
-                    throw new IllegalArgumentException("found scrambled track without drmInitData!");
+                MediaExtractor.CasInfo casInfo = extractor.getCasInfo(trackId);
+                if (casInfo != null) {
+                    mMediaCas = new MediaCas(casInfo.getSystemId());
+                    mDescrambler = new MediaDescrambler(casInfo.getSystemId());
+                    mMediaCas.provision(sProvisionStr);
+                    extractor.setMediaCas(mMediaCas);
                 }
-                android.media.DrmInitData.SchemeInitData schemeInitData =
-                        drmInitData.get(new UUID(0, trackId));
-                int CA_system_id = (schemeInitData.data[0] & 0xff)
-                                | ((schemeInitData.data[1] & 0xff) << 8);
-                mMediaCas = new MediaCas(CA_system_id);
-                mDescrambler = new MediaDescrambler(CA_system_id);
-                mMediaCas.provision(sProvisionStr);
-                extractor.setMediaCas(mMediaCas);
             }
         }
     }
@@ -550,12 +542,12 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         }
 
         if (mMediaCas != null) {
-            mMediaCas.release();
+            mMediaCas.close();
             mMediaCas = null;
         }
 
         if (mDescrambler != null) {
-            mDescrambler.release();
+            mDescrambler.close();
             mDescrambler = null;
         }
 
