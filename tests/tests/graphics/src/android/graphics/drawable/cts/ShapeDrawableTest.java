@@ -36,6 +36,7 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.cts.R;
@@ -217,6 +218,18 @@ public class ShapeDrawableTest {
 
         shapeDrawable.setShaderFactory(null);
         assertNull(shapeDrawable.getShaderFactory());
+    }
+
+    @Test
+    public void testSetXfermode() {
+        ShapeDrawable shapeDrawable = new ShapeDrawable();
+
+        PorterDuffXfermode xfermode = new PorterDuffXfermode(Mode.SRC_OVER);
+        shapeDrawable.setXfermode(xfermode);
+        assertSame(xfermode, shapeDrawable.getPaint().getXfermode());
+
+        shapeDrawable.setXfermode(null);
+        assertNull(shapeDrawable.getPaint().getXfermode());
     }
 
     public static class MockShaderFactory extends ShaderFactory {
