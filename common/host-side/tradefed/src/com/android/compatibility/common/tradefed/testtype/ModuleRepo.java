@@ -63,8 +63,8 @@ public class ModuleRepo implements IModuleRepo {
         ENDING_MODULES.put("CtsMonkeyTestCases", 1);
     }
     // Synchronization objects for Token Modules.
-    private static int mInitCount = 0;
-    private static Set<IModuleDef> mTokenModuleScheduled;
+    private int mInitCount = 0;
+    private Set<IModuleDef> mTokenModuleScheduled;
     private static Object lock = new Object();
 
     private int mTotalShards;
@@ -173,7 +173,6 @@ public class ModuleRepo implements IModuleRepo {
         mTotalShards = totalShards;
         mShardIndex = shardIndex;
         synchronized (lock) {
-            mInitCount++;
             if (mTokenModuleScheduled == null) {
                 mTokenModuleScheduled = new HashSet<>();
             }
@@ -461,17 +460,22 @@ public class ModuleRepo implements IModuleRepo {
                 // if it matches any of the token modules, add them
                 for (IModuleDef def : mTokenModules) {
                     if (!mTokenModuleScheduled.contains(def)) {
-                        modules.add(def);
-                        CLog.e("Adding %s to scheduled token", def);
-                        mTokenModuleScheduled.add(def);
+                        if (tokens.equals(def.getTokens())) {
+                            modules.add(def);
+                            CLog.d("Adding %s to scheduled token", def);
+                            mTokenModuleScheduled.add(def);
+                        }
                     }
                 }
             }
-            if (mInitCount == mTotalShards && mTokenModuleScheduled.size() != mTokenModules.size()) {
+            // the last shard going through may add everything remaining.
+            if (mInitCount == (mTotalShards - 1) &&
+                    mTokenModuleScheduled.size() != mTokenModules.size()) {
                 mTokenModules.removeAll(mTokenModuleScheduled);
                 CLog.e("Could not find any token for %s. Adding to last shard.", mTokenModules);
                 modules.addAll(mTokenModules);
             }
+            mInitCount++;
         }
         Collections.sort(modules, new ExecutionOrderComparator());
         CLog.logAndDisplay(LogLevel.INFO, "%s running %s modules, expected to complete in %s: %s",
@@ -563,14 +567,6 @@ public class ModuleRepo implements IModuleRepo {
             }
             return (int) Math.signum(value1 - value2);
         }
-    }
-
-    /**
-     * Reset some module repo variable. Exposed for testing.
-     */
-    protected void resetModuleRepo() {
-        mInitCount = 0;
-        mTokenModuleScheduled = null;
     }
 
     /**
