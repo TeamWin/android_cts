@@ -29,6 +29,10 @@
                 android:resizeableActivity="true"
                 android:exported="true"
         />
+        <activity android:name=".VrTestActivity"
+                android:resizeableActivity="true"
+                android:exported="true"
+        />
         <activity android:name=".ResumeWhilePausingActivity"
                 android:allowEmbedded="true"
                 android:resumeWhilePausing="true"
@@ -316,6 +320,15 @@
         <service android:name=".AssistantVoiceInteractionSessionService"
                  android:permission="android.permission.BIND_VOICE_INTERACTION"
                  android:exported="true" />
+
+        <service android:name="com.android.cts.verifier.vr.MockVrListenerService"
+                 android:exported="true"
+                 android:enabled="true"
+                 android:permission="android.permission.BIND_VR_LISTENER_SERVICE">
+           <intent-filter>
+               <action android:name="android.service.vr.VrListenerService" />
+           </intent-filter>
+        </service>
     </application>
 </manifest>
 
