@@ -48,6 +48,7 @@ public class NotificationTest extends AndroidTestCase {
     private static final NotificationChannel CHANNEL = new NotificationChannel("id", "name",
             NotificationManager.IMPORTANCE_HIGH);
     private static final String SHORTCUT_ID = "shortcutId";
+    private static final String SETTING_TEXT = "work chats";
 
     @Override
     protected void setUp() throws Exception {
@@ -91,6 +92,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
+                .setSettingsText(SETTING_TEXT)
                 .build();
         mNotification.icon = 0;
         mNotification.number = 1;
@@ -145,6 +147,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.getBadgeIconType(), result.getBadgeIconType());
         assertEquals(mNotification.getTimeout(), result.getTimeout());
         assertEquals(mNotification.getChannel(), result.getChannel());
+        assertEquals(mNotification.getSettingsText(), result.getSettingsText());
 
         mNotification.contentIntent = null;
         parcel = Parcel.obtain();
@@ -203,6 +206,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeout(TIMEOUT)
+                .setSettingsText(SETTING_TEXT)
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
@@ -212,6 +216,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(Notification.BADGE_ICON_SMALL, mNotification.getBadgeIconType());
         assertEquals(SHORTCUT_ID, mNotification.getShortcutId());
         assertEquals(TIMEOUT, mNotification.getTimeout());
+        assertEquals(SETTING_TEXT, mNotification.getSettingsText());
     }
 
     public void testActionBuilder() {
