@@ -38,6 +38,7 @@
     <string name="test_category_features">Features</string>
     <string name="test_category_deskclock">Clock</string>
     <string name="test_category_jobscheduler">Job Scheduler</string>
+    <string name="test_category_telecom">Telecom</string>
     <string name="test_category_telephony">Telephony</string>
     <string name="test_category_tv">TV</string>
     <string name="test_category_other">Other</string>
@@ -3764,4 +3765,20 @@ You should be prompted to select credentials; choose the ones you just installed
         This test requires that you have connected a mandated USB Audio headset. Press each
         \"transport\" button and verify that it is recognized by the test.
        </string>
+
+    <!-- Telecom tests -->
+    <string name="telecom_enable_phone_account_test"> Telecom Enable Phone Account Test</string>
+    <string name="telecom_enable_phone_account_info">
+        This test verifies that a third party ConnectionService can be enabled by the user.
+    </string>
+    <string name="telecom_enable_phone_account_step_1">
+        Click the button below to register a test PhoneAccount and ConnectionService.
+    </string>
+    <string name="telecom_enable_phone_account_register_button">Register Phone Account</string>
+    <string name="telecom_enable_phone_account_step_2">
+        In the Calling accounts settings, choose "All calling accounts" and enable the "CTS Verifier Test" account.
+        On AOSP this is accessible from: Phone app > Settings > Calls > Calling Accounts.
+        Once you have completed this step, return here and click the Confirm button.
+    </string>
+    <string name="telecom_enable_phone_account_confirm_button">Confirm</string>
 </resources>
