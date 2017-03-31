@@ -138,7 +138,7 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             try {
                 String libInDataData = dataData + "/" + library;
 
-                File apkFile = null;  // TODO: Implement: mBuildHelper.getTestFile(mApk);
+                File apkFile = mBuildHelper.getTestFile(mApk);
                 zf = new ZipFile(apkFile);
 
                 String libPathInApk = "lib/" + mAbi.getName() + "/" + library;
