@@ -112,7 +112,8 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         assertTrue(jankyDelta < 25);
 
         int gt150msDelta = countFramesAbove(statsAfter, 150) - countFramesAbove(statsBefore, 150);
-        assertEquals(gt150msDelta, 20); // 10 davey jrs + 10 daveys
+        assertTrue(gt150msDelta >= 20); // 10 davey jrs + 10 daveys + maybe first frame
+        assertTrue(gt150msDelta <= 21);
         int gt700msDelta = countFramesAbove(statsAfter, 700) - countFramesAbove(statsBefore, 700);
         assertEquals(gt700msDelta, 10); // 10 daveys
     }
