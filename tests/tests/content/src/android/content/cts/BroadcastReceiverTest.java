@@ -49,6 +49,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
             "android.content.cts.BroadcastReceiverTest.BROADCAST_TESTABORT";
     private static final String ACTION_BROADCAST_DISABLED =
             "android.content.cts.BroadcastReceiverTest.BROADCAST_DISABLED";
+    private static final String TEST_PACKAGE_NAME = "android.content.cts";
 
     private static final long SEND_BROADCAST_TIMEOUT = 15000;
     private static final long START_SERVICE_TIMEOUT  = 3000;
@@ -58,7 +59,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
                     "android.content.cts.MockReceiverDisableable");
 
     public BroadcastReceiverTest() {
-        super("android.content.cts", MockActivity.class);
+        super(TEST_PACKAGE_NAME, MockActivity.class);
     }
 
     @Override
@@ -191,7 +192,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         map.putString(MockReceiver.RESULT_EXTRAS_REMOVE_KEY,
                 MockReceiver.RESULT_EXTRAS_REMOVE_VALUE);
         getInstrumentation().getContext().sendOrderedBroadcast(
-                new Intent(ACTION_BROADCAST_MOCKTEST).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                new Intent(ACTION_BROADCAST_MOCKTEST)
+                        .setPackage(TEST_PACKAGE_NAME).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
                 null, internalOrderReceiver,
                 null, RESULT_INITIAL_CODE, RESULT_INITIAL_DATA, map);
         internalOrderReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
@@ -223,7 +225,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         // MockReceiverFirst --> MockReceiverAbort --> MockReceiver --> internalOrderReceiver.
         // And MockReceiver is the receiver which will be aborted.
         getInstrumentation().getContext().sendOrderedBroadcast(
-                new Intent(ACTION_BROADCAST_TESTABORT).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                new Intent(ACTION_BROADCAST_TESTABORT)
+                        .setPackage(TEST_PACKAGE_NAME).addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
                 null, internalOrderReceiver,
                 null, RESULT_INITIAL_CODE, RESULT_INITIAL_DATA, map);
         internalOrderReceiver.waitForReceiver(SEND_BROADCAST_TIMEOUT);
