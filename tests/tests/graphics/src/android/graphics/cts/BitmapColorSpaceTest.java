@@ -38,6 +38,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
@@ -315,6 +316,86 @@ public class BitmapColorSpaceTest {
             ColorSpace cs = b.getColorSpace();
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void guessSRGB() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+
+        try (InputStream in = mResources.getAssets().open("green-srgb.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = opts.outColorSpace;
+            assertNull(b);
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void guessProPhotoRGB() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+
+        try (InputStream in = mResources.getAssets().open("prophoto-rgba16f.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = opts.outColorSpace;
+            assertNull(b);
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void guessP3() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = opts.outColorSpace;
+            assertNull(b);
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void guessUnknown() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+
+        try (InputStream in = mResources.getAssets().open("purple-displayprofile.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = opts.outColorSpace;
+            assertNull(b);
+            assertNotNull(cs);
+            assertEquals("Unknown", cs.getName());
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void guessCMYK() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+
+        try (InputStream in = mResources.getAssets().open("purple-cmyk.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = opts.outColorSpace;
+            assertNull(b);
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
         } catch (IOException e) {
             fail();
         }
