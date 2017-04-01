@@ -25,7 +25,8 @@ public class ActiveTileServiceTest extends BaseTileServiceTest {
     private static final String ACTION_REQUEST_LISTENING =
             "android.sysui.testtile.REQUEST_LISTENING";
 
-    private static final String REQUEST_LISTENING = "am broadcast -a " + ACTION_REQUEST_LISTENING;
+    private static final String REQUEST_LISTENING = "am broadcast -a " + ACTION_REQUEST_LISTENING
+            + " " + PACKAGE;
 
     public ActiveTileServiceTest() {
         super(SERVICE);
