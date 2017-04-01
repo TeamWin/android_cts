@@ -16,9 +16,15 @@
 
 package com.android.cts.verifier.telecom;
 
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.VideoProfile;
+
+import com.android.cts.verifier.R;
 
 /**
  * An implementation of the {@link android.telecom.Connection} class used by the
@@ -38,12 +44,24 @@ public class CtsConnection extends Connection {
         void onShowIncomingCallUi(CtsConnection connection) { };
     }
 
+    public static final String EXTRA_PLAY_CS_AUDIO =
+            "com.android.cts.verifier.telecom.PLAY_CS_AUDIO";
+
     private final boolean mIsIncomingCall;
     private final Listener mListener;
+    private final MediaPlayer mMediaPlayer;
+    private final Context mContext;
 
-    public CtsConnection(boolean isIncomingCall, Listener listener) {
+    public CtsConnection(Context context, boolean isIncomingCall,
+            Listener listener, boolean hasAudio) {
+        mContext = context;
         mIsIncomingCall = isIncomingCall;
         mListener = listener;
+        if (hasAudio) {
+            mMediaPlayer = createMediaPlayer();
+        } else {
+            mMediaPlayer = null;
+        }
     }
 
     public boolean isIncomingCall() {
@@ -83,6 +101,10 @@ public class CtsConnection extends Connection {
         setVideoState(videoState);
         setActive();
 
+        if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
+            mMediaPlayer.start();
+        }
+
         if (mListener != null) {
             mListener.onAnswer(this, videoState);
         }
@@ -113,8 +135,26 @@ public class CtsConnection extends Connection {
         setDisconnected(cause);
         destroy();
 
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+            mMediaPlayer.stop();
+        }
+
         if (mListener != null) {
             mListener.onDestroyed(this);
         }
+    }
+
+    private MediaPlayer createMediaPlayer() {
+        AudioAttributes voiceCallAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .build();
+        int audioSessionId = ((AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE))
+                .generateAudioSessionId();
+        // Prepare the media player to play a tone when there is a call.
+        MediaPlayer mediaPlayer = MediaPlayer.create(mContext, R.raw.telecom_test_call_audio,
+                voiceCallAttributes, audioSessionId);
+        mediaPlayer.setLooping(true);
+        return mediaPlayer;
     }
 }
