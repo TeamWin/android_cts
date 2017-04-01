@@ -1101,7 +1101,7 @@
         \n\n4. Confirm access to the USB device on the helper device.
         \n\n5. Confirm access to the USB accessory on this device
         \n\n6. Confirm access to the USB device on the helper again.
-        \n\n7. Test will run and complete automatically in a less than 30 seconds.
+        \n\n7. Test will run and complete automatically in less than 30 seconds.
         \n\n8. Cancel all further dialogs on this device
     </string>
     <string name="usb_accessory_test_step1">

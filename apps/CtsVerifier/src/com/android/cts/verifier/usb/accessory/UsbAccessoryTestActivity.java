@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -87,164 +88,181 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
 
         UsbManager usbManager = getSystemService(UsbManager.class);
 
-        try {
-            assertEquals("Android device running CTS verifier", accessory.getDescription());
-            assertEquals("Android", accessory.getManufacturer());
-            assertEquals("Android device", accessory.getModel());
-            assertEquals("0", accessory.getSerial());
-            assertEquals("https://source.android.com/compatibility/cts/verifier.html",
-                    accessory.getUri());
-            assertEquals("1", accessory.getVersion());
+        (new AsyncTask<Void, Void, Throwable>() {
+            @Override
+            protected Throwable doInBackground(Void... params) {
+                try {
+                    assertEquals("Android device running CTS verifier", accessory.getDescription());
+                    assertEquals("Android", accessory.getManufacturer());
+                    assertEquals("Android device", accessory.getModel());
+                    assertEquals("0", accessory.getSerial());
+                    assertEquals("https://source.android.com/compatibility/cts/verifier.html",
+                            accessory.getUri());
+                    assertEquals("1", accessory.getVersion());
 
-            assertTrue(Arrays.asList(usbManager.getAccessoryList()).contains(accessory));
+                    assertTrue(Arrays.asList(usbManager.getAccessoryList()).contains(accessory));
 
-            runAndAssertException(() -> usbManager.openAccessory(null), NullPointerException.class);
+                    runAndAssertException(() -> usbManager.openAccessory(null),
+                            NullPointerException.class);
 
-            ParcelFileDescriptor accessoryFd = usbManager.openAccessory(accessory);
-            assertNotNull(accessoryFd);
+                    ParcelFileDescriptor accessoryFd = usbManager.openAccessory(accessory);
+                    assertNotNull(accessoryFd);
 
-            try (InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(accessoryFd)) {
-                try (OutputStream os = new ParcelFileDescriptor.AutoCloseOutputStream(
-                        accessoryFd)) {
-                    byte[] origBuffer32 = new byte[32];
-                    (new Random()).nextBytes(origBuffer32);
+                    try (InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(
+                            accessoryFd)) {
+                        try (OutputStream os = new ParcelFileDescriptor.AutoCloseOutputStream(
+                                accessoryFd)) {
+                            byte[] origBuffer32 = new byte[32];
+                            (new Random()).nextBytes(origBuffer32);
 
-                    byte[] origBufferMax = new byte[MAX_BUFFER_SIZE];
-                    (new Random()).nextBytes(origBufferMax);
+                            byte[] origBufferMax = new byte[MAX_BUFFER_SIZE];
+                            (new Random()).nextBytes(origBufferMax);
 
-                    byte[] bufferMax = new byte[MAX_BUFFER_SIZE];
-                    byte[] buffer32 = new byte[32];
-                    byte[] buffer16 = new byte[16];
+                            byte[] bufferMax = new byte[MAX_BUFFER_SIZE];
+                            byte[] buffer32 = new byte[32];
+                            byte[] buffer16 = new byte[16];
 
-                    // Echo a transfer
-                    nextTest(is, os, "echo 32 bytes");
+                            // Echo a transfer
+                            nextTest(is, os, "echo 32 bytes");
 
-                    os.write(origBuffer32);
+                            os.write(origBuffer32);
 
-                    int numRead = is.read(buffer32);
-                    assertEquals(32, numRead);
-                    assertArrayEquals(origBuffer32, buffer32);
+                            int numRead = is.read(buffer32);
+                            assertEquals(32, numRead);
+                            assertArrayEquals(origBuffer32, buffer32);
 
-                    // Receive less data than available
-                    nextTest(is, os, "echo 32 bytes");
+                            // Receive less data than available
+                            nextTest(is, os, "echo 32 bytes");
 
-                    os.write(origBuffer32);
+                            os.write(origBuffer32);
 
-                    numRead = is.read(buffer16);
-                    assertEquals(16, numRead);
-                    assertArrayEquals(Arrays.copyOf(origBuffer32, 16), buffer16);
+                            numRead = is.read(buffer16);
+                            assertEquals(16, numRead);
+                            assertArrayEquals(Arrays.copyOf(origBuffer32, 16), buffer16);
 
-                    // If a transfer was only partially read, the rest of the transfer is lost.
-                    // We cannot read the second part, hence proceed to the next test.
+                            // If a transfer was only partially read, the rest of the transfer is
+                            // lost. We cannot read the second part, hence proceed to the next test.
 
-                    // Send two transfers in a row
-                    nextTest(is, os, "echo two 16 byte transfers as one");
+                            // Send two transfers in a row
+                            nextTest(is, os, "echo two 16 byte transfers as one");
 
-                    os.write(Arrays.copyOf(origBuffer32, 16));
-                    os.write(Arrays.copyOfRange(origBuffer32, 16, 32));
+                            os.write(Arrays.copyOf(origBuffer32, 16));
+                            os.write(Arrays.copyOfRange(origBuffer32, 16, 32));
 
-                    numRead = is.read(buffer32);
-                    assertEquals(32, numRead);
-                    assertArrayEquals(origBuffer32, buffer32);
+                            numRead = is.read(buffer32);
+                            assertEquals(32, numRead);
+                            assertArrayEquals(origBuffer32, buffer32);
 
-                    // Receive two transfers in a row into a buffer that is bigger than the transfer
-                    nextTest(is, os, "echo 32 bytes as two 16 byte transfers");
+                            // Receive two transfers in a row into a buffer that is bigger than the
+                            // transfer
+                            nextTest(is, os, "echo 32 bytes as two 16 byte transfers");
 
-                    os.write(origBuffer32);
+                            os.write(origBuffer32);
 
-                    // Even though the buffer would hold 32 bytes the input stream will read the
-                    // transfers individually
-                    numRead = is.read(buffer32);
-                    assertEquals(16, numRead);
-                    assertArrayEquals(Arrays.copyOf(origBuffer32, 16),
-                            Arrays.copyOf(buffer32, 16));
+                            // Even though the buffer would hold 32 bytes the input stream will read
+                            // the transfers individually
+                            numRead = is.read(buffer32);
+                            assertEquals(16, numRead);
+                            assertArrayEquals(Arrays.copyOf(origBuffer32, 16),
+                                    Arrays.copyOf(buffer32, 16));
 
-                    numRead = is.read(buffer32);
-                    assertEquals(16, numRead);
-                    assertArrayEquals(Arrays.copyOfRange(origBuffer32, 16, 32),
-                            Arrays.copyOf(buffer32, 16));
+                            numRead = is.read(buffer32);
+                            assertEquals(16, numRead);
+                            assertArrayEquals(Arrays.copyOfRange(origBuffer32, 16, 32),
+                                    Arrays.copyOf(buffer32, 16));
 
-                    // Echo a buffer with the maximum size
-                    nextTest(is, os, "echo max bytes");
+                            // Echo a buffer with the maximum size
+                            nextTest(is, os, "echo max bytes");
 
-                    os.write(origBufferMax);
+                            os.write(origBufferMax);
 
-                    numRead = is.read(bufferMax);
-                    assertEquals(MAX_BUFFER_SIZE, numRead);
-                    assertArrayEquals(origBufferMax, bufferMax);
+                            numRead = is.read(bufferMax);
+                            assertEquals(MAX_BUFFER_SIZE, numRead);
+                            assertArrayEquals(origBufferMax, bufferMax);
 
-                    // Echo a buffer with twice the maximum size
-                    nextTest(is, os, "echo max*2 bytes");
+                            // Echo a buffer with twice the maximum size
+                            nextTest(is, os, "echo max*2 bytes");
 
-                    byte[] oversizeBuffer = new byte[MAX_BUFFER_SIZE * 2];
-                    System.arraycopy(origBufferMax, 0, oversizeBuffer, 0, MAX_BUFFER_SIZE);
-                    System.arraycopy(origBufferMax, 0, oversizeBuffer, MAX_BUFFER_SIZE,
-                            MAX_BUFFER_SIZE);
-                    os.write(oversizeBuffer);
+                            byte[] oversizeBuffer = new byte[MAX_BUFFER_SIZE * 2];
+                            System.arraycopy(origBufferMax, 0, oversizeBuffer, 0, MAX_BUFFER_SIZE);
+                            System.arraycopy(origBufferMax, 0, oversizeBuffer, MAX_BUFFER_SIZE,
+                                    MAX_BUFFER_SIZE);
+                            os.write(oversizeBuffer);
 
-                    // The other side can not write more than the maximum size at once, hence we get
-                    // two transfers in return
-                    numRead = is.read(bufferMax);
-                    assertEquals(MAX_BUFFER_SIZE, numRead);
-                    assertArrayEquals(origBufferMax, bufferMax);
+                            // The other side can not write more than the maximum size at once,
+                            // hence we get two transfers in return
+                            numRead = is.read(bufferMax);
+                            assertEquals(MAX_BUFFER_SIZE, numRead);
+                            assertArrayEquals(origBufferMax, bufferMax);
 
-                    numRead = is.read(bufferMax);
-                    assertEquals(MAX_BUFFER_SIZE, numRead);
-                    assertArrayEquals(origBufferMax, bufferMax);
+                            numRead = is.read(bufferMax);
+                            assertEquals(MAX_BUFFER_SIZE, numRead);
+                            assertArrayEquals(origBufferMax, bufferMax);
 
-                    nextTest(is, os, "measure out transfer speed");
+                            nextTest(is, os, "measure out transfer speed");
 
-                    byte[] result = new byte[1];
-                    long bytesSent = 0;
-                    long timeStart = SystemClock.elapsedRealtime();
-                    while (bytesSent < TEST_DATA_SIZE_THRESHOLD) {
-                        os.write(origBufferMax);
-                        bytesSent += MAX_BUFFER_SIZE;
+                            byte[] result = new byte[1];
+                            long bytesSent = 0;
+                            long timeStart = SystemClock.elapsedRealtime();
+                            while (bytesSent < TEST_DATA_SIZE_THRESHOLD) {
+                                os.write(origBufferMax);
+                                bytesSent += MAX_BUFFER_SIZE;
+                            }
+                            numRead = is.read(result);
+                            double speedKBPS = (bytesSent * 8 * 1000. / 1024.)
+                                    / (SystemClock.elapsedRealtime() - timeStart);
+                            assertEquals(1, numRead);
+                            assertEquals(1, result[0]);
+                            // We don't mandate min speed for now, let's collect data on what it is.
+                            getReportLog().setSummary(
+                                    "Output USB accesory transfer speed",
+                                    speedKBPS,
+                                    ResultType.HIGHER_BETTER,
+                                    ResultUnit.KBPS);
+                            Log.i(LOG_TAG, "Write data transfer speed is " + speedKBPS + "KBPS");
+
+                            nextTest(is, os, "measure in transfer speed");
+
+                            long bytesRead = 0;
+                            timeStart = SystemClock.elapsedRealtime();
+                            while (bytesRead < TEST_DATA_SIZE_THRESHOLD) {
+                                numRead = is.read(bufferMax);
+                                bytesRead += numRead;
+                            }
+                            numRead = is.read(result);
+                            speedKBPS = (bytesRead * 8 * 1000. / 1024.)
+                                    / (SystemClock.elapsedRealtime() - timeStart);
+                            assertEquals(1, numRead);
+                            assertEquals(1, result[0]);
+                            // We don't mandate min speed for now, let's collect data on what it is.
+                            getReportLog().setSummary(
+                                    "Input USB accesory transfer speed",
+                                    speedKBPS,
+                                    ResultType.HIGHER_BETTER,
+                                    ResultUnit.KBPS);
+                            Log.i(LOG_TAG, "Read data transfer speed is " + speedKBPS + "KBPS");
+
+                            nextTest(is, os, "done");
+                        }
                     }
-                    numRead = is.read(result);
-                    double speedKBPS = (bytesSent * 8 * 1000. / 1024.)
-                            / (SystemClock.elapsedRealtime() - timeStart);
-                    assertEquals(1, numRead);
-                    assertEquals(1, result[0]);
-                    // We don't mandate min speed for now, let's collect data on what it is.
-                    getReportLog().setSummary(
-                            "Output USB accesory transfer speed",
-                            speedKBPS,
-                            ResultType.HIGHER_BETTER,
-                            ResultUnit.KBPS);
-                    Log.i(LOG_TAG, "Write data transfer speed is " + speedKBPS + "KBPS");
 
-                    nextTest(is, os, "measure in transfer speed");
+                    accessoryFd.close();
 
-                    long bytesRead = 0;
-                    timeStart = SystemClock.elapsedRealtime();
-                    while (bytesRead < TEST_DATA_SIZE_THRESHOLD) {
-                        numRead = is.read(bufferMax);
-                        bytesRead += numRead;
-                    }
-                    numRead = is.read(result);
-                    speedKBPS = (bytesRead * 8 * 1000. / 1024.)
-                            / (SystemClock.elapsedRealtime() - timeStart);
-                    assertEquals(1, numRead);
-                    assertEquals(1, result[0]);
-                    // We don't mandate min speed for now, let's collect data on what it is.
-                    getReportLog().setSummary(
-                            "Input USB accesory transfer speed",
-                            speedKBPS,
-                            ResultType.HIGHER_BETTER,
-                            ResultUnit.KBPS);
-                    Log.i(LOG_TAG, "Read data transfer speed is " + speedKBPS + "KBPS");
-
-                    nextTest(is, os, "done");
+                    return null;
+                } catch (Throwable t) {
+                    return  t;
                 }
             }
 
-            accessoryFd.close();
-
-            setTestResultAndFinish(true);
-        } catch (Throwable t) {
-            fail(null, t);
-        }
+            @Override
+            protected void onPostExecute(Throwable t) {
+                if (t == null) {
+                    setTestResultAndFinish(true);
+                } else {
+                    fail(null, t);
+                }
+            }
+        }).execute();
     }
 
     /**
