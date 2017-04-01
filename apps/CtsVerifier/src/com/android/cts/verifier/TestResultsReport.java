@@ -118,11 +118,16 @@ class TestResultsReport {
 
         ICaseResult caseResult = moduleResult.getOrCreateResult(TEST_CASE_NAME);
         int count = mAdapter.getCount();
+        int notExecutedCount = 0;
         for (int i = 0; i < count; i++) {
             TestListItem item = mAdapter.getItem(i);
             if (item.isTest()) {
                 ITestResult currentTestResult = caseResult.getOrCreateResult(item.testName);
-                currentTestResult.setResultStatus(getTestResultStatus(mAdapter.getTestResult(i)));
+                TestStatus resultStatus = getTestResultStatus(mAdapter.getTestResult(i));
+                if (resultStatus == null) {
+                    ++notExecutedCount;
+                }
+                currentTestResult.setResultStatus(resultStatus);
                 // TODO: report test details with Extended Device Info (EDI) or CTS metrics
                 // String details = mAdapter.getTestDetails(i);
 
@@ -133,6 +138,7 @@ class TestResultsReport {
             }
         }
         moduleResult.setDone(true);
+        moduleResult.setNotExecuted(notExecutedCount);
 
         return result;
     }
