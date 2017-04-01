@@ -35,6 +35,7 @@ import android.util.Log;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.view.View;
+import android.view.ViewStructure.HtmlInfo;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -176,6 +177,11 @@ final class Helper {
             .append(" afType=").append(node.getAutofillType())
             .append(" afValue=").append(node.getAutofillValue())
             .append(" checked=").append(node.isChecked());
+        final HtmlInfo htmlInfo = node.getHtmlInfo();
+        if (htmlInfo != null) {
+            buffer.append("\nHtmlInfo: tag=").append(htmlInfo.getTag())
+                .append(", attrs: ").append(htmlInfo.getAttributes());
+        }
 
         prefix += " ";
         if (childrenSize > 0) {
