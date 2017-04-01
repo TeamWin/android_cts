@@ -108,4 +108,10 @@ public class PhoneAccountUtils {
                 Context.TELECOM_SERVICE);
         return telecomManager.getPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE);
     }
+
+    public static PhoneAccountHandle getDefaultOutgoingPhoneAccount(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(
+                Context.TELECOM_SERVICE);
+        return telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+    }
 }
