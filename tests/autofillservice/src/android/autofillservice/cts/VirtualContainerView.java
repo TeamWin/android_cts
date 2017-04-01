@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.FILL_TIMEOUT_MS;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.assist.AssistStructure.ViewNode;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -30,10 +31,12 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStructure;
+import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
@@ -166,10 +169,10 @@ class VirtualContainerView extends View {
 
     @Override
     public void onProvideAutofillVirtualStructure(ViewStructure structure, int flags) {
-        super.onProvideAutofillVirtualStructure(structure, flags);
-
         Log.d(TAG, "onProvideAutofillVirtualStructure(): flags = " + flags);
         super.onProvideAutofillVirtualStructure(structure, flags);
+
+        final String packageName = getContext().getPackageName();
         structure.setClassName(getClass().getName());
         final int childrenSize = mItems.size();
         int index = structure.addChildCount(childrenSize);
@@ -185,15 +188,34 @@ class VirtualContainerView extends View {
             index++;
             final String className = item.editable ? TEXT_CLASS : LABEL_CLASS;
             child.setClassName(className);
-            child.setIdEntry(item.resourceId);
+            // Must set "fake" idEntry because that's what the test cases use to find nodes.
+            child.setId(1000 + index, packageName, "id", item.resourceId);
             child.setText(item.text);
             child.setAutofillValue(AutofillValue.forText(item.text));
             child.setFocused(item.line.focused);
+            child.setHtmlInfo(child.newHtmlInfoBuilder("TAGGY")
+                    .addAttribute("a1", "v1")
+                    .addAttribute("a2", "v2")
+                    .addAttribute("a1", "v2")
+                    .build());
+
             if (!mSync) {
                 Log.d(TAG, "Commiting virtual child");
                 child.asyncCommit();
             }
         }
+    }
+
+    static void assertHtmlInfo(ViewNode node) {
+        final String name = node.getText().toString();
+        final HtmlInfo info = node.getHtmlInfo();
+        assertWithMessage("no HTML info on %s", name).that(info).isNotNull();
+        assertWithMessage("wrong HTML tag on %s", name).that(info.getTag()).isEqualTo("TAGGY");
+        assertWithMessage("wrong attributes on %s", name).that(info.getAttributes())
+                .containsExactly(
+                        new Pair<>("a1", "v1"),
+                        new Pair<>("a2", "v2"),
+                        new Pair<>("a1", "v2"));
     }
 
     Line addLine(String labelId, String label, String textId, String text) {
