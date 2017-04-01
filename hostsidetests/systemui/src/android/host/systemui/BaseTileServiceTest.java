@@ -19,7 +19,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 
 public class BaseTileServiceTest extends DeviceTestCase {
     // Constants for generating commands below.
-    private static final String PACKAGE = "android.systemui.cts";
+    protected static final String PACKAGE = "android.systemui.cts";
     private static final String ACTION_SHOW_DIALOG = "android.sysui.testtile.action.SHOW_DIALOG";
 
     // Commands used on the device.
