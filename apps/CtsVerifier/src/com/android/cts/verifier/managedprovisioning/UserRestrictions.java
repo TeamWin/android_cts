@@ -110,7 +110,7 @@ public class UserRestrictions {
             Settings.ACTION_DEVICE_INFO_SETTINGS,
             Settings.ACTION_PRIVACY_SETTINGS,
             Settings.ACTION_DEVICE_INFO_SETTINGS,
-            Settings.ACTION_SECURITY_SETTINGS,
+            Settings.ACTION_MANAGE_EXTERNAL_SOURCES,
             Settings.ACTION_SYNC_SETTINGS,
             Settings.ACTION_WIRELESS_SETTINGS,
             Settings.ACTION_WIRELESS_SETTINGS,
