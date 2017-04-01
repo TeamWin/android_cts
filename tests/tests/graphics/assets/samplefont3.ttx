@@ -17,6 +17,7 @@
 
   <GlyphOrder>
     <GlyphID id="0" name=".notdef"/>
+    <GlyphID id="1" name="a"/>
   </GlyphOrder>
 
   <head>
@@ -115,12 +116,13 @@
 
   <hmtx>
     <mtx name=".notdef" width="500" lsb="93"/>
+    <mtx name="a" width="500" lsb="93"/>
   </hmtx>
 
   <cmap>
     <tableVersion version="0"/>
     <cmap_format_4 platformID="3" platEncID="10" language="0">
-      <map code="0x0061" name=".notdef" />
+      <map code="0x0061" name="a" />
     </cmap_format_4>
   </cmap>
 
@@ -129,9 +131,8 @@
   </loca>
 
   <glyf>
-    <TTGlyph name=".notdef" xMin="0" yMin="0" xMax="0" yMax="0">
-      <contour></contour><instructions><assembly></assembly></instructions>
-    </TTGlyph>
+    <TTGlyph name=".notdef" xMin="0" yMin="0" xMax="0" yMax="0" />
+    <TTGlyph name="a" xMin="0" yMin="0" xMax="0" yMax="0" />
   </glyf>
 
   <name>
