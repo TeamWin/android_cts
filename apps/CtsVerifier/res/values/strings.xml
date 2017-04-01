@@ -3813,7 +3813,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="telecom_outgoing_call_register_enable_phone_account_button">
         Register and Enable Phone Account
     </string>
-    <string name="telecom_outgoing_call_confirm_register_button">Confirm</string>
+    <string name="telecom_outgoing_call_confirm_register_button">Confirm Phone Account</string>
     <string name="telecom_outgoing_call_step_2">
         Click the button below to dial an outgoing call. This will populate the default dialer
         app with a dummy phone number. Initiate the phone call from the dialer app, then return
@@ -3825,4 +3825,29 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="telecom_outgoing_call_confirm_button">Confirm</string>
 
+    <string name="telecom_incoming_call_test">Telecom Incoming Call Test</string>
+    <string name="telecom_incoming_call_test_info">This test verifies that the default
+        dialer on the system is able to receive a call from a third-party connection service.
+    </string>
+    <string name="telecom_incoming_call_step_1">
+        Click the button below to register a test PhoneAccount and ConnectionService. You will be
+        taken to the phone account selection screen. Please enable the "CTS Verifier Test"
+        account. Once you have completed this step, return here and click the
+        "Confirm Phone Account" button.
+    </string>
+    <string name="telecom_incoming_call_register_enable_phone_account_button">
+        Register and Enable Phone Account
+    </string>
+    <string name="telecom_incoming_call_confirm_register_button">Confirm Phone Account</string>
+    <string name="telecom_incoming_call_step_2">
+        Click the button below to initiate an incoming call. The phone should start ringing.
+        Answer the call, confirm that you can hear an audio clip with Eisenhower\'s voice, then
+        return to this screen.
+    </string>
+    <string name="telecom_incoming_call_dial_button">Dial</string>
+    <string name="telecom_incoming_call_step_3">
+        Click the button below to confirm that the incoming call was properly answered and that
+        audio was audible.
+    </string>
+    <string name="telecom_incoming_call_confirm_button">Confirm</string>
 </resources>

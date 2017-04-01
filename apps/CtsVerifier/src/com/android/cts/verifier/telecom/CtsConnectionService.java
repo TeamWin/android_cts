@@ -91,8 +91,10 @@ public class CtsConnectionService extends ConnectionService {
         boolean isSelfManaged = request.getAccountHandle().equals(
                 PhoneAccountUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE);
 
-        CtsConnection connection = new CtsConnection(isIncoming,
-                mConnectionListener);
+        boolean useAudioClip =
+                request.getExtras().getBoolean(CtsConnection.EXTRA_PLAY_CS_AUDIO, false);
+        CtsConnection connection = new CtsConnection(getApplicationContext(), isIncoming,
+                mConnectionListener, useAudioClip);
         if (isSelfManaged) {
             connection.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         }
