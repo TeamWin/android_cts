@@ -93,6 +93,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
         // Set a PIN for this user
         mDevice.executeShellCommand("settings put global require_password_to_decrypt 0");
+        mDevice.executeShellCommand("locksettings set-disabled false");
         mDevice.executeShellCommand("locksettings set-pin 12345");
     }
 
@@ -106,6 +107,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
         // Clear PIN for this user
         mDevice.executeShellCommand("locksettings clear --old 12345");
+        mDevice.executeShellCommand("locksettings set-disabled true");
         mDevice.executeShellCommand("settings delete global require_password_to_decrypt");
     }
 
