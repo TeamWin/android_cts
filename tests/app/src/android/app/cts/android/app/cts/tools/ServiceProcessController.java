@@ -40,23 +40,23 @@ public final class ServiceProcessController {
     final Context mContext;
     final Instrumentation mInstrumentation;
     final String mMyPackageName;
-    final Intent mServiceIntent;
+    final Intent[] mServiceIntents;
     final String mServicePackage;
 
     final ActivityManager mAm;
     final Parcel mData;
-    final ServiceConnectionHandler mConnection;
+    final ServiceConnectionHandler[] mConnections;
     final UidImportanceListener mUidForegroundListener;
     final UidImportanceListener mUidGoneListener;
 
     public ServiceProcessController(Context context, Instrumentation instrumentation,
-            String myPackageName, Intent serviceIntent)
+            String myPackageName, Intent[] serviceIntents)
             throws IOException, PackageManager.NameNotFoundException {
         mContext = context;
         mInstrumentation = instrumentation;
         mMyPackageName = myPackageName;
-        mServiceIntent = serviceIntent;
-        mServicePackage = mServiceIntent.getComponent().getPackageName();
+        mServiceIntents = serviceIntents;
+        mServicePackage = mServiceIntents[0].getComponent().getPackageName();
         String cmd = "pm grant " + mMyPackageName + " " + Manifest.permission.PACKAGE_USAGE_STATS;
         String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
         /*
@@ -68,7 +68,10 @@ public final class ServiceProcessController {
 
         mAm = mContext.getSystemService(ActivityManager.class);
         mData = Parcel.obtain();
-        mConnection = new ServiceConnectionHandler(mContext, serviceIntent);
+        mConnections = new ServiceConnectionHandler[serviceIntents.length];
+        for (int i=0; i<serviceIntents.length; i++) {
+            mConnections[i] = new ServiceConnectionHandler(mContext, serviceIntents[i]);
+        }
 
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 mServicePackage, 0);
@@ -87,8 +90,8 @@ public final class ServiceProcessController {
         mData.recycle();
     }
 
-    public ServiceConnectionHandler getConnection() {
-        return mConnection;
+    public ServiceConnectionHandler getConnection(int index) {
+        return mConnections[index];
     }
 
     public UidImportanceListener getUidForegroundListener() {
@@ -100,13 +103,15 @@ public final class ServiceProcessController {
     }
 
     public void ensureProcessGone(long timeout) {
-        mConnection.bind(timeout);
-        try {
-            mConnection.getServiceIBinder().transact(IBinder.FIRST_CALL_TRANSACTION, mData, null,
-                    0);
-        } catch (RemoteException e) {
+        for (int i=0; i<mConnections.length; i++) {
+            mConnections[i].bind(timeout);
+            IBinder serviceBinder = mConnections[i].getServiceIBinder();
+            try {
+                serviceBinder.transact(IBinder.FIRST_CALL_TRANSACTION, mData, null, 0);
+            } catch (RemoteException e) {
+            }
+            mConnections[i].unbind(timeout);
         }
-        mConnection.unbind(timeout);
 
         // Wait for uid's process to go away.
         mUidGoneListener.waitForValue(ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE,
