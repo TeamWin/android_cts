@@ -1338,4 +1338,29 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private static boolean hasH264() {
         return MediaUtils.hasEncoder(MediaFormat.MIMETYPE_VIDEO_AVC);
     }
+
+    public void testSetCaptureRate() throws Exception {
+        // No exception expected for 30fps
+        mMediaRecorder.setCaptureRate(30.0);
+        try {
+            mMediaRecorder.setCaptureRate(-1.0);
+            fail("Should fail setting negative fps");
+        } catch (Exception ex) {
+            // expected
+        }
+        // No exception expected for 1/24hr
+        mMediaRecorder.setCaptureRate(1.0 / 86400.0);
+        try {
+            mMediaRecorder.setCaptureRate(1.0 / 90000.0);
+            fail("Should fail setting smaller fps than one frame per day");
+        } catch (Exception ex) {
+            // expected
+        }
+        try {
+            mMediaRecorder.setCaptureRate(0);
+            fail("Should fail setting zero fps");
+        } catch (Exception ex) {
+            // expected
+        }
+    }
 }
