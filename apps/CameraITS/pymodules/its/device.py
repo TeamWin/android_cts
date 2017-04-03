@@ -389,6 +389,7 @@ class ItsSession(object):
 
         Triggers some or all of AE, AWB, and AF, and returns once they have
         converged. Uses the vendor 3A that is implemented inside the HAL.
+        Note: do_awb is always enabled regardless of do_awb flag
 
         Throws an assertion if 3A fails to converge.
 
@@ -416,8 +417,8 @@ class ItsSession(object):
             Five values are returned if get_results is true::
             * AE sensitivity; None if do_ae is False
             * AE exposure time; None if do_ae is False
-            * AWB gains (list); None if do_awb is False
-            * AWB transform (list); None if do_awb is false
+            * AWB gains (list);
+            * AWB transform (list);
             * AF focus position; None if do_af is false
             Otherwise, it returns five None values.
         """
@@ -447,9 +448,11 @@ class ItsSession(object):
             data,_ = self.__read_response_from_socket()
             vals = data['strValue'].split()
             if data['tag'] == 'aeResult':
-                ae_sens, ae_exp = [int(i) for i in vals]
+                if do_ae:
+                    ae_sens, ae_exp = [int(i) for i in vals]
             elif data['tag'] == 'afResult':
-                af_dist = float(vals[0])
+                if do_af:
+                    af_dist = float(vals[0])
             elif data['tag'] == 'awbResult':
                 awb_gains = [float(f) for f in vals[:4]]
                 awb_transform = [float(f) for f in vals[4:]]
