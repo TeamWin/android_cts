@@ -22,16 +22,22 @@ import static com.android.cts.storageapp.Utils.CACHE_INT;
 import static com.android.cts.storageapp.Utils.DATA_EXT;
 import static com.android.cts.storageapp.Utils.DATA_INT;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
+import static com.android.cts.storageapp.Utils.TAG;
 import static com.android.cts.storageapp.Utils.assertMostlyEquals;
 import static com.android.cts.storageapp.Utils.getSizeManual;
 import static com.android.cts.storageapp.Utils.makeUniqueFile;
+import static com.android.cts.storageapp.Utils.shouldHaveQuota;
 import static com.android.cts.storageapp.Utils.useSpace;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
+import android.system.Os;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +53,20 @@ public class StorageTest extends InstrumentationTestCase {
 
     public void testAllocate() throws Exception {
         useSpace(getContext());
+    }
+
+    public void testFullDisk() throws Exception {
+        if (shouldHaveQuota(Os.uname())) {
+            Hoarder.doBlocks(getContext().getDataDir(), true);
+        } else {
+            Log.d(TAG, "Skipping full disk test due to missing quota support");
+        }
+    }
+
+    public void testTweakComponent() throws Exception {
+        getContext().getPackageManager().setComponentEnabledSetting(
+                new ComponentName(getContext().getPackageName(), UtilsReceiver.class.getName()),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
     }
 
     /**
