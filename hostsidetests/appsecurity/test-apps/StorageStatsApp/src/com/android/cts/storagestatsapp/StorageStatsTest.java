@@ -25,6 +25,7 @@ import static com.android.cts.storageapp.Utils.assertMostlyEquals;
 import static com.android.cts.storageapp.Utils.getSizeManual;
 import static com.android.cts.storageapp.Utils.logCommand;
 import static com.android.cts.storageapp.Utils.makeUniqueFile;
+import static com.android.cts.storageapp.Utils.shouldHaveQuota;
 import static com.android.cts.storageapp.Utils.useFallocate;
 import static com.android.cts.storageapp.Utils.useSpace;
 import static com.android.cts.storageapp.Utils.useWrite;
@@ -53,8 +54,6 @@ import com.android.cts.storageapp.UtilsReceiver;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Tests to verify {@link StorageStatsManager} behavior.
@@ -74,15 +73,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
      * enabled.
      */
     public void testVerifyQuota() throws Exception {
-        // Linux 3.18 was the first kernel with solid quota support, so we don't
-        // require it on older kernels.
         final StructUtsname uname = Os.uname();
-        final Matcher matcher = Pattern.compile("(\\d+)\\.(\\d+)").matcher(uname.release);
-        assertTrue(matcher.find());
-        final int major = Integer.parseInt(matcher.group(1));
-        final int minor = Integer.parseInt(matcher.group(2));
-
-        if (major > 3 || (major == 3 && minor >= 18)) {
+        if (shouldHaveQuota(uname)) {
             final StorageStatsManager stats = getContext()
                     .getSystemService(StorageStatsManager.class);
             assertTrue("You're running kernel 3.18 or newer (" + uname.release + ") which "
