@@ -638,7 +638,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         boolean isInited = receiveZero.initialize(connection, in);
         assertTrue(isInited);
         ByteBuffer zeroBuffer = ByteBuffer.allocate(1);
-        receiveZero.enqueue(zeroBuffer);
+        receiveZero.queue(zeroBuffer);
 
         UsbRequest finished = connection.requestWait();
         assertEquals(receiveZero, finished);
@@ -712,9 +712,9 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         bufferReceived.position(0);
         bufferReceived.limit(originalSize);
 
-        boolean wasQueued = receive.enqueue(bufferReceivedSliced);
+        boolean wasQueued = receive.queue(bufferReceivedSliced);
         assertTrue(wasQueued);
-        wasQueued = sent.enqueue(bufferSentSliced);
+        wasQueued = sent.queue(bufferSentSliced);
         assertTrue(wasQueued);
 
         for (int reqRun = 0; reqRun < 2; reqRun++) {
@@ -865,7 +865,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         ByteBuffer buffer = ByteBuffer.allocate(1);
 
         reqQueued.initialize(connection, in);
-        reqQueued.enqueue(buffer);
+        reqQueued.queue(buffer);
 
         // Let the kernel receive and process the request
         Thread.sleep(50);
@@ -924,7 +924,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             buffer = ByteBuffer.allocate(0);
         }
 
-        boolean isQueued = sent.enqueue(buffer);
+        boolean isQueued = sent.queue(buffer);
         assumeTrue(isQueued);
         UsbRequest finished = connection.requestWait();
         assertSame(finished, sent);
@@ -943,7 +943,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         boolean isInited = sent.initialize(connection, out);
         assertTrue(isInited);
 
-        boolean isQueued = sent.enqueue(null);
+        boolean isQueued = sent.queue(null);
         assumeTrue(isQueued);
         UsbRequest finished = connection.requestWait();
         assertSame(finished, sent);
@@ -980,9 +980,9 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             buffer1 = ByteBuffer.allocate(1);
         }
 
-        boolean isQueued = zeroReceived.enqueue(buffer);
+        boolean isQueued = zeroReceived.queue(buffer);
         assumeTrue(isQueued);
-        isQueued = oneReceived.enqueue(buffer1);
+        isQueued = oneReceived.queue(buffer1);
         assumeTrue(isQueued);
 
         // We expect both to be returned after some time
@@ -1211,16 +1211,16 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         runAndAssertException(() -> req1.initialize(connection, null), NullPointerException.class);
         boolean isInited = req1.initialize(connection, in);
         assertTrue(isInited);
-        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocate(16384 + 1).asReadOnlyBuffer()),
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocate(16384 + 1).asReadOnlyBuffer()),
                 IllegalArgumentException.class);
-        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocate(1).asReadOnlyBuffer()),
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocate(1).asReadOnlyBuffer()),
                 IllegalArgumentException.class);
         req1.close();
 
         // Cannot queue closed request
-        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocate(1)),
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocate(1)),
                 IllegalStateException.class);
-        runAndAssertException(() -> req1.enqueue(ByteBuffer.allocateDirect(1)),
+        runAndAssertException(() -> req1.queue(ByteBuffer.allocateDirect(1)),
                 IllegalStateException.class);
 
         // Initialize
@@ -1446,7 +1446,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
                     // Send both requests to the system. Once they finish the ReceiverThread will
                     // be notified
-                    boolean isQueued = writeRequest.enqueue(writeBuffer);
+                    boolean isQueued = writeRequest.queue(writeBuffer);
                     assertTrue(isQueued);
 
                     isQueued = readRequest.queue(readBuffer, 9);
