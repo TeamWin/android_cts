@@ -63,6 +63,10 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     protected void tearDown() throws Exception {
         super.tearDown();
 
+        getDevice().uninstallPackage(PKG_STATS);
+        getDevice().uninstallPackage(PKG_A);
+        getDevice().uninstallPackage(PKG_B);
+
         Utils.removeUsersForTest(getDevice(), mUsers);
         mUsers = null;
     }
@@ -95,6 +99,7 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         prepareTestApps(); doVerifyStatsExternalConsistent();
         prepareTestApps(); doVerifyCategory();
         prepareTestApps(); doCache();
+        prepareTestApps(); doFullDisk();
     }
 
     public void doVerifyQuota() throws Exception {
@@ -187,6 +192,43 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
         } finally {
             getDevice().executeShellCommand("settings delete global sys_storage_threshold_max_bytes");
             getDevice().executeShellCommand("settings delete global sys_storage_cache_max_bytes");
+        }
+    }
+
+    public void doFullDisk() throws Exception {
+        // Clear all other cached data to give ourselves a clean slate
+        getDevice().executeShellCommand("pm trim-caches 4096G");
+
+        // We're interested in any crashes while disk full
+        final String lastEvent = getDevice().executeShellCommand("logcat -d -b events -t 1");
+        final String sinceTime = lastEvent.trim().substring(0, 18);
+
+        // Try our hardest to fill up the entire disk
+        runDeviceTests(PKG_A, CLASS, "testFullDisk", Utils.USER_OWNER);
+        runDeviceTests(PKG_A, CLASS, "testTweakComponent", Utils.USER_OWNER);
+
+        // Try poking around a couple of settings apps
+        getDevice().executeShellCommand("input keyevent KEY_HOME");
+        Thread.sleep(1000);
+        getDevice().executeShellCommand("am start -a android.settings.SETTINGS");
+        Thread.sleep(2000);
+        getDevice().executeShellCommand("input keyevent KEY_BACK");
+        Thread.sleep(1000);
+        getDevice().executeShellCommand("am start -a android.os.storage.action.MANAGE_STORAGE");
+        Thread.sleep(2000);
+        getDevice().executeShellCommand("input keyevent KEY_BACK");
+        Thread.sleep(1000);
+
+        // Our misbehaving app above shouldn't have caused anything else to
+        // think the disk was full
+        String troubleLogs = getDevice().executeShellCommand(
+                "logcat -d -t '" + sinceTime + "' -e '(ENOSPC|No space left on device)'");
+
+        if (troubleLogs == null) troubleLogs = "";
+        troubleLogs = troubleLogs.trim().replaceAll("\\-+ beginning of [a-z]+", "");
+
+        if (troubleLogs.length() > 4) {
+            fail("Unexpected crashes while disk full: " + troubleLogs);
         }
     }
 
