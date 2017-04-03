@@ -17,13 +17,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.cts.ephemeralapp2"
     android:targetSandboxVersion="2">
+    <uses-sdk
+        android:minSdkVersion="24" />
 
-  <!-- TEST: exists only for testing ephemeral app1 can't see this app -->
-  <application
+    <!-- TEST: exists only for testing ephemeral app1 can't see this app -->
+    <application
         android:label="@string/app_name">
         <uses-library android:name="android.test.runner" />
         <activity
-          android:name=".EphemeralActivity">
+          android:name=".EphemeralActivity"
+          android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -44,7 +47,8 @@
           <!-- This should still not be visible to other Instant Apps -->
           <activity
             android:name=".FakeExposedActivity"
-            android:visibleToInstantApps="true" />
+            android:visibleToInstantApps="true"
+            android:theme="@android:style/Theme.NoDisplay" />
     </application>
 
     <instrumentation
