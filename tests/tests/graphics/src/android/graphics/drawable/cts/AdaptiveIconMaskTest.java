@@ -32,6 +32,7 @@ import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 import android.util.PathParser;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,8 +40,12 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class MaskableIconDrawableTest {
+public class AdaptiveIconMaskTest {
 
+    public static final String TAG = AdaptiveIconMaskTest.class.getSimpleName();
+    public static void L(String s, Object... parts) {
+        Log.d(TAG, (parts.length == 0) ? s : String.format(s, parts));
+    }
     private static final double SAFEZONE_INSET = .1;
     private static final double DELTA = .01f;
     private Path mMask = new Path();
@@ -54,8 +59,10 @@ public class MaskableIconDrawableTest {
         mBlueDrawable = new ColorDrawable(Color.BLUE);
         mRedDrawable = new ColorDrawable(Color.RED);
         mDrawable = new AdaptiveIconDrawable( mBlueDrawable, mRedDrawable);
-        mMask = PathParser.createPathFromPathData(
-            Resources.getSystem().getString(com.android.internal.R.string.config_icon_mask));
+
+        String path = Resources.getSystem().getString(com.android.internal.R.string.config_icon_mask);
+        L("config_icon_mask: " + path);
+        mMask = PathParser.createPathFromPathData(path);
         int sInset = (int) (SAFEZONE_INSET * AdaptiveIconDrawable.MASK_SIZE);
         mSafeZone.addCircle(AdaptiveIconDrawable.MASK_SIZE/2, AdaptiveIconDrawable.MASK_SIZE/2,
             AdaptiveIconDrawable.MASK_SIZE/2/2 - sInset, Direction.CW);
