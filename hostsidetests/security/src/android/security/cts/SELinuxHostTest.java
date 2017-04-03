@@ -236,10 +236,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     private boolean isFullTrebleDevice() throws Exception {
-        if (PropertyUtil.getFirstApiLevel(mDevice) > 25) {
-            return true;
-        }
-        return mDevice.getFileEntry("/system/etc/selinux/plat_sepolicy.cil") != null;
+        return PropertyUtil.getFirstApiLevel(mDevice) > 25;
     }
 
     /**
