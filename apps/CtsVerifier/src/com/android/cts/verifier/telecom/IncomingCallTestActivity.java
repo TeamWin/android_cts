@@ -16,9 +16,11 @@
 
 package com.android.cts.verifier.telecom;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.telecom.Connection;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -32,15 +34,15 @@ import com.android.cts.verifier.R;
 import java.util.List;
 
 /**
- * Tests that an outgoing call made from the default dialer on the system is able to connect to
- * the CtsConnectionService.
+ * Tests that an incoming call made from an enabled ConnectionService will ring the phone and be
+ * able to be answered.
  */
-public class OutgoingCallTestActivity extends PassFailButtons.Activity {
+public class IncomingCallTestActivity extends PassFailButtons.Activity {
 
     private Button mRegisterAndEnablePhoneAccount;
     private Button mConfirmPhoneAccountEnabled;
-    private Button mDialOutgoingCall;
-    private Button mConfirmOutgoingCall;
+    private Button mAddIncomingCall;
+    private Button mConfirmIncomingCallAnswered;
 
     private ImageView mStep1Status;
     private ImageView mStep2Status;
@@ -51,17 +53,18 @@ public class OutgoingCallTestActivity extends PassFailButtons.Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        View view = getLayoutInflater().inflate(R.layout.telecom_outgoing_call, null);
+        View view = getLayoutInflater().inflate(R.layout.telecom_incoming_call, null);
         setContentView(view);
-        setInfoResources(R.string.telecom_outgoing_call_test,
-                R.string.telecom_outgoing_call_test_info, -1);
+        setInfoResources(R.string.telecom_incoming_call_test,
+                R.string.telecom_incoming_call_test_info, -1);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
         mRegisterAndEnablePhoneAccount = view.findViewById(
-                R.id.telecom_outgoing_call_register_enable_phone_account_button);
+                R.id.telecom_incoming_call_register_enable_phone_account_button);
         if (mRegisterAndEnablePhoneAccount == null) {
             finish();
+            return;
         }
         mRegisterAndEnablePhoneAccount.setOnClickListener(v -> {
             PhoneAccountUtils.registerTestPhoneAccount(this);
@@ -79,16 +82,14 @@ public class OutgoingCallTestActivity extends PassFailButtons.Activity {
         });
 
         mConfirmPhoneAccountEnabled = view.findViewById(R.id
-                .telecom_outgoing_call_confirm_register_button);
+                .telecom_incoming_call_confirm_register_button);
         if (mConfirmPhoneAccountEnabled == null) {
             finish();
+            return;
         }
         mConfirmPhoneAccountEnabled.setOnClickListener(v -> {
             PhoneAccount account = PhoneAccountUtils.getPhoneAccount(this);
-            PhoneAccountHandle defaultOutgoingAccount = PhoneAccountUtils
-                    .getDefaultOutgoingPhoneAccount(this) ;
-            if (account != null && account.isEnabled() &&
-                    PhoneAccountUtils.TEST_PHONE_ACCOUNT_HANDLE.equals(defaultOutgoingAccount)) {
+            if (account != null && account.isEnabled()) {
                 getPassButton().setEnabled(true);
                 mStep1Status.setImageResource(R.drawable.fs_good);
                 mConfirmPhoneAccountEnabled.setEnabled(false);
@@ -96,25 +97,35 @@ public class OutgoingCallTestActivity extends PassFailButtons.Activity {
                 mStep1Status.setImageResource(R.drawable.fs_error);
             }
         });
+
         mConfirmPhoneAccountEnabled.setEnabled(false);
 
-        mDialOutgoingCall = view.findViewById(R.id.telecom_outgoing_call_dial_button);
-        if (mDialOutgoingCall == null) {
+        mAddIncomingCall = view.findViewById(R.id.telecom_incoming_call_dial_button);
+        if (mAddIncomingCall == null) {
             finish();
+            return;
         }
-        mDialOutgoingCall.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(TEST_DIAL_NUMBER);
-            startActivity(intent);
+        mAddIncomingCall.setOnClickListener(v -> {
+            Bundle extras = new Bundle();
+            extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, TEST_DIAL_NUMBER);
+            extras.putBoolean(CtsConnection.EXTRA_PLAY_CS_AUDIO, true);
+            TelecomManager telecomManager =
+                    (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+            if (telecomManager == null) {
+                mStep2Status.setImageResource(R.drawable.fs_error);
+                return;
+            }
+            telecomManager.addNewIncomingCall(PhoneAccountUtils.TEST_PHONE_ACCOUNT_HANDLE, extras);
             mStep2Status.setImageResource(R.drawable.fs_good);
         });
 
-        mConfirmOutgoingCall = view.findViewById(R.id.telecom_outgoing_call_confirm_button);
-        if (mConfirmOutgoingCall == null) {
+        mConfirmIncomingCallAnswered = view.findViewById(R.id.telecom_incoming_call_confirm_button);
+        if (mConfirmIncomingCallAnswered == null) {
             finish();
+            return;
         }
-        mConfirmOutgoingCall.setOnClickListener(v -> {
-            if (confirmOutgoingCall()) {
+        mConfirmIncomingCallAnswered.setOnClickListener(v -> {
+            if (confirmIncomingCall()) {
                 mStep3Status.setImageResource(R.drawable.fs_good);
             } else {
                 mStep3Status.setImageResource(R.drawable.fs_error);
@@ -130,7 +141,7 @@ public class OutgoingCallTestActivity extends PassFailButtons.Activity {
         mStep3Status.setImageResource(R.drawable.fs_indeterminate);
     }
 
-    private boolean confirmOutgoingCall() {
+    private boolean confirmIncomingCall() {
         if (CtsConnectionService.getConnectionService() == null) {
             return false;
         }
@@ -139,11 +150,14 @@ public class OutgoingCallTestActivity extends PassFailButtons.Activity {
         if (ongoingConnections == null || ongoingConnections.size() != 1) {
             return false;
         }
-        CtsConnection outgoingConnection = ongoingConnections.get(0);
-        if (outgoingConnection.isIncomingCall()) {
+        CtsConnection incomingConnection = ongoingConnections.get(0);
+        if (!incomingConnection.isIncomingCall()) {
             return false;
         }
-        outgoingConnection.onDisconnect();
+        if (incomingConnection.getState() != Connection.STATE_ACTIVE) {
+            return false;
+        }
+        incomingConnection.onDisconnect();
         return true;
     }
 }
