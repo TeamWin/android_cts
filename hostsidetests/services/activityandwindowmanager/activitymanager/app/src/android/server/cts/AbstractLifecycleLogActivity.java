@@ -63,6 +63,19 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
     }
 
     @Override
+    public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
+        Log.i(getTag(), "onMultiWindowModeChanged");
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+            Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        Log.i(getTag(), "onPictureInPictureModeChanged");
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(getTag(), "onDestroy");
