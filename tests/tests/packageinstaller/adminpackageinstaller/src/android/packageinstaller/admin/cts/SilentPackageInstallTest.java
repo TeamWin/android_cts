@@ -21,6 +21,9 @@ package android.packageinstaller.admin.cts;
  */
 public class SilentPackageInstallTest extends BasePackageInstallTest {
     public void testSilentInstallUninstall() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         // install the app
         assertInstallPackage();
 
@@ -30,6 +33,9 @@ public class SilentPackageInstallTest extends BasePackageInstallTest {
     }
 
     public void testUninstallBlocked() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         // install the app
         assertInstallPackage();
 
