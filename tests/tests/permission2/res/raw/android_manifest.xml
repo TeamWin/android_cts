@@ -313,6 +313,10 @@
     <protected-broadcast android:name="android.net.wifi.STATE_CHANGE" />
     <protected-broadcast android:name="android.net.wifi.LINK_CONFIGURATION_CHANGED" />
     <protected-broadcast android:name="android.net.wifi.CONFIGURED_NETWORKS_CHANGE" />
+    <protected-broadcast android:name="android.net.wifi.action.PASSPOINT_DEAUTH_IMMINENT" />
+    <protected-broadcast android:name="android.net.wifi.action.PASSPOINT_ICON" />
+    <protected-broadcast android:name="android.net.wifi.action.PASSPOINT_OSU_PROVIDERS_LIST" />
+    <protected-broadcast android:name="android.net.wifi.action.PASSPOINT_SUBSCRIPTION_REMEDIATION" />
     <protected-broadcast android:name="android.net.wifi.supplicant.CONNECTION_CHANGE" />
     <protected-broadcast android:name="android.net.wifi.supplicant.STATE_CHANGE" />
     <protected-broadcast android:name="android.net.wifi.p2p.STATE_CHANGED" />
@@ -440,6 +444,7 @@
     <protected-broadcast android:name="android.telecom.action.PHONE_ACCOUNT_UNREGISTERED" />
     <protected-broadcast android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION" />
     <protected-broadcast android:name="android.telephony.action.CARRIER_CONFIG_CHANGED" />
+    <protected-broadcast android:name="android.telephony.action.SHOW_VOICEMAIL_NOTIFICATION" />
 
     <protected-broadcast android:name="com.android.bluetooth.btservice.action.ALARM_WAKEUP" />
     <protected-broadcast android:name="com.android.server.action.NETWORK_STATS_POLL" />
@@ -486,6 +491,7 @@
     <protected-broadcast android:name="android.intent.action.ACTION_RADIO_OFF" />
 
     <protected-broadcast android:name="android.accounts.LOGIN_ACCOUNTS_CHANGED" />
+    <protected-broadcast android:name="android.accounts.action.VISIBLE_ACCOUNTS_CHANGED" />
     <protected-broadcast android:name="com.android.sync.SYNC_CONN_STATUS_CHANGED" />
 
     <protected-broadcast android:name="com.android.phone.SIP_INCOMING_CALL" />
@@ -524,6 +530,7 @@
     <protected-broadcast android:name="com.android.server.wm.ACTION_REVOKE_SYSTEM_ALERT_WINDOW_PERMISSION" />
 
     <protected-broadcast android:name="android.content.pm.action.SESSION_COMMITTED" />
+    <protected-broadcast android:name="android.os.action.USER_RESTRICTIONS_CHANGED" />
 
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
@@ -791,13 +798,13 @@
         android:description="@string/permdesc_readPhoneState"
         android:protectionLevel="dangerous" />
 
-    <!-- Allows read access to the device's phone number. This is a subset of the capabilities
+    <!-- Allows read access to the device's phone number(s). This is a subset of the capabilities
          granted by {@link #READ_PHONE_STATE} but is exposed to ephemeral applications.
          <p>Protection level: dangerous-->
-    <permission android:name="android.permission.READ_PHONE_NUMBER"
+    <permission android:name="android.permission.READ_PHONE_NUMBERS"
         android:permissionGroup="android.permission-group.PHONE"
         android:label="@string/permlab_readPhoneNumber"
-        android:description="@string/permdesc_readPhoneNumber"
+        android:description="@string/permdesc_readPhoneNumbers"
         android:protectionLevel="dangerous|ephemeral" />
 
     <!-- Allows an application to initiate a phone call without going through
@@ -1344,7 +1351,7 @@
     <permission android:name="android.permission.CONNECTIVITY_INTERNAL"
         android:protectionLevel="signature|privileged" />
 
-    <!-- Allows an internal user to use restricted Networks.
+    <!-- @SystemApi Allows an internal user to use restricted Networks.
          @hide -->
     <permission android:name="android.permission.CONNECTIVITY_USE_RESTRICTED_NETWORKS"
         android:protectionLevel="signature|privileged" />
@@ -2308,6 +2315,10 @@
 
     <!-- @hide Allows an application to modify accessibility information from another app. -->
     <permission android:name="android.permission.MODIFY_ACCESSIBILITY_DATA"
+                android:protectionLevel="signature" />
+
+    <!-- @hide Allows an application to change the accessibility volume. -->
+    <permission android:name="android.permission.CHANGE_ACCESSIBILITY_VOLUME"
                 android:protectionLevel="signature" />
 
     <!-- @hide Allows an application to collect frame statistics -->
@@ -3342,6 +3353,19 @@
                 <category android:name="android.intent.category.VOICE" />
             </intent-filter>
         </activity>
+        <activity android:name="com.android.internal.app.AccessibilityButtonChooserActivity"
+                  android:theme="@style/Theme.DeviceDefault.Resolver"
+                  android:finishOnCloseSystemDialogs="true"
+                  android:excludeFromRecents="true"
+                  android:documentLaunchMode="never"
+                  android:relinquishTaskIdentity="true"
+                  android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
+                  android:process=":ui">
+            <intent-filter>
+                <action android:name="android.intent.action.CHOOSE_ACCESSIBILITY_BUTTON" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name="com.android.internal.app.IntentForwarderActivity"
                 android:finishOnCloseSystemDialogs="true"
                 android:theme="@style/Theme.NoDisplay"
@@ -3593,7 +3617,7 @@
                  android:permission="android.permission.BIND_JOB_SERVICE" >
         </service>
 
-        <service android:name="com.android.server.BackgroundDexOptJobService"
+        <service android:name="com.android.server.pm.BackgroundDexOptService"
                  android:exported="true"
                  android:permission="android.permission.BIND_JOB_SERVICE">
         </service>
@@ -3603,6 +3627,10 @@
         </service>
 
         <service android:name="com.android.server.storage.DiskStatsLoggingService"
+                 android:permission="android.permission.BIND_JOB_SERVICE" >
+        </service>
+
+        <service android:name="com.android.server.PreloadsFileCacheExpirationJobService"
                  android:permission="android.permission.BIND_JOB_SERVICE" >
         </service>
 
