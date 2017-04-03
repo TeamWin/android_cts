@@ -58,6 +58,8 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
     protected int mCallbackStatus;
     protected Intent mCallbackIntent;
 
+    protected boolean mHasFeature;
+
     protected final Object mPackageInstallerTimeoutLock = new Object();
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -90,8 +92,12 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         mPackageInstaller = mPackageManager.getPackageInstaller();
         assertNotNull(mPackageInstaller);
 
-        // check that app is not already installed
-        assertFalse(isPackageInstalled(TEST_APP_PKG));
+        mHasFeature = mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
+
+        if (mHasFeature) {
+            // check that app is not already installed
+            assertFalse(isPackageInstalled(TEST_APP_PKG));
+        }
     }
 
     @Override

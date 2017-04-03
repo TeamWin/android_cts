@@ -48,6 +48,9 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     }
 
     public void testBroadcastReceivedForDifferentLauncher() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         assertNotSame(mDefaultLauncher, mThisAppLauncher);
 
         SessionCommitReceiver receiver = new SessionCommitReceiver();
@@ -67,6 +70,9 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     }
 
     public void testBroadcastReceivedForNewInstall() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         setLauncher(mThisAppLauncher.flattenToString());
 
         SessionCommitReceiver receiver = new SessionCommitReceiver();

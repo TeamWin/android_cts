@@ -23,6 +23,9 @@ import android.content.pm.PackageManager;
  */
 public class InstallReasonTest extends BasePackageInstallTest {
     public void testInstallReason() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         // Verify that since the Device Owner was sideloaded, its install reason is unknown.
         assertEquals(PackageManager.INSTALL_REASON_UNKNOWN, getInstallReason(PACKAGE_NAME));
 
