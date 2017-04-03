@@ -50,6 +50,7 @@ def main():
             "test_jitter"
         ],
         "scene1":[
+            "test_ae_af",
             "test_ae_precapture_trigger",
             "test_crop_region_raw",
             "test_ev_compensation_advanced",
