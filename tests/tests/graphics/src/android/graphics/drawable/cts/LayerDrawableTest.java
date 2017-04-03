@@ -38,6 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
@@ -46,6 +47,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.BitmapDrawable;
@@ -1804,6 +1806,34 @@ public class LayerDrawableTest {
         assertEquals(initialLayerInsetBottom, doubleDrawable.getLayerInsetBottom(0));
         assertEquals(initialLayerWidth, doubleDrawable.getLayerWidth(0));
         assertEquals(initialLayerHeight, doubleDrawable.getLayerHeight(0));
+    }
+
+    @Test
+    public void testOpacityChange() {
+        ColorDrawable c1 = new ColorDrawable(Color.RED);
+        ColorDrawable c2 = new ColorDrawable(Color.BLUE);
+        LayerDrawable dr = new LayerDrawable(new ColorDrawable[] { c1, c2 });
+        assertEquals(PixelFormat.OPAQUE, dr.getOpacity());
+
+        c1.setTint(0x80FF0000);
+        c1.setTintMode(PorterDuff.Mode.SRC);
+        c2.setTint(0x800000FF);
+        c2.setTintMode(PorterDuff.Mode.SRC);
+        assertEquals(PixelFormat.TRANSLUCENT, dr.getOpacity());
+    }
+
+    @Test
+    public void testStatefulnessChange() {
+        ColorDrawable c1 = new ColorDrawable(Color.RED);
+        ColorDrawable c2 = new ColorDrawable(Color.BLUE);
+        LayerDrawable dr = new LayerDrawable(new ColorDrawable[] { c1, c2 });
+        assertEquals(false, dr.isStateful());
+
+        ColorStateList csl = new ColorStateList(
+                new int[][] { { android.R.attr.state_enabled }, { } },
+                new int[] { Color.RED, Color.BLUE });
+        c1.setTintList(csl);
+        assertEquals(true, dr.isStateful());
     }
 
     private static class IntrinsicSizeDrawable extends Drawable {
