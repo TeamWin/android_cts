@@ -70,7 +70,7 @@ public class FocusFinderTest {
     }
 
     @Test
-    public void testFindNextFocus() {
+    public void testFindNextFocus() throws Throwable {
         /*
          * Go clockwise around the buttons from the top left searching for focus.
          *
@@ -89,6 +89,12 @@ public class FocusFinderTest {
         verifyNextFocus(null, View.FOCUS_DOWN, mTopLeft);
         verifyNextFocus(null, View.FOCUS_LEFT, mBottomRight);
         verifyNextFocus(null, View.FOCUS_UP, mBottomRight);
+
+        // Edge-case where root has focus
+        mActivityRule.runOnUiThread(() -> {
+            mLayout.setFocusableInTouchMode(true);
+            verifyNextFocus(mLayout, View.FOCUS_FORWARD, mTopLeft);
+        });
     }
 
     private void verifyNextFocus(View currentFocus, int direction, View expectedNextFocus) {
