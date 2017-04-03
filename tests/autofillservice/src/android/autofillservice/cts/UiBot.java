@@ -126,8 +126,16 @@ final class UiBot {
     void selectByText(String name) {
         Log.v(TAG, "selectByText(): " + name);
 
-        final UiObject2 dataset = waitForObject(By.text(name));
-        dataset.click();
+        final UiObject2 object = waitForObject(By.text(name));
+        object.click();
+    }
+
+    /**
+     * Asserts a text is not shown.
+     */
+    public void assertShownByText(String text) {
+        final UiObject2 object = waitForObject(By.text(text));
+        assertWithMessage(text).that(object).isNotNull();
     }
 
     /**

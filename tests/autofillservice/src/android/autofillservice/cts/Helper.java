@@ -480,6 +480,8 @@ final class Helper {
      * {@code resourceIds}.
      */
     static AutofillId[] getAutofillIds(AssistStructure structure, String[] resourceIds) {
+        if (resourceIds == null) return null;
+
         final AutofillId[] requiredIds = new AutofillId[resourceIds.length];
         for (int i = 0; i < resourceIds.length; i++) {
             final String resourceId = resourceIds[i];
