@@ -2688,6 +2688,36 @@ public class TextViewTest {
     }
 
     @Test
+    public void testKeyNavigation() throws Throwable {
+        initTextViewForTypingOnUiThread();
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.findViewById(R.id.textview_singleLine).setFocusableInTouchMode(true);
+            mActivity.findViewById(R.id.textview_text_two_lines).setFocusableInTouchMode(true);
+            mTextView.setMovementMethod(ArrowKeyMovementMethod.getInstance());
+            mTextView.setText("abc");
+            mTextView.setFocusableInTouchMode(true);
+        });
+
+        mTextView.requestFocus();
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.isFocused());
+
+        // Arrows should not cause focus to leave the textfield
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_DPAD_UP);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.isFocused());
+
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_DPAD_DOWN);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.isFocused());
+
+        // Tab should
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_TAB);
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mTextView.isFocused());
+    }
+
+    @Test
     public void testSetIncludeFontPadding() throws Throwable {
         mTextView = findTextView(R.id.textview_text);
         assertTrue(mTextView.getIncludeFontPadding());
