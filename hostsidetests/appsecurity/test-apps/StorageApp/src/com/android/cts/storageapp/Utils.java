@@ -16,9 +16,11 @@
 
 package com.android.cts.storageapp;
 
+import android.app.usage.StorageStatsManager;
 import android.content.Context;
 import android.system.Os;
 import android.system.OsConstants;
+import android.system.StructUtsname;
 import android.util.Log;
 
 import junit.framework.AssertionFailedError;
@@ -31,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
     public static final String TAG = "StorageApp";
@@ -146,6 +150,16 @@ public class Utils {
             }
         }
         return success;
+    }
+
+    public static boolean shouldHaveQuota(StructUtsname uname) {
+        final Matcher matcher = Pattern.compile("(\\d+)\\.(\\d+)").matcher(uname.release);
+        if (!matcher.find()) {
+            throw new IllegalStateException("Failed to parse version: " + uname.release);
+        }
+        final int major = Integer.parseInt(matcher.group(1));
+        final int minor = Integer.parseInt(matcher.group(2));
+        return (major > 3 || (major == 3 && minor >= 18));
     }
 
     public static void logCommand(String... cmd) throws Exception {
