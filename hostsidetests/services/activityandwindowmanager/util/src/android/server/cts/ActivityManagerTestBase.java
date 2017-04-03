@@ -754,6 +754,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final Pattern sMovedToDisplayPattern =
             Pattern.compile("(.+): onMovedToDisplay");
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
+    private static final Pattern sMultiWindowModeChangedPattern =
+            Pattern.compile("(.+): onMultiWindowModeChanged");
+    private static final Pattern sPictureInPictureModeChangedPattern =
+            Pattern.compile("(.+): onPictureInPictureModeChanged");
     private static final Pattern sNewConfigPattern = Pattern.compile(
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)" +
             " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)");
@@ -819,12 +823,19 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     class ActivityLifecycleCounts {
         int mCreateCount;
         int mConfigurationChangedCount;
+        int mLastConfigurationChangedLineIndex;
         int mMovedToDisplayCount;
+        int mMultiWindowModeChangedCount;
+        int mLastMultiWindowModeChangedLineIndex;
+        int mPictureInPictureModeChangedCount;
+        int mLastPictureInPictureModeChangedLineIndex;
         int mDestroyCount;
 
         public ActivityLifecycleCounts(String activityName) throws DeviceNotAvailableException {
+            int lineIndex = 0;
             for (String line : getDeviceLogsForComponent(activityName)) {
                 line = line.trim();
+                lineIndex++;
 
                 Matcher matcher = sCreatePattern.matcher(line);
                 if (matcher.matches()) {
@@ -835,12 +846,27 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 matcher = sConfigurationChangedPattern.matcher(line);
                 if (matcher.matches()) {
                     mConfigurationChangedCount++;
+                    mLastConfigurationChangedLineIndex = lineIndex;
                     continue;
                 }
 
                 matcher = sMovedToDisplayPattern.matcher(line);
                 if (matcher.matches()) {
                     mMovedToDisplayCount++;
+                    continue;
+                }
+
+                matcher = sMultiWindowModeChangedPattern.matcher(line);
+                if (matcher.matches()) {
+                    mMultiWindowModeChangedCount++;
+                    mLastMultiWindowModeChangedLineIndex = lineIndex;
+                    continue;
+                }
+
+                matcher = sPictureInPictureModeChangedPattern.matcher(line);
+                if (matcher.matches()) {
+                    mPictureInPictureModeChangedCount++;
+                    mLastPictureInPictureModeChangedLineIndex = lineIndex;
                     continue;
                 }
 

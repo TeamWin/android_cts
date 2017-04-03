@@ -709,22 +709,23 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand("am task lock stop");
     }
 
-    public void testSingleConfigurationChangeDuringTransition() throws Exception {
+    public void testConfigurationChangeOrderDuringTransition() throws Exception {
         if (!supportsPip()) return;
 
-        // Launch a PiP activity and ensure configuration change only happened once
+        // Launch a PiP activity and ensure configuration change only happened once, and that the
+        // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
         clearLogcat();
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
-        assertRelaunchOrConfigChanged(PIP_ACTIVITY, 0, 1);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
 
         // Trigger it to go back to fullscreen and ensure that only triggered one configuration
         // change as well
         clearLogcat();
         launchActivity(PIP_ACTIVITY);
-        assertRelaunchOrConfigChanged(PIP_ACTIVITY, 0, 1);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
     }
 
     public void testPreventSetAspectRatioWhileExpanding() throws Exception {
@@ -857,6 +858,34 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private void assertPinnedStackIsOnTop() throws Exception {
         mAmWmState.assertFrontStack("Pinned stack must always be on top.", PINNED_STACK_ID);
+    }
+
+    /**
+     * Asserts that the activity received exactly one of each of the callbacks when entering and
+     * exiting picture-in-picture.
+     */
+    private void assertValidPictureInPictureCallbackOrder(String activityName) throws Exception {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+
+        if (lifecycleCounts.mConfigurationChangedCount != 1) {
+            fail(activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
+                    + " onConfigurationChanged() calls, expecting 1");
+        } else if (lifecycleCounts.mPictureInPictureModeChangedCount != 1) {
+            fail(activityName + " has received " + lifecycleCounts.mPictureInPictureModeChangedCount
+                    + " onMultiWindowModeChanged() calls, expecting 1");
+        } else if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
+            fail(activityName + " has received " + lifecycleCounts.mMultiWindowModeChangedCount
+                    + " onPictureInPictureModeChanged() calls, expecting 1");
+        } else {
+            int lastPipLine = lifecycleCounts.mLastPictureInPictureModeChangedLineIndex;
+            int lastMwLine = lifecycleCounts.mLastMultiWindowModeChangedLineIndex;
+            int lastConfigLine = lifecycleCounts.mLastConfigurationChangedLineIndex;
+            if (!(lastPipLine < lastMwLine && lastMwLine < lastConfigLine)) {
+                fail(activityName + " has received callbacks in unexpected order.  Expected:"
+                        + " pip < mw < config change, but got line indices: " + lastPipLine + ", "
+                        + lastMwLine + ", " + lastConfigLine + " respectively");
+            }
+        }
     }
 
     /**
