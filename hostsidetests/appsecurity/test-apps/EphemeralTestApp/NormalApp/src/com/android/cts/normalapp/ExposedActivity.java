@@ -25,43 +25,40 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.android.cts.util.TestResult;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 
 public class ExposedActivity extends Activity {
-    private static final String ACTION_START_ACTIVITY =
-            "com.android.cts.ephemeraltest.START_ACTIVITY";
-    private static final String EXTRA_ACTIVITY_NAME =
-            "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_NAME";
-    private static final String EXTRA_ACTIVITY_RESULT =
-            "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final Intent broadcastIntent = new Intent(ACTION_START_ACTIVITY);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.addFlags(Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
-        broadcastIntent.putExtra(Intent.EXTRA_PACKAGE_NAME, "com.android.cts.normalapp");
-        broadcastIntent.putExtra(EXTRA_ACTIVITY_NAME, "ExposedActivity");
-        String result = "FAIL";
+        boolean canAccessInstantApp = false;
+        String exception = null;
         try {
-            tryAccessingEphemeral();
-            result = "PASS";
+            canAccessInstantApp = tryAccessingInstantApp();
         } catch (Throwable t) {
-            result = t.getClass().getName();
+            exception = t.getClass().getName();
         }
-        broadcastIntent.putExtra(EXTRA_ACTIVITY_RESULT, result);
-        sendBroadcast(broadcastIntent);
 
+        TestResult.getBuilder()
+                .setPackageName("com.android.cts.normalapp")
+                .setComponentName("ExposedActivity")
+                .setStatus("PASS")
+                .setException(exception)
+                .setEphemeralPackageInfoExposed(canAccessInstantApp)
+                .build()
+                .broadcast(this);
         finish();
     }
 
-    private void tryAccessingEphemeral() throws NameNotFoundException {
-        final PackageInfo info =
-                getPackageManager().getPackageInfo("com.android.cts.ephemeralapp1", 0 /*flags*/);
-        if (info == null) throw new IllegalStateException("No PackageInfo object found");
+    private boolean tryAccessingInstantApp() throws NameNotFoundException {
+        final PackageInfo info = getPackageManager()
+                .getPackageInfo("com.android.cts.ephemeralapp1", 0 /*flags*/);
+        return (info != null);
     }
 }

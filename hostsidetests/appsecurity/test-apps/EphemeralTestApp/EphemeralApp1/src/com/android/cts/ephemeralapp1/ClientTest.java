@@ -17,6 +17,8 @@
 package com.android.cts.ephemeralapp1;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -26,11 +28,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.IBinder;
+import android.os.ServiceManager.ServiceNotFoundException;
 import android.provider.CalendarContract;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
@@ -39,32 +44,36 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.cts.util.TestResult;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.ServiceConfigurationError;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class ClientTest {
     /** Action to start normal test activities */
-    private static final String ACTION_START_NORMAL_ACTIVITY =
+    private static final String ACTION_START_NORMAL =
             "com.android.cts.ephemeraltest.START_NORMAL";
     /** Action to start normal, exposed test activities */
-    private static final String ACTION_START_EXPOSED_ACTIVITY =
+    private static final String ACTION_START_EXPOSED =
             "com.android.cts.ephemeraltest.START_EXPOSED";
     /** Action to start ephemeral test activities */
-    private static final String ACTION_START_EPHEMERAL_ACTIVITY =
+    private static final String ACTION_START_EPHEMERAL =
             "com.android.cts.ephemeraltest.START_EPHEMERAL";
     /** Action to start private ephemeral test activities */
-    private static final String ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY =
+    private static final String ACTION_START_EPHEMERAL_PRIVATE =
             "com.android.cts.ephemeraltest.START_EPHEMERAL_PRIVATE";
     /** Action to query for test activities */
-    private static final String ACTION_QUERY_ACTIVITY =
+    private static final String ACTION_QUERY =
             "com.android.cts.ephemeraltest.QUERY";
     private static final String EXTRA_ACTIVITY_NAME =
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_NAME";
@@ -107,7 +116,7 @@ public class ClientTest {
     };
 
     private BroadcastReceiver mReceiver;
-    private final SynchronousQueue<BroadcastResult> mResultQueue = new SynchronousQueue<>();
+    private final SynchronousQueue<TestResult> mResultQueue = new SynchronousQueue<>();
 
     @Before
     public void setUp() throws Exception {
@@ -126,58 +135,80 @@ public class ClientTest {
 
     @Test
     public void testQuery() throws Exception {
-        final Intent queryIntent = new Intent(ACTION_QUERY_ACTIVITY);
-        final List<ResolveInfo> resolveInfo = InstrumentationRegistry
-                .getContext().getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
-        if (resolveInfo == null || resolveInfo.size() == 0) {
-            fail("didn't resolve any intents");
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).activityInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).activityInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralActivity"));
+            assertThat(resolveInfo.get(0).instantAppAvailable,
+                    is(true));
+            assertThat(resolveInfo.get(1).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).activityInfo.name,
+                    is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
         }
-        assertThat(resolveInfo.size(), is(2));
-        assertThat(resolveInfo.get(0).activityInfo.packageName,
-                is("com.android.cts.ephemeralapp1"));
-        assertThat(resolveInfo.get(0).activityInfo.name,
-                is("com.android.cts.ephemeralapp1.EphemeralActivity"));
-        assertThat(resolveInfo.get(0).instantAppAvailable,
-                is(true));
-        assertThat(resolveInfo.get(1).activityInfo.packageName,
-                is("com.android.cts.normalapp"));
-        assertThat(resolveInfo.get(1).activityInfo.name,
-                is("com.android.cts.normalapp.ExposedActivity"));
-        assertThat(resolveInfo.get(1).instantAppAvailable,
-                is(false));
+
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().queryIntentServices(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).serviceInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).serviceInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralService"));
+            assertThat(resolveInfo.get(1).serviceInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).serviceInfo.name,
+                    is("com.android.cts.normalapp.ExposedService"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
+        }
     }
 
     @Test
     public void testStartNormal() throws Exception {
         // start the normal activity
         try {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
             InstrumentationRegistry
                     .getContext().startActivity(startNormalIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
+            final TestResult testResult = getResult();
             fail();
         } catch (ActivityNotFoundException expected) {
         }
 
         // start the normal activity; directed package
         try {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
             startNormalIntent.setPackage("com.android.cts.normalapp");
             InstrumentationRegistry
                     .getContext().startActivity(startNormalIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
+            final TestResult testResult = getResult();
             fail();
         } catch (ActivityNotFoundException expected) {
         }
 
         // start the normal activity; directed component
         try {
-            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL_ACTIVITY);
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
             startNormalIntent.setComponent(new ComponentName(
                     "com.android.cts.normalapp", "com.android.cts.normalapp.NormalActivity"));
             InstrumentationRegistry
                     .getContext().startActivity(startNormalIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
+            final TestResult testResult = getResult();
             fail();
         } catch (ActivityNotFoundException expected) {
         }
@@ -194,53 +225,162 @@ public class ClientTest {
 //            assertThat("com.android.cts.normalapp", is(testResult.packageName));
 //            assertThat("NormalWebActivity", is(testResult.activityName));
 //        }
+
+        // We don't attempt to start the service since it will merely return and not
+        // provide any feedback. The alternative is to wait for the broadcast timeout
+        // but it's silly to artificially slow down CTS. We'll rely on queryIntentService
+        // to check whether or not the service is actually exposed
     }
 
     @Test
     public void testStartExposed() throws Exception {
         // start the exposed activity
         {
-            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED_ACTIVITY);
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
             InstrumentationRegistry
                     .getContext().startActivity(startExposedIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.normalapp"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("ExposedActivity"));
-            assertThat(testResult.result,
+            assertThat(testResult.getStatus(),
                     is("PASS"));
+            assertThat(testResult.getEphemeralPackageInfoExposed(),
+                    is(true));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start the exposed activity; directed package
         {
-            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED_ACTIVITY);
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
             startExposedIntent.setPackage("com.android.cts.normalapp");
             InstrumentationRegistry
                     .getContext().startActivity(startExposedIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.normalapp"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("ExposedActivity"));
-            assertThat(testResult.result,
+            assertThat(testResult.getStatus(),
                     is("PASS"));
+            assertThat(testResult.getEphemeralPackageInfoExposed(),
+                    is(true));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start the exposed activity; directed component
         {
-            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED_ACTIVITY);
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
             startExposedIntent.setComponent(new ComponentName(
                     "com.android.cts.normalapp", "com.android.cts.normalapp.ExposedActivity"));
             InstrumentationRegistry
                     .getContext().startActivity(startExposedIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.normalapp"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("ExposedActivity"));
-            assertThat(testResult.result,
+            assertThat(testResult.getStatus(),
                     is("PASS"));
+            assertThat(testResult.getEphemeralPackageInfoExposed(),
+                    is(true));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
+        }
+
+        // start the exposed service; directed package
+        {
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
+            startExposedIntent.setPackage("com.android.cts.normalapp");
+            InstrumentationRegistry.getContext().startService(startExposedIntent);
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.getComponentName(),
+                    is("ExposedService"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getEphemeralPackageInfoExposed(),
+                    is(true));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
+        }
+
+        // start the exposed service; directed component
+        {
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
+            startExposedIntent.setComponent(new ComponentName(
+                    "com.android.cts.normalapp", "com.android.cts.normalapp.ExposedService"));
+            InstrumentationRegistry.getContext().startService(startExposedIntent);
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.getComponentName(),
+                    is("ExposedService"));
+            assertThat(testResult.getMethodName(),
+                    is("onStartCommand"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getEphemeralPackageInfoExposed(),
+                    is(true));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
+        }
+
+        // bind to the exposed service; directed package
+        {
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
+            startExposedIntent.setPackage("com.android.cts.normalapp");
+            final TestServiceConnection connection = new TestServiceConnection();
+            try {
+                assertThat(InstrumentationRegistry.getContext().bindService(
+                        startExposedIntent, connection, Context.BIND_AUTO_CREATE /*flags*/),
+                        is(true));
+                final TestResult testResult = getResult();
+                assertThat(testResult.getPackageName(),
+                        is("com.android.cts.normalapp"));
+                assertThat(testResult.getComponentName(),
+                        is("ExposedService"));
+                assertThat(testResult.getMethodName(),
+                        is("onBind"));
+                assertThat(testResult.getStatus(),
+                        is("PASS"));
+                assertThat(testResult.getEphemeralPackageInfoExposed(),
+                        is(true));
+                assertThat(testResult.getException(),
+                        is(nullValue()));
+            } finally {
+                InstrumentationRegistry.getContext().unbindService(connection);
+            }
+        }
+
+        // bind to the exposed service; directed component
+        {
+            final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED);
+            startExposedIntent.setComponent(new ComponentName(
+                    "com.android.cts.normalapp", "com.android.cts.normalapp.ExposedService"));
+            final TestServiceConnection connection = new TestServiceConnection();
+            try {
+                assertThat(InstrumentationRegistry.getContext().bindService(
+                        startExposedIntent, connection, Context.BIND_AUTO_CREATE /*flags*/),
+                        is(true));
+                final TestResult testResult = getResult();
+                assertThat(testResult.getPackageName(),
+                        is("com.android.cts.normalapp"));
+                assertThat(testResult.getComponentName(),
+                        is("ExposedService"));
+                assertThat(testResult.getMethodName(),
+                        is("onBind"));
+                assertThat(testResult.getStatus(),
+                        is("PASS"));
+                assertThat(testResult.getException(),
+                        is(nullValue()));
+            } finally {
+                InstrumentationRegistry.getContext().unbindService(connection);
+            }
         }
     }
 
@@ -248,82 +388,106 @@ public class ClientTest {
     public void testStartEphemeral() throws Exception {
         // start the ephemeral activity
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start the ephemeral activity; directed package
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
             startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start the ephemeral activity; directed component
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity"));
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start a private ephemeral activity
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE);
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity2"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start a private ephemeral activity; directed package
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE);
             startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity2"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start a private ephemeral activity; directed component
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE_ACTIVITY);
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_PRIVATE);
             startEphemeralIntent.setComponent(
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity2"));
             InstrumentationRegistry
                     .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity2"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
 
         // start a private ephemeral activity; directed component
@@ -334,11 +498,114 @@ public class ClientTest {
                             "com.android.cts.ephemeralapp1.EphemeralActivity3"));
             InstrumentationRegistry
             .getContext().startActivity(startEphemeralIntent, null /*options*/);
-            final BroadcastResult testResult = getResult();
-            assertThat(testResult.packageName,
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
-            assertThat(testResult.activityName,
+            assertThat(testResult.getComponentName(),
                     is("EphemeralActivity3"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
+        }
+
+        // start the ephemeral service; directed package
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
+            startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
+            try {
+                InstrumentationRegistry.getContext().startService(startEphemeralIntent);
+                final TestResult testResult = getResult();
+                assertThat(testResult.getPackageName(),
+                        is("com.android.cts.ephemeralapp1"));
+                assertThat(testResult.getComponentName(),
+                        is("EphemeralService"));
+                assertThat(testResult.getMethodName(),
+                        is("onStartCommand"));
+                assertThat(testResult.getStatus(),
+                        is("PASS"));
+                assertThat(testResult.getException(),
+                        is(nullValue()));
+            } finally {
+                InstrumentationRegistry.getContext().stopService(startEphemeralIntent);
+            }
+        }
+
+        // start the ephemeral service; directed component
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
+            startEphemeralIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralService"));
+            try {
+                assertThat(InstrumentationRegistry.getContext().startService(startEphemeralIntent),
+                        is(notNullValue()));
+                final TestResult testResult = getResult();
+                assertThat(testResult.getPackageName(),
+                        is("com.android.cts.ephemeralapp1"));
+                assertThat(testResult.getComponentName(),
+                        is("EphemeralService"));
+                assertThat(testResult.getMethodName(),
+                        is("onStartCommand"));
+                assertThat(testResult.getStatus(),
+                        is("PASS"));
+                assertThat(testResult.getException(),
+                        is(nullValue()));
+            } finally {
+                InstrumentationRegistry.getContext().stopService(startEphemeralIntent);
+            }
+        }
+
+        // bind to the ephemeral service; directed package
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
+            startEphemeralIntent.setPackage("com.android.cts.ephemeralapp1");
+            final TestServiceConnection connection = new TestServiceConnection();
+            try {
+                assertThat(InstrumentationRegistry.getContext().bindService(
+                        startEphemeralIntent, connection, Context.BIND_AUTO_CREATE /*flags*/),
+                        is(true));
+                final TestResult testResult = getResult();
+                assertThat(testResult.getPackageName(),
+                        is("com.android.cts.ephemeralapp1"));
+                assertThat(testResult.getComponentName(),
+                        is("EphemeralService"));
+                assertThat(testResult.getMethodName(),
+                        is("onBind"));
+                assertThat(testResult.getStatus(),
+                        is("PASS"));
+                assertThat(testResult.getException(),
+                        is(nullValue()));
+            } finally {
+                InstrumentationRegistry.getContext().unbindService(connection);
+            }
+        }
+
+        // bind to the ephemeral service; directed component
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL);
+            startEphemeralIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralService"));
+            final TestServiceConnection connection = new TestServiceConnection();
+            try {
+                assertThat(InstrumentationRegistry.getContext().bindService(
+                        startEphemeralIntent, connection, Context.BIND_AUTO_CREATE /*flags*/),
+                        is(true));
+                final TestResult testResult = getResult();
+                assertThat(testResult.getPackageName(),
+                        is("com.android.cts.ephemeralapp1"));
+                assertThat(testResult.getComponentName(),
+                        is("EphemeralService"));
+                assertThat(testResult.getMethodName(),
+                        is("onBind"));
+                assertThat(testResult.getStatus(),
+                        is("PASS"));
+                assertThat(testResult.getException(),
+                        is(nullValue()));
+            } finally {
+                InstrumentationRegistry.getContext().unbindService(connection);
+            }
         }
     }
 
@@ -394,8 +661,8 @@ public class ClientTest {
         }
     }
 
-    private BroadcastResult getResult() {
-        final BroadcastResult result;
+    private TestResult getResult() {
+        final TestResult result;
         try {
             result = mResultQueue.poll(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -421,44 +688,29 @@ public class ClientTest {
         return intent;
     }
 
-    private static class BroadcastResult {
-        final String packageName;
-        final String activityName;
-        final String result;
-
-        public BroadcastResult(String packageName, String activityName, String result) {
-            this.packageName = packageName;
-            this.activityName = activityName;
-            this.result = result;
-        }
-
-        @Override
-        public String toString() {
-            return "[pkg=" + packageName
-                    + ", activity=" + activityName
-                    + ", result=" + result + "]";
-        }
-    }
-
     private static class ActivityBroadcastReceiver extends BroadcastReceiver {
-        private final SynchronousQueue<BroadcastResult> mQueue;
-        public ActivityBroadcastReceiver(SynchronousQueue<BroadcastResult> queue) {
+        private final SynchronousQueue<TestResult> mQueue;
+        public ActivityBroadcastReceiver(SynchronousQueue<TestResult> queue) {
             mQueue = queue;
         }
 
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
-                mQueue.offer(
-                        new BroadcastResult(
-                                intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME),
-                                intent.getStringExtra(EXTRA_ACTIVITY_NAME),
-                                intent.getStringExtra(EXTRA_ACTIVITY_RESULT)
-                                ),
+                mQueue.offer(intent.getParcelableExtra(TestResult.EXTRA_TEST_RESULT),
                         5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private static class TestServiceConnection implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
         }
     }
 }

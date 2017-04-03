@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,23 @@
 
 package com.android.cts.normalapp;
 
-import android.app.Activity;
+import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.Uri;
-import android.os.Bundle;
-import android.util.Log;
+import android.os.IBinder;
 
 import com.android.cts.util.TestResult;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
+public class NormalService extends Service {
 
-public class NormalActivity extends Activity {
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         boolean canAccessInstantApp = false;
         String exception = null;
         try {
@@ -46,13 +43,15 @@ public class NormalActivity extends Activity {
 
         TestResult.getBuilder()
                 .setPackageName("com.android.cts.normalapp")
-                .setComponentName("NormalActivity")
+                .setComponentName("NormalService")
                 .setStatus("PASS")
                 .setException(exception)
                 .setEphemeralPackageInfoExposed(canAccessInstantApp)
                 .build()
                 .broadcast(this);
-        finish();
+        stopSelf(startId);
+
+        return super.onStartCommand(intent, flags, startId);
     }
 
     private boolean tryAccessingInstantApp() throws NameNotFoundException {
