@@ -22,24 +22,21 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.android.cts.util.TestResult;
+
 import java.util.List;
 
 public class UserActivity extends Activity {
-    private static final String ACTION_START_ACTIVITY =
-            "com.android.cts.ephemeraltest.START_ACTIVITY";
-    private static final String EXTRA_ACTIVITY_NAME =
-            "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_NAME";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final Intent broadcastIntent = new Intent(ACTION_START_ACTIVITY);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(Intent.EXTRA_PACKAGE_NAME, "com.android.cts.userapp");
-        broadcastIntent.putExtra(EXTRA_ACTIVITY_NAME, "UserActivity");
-        sendBroadcast(broadcastIntent);
-
+        TestResult.getBuilder()
+                .setPackageName("com.android.cts.userapp")
+                .setComponentName("UserActivity")
+                .setStatus("PASS")
+                .build()
+                .broadcast(this);
         finish();
     }
 }

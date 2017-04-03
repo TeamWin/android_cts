@@ -19,6 +19,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
+    cts-aia-util \
     android-support-test \
     legacy-android-test
 

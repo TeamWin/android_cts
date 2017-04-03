@@ -51,8 +51,9 @@
         </activity>
         <activity
             android:name=".ExposedActivity"
-            android:visibleToInstantApps="true">
-            <!-- TEST: ephemeral apps can see this activity using query methods -->
+            android:visibleToInstantApps="true"
+            android:theme="@android:style/Theme.NoDisplay">
+          <!-- TEST: ephemeral apps can see this activity using query methods -->
             <intent-filter android:priority="-10">
                 <action android:name="com.android.cts.ephemeraltest.QUERY" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -62,7 +63,34 @@
                 <action android:name="com.android.cts.ephemeraltest.START_EXPOSED" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            </activity>
+        </activity>
+        <service
+            android:name=".NormalService">
+            <!-- TEST: ephemeral apps can't see this service using query methods -->
+            <intent-filter android:priority="-20">
+                <action android:name="com.android.cts.ephemeraltest.QUERY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- TEST: ephemeral apps can't start this service using directed intent -->
+            <intent-filter>
+                <action android:name="com.android.cts.ephemeraltest.START_NORMAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".ExposedService"
+            android:visibleToInstantApps="true">
+            <!-- TEST: ephemeral apps can see this service using query methods -->
+            <intent-filter android:priority="-10">
+                <action android:name="com.android.cts.ephemeraltest.QUERY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- TEST: ephemeral apps can start this service using directed intent -->
+            <intent-filter android:priority="-10">
+                <action android:name="com.android.cts.ephemeraltest.START_EXPOSED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation
