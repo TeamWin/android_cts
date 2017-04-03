@@ -22,11 +22,14 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.util.Log;
 
 /**
  * Helper for binding to a service and monitoring the state of that service.
  */
 public final class ServiceConnectionHandler implements ServiceConnection {
+    static final String TAG = "ServiceConnectionHandler";
+
     final Context mContext;
     final Intent mIntent;
     boolean mMonitoring;
@@ -49,14 +52,16 @@ public final class ServiceConnectionHandler implements ServiceConnection {
     }
 
     public void startMonitoring() {
-        if (mMonitoring) {
-            throw new IllegalStateException("Already monitoring");
+        synchronized (this) {
+            if (mMonitoring) {
+                throw new IllegalStateException("Already monitoring");
+            }
+            if (!mContext.bindService(mIntent, this, Context.BIND_WAIVE_PRIORITY)) {
+                throw new IllegalStateException("Failed to bind " + mIntent);
+            }
+            mMonitoring = true;
+            mService = null;
         }
-        if (!mContext.bindService(mIntent, this, Context.BIND_WAIVE_PRIORITY)) {
-            throw new IllegalStateException("Failed to bind " + mIntent);
-        }
-        mMonitoring = true;
-        mService = null;
     }
 
     public void waitForConnect(long timeout) {
@@ -98,11 +103,13 @@ public final class ServiceConnectionHandler implements ServiceConnection {
     }
 
     public void stopMonitoring() {
-        if (!mMonitoring) {
-            throw new IllegalStateException("Not monitoring");
+        synchronized (this) {
+            if (!mMonitoring) {
+                throw new IllegalStateException("Not monitoring");
+            }
+            mContext.unbindService(this);
+            mMonitoring = false;
         }
-        mContext.unbindService(this);
-        mMonitoring = false;
     }
 
     public void bind(long timeout) {
@@ -153,6 +160,19 @@ public final class ServiceConnectionHandler implements ServiceConnection {
         synchronized (this) {
             mService = null;
             notifyAll();
+        }
+    }
+
+    @Override
+    public void onBindingDead(ComponentName name) {
+        synchronized (this) {
+            // We want to remain connected to this service.
+            if (mMonitoring) {
+                Log.d(TAG, "Disconnected but monitoring, unbinding " + this + "...");
+                mContext.unbindService(this);
+                Log.d(TAG, "...and rebinding");
+                mContext.bindService(mIntent, this, Context.BIND_WAIVE_PRIORITY);
+            }
         }
     }
 }
