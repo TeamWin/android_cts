@@ -33,6 +33,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
 
     private static final String SHOW_DIALOG = "am broadcast -a " + ACTION_SHOW_DIALOG;
 
+    public static final String REQUEST_SUPPORTED = "cmd statusbar check-support";
     public static final String TEST_PREFIX = "TileTest_";
 
     // Time between checks for logs we expect.
@@ -63,7 +64,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        if (!supportedHardware()) return;
+        if (!supported()) return;
         collapse();
         remTile();
         // Try to wait for a onTileRemoved.
@@ -124,7 +125,16 @@ public class BaseTileServiceTest extends DeviceTestCase {
         getDevice().executeAdbCommand("logcat", "-c");
     }
 
-    protected boolean supportedHardware() throws DeviceNotAvailableException {
+    protected boolean supported() throws DeviceNotAvailableException {
+        return supportedHardware() && supportedSoftware();
+    }
+
+    private boolean supportedSoftware() throws DeviceNotAvailableException {
+        String supported = getDevice().executeShellCommand(REQUEST_SUPPORTED);
+        return Boolean.parseBoolean(supported);
+    }
+
+    private boolean supportedHardware() throws DeviceNotAvailableException {
         String features = getDevice().executeShellCommand("pm list features");
         return !features.contains("android.hardware.type.television") &&
                !features.contains("android.hardware.type.watch");
