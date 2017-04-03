@@ -29,7 +29,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,7 +61,7 @@ public class ContentPaneFocusTest {
         mActivityRule.runOnUiThread(v1::requestFocus);
 
         mInstrumentation.waitForIdleSync();
-        sendControlChar('<');
+        sendMetaHotkey(KeyEvent.KEYCODE_TAB);
         mInstrumentation.waitForIdleSync();
 
         ActionBar action = mActivity.getActionBar();
@@ -88,49 +87,55 @@ public class ContentPaneFocusTest {
         }
         assertNotNull(actionBarView);
         final View actionBar = actionBarView;
-        // Should jump to the action bar after control-<
+        // Should jump to the action bar after meta+tab
         mActivityRule.runOnUiThread(() -> {
             assertFalse(v1.hasFocus());
             assertTrue(actionBar.hasFocus());
         });
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
+
+        boolean isTouchScreen = mActivity.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN);
+        if (isTouchScreen) {
+            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);
+            mInstrumentation.waitForIdleSync();
+
+            // Shouldn't leave actionbar with normal keyboard navigation on touchscreens.
+            mActivityRule.runOnUiThread(() -> assertTrue(actionBar.hasFocus()));
+        }
+
+        sendMetaHotkey(KeyEvent.KEYCODE_TAB);
         mInstrumentation.waitForIdleSync();
 
         // Should jump to the first view again.
         mActivityRule.runOnUiThread(() -> assertTrue(v1.hasFocus()));
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
-        mInstrumentation.waitForIdleSync();
 
-        boolean isTouchScreen = mActivity.getPackageManager().
-                hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN);
         if (isTouchScreen) {
+            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);
+            mInstrumentation.waitForIdleSync();
             // Now it shouldn't go up to action bar -- it doesn't allow taking focus once left
             // but only for touch screens.
             mActivityRule.runOnUiThread(() -> assertTrue(v1.hasFocus()));
         }
     }
 
-    private void sendControlChar(char key) throws Throwable {
-        KeyEvent tempEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A);
-        KeyCharacterMap map = tempEvent.getKeyCharacterMap();
-        sendControlKey(KeyEvent.ACTION_DOWN);
-        KeyEvent[] events = map.getEvents(new char[] {key});
-        final int controlOn = KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON;
-        for (int i = 0; i < events.length; i++) {
-            long time = SystemClock.uptimeMillis();
-            KeyEvent event = events[i];
-            KeyEvent controlKey = new KeyEvent(time, time, event.getAction(), event.getKeyCode(),
-                    event.getRepeatCount(), event.getMetaState() | controlOn);
-            mInstrumentation.sendKeySync(controlKey);
-            Thread.sleep(2);
-        }
-        sendControlKey(KeyEvent.ACTION_UP);
+    private void sendMetaHotkey(int keyCode) throws Throwable {
+        sendMetaKey(KeyEvent.ACTION_DOWN);
+        long time = SystemClock.uptimeMillis();
+        KeyEvent metaHotkey = new KeyEvent(time, time, KeyEvent.ACTION_DOWN, keyCode,
+                0, KeyEvent.META_META_ON | KeyEvent.META_META_LEFT_ON);
+        mInstrumentation.sendKeySync(metaHotkey);
+        time = SystemClock.uptimeMillis();
+        metaHotkey = new KeyEvent(time, time, KeyEvent.ACTION_UP, keyCode,
+                0, KeyEvent.META_META_ON | KeyEvent.META_META_LEFT_ON);
+        mInstrumentation.sendKeySync(metaHotkey);
+        Thread.sleep(2);
+        sendMetaKey(KeyEvent.ACTION_UP);
     }
 
-    private void sendControlKey(int action) throws Throwable {
+    private void sendMetaKey(int action) throws Throwable {
         long time = SystemClock.uptimeMillis();
-        KeyEvent keyEvent = new KeyEvent(time, time, action, KeyEvent.KEYCODE_CTRL_LEFT, 0,
-                KeyEvent.META_CTRL_LEFT_ON | KeyEvent.META_CTRL_ON);
+        KeyEvent keyEvent = new KeyEvent(time, time, action, KeyEvent.KEYCODE_META_LEFT, 0,
+                KeyEvent.META_META_LEFT_ON | KeyEvent.META_META_ON);
         mInstrumentation.sendKeySync(keyEvent);
         Thread.sleep(2);
     }
