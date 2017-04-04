@@ -288,6 +288,17 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Tests whether the getCreationTimeMillis() getter returns the correct object.
+     */
+    public void testCreationTimeMillis() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        assertThat(mCall.getDetails().getCreationTimeMillis(), instanceOf(Long.class));
+    }
+
+    /**
      * Tests whether the getDisconnectCause() getter returns the correct object.
      */
     public void testDisconnectCause() {
