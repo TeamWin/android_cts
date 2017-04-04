@@ -143,6 +143,10 @@ class CtsBuilder(object):
     plan.Include(r'android\.tests\.appsecurity')
     self.__WritePlan(plan, 'AppSecurity')
 
+    plan = tools.AnnotationTestPlan(packages, descriptions,"security")
+    plan.MakeAnnotationPlan()
+    self.__WritePlan(plan, 'CTS-sts')
+
     # hard-coded white list for PDK plan
     plan.Exclude('.*')
     plan.Include('android\.aadb')
@@ -550,4 +554,3 @@ if __name__ == '__main__':
   if result != 0:
     sys.exit(result)
   builder.GenerateTestPlans()
-
