@@ -34,8 +34,8 @@ class TestCase implements Comparable<TestCase> {
         return mName;
     }
 
-    public void addTest(String testName, int timeout) {
-        mTests.add(new Test(testName, timeout));
+  public void addTest(String testName, int timeout, boolean security) {
+        mTests.add(new Test(testName, timeout, security));
     }
 
     public Collection<Test> getTests() {

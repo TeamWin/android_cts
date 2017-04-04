@@ -68,6 +68,7 @@ import com.sun.javadoc.AnnotationDesc.ElementValuePair;
 public class DescriptionGenerator extends Doclet {
     static final String HOST_CONTROLLER = "dalvik.annotation.HostController";
     static final String KNOWN_FAILURE = "dalvik.annotation.KnownFailure";
+    static final String SECURITY_ANNOTATION = "android.security.cts.SecurityTest";
     static final String SUPPRESSED_TEST = "android.test.suitebuilder.annotation.Suppress";
     static final String CTS_EXPECTATION_DIR = "cts/tests/expectations";
 
@@ -87,6 +88,7 @@ public class DescriptionGenerator extends Doclet {
     static final String ATTRIBUTE_ABIS = "abis";
     static final String ATTRIBUTE_HOST_CONTROLLER = "HostController";
     static final String ATTRIBUTE_TIMEOUT = "timeout";
+    static final String ATTRIBUTE_SECURITY = "security";
 
     static final String XML_OUTPUT_PATH = "./description.xml";
 
@@ -141,7 +143,7 @@ public class DescriptionGenerator extends Doclet {
         }
 
         for (ClassDoc clazz : classes) {
-            if ((!clazz.isAbstract()) && (isValidJUnitTestCase(clazz))) {
+          if ((!clazz.isAbstract()) && (isValidJUnitTestCase(clazz))) {
                 xmlGenerator.addTestClass(new TestClass(clazz, ctsExpectationStore, architecture));
             }
         }
@@ -443,6 +445,9 @@ public class DescriptionGenerator extends Doclet {
                         setAttribute(caseNode, ATTRIBUTE_TIMEOUT,
                                      Integer.toString(caze.mTimeoutInMinutes));
                     }
+                    if (caze.mSecurity) {
+                        setAttribute(caseNode, ATTRIBUTE_SECURITY, "true");
+                    }
 
                     if (caze.mDescription != null && !caze.mDescription.equals("")) {
                         caseNode.appendChild(mDoc.createElement(TAG_DESCRIPTION))
@@ -557,6 +562,7 @@ public class DescriptionGenerator extends Doclet {
                 String knownFailure = null;
                 boolean isBroken = false;
                 boolean isSuppressed = false;
+                boolean isSecurity = false;
                 for (AnnotationDesc cAnnot : annotations) {
 
                     AnnotationTypeDoc atype = cAnnot.annotationType();
@@ -566,7 +572,10 @@ public class DescriptionGenerator extends Doclet {
                         knownFailure = getAnnotationDescription(cAnnot);
                     } else if (atype.toString().equals(SUPPRESSED_TEST)) {
                         isSuppressed = true;
+                    } else if (atype.toString().equals(SECURITY_ANNOTATION)) {
+                        isSecurity = true;
                     }
+
                 }
 
                 if (VogarUtils.isVogarKnownFailure(expectationStore, clazz.toString(), name)) {
@@ -581,7 +590,7 @@ public class DescriptionGenerator extends Doclet {
                     int timeoutInMinutes = VogarUtils.timeoutInMinutes(expectation);
                     cases.add(new TestMethod(
                             name, method.commentText(), controller, supportedAbis,
-                                    knownFailure, isBroken, isSuppressed, timeoutInMinutes));
+                            knownFailure, isBroken, isSuppressed, timeoutInMinutes, isSecurity));
                 }
             }
 
@@ -642,6 +651,7 @@ public class DescriptionGenerator extends Doclet {
         boolean mIsBroken;
         boolean mIsSuppressed;
         int mTimeoutInMinutes;  // zero to use default timeout.
+        boolean mSecurity;
 
         /**
          * Construct an test case object.
@@ -651,7 +661,7 @@ public class DescriptionGenerator extends Doclet {
          * @param knownFailure The reason of known failure.
          */
         TestMethod(String name, String description, String controller, Set<String> abis,
-                String knownFailure, boolean isBroken, boolean isSuppressed, int timeoutInMinutes) {
+            String knownFailure, boolean isBroken, boolean isSuppressed, int timeoutInMinutes, boolean isSecurity) {
             if (timeoutInMinutes < 0) {
                 throw new IllegalArgumentException("timeoutInMinutes < 0: " + timeoutInMinutes);
             }
@@ -663,6 +673,7 @@ public class DescriptionGenerator extends Doclet {
             mIsBroken = isBroken;
             mIsSuppressed = isSuppressed;
             mTimeoutInMinutes = timeoutInMinutes;
+            mSecurity = isSecurity;
         }
     }
 }
