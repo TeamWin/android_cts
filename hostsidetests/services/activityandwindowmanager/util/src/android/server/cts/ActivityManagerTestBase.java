@@ -124,6 +124,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     static String componentName = "android.server.cts";
 
+    protected static final int INVALID_DEVICE_ROTATION = -1;
+
     /** A reference to the device under test. */
     protected ITestDevice mDevice;
 
@@ -608,6 +610,20 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mAmWmState.waitForRotation(mDevice, rotation);
     }
 
+    protected int getDeviceRotation(int displayId) throws DeviceNotAvailableException {
+        final String displays = runCommandAndPrintOutput("dumpsys display displays").trim();
+        Pattern pattern = Pattern.compile(
+                "(mDisplayId=" + displayId + ")([\\s\\S]*)(mOverrideDisplayInfo)(.*)"
+                        + "(rotation)(\\s+)(\\d+)");
+        Matcher matcher = pattern.matcher(displays);
+        while (matcher.find()) {
+            final String match = matcher.group(7);
+            return Integer.parseInt(match);
+        }
+
+        return INVALID_DEVICE_ROTATION;
+    }
+
     private int getAccelerometerRotation() throws DeviceNotAvailableException {
         final String rotation =
                 runCommandAndPrintOutput("settings get system accelerometer_rotation");
@@ -619,7 +635,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 "settings put system accelerometer_rotation " + rotation);
     }
 
-    private int getUserRotation() throws DeviceNotAvailableException {
+    protected int getUserRotation() throws DeviceNotAvailableException {
         final String rotation =
                 runCommandAndPrintOutput("settings get system user_rotation").trim();
         if ("null".equals(rotation)) {
