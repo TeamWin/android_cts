@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.graphics.fonts.FontVariationAxis;
 import android.provider.FontsContract;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -294,7 +295,7 @@ public class TypefaceTest {
     }
 
     @Test
-    public void testTypefaceBuilder_AssetSource() {
+    public void testTypefaceBuilder_AssetSource() throws FontVariationAxis.InvalidFormatException {
         Typeface.Builder builder = Typeface.Builder.obtain();
         try {
             Typeface typeface1 =
@@ -341,7 +342,7 @@ public class TypefaceTest {
             assertNotSame("Different font font variation should return different Typeface object",
                     typeface5, typeface6);
 
-            // TODO: Add ttc index case. Need TTC file for CTS.
+            // TODO: Add ttc index case. Need TTC file for CTS. (b/36731640)
         } finally {
             builder.recycle();
         }
@@ -368,7 +369,7 @@ public class TypefaceTest {
             assertNotSame(typeface2, typeface3);
 
             // TODO: Add ttc index case. Need TTC file for CTS.
-        } catch (IOException e) {
+        } catch (IOException | FontVariationAxis.InvalidFormatException e) {
             throw new RuntimeException(e);
         } finally {
             builder.recycle();
