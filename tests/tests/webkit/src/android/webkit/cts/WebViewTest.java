@@ -1176,40 +1176,6 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }.run();
     }
 
-    public void testClearFormData() throws Throwable {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-        try {
-            startWebServer(false);
-            WebSettings settings = mOnUiThread.getSettings();
-            settings.setDatabaseEnabled(true);
-            settings.setJavaScriptEnabled(true);
-            WebViewDatabase webViewDatabase = WebViewDatabase.getInstance(getActivity());
-            webViewDatabase.clearFormData();
-            final String url = mWebServer.getAssetUrl(TestHtmlConstants.LOGIN_FORM_URL);
-            mOnUiThread.loadUrlAndWaitForCompletion(url);
-            new PollingCheck(TEST_TIMEOUT) {
-                @Override
-                public boolean check() {
-                    return !WebViewDatabase.getInstance(getActivity()).hasFormData();
-                }
-            }.run();
-
-            // Click submit (using JS, rather than simulated key presses, to avoid IME
-            // inconsistencies).
-            mOnUiThread.evaluateJavascript("document.getElementsByName('submit')[0].click()", null);
-            new PollingCheck(TEST_TIMEOUT) {
-                @Override
-                public boolean check() {
-                    return WebViewDatabase.getInstance(getActivity()).hasFormData();
-                }
-            }.run();
-        } finally {
-            WebViewDatabase.getInstance(getActivity()).clearFormData();
-        }
-    }
-
     @UiThreadTest
     public void testAccessHttpAuthUsernamePassword() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
