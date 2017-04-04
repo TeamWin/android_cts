@@ -58,6 +58,8 @@ public class JDiffClassDescription {
         // list are probably not meant to be implemented in an application.
         HIDDEN_INTERFACE_WHITELIST.add("public abstract boolean android.companion.DeviceFilter.matches(D)");
         HIDDEN_INTERFACE_WHITELIST.add("public static <D> boolean android.companion.DeviceFilter.matches(android.companion.DeviceFilter<D>,D)");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract java.lang.String android.companion.DeviceFilter.getDeviceDisplayName(D)");
+        HIDDEN_INTERFACE_WHITELIST.add("public abstract int android.companion.DeviceFilter.getMediumType()");
         HIDDEN_INTERFACE_WHITELIST.add("public abstract void android.nfc.tech.TagTechnology.reconnect() throws java.io.IOException");
         HIDDEN_INTERFACE_WHITELIST.add("public abstract void android.os.IBinder.shellCommand(java.io.FileDescriptor,java.io.FileDescriptor,java.io.FileDescriptor,java.lang.String[],android.os.ShellCallback,android.os.ResultReceiver) throws android.os.RemoteException");
         HIDDEN_INTERFACE_WHITELIST.add("public abstract int android.text.ParcelableSpan.getSpanTypeIdInternal()");
