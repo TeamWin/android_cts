@@ -16,6 +16,8 @@
 
 package android.content.res.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.cts.R;
@@ -45,7 +47,6 @@ public class TypedArrayTest extends AndroidTestCase {
     private static final String EXPECTED_STRING = "Hello, Android!";
     private static final String EXPECTED_TEXT = "TypedArray Test!";
     private static final String[] EXPECTED_TEXT_ARRAY = {"Easy", "Medium", "Hard"};
-    private static final int EXPECTED_INDEX = 15;
     private static final TypedValue DEF_VALUE = new TypedValue();
     private static final int EXPECTED_INDEX_COUNT = 17;
     private static final String EXPTECTED_POS_DESCRIP = "<internal>";
@@ -158,9 +159,35 @@ public class TypedArrayTest extends AndroidTestCase {
         assertEquals(EXPECTED_TEXT_ARRAY[1], textArray[1]);
         assertEquals(EXPECTED_TEXT_ARRAY[2], textArray[2]);
 
-        final int index = t.getIndex(R.styleable.style1_type16);
-        assertEquals(EXPECTED_INDEX, index);
-        assertTrue(t.getValue(index, DEF_VALUE));
+        // Verify that all the attributes retrieved are expected and present.
+        final int[] actual_indices = new int[t.getIndexCount()];
+        for (int idx = 0; idx < t.getIndexCount(); idx++) {
+            final int attr_index = t.getIndex(idx);
+            assertTrue(t.getValue(attr_index, DEF_VALUE));
+            actual_indices[idx] = attr_index;
+        }
+
+        // NOTE: order does not matter here.
+        // R.styleable.style1_typeEmpty and R.styleable.style1_typeUndefined are not
+        // expected because TYPE_NULL values do not get included in the index list.
+        assertThat(actual_indices).asList().containsExactly(
+                R.styleable.style1_type1,
+                R.styleable.style1_type2,
+                R.styleable.style1_type3,
+                R.styleable.style1_type4,
+                R.styleable.style1_type5,
+                R.styleable.style1_type6,
+                R.styleable.style1_type7,
+                R.styleable.style1_type8,
+                R.styleable.style1_type9,
+                R.styleable.style1_type10,
+                R.styleable.style1_type11,
+                R.styleable.style1_type12,
+                R.styleable.style1_type13,
+                R.styleable.style1_type14,
+                R.styleable.style1_type15,
+                R.styleable.style1_type16,
+                R.styleable.style1_type17);
     }
 
     public void testPeekValue() {

@@ -32,7 +32,8 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  android-support-v4 \
                                 ctstestrunner \
                                 services.core \
                                 junit \
-                                legacy-android-test
+                                legacy-android-test \
+                                truth-prebuilt
 
 # Use multi-dex as the compatibility-common-util-devicesidelib dependency
 # on compatibility-device-util pushes us beyond 64k methods.
