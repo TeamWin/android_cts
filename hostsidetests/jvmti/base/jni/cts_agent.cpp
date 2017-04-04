@@ -32,8 +32,6 @@ jvmtiEnv* GetJvmtiEnv() {
 }
 
 int JniThrowNullPointerException(JNIEnv* env, const char* msg) {
-  JNIEnv* e = reinterpret_cast<JNIEnv*>(env);
-
   if (env->ExceptionCheck()) {
     env->ExceptionClear();
   }
