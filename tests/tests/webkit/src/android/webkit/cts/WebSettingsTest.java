@@ -529,16 +529,6 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals("", mSettings.getPluginsPath());
     }
 
-    public void testAccessSaveFormData() {
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-        assertTrue(mSettings.getSaveFormData());
-
-        mSettings.setSaveFormData(false);
-        assertFalse(mSettings.getSaveFormData());
-    }
-
     public void testAccessTextSize() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
