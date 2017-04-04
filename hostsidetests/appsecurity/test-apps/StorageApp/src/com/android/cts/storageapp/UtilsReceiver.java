@@ -38,12 +38,22 @@ public class UtilsReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        final Bundle res = doAllocation(context, intent.getExtras());
+        if (res != null) {
+            setResultCode(Activity.RESULT_OK);
+            setResultExtras(res);
+        } else {
+            setResultCode(Activity.RESULT_CANCELED);
+        }
+    }
+
+    public static Bundle doAllocation(Context context, Bundle extras) {
         final StorageManager sm = context.getSystemService(StorageManager.class);
 
-        final double fraction = intent.getDoubleExtra(EXTRA_FRACTION, 0);
+        final double fraction = extras.getDouble(EXTRA_FRACTION, 0);
         final long quota = sm.getCacheQuotaBytes(context.getCacheDir());
         final long bytes = (long) (quota * fraction);
-        final long time = intent.getLongExtra(EXTRA_TIME, System.currentTimeMillis());
+        final long time = extras.getLong(EXTRA_TIME, System.currentTimeMillis());
 
         long allocated = 0;
         try {
@@ -56,15 +66,13 @@ public class UtilsReceiver extends BroadcastReceiver {
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to allocate cache files", e);
-            setResultCode(Activity.RESULT_CANCELED);
-            return;
+            return null;
         }
 
         Log.d(TAG, "Quota " + quota + ", target " + bytes + ", allocated " + allocated);
 
-        final Bundle extras = new Bundle();
-        extras.putLong(EXTRA_BYTES, allocated);
-        setResultCode(Activity.RESULT_OK);
-        setResultExtras(extras);
+        final Bundle res = new Bundle();
+        res.putLong(EXTRA_BYTES, allocated);
+        return res;
     }
 }

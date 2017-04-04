@@ -36,10 +36,12 @@ import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
@@ -230,8 +232,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertMostlyEquals(0, getCacheBytes(PKG_B, user));
 
         // Ask apps to allocate some cached data
-        final long targetA = doAllocate(PKG_A, 0.5, 1262304000);
-        final long targetB = doAllocate(PKG_B, 2.0, 1420070400);
+        final long targetA = doAllocateProvider(PKG_A, 0.5, 1262304000);
+        final long targetB = doAllocateProvider(PKG_B, 2.0, 1420070400);
 
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real
@@ -322,7 +324,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
                 .queryStatsForPackage(null, pkg, user).getCacheBytes();
     }
 
-    private long doAllocate(String pkg, double fraction, long time) throws Exception {
+    private long doAllocateReceiver(String pkg, double fraction, long time) throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         final Intent intent = new Intent();
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -340,5 +342,17 @@ public class StorageStatsTest extends InstrumentationTestCase {
                 }, null, Activity.RESULT_CANCELED, null, null);
         latch.await(30, TimeUnit.SECONDS);
         return bytes.value;
+    }
+
+    private long doAllocateProvider(String pkg, double fraction, long time) throws Exception {
+        final Bundle args = new Bundle();
+        args.putDouble(UtilsReceiver.EXTRA_FRACTION, fraction);
+        args.putLong(UtilsReceiver.EXTRA_TIME, time);
+
+        try (final ContentProviderClient client = getContext().getContentResolver()
+                .acquireContentProviderClient(pkg)) {
+            final Bundle res = client.call(pkg, pkg, args);
+            return res.getLong(UtilsReceiver.EXTRA_BYTES);
+        }
     }
 }
