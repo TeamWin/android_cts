@@ -25,6 +25,7 @@ LOCAL_SRC_FILES := \
     AImageReaderCts.cpp
 
 LOCAL_SHARED_LIBRARIES := \
+    libandroid \
     libcamera2ndk \
     libmediandk \
     libnativewindow \

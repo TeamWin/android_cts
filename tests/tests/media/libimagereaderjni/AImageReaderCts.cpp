@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <android/log.h>
+#include <android/native_window_jni.h>
 #include <camera/NdkCameraError.h>
 #include <camera/NdkCameraManager.h>
 #include <camera/NdkCameraDevice.h>
@@ -532,4 +533,28 @@ testTakePicturesNative(JNIEnv* /*env*/, jclass /*clazz*/) {
         }
     }
     return true;
+}
+
+extern "C" jobject Java_android_media_cts_NativeImageReaderTest_\
+testCreateSurfaceNative(JNIEnv* env, jclass /*clazz*/) {
+    static constexpr uint64_t kTestImageUsage = AHARDWAREBUFFER_USAGE0_CPU_READ_OFTEN;
+    static constexpr int kTestImageCount = 8;
+
+    ImageReaderTestCase testCase(
+            kTestImageWidth, kTestImageHeight, kTestImageFormat, kTestImageUsage, kTestImageCount,
+            false);
+    int ret = testCase.initImageReader();
+    if (ret < 0) {
+        ALOGE("Failed to get initialize image reader: ret=%d.", ret);
+        return nullptr;
+    }
+
+    // No need to release the window as AImageReader_delete takes care of it.
+    ANativeWindow* window = testCase.getNativeWindow();
+    if (window == nullptr) {
+        ALOGE("Failed to get native window for the test case.");
+        return nullptr;
+    }
+
+    return ANativeWindow_toSurface(env, window);
 }
