@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.view.Surface;
 
 /**
  * Verification test for AImageReader.
@@ -42,6 +43,13 @@ public class NativeImageReaderTest extends AndroidTestCase {
         assertTrue("Native test failed, see log for details", testTakePicturesNative());
     }
 
+    public void testCreateSurface() {
+        Surface surface = testCreateSurfaceNative();
+        assertNotNull("Surface created is null.", surface);
+        assertTrue("Surface created is invalid.", surface.isValid());
+    }
+
     private static native boolean testSucceedsWithSupportedUsageNative();
     private static native boolean testTakePicturesNative();
+    private static native Surface testCreateSurfaceNative();
 }
