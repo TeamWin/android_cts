@@ -46,7 +46,7 @@ LOCAL_STATIC_LIBRARIES := libbase
 LOCAL_STRIP_MODULE := keep_symbols
 
 # Turn on all warnings.
-LOCAL_C_FLAGS := -fno-rtti \
+LOCAL_CFLAGS :=  -fno-rtti \
                  -ggdb3 \
                  -Wall \
                  -Wextra \
