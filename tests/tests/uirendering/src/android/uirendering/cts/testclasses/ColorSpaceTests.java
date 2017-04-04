@@ -20,8 +20,6 @@ import static android.graphics.Bitmap.Config.ARGB_8888;
 import static android.graphics.Bitmap.Config.HARDWARE;
 import static android.graphics.Bitmap.Config.RGB_565;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -30,6 +28,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Shader;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.filters.MediumTest;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
