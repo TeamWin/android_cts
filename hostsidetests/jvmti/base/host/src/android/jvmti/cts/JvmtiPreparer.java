@@ -32,9 +32,9 @@ public class JvmtiPreparer extends ApkInstaller {
     }
 
     @Override
-    protected File getLocalPathForFilename(IBuildInfo arg0, String arg1)
+    protected File getLocalPathForFilename(IBuildInfo arg0, String arg1, ITestDevice arg2)
             throws TargetSetupError {
         storedApkName = arg1;
-        return super.getLocalPathForFilename(arg0, arg1);
+        return super.getLocalPathForFilename(arg0, arg1, arg2);
     }
 }
