@@ -19,10 +19,12 @@ package android.graphics.drawable.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -36,8 +38,11 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import android.annotation.NonNull;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
@@ -46,6 +51,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.BitmapDrawable;
@@ -54,6 +60,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.RotateDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -1804,6 +1811,46 @@ public class LayerDrawableTest {
         assertEquals(initialLayerInsetBottom, doubleDrawable.getLayerInsetBottom(0));
         assertEquals(initialLayerWidth, doubleDrawable.getLayerWidth(0));
         assertEquals(initialLayerHeight, doubleDrawable.getLayerHeight(0));
+    }
+
+    @Test
+    public void testOpacityChange() {
+        ColorDrawable c1 = new ColorDrawable(Color.RED);
+        ColorDrawable c2 = new ColorDrawable(Color.BLUE);
+        LayerDrawable dr = new LayerDrawable(new ColorDrawable[] { c1, c2 });
+        assertEquals(PixelFormat.OPAQUE, dr.getOpacity());
+
+        c1.setTint(0x80FF0000);
+        c1.setTintMode(PorterDuff.Mode.SRC);
+        c2.setTint(0x800000FF);
+        c2.setTintMode(PorterDuff.Mode.SRC);
+        assertEquals(PixelFormat.TRANSLUCENT, dr.getOpacity());
+    }
+
+    @Test
+    public void testStatefulnessChange() {
+        ColorDrawable c1 = new ColorDrawable(Color.RED);
+        ColorDrawable c2 = new ColorDrawable(Color.BLUE);
+        LayerDrawable dr = new LayerDrawable(new ColorDrawable[] { c1, c2 });
+        assertEquals(false, dr.isStateful());
+
+        ColorStateList csl = new ColorStateList(
+                new int[][] { { android.R.attr.state_enabled }, { } },
+                new int[] { Color.RED, Color.BLUE });
+        c1.setTintList(csl);
+        assertEquals(true, dr.isStateful());
+    }
+
+    @Test
+    public void testInvalidateDuringInit() {
+        Drawable layer = new RippleDrawable(ColorStateList.valueOf(Color.BLACK), null, null);
+
+        LayerDrawable orig = new LayerDrawable(new Drawable[] { layer });
+        orig.setBounds(0, 0, 100, 100);
+
+        // This will invoke the layer's invalidateSelf() during construction.
+        LayerDrawable copy = (LayerDrawable) orig.getConstantState().newDrawable();
+        assertNotSame(orig, copy);
     }
 
     private static class IntrinsicSizeDrawable extends Drawable {
