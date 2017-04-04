@@ -28,14 +28,14 @@ namespace cts {
 namespace jvmti {
 namespace tagging {
 
-extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiTaggingTest_setTag(
+extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JniBindings_setTag(
     JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jobject obj, jlong tag) {
   jvmtiEnv* jvmti_env = GetJvmtiEnv();
   jvmtiError ret = jvmti_env->SetTag(obj, tag);
   JvmtiErrorToException(env, jvmti_env, ret);
 }
 
-extern "C" JNIEXPORT jlong JNICALL Java_android_jvmti_cts_JvmtiTaggingTest_getTag(
+extern "C" JNIEXPORT jlong JNICALL Java_android_jvmti_cts_JniBindings_getTag(
     JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jobject obj) {
   jvmtiEnv* jvmti_env = GetJvmtiEnv();
   jlong tag = 0;
