@@ -62,6 +62,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.fonts.FontVariationAxis;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -3358,7 +3359,7 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
-    public void testSetGetFontVariationSettings() {
+    public void testSetGetFontVariationSettings() throws FontVariationAxis.InvalidFormatException {
         mTextView = new TextView(mActivity);
         Context context = InstrumentationRegistry.getTargetContext();
         Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");

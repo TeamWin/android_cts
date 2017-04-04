@@ -38,6 +38,7 @@ import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.Xfermode;
+import android.graphics.fonts.FontVariationAxis;
 import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -902,7 +903,7 @@ public class PaintTest {
     }
 
     @Test
-    public void testSetGetFontVariationSettings() {
+    public void testSetGetFontVariationSettings() throws FontVariationAxis.InvalidFormatException {
         Paint p = new Paint();
         Context context = InstrumentationRegistry.getTargetContext();
         Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");
@@ -914,8 +915,6 @@ public class PaintTest {
         assertNull(p.getFontVariationSettings());
 
         final String[] nonEffectiveSettings = {
-                "invalid syntax",
-                "'aaa' 1.0",  // tag is not 4 ascii chars
                 "'bbbb' 1.0",  // unsupported tag
                 "'    ' 1.0",  // unsupported tag
                 "'AAAA' 0.7",  // unsupported tag (case sensitive)
