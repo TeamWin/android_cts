@@ -459,7 +459,7 @@ public class CollectAllTests extends DescriptionGenerator {
         }
 
         testClass.mCases.add(new TestMethod(testName, "", "", supportedAbis,
-              knownFailure, false, false, timeoutInMinutes));
+                knownFailure, false, false, timeoutInMinutes, false));
     }
 
     private static boolean isJunit3Test(Class<?> klass) {
