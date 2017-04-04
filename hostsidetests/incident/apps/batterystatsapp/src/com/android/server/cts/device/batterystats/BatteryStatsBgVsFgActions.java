@@ -18,10 +18,14 @@ package com.android.server.cts.device.batterystats;
 
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -35,6 +39,7 @@ public class BatteryStatsBgVsFgActions {
     private static final String TAG = BatteryStatsBgVsFgActions.class.getSimpleName();
 
     public static final String KEY_ACTION = "action";
+    public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
 
     /** Perform the action specified by the given action code (see constants above). */
@@ -45,6 +50,9 @@ public class BatteryStatsBgVsFgActions {
         }
         sleep(100);
         switch(actionCode) {
+            case ACTION_JOB_SCHEDULE:
+                doScheduleJob(ctx);
+                break;
             case ACTION_WIFI_SCAN:
                 doWifi(ctx);
                 break;
@@ -52,6 +60,30 @@ public class BatteryStatsBgVsFgActions {
                 Log.e(TAG, "Intent had invalid action");
         }
         sleep(100);
+    }
+
+    private static void doScheduleJob(Context ctx) {
+        final ComponentName JOB_COMPONENT_NAME =
+                new ComponentName("com.android.server.cts.device.batterystats",
+                        SimpleJobService.class.getName());
+        JobScheduler js = ctx.getSystemService(JobScheduler.class);
+        if (js == null) {
+            Log.e(TAG, "JobScheduler service not available");
+            return;
+        }
+        final JobInfo job = (new JobInfo.Builder(1, JOB_COMPONENT_NAME))
+                .setOverrideDeadline(0)
+                .build();
+        CountDownLatch latch = SimpleJobService.resetCountDownLatch();
+        js.schedule(job);
+        // Job starts in main thread so wait in another thread to see if job finishes.
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                waitForReceiver(null, 3_000, latch, null);
+                return null;
+            }
+        }.execute();
     }
 
     private static void doWifi(Context ctx) {
@@ -80,11 +112,14 @@ public class BatteryStatsBgVsFgActions {
         return receiver;
     }
 
-    /** Uses the receiver to wait until the action is complete. */
+    /**
+     * Uses the receiver to wait until the action is complete. ctx and receiver may be null if no
+     * receiver is needed to be unregistered.
+     */
     private static void waitForReceiver(Context ctx,
-            int maxWaitTimeMs, CountDownLatch onReceiveLatch, BroadcastReceiver receiver) {
+            int maxWaitTimeMs, CountDownLatch latch, BroadcastReceiver receiver) {
         try {
-            boolean didFinish = onReceiveLatch.await(maxWaitTimeMs, TimeUnit.MILLISECONDS);
+            boolean didFinish = latch.await(maxWaitTimeMs, TimeUnit.MILLISECONDS);
             if (didFinish) {
                 Log.v(TAG, "Finished performing action");
             } else {
@@ -95,7 +130,9 @@ public class BatteryStatsBgVsFgActions {
         } catch (InterruptedException e) {
             Log.e(TAG, "Interrupted exception while awaiting action to finish", e);
         }
-        ctx.unregisterReceiver(receiver);
+        if (ctx != null && receiver != null) {
+            ctx.unregisterReceiver(receiver);
+        }
     }
 
     /** Determines whether the package is running as a background process. */
