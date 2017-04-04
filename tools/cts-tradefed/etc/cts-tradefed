@@ -121,5 +121,5 @@ for j in ${CTS_ROOT}/android-cts/testcases/*.jar; do
     JAR_PATH=${JAR_PATH}:$j
 done
 
-java $RDBG_FLAG -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
+java $RDBG_FLAG -XX:+HeapDumpOnOutOfMemoryError -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
 
