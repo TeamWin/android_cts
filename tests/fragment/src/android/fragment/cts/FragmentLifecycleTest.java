@@ -808,6 +808,45 @@ public class FragmentLifecycleTest {
         });
     }
 
+    /**
+     * When a fragment has been optimized out, it state should still be saved during
+     * save and restore instance state.
+     */
+    @Test
+    public void saveRemovedFragment() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, null);
+            FragmentManager fm = fc.getFragmentManager();
+
+            SaveStateFragment fragment1 = SaveStateFragment.create(1);
+            fm.beginTransaction()
+                    .add(android.R.id.content, fragment1, "1")
+                    .addToBackStack(null)
+                    .commit();
+            SaveStateFragment fragment2 = SaveStateFragment.create(2);
+            fm.beginTransaction()
+                    .replace(android.R.id.content, fragment2, "2")
+                    .addToBackStack(null)
+                    .commit();
+            fm.executePendingTransactions();
+
+            Pair<Parcelable, FragmentManagerNonConfig> savedState =
+                    FragmentTestUtil.destroy(mActivityRule, fc);
+
+            fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, savedState);
+            fm = fc.getFragmentManager();
+            fragment2 = (SaveStateFragment) fm.findFragmentByTag("2");
+            assertNotNull(fragment2);
+            assertEquals(2, fragment2.getValue());
+            fm.popBackStackImmediate();
+            fragment1 = (SaveStateFragment) fm.findFragmentByTag("1");
+            assertNotNull(fragment1);
+            assertEquals(1, fragment1.getValue());
+        });
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override
@@ -972,6 +1011,35 @@ public class FragmentLifecycleTest {
         public boolean onHasView() {
             final Window w = mActivity.getWindow();
             return (w != null && w.peekDecorView() != null);
+        }
+    }
+
+    public static class SaveStateFragment extends Fragment {
+        private static final String VALUE_KEY = "SaveStateFragment.mValue";
+        private int mValue;
+
+        public static SaveStateFragment create(int value) {
+            SaveStateFragment saveStateFragment = new SaveStateFragment();
+            saveStateFragment.mValue = value;
+            return saveStateFragment;
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            super.onSaveInstanceState(outState);
+            outState.putInt(VALUE_KEY, mValue);
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            if (savedInstanceState != null) {
+                mValue = savedInstanceState.getInt(VALUE_KEY, mValue);
+            }
+        }
+
+        public int getValue() {
+            return mValue;
         }
     }
 }
