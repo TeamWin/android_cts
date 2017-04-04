@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.widget.EditText;
 
 import java.util.concurrent.CountDownLatch;
@@ -31,17 +32,19 @@ import java.util.concurrent.TimeUnit;
  * Custom {@link TextWatcher} used to assert a {@link EditText} was set multiple times.
  */
 class MultipleTimesTextWatcher implements TextWatcher {
-    private final String name;
-    private final CountDownLatch latch;
-    private final EditText editText;
-    private final CharSequence expected;
+    private static final String TAG = "MultipleTimesTextWatcher";
+
+    private final String mName;
+    private final CountDownLatch mLatch;
+    private final EditText mEditText;
+    private final CharSequence mExpected;
 
     MultipleTimesTextWatcher(String name, int times, EditText editText,
             CharSequence expectedAutofillValue) {
-        this.name = name;
-        this.editText = editText;
-        this.expected = expectedAutofillValue;
-        this.latch = new CountDownLatch(times);
+        this.mName = name;
+        this.mEditText = editText;
+        this.mExpected = expectedAutofillValue;
+        this.mLatch = new CountDownLatch(times);
     }
 
     @Override
@@ -50,7 +53,8 @@ class MultipleTimesTextWatcher implements TextWatcher {
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-        latch.countDown();
+        Log.v(TAG, "onTextChanged(" + mLatch.getCount() + "): " + mName + " = " + s);
+        mLatch.countDown();
     }
 
     @Override
@@ -58,11 +62,11 @@ class MultipleTimesTextWatcher implements TextWatcher {
     }
 
     void assertAutoFilled() throws Exception {
-        final boolean set = latch.await(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        assertWithMessage("Timeout (%s ms) on EditText %s", FILL_TIMEOUT_MS, name)
+        final boolean set = mLatch.await(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertWithMessage("Timeout (%s ms) on EditText %s", FILL_TIMEOUT_MS, mName)
                 .that(set).isTrue();
-        final String actual = editText.getText().toString();
-        assertWithMessage("Wrong auto-fill value on EditText %s", name)
-                .that(actual).isEqualTo(expected.toString());
+        final String actual = mEditText.getText().toString();
+        assertWithMessage("Wrong auto-fill value on EditText %s", mName)
+                .that(actual).isEqualTo(mExpected.toString());
     }
 }

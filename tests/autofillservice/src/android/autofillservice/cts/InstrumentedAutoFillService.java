@@ -207,6 +207,9 @@ public class InstrumentedAutoFillService extends AutofillService {
          * Sets the expectation for the next {@code onFillRequest}.
          */
         Replier addResponse(CannedFillResponse response) {
+            if (response == null) {
+                throw new IllegalArgumentException("Cannot be null - use NO_RESPONSE instead");
+            }
             mResponses.add(response);
             return this;
         }
@@ -278,6 +281,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                     Thread.currentThread().interrupt();
                 }
                 if (response == null) {
+                    dumpStructure("onFillRequest() without response", structure);
                     throw new IllegalStateException("No CannedResponse");
                 }
                 if (response == NO_RESPONSE) {
