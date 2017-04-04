@@ -23,20 +23,21 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.result.LogDataType;
+import com.android.tradefed.result.LogFileSaver;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
+import com.android.tradefed.util.Pair;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -46,7 +47,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Test to check non-modifiable themes have not been changed.
@@ -92,10 +92,12 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     private ExecutorService mExecutionService;
 
-    private ExecutorCompletionService<File> mCompletionService;
+    private ExecutorCompletionService<Pair<String, File>> mCompletionService;
 
     /** the string identifying the hardware type. */
     private String mHardwareType;
+
+    private LogFileSaver mDiffsFileSaver;
 
     @Override
     public void setAbi(IAbi abi) {
@@ -115,15 +117,17 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         mDevice.uninstallPackage(APP_PACKAGE_NAME);
         mHardwareType = mDevice.executeShellCommand(HARDWARE_TYPE_CMD).trim();
 
-        // Get the APK from the build.
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
-        final File app = buildHelper.getTestFile(String.format("%s.apk", APK_NAME));
-        final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
-        mDevice.installPackage(app, true, true, options);
+        final CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        final File diffsDir = new File(buildHelper.getResultDir(), "diffs");
+        mDiffsFileSaver = new LogFileSaver(diffsDir);
+
+        final File testApk = buildHelper.getTestFile(String.format("%s.apk", APK_NAME));
+        final String abiFlag = AbiUtils.createAbiFlag(mAbi.getName());
+        mDevice.installPackage(testApk, true, true, abiFlag);
 
         final String density = getDensityBucketForDevice(mDevice, mHardwareType);
-        final String zipFile = String.format("/%s.zip", density);
-        mReferences = extractReferenceImages(zipFile);
+        final String referenceZipAssetPath = String.format("/%s.zip", density);
+        mReferences = extractReferenceImages(referenceZipAssetPath);
 
         final int numCores = Runtime.getRuntime().availableProcessors();
         mExecutionService = Executors.newFixedThreadPool(numCores * 2);
@@ -135,20 +139,18 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         final InputStream zipStream = ThemeHostTest.class.getResourceAsStream(zipFile);
         if (zipStream != null) {
             try (ZipInputStream in = new ZipInputStream(zipStream)) {
-                ZipEntry ze;
                 final byte[] buffer = new byte[1024];
-                while ((ze = in.getNextEntry()) != null) {
+                for (ZipEntry ze; (ze = in.getNextEntry()) != null; ) {
                     final String name = ze.getName();
                     final File tmp = File.createTempFile("ref_" + name, ".png");
-                    final FileOutputStream out = new FileOutputStream(tmp);
+                    tmp.deleteOnExit();
 
-                    int count;
-                    while ((count = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, count);
+                    try (FileOutputStream out = new FileOutputStream(tmp)) {
+                        for (int count; (count = in.read(buffer)) != -1; ) {
+                            out.write(buffer, 0, count);
+                        }
                     }
 
-                    out.flush();
-                    out.close();
                     references.put(name, tmp);
                 }
             } catch (IOException e) {
@@ -168,9 +170,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     @Override
     protected void tearDown() throws Exception {
-        // Delete the temp files
-        mReferences.values().forEach(File::delete);
-
         mExecutionService.shutdown();
 
         // Remove the APK.
@@ -184,7 +183,7 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest(mHardwareType)) {
-            Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch");
+            Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch / TV");
             return;
         }
 
@@ -203,21 +202,15 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
 
         final int numTasks = extractGeneratedImages(localZip, mReferences);
 
-        final List<File> failures = new ArrayList<>();
+        int failureCount = 0;
         for (int i = numTasks; i > 0; i--) {
-            final File comparison = mCompletionService.take().get();
+            final Pair<String, File> comparison = mCompletionService.take().get();
             if (comparison != null) {
-                failures.add(comparison);
+                try (InputStream inputStream = new FileInputStream(comparison.second)) {
+                    mDiffsFileSaver.saveLogData(comparison.first, LogDataType.PNG, inputStream);
+                }
+                failureCount++;
             }
-        }
-
-        // Generate ZIP file from failure output.
-        final int failureCount = failures.size();
-        if (failureCount != 0) {
-            final File failuresZip = File.createTempFile("failures", ".zip");
-            compressFiles(failures, failuresZip, true);
-            Log.logAndDisplay(LogLevel.INFO, LOG_TAG,
-                    "Wrote " + failureCount+ " failures to file:" + failuresZip.getPath());
         }
 
         assertTrue(failureCount + " failures in theme test", failureCount == 0);
@@ -230,23 +223,21 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         // Extract generated images to temporary files.
         final byte[] data = new byte[8192];
         try (ZipInputStream zipInput = new ZipInputStream(new FileInputStream(localZip))) {
-            ZipEntry entry;
-            while ((entry = zipInput.getNextEntry()) != null) {
+            for (ZipEntry entry; (entry = zipInput.getNextEntry()) != null; ) {
                 final String name = entry.getName();
                 final File expected = references.get(name);
                 if (expected != null && expected.exists()) {
                     final File actual = File.createTempFile("actual_" + name, ".png");
-                    final FileOutputStream pngOutput = new FileOutputStream(actual);
+                    actual.deleteOnExit();
 
-                    int count;
-                    while ((count = zipInput.read(data, 0, data.length)) != -1) {
-                        pngOutput.write(data, 0, count);
+                    try (FileOutputStream pngOutput = new FileOutputStream(actual)) {
+                        for (int count; (count = zipInput.read(data, 0, data.length)) != -1; ) {
+                            pngOutput.write(data, 0, count);
+                        }
                     }
 
-                    pngOutput.flush();
-                    pngOutput.close();
-
-                    mCompletionService.submit(new ComparisonTask(expected, actual));
+                    final String shortName = name.substring(0, name.indexOf('.'));
+                    mCompletionService.submit(new ComparisonTask(shortName, expected, actual));
                     numTasks++;
                 } else {
                     Log.logAndDisplay(LogLevel.INFO, LOG_TAG,
@@ -258,40 +249,6 @@ public class ThemeHostTest extends DeviceTestCase implements IAbiReceiver, IBuil
         }
 
         return numTasks;
-    }
-
-    /**
-     * Compresses a list of files to a ZIP file.
-     *
-     * @param files the files to compress
-     * @param outFile the output file
-     * @param remove {@code true} to remove files after compressing them or
-     *               {@code false} to leave them alone
-     */
-    public static void compressFiles(List<File> files, File outFile, boolean remove)
-            throws IOException {
-        final ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(outFile));
-        final byte[] data = new byte[4096];
-        for (File file : files) {
-            final FileInputStream fileIn = new FileInputStream(file);
-            final ZipEntry entry = new ZipEntry(file.getName());
-            zipOut.putNextEntry(entry);
-
-            int count;
-            while ((count = fileIn.read(data, 0, data.length)) != -1) {
-                zipOut.write(data, 0, count);
-                zipOut.flush();
-            }
-
-            zipOut.closeEntry();
-            fileIn.close();
-
-            if (remove) {
-                file.delete();
-            }
-        }
-
-        zipOut.close();
     }
 
     private boolean generateDeviceImages() throws Exception {
