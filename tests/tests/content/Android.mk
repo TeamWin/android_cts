@@ -40,16 +40,7 @@ LOCAL_JACK_FLAGS := --multi-dex legacy
 LOCAL_DX_FLAGS := --multi-dex
 
 # Resource unit tests use a private locale and some densities
-LOCAL_AAPT_FLAGS = -c small -c normal -c large -c xlarge \
-        -c 320dpi -c 240dpi -c 160dpi -c 32dpi \
-        -c cs \
-        -c fil,fil_SA \
-        -c iw,iw_IL \
-        -c kok,kok_IN,kok_419,kok_419_VARIANT,kok_Knda_419,kok_Knda_419_VARIANT,kok_VARIANT,kok_Knda \
-        -c mk,mk_MK \
-        -c tgl,tgl_PH \
-        -c tlh \
-        -c xx_YY
+LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MULTILIB := both
