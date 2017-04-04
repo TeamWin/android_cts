@@ -38,6 +38,7 @@ import java.nio.charset.Charset;
  * Companion code for com.android.cts.verifier.usb.device.UsbAccessoryTestActivity
  */
 class AccessoryTestCompanion extends TestCompanion {
+    private static final int TIMEOUT_MILLIS = 500;
     private static final int MAX_BUFFER_SIZE = 16384;
     private static final int TEST_DATA_SIZE_THRESHOLD = 100 * 1024 * 1024; // 100MB
 
@@ -174,12 +175,14 @@ class AccessoryTestCompanion extends TestCompanion {
                             bytesRead += numTransferred;
                         }
 
-                        // If the data length is a multple of the maxpacket size try reading zero
-                        // length packet. On some implementation it might be missing.
-                        connection.bulkTransfer(in, buffer, 1, 100);
+                        // MAX_BUFFER_SIZE is a multiple of the package size, hence we get a zero
+                        // sized package after. Some older devices do not send these packages, but
+                        // this is not compliant anymore.
+                        int numTransferred = connection.bulkTransfer(in, buffer, 1, TIMEOUT_MILLIS);
+                        assertEquals(0, numTransferred);
 
                         byte[] confirm = new byte[] {1};
-                        int numTransferred = connection.bulkTransfer(out, confirm, 1, 0);
+                        numTransferred = connection.bulkTransfer(out, confirm, 1, 0);
                         assertEquals(1, numTransferred);
                     }
                     break;
@@ -204,15 +207,16 @@ class AccessoryTestCompanion extends TestCompanion {
 
                     case "echo max bytes": {
                         byte[] buffer = new byte[MAX_BUFFER_SIZE];
-                        byte[] empty = new byte[1];
 
                         int numTransferred = connection.bulkTransfer(in, buffer, MAX_BUFFER_SIZE,
                                 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
 
-                        // If the data length is a multple of the maxpacket size try reading zero
-                        // length packet. On some implementation it might be missing.
-                        connection.bulkTransfer(in, empty, 1, 100);
+                        // MAX_BUFFER_SIZE is a multiple of the package size, hence we get a zero
+                        // sized package after. Some older devices do not send these packages, but
+                        // this is not compliant anymore.
+                        numTransferred = connection.bulkTransfer(in, buffer, 1, TIMEOUT_MILLIS);
+                        assertEquals(0, numTransferred);
 
                         numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
@@ -221,7 +225,6 @@ class AccessoryTestCompanion extends TestCompanion {
 
                     case "echo max*2 bytes": {
                         byte[] buffer = new byte[MAX_BUFFER_SIZE * 2];
-                        byte[] empty = new byte[1];
 
                         int numTransferred = connection.bulkTransfer(in, buffer, MAX_BUFFER_SIZE,
                                 0);
@@ -232,9 +235,11 @@ class AccessoryTestCompanion extends TestCompanion {
                                 MAX_BUFFER_SIZE, 0);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
 
-                        // If the data length is a multple of the maxpacket size try reading zero
-                        // length packet. On some implementation it might be missing.
-                        connection.bulkTransfer(in, empty, 1, 100);
+                        // MAX_BUFFER_SIZE is a multiple of the package size, hence we get a zero
+                        // sized package after. Some older devices do not send these packages, but
+                        // this is not compliant anymore.
+                        numTransferred = connection.bulkTransfer(in, buffer, 1, TIMEOUT_MILLIS);
+                        assertEquals(0, numTransferred);
 
                         numTransferred = connection.bulkTransfer(out, buffer, MAX_BUFFER_SIZE, 100);
                         assertEquals(MAX_BUFFER_SIZE, numTransferred);
