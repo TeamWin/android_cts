@@ -285,6 +285,53 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Asserts that no vendor domains are exempted from the prohibition on directly
+     * accessing /data outside /data/vendor.
+     *
+     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
+     * during Android O development. This test will be removed before Android O.
+     * TODO(b/34980020): Remove this test once b/34980020 is fixed.
+     */
+    public void testNoExemptionsForCoreDataInVendor() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        Set<String> types =
+                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                        "coredata_in_vendor_violators");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts domains from ban on vendor domains accessing data partition"
+                    + " outside /data/vendor: " + sortedTypes);
+        }
+    }
+
+    /**
+     * Asserts that no core domains are exempted from the prohibition on directly
+     * accessing /data/vendor.
+     *
+     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
+     * during Android O development. This test will be removed before Android O.
+     * TODO(b/34980020): Remove this test once b/34980020 is fixed.
+     */
+    public void testNoExemptionsForVendorDataInCore() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        Set<String> types =
+                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                        "vendordata_in_core_violators");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts domains from ban on core domains accessing vendor data"
+                    + " in /data/vendor: " + sortedTypes);
+        }
+    }
+    /**
      * Tests that mlstrustedsubject does not include untrusted_app
      * and that mlstrustedobject does not include app_data_file.
      * This helps prevent circumventing the per-user isolation of
