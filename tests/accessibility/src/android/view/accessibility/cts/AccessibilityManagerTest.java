@@ -18,6 +18,7 @@ package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
+import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
@@ -42,14 +43,20 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
     private static final String VIBRATING_ACCESSIBLITY_SERVICE_NAME =
         "android.view.accessibility.cts.VibratingAccessibilityService";
 
+    private static final String MULTIPLE_FEEDBACK_TYPES_ACCESSIBILITY_SERVICE_NAME =
+        "android.view.accessibility.cts.SpeakingAndVibratingAccessibilityService";
+
     private static final long WAIT_FOR_ACCESSIBILITY_ENABLED_TIMEOUT = 3000; // 3s
 
     private AccessibilityManager mAccessibilityManager;
+
+    private Context mTargetContext;
 
     @Override
     public void setUp() throws Exception {
         mAccessibilityManager = (AccessibilityManager)
                 getInstrumentation().getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
+        mTargetContext = getInstrumentation().getTargetContext();
         ServiceControlUtils.enableSpeakingAndVibratingServices(getInstrumentation());
     }
 
@@ -104,11 +111,11 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         for (int i = 0; i < serviceCount; i++) {
             AccessibilityServiceInfo installedService = installedServices.get(i);
             ServiceInfo serviceInfo = installedService.getResolveInfo().serviceInfo;
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 speakingServiceInstalled = true;
             }
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 vibratingServiceInstalled = true;
             }
@@ -127,11 +134,11 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         for (int i = 0; i < serviceCount; i++) {
             AccessibilityServiceInfo enabledService = enabledServices.get(i);
             ServiceInfo serviceInfo = enabledService.getResolveInfo().serviceInfo;
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 speakingServiceEnabled = true;
             }
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 vibratingServiceEnabled = true;
             }
@@ -149,12 +156,48 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         for (int i = 0; i < serviceCount; i++) {
             AccessibilityServiceInfo enabledService = enabledServices.get(i);
             ServiceInfo serviceInfo = enabledService.getResolveInfo().serviceInfo;
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 return;
             }
         }
         fail("The speaking service is not enabled.");
+    }
+
+    public void testGetEnabledAccessibilityServiceListForTypes() throws Exception {
+        // For this test, also enable a service with multiple feedback types
+        ServiceControlUtils.enableMultipleFeedbackTypesService(getInstrumentation());
+
+        List<AccessibilityServiceInfo> enabledServices =
+                mAccessibilityManager.getEnabledAccessibilityServiceList(
+                        AccessibilityServiceInfo.FEEDBACK_SPOKEN
+                                | AccessibilityServiceInfo.FEEDBACK_HAPTIC);
+        assertSame("There should be 3 enabled accessibility services.", 3, enabledServices.size());
+        boolean speakingServiceEnabled = false;
+        boolean vibratingServiceEnabled = false;
+        boolean multipleFeedbackTypesServiceEnabled = false;
+        final int serviceCount = enabledServices.size();
+        for (int i = 0; i < serviceCount; i++) {
+            AccessibilityServiceInfo enabledService = enabledServices.get(i);
+            ServiceInfo serviceInfo = enabledService.getResolveInfo().serviceInfo;
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
+                    && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
+                speakingServiceEnabled = true;
+            }
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
+                    && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
+                vibratingServiceEnabled = true;
+            }
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
+                    && MULTIPLE_FEEDBACK_TYPES_ACCESSIBILITY_SERVICE_NAME.equals(
+                    serviceInfo.name)) {
+                multipleFeedbackTypesServiceEnabled = true;
+            }
+        }
+        assertTrue("The speaking service should be enabled.", speakingServiceEnabled);
+        assertTrue("The vibrating service should be enabled.", vibratingServiceEnabled);
+        assertTrue("The multiple feedback types service should be enabled.",
+                multipleFeedbackTypesServiceEnabled);
     }
 
     @SuppressWarnings("deprecation")
@@ -165,11 +208,11 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         final int serviceCount = services.size();
         for (int i = 0; i < serviceCount; i++) {
             ServiceInfo serviceInfo = services.get(i);
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && SPEAKING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 speakingServiceInstalled = true;
             }
-            if (getClass().getPackage().getName().equals(serviceInfo.packageName)
+            if (mTargetContext.getPackageName().equals(serviceInfo.packageName)
                     && VIBRATING_ACCESSIBLITY_SERVICE_NAME.equals(serviceInfo.name)) {
                 vibratingServiceInstalled = true;
             }
