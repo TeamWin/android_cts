@@ -222,28 +222,6 @@ public class MediaSessionTest extends AndroidTestCase {
             mSession.setSessionActivity(pi);
             assertEquals(pi, controller.getSessionActivity());
 
-            // test setRepeatMode
-            mCallback.resetLocked();
-            final int repeatMode = PlaybackState.REPEAT_MODE_ALL;
-            mSession.setRepeatMode(repeatMode);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnRepeatModeChangedCalled);
-            assertEquals(repeatMode, mCallback.mRepeatMode);
-            assertEquals(repeatMode, controller.getRepeatMode());
-            // just call the callback once directly so it's marked as tested
-            callback.onRepeatModeChanged(mCallback.mRepeatMode);
-
-            // test setShuffleModeEnabled
-            mCallback.resetLocked();
-            final boolean shuffleModeEnabled = true;
-            mSession.setShuffleModeEnabled(shuffleModeEnabled);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnShuffleModeChangedCalled);
-            assertEquals(shuffleModeEnabled, mCallback.mShuffleModeEnabled);
-            assertEquals(shuffleModeEnabled, controller.isShuffleModeEnabled());
-            // just call the callback once directly so it's marked as tested
-            callback.onShuffleModeChanged(mCallback.mShuffleModeEnabled);
-
             // test setActivity
             mSession.setActive(true);
             assertTrue(mSession.isActive());
@@ -474,8 +452,6 @@ public class MediaSessionTest extends AndroidTestCase {
         private volatile boolean mOnAudioInfoChangedCalled;
         private volatile boolean mOnSessionDestroyedCalled;
         private volatile boolean mOnSessionEventCalled;
-        private volatile boolean mOnRepeatModeChangedCalled;
-        private volatile boolean mOnShuffleModeChangedCalled;
 
         private volatile PlaybackState mPlaybackState;
         private volatile MediaMetadata mMediaMetadata;
@@ -484,8 +460,6 @@ public class MediaSessionTest extends AndroidTestCase {
         private volatile String mEvent;
         private volatile Bundle mExtras;
         private volatile MediaController.PlaybackInfo mPlaybackInfo;
-        private volatile int mRepeatMode;
-        private volatile boolean mShuffleModeEnabled;
 
         public void resetLocked() {
             mOnPlaybackStateChangedCalled = false;
@@ -496,8 +470,6 @@ public class MediaSessionTest extends AndroidTestCase {
             mOnAudioInfoChangedCalled = false;
             mOnSessionDestroyedCalled = false;
             mOnSessionEventCalled = false;
-            mOnRepeatModeChangedCalled = false;
-            mOnShuffleModeChangedCalled = false;
 
             mPlaybackState = null;
             mMediaMetadata = null;
@@ -505,8 +477,6 @@ public class MediaSessionTest extends AndroidTestCase {
             mTitle = null;
             mExtras = null;
             mPlaybackInfo = null;
-            mRepeatMode = PlaybackState.REPEAT_MODE_NONE;
-            mShuffleModeEnabled = false;
         }
 
         @Override
@@ -577,24 +547,6 @@ public class MediaSessionTest extends AndroidTestCase {
                 mOnSessionEventCalled = true;
                 mEvent = event;
                 mExtras = (Bundle) extras.clone();
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onRepeatModeChanged(int repeatMode) {
-            synchronized (mWaitLock) {
-                mOnRepeatModeChangedCalled = true;
-                mRepeatMode = repeatMode;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onShuffleModeChanged(boolean enabled) {
-            synchronized (mWaitLock) {
-                mOnShuffleModeChangedCalled = true;
-                mShuffleModeEnabled = enabled;
                 mWaitLock.notify();
             }
         }
