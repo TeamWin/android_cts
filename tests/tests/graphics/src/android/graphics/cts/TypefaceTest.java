@@ -18,6 +18,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
@@ -385,6 +386,34 @@ public class TypefaceTest {
             throw new RuntimeException(e);
         } finally {
             builder.recycle();
+        }
+    }
+
+    @Test
+    public void testTypeface_SupportedCmapEncodingTest() {
+        // We support the following combinations of cmap platfrom/endcoding pairs.
+        String[] fontPaths = {
+            "CmapPlatform0Encoding0.ttf",  // Platform ID == 0, Encoding ID == 0
+            "CmapPlatform0Encoding1.ttf",  // Platform ID == 0, Encoding ID == 1
+            "CmapPlatform0Encoding2.ttf",  // Platform ID == 0, Encoding ID == 2
+            "CmapPlatform0Encoding3.ttf",  // Platform ID == 0, Encoding ID == 3
+            "CmapPlatform0Encoding4.ttf",  // Platform ID == 0, Encoding ID == 4
+            "CmapPlatform0Encoding6.ttf",  // Platform ID == 0, Encoding ID == 6
+            "CmapPlatform3Encoding1.ttf",  // Platform ID == 3, Encoding ID == 1
+            "CmapPlatform3Encoding10.ttf",  // Platform ID == 3, Encoding ID == 10
+        };
+
+        for (String fontPath : fontPaths) {
+            Typeface typeface = Typeface.createFromAsset(mContext.getAssets(), fontPath);
+            assertNotNull(typeface);
+            Paint p = new Paint();
+            final String testString = "a";
+            float widthDefaultTypeface = p.measureText(testString);
+            p.setTypeface(typeface);
+            float widthCustomTypeface = p.measureText(testString);
+            // The width of the glyph "a" from above fonts are 2em.
+            // So the width should be different from the default one.
+            assertNotEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
         }
     }
 }
