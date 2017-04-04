@@ -719,7 +719,6 @@ public class BleServerService extends Service {
 
         characteristic =
                 new BluetoothGattCharacteristic(CHARACTERISTIC_RESULT_UUID, 0x0A, 0x11);
-        characteristic.addDescriptor(descriptor);
 
         BluetoothGattDescriptor descriptor_encrypted = new BluetoothGattDescriptor(DESCRIPTOR_NEED_ENCRYPTED_READ_UUID, 0x02);
         characteristic.addDescriptor(descriptor_encrypted);
@@ -733,24 +732,20 @@ public class BleServerService extends Service {
         // Registered the characteristic of read permission for operation confirmation.
         characteristic =
                 new BluetoothGattCharacteristic(CHARACTERISTIC_NO_READ_UUID, 0x0A, 0x10);
-        characteristic.addDescriptor(descriptor);
         service.addCharacteristic(characteristic);
 
         // Registered the characteristic of write permission for operation confirmation.
         characteristic =
                 new BluetoothGattCharacteristic(CHARACTERISTIC_NO_WRITE_UUID, 0x0A, 0x01);
-        characteristic.addDescriptor(descriptor);
         service.addCharacteristic(characteristic);
 
         // Registered the characteristic of authenticate (Encrypted) for operation confirmation.
         characteristic =
                 new BluetoothGattCharacteristic(CHARACTERISTIC_NEED_ENCRYPTED_READ_UUID, 0x0A, 0x02);
-        characteristic.addDescriptor(descriptor);
         service.addCharacteristic(characteristic);
 
         characteristic =
                 new BluetoothGattCharacteristic(CHARACTERISTIC_NEED_ENCRYPTED_WRITE_UUID, 0x0A, 0x20);
-        characteristic.addDescriptor(descriptor);
         service.addCharacteristic(characteristic);
 
         // Add new Characteristics(Indicate)
