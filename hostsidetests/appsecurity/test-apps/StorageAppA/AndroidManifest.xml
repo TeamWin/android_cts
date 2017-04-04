@@ -19,6 +19,10 @@
     <application android:appCategory="video">
         <uses-library android:name="android.test.runner" />
         <receiver android:name="com.android.cts.storageapp.UtilsReceiver" android:exported="true" />
+        <provider
+            android:name="com.android.cts.storageapp.UtilsProvider"
+            android:authorities="com.android.cts.storageapp_a"
+            android:exported="true" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
