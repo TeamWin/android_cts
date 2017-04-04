@@ -296,6 +296,16 @@ final class Helper {
         assertText(node, expectedValue, true);
     }
 
+    /**
+     * Asserts a text-base node exists and verify its values.
+     */
+    static ViewNode assertTextAndValue(AssistStructure structure, String resourceId,
+            String expectedValue) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertTextAndValue(node, expectedValue);
+        return node;
+    }
+
     private static void assertText(ViewNode node, String expectedValue, boolean isAutofillable) {
         assertWithMessage("wrong text on %s", node).that(node.getText().toString())
                 .isEqualTo(expectedValue);
