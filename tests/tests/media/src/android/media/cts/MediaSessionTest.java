@@ -390,6 +390,26 @@ public class MediaSessionTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * Test {@link MediaSession#release} doesn't crash when multiple media sessions are in the app
+     * which receives the media key events.
+     * See: b/36669550
+     */
+    public void testReleaseNoCrashWithMultipleSessions() throws Exception {
+        // Start a media playback for this app to receive media key events.
+        Utils.assertMediaPlaybackStarted(getContext());
+
+        MediaSession anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+        mSession.release();
+        anotherSession.release();
+
+        // Try release with the different order.
+        mSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+        anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+        anotherSession.release();
+        mSession.release();
+    }
+
     private void simulateMediaKeyInput(int keyCode) {
         mAudioManager.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
         mAudioManager.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode));
