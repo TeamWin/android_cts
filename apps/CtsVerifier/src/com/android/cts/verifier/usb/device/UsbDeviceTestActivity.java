@@ -75,6 +75,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private static final String LOG_TAG = UsbDeviceTestActivity.class.getSimpleName();
     private static final int TIMEOUT_MILLIS = 5000;
     private static final int MAX_BUFFER_SIZE = 16384;
+    private static final int OVERSIZED_BUFFER_SIZE = MAX_BUFFER_SIZE + 100;
 
     private UsbManager mUsbManager;
     private BroadcastReceiver mUsbDeviceConnectionReceiver;
@@ -82,8 +83,36 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private TextView mStatus;
     private ProgressBar mProgress;
 
+    /**
+     * Some N and older accessories do not send a zero sized package after a request that is a
+     * multiple of the maximum package size.
+     */
+    private boolean mDoesCompanionZeroTerminate;
+
     private static long now() {
         return System.nanoTime() / 1000000;
+    }
+
+    /**
+     * Check if we should expect a zero sized transfer after a certain sized transfer
+     *
+     * @param transferSize The size of the previous transfer
+     *
+     * @return {@code true} if a zero sized transfer is expected
+     */
+    private boolean isZeroTransferExpected(int transferSize) {
+        if (mDoesCompanionZeroTerminate) {
+            if (transferSize % 1024 == 0) {
+                if (transferSize % 8 != 0) {
+                    throw new IllegalArgumentException("As the transfer speed is unknown the code "
+                            + "has to work for all speeds");
+                }
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -207,10 +236,16 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             @NonNull UsbEndpoint out, @NonNull CharSequence nextTestName) {
         Log.v(LOG_TAG, "Finishing previous test");
 
+        // Make sure name length is not a multiple of 8 to avoid zero-termination issues
+        StringBuilder safeNextTestName = new StringBuilder(nextTestName);
+        if (nextTestName.length() % 8 == 0) {
+            safeNextTestName.append(' ');
+        }
+
         // Send name of next test
-        assertTrue(nextTestName.length() <= Byte.MAX_VALUE);
+        assertTrue(safeNextTestName.length() <= Byte.MAX_VALUE);
         ByteBuffer nextTestNameBuffer = Charset.forName("UTF-8")
-                .encode(CharBuffer.wrap(nextTestName));
+                .encode(CharBuffer.wrap(safeNextTestName));
         byte[] sizeBuffer = { (byte) nextTestNameBuffer.limit() };
         int numSent = connection.bulkTransfer(out, sizeBuffer, 1, 0);
         assertEquals(1, numSent);
@@ -231,7 +266,20 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         numSent = connection.bulkTransfer(out, sizeBuffer, 1, 0);
         assertEquals(1, numSent);
 
-        Log.i(LOG_TAG, "Running test \"" + nextTestName + "\"");
+        Log.i(LOG_TAG, "Running test \"" + safeNextTestName + "\"");
+    }
+
+    /**
+     * Receive a transfer that has size zero using bulk-transfer.
+     *
+     * @param connection Connection to the USB device
+     * @param in         The in endpoint
+     */
+    private void receiveZeroSizedTransfer(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint in) {
+        byte[] buffer = new byte[1];
+        int numReceived = connection.bulkTransfer(in, buffer, 1, TIMEOUT_MILLIS);
+        assertEquals(0, numReceived);
     }
 
     /**
@@ -257,6 +305,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         assertEquals(size, numReceived);
 
         assertArrayEquals(sentBuffer, receivedBuffer);
+
+        if (isZeroTransferExpected(size)) {
+            receiveZeroSizedTransfer(connection, in);
+        }
     }
 
     /**
@@ -287,6 +339,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 assertEquals(sentBuffer[i], receivedBuffer[i]);
             }
         }
+
+        if (isZeroTransferExpected(size)) {
+            receiveZeroSizedTransfer(connection, in);
+        }
     }
 
     /**
@@ -298,7 +354,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private void echoOversizedBulkTransfer(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, @NonNull UsbEndpoint out) {
-        int totalSize = MAX_BUFFER_SIZE * 3 / 2;
+        int totalSize = OVERSIZED_BUFFER_SIZE;
         byte[] sentBuffer = new byte[totalSize];
         Random r = new Random();
         r.nextBytes(sentBuffer);
@@ -322,6 +378,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 assertEquals(0, receivedBuffer[i]);
             }
         }
+
+        if (mDoesCompanionZeroTerminate) {
+            receiveZeroSizedTransfer(connection, in);
+        }
     }
 
     /**
@@ -333,20 +393,20 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void receiveOversizedBulkTransfer(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in) {
         // Buffer will be received as two transfers
-        byte[] receivedBuffer1 = new byte[MAX_BUFFER_SIZE * 3 / 2];
+        byte[] receivedBuffer1 = new byte[OVERSIZED_BUFFER_SIZE];
         int numReceived = connection.bulkTransfer(in, receivedBuffer1, receivedBuffer1.length,
                 TIMEOUT_MILLIS);
         assertEquals(MAX_BUFFER_SIZE, numReceived);
 
-        byte[] receivedBuffer2 = new byte[MAX_BUFFER_SIZE / 2];
+        byte[] receivedBuffer2 = new byte[OVERSIZED_BUFFER_SIZE - MAX_BUFFER_SIZE];
         numReceived = connection.bulkTransfer(in, receivedBuffer2, receivedBuffer2.length,
                 TIMEOUT_MILLIS);
-        assertEquals(MAX_BUFFER_SIZE / 2, numReceived);
+        assertEquals(OVERSIZED_BUFFER_SIZE - MAX_BUFFER_SIZE, numReceived);
 
         assertEquals(1, receivedBuffer1[0]);
         assertEquals(2, receivedBuffer1[MAX_BUFFER_SIZE - 1]);
         assertEquals(3, receivedBuffer2[0]);
-        assertEquals(4, receivedBuffer2[MAX_BUFFER_SIZE / 2 - 1]);
+        assertEquals(4, receivedBuffer2[OVERSIZED_BUFFER_SIZE - MAX_BUFFER_SIZE - 1]);
     }
 
     /**
@@ -427,6 +487,25 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
         throw new IllegalStateException("Could not find " + direction + " endpoint in "
                 + iface.getName());
+    }
+
+    /**
+     * Receive a transfer that has size zero using deprecated usb-request methods.
+     *
+     * @param connection Connection to the USB device
+     * @param in         The in endpoint
+     */
+    private void receiveZeroSizeRequestLegacy(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint in) {
+        UsbRequest receiveZero = new UsbRequest();
+        boolean isInited = receiveZero.initialize(connection, in);
+        assertTrue(isInited);
+        ByteBuffer zeroBuffer = ByteBuffer.allocate(1);
+        receiveZero.queue(zeroBuffer, 1);
+
+        UsbRequest finished = connection.requestWait();
+        assertEquals(receiveZero, finished);
+        assertEquals(0, zeroBuffer.position());
     }
 
     /**
@@ -541,6 +620,29 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             }
             finished.close();
         }
+
+        if (isZeroTransferExpected(size)) {
+            receiveZeroSizeRequestLegacy(connection, in);
+        }
+    }
+
+    /**
+     * Receive a transfer that has size zero using current usb-request methods.
+     *
+     * @param connection Connection to the USB device
+     * @param in         The in endpoint
+     */
+    private void receiveZeroSizeRequest(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbEndpoint in) {
+        UsbRequest receiveZero = new UsbRequest();
+        boolean isInited = receiveZero.initialize(connection, in);
+        assertTrue(isInited);
+        ByteBuffer zeroBuffer = ByteBuffer.allocate(1);
+        receiveZero.enqueue(zeroBuffer);
+
+        UsbRequest finished = connection.requestWait();
+        assertEquals(receiveZero, finished);
+        assertEquals(0, zeroBuffer.position());
     }
 
     /**
@@ -642,6 +744,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             }
             finished.close();
         }
+
+        if (isZeroTransferExpected(sliceStart + limitInSlice - (sliceStart + positionInSlice))) {
+            receiveZeroSizeRequest(connection, in);
+        }
     }
 
     /**
@@ -682,7 +788,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void echoOversizedUsbRequestLegacy(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, @NonNull UsbEndpoint out) {
         Random random = new Random();
-        int totalSize = MAX_BUFFER_SIZE * 3 / 2;
+        int totalSize = OVERSIZED_BUFFER_SIZE;
 
         UsbRequest sent = new UsbRequest();
         boolean isInited = sent.initialize(connection, out);
@@ -719,6 +825,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 assertSame(sent, finished);
             }
             finished.close();
+        }
+
+        if (mDoesCompanionZeroTerminate) {
+            receiveZeroSizeRequestLegacy(connection, in);
         }
     }
 
@@ -1715,6 +1825,48 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     }
 
     /**
+     * Test if the companion device zero-terminates their requests that are multiples of the
+     * maximum package size. Then sets {@link #mDoesCompanionZeroTerminate} if the companion
+     * zero terminates
+     *
+     * @param connection Connection to the USB device
+     * @param iface      The interface to use
+     */
+    private void testIfCompanionZeroTerminates(@NonNull UsbDeviceConnection connection,
+            @NonNull UsbInterface iface) {
+        assumeTrue(iface.getEndpointCount() == 2);
+        final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
+        final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
+        assertNotNull(in);
+        assertNotNull(out);
+
+        nextTest(connection, in, out, "does companion zero terminate");
+
+        // The other size sends:
+        // - 1024 bytes
+        // - maybe a zero sized package
+        // - 1 byte
+
+        byte[] buffer = new byte[1024];
+        int numTransferred = connection.bulkTransfer(in, buffer, 1024, 0);
+        assertEquals(1024, numTransferred);
+
+        numTransferred = connection.bulkTransfer(in, buffer, 1, 0);
+        if (numTransferred == 0) {
+            assertEquals(0, numTransferred);
+
+            numTransferred = connection.bulkTransfer(in, buffer, 1, 0);
+            assertEquals(1, numTransferred);
+
+            mDoesCompanionZeroTerminate = true;
+            Log.i(LOG_TAG, "Companion zero terminates");
+        } else {
+            assertEquals(1, numTransferred);
+            Log.i(LOG_TAG, "Companion does not zero terminate - an older device");
+        }
+    }
+
+    /**
      * Send signal to the remove device that testing is finished.
      *
      * @param connection The connection to use for testing
@@ -1960,6 +2112,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
             boolean claimed = connection.claimInterface(iface, false);
             assertTrue(claimed);
+
+            testIfCompanionZeroTerminates(connection, iface);
 
             usbRequestLegacyTests(connection, iface);
             usbRequestTests(connection, iface);

@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
  */
 class DeviceTestCompanion extends TestCompanion {
     private static final int MAX_BUFFER_SIZE = 16384;
+    private static final int OVERSIZED_BUFFER_SIZE = MAX_BUFFER_SIZE + 100;
 
     DeviceTestCompanion(@NonNull Context context, @NonNull TestObserver observer) {
         super(context, observer);
@@ -133,6 +134,20 @@ class DeviceTestCompanion extends TestCompanion {
         }
     }
 
+    /**
+     * Some N and older accessories do not send a zero sized package after a request that is a
+     * multiple of the maximum package size. Hence send such a package to let the device under test
+     * figure out how the accessory driver is implemented on this side.
+     *
+     * @param os The stream to send to
+     */
+    private void helpToFigureOutIfCompanionZeroTerminates(@NonNull OutputStream os)
+            throws IOException {
+        // 1024 is a multiple of all package sizes that are currently known
+        os.write(new byte[1024]);
+        os.write(new byte[1]);
+    }
+
     @Override
     protected void runTest() throws Throwable {
         UsbAccessory accessory;
@@ -172,6 +187,10 @@ class DeviceTestCompanion extends TestCompanion {
                     updateStatus("Running test \"" + testName + "\"");
 
                     switch (testName) {
+                        case "does companion zero terminate":
+                            helpToFigureOutIfCompanionZeroTerminates(os);
+                            isSuccess = true;
+                            break;
                         case "Echo 1 byte":
                             isSuccess = echoBytes(is, os, 1);
                             break;
@@ -186,11 +205,11 @@ class DeviceTestCompanion extends TestCompanion {
                             isSuccess = echoBytes(is, os, MAX_BUFFER_SIZE);
                             break;
                         case "Receive oversized buffer": {
-                            byte[] buffer = new byte[MAX_BUFFER_SIZE * 3 / 2];
+                            byte[] buffer = new byte[OVERSIZED_BUFFER_SIZE];
                             buffer[0] = 1;
                             buffer[MAX_BUFFER_SIZE - 1] = 2;
                             buffer[MAX_BUFFER_SIZE] = 3;
-                            buffer[MAX_BUFFER_SIZE * 3 / 2 - 1] = 4;
+                            buffer[OVERSIZED_BUFFER_SIZE - 1] = 4;
 
                             os.write(buffer);
 
@@ -210,9 +229,10 @@ class DeviceTestCompanion extends TestCompanion {
                             isSuccess = echoUntilStopSignal(is, os);
                             break;
                         case "done":
-                        default:
                             isSuccess = true;
                             break;
+                        default:
+                            throw new IllegalStateException("unknown test");
                     }
                 } while (!"done".equals(testName));
             }
