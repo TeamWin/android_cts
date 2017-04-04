@@ -626,7 +626,10 @@ def get_image_patch(img, xnorm, ynorm, wnorm, hnorm):
     ytile = math.ceil(ynorm * hfull)
     wtile = math.floor(wnorm * wfull)
     htile = math.floor(hnorm * hfull)
-    return img[ytile:ytile+htile,xtile:xtile+wtile,:].copy()
+    if len(img.shape)==2:
+        return img[ytile:ytile+htile,xtile:xtile+wtile].copy()
+    else:
+        return img[ytile:ytile+htile,xtile:xtile+wtile,:].copy()
 
 def compute_image_means(img):
     """Calculate the mean of each color channel in the image.
@@ -755,6 +758,7 @@ def compute_image_sharpness(img):
     [gy, gx] = numpy.gradient(luma)
     return numpy.average(numpy.sqrt(gy*gy + gx*gx))
 
+
 def normalize_img(img):
     """Normalize the image values to between 0 and 1.
 
@@ -774,30 +778,29 @@ def chart_located_per_argv():
     Args:
         None
     Returns:
-        chart_loc:  float converted xnorm,ynorm,wnorm,hnorm from argv text.
-                    argv is of form 'chart_loc=0.45,0.45,0.1,0.1'
+        chart_loc:  float converted xnorm,ynorm,wnorm,hnorm,scale from argv text.
+                    argv is of form 'chart_loc=0.45,0.45,0.1,0.1,1.0'
     """
     for s in sys.argv[1:]:
         if s[:10] == "chart_loc=" and len(s) > 10:
             chart_loc = s[10:].split(",")
             return map(float, chart_loc)
-    return None, None, None, None
+    return None, None, None, None, None
 
 
-def flip_mirror_img_per_argv(img):
-    """Flip/mirror an image if "flip" or "mirror" is in argv
+def rotate_img_per_argv(img):
+    """Rotate an image 180 degrees if "rotate" is in argv
 
     Args:
         img: 2-D numpy array of image values
     Returns:
-        Flip/mirrored image
+        Rotated image
     """
     img_out = img
-    if "flip" in sys.argv:
-        img_out = numpy.flipud(img_out)
-    if "mirror" in sys.argv:
-        img_out = numpy.fliplr(img_out)
+    if "rotate180" in sys.argv:
+        img_out = numpy.fliplr(numpy.flipud(img_out))
     return img_out
+
 
 def stationary_lens_cap(cam, req, fmt):
     """Take up to NUM_TRYS caps and save the 1st one with lens stationary.
@@ -822,6 +825,7 @@ def stationary_lens_cap(cam, req, fmt):
         if trys == NUM_TRYS:
             raise its.error.Error('Cannot settle lens after %d trys!' % trys)
     return cap[NUM_FRAMES-1]
+
 
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.

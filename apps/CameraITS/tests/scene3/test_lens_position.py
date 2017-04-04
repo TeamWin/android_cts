@@ -105,7 +105,7 @@ def test_lens_position(cam, props, fmt, sensitivity, exp, chart):
         print ' focus distance (diopters): %.3f' % data['fd']
         print ' current lens location (diopters): %.3f' % data['loc']
         y, _, _ = its.image.convert_capture_to_planes(cap, props)
-        y = its.image.flip_mirror_img_per_argv(y)
+        y = its.image.rotate_img_per_argv(y)
         chart.img = its.image.normalize_img(its.image.get_image_patch(
                 y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm))
         its.image.write_image(chart.img, '%s_move_i=%d_chart.jpg' % (NAME, i))

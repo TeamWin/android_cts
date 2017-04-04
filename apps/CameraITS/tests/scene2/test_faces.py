@@ -60,7 +60,7 @@ def main():
                 # but it should detect at least one face in last frame
                 if i == NUM_TEST_FRAMES - 1:
                     img = its.image.convert_capture_to_rgb_image(cap, props=props)
-                    img = its.image.flip_mirror_img_per_argv(img)
+                    img = its.image.rotate_img_per_argv(img)
                     img_name = "%s_fd_mode_%s.jpg" % (NAME, fd_mode)
                     its.image.write_image(img, img_name)
                     if len(faces) == 0:
