@@ -53,7 +53,12 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     junit \
     legacy-android-test
 
-LOCAL_JNI_SHARED_LIBRARIES := libctsmediacodec_jni libaudio_jni libnativehelper_compat_libc++ libndkaudioLib
+LOCAL_JNI_SHARED_LIBRARIES := \
+    libctsimagereader_jni \
+    libctsmediacodec_jni \
+    libaudio_jni \
+    libnativehelper_compat_libc++ \
+    libndkaudioLib
 
 # do not compress VP9 video files
 LOCAL_AAPT_FLAGS := -0 .vp9
