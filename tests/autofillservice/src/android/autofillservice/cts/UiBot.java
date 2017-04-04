@@ -19,8 +19,10 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -56,6 +58,9 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_TYPE_ADDRESS = "autofill_save_type_address";
     private static final String RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD =
             "autofill_save_type_credit_card";
+    private static final String RESOURCE_STRING_SAVE_TYPE_USERNAME = "autofill_save_type_username";
+    private static final String RESOURCE_STRING_SAVE_TYPE_EMAIL =
+            "autofill_save_type_email_address";
     private static final String RESOURCE_STRING_AUTOFILL = "autofill";
     private static final String RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE =
             "autofill_picker_accessibility_title";
@@ -190,6 +195,12 @@ final class UiBot {
                     break;
                 case SAVE_DATA_TYPE_CREDIT_CARD:
                     typeResourceName = RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD;
+                    break;
+                case SAVE_DATA_TYPE_USERNAME:
+                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_USERNAME;
+                    break;
+                case SAVE_DATA_TYPE_EMAIL_ADDRESS:
+                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_EMAIL;
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported type: " + type);

@@ -33,8 +33,10 @@ import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static android.text.InputType.TYPE_NULL;
 import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
 import static android.view.View.AUTOFILL_MODE_MANUAL;
@@ -819,6 +821,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     @Test
     public void testCustomizedSaveCreditCard() throws Exception {
         customizedSaveTest(SAVE_DATA_TYPE_CREDIT_CARD);
+    }
+
+    @Test
+    public void testCustomizedSaveUsername() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_USERNAME);
+    }
+
+    @Test
+    public void testCustomizedSaveEmailAddress() throws Exception {
+        customizedSaveTest(SAVE_DATA_TYPE_EMAIL_ADDRESS);
     }
 
     private void customizedSaveTest(int type) throws Exception {
