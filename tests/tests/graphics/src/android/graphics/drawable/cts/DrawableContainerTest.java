@@ -37,10 +37,12 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -789,6 +791,36 @@ public class DrawableContainerTest {
         mDrawableContainerState.addChild(dr0);
         mDrawableContainer.mutate();
         verify(dr0, atLeastOnce()).mutate();
+    }
+
+    @Test
+    public void testOpacityChange() {
+        ColorDrawable c1 = new ColorDrawable(Color.RED);
+        ColorDrawable c2 = new ColorDrawable(Color.BLUE);
+        addAndSelectDrawable(c1);
+        addAndSelectDrawable(c2);
+        assertEquals(PixelFormat.OPAQUE, mDrawableContainer.getOpacity());
+
+        // Changes to the not-current drawable should still refresh.
+        c1.setTint(0x80FF0000);
+        c1.setTintMode(PorterDuff.Mode.SRC);
+        assertEquals(PixelFormat.TRANSLUCENT, mDrawableContainer.getOpacity());
+    }
+
+    @Test
+    public void testStatefulnessChange() {
+        ColorDrawable c1 = new ColorDrawable(Color.RED);
+        ColorDrawable c2 = new ColorDrawable(Color.BLUE);
+        addAndSelectDrawable(c1);
+        addAndSelectDrawable(c2);
+        assertEquals(false, mDrawableContainer.isStateful());
+
+        // Changes to the not-current drawable should still refresh.
+        ColorStateList csl = new ColorStateList(
+                new int[][] { { android.R.attr.state_enabled }, { } },
+                new int[] { Color.RED, Color.BLUE });
+        c1.setTintList(csl);
+        assertEquals(true, mDrawableContainer.isStateful());
     }
 
     private void addAndSelectDrawable(Drawable drawable) {
