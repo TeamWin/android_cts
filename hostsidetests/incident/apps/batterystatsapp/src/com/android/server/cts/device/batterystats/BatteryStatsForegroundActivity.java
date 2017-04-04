@@ -16,6 +16,8 @@
 
 package com.android.server.cts.device.batterystats;
 
+import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions
+        .ACTION_JOB_SCHEDULE;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_ACTION;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.doAction;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.isAppInBackground;
