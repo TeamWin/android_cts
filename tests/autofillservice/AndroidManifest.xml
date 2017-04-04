@@ -39,7 +39,9 @@
         <activity android:name=".TimePickerSpinnerActivity" />
         <activity android:name=".FatActivity" />
         <activity android:name=".VirtualContainerActivity" />
-        <activity android:name=".OptionalSaveActivity" >
+        <activity android:name=".OptionalSaveActivity" />
+        <activity android:name=".AllAutofillableViewsActivity" />
+        <activity android:name=".GridActivity" >
             <intent-filter>
                 <!-- This intent filter is not really needed by CTS, but it maks easier to launch
                      this app during CTS development... -->
@@ -47,7 +49,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".AllAutofillableViewsActivity" />
 
         <service
             android:name=".InstrumentedAutoFillService"
