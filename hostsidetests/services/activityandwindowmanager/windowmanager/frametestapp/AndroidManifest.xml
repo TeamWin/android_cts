@@ -22,7 +22,7 @@
         <activity android:name=".DialogTestActivity"
                 android:exported="true"
         />
-        <activity android:name=".MovingPopupTestActivity"
+        <activity android:name=".MovingChildTestActivity"
                   android:exported="true"
         />
     </application>
