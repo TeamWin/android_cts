@@ -584,22 +584,22 @@ public class TvContractTest extends AndroidTestCase {
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_DURATION_MILLIS);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTENT_URI);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_WEIGHT);
-            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_TYPE);
-            verifyStringColumn(cursor, expectedValues,
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_TYPE);
+            verifyIntegerColumn(cursor, expectedValues,
                     PreviewPrograms.COLUMN_POSTER_ART_ASPECT_RATIO);
-            verifyStringColumn(cursor, expectedValues,
+            verifyIntegerColumn(cursor, expectedValues,
                     PreviewPrograms.COLUMN_THUMBNAIL_ASPECT_RATIO);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_LOGO_URI);
-            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AVAILABILITY);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AVAILABILITY);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_STARTING_PRICE);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_OFFER_PRICE);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_RELEASE_DATE);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_ITEM_COUNT);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_LIVE);
-            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERACTION_TYPE);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERACTION_TYPE);
             verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_INTERACTION_COUNT);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_AUTHOR);
-            verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING_STYLE);
+            verifyIntegerColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING_STYLE);
             verifyStringColumn(cursor, expectedValues, PreviewPrograms.COLUMN_REVIEW_RATING);
         }
     }
@@ -612,7 +612,7 @@ public class TvContractTest extends AndroidTestCase {
             assertEquals(cursor.getCount(), 1);
             assertTrue(cursor.moveToNext());
 
-            verifyStringColumn(cursor, expectedValues, WatchNextPrograms.COLUMN_WATCH_NEXT_TYPE);
+            verifyIntegerColumn(cursor, expectedValues, WatchNextPrograms.COLUMN_WATCH_NEXT_TYPE);
             verifyLongColumn(cursor, expectedValues,
                     WatchNextPrograms.COLUMN_LAST_ENGAGEMENT_TIME_UTC_MILLIS);
         }
