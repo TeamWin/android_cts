@@ -481,12 +481,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
             Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
             int maxMusicVolume = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
 
-            for (int i = 0; i < streams.length; i++) {
+            for (int stream : streams) {
                 // set ringer mode to back normal to not interfere with volume tests
                 mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
 
-                int maxVolume = mAudioManager.getStreamMaxVolume(streams[i]);
-                int minVolume = mAudioManager.getStreamMinVolume(streams[i]);
+                int maxVolume = mAudioManager.getStreamMaxVolume(stream);
+                int minVolume = mAudioManager.getStreamMinVolume(stream);
 
                 // validate min
                 assertTrue(String.format("minVolume(%d) must be >= 0", minVolume), minVolume >= 0);
@@ -494,14 +494,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
                         maxVolume),
                         minVolume < maxVolume);
 
-                mAudioManager.setStreamVolume(streams[i], 1, 0);
+                mAudioManager.setStreamVolume(stream, 1, 0);
                 if (mUseFixedVolume) {
-                    assertEquals(maxVolume, mAudioManager.getStreamVolume(streams[i]));
+                    assertEquals(maxVolume, mAudioManager.getStreamVolume(stream));
                     continue;
                 }
-                assertEquals(1, mAudioManager.getStreamVolume(streams[i]));
+                assertEquals(String.format("stream=%d", stream),
+                             1, mAudioManager.getStreamVolume(stream));
 
-                if (streams[i] == AudioManager.STREAM_MUSIC && mAudioManager.isWiredHeadsetOn()) {
+                if (stream == AudioManager.STREAM_MUSIC && mAudioManager.isWiredHeadsetOn()) {
                     // due to new regulations, music sent over a wired headset may be volume limited
                     // until the user explicitly increases the limit, so we can't rely on being able
                     // to set the volume to getStreamMaxVolume(). Instead, determine the current limit
@@ -511,52 +512,52 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     int prevvol = 0;
                     do {
                         prevvol = curvol;
-                        mAudioManager.adjustStreamVolume(streams[i], ADJUST_RAISE, 0);
-                        curvol = mAudioManager.getStreamVolume(streams[i]);
+                        mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0);
+                        curvol = mAudioManager.getStreamVolume(stream);
                     } while (curvol != prevvol);
                     maxVolume = maxMusicVolume = curvol;
                 }
-                mAudioManager.setStreamVolume(streams[i], maxVolume, 0);
-                mAudioManager.adjustStreamVolume(streams[i], ADJUST_RAISE, 0);
-                assertEquals(maxVolume, mAudioManager.getStreamVolume(streams[i]));
+                mAudioManager.setStreamVolume(stream, maxVolume, 0);
+                mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0);
+                assertEquals(maxVolume, mAudioManager.getStreamVolume(stream));
 
-                volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(streams[i]));
-                mAudioManager.adjustSuggestedStreamVolume(ADJUST_LOWER, streams[i], 0);
+                volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
+                mAudioManager.adjustSuggestedStreamVolume(ADJUST_LOWER, stream, 0);
                 Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-                assertEquals(maxVolume - volumeDelta, mAudioManager.getStreamVolume(streams[i]));
+                assertEquals(maxVolume - volumeDelta, mAudioManager.getStreamVolume(stream));
 
                 // volume lower
-                mAudioManager.setStreamVolume(streams[i], maxVolume, 0);
-                volume = mAudioManager.getStreamVolume(streams[i]);
+                mAudioManager.setStreamVolume(stream, maxVolume, 0);
+                volume = mAudioManager.getStreamVolume(stream);
                 while (volume > minVolume) {
-                    volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(streams[i]));
-                    mAudioManager.adjustStreamVolume(streams[i], ADJUST_LOWER, 0);
+                    volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
+                    mAudioManager.adjustStreamVolume(stream, ADJUST_LOWER, 0);
                     assertEquals(Math.max(0, volume - volumeDelta),
-                            mAudioManager.getStreamVolume(streams[i]));
-                    volume = mAudioManager.getStreamVolume(streams[i]);
+                            mAudioManager.getStreamVolume(stream));
+                    volume = mAudioManager.getStreamVolume(stream);
                 }
 
-                mAudioManager.adjustStreamVolume(streams[i], ADJUST_SAME, 0);
+                mAudioManager.adjustStreamVolume(stream, ADJUST_SAME, 0);
 
                 // volume raise
-                mAudioManager.setStreamVolume(streams[i], 1, 0);
-                volume = mAudioManager.getStreamVolume(streams[i]);
+                mAudioManager.setStreamVolume(stream, 1, 0);
+                volume = mAudioManager.getStreamVolume(stream);
                 while (volume < maxVolume) {
-                    volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(streams[i]));
-                    mAudioManager.adjustStreamVolume(streams[i], ADJUST_RAISE, 0);
+                    volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
+                    mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0);
                     assertEquals(Math.min(volume + volumeDelta, maxVolume),
-                            mAudioManager.getStreamVolume(streams[i]));
-                    volume = mAudioManager.getStreamVolume(streams[i]);
+                            mAudioManager.getStreamVolume(stream));
+                    volume = mAudioManager.getStreamVolume(stream);
                 }
 
                 // volume same
-                mAudioManager.setStreamVolume(streams[i], maxVolume, 0);
+                mAudioManager.setStreamVolume(stream, maxVolume, 0);
                 for (int k = 0; k < maxVolume; k++) {
-                    mAudioManager.adjustStreamVolume(streams[i], ADJUST_SAME, 0);
-                    assertEquals(maxVolume, mAudioManager.getStreamVolume(streams[i]));
+                    mAudioManager.adjustStreamVolume(stream, ADJUST_SAME, 0);
+                    assertEquals(maxVolume, mAudioManager.getStreamVolume(stream));
                 }
 
-                mAudioManager.setStreamVolume(streams[i], maxVolume, 0);
+                mAudioManager.setStreamVolume(stream, maxVolume, 0);
             }
 
             if (mUseFixedVolume) {
@@ -659,18 +660,18 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 AudioManager.STREAM_NOTIFICATION,
                 AudioManager.STREAM_SYSTEM};
         if (mUseFixedVolume) {
-            for (int i = 0; i < streams.length; i++) {
-                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
+            for (int stream : streams) {
+                mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
                 assertFalse("Muting should not affect a fixed volume device.",
-                        mAudioManager.isStreamMute(streams[i]));
+                        mAudioManager.isStreamMute(stream));
 
-                mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
+                mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
                 assertFalse("Toggling mute should not affect a fixed volume device.",
-                        mAudioManager.isStreamMute(streams[i]));
+                        mAudioManager.isStreamMute(stream));
 
-                mAudioManager.setStreamMute(streams[i], true);
+                mAudioManager.setStreamMute(stream, true);
                 assertFalse("Muting should not affect a fixed volume device.",
-                        mAudioManager.isStreamMute(streams[i]));
+                        mAudioManager.isStreamMute(stream));
             }
         }
     }
@@ -688,16 +689,16 @@ public class AudioManagerTest extends InstrumentationTestCase {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
             // Verify streams cannot be unmuted without policy access.
-            for (int i = 0; i < streams.length; i++) {
+            for (int stream : streams) {
                 try {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_UNMUTE, 0);
+                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
                     assertEquals("Apps without Notification policy access can't change ringer mode",
                             RINGER_MODE_SILENT, mAudioManager.getRingerMode());
                 } catch (SecurityException e) {
                 }
 
                 try {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE,
+                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE,
                             0);
                     assertEquals("Apps without Notification policy access can't change ringer mode",
                             RINGER_MODE_SILENT, mAudioManager.getRingerMode());
@@ -705,7 +706,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 }
 
                 try {
-                    mAudioManager.setStreamMute(streams[i], false);
+                    mAudioManager.setStreamMute(stream, false);
                     assertEquals("Apps without Notification policy access can't change ringer mode",
                             RINGER_MODE_SILENT, mAudioManager.getRingerMode());
                 } catch (SecurityException e) {
@@ -716,37 +717,37 @@ public class AudioManagerTest extends InstrumentationTestCase {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
             mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
-            for (int i = 0; i < streams.length; i++) {
+            for (int stream : streams) {
                 // ensure each stream is on and turned up.
-                mAudioManager.setStreamVolume(streams[i],
-                        mAudioManager.getStreamMaxVolume(streams[i]),
+                mAudioManager.setStreamVolume(stream,
+                        mAudioManager.getStreamMaxVolume(stream),
                         0);
 
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), false);
                 try {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
+                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
                     assertEquals("Apps without Notification policy access can't change ringer mode",
                             RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
                 } catch (SecurityException e) {
                 }
                 try {
                     mAudioManager.adjustStreamVolume(
-                            streams[i], AudioManager.ADJUST_TOGGLE_MUTE, 0);
+                            stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
                     assertEquals("Apps without Notification policy access can't change ringer mode",
                             RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
                 } catch (SecurityException e) {
                 }
 
                 try {
-                    mAudioManager.setStreamMute(streams[i], true);
+                    mAudioManager.setStreamMute(stream, true);
                     assertEquals("Apps without Notification policy access can't change ringer mode",
                             RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
                 } catch (SecurityException e) {
                 }
                 Utils.toggleNotificationPolicyAccess(
                         mContext.getPackageName(), getInstrumentation(), true);
-                testStreamMuting(streams[i]);
+                testStreamMuting(stream);
             }
         } finally {
             Utils.toggleNotificationPolicyAccess(
@@ -779,25 +780,25 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
-            for (int i = 0; i < streams.length; i++) {
+            for (int stream : streams) {
                 // ensure each stream is on and turned up.
-                mAudioManager.setStreamVolume(streams[i],
-                        mAudioManager.getStreamMaxVolume(streams[i]),
+                mAudioManager.setStreamVolume(stream,
+                        mAudioManager.getStreamMaxVolume(stream),
                         0);
-                if (((1 << streams[i]) & muteAffectedStreams) == 0) {
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_MUTE, 0);
-                    assertFalse("Stream " + streams[i] + " should not be affected by mute.",
-                            mAudioManager.isStreamMute(streams[i]));
-                    mAudioManager.setStreamMute(streams[i], true);
-                    assertFalse("Stream " + streams[i] + " should not be affected by mute.",
-                            mAudioManager.isStreamMute(streams[i]));
-                    mAudioManager.adjustStreamVolume(streams[i], AudioManager.ADJUST_TOGGLE_MUTE,
+                if (((1 << stream) & muteAffectedStreams) == 0) {
+                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+                    assertFalse("Stream " + stream + " should not be affected by mute.",
+                            mAudioManager.isStreamMute(stream));
+                    mAudioManager.setStreamMute(stream, true);
+                    assertFalse("Stream " + stream + " should not be affected by mute.",
+                            mAudioManager.isStreamMute(stream));
+                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE,
                             0);
-                    assertFalse("Stream " + streams[i] + " should not be affected by mute.",
-                            mAudioManager.isStreamMute(streams[i]));
+                    assertFalse("Stream " + stream + " should not be affected by mute.",
+                            mAudioManager.isStreamMute(stream));
                     continue;
                 }
-                testStreamMuting(streams[i]);
+                testStreamMuting(stream);
             }
         } finally {
             Utils.toggleNotificationPolicyAccess(
