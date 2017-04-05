@@ -546,6 +546,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testSendDialerSpecialCode() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         try {
             mTelephonyManager.sendDialerSpecialCode("4636");
             fail("Expected SecurityException. App does not have carrier privileges or is not the "
