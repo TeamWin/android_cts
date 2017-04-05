@@ -140,6 +140,7 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     public void testSendDialerSpecialCode() {
+        if (!hasCellular) return;
         try {
             IntentReceiver intentReceiver = new IntentReceiver();
             final IntentFilter intentFilter = new IntentFilter();
