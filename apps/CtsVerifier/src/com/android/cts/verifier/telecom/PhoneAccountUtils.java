@@ -108,4 +108,15 @@ public class PhoneAccountUtils {
                 Context.TELECOM_SERVICE);
         return telecomManager.getPhoneAccount(TEST_SELF_MANAGED_PHONE_ACCOUNT_HANDLE);
     }
+
+    /**
+     * Gets the default outgoing phone account, or null if none selected.
+     * @param context The context.
+     * @return The PhoneAccountHandle
+     */
+    public static PhoneAccountHandle getDefaultOutgoingPhoneAccount(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(
+                Context.TELECOM_SERVICE);
+        return telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+    }
 }
