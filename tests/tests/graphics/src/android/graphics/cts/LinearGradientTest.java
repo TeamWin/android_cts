@@ -24,6 +24,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader.TileMode;
 import android.support.test.filters.SmallTest;
@@ -109,5 +110,18 @@ public class LinearGradientTest {
         ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(0, 0), 5);
         ColorUtils.verifyColor(Color.WHITE, bitmap.getPixel(1, 0), 5);
         ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(2, 0), 5);
+    }
+
+    @Test
+    public void testZeroScaleMatrix() {
+        LinearGradient gradient = new LinearGradient(0.5f, 0, 1.5f, 0,
+                Color.RED, Color.BLUE, TileMode.CLAMP);
+        Matrix m = new Matrix();
+        m.setScale(0, 0);
+        gradient.setLocalMatrix(m);
+        Bitmap bitmap = drawLinearGradient(gradient);
+
+        ColorUtils.verifyColor(Color.BLACK, bitmap.getPixel(0, 0), 1);
+        ColorUtils.verifyColor(Color.BLACK, bitmap.getPixel(20, 20), 1);
     }
 }
