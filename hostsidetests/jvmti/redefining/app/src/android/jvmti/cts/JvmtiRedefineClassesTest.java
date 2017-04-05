@@ -34,6 +34,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import art.Main;
+
 /**
  * Check redefineClasses-related functionality.
  */
@@ -41,7 +43,7 @@ public class JvmtiRedefineClassesTest extends JvmtiTestBase {
 
     @Before
     public void setUp() throws Exception {
-        JniBindings.bindAgentJNI("android/jvmti/cts/JvmtiRedefineClassesTest",
+        Main.bindAgentJNI("android/jvmti/cts/JvmtiRedefineClassesTest",
                 getClass().getClassLoader());
         // make sure everything is cleared.
         setTransformationEvent(false);

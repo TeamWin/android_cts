@@ -21,14 +21,12 @@
 
 #include "android-base/logging.h"
 #include "android-base/stringprintf.h"
-#include "common.h"
 #include "jvmti_helper.h"
 #include "scoped_local_ref.h"
 #include "scoped_utf_chars.h"
+#include "test_env.h"
 
-namespace cts {
-namespace jvmti {
-namespace allocation_tracking {
+namespace art {
 
 static std::string GetClassName(JNIEnv* jni_env, jclass cls) {
   ScopedLocalRef<jclass> class_class(jni_env, jni_env->GetObjectClass(cls));
@@ -65,17 +63,17 @@ extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_setup
   memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
   callbacks.VMObjectAlloc = enable ? ObjectAllocated : nullptr;
 
-  jvmtiError ret = GetJvmtiEnv()->SetEventCallbacks(&callbacks, sizeof(callbacks));
-  JvmtiErrorToException(env, GetJvmtiEnv(), ret);
+  jvmtiError ret = jvmti_env->SetEventCallbacks(&callbacks, sizeof(callbacks));
+  JvmtiErrorToException(env, jvmti_env, ret);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_enableAllocationTracking(
     JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jthread thread, jboolean enable) {
-  jvmtiError ret = GetJvmtiEnv()->SetEventNotificationMode(
+  jvmtiError ret = jvmti_env->SetEventNotificationMode(
       enable ? JVMTI_ENABLE : JVMTI_DISABLE,
       JVMTI_EVENT_VM_OBJECT_ALLOC,
       thread);
-  JvmtiErrorToException(env, GetJvmtiEnv(), ret);
+  JvmtiErrorToException(env, jvmti_env, ret);
 }
 
 extern "C" JNIEXPORT
@@ -95,6 +93,4 @@ jstring JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_getAndResetAllocationTr
   return env->NewStringUTF(result.c_str());
 }
 
-}  // namespace allocation_tracking
-}  // namespace jvmti
-}  // namespace cts
+}  // namespace art

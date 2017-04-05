@@ -15,13 +15,16 @@
  */
 package android.jvmti.cts;
 
-import android.jvmti.JvmtiActivity;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
+
+import android.jvmti.JvmtiActivity;
+import art.CtsMain;
 
 /**
  * Base class for JVMTI tests. Ensures that the agent is connected for the tests. If you
@@ -45,6 +48,6 @@ public abstract class JvmtiTestBase {
         mActivity = mActivityRule.getActivity();
 
         // Make sure that the agent is ready.
-        JniBindings.waitFor();
+        CtsMain.waitFor();
     }
 }
