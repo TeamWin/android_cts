@@ -143,13 +143,13 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     @Option(name = MODULE_ARG_OPTION,
             description = "the arguments to pass to a module. The expected format is"
-                    + "\"<module-name>:<arg-name>:<arg-value>\"",
+                    + "\"<module-name>:<arg-name>:[<arg-key>:]<arg-value>\"",
             importance = Importance.ALWAYS)
     private List<String> mModuleArgs = new ArrayList<>();
 
     @Option(name = TEST_ARG_OPTION,
             description = "the arguments to pass to a test. The expected format is"
-                    + "\"<test-class>:<arg-name>:<arg-value>\"",
+                    + "\"<test-class>:<arg-name>:[<arg-key>:]<arg-value>\"",
             importance = Importance.ALWAYS)
     private List<String> mTestArgs = new ArrayList<>();
 
