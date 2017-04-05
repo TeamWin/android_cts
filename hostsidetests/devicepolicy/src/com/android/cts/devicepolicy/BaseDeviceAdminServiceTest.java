@@ -21,17 +21,25 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
     protected static final String OWNER_PKG = "com.android.cts.deviceadminservice";
+    protected static final String OWNER_PKG_B = "com.android.cts.deviceadminserviceb";
 
     protected static final String OWNER_APK_1 = "CtsDeviceAdminService1.apk";
     protected static final String OWNER_APK_2 = "CtsDeviceAdminService2.apk";
     protected static final String OWNER_APK_3 = "CtsDeviceAdminService3.apk";
     protected static final String OWNER_APK_4 = "CtsDeviceAdminService4.apk";
 
+    protected static final String OWNER_APK_B = "CtsDeviceAdminServiceB.apk";
+
     protected static final String ADMIN_RECEIVER_TEST_CLASS = ".MyOwner";
 
     protected static final String OWNER_COMPONENT = OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS;
     protected static final String OWNER_SERVICE = OWNER_PKG + "/.MyService";
     protected static final String OWNER_SERVICE2 = OWNER_PKG + "/.MyService2";
+
+    protected static final String OWNER_COMPONENT_B = OWNER_PKG_B + "/"
+            + OWNER_PKG + ADMIN_RECEIVER_TEST_CLASS;
+    protected static final String OWNER_SERVICE_B = OWNER_PKG_B + "/"
+            + OWNER_PKG + ".MyService";
 
     private static final int TIMEOUT_SECONDS = 3 * 60;
 
@@ -48,7 +56,9 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
     protected void tearDown() throws Exception {
         if (isTestEnabled()) {
             removeAdmin(OWNER_COMPONENT, getUserId());
+            removeAdmin(OWNER_COMPONENT_B, getUserId());
             getDevice().uninstallPackage(OWNER_PKG);
+            getDevice().uninstallPackage(OWNER_PKG_B);
         }
         super.tearDown();
     }
@@ -67,6 +77,8 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
 
     protected void withRetry(RunnableWithThrowable test) throws Throwable {
         final long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(TIMEOUT_SECONDS);
+
+        Thread.sleep(500);
 
         Throwable lastThrowable = null;
         while (System.nanoTime() < until) {
@@ -98,11 +110,11 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
 
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
 
-        // Uninstall.
+        // Remove admin.
         removeAdmin(OWNER_COMPONENT, getUserId());
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
 
-        // Install -> update.
+        // Overwrite -> update.
         installAppAsUser(OWNER_APK_1, getUserId());
         setAsOwnerOrFail(OWNER_COMPONENT);
         withRetry(() -> assertServiceBound(OWNER_SERVICE));
@@ -139,6 +151,25 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ComponentController", "testEnableService2");
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
         withRetry(() -> assertServiceNotBound(OWNER_SERVICE2));
+
+        // Remove admin.
+        removeAdmin(OWNER_COMPONENT, getUserId());
+        withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
+
+        // Retry with package 1 and remove admin.
+        installAppAsUser(OWNER_APK_1, getUserId());
+        setAsOwnerOrFail(OWNER_COMPONENT);
+        withRetry(() -> assertServiceBound(OWNER_SERVICE));
+
+        removeAdmin(OWNER_COMPONENT, getUserId());
+        withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
+
+        // Now install package B and make it the owner.  OWNER_APK_1 still exists, but it shouldn't
+        // interfere.
+        installAppAsUser(OWNER_APK_B, getUserId());
+        setAsOwnerOrFail(OWNER_COMPONENT_B);
+        withRetry(() -> assertServiceNotBound(OWNER_SERVICE));
+        withRetry(() -> assertServiceBound(OWNER_SERVICE_B));
     }
 
     private String rumpDumpSysService(String component) throws Exception {
