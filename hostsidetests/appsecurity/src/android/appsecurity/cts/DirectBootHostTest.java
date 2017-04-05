@@ -16,6 +16,8 @@
 
 package android.appsecurity.cts;
 
+import com.android.ddmlib.AdbCommandRejectedException;
+import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -44,6 +46,8 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     private static final String MODE_NATIVE = "native";
     private static final String MODE_EMULATED = "emulated";
     private static final String MODE_NONE = "none";
+
+    private static final long SHUTDOWN_TIME_MS = 30 * 1000;
 
     private IAbi mAbi;
     private IBuildInfo mCtsBuild;
@@ -150,6 +154,7 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
                 if (res != null && res.contains("Emulation not supported")) {
                     doTest = false;
                 }
+                getDevice().waitForDeviceNotAvailable(SHUTDOWN_TIME_MS);
                 getDevice().waitForDeviceOnline();
             } else {
                 getDevice().rebootUntilOnline();
@@ -175,11 +180,12 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
                 // Get ourselves back into a known-good state
                 if (MODE_EMULATED.equals(mode)) {
                     getDevice().executeShellCommand("sm set-emulate-fbe false");
+                    getDevice().waitForDeviceNotAvailable(SHUTDOWN_TIME_MS);
                     getDevice().waitForDeviceOnline();
                 } else {
                     getDevice().rebootUntilOnline();
                 }
-                waitForBootCompleted();
+                getDevice().waitForDeviceAvailable();
             }
         }
     }
@@ -207,7 +213,18 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
     }
 
     private boolean isBootCompleted() throws Exception {
-        return "1".equals(getDevice().executeShellCommand("getprop sys.boot_completed").trim());
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        try {
+            getDevice().getIDevice().executeShellCommand("getprop sys.boot_completed", receiver);
+        } catch (AdbCommandRejectedException e) {
+            // do nothing: device might be temporarily disconnected
+            Log.d(TAG, "Ignored AdbCommandRejectedException while `getprop sys.boot_completed`");
+        }
+        String output = receiver.getOutput();
+        if (output != null) {
+            output = output.trim();
+        }
+        return "1".equals(output);
     }
 
     private boolean isSupportedDevice() throws Exception {
@@ -219,6 +236,9 @@ public class DirectBootHostTest extends DeviceTestCase implements IAbiReceiver, 
         for (int i = 0; i < 45; i++) {
             if (isBootCompleted()) {
                 Log.d(TAG, "Yay, system is ready!");
+                // or is it really ready?
+                // guard against potential USB mode switch weirdness at boot
+                Thread.sleep(10 * 1000);
                 return;
             }
             Log.d(TAG, "Waiting for system ready...");
