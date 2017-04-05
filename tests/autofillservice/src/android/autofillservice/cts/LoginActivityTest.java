@@ -88,6 +88,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
+    // TODO(b/33197203 , b/36855717): remove when bug 36855717 is fixed
+    private static final boolean BUG_36855717_FIXED = false;
+
+    // TODO(b/33197203 , b/35707731): remove when fixed
+    private static final boolean SUPPORTS_PARTIOTINED_AUTH = false;
+
     @Rule
     public final ActivityTestRule<LoginActivity> mActivityRule =
             new ActivityTestRule<LoginActivity>(LoginActivity.class);
@@ -901,7 +907,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testFillResponseAuth() throws Exception {
+    public void testFillResponseAuthBothFields() throws Exception {
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -938,18 +944,124 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // Wait for onFill() before proceeding.
         sReplier.getNextFillRequest();
         final View username = mActivity.getUsername();
+        callback.assertUiShownEvent(username);
+        sUiBot.assertShownByText("Tap to auth response");
 
+        // Make sure UI is show on 2nd field as weell
+        final View password = mActivity.getPassword();
+        mActivity.onPassword(View::requestFocus);
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+        sUiBot.assertShownByText("Tap to auth response");
 
-        // Authenticate
+        // Now tap on 1st field to show it again...
+        mActivity.onUsername(View::requestFocus);
+        callback.assertUiHiddenEvent(password);
         callback.assertUiShownEvent(username);
         sUiBot.selectByText("Tap to auth response");
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNotShownByText("Tap to auth response");
 
-        // Select the dataset
-        callback.assertUiShownEvent(username);
+        // ...and select it this time
+        if (BUG_36855717_FIXED) {
+            callback.assertUiShownEvent(username);
+        }
         sUiBot.selectDataset("Dataset");
+        if (BUG_36855717_FIXED) {
+            callback.assertUiHiddenEvent(username);
+        }
+        sUiBot.assertNoDatasets();
+        sUiBot.assertNotShownByText("Tap to auth response");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+
+        final Bundle data = AuthenticationActivity.getData();
+        assertThat(data).isNotNull();
+        final String extraValue = data.getString("numbers");
+        assertThat(extraValue).isEqualTo("4815162342");
+    }
+
+    @Test
+    public void testFillResponseAuthJustOneField() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Prepare the authenticated response
+        final Bundle extras = new Bundle();
+        extras.putString("numbers", "4815162342");
+        AuthenticationActivity.setResponse(
+                new CannedFillResponse.Builder()
+            .addDataset(new CannedDataset.Builder()
+                    .setField(ID_USERNAME, "dude")
+                    .setField(ID_PASSWORD, "sweet")
+                    .setPresentation(createPresentation("Dataset"))
+                    .build())
+            .setAuthenticationIds(ID_USERNAME)
+            .build());
+
+        // Create the authentication intent
+        final IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication)
+                .setPresentation(createPresentation("Tap to auth response"))
+                .setExtras(extras)
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+        callback.assertUiShownEvent(username);
+        sUiBot.assertShownByText("Tap to auth response");
+
+        if (SUPPORTS_PARTIOTINED_AUTH) {
+            // Make sure UI is not show on 2nd field
+            final View password = mActivity.getPassword();
+            mActivity.onPassword(View::requestFocus);
+            callback.assertUiHiddenEvent(username);
+            sUiBot.assertNotShownByText("Tap to auth response");
+            // Now tap on 1st field to show it again...
+            mActivity.onUsername(View::requestFocus);
+            callback.assertUiShownEvent(username);
+        } else {
+            // Make sure UI is show on 2nd field as well
+            final View password = mActivity.getPassword();
+            mActivity.onPassword(View::requestFocus);
+
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(password);
+            sUiBot.assertShownByText("Tap to auth response");
+
+            // Now tap on 1st field to show it again...
+            mActivity.onUsername(View::requestFocus);
+            callback.assertUiHiddenEvent(password);
+            callback.assertUiShownEvent(username);
+        }
+
+        // ...and select it this time
+        sUiBot.selectByText("Tap to auth response");
         callback.assertUiHiddenEvent(username);
+        sUiBot.assertNotShownByText("Tap to auth response");
+
+        if (BUG_36855717_FIXED) {
+            callback.assertUiShownEvent(username);
+        }
+        sUiBot.selectDataset("Dataset");
+        if (BUG_36855717_FIXED) {
+            callback.assertUiHiddenEvent(username);
+        }
+        sUiBot.assertNoDatasets();
+        sUiBot.assertNotShownByText("Tap to auth response");
 
         // Check the results.
         mActivity.assertAutoFilled();
