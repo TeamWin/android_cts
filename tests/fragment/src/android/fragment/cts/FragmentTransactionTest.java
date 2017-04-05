@@ -20,9 +20,12 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.Instrumentation;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -39,6 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests usage of the {@link FragmentTransaction} class.
@@ -318,6 +322,36 @@ public class FragmentTransactionTest {
                     .commitNowAllowingStateLoss();
             assertEquals(0, fm.getFragments().size());
         });
+    }
+
+    /**
+     * onNewIntent() should note that the state is not saved so that child fragment
+     * managers can execute transactions.
+     */
+    @Test
+    public void newIntentUnlocks() throws Throwable {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        Intent intent1 = new Intent(mActivity, NewIntentActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        NewIntentActivity newIntentActivity =
+                (NewIntentActivity) instrumentation.startActivitySync(intent1);
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        Intent intent2 = new Intent(mActivity, FragmentTestActivity.class);
+        intent2.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Activity coveringActivity = instrumentation.startActivitySync(intent2);
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        Intent intent3 = new Intent(mActivity, NewIntentActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mActivity.startActivity(intent3);
+        assertTrue(newIntentActivity.newIntent.await(1, TimeUnit.SECONDS));
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        for (Fragment fragment : newIntentActivity.getFragmentManager().getFragments()) {
+            // There really should only be one fragment in newIntentActivity.
+            assertEquals(1, fragment.getChildFragmentManager().getFragments().size());
+        }
     }
 
     private void getFragmentsUntilSize(int expectedSize) {
