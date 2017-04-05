@@ -65,8 +65,7 @@ public class UsesLibraryHostTest extends DeviceTestCase implements IAbiReceiver,
     }
 
     public void testUsesLibrary() throws Exception {
-        assertNull(getDevice().installPackage(
-                MigrationHelper.getTestFile(mCtsBuild, APK), false, false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK), false, false));
         runDeviceTests(PKG, ".UsesLibraryTest", "testUsesLibrary");
     }
 
