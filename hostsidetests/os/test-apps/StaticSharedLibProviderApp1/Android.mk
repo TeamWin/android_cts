@@ -24,6 +24,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderApp1
 
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
+
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_PROGUARD_ENABLED := disabled

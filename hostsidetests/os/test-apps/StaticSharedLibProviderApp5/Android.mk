@@ -24,6 +24,8 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_PACKAGE_NAME := CtsStaticSharedLibProviderApp5
 
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-b
+
 LOCAL_COMPATIBILITY_SUITE := cts
 
 LOCAL_AAPT_FLAGS := --shared-lib
