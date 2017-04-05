@@ -186,4 +186,10 @@
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testGyroscopeHardwareBufferVeryFast" />
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testMagneticFieldHardwareBufferVeryFast" />
 
+    <!-- b/33090965 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf0320x0180" />
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf0640x0360" />
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1280x0720" />
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1920x1080" />
+
 </configuration>
