@@ -21,6 +21,7 @@ import static android.os.ParcelFileDescriptor.MODE_READ_ONLY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -56,7 +57,7 @@ public class FontResultTest {
             new ParcelFileDescriptor(new FileDescriptor());
     private static final int TTC_INDEX = 3;
     private static final String FONT_VARIATION_SETTINGS = "my_settings";
-    private static final int STYLE = Typeface.BOLD_ITALIC;
+    private static final int BOLD_WEIGHT = 700;
     private static final String TEST_FONT_FILE = "samplefont.ttf";
     private Resources mResources;
     private Activity mActivity;
@@ -75,7 +76,8 @@ public class FontResultTest {
     public void testWriteToParcel() throws IOException {
         ParcelFileDescriptor pfd = loadFont();
         // GIVEN a FontResult
-        FontResult fontResult = new FontResult(pfd, TTC_INDEX, FONT_VARIATION_SETTINGS, STYLE);
+        FontResult fontResult = new FontResult(pfd, TTC_INDEX, FONT_VARIATION_SETTINGS,
+                BOLD_WEIGHT, true /* italic */);
 
         // WHEN we write it to a Parcel
         Parcel dest = Parcel.obtain();
@@ -87,18 +89,20 @@ public class FontResultTest {
         assertNotNull(result.getFileDescriptor());
         assertEquals(TTC_INDEX, result.getTtcIndex());
         assertEquals(FONT_VARIATION_SETTINGS, result.getFontVariationSettings());
-        assertEquals(STYLE, result.getStyle());
+        assertEquals(BOLD_WEIGHT, result.getWeight());
+        assertTrue(result.getItalic());
     }
 
     @Test(expected = NullPointerException.class)
     public void testConstructorWithNullFileDescriptor() {
-        new FontResult(null, TTC_INDEX, FONT_VARIATION_SETTINGS, STYLE);
+        new FontResult(null, TTC_INDEX, FONT_VARIATION_SETTINGS, BOLD_WEIGHT, false /* italic */);
     }
 
     @Test
     public void testConstructorWithNullFontVariationSettings() {
         // WHEN we create a result with a null fontVariationSettings
-        FontResult fontResult = new FontResult(FILE_DESCRIPTOR, TTC_INDEX, null, STYLE);
+        FontResult fontResult = new FontResult(FILE_DESCRIPTOR, TTC_INDEX, null, BOLD_WEIGHT,
+                false /* italic */);
 
         // THEN we expect no exception to be raised, and null to be stored as the value.
         assertNull(fontResult.getFontVariationSettings());
