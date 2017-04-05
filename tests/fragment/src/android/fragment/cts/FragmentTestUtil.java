@@ -16,6 +16,7 @@
 package android.fragment.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -23,6 +24,8 @@ import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
 import android.app.Instrumentation;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.support.test.InstrumentationRegistry;
@@ -34,6 +37,8 @@ import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class FragmentTestUtil {
     public static void waitForExecution(final ActivityTestRule<? extends Activity> rule) {
@@ -211,4 +216,59 @@ public class FragmentTestUtil {
         Runtime.getRuntime().gc();
         Runtime.getRuntime().runFinalization();
     }
-}
+
+    /**
+     * Switches the orientation of the OrientationChangeActivity.
+     *
+     * @return {@code true} if the orientation changed or {@code false} if the screen is square
+     * or some other error happens
+     */
+    public static boolean switchOrientation() throws InterruptedException {
+        OrientationChangeActivity activity = OrientationChangeActivity.sActivity;
+
+        int currentOrientation = activity.getResources().getConfiguration().orientation;
+
+        int nextOrientation;
+        int expectedOrientation;
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            nextOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            expectedOrientation = Configuration.ORIENTATION_PORTRAIT;
+        } else if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
+            nextOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            expectedOrientation = Configuration.ORIENTATION_LANDSCAPE;
+        } else {
+            return false; // Don't know what to do with square or unknown orientations
+        }
+
+        // Now switch the orientation
+        LoaderActivity.sResumed = new CountDownLatch(1);
+        LoaderActivity.sDestroyed = new CountDownLatch(1);
+
+        activity.setRequestedOrientation(nextOrientation);
+        assertTrue(LoaderActivity.sResumed.await(1, TimeUnit.SECONDS));
+        assertTrue(LoaderActivity.sDestroyed.await(1, TimeUnit.SECONDS));
+
+        int switchedOrientation =
+                LoaderActivity.sActivity.getResources().getConfiguration().orientation;
+        assertEquals(expectedOrientation, switchedOrientation);
+        return true;
+    }
+
+    /**
+     * After calling {@link #switchOrientation()}, this must be called in an After.
+     */
+    public static void resetOrientation() {
+        final OrientationChangeActivity activity = OrientationChangeActivity.sActivity;
+        final int unspecifiedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+        if (activity != null && activity.getRequestedOrientation() != unspecifiedOrientation) {
+            OrientationChangeActivity.sResumed = new CountDownLatch(1);
+            activity.setRequestedOrientation(unspecifiedOrientation);
+            // Wait for the orientation change to settle, if there was a change
+            try {
+                OrientationChangeActivity.sResumed.await(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // I guess there wasn't a change in orientation after all
+            }
+        }
+        OrientationChangeActivity.clearState();
+    }}

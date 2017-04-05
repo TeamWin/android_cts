@@ -30,25 +30,13 @@ import java.util.concurrent.CountDownLatch;
  * This Activity sets the text when loading completes. It also tracks the Activity in
  * a static variable, so it must be cleared in test tear down.
  */
-public class LoaderActivity extends Activity {
-    // These must be cleared after each test using clearState()
-    public static LoaderActivity sActivity;
-    public static CountDownLatch sResumed;
-    public static CountDownLatch sDestroyed;
-
+public class LoaderActivity extends OrientationChangeActivity {
     public TextView textView;
     public TextView textViewB;
-
-    public static void clearState() {
-        sActivity = null;
-        sResumed = null;
-        sDestroyed = null;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sActivity = this;
 
         setContentView(R.layout.text_a);
         textView = (TextView) findViewById(R.id.textA);
@@ -63,17 +51,6 @@ public class LoaderActivity extends Activity {
     protected void onResume() {
         super.onResume();
         getLoaderManager().initLoader(0, null, new TextLoaderCallback());
-        if (sResumed != null) {
-            sResumed.countDown();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (sDestroyed != null) {
-            sDestroyed.countDown();
-        }
     }
 
     class TextLoaderCallback implements LoaderManager.LoaderCallbacks<String> {
