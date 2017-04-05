@@ -20,6 +20,6 @@ LOCAL_MODULE := CtsJvmtiHostTestBase
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
 LOCAL_SDK_VERSION := current
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed-prebuilt compatibility-host-util
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 include $(BUILD_HOST_JAVA_LIBRARY)
