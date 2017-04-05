@@ -15,13 +15,13 @@
  */
 package android.uirendering.cts.testinfrastructure;
 
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.Nullable;
 import android.uirendering.cts.R;
 import android.view.View;
 import android.view.ViewGroup;
@@ -169,13 +169,15 @@ public class DrawActivity extends Activity {
     }
 
     private class DrawCounterListener implements ViewTreeObserver.OnDrawListener {
+        private final int[] mLocationOnScreen = new int[2];
+
         @Override
         public void onDraw() {
             mView.post(() -> {
                 mView.getViewTreeObserver().removeOnDrawListener(this);
                 synchronized (mLock) {
-                    final int[] locationOnScreen = mViewWrapper.getLocationOnScreen();
-                    mLock.set(locationOnScreen[0], locationOnScreen[1]);
+                    mViewWrapper.getLocationOnScreen(mLocationOnScreen);
+                    mLock.set(mLocationOnScreen[0], mLocationOnScreen[1]);
                     mLock.notify();
                 }
             });

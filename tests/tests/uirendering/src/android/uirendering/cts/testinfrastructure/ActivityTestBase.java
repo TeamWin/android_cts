@@ -17,13 +17,13 @@ package android.uirendering.cts.testinfrastructure;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
-import android.annotation.Nullable;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
