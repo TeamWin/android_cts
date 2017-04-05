@@ -420,7 +420,6 @@ public class TvContractTest extends AndroidTestCase {
         ContentValues baseValues = createDummyChannelValues(mInputId, false);
         Uri channelUri = mContentResolver.insert(mChannelsUri, baseValues);
 
-        final String COLUMN_SYSTEM_APPROVED = "system_approved";
 
         // Test: insert
         ContentValues values = new ContentValues(baseValues);
@@ -428,14 +427,6 @@ public class TvContractTest extends AndroidTestCase {
         try {
             mContentResolver.insert(mChannelsUri, values);
             fail("Channels.COLUMN_BROWSABLE should be read-only.");
-        } catch (Exception e) {
-            // Expected.
-        }
-        values = new ContentValues(baseValues);
-        values.put(COLUMN_SYSTEM_APPROVED, 1);
-        try {
-            mContentResolver.insert(mChannelsUri, values);
-            fail("'" + COLUMN_SYSTEM_APPROVED + "' should be read-only.");
         } catch (Exception e) {
             // Expected.
         }
@@ -454,14 +445,6 @@ public class TvContractTest extends AndroidTestCase {
         try {
             mContentResolver.update(channelUri, values, null, null);
             fail("Channels.COLUMN_BROWSABLE should be read-only.");
-        } catch (Exception e) {
-            // Expected.
-        }
-        values = new ContentValues(baseValues);
-        values.put(COLUMN_SYSTEM_APPROVED, 1);
-        try {
-            mContentResolver.update(channelUri, values, null, null);
-            fail("'" + COLUMN_SYSTEM_APPROVED + "' should be read-only.");
         } catch (Exception e) {
             // Expected.
         }
