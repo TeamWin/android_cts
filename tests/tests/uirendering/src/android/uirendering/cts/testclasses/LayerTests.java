@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.annotation.ColorInt;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
@@ -32,6 +31,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Region.Op;
+import android.support.annotation.ColorInt;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
