@@ -55,28 +55,30 @@ import java.util.Map;
  */
 final class CannedFillResponse {
 
-    final List<CannedDataset> datasets;
-    final int saveType;
-    final String[] requiredSavableIds;
-    final String[] optionalSavableIds;
-    final String saveDescription;
-    final Bundle extras;
-    final RemoteViews presentation;
-    final IntentSender authentication;
-    final CharSequence negativeActionLabel;
-    final IntentSender negativeActionListener;
+    private final List<CannedDataset> mDatasets;
+    private final int mSaveType;
+    private final String[] mRequiredSavableIds;
+    private final String[] mOptionalSavableIds;
+    private final String mSaveDescription;
+    private final Bundle mExtras;
+    private final RemoteViews mPresentation;
+    private final IntentSender mAuthentication;
+    private final String[] mAuthenticationIds;
+    private final CharSequence mNegativeActionLabel;
+    private final IntentSender mNegativeActionListener;
 
     private CannedFillResponse(Builder builder) {
-        datasets = builder.mDatasets;
-        requiredSavableIds = builder.mRequiredSavableIds;
-        optionalSavableIds = builder.mOptionalSavableIds;
-        saveDescription = builder.mSaveDescription;
-        saveType = builder.mSaveType;
-        extras = builder.mExtras;
-        presentation = builder.mPresentation;
-        authentication = builder.mAuthentication;
-        negativeActionLabel = builder.mNegativeActionLabel;
-        negativeActionListener = builder.mNegativeActionListener;
+        mDatasets = builder.mDatasets;
+        mRequiredSavableIds = builder.mRequiredSavableIds;
+        mOptionalSavableIds = builder.mOptionalSavableIds;
+        mSaveDescription = builder.mSaveDescription;
+        mSaveType = builder.mSaveType;
+        mExtras = builder.mExtras;
+        mPresentation = builder.mPresentation;
+        mAuthentication = builder.mAuthentication;
+        mAuthenticationIds = builder.mAuthenticationIds;
+        mNegativeActionLabel = builder.mNegativeActionLabel;
+        mNegativeActionListener = builder.mNegativeActionListener;
     }
 
     /**
@@ -91,41 +93,43 @@ final class CannedFillResponse {
      */
     FillResponse asFillResponse(AssistStructure structure) {
         final FillResponse.Builder builder = new FillResponse.Builder();
-        if (datasets != null) {
-            for (CannedDataset cannedDataset : datasets) {
+        if (mDatasets != null) {
+            for (CannedDataset cannedDataset : mDatasets) {
                 final Dataset dataset = cannedDataset.asDataset(structure);
                 assertWithMessage("Cannot create datase").that(dataset).isNotNull();
                 builder.addDataset(dataset);
             }
         }
-        if (requiredSavableIds != null) {
-            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(saveType,
-                    getAutofillIds(structure, requiredSavableIds));
-            if (optionalSavableIds != null) {
-                saveInfo.setOptionalIds(getAutofillIds(structure, optionalSavableIds));
+        if (mRequiredSavableIds != null) {
+            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(mSaveType,
+                    getAutofillIds(structure, mRequiredSavableIds));
+            if (mOptionalSavableIds != null) {
+                saveInfo.setOptionalIds(getAutofillIds(structure, mOptionalSavableIds));
             }
-            if (saveDescription != null) {
-                saveInfo.setDescription(saveDescription);
+            if (mSaveDescription != null) {
+                saveInfo.setDescription(mSaveDescription);
             }
-            if (negativeActionLabel != null) {
-                saveInfo.setNegativeAction(negativeActionLabel, negativeActionListener);
+            if (mNegativeActionLabel != null) {
+                saveInfo.setNegativeAction(mNegativeActionLabel, mNegativeActionListener);
             }
             builder.setSaveInfo(saveInfo.build());
         }
         return builder
-                .setExtras(extras)
-                .setAuthentication(authentication, presentation)
+                .setExtras(mExtras)
+                .setAuthentication(getAutofillIds(structure, mAuthenticationIds), mAuthentication,
+                        mPresentation)
                 .build();
     }
 
     @Override
     public String toString() {
-        return "CannedFillResponse: [datasets=" + datasets
-                + ", requiredSavableIds=" + Arrays.toString(requiredSavableIds)
-                + ", optionalSavableIds=" + Arrays.toString(optionalSavableIds)
-                + ", saveDescription=" + saveDescription
-                + ", hasPresentation=" + (presentation != null)
-                + ", hasAuthentication=" + (authentication != null)
+        return "CannedFillResponse: [datasets=" + mDatasets
+                + ", requiredSavableIds=" + Arrays.toString(mRequiredSavableIds)
+                + ", optionalSavableIds=" + Arrays.toString(mOptionalSavableIds)
+                + ", saveDescription=" + mSaveDescription
+                + ", hasPresentation=" + (mPresentation != null)
+                + ", hasAuthentication=" + (mAuthentication != null)
+                + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
                 + "]";
     }
 
@@ -138,6 +142,7 @@ final class CannedFillResponse {
         private Bundle mExtras;
         private RemoteViews mPresentation;
         private IntentSender mAuthentication;
+        private String[] mAuthenticationIds;
         private CharSequence mNegativeActionLabel;
         private IntentSender mNegativeActionListener;
 
@@ -197,6 +202,14 @@ final class CannedFillResponse {
         }
 
         /**
+         * Sets the authentication ids.
+         */
+        public Builder setAuthenticationIds(String... ids) {
+            mAuthenticationIds = ids;
+            return this;
+        }
+
+        /**
          * Sets the negative action spec.
          */
         public Builder setNegativeAction(CharSequence label,
@@ -227,28 +240,28 @@ final class CannedFillResponse {
      * </pre class="prettyprint">
      */
     static class CannedDataset {
-        final Map<String, AutofillValue> fieldValues;
-        final Map<String, RemoteViews> fieldPresentations;
-        final RemoteViews presentation;
-        final IntentSender authentication;
+        private final Map<String, AutofillValue> mFieldValues;
+        private final Map<String, RemoteViews> mFieldPresentations;
+        private final RemoteViews mPresentation;
+        private final IntentSender mAuthentication;
 
         private CannedDataset(Builder builder) {
-            fieldValues = builder.mFieldValues;
-            fieldPresentations = builder.mFieldPresentations;
-            presentation = builder.mPresentation;
-            authentication = builder.mAuthentication;
+            mFieldValues = builder.mFieldValues;
+            mFieldPresentations = builder.mFieldPresentations;
+            mPresentation = builder.mPresentation;
+            mAuthentication = builder.mAuthentication;
         }
 
         /**
          * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
          */
         Dataset asDataset(AssistStructure structure) {
-            final Dataset.Builder builder = (presentation == null)
+            final Dataset.Builder builder = (mPresentation == null)
                     ? new Dataset.Builder()
-                    : new Dataset.Builder(presentation);
+                    : new Dataset.Builder(mPresentation);
 
-            if (fieldValues != null) {
-                for (Map.Entry<String, AutofillValue> entry : fieldValues.entrySet()) {
+            if (mFieldValues != null) {
+                for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
                     final String resourceId = entry.getKey();
                     final ViewNode node = findNodeByResourceId(structure, resourceId);
                     if (node == null) {
@@ -257,7 +270,7 @@ final class CannedFillResponse {
                     }
                     final AutofillId id = node.getAutofillId();
                     final AutofillValue value = entry.getValue();
-                    final RemoteViews presentation = fieldPresentations.get(resourceId);
+                    final RemoteViews presentation = mFieldPresentations.get(resourceId);
                     if (presentation != null) {
                         builder.setValue(id, value, presentation);
                     } else {
@@ -265,16 +278,16 @@ final class CannedFillResponse {
                     }
                 }
             }
-            builder.setAuthentication(authentication);
+            builder.setAuthentication(mAuthentication);
             return builder.build();
         }
 
         @Override
         public String toString() {
-            return "CannedDataset: [hasPresentation=" + (presentation != null)
-                    + ", fieldPresentations=" + (fieldPresentations)
-                    + ", hasAuthentication=" + (authentication != null)
-                    + ", fieldValuess=" + fieldValues + "]";
+            return "CannedDataset: [hasPresentation=" + (mPresentation != null)
+                    + ", fieldPresentations=" + (mFieldPresentations)
+                    + ", hasAuthentication=" + (mAuthentication != null)
+                    + ", fieldValuess=" + mFieldValues + "]";
         }
 
         static class Builder {
