@@ -362,6 +362,11 @@ public class AdapterViewTest {
         assertTrue(mAdapterView.isFocusable());
         assertTrue(mAdapterView.isFocusableInTouchMode());
 
+        // FOCUSABLE_AUTO should also work with children added (AbsListView is clickable)
+        mAdapterView.setFocusable(View.FOCUSABLE_AUTO);
+        assertTrue(mAdapterView.isFocusable());
+        assertTrue(mAdapterView.isFocusableInTouchMode());
+
         mAdapterView.setFocusable(false);
         assertFalse(mAdapterView.isFocusable());
         assertFalse(mAdapterView.isFocusableInTouchMode());
