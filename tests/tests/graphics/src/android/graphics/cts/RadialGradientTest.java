@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
 import android.graphics.Shader.TileMode;
@@ -61,5 +62,27 @@ public class RadialGradientTest {
         ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(0, 0), 5);
         ColorUtils.verifyColor(Color.WHITE, bitmap.getPixel(1, 0), 5);
         ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(2, 0), 5);
+    }
+
+    @Test
+    public void testZeroScaleMatrix() {
+        RadialGradient gradient = new RadialGradient(0.5f, 0.5f, 1,
+                Color.RED, Color.BLUE, TileMode.CLAMP);
+
+        Matrix m = new Matrix();
+        m.setScale(0, 0);
+        gradient.setLocalMatrix(m);
+
+        Bitmap bitmap = Bitmap.createBitmap(3, 1, Config.ARGB_8888);
+        bitmap.eraseColor(Color.BLACK);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint paint = new Paint();
+        paint.setShader(gradient);
+        canvas.drawPaint(paint);
+
+        ColorUtils.verifyColor(Color.BLACK, bitmap.getPixel(0, 0), 1);
+        ColorUtils.verifyColor(Color.BLACK, bitmap.getPixel(1, 0), 1);
+        ColorUtils.verifyColor(Color.BLACK, bitmap.getPixel(2, 0), 1);
     }
 }
