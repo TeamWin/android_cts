@@ -154,7 +154,17 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
         // Figure out who is going to answer the phone
         final ResolveInfo ri = context.getPackageManager().resolveActivity(intent, 0);
+        final String pkg = ri.activityInfo.packageName;
         Log.d(TAG, "We're probably launching " + ri);
+
+        // Grant them all the permissions they might want
+        getInstrumentation().getUiAutomation().executeShellCommand("pm grant "
+                + pkg + " " + android.Manifest.permission.CAMERA);
+        getInstrumentation().getUiAutomation().executeShellCommand("pm grant "
+                + pkg + " " + android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        getInstrumentation().getUiAutomation().executeShellCommand("pm grant "
+                + pkg + " " + android.Manifest.permission.ACCESS_FINE_LOCATION);
+        Thread.sleep(1000);
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
@@ -174,7 +184,6 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         // Hrm, that didn't work; let's try an alternative approach of digging
         // around for a shutter button
         if (result == null) {
-            final String pkg = ri.activityInfo.packageName;
             mDevice.findObject(new UiSelector().resourceId(pkg + ":id/shutter_button")).click();
             mDevice.waitForIdle();
             SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
