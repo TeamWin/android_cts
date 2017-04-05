@@ -39,6 +39,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -59,7 +60,7 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD =
             "autofill_save_type_credit_card";
     private static final String RESOURCE_STRING_SAVE_TYPE_USERNAME = "autofill_save_type_username";
-    private static final String RESOURCE_STRING_SAVE_TYPE_EMAIL =
+    private static final String RESOURCE_STRING_SAVE_TYPE_EMAIL_ADDRESS =
             "autofill_save_type_email_address";
     private static final String RESOURCE_STRING_AUTOFILL = "autofill";
     private static final String RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE =
@@ -164,7 +165,7 @@ final class UiBot {
      * Asserts the save snackbar is showing and returns it.
      */
     UiObject2 assertSaveShowing(int type) {
-        return assertSaveShowing(type, null);
+        return assertSaveShowing(null, type);
     }
 
     /**
@@ -181,46 +182,63 @@ final class UiBot {
         throw new AssertionError("snack bar is showing");
     }
 
-    UiObject2 assertSaveShowing(int type, String description) {
+    private String getSaveTypeString(int type) {
+        final String typeResourceName;
+        switch (type) {
+            case SAVE_DATA_TYPE_PASSWORD:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_PASSWORD;
+                break;
+            case SAVE_DATA_TYPE_ADDRESS:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_ADDRESS;
+                break;
+            case SAVE_DATA_TYPE_CREDIT_CARD:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD;
+                break;
+            case SAVE_DATA_TYPE_USERNAME:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_USERNAME;
+                break;
+            case SAVE_DATA_TYPE_EMAIL_ADDRESS:
+                typeResourceName = RESOURCE_STRING_SAVE_TYPE_EMAIL_ADDRESS;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported type: " + type);
+        }
+        return getString(typeResourceName);
+    }
+
+    UiObject2 assertSaveShowing(String description, int... types) {
         final UiObject2 snackbar = waitForObject(By.res("android", RESOURCE_ID_SAVE_SNACKBAR),
                 SAVE_TIMEOUT_MS);
 
         final UiObject2 titleView = snackbar.findObject(By.res("android", RESOURCE_ID_SAVE_TITLE));
         assertWithMessage("save title (%s)", RESOURCE_ID_SAVE_TITLE).that(titleView).isNotNull();
 
-        final String serviceLabel = InstrumentedAutoFillService.class.getSimpleName();
-        final String expectedTitle;
-        if (type == SAVE_DATA_TYPE_GENERIC) {
-            expectedTitle = getString(RESOURCE_STRING_SAVE_TITLE, serviceLabel);
-        } else {
-            final String typeResourceName;
-            switch (type) {
-                case SAVE_DATA_TYPE_PASSWORD:
-                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_PASSWORD;
-                    break;
-                case SAVE_DATA_TYPE_ADDRESS:
-                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_ADDRESS;
-                    break;
-                case SAVE_DATA_TYPE_CREDIT_CARD:
-                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_CREDIT_CARD;
-                    break;
-                case SAVE_DATA_TYPE_USERNAME:
-                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_USERNAME;
-                    break;
-                case SAVE_DATA_TYPE_EMAIL_ADDRESS:
-                    typeResourceName = RESOURCE_STRING_SAVE_TYPE_EMAIL;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported type: " + type);
-            }
-            final String typeString = getString(typeResourceName);
-            expectedTitle = getString(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE, typeString,
-                    serviceLabel);
-        }
-
         final String actualTitle = titleView.getText();
         Log.d(TAG, "save title: " + actualTitle);
-        assertThat(actualTitle).isEqualTo(expectedTitle);
+
+        final String serviceLabel = InstrumentedAutoFillService.class.getSimpleName();
+        switch (types.length) {
+            case 1:
+                final String expectedTitle = (types[0] == SAVE_DATA_TYPE_GENERIC)
+                        ? getString(RESOURCE_STRING_SAVE_TITLE, serviceLabel)
+                        : getString(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE,
+                                getSaveTypeString(types[0]), serviceLabel);
+                assertThat(actualTitle).isEqualTo(expectedTitle);
+                break;
+            case 2:
+                // We cannot predict the order...
+                assertThat(actualTitle).contains(getSaveTypeString(types[0]));
+                assertThat(actualTitle).contains(getSaveTypeString(types[1]));
+                break;
+            case 3:
+                // We cannot predict the order...
+                assertThat(actualTitle).contains(getSaveTypeString(types[0]));
+                assertThat(actualTitle).contains(getSaveTypeString(types[1]));
+                assertThat(actualTitle).contains(getSaveTypeString(types[2]));
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid types: " + Arrays.toString(types));
+        }
 
         if (description != null) {
             final UiObject2 saveSubTitle = snackbar.findObject(By.text(description));
@@ -233,11 +251,11 @@ final class UiBot {
     /**
      * Taps an option in the save snackbar.
      *
-     * @param type expected type of save info.
      * @param yesDoIt {@code true} for 'YES', {@code false} for 'NO THANKS'.
+     * @param types expected types of save info.
      */
-    void saveForAutofill(int type, boolean yesDoIt) {
-        final UiObject2 saveSnackBar = assertSaveShowing(type, null);
+    void saveForAutofill(boolean yesDoIt, int... types) {
+        final UiObject2 saveSnackBar = assertSaveShowing(null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
     }
 

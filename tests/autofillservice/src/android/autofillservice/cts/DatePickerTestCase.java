@@ -90,7 +90,7 @@ abstract class DatePickerTestCase<T extends AbstractDatePickerActivity>
         activity.setDate(2010, 11, 12);
         activity.tapOk();
 
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_GENERIC, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 

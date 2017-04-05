@@ -241,7 +241,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mActivity.onAddress((v) -> v.check(R.id.work_address));
         mActivity.onSaveCc((v) -> v.setChecked(false));
         mActivity.tapBuy();
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_CREDIT_CARD, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_CREDIT_CARD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
         // Assert sanitization on save: everything should be available!
