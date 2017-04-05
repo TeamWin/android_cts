@@ -6448,6 +6448,7 @@ public class TextViewTest {
         final TextUtils.TruncateAt newEllipsizeValue = TextUtils.TruncateAt.END;
         mActivityRule.runOnUiThread(() ->
                 textView.setEllipsize(newEllipsizeValue));
+        mInstrumentation.waitForIdleSync();
         assertEquals(newEllipsizeValue, textView.getEllipsize());
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_NONE, textView.getAutoSizeTextType());
         assertEquals(-1, textView.getAutoSizeMinTextSize());
@@ -6457,6 +6458,7 @@ public class TextViewTest {
 
         mActivityRule.runOnUiThread(() ->
                 textView.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM));
+        mInstrumentation.waitForIdleSync();
         assertEquals(newEllipsizeValue, textView.getEllipsize());
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, textView.getAutoSizeTextType());
         // The auto-size defaults have been used.
@@ -6771,6 +6773,19 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
 
         assertEquals(initialTextSize, autoSizeTextView.getTextSize(), 0f);
+    }
+
+    @Test
+    public void testAutoSizeCallers_setHeightForOneLineText() throws Throwable {
+        final TextView autoSizeTextView = (TextView) mActivity.findViewById(
+                R.id.textview_autosize_basic);
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, autoSizeTextView.getAutoSizeTextType());
+        final float initialTextSize = autoSizeTextView.getTextSize();
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setHeight(
+                autoSizeTextView.getHeight() * 3));
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(autoSizeTextView.getTextSize() > initialTextSize);
     }
 
     @Test
