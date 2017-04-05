@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 
+import art.Main;
+
 /**
  * Check tagging-related functionality.
  */
@@ -27,7 +29,7 @@ public class JvmtiTrackingTest extends JvmtiTestBase {
     @Before
     public void setUp() throws Exception {
         // Bind our native methods.
-        JniBindings.bindAgentJNI("android/jvmti/cts/JvmtiTrackingTest",
+        Main.bindAgentJNI("android/jvmti/cts/JvmtiTrackingTest",
                 getClass().getClassLoader());
 
         prefetchClassNames();

@@ -18,26 +18,22 @@
 
 #include "android-base/logging.h"
 #include "android-base/macros.h"
-#include "common.h"
 #include "jni_helper.h"
 #include "jvmti_helper.h"
 #include "jvmti.h"
 #include "scoped_primitive_array.h"
+#include "test_env.h"
 
-namespace cts {
-namespace jvmti {
-namespace tagging {
+namespace art {
 
 extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JniBindings_setTag(
     JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jobject obj, jlong tag) {
-  jvmtiEnv* jvmti_env = GetJvmtiEnv();
   jvmtiError ret = jvmti_env->SetTag(obj, tag);
   JvmtiErrorToException(env, jvmti_env, ret);
 }
 
 extern "C" JNIEXPORT jlong JNICALL Java_android_jvmti_cts_JniBindings_getTag(
     JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jobject obj) {
-  jvmtiEnv* jvmti_env = GetJvmtiEnv();
   jlong tag = 0;
   jvmtiError ret = jvmti_env->GetTag(obj, &tag);
   if (JvmtiErrorToException(env, jvmti_env, ret)) {
@@ -52,7 +48,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_android_jvmti_cts_JvmtiTaggingTes
     jlongArray searchTags,
     jboolean returnObjects,
     jboolean returnTags) {
-  jvmtiEnv* jvmti_env = GetJvmtiEnv();
   ScopedLongArrayRO scoped_array(env);
   if (searchTags != nullptr) {
     scoped_array.reset(searchTags);
@@ -132,7 +127,5 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_android_jvmti_cts_JvmtiTaggingTes
   return CreateObjectArray(env, 3, "java/lang/Object", callback);
 }
 
-}  // namespace tagging
-}  // namespace jvmti
-}  // namespace cts
+}  // namespace art
 
