@@ -9,3 +9,4 @@
 .idea/
 gen/
 *.iml
+*.class
