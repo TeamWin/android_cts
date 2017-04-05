@@ -139,6 +139,11 @@
         device and verify that all rows in the policy list are green. Red items indicate policy
         settings that were not loaded properly.
     </string>
+    <string name="da_uninstall_test">Device Admin Uninstall Test</string>
+    <string name="da_uninstall_test_info">This test checks that an active device administrator
+        can be easily uninstalled from the application details screen in a way similar to other
+        apps.
+    </string>
     <string name="car_dock_test">Car Dock Test</string>
     <string name="car_dock_test_desc">This test ensures that car mode opens the app associated with
         car dock when going into car mode.\n\n
@@ -179,6 +184,20 @@
     <string name="da_force_lock">Force Lock</string>
     <string name="da_lock_success">It appears the screen was locked successfully!</string>
     <string name="da_lock_error">It does not look like the screen was locked...</string>
+
+    <string name="da_install_admin_instructions">Please install the \'Test Device Admin\' app on the device.
+        If needed, grant \'Cts Verifier\' permission to install unknown apps, and return when install succeeds.
+    </string>
+    <string name="da_install_admin_button_text">Install admin</string>
+    <string name="da_enable_admin_instructions">Add \'Test Device Admin\' as an active administrator on the device.
+        Tap the button below to review the device admin details and activate the administrator.
+    </string>
+    <string name="da_enable_admin_button_text">Enable admin</string>
+    <string name="da_uninstall_admin_instructions">Attempt to uninstall the app from the application details page of the \'Test Device Admin\' app.
+        You should see another screen showing the device admin details before you can uninstall the app from the device.
+        Wait till the app is uninstalled before returning to this page.
+    </string>
+    <string name="da_uninstall_admin_button_text">Launch settings</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
