@@ -232,9 +232,18 @@ public class ModuleRepo implements IModuleRepo {
                         args.putAll(mModuleArgs.get(id));
                     }
                     for (Entry<String, List<String>> entry : args.entrySet()) {
-                        for (String value : entry.getValue()) {
+                        for (String entryValue : entry.getValue()) {
                             // Collection-type options can be injected with multiple values
-                            config.injectOptionValue(entry.getKey(), value);
+                            String entryName = entry.getKey();
+                            if (entryValue.contains(":")) {
+                                // entryValue is key-value pair
+                                String key = entryValue.split(":")[0];
+                                String value = entryValue.split(":")[1];
+                                config.injectOptionValue(entryName, key, value);
+                            } else {
+                                // entryValue is just the argument value
+                                config.injectOptionValue(entryName, entryValue);
+                            }
                         }
                     }
 
@@ -246,8 +255,17 @@ public class ModuleRepo implements IModuleRepo {
                             testArgsMap.putAll(mTestArgs.get(className));
                         }
                         for (Entry<String, List<String>> entry : testArgsMap.entrySet()) {
-                            for (String value : entry.getValue()) {
-                                config.injectOptionValue(entry.getKey(), value);
+                            for (String entryValue : entry.getValue()) {
+                                String entryName = entry.getKey();
+                                if (entryValue.contains(":")) {
+                                    // entryValue is key-value pair
+                                    String key = entryValue.split(":")[0];
+                                    String value = entryValue.split(":")[1];
+                                    config.injectOptionValue(entryName, key, value);
+                                } else {
+                                    // entryValue is just the argument value
+                                    config.injectOptionValue(entryName, entryValue);
+                                }
                             }
                         }
                         addFiltersToTest(test, abi, name);
@@ -528,17 +546,23 @@ public class ModuleRepo implements IModuleRepo {
         for (String arg : args) {
             String[] parts = arg.split(":");
             String target = parts[0];
-            String key = parts[1];
-            String value = parts[2];
+            String name = parts[1];
+            String value;
+            if (parts.length == 4) {
+                // key and value given, keep the pair delimited by ':' and stored as value
+                value = String.format("%s:%s", parts[2], parts[3]);
+            } else {
+                value = parts[2];
+            }
             Map<String, List<String>> map = argsMap.get(target);
             if (map == null) {
                 map = new HashMap<>();
                 argsMap.put(target, map);
             }
-            List<String> valueList = map.get(key);
+            List<String> valueList = map.get(name);
             if (valueList == null) {
                 valueList = new ArrayList<>();
-                map.put(key, valueList);
+                map.put(name, valueList);
             }
             valueList.add(value);
         }
