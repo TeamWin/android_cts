@@ -482,6 +482,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return -1;
     }
 
+    protected boolean supportsVrMode() throws DeviceNotAvailableException {
+        return hasDeviceFeature("android.software.vr.mode") &&
+                hasDeviceFeature("android.hardware.vr.high_performance");
+    }
+
     protected boolean supportsPip() throws DeviceNotAvailableException {
         return hasDeviceFeature("android.software.picture_in_picture")
                 || PRETEND_DEVICE_SUPPORTS_PIP;

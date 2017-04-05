@@ -138,6 +138,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that any new activity launch in Vr mode is in Vr display.
      */
     public void testVrActivityLaunch() throws Exception {
+        // VR Mode is not supported on this device, bail from this test.
+        if (!supportsVrMode()) {
+            return;
+        }
+
         // Put the device in persistent vr mode.
         enablePersistentVrMode(true);
 
@@ -180,6 +185,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that any activity already present is re-launched in Vr display in vr mode.
      */
     public void testVrActivityReLaunch() throws Exception {
+        // VR Mode is not supported on this device, bail from this test.
+        if (!supportsVrMode()) {
+            return;
+        }
+
         // Launch a 2D activity.
         launchActivity(LAUNCHING_ACTIVITY);
 
@@ -225,6 +235,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that any new activity launch post Vr mode is in the main display.
      */
     public void testActivityLaunchPostVr() throws Exception {
+        // VR Mode is not supported on this device, bail from this test.
+        if (!supportsVrMode()) {
+            return;
+        }
+
         // Put the device in persistent vr mode.
         enablePersistentVrMode(true);
 
