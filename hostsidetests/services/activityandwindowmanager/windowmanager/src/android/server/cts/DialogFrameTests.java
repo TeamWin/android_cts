@@ -135,7 +135,9 @@ public class DialogFrameTests extends ParentChildTestBase {
     // With FLAG_LAYOUT_NO_LIMITS  we should get the size we request, even if its much
     // larger than the screen.
     public void testOversizedDimensionsNoLimits() throws Exception {
-        doParentChildTest("OversizedDimensionsNoLimits",
+        // TODO(b/36890978): We only run this in fullscreen because of the
+        // unclear status of NO_LIMITS for non-child surfaces in MW modes
+        doFullscreenTest("OversizedDimensionsNoLimits",
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(contentFrame.x, contentFrame.y,
