@@ -90,11 +90,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
-    // TODO(b/33197203 , b/36855717): remove when bug 36855717 is fixed
-    private static final boolean BUG_36855717_FIXED = false;
-
     // TODO(b/33197203 , b/35707731): remove when fixed
-    private static final boolean SUPPORTS_PARTIOTINED_AUTH = false;
+    private static final boolean SUPPORTS_PARTITIONED_AUTH = false;
 
     @Rule
     public final ActivityTestRule<LoginActivity> mActivityRule =
@@ -975,13 +972,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         sUiBot.assertNotShownByText("Tap to auth response");
 
         // ...and select it this time
-        if (BUG_36855717_FIXED) {
-            callback.assertUiShownEvent(username);
-        }
+        callback.assertUiShownEvent(username);
         sUiBot.selectDataset("Dataset");
-        if (BUG_36855717_FIXED) {
-            callback.assertUiHiddenEvent(username);
-        }
+        callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
         sUiBot.assertNotShownByText("Tap to auth response");
 
@@ -1036,7 +1029,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiShownEvent(username);
         sUiBot.assertShownByText("Tap to auth response");
 
-        if (SUPPORTS_PARTIOTINED_AUTH) {
+        if (SUPPORTS_PARTITIONED_AUTH) {
             // Make sure UI is not show on 2nd field
             final View password = mActivity.getPassword();
             mActivity.onPassword(View::requestFocus);
@@ -1065,13 +1058,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         callback.assertUiHiddenEvent(username);
         sUiBot.assertNotShownByText("Tap to auth response");
 
-        if (BUG_36855717_FIXED) {
-            callback.assertUiShownEvent(username);
-        }
+        callback.assertUiShownEvent(username);
         sUiBot.selectDataset("Dataset");
-        if (BUG_36855717_FIXED) {
-            callback.assertUiHiddenEvent(username);
-        }
+        callback.assertUiHiddenEvent(username);
         sUiBot.assertNoDatasets();
         sUiBot.assertNotShownByText("Tap to auth response");
 
