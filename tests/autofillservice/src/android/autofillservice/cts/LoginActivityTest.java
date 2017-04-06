@@ -61,6 +61,9 @@ import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
+import android.view.View.AccessibilityDelegate;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 
 import org.junit.After;
@@ -171,6 +174,25 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
+
+    @Test
+    public void testAutoFillWhenViewHasChildAccessibilityNodes() throws Exception {
+        mActivity.onUsername((v) -> v.setAccessibilityDelegate(new AccessibilityDelegate() {
+            @Override
+            public AccessibilityNodeProvider getAccessibilityNodeProvider(View host) {
+                return new AccessibilityNodeProvider() {
+                    @Override
+                    public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
+                        final AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+                        info.addChild(v, virtualViewId);
+                        return info;
+                    }
+                };
+            }
+        }));
+
+        testAutoFillOneDataset();
     }
 
     @Test
