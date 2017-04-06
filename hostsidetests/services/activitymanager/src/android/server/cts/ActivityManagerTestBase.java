@@ -26,7 +26,9 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.String;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,6 +80,11 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected ITestDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
+    final private String RESULT_KEY_HEAD = "HEAD";
+    final private String SUPPORT_OBSERVER = "MultiWindowSupportObserver";
+    private static boolean mConfigLoaded = false;
+    private static boolean mSupportMultiWindow = true;
+
 
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -216,6 +223,68 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean supportsFreeform() throws DeviceNotAvailableException {
         return hasDeviceFeature("android.software.freeform_window_management")
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
+    }
+
+    protected boolean supportsMultiWindowMode() {
+        if (!mConfigLoaded) {
+            try {
+                executeShellCommand("am start -n " + "android.server.app/." + SUPPORT_OBSERVER);
+                waitForResume("android.server.app", SUPPORT_OBSERVER);
+                Map map = getLogResults(SUPPORT_OBSERVER);
+                String value = (String)map.get(RESULT_KEY_HEAD);
+                if (value != null && value.equals("OK")) {
+                    mConfigLoaded = true;
+                    mSupportMultiWindow = !map.get("config_supportsMultiWindow").equals("false");
+                }
+                executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+                clearLogs();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return mSupportMultiWindow;
+    }
+
+    private void clearLogs() throws DeviceNotAvailableException {
+        executeShellCommand("logcat -c");
+    }
+
+    private Map<String, String> getLogResults(String className) throws Exception {
+        int retryCount = 3;
+        Map<String, String> output = new HashMap<String, String>();
+        do {
+
+            String logs = executeShellCommand("logcat -v brief -d " + className + ":I" + " *:S");
+            for (String line : logs.split("\\n")) {
+                if (line.startsWith("I/" + className)) {
+                    String payload = line.split(":")[1].trim();
+                    final String[] split = payload.split("=");
+                    if (split.length > 1) {
+                        output.put(split[0], split[1]);
+                    }
+                }
+            }
+            if (output.containsKey(RESULT_KEY_HEAD)) {
+                return output;
+            }
+        } while (retryCount-- > 0);
+        return output;
+    }
+
+    private void waitForResume(String packageName, String activityName) throws Exception {
+        final String fullActivityName = packageName + "." + activityName;
+        int retryCount = 3;
+        do {
+            Thread.sleep(500);
+            String logs = executeShellCommand("logcat -d -b events");
+            for (String line : logs.split("\\n")) {
+                if(line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
+                    return;
+                }
+            }
+        } while (retryCount-- > 0);
+
+        throw new Exception(fullActivityName + " has failed to start");
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
