@@ -2174,15 +2174,15 @@ You should be prompted to select credentials; choose the ones you just installed
         Then use the Back button to return to this test and mark accordingly.
     </string>
 
-    <string name="provisioning_byod_cellular_data_usage_settings">Profile-aware data usage settings (Cellular)</string>
+    <string name="provisioning_byod_cellular_data_usage_settings">Profile-aware data usage settings (Mobile)</string>
     <string name="provisioning_byod_cellular_data_usage_settings_instruction">
         Please disable Wi-Fi connection on your device.\n
-        Please make sure you have added a SIM card with data plan to your phone, have enabled data over cellular and in case of dual SIM devices, have selected the right SIM for data connection.\n
+        Please make sure you have added a SIM card with data plan to your phone, have enabled data over mobile and in case of dual SIM devices, have selected the right SIM for data connection.\n
         Please carry out operations that will use mobile data using both badged and unbadged apps (e.g. visit a page in a browser).\n
         \n
         Please press the Go button to open the Settings page.\n
         \n
-        Navigate to \"Data usage\" page and then into the \"Cellular data usage\" category.\n
+        Navigate to \"Data usage\" page and then into the \"Mobile data usage\" category.\n
         Confirm that \"All work apps\" section is present and that it is possible to see the data usage for work (badged) apps.\n
         \n
         Then use the Back button to return to this test and mark accordingly.
@@ -2566,7 +2566,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_data_roaming_info">
         Device should have a sim card to perform this test.
         Please press the Set restriction button to set the user restriction.
-        Then press Go to open the Cellular network page in Settings.
+        Then press Go to open the Mobile network page in Settings.
         Confirm that:\n\n
         - Data roaming is disabled.\n
         - Enabling data roaming is not possible and triggers a support message.\n\n
@@ -3158,7 +3158,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="js_connectivity_test">Connectivity Constraints</string>
     <string name="js_connectivity_instructions">Verify the behavior of the JobScheduler API for when the device has no access to data connectivity. Simply follow the on-screen instructions.</string>
-    <string name="js_connectivity_description_1">Disable WiFi and Cellular data to begin.</string>
+    <string name="js_connectivity_description_1">Disable WiFi and Mobile data to begin.</string>
     <string name="js_unmetered_connectivity_test">Device with no connectivity will not execute a job with an unmetered connectivity constraint.</string>
     <string name="js_any_connectivity_test">Device with no connectivity will not execute a job with an unmetered connectivity constraint.</string>
     <string name="js_no_connectivity_test">Device with no connectivity will still execute a job with no connectivity constraints.</string>
