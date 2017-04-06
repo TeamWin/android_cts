@@ -17,6 +17,7 @@
 package com.android.cts.verifier.wifiaware;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.net.wifi.aware.WifiAwareManager;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -28,6 +29,7 @@ import com.android.cts.verifier.R;
  */
 public abstract class BaseTestCase {
     protected Context mContext;
+    protected Resources mResources;
     protected Listener mListener;
 
     private Thread mThread;
@@ -38,6 +40,7 @@ public abstract class BaseTestCase {
 
     public BaseTestCase(Context context) {
         mContext = context;
+        mResources = mContext.getResources();
     }
 
     /**
@@ -151,5 +154,28 @@ public abstract class BaseTestCase {
          * This function is invoked when the test failed (test is done).
          */
         void onTestFailed(String reason);
+    }
+
+    /**
+     * Convert byte array to hex string representation utility.
+     */
+    public static String bytesToHex(byte[] bytes, Character separator) {
+        final char[] hexArray = "0123456789ABCDEF".toCharArray();
+        boolean useSeparator = separator != null;
+        char sep = 0;
+        if (useSeparator) {
+            sep = separator;
+        }
+        char[] hexChars = new char[bytes.length * 2 + (useSeparator ? bytes.length - 1 : 0)];
+        int base = 0;
+        for (int j = 0; j < bytes.length; j++) {
+            if (useSeparator && j != 0) {
+                hexChars[base++] = sep;
+            }
+            int v = bytes[j] & 0xFF;
+            hexChars[base++] = hexArray[v >> 4];
+            hexChars[base++] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
     }
 }
