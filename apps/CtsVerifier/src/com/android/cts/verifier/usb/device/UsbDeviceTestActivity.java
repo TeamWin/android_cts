@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UsbDeviceTestActivity extends PassFailButtons.Activity {
@@ -842,14 +843,12 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         runAndAssertException(() -> connection.requestWait(-1), IllegalArgumentException.class);
 
         long startTime = now();
-        UsbRequest req = connection.requestWait(100);
-        assertNull(req);
+        runAndAssertException(() -> connection.requestWait(100), TimeoutException.class);
         assertTrue(now() - startTime >= 100);
         assertTrue(now() - startTime < 400);
 
         startTime = now();
-        req = connection.requestWait(0);
-        assertNull(req);
+        runAndAssertException(() -> connection.requestWait(0), TimeoutException.class);
         assertTrue(now() - startTime < 400);
     }
 
@@ -860,7 +859,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      * @param in         The endpoint to receive requests from
      */
     private void receiveAfterTimeout(@NonNull UsbDeviceConnection connection,
-            @NonNull UsbEndpoint in, int timeout) throws InterruptedException {
+            @NonNull UsbEndpoint in, long timeout) throws InterruptedException, TimeoutException {
         UsbRequest reqQueued = new UsbRequest();
         ByteBuffer buffer = ByteBuffer.allocate(1);
 
