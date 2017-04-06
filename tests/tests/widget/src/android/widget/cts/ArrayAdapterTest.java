@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.database.DataSetObserver;
 import android.support.test.annotation.UiThreadTest;
@@ -411,7 +412,7 @@ public class ArrayAdapterTest {
         ArrayAdapter.createFromResource(null, R.array.string, R.layout.simple_spinner_item);
     }
 
-    @Test(expected=NullPointerException.class)
+    @Test(expected=Resources.NotFoundException.class)
     public void testCreateFromResourceWithInvalidId() {
         ArrayAdapter.createFromResource(mContext, INVALID_ID, R.layout.simple_spinner_item);
     }
