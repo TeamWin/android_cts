@@ -73,7 +73,6 @@ import android.util.SparseArray;
 import android.util.Xml;
 import android.view.ActionMode;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Display;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
@@ -1089,7 +1088,7 @@ public class ViewTest {
         assertTrue(view.hasCalledOnCreateContextMenu());
         assertTrue(mMockParent.hasCreateContextMenu());
         verify(listener, times(1)).onCreateContextMenu(
-                eq(contextMenu), eq(view), any(ContextMenuInfo.class));
+                eq(contextMenu), eq(view), any());
     }
 
     @Test(expected=NullPointerException.class)
