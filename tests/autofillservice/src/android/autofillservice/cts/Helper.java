@@ -176,7 +176,9 @@ final class Helper {
             .append("   afId=").append(node.getAutofillId())
             .append(" afType=").append(node.getAutofillType())
             .append(" afValue=").append(node.getAutofillValue())
-            .append(" checked=").append(node.isChecked());
+            .append(" checked=").append(node.isChecked())
+            .append(" focused=").append(node.isFocused());
+
         final HtmlInfo htmlInfo = node.getHtmlInfo();
         if (htmlInfo != null) {
             buffer.append("\nHtmlInfo: tag=").append(htmlInfo.getTag())
@@ -306,6 +308,16 @@ final class Helper {
         return node;
     }
 
+    /**
+     * Asserts a text-base node exists and is sanitized.
+     */
+    static ViewNode assertValue(AssistStructure structure, String resourceId,
+            String expectedValue) {
+        final ViewNode node = findNodeByResourceId(structure, resourceId);
+        assertTextValue(node, expectedValue);
+        return node;
+    }
+
     private static void assertText(ViewNode node, String expectedValue, boolean isAutofillable) {
         assertWithMessage("wrong text on %s", node).that(node.getText().toString())
                 .isEqualTo(expectedValue);
@@ -320,24 +332,37 @@ final class Helper {
     }
 
     /**
+     * Asserts the auto-fill value of a text-based node.
+     */
+    static ViewNode assertTextValue(ViewNode node, String expectedText) {
+        final AutofillValue value = node.getAutofillValue();
+        assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", node).that(value.isText()).isTrue();
+        assertWithMessage("wrong autofill value on %s", node).that(value.getTextValue())
+                .isEqualTo(expectedText);
+        return node;
+    }
+
+    /**
      * Asserts the auto-fill value of a list-based node.
      */
     static ViewNode assertListValue(ViewNode node, int expectedIndex) {
         final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
-        assertWithMessage("wrong auto-fill value on %s", node).that(value.getListValue())
+        assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", node).that(value.isList()).isTrue();
+        assertWithMessage("wrong autofill value on %s", node).that(value.getListValue())
                 .isEqualTo(expectedIndex);
         return node;
     }
 
     /**
      * Asserts the auto-fill value of a toggle-based node.
-     *
      */
     static void assertToggleValue(ViewNode node, boolean expectedToggle) {
         final AutofillValue value = node.getAutofillValue();
-        assertWithMessage("null auto-fill value on %s", node).that(value).isNotNull();
-        assertWithMessage("wrong auto-fill value on %s", node).that(value.getToggleValue())
+        assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", node).that(value.isToggle()).isTrue();
+        assertWithMessage("wrong autofill value on %s", node).that(value.getToggleValue())
                 .isEqualTo(expectedToggle);
     }
 
@@ -345,7 +370,8 @@ final class Helper {
      * Asserts the auto-fill value of a date-based node.
      */
     static void assertDateValue(Object object, AutofillValue value, int year, int month, int day) {
-        assertWithMessage("null auto-fill value on %s", object).that(value).isNotNull();
+        assertWithMessage("null autofill value on %s", object).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", object).that(value.isDate()).isTrue();
 
         final Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(value.getDateValue());
@@ -376,7 +402,8 @@ final class Helper {
      * Asserts the auto-fill value of a time-based node.
      */
     private static void assertTimeValue(Object object, AutofillValue value, int hour, int minute) {
-        assertWithMessage("null auto-fill value on %s", object).that(value).isNotNull();
+        assertWithMessage("null autofill value on %s", object).that(value).isNotNull();
+        assertWithMessage("wrong autofill type on %s", object).that(value.isDate()).isTrue();
 
         final Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(value.getDateValue());

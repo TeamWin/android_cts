@@ -19,10 +19,11 @@ import static android.autofillservice.cts.GridActivity.ID_L1C1;
 import static android.autofillservice.cts.GridActivity.ID_L1C2;
 import static android.autofillservice.cts.GridActivity.ID_L2C1;
 import static android.autofillservice.cts.GridActivity.ID_L2C2;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.Helper.assertValue;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
@@ -69,10 +70,8 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         final ViewNode p1l1c1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
         final ViewNode p1l1c2 = assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
-        if (false) { // TODO(b/33197203 , b/35707731): enable when fixed
-            assertThat(p1l1c1.isFocused()).isTrue();
-            assertThat(p1l1c2.isFocused()).isFalse();
-        }
+        assertWithMessage("Focus on p1l1c1").that(p1l1c1.isFocused()).isTrue();
+        assertWithMessage("Focus on p1l1c2").that(p1l1c2.isFocused()).isFalse();
 
         // Make sure UI is shown, but don't tap it.
         sUiBot.assertDatasets("l1c1");
@@ -94,14 +93,11 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final ViewNode p2l1c1 = assertTextIsSanitized(fillRequest2.structure, ID_L1C1);
         final ViewNode p2l1c2 = assertTextIsSanitized(fillRequest2.structure, ID_L1C2);
         final ViewNode p2l2c1 = assertTextIsSanitized(fillRequest2.structure, ID_L2C1);
-        final ViewNode p2l2c2 = assertTextIsSanitized(fillRequest2.structure, ID_L2C1);
-        if (false) { // TODO(b/33197203 , b/35707731): enable when fixed
-            assertThat(p2l1c1.isFocused()).isFalse();
-            assertThat(p2l1c2.isFocused()).isFalse();
-            assertThat(p2l2c1.isFocused()).isTrue();
-            assertThat(p2l2c2.isFocused()).isFalse();
-        }
-
+        final ViewNode p2l2c2 = assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
+        assertWithMessage("Focus on p2l1c1").that(p2l1c1.isFocused()).isFalse();
+        assertWithMessage("Focus on p2l1c2").that(p2l1c2.isFocused()).isFalse();
+        assertWithMessage("Focus on p2l2c1").that(p2l2c1.isFocused()).isTrue();
+        assertWithMessage("Focus on p2l2c2").that(p2l2c2.isFocused()).isFalse();
         // Make sure UI is shown, but don't tap it.
         sUiBot.assertDatasets("l2c1");
         mActivity.focusCell(2, 2);
@@ -181,10 +177,8 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.focusCell(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
 
-        if (false) { // TODO(b/33197203 , b/35707731): enable when fixed
-            assertTextAndValue(fillRequest2.structure, ID_L1C1, "l1c1");
-            assertTextAndValue(fillRequest2.structure, ID_L1C2, "l1c2");
-        }
+        assertValue(fillRequest2.structure, ID_L1C1, "l1c1");
+        assertValue(fillRequest2.structure, ID_L1C2, "l1c2");
         assertTextIsSanitized(fillRequest2.structure, ID_L2C1);
         assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
 
