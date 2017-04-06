@@ -32,17 +32,17 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import android.server.cts.ActivityManagerTestBase;
 import android.server.cts.WindowManagerState.WindowState;
 
-public class PopupMovementTests extends ParentChildTestBase {
+public class ChildMovementTests extends ParentChildTestBase {
     private List<WindowState> mWindowList = new ArrayList();
 
     @Override
     String intentKey() {
-        return "android.server.FrameTestApp.PopupTestCase";
+        return "android.server.FrameTestApp.ChildTestCase";
     }
 
     @Override
     String activityName() {
-        return "MovingPopupTestActivity";
+        return "MovingChildTestActivity";
     }
 
     WindowState getSingleWindow(String fullWindowName) {
@@ -66,7 +66,7 @@ public class PopupMovementTests extends ParentChildTestBase {
     }
 
     void doSingleTest(ParentChildTest t) throws Exception {
-        String popupName = "PopupWindow";
+        String popupName = "ChildWindow";
         final String[] waitForVisible = new String[] { popupName };
 
         mAmWmState.setUseActivityNamesForWindowNames(false);
@@ -85,7 +85,7 @@ public class PopupMovementTests extends ParentChildTestBase {
 
     SurfaceTraceReceiver.SurfaceObserver observer = new SurfaceTraceReceiver.SurfaceObserver() {
         int transactionCount = 0;
-        boolean sawPopupMove = false;
+        boolean sawChildMove = false;
         boolean sawMainMove = false;
         int timesSeen = 0;
 
@@ -93,7 +93,7 @@ public class PopupMovementTests extends ParentChildTestBase {
         public void openTransaction() {
             transactionCount++;
             if (transactionCount == 1) {
-                sawPopupMove = false;
+                sawChildMove = false;
                 sawMainMove = false;
             }
         }
@@ -105,7 +105,7 @@ public class PopupMovementTests extends ParentChildTestBase {
                 return;
             }
             synchronized (monitor) {
-                if (sawPopupMove ^ sawMainMove ) {
+                if (sawChildMove ^ sawMainMove ) {
                     monitor.notifyAll();
                     return;
                 }
@@ -119,7 +119,7 @@ public class PopupMovementTests extends ParentChildTestBase {
         @Override
         public void setPosition(String windowName, float x, float y) {
             if (windowName.equals(popupName)) {
-                sawPopupMove = true;
+                sawChildMove = true;
                 timesSeen++;
             } else if (windowName.equals(mainName)) {
                 sawMainMove = true;
@@ -128,10 +128,10 @@ public class PopupMovementTests extends ParentChildTestBase {
     };
 
     /**
-     * Here we test that a Popup moves in the same transaction
-     * as its parent. We launch an activity with a Popup which will
+     * Here we test that a Child moves in the same transaction
+     * as its parent. We launch an activity with a Child which will
      * move around its own main window. Then we listen to WindowManager transactions.
-     * Since the Popup is static within the window, if we ever see one of
+     * Since the Child is static within the window, if we ever see one of
      * them move xor the other one we have a problem!
      */
     public void testSurfaceMovesWithParent() throws Exception {

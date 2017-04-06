@@ -18,23 +18,23 @@ package android.server.FrameTestApp;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.view.Window;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Space;
-import android.widget.PopupWindow;
 import android.widget.Button;
 import android.view.ViewGroup.LayoutParams;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-// This activity will parent a Popup to the main window, and then move
-// the main window around. We can use this to verify the Popup
+// This activity will parent a Child to the main window, and then move
+// the main window around. We can use this to verify the Child
 // is properly updated.
-public class MovingPopupTestActivity extends Activity {
+public class MovingChildTestActivity extends Activity {
     Space mView;
-    PopupWindow mPopupWindow;
     int mX = 0;
     int mY = 0;
 
@@ -43,6 +43,7 @@ public class MovingPopupTestActivity extends Activity {
             public void run() {
                 final Window w = getWindow();
                 final WindowManager.LayoutParams attribs = w.getAttributes();
+                attribs.privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_NO_MOVE_ANIMATION;
                 attribs.x = mX % 1000;
                 attribs.y = mY % 1000;
                 w.setAttributes(attribs);
@@ -52,16 +53,19 @@ public class MovingPopupTestActivity extends Activity {
             }
     };
 
-    final Runnable makePopup = new Runnable() {
+    final Runnable makeChild = new Runnable() {
             @Override
             public void run() {
-                Button b = new Button(MovingPopupTestActivity.this);
+                Button b = new Button(MovingChildTestActivity.this);
+                WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+                p.privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_NO_MOVE_ANIMATION;
+                p.x = 0;
+                p.y = 0;
+                p.token = mView.getWindowToken();
+                p.setTitle("ChildWindow");
 
-                mPopupWindow = new PopupWindow(MovingPopupTestActivity.this);
-                mPopupWindow.setContentView(b);
-                mPopupWindow.setWidth(50);
-                mPopupWindow.setHeight(50);
-                mPopupWindow.showAtLocation(mView, 0, 0, 0);
+                ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).addView(b, p);
 
                 mView.postDelayed(moveWindow, 50);
             }
@@ -76,6 +80,6 @@ public class MovingPopupTestActivity extends Activity {
         mView = new Space(this);
 
         setContentView(mView, p);
-        mView.post(makePopup);
+        mView.post(makeChild);
     }
 }
