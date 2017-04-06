@@ -191,6 +191,9 @@ class XmlGenerator {
             if (test.getTimeout() >= 0) {
                 writer.append(" timeout=\"" + test.getTimeout() + "\"");
             }
+            if (test.isSecurity()) {
+                writer.append(" security=\"true\"");
+            }
             writer.println(" />");
 
             nameCollector.delete(nameCollector.length() - test.getName().length() - 1,
