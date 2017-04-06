@@ -51,11 +51,14 @@ import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 import android.util.DisplayMetrics;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Vector;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Vector;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -2112,6 +2115,26 @@ public class CanvasTest {
             mCanvas.restore();
             assertEquals(clips.elementAt(i), getDeviceClip());
             assertEquals(matrices.elementAt(i), mCanvas.getMatrix());
+        }
+    }
+
+    @Test
+    public void testDrawBitmapColorBehavior() {
+        try {
+            // Create a wide gamut bitmap where the pixel value is slightly less than max red.
+            Resources resources = InstrumentationRegistry.getTargetContext().getResources();
+            InputStream in = resources.getAssets().open("almost-red-adobe.png");
+            Bitmap bitmap = BitmapFactory.decodeStream(in);
+
+            // Draw the bitmap to an sRGB canvas.
+            Bitmap canvasBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(canvasBitmap);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+
+            // Verify that the pixel is now max red.
+            Assert.assertEquals(0xFFFF0000, canvasBitmap.getPixel(0, 0));
+        } catch (IOException e) {
+            Assert.fail();
         }
     }
 }
