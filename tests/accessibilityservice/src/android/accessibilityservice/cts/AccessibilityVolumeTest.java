@@ -14,6 +14,7 @@
 package android.accessibilityservice.cts;
 
 import android.app.Instrumentation;
+import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.media.AudioManager;
@@ -31,16 +32,25 @@ import static org.junit.Assert.assertEquals;
 public class AccessibilityVolumeTest {
     Instrumentation mInstrumentation;
     AudioManager mAudioManager;
+    // If a platform collects all volumes into one, these tests aren't relevant
+    boolean mSingleVolume;
 
     @Before
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mAudioManager =
                 (AudioManager) mInstrumentation.getContext().getSystemService(AUDIO_SERVICE);
+        // TVs have a single volume
+        PackageManager pm = mInstrumentation.getContext().getPackageManager();
+        mSingleVolume = (pm != null) && (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION));
     }
 
     @Test
     public void testChangeAccessibilityVolume_outsideValidAccessibilityService_shouldFail() {
+        if (mSingleVolume) {
+            return;
+        }
         int startingVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY);
         int otherVolume = (startingVolume == 0) ? 1 : startingVolume - 1;
         mAudioManager.setStreamVolume(AudioManager.STREAM_ACCESSIBILITY, otherVolume, 0);
@@ -50,6 +60,9 @@ public class AccessibilityVolumeTest {
 
     @Test
     public void testChangeAccessibilityVolume_inAccessibilityService_shouldWork() {
+        if (mSingleVolume) {
+            return;
+        }
         int startingVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY);
         int otherVolume = (startingVolume == 0) ? 1 : startingVolume - 1;
         InstrumentedAccessibilityService service = InstrumentedAccessibilityService.enableService(
