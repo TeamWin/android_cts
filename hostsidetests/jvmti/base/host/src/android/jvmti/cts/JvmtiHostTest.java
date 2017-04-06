@@ -109,8 +109,8 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
 
                 String agentInDataData = installLibToDataData(pwd, "libctsjvmtiagent.so");
 
-                String attachReply = mDevice
-                        .executeShellCommand("am attach-agent " + mPkg + " " + agentInDataData);
+                String attachCmd = "cmd activity attach-agent " + mPkg + " " + agentInDataData;
+                String attachReply = mDevice.executeShellCommand(attachCmd);
                 // Don't try to parse the output. The test will time out anyways if this didn't
                 // work.
                 if (attachReply != null && !attachReply.trim().isEmpty()) {
