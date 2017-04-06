@@ -270,7 +270,7 @@ public class AdapterViewTest {
 
         verifyZeroInteractions(mockClickListener);
         assertTrue(mAdapterView.performItemClick(null, 0, 0));
-        verify(mockClickListener, times(1)).onItemClick(eq(mAdapterView), any(View.class),
+        verify(mockClickListener, times(1)).onItemClick(eq(mAdapterView), any(),
                 eq(0), eq(0L));
 
         setArrayAdapter(mAdapterView);
