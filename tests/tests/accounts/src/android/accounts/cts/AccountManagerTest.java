@@ -39,6 +39,7 @@ import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
 
 import java.io.IOException;
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -839,6 +840,45 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         visibilities = am.getAccountsAndVisibilityForPackage(PACKAGE_NAME_1, ACCOUNT_TYPE);
         assertEquals((int) visibilities.get(ACCOUNT), AccountManager.VISIBILITY_VISIBLE);
         assertEquals(am.getAccountsByTypeForPackage(ACCOUNT_TYPE, PACKAGE_NAME_1).length, 2);
+    }
+
+    /**
+     * Test checks order of accounts returned by getAccounts...().
+     * Accounts should be grouped by type.
+     */
+    public void testGetAccountsReturnedOrder() {
+        Account account_1_1 = new Account("account_z", ACCOUNT_TYPE);
+        Account account_1_2 = new Account("account_c", ACCOUNT_TYPE);
+        Account account_1_3 = new Account("account_a", ACCOUNT_TYPE);
+
+        Account account_2_1 = new Account("account_b", ACCOUNT_TYPE_CUSTOM);
+        Account account_2_2 = new Account("account_f", ACCOUNT_TYPE_CUSTOM);
+        Account account_2_3 = new Account("account_a", ACCOUNT_TYPE_CUSTOM);
+
+        am.addAccountExplicitly(account_1_1, ACCOUNT_PASSWORD, null /* userData */, null);
+        am.addAccountExplicitly(account_1_2, ACCOUNT_PASSWORD, null /* userData */, null);
+        am.addAccountExplicitly(account_2_1, ACCOUNT_PASSWORD, null /* userData */, null);
+
+        verifyAccountsGroupedByType(am.getAccounts());
+        verifyAccountsGroupedByType(am.getAccountsByType(null));
+        verifyAccountsGroupedByType(am.getAccountsByTypeForPackage(null, PACKAGE_NAME_1));
+
+        am.addAccountExplicitly(account_2_2, ACCOUNT_PASSWORD, null /* userData */, null);
+
+        verifyAccountsGroupedByType(am.getAccounts());
+        verifyAccountsGroupedByType(am.getAccountsByType(null));
+        verifyAccountsGroupedByType(am.getAccountsByTypeForPackage(null, PACKAGE_NAME_1));
+
+        am.addAccountExplicitly(account_1_3, ACCOUNT_PASSWORD, null /* userData */, null);
+        verifyAccountsGroupedByType(am.getAccounts());
+        verifyAccountsGroupedByType(am.getAccountsByType(null));
+        verifyAccountsGroupedByType(am.getAccountsByTypeForPackage(null, PACKAGE_NAME_1));
+
+        am.addAccountExplicitly(account_2_3, ACCOUNT_PASSWORD, null /* userData */, null);
+
+        verifyAccountsGroupedByType(am.getAccounts());
+        verifyAccountsGroupedByType(am.getAccountsByType(null));
+        verifyAccountsGroupedByType(am.getAccountsByTypeForPackage(null, PACKAGE_NAME_1));
     }
 
     /**
@@ -4214,5 +4254,31 @@ public class AccountManagerTest extends ActivityInstrumentationTestCase2<Account
         }
 
         return result;
+    }
+
+    private void verifyAccountsGroupedByType(Account[] accounts) {
+
+        Map<String, Integer> firstPositionForType = new HashMap<>();
+        Map<String, Integer> lastPositionForType = new HashMap<>();
+        Map<String, Integer> counterForType = new HashMap<>();
+        for (int i = 0; i < accounts.length; i++) {
+            String type = accounts[i].type;
+
+            Integer first = firstPositionForType.get(type);
+            first = first != null ? first : Integer.MAX_VALUE;
+            firstPositionForType.put(type, Math.min(first, i));
+
+            Integer last = lastPositionForType.get(type);
+            last = last != null ? last : Integer.MIN_VALUE;
+            lastPositionForType.put(type, Math.max(last, i));
+
+            Integer counter = counterForType.get(type);
+            counter = counter != null ? counter  : 0;
+            counterForType.put(type, counter + 1);
+        }
+        for (String type : counterForType.keySet()) {
+            assertEquals((int)lastPositionForType.get(type),
+                firstPositionForType.get(type) + counterForType.get(type) - 1);
+        }
     }
 }
