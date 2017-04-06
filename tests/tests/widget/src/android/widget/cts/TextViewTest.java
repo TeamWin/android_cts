@@ -3370,9 +3370,22 @@ public class TextViewTest {
         // The default variation settings should be null.
         assertNull(mTextView.getFontVariationSettings());
 
-        final String[] nonEffectiveSettings = {
+        final String[] invalidFormatSettings = {
                 "invalid syntax",
                 "'aaa' 1.0",  // tag is not 4 ascii chars
+        };
+        for (String settings : invalidFormatSettings) {
+            try {
+                mTextView.setFontVariationSettings(settings);
+                fail();
+            } catch (FontVariationAxis.InvalidFormatException e) {
+                // pass.
+            }
+            assertNull("Must not change settings for " + settings,
+                    mTextView.getFontVariationSettings());
+        }
+
+        final String[] nonEffectiveSettings = {
                 "'bbbb' 1.0",  // unsupported tag
                 "'    ' 1.0",  // unsupported tag
                 "'AAAA' 0.7",  // unsupported tag (case sensitive)
