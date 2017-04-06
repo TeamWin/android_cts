@@ -17,7 +17,7 @@ package android.fragment.cts;
 
 import android.app.Fragment;
 
-public class NonConfigOnStopActivity extends OrientationChangeActivity {
+public class NonConfigOnStopActivity extends RecreatedActivity {
     @Override
     protected void onStop() {
         super.onStop();

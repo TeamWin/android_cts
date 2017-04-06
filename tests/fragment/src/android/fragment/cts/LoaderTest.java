@@ -22,14 +22,10 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.Instrumentation;
 import android.app.LoaderManager;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
-import android.content.Intent;
 import android.content.Loader;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -37,7 +33,6 @@ import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,25 +50,17 @@ public class LoaderTest {
     public ActivityTestRule<LoaderActivity> mActivityRule =
             new ActivityTestRule<>(LoaderActivity.class);
 
-    @After
-    public void resetActivity() {
-        FragmentTestUtil.resetOrientation();
-    }
-
     /**
      * Test to ensure that there is no Activity leak due to Loader
      */
     @Test
     public void testLeak() throws Throwable {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        Intent intent = new Intent(mActivityRule.getActivity(), LoaderActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        LoaderActivity.sResumed = new CountDownLatch(1);
-        instrumentation.startActivitySync(intent);
-        assertTrue(LoaderActivity.sResumed.await(1, TimeUnit.SECONDS));
-
+        // Restart the activity because mActivityRule keeps a strong reference to the
+        // old activity.
+        LoaderActivity activity = FragmentTestUtil.recreateActivity(mActivityRule,
+                mActivityRule.getActivity());
         LoaderFragment fragment = new LoaderFragment();
-        FragmentManager fm = LoaderActivity.sActivity.getFragmentManager();
+        FragmentManager fm = activity.getFragmentManager();
 
         fm.beginTransaction()
                 .add(fragment, "1")
@@ -87,12 +74,11 @@ public class LoaderTest {
                 .commit();
 
         FragmentTestUtil.executePendingTransactions(mActivityRule, fm);
+        fm = null; // clear it so that it can be released
 
         WeakReference<LoaderActivity> weakActivity = new WeakReference(LoaderActivity.sActivity);
 
-        if (!FragmentTestUtil.switchOrientation()) {
-            return; // can't switch orientation for square screens
-        }
+        activity = FragmentTestUtil.recreateActivity(mActivityRule, activity);
 
         // Wait for everything to settle. We have to make sure that the old Activity
         // is ready to be collected.
@@ -113,12 +99,9 @@ public class LoaderTest {
 
         assertEquals("Loaded!", activity.textView.getText().toString());
 
-        if (!FragmentTestUtil.switchOrientation()) {
-            return; // can't switch orientation for square screens
-        }
+        activity = FragmentTestUtil.recreateActivity(mActivityRule, activity);
 
         // After orientation change, the text should still be loaded properly
-        activity = (LoaderActivity) LoaderActivity.sActivity;
         assertEquals("Loaded!", activity.textView.getText().toString());
     }
 
