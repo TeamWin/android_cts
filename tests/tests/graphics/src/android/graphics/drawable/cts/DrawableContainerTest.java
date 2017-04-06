@@ -795,6 +795,7 @@ public class DrawableContainerTest {
 
     @Test
     public void testOpacityChange() {
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         ColorDrawable c1 = new ColorDrawable(Color.RED);
         ColorDrawable c2 = new ColorDrawable(Color.BLUE);
         addAndSelectDrawable(c1);
@@ -809,6 +810,7 @@ public class DrawableContainerTest {
 
     @Test
     public void testStatefulnessChange() {
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
         ColorDrawable c1 = new ColorDrawable(Color.RED);
         ColorDrawable c2 = new ColorDrawable(Color.BLUE);
         addAndSelectDrawable(c1);
