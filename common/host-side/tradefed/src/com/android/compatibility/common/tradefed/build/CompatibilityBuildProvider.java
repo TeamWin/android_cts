@@ -56,6 +56,14 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Option(name="branch", description="build branch name to supply.")
     private String mBranch = null;
 
+    @Option(name = "build-id",
+            description =
+                    "build version number to supply. Override the default cts version number.")
+    private String mBuildId = null;
+
+    @Option(name="build-flavor", description="build flavor name to supply.")
+    private String mBuildFlavor = null;
+
     @Option(name="use-device-build-info", description="Bootstrap build info from device")
     private boolean mUseDeviceBuildInfo = false;
 
@@ -78,13 +86,21 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
     @Override
     public IBuildInfo getBuild() {
         // Create a blank BuildInfo which will get populated later.
-        String version = getSuiteInfoBuildNumber();
-        if (version == null) {
-            version = IBuildInfo.UNKNOWN_BUILD_ID;
+        String version = null;
+        if (mBuildId != null) {
+            version = mBuildId;
+        } else {
+            version = getSuiteInfoBuildNumber();
+            if (version == null) {
+                version = IBuildInfo.UNKNOWN_BUILD_ID;
+            }
         }
-        IBuildInfo ctsBuild = new BuildInfo(version, mTestTag, mTestTag);
+        IBuildInfo ctsBuild = new BuildInfo(version, mTestTag);
         if (mBranch  != null) {
             ctsBuild.setBuildBranch(mBranch);
+        }
+        if (mBuildFlavor != null) {
+            ctsBuild.setBuildFlavor(mBuildFlavor);
         }
         addCompatibilitySuiteInfo(ctsBuild);
         return ctsBuild;
@@ -103,7 +119,7 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider {
         } else {
             String buildId = device.getBuildId();
             String buildFlavor = device.getBuildFlavor();
-            IBuildInfo info = new DeviceBuildInfo(buildId, mTestTag, buildFlavor);
+            IBuildInfo info = new DeviceBuildInfo(buildId, mTestTag);
             if (mBranch == null) {
                 // if branch is not specified via param, make a pseudo branch name based on platform
                 // version and product info from device

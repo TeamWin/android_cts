@@ -77,6 +77,11 @@ public class CompatibilityHostTestBase implements IAbiReceiver, IBuildReceiver, 
     }
 
     @Override
+    public IAbi getAbi() {
+        return mAbi;
+    }
+
+    @Override
     public void setBuild(IBuildInfo buildInfo) {
         // Get the build, this is used to access the APK.
         mBuild = buildInfo;
