@@ -35,23 +35,16 @@ public class FragmentManagerNonConfigTest {
     public ActivityTestRule<NonConfigOnStopActivity> mActivityRule =
             new ActivityTestRule<>(NonConfigOnStopActivity.class);
 
-    @After
-    public void resetActivity() {
-        FragmentTestUtil.resetOrientation();
-    }
-
     /**
      * When a fragment is added during onStop(), it shouldn't show up in non-config
      * state when restored.
      */
     @Test
     public void nonConfigStop() throws Throwable {
-        if (!FragmentTestUtil.switchOrientation()) {
-            return; // nothing to do -- we can't change the orientation
-        }
+        NonConfigOnStopActivity activity = FragmentTestUtil.recreateActivity(mActivityRule,
+                mActivityRule.getActivity());
 
         // A fragment was added in onStop(), but we shouldn't see it here...
-        Activity activity = OrientationChangeActivity.sActivity;
         assertTrue(activity.getFragmentManager().getFragments().isEmpty());
     }
 

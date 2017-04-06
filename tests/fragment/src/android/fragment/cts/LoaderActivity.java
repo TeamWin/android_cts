@@ -15,7 +15,6 @@
  */
 package android.fragment.cts;
 
-import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
@@ -24,13 +23,11 @@ import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.concurrent.CountDownLatch;
-
 /**
  * This Activity sets the text when loading completes. It also tracks the Activity in
  * a static variable, so it must be cleared in test tear down.
  */
-public class LoaderActivity extends OrientationChangeActivity {
+public class LoaderActivity extends RecreatedActivity {
     public TextView textView;
     public TextView textViewB;
 
