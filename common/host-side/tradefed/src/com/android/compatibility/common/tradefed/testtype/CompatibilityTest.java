@@ -366,6 +366,8 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 // Get the tests to run in this shard
                 modules = mModuleRepo.getModules(getDevice().getSerialNumber(), mShardIndex);
             }
+            mExcludeFilters.clear();
+            mIncludeFilters.clear();
             // Update BuildInfo in each shard to store the original command-line arguments from
             // the session to be retried. These arguments will be serialized in the report later.
             if (mRetrySessionId != null) {

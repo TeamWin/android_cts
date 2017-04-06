@@ -286,6 +286,7 @@ public class ModuleRepo implements IModuleRepo {
                         configFile.getName()), e);
             }
         }
+        mExcludeFilters.clear();
         TestRunHandler.setTestRuns(new CompatibilityBuildHelper(buildInfo), shardedTestCounts);
     }
 
