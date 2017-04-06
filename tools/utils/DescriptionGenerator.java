@@ -68,6 +68,7 @@ import com.sun.javadoc.AnnotationDesc.ElementValuePair;
 public class DescriptionGenerator extends Doclet {
     static final String HOST_CONTROLLER = "dalvik.annotation.HostController";
     static final String KNOWN_FAILURE = "dalvik.annotation.KnownFailure";
+    static final String SECURITY_ANNOTATION = "android.security.cts.SecurityTest";
     static final String SUPPRESSED_TEST = "android.test.suitebuilder.annotation.Suppress";
     static final String CTS_EXPECTATION_DIR = "cts/tests/expectations";
 
@@ -86,6 +87,7 @@ public class DescriptionGenerator extends Doclet {
     static final String ATTRIBUTE_NAME = "name";
     static final String ATTRIBUTE_ABIS = "abis";
     static final String ATTRIBUTE_HOST_CONTROLLER = "HostController";
+    static final String ATTRIBUTE_SECURITY = "security";
 
     static final String XML_OUTPUT_PATH = "./description.xml";
 
@@ -140,7 +142,7 @@ public class DescriptionGenerator extends Doclet {
         }
 
         for (ClassDoc clazz : classes) {
-            if ((!clazz.isAbstract()) && (isValidJUnitTestCase(clazz))) {
+          if ((!clazz.isAbstract()) && (isValidJUnitTestCase(clazz))) {
                 xmlGenerator.addTestClass(new TestClass(clazz, ctsExpectationStore, architecture));
             }
         }
@@ -438,6 +440,9 @@ public class DescriptionGenerator extends Doclet {
                     if ((caze.mController != null) && (caze.mController.length() != 0)) {
                         setAttribute(caseNode, ATTRIBUTE_HOST_CONTROLLER, caze.mController);
                     }
+                    if (caze.mSecurity) {
+                        setAttribute(caseNode, ATTRIBUTE_SECURITY, "true");
+                    }
 
                     if (caze.mDescription != null && !caze.mDescription.equals("")) {
                         caseNode.appendChild(mDoc.createElement(TAG_DESCRIPTION))
@@ -552,6 +557,7 @@ public class DescriptionGenerator extends Doclet {
                 String knownFailure = null;
                 boolean isBroken = false;
                 boolean isSuppressed = false;
+                boolean isSecurity = false;
                 for (AnnotationDesc cAnnot : annotations) {
 
                     AnnotationTypeDoc atype = cAnnot.annotationType();
@@ -561,7 +567,10 @@ public class DescriptionGenerator extends Doclet {
                         knownFailure = getAnnotationDescription(cAnnot);
                     } else if (atype.toString().equals(SUPPRESSED_TEST)) {
                         isSuppressed = true;
+                    } else if (atype.toString().equals(SECURITY_ANNOTATION)) {
+                        isSecurity = true;
                     }
+
                 }
 
                 if (VogarUtils.isVogarKnownFailure(expectationStore, clazz.toString(), name)) {
@@ -575,7 +584,7 @@ public class DescriptionGenerator extends Doclet {
                             VogarUtils.extractSupportedAbis(architecture, expectation);
                     cases.add(new TestMethod(
                             name, method.commentText(), controller, supportedAbis,
-                                    knownFailure, isBroken, isSuppressed));
+                            knownFailure, isBroken, isSuppressed, isSecurity));
                 }
             }
 
@@ -635,6 +644,7 @@ public class DescriptionGenerator extends Doclet {
         String mKnownFailure;
         boolean mIsBroken;
         boolean mIsSuppressed;
+        boolean mSecurity;
 
         /**
          * Construct an test case object.
@@ -644,7 +654,7 @@ public class DescriptionGenerator extends Doclet {
          * @param knownFailure The reason of known failure.
          */
         TestMethod(String name, String description, String controller, Set<String> abis,
-                String knownFailure, boolean isBroken, boolean isSuppressed) {
+            String knownFailure, boolean isBroken, boolean isSuppressed, boolean isSecurity) {
             mName = name;
             mDescription = description;
             mController = controller;
@@ -652,6 +662,7 @@ public class DescriptionGenerator extends Doclet {
             mKnownFailure = knownFailure;
             mIsBroken = isBroken;
             mIsSuppressed = isSuppressed;
+            mSecurity = isSecurity;
         }
     }
 }
