@@ -23,6 +23,9 @@ import textwrap
 import its.device
 from its.device import ItsSession
 
+CHART_DELAY = 1  # seconds
+
+
 def main():
     """Run all the automated tests, saving intermediate files, and producing
     a summary/report of the results.
@@ -227,6 +230,8 @@ def main():
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
                                scene_arg, screen_id_arg]
+                    else:
+                        time.sleep(CHART_DELAY)
                 else:
                     # Skip scene validation for scene 5 running in parallel
                     if not merge_result_switch or scene != 'scene5':
