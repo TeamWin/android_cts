@@ -1959,6 +1959,46 @@
                   android:label="@string/aware_data_path_open_passive_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishTestActivity"
+                  android:label="@string/aware_data_path_passphrase_unsolicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_passphrase_passive_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOpenSolicitedPublishTestActivity"
+                  android:label="@string/aware_data_path_open_solicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOpenActiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_open_active_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathPassphraseSolicitedPublishTestActivity"
+                  android:label="@string/aware_data_path_passphrase_solicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeTestActivity"
+                  android:label="@string/aware_data_path_passphrase_active_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobOpenResponderTestActivity"
+                  android:label="@string/aware_data_path_oob_open_responder"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobOpenInitiatorTestActivity"
+                  android:label="@string/aware_data_path_oob_open_initiator"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobPassphraseResponderTestActivity"
+                  android:label="@string/aware_data_path_oob_passphrase_responder"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DataPathOobPassphraseInitiatorTestActivity"
+                  android:label="@string/aware_data_path_oob_passphrase_initiator"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
                 android:targetActivity=".TestListActivity">
             <intent-filter>
