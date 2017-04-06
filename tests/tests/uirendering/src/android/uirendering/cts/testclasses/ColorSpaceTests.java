@@ -81,7 +81,7 @@ public class ColorSpaceTests extends ActivityTestBase {
                         new Point[] {
                                 point(0, 0), point(48, 0), point(32, 40), point(0, 40), point(0, 56)
                         },
-                        new int[] { 0xff75fb4c, 0xff75fb4c, 0xff75fb4c, 0xffffffff, 0xffba7d26 }
+                        new int[] { 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xffffffff, 0xff7f7f00 }
                 ));
     }
 
@@ -114,7 +114,7 @@ public class ColorSpaceTests extends ActivityTestBase {
                         new Point[] {
                                 point(0, 0), point(48, 0), point(32, 40), point(0, 40), point(0, 56)
                         },
-                        new int[] { 0xffc07f2c, 0xffc07f2c, 0xffc07f2c, 0xffffffff, 0xffe03f16 }
+                        new int[] { 0xffff7f00, 0xffff7f00, 0xffff7f00, 0xffffffff, 0xffff3f00 }
                 ));
     }
 
