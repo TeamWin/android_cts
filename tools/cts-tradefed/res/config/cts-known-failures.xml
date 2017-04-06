@@ -174,4 +174,16 @@
 
     <!-- b/31803630 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.ListeningPortsTest" />
+
+    <!-- b/36812770 -->
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testAccelerometerHardwareBufferNormal" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testGyroscopeHardwareBufferNormal" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testMagneticFieldHardwareBufferNormal" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testAccelerometerHardwareBufferFast" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testGyroscopeHardwareBufferFast" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testMagneticFieldHardwareBufferFast" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testAccelerometerHardwareBufferVeryFast" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testGyroscopeHardwareBufferVeryFast" />
+    <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testMagneticFieldHardwareBufferVeryFast" />
+
 </configuration>
