@@ -847,6 +847,29 @@ public class FragmentLifecycleTest {
         });
     }
 
+    /**
+     * When there are no retained instance fragments, the FragmentManagerNonConfig should be
+     * null
+     */
+    @Test
+    public void nullNonConfig() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, null);
+            FragmentManager fm = fc.getFragmentManager();
+
+            Fragment fragment1 = new StrictFragment();
+            fm.beginTransaction()
+                    .add(fragment1, "1")
+                    .addToBackStack(null)
+                    .commit();
+            fm.executePendingTransactions();
+            Pair<Parcelable, FragmentManagerNonConfig> savedState =
+                    FragmentTestUtil.destroy(mActivityRule, fc);
+            assertNull(savedState.second);
+        });
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override

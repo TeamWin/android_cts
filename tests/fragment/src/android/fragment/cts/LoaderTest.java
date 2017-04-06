@@ -57,18 +57,7 @@ public class LoaderTest {
 
     @After
     public void resetActivity() {
-        final LoaderActivity activity = LoaderActivity.sActivity;
-        final int unspecifiedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
-        if (activity != null && activity.getRequestedOrientation() != unspecifiedOrientation) {
-            LoaderActivity.sResumed = new CountDownLatch(1);
-            activity.setRequestedOrientation(unspecifiedOrientation);
-            // Wait for the orientation change to settle, if there was a change
-            try {
-                LoaderActivity.sResumed.await(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                // I guess there wasn't a change in orientation after all
-            }
-        }        LoaderActivity.clearState();
+        FragmentTestUtil.resetOrientation();
     }
 
     /**
@@ -101,7 +90,7 @@ public class LoaderTest {
 
         WeakReference<LoaderActivity> weakActivity = new WeakReference(LoaderActivity.sActivity);
 
-        if (!switchOrientation()) {
+        if (!FragmentTestUtil.switchOrientation()) {
             return; // can't switch orientation for square screens
         }
 
@@ -124,12 +113,12 @@ public class LoaderTest {
 
         assertEquals("Loaded!", activity.textView.getText().toString());
 
-        if (!switchOrientation()) {
+        if (!FragmentTestUtil.switchOrientation()) {
             return; // can't switch orientation for square screens
         }
 
         // After orientation change, the text should still be loaded properly
-        activity = LoaderActivity.sActivity;
+        activity = (LoaderActivity) LoaderActivity.sActivity;
         assertEquals("Loaded!", activity.textView.getText().toString());
     }
 
@@ -215,38 +204,6 @@ public class LoaderTest {
         assertTrue(loadedLatch[0].await(1, TimeUnit.SECONDS));
         assertEquals("Second Value", activity.textViewB.getText().toString());
     }
-
-    private boolean switchOrientation() throws InterruptedException {
-        LoaderActivity activity = LoaderActivity.sActivity;
-
-        int currentOrientation = activity.getResources().getConfiguration().orientation;
-
-        int nextOrientation;
-        int expectedOrientation;
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            nextOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-            expectedOrientation = Configuration.ORIENTATION_PORTRAIT;
-        } else if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
-            nextOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-            expectedOrientation = Configuration.ORIENTATION_LANDSCAPE;
-        } else {
-            return false; // Don't know what to do with square or unknown orientations
-        }
-
-        // Now switch the orientation
-        LoaderActivity.sResumed = new CountDownLatch(1);
-        LoaderActivity.sDestroyed = new CountDownLatch(1);
-
-        activity.setRequestedOrientation(nextOrientation);
-        assertTrue(LoaderActivity.sResumed.await(1, TimeUnit.SECONDS));
-        assertTrue(LoaderActivity.sDestroyed.await(1, TimeUnit.SECONDS));
-
-        int switchedOrientation =
-                LoaderActivity.sActivity.getResources().getConfiguration().orientation;
-        assertEquals(expectedOrientation, switchedOrientation);
-        return true;
-    }
-
 
     public static class LoaderFragment extends Fragment {
         private static final int LOADER_ID = 1;
