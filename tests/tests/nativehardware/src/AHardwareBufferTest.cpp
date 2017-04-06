@@ -154,35 +154,17 @@ TEST(AHardwareBufferTest, AHardwareBuffer_describe_Succeeds) {
 }
 
 struct ClientData {
-    const char* path;
+    int fd;
     AHardwareBuffer* buffer;
-    ClientData(const char* path_in, AHardwareBuffer* buffer_in)
-            : path(path_in), buffer(buffer_in) {}
+    ClientData(int fd_in, AHardwareBuffer* buffer_in)
+            : fd(fd_in), buffer(buffer_in) {}
 };
 
 static void* clientFunction(void* data) {
     ClientData* pdata = reinterpret_cast<ClientData*>(data);
-
-    int fd = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
-    if (fd < 0) {
-        GTEST_LOG_(ERROR) << "Client socket call failed: " << strerror(errno);
-        return reinterpret_cast<void*>(-1);
-    }
-
-    struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, pdata->path);
-
-    if (connect(fd, reinterpret_cast<struct sockaddr*>(&addr),
-            sizeof(addr)) < 0) {
-        GTEST_LOG_(ERROR) << "Client connect call failed: " << strerror(errno);
-        return reinterpret_cast<void*>(-1);
-    }
-
-    int err = AHardwareBuffer_sendHandleToUnixSocket(pdata->buffer, fd);
+    int err = AHardwareBuffer_sendHandleToUnixSocket(pdata->buffer, pdata->fd);
     EXPECT_EQ(NO_ERROR, err);
-    close(fd);
+    close(pdata->fd);
     return 0;
 }
 
@@ -208,38 +190,20 @@ TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
     err = AHardwareBuffer_allocate(&desc, &buffer);
     EXPECT_EQ(NO_ERROR, err);
 
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    ASSERT_LT(0, fd);
-
-    std::string tempFile = "/data/local/tmp/ahardwarebuffer_test_XXXXXX";
-    int tempFd = mkstemp(&tempFile[0]);
-    unlink(&tempFile[0]);
-
-    struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, &tempFile[0]);
-
-    // Bind the server and listen on the socket.
-    ASSERT_NE(-1, bind(fd, reinterpret_cast<struct sockaddr*>(&addr),
-          sizeof(addr))) << strerror(errno);
-    ASSERT_EQ(0, listen(fd, 1)) << strerror(errno);
+    int fds[2];
+    err = socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds);
 
     // Launch a client that will send the buffer back.
-    ClientData data(&tempFile[0], buffer);
+    ClientData data(fds[1], buffer);
     pthread_t thread;
     ASSERT_EQ(0, pthread_create(&thread, NULL, clientFunction, &data));
 
-    // Wait for the client to send the buffer.
-    int acceptFd = accept(fd, NULL, NULL);
-    ASSERT_LT(0, acceptFd) << strerror(errno);
-
     // Receive the buffer.
-    err = AHardwareBuffer_recvHandleFromUnixSocket(acceptFd, NULL);
+    err = AHardwareBuffer_recvHandleFromUnixSocket(fds[0], NULL);
     EXPECT_EQ(BAD_VALUE, err);
 
     AHardwareBuffer* received = NULL;
-    err = AHardwareBuffer_recvHandleFromUnixSocket(acceptFd, &received);
+    err = AHardwareBuffer_recvHandleFromUnixSocket(fds[0], &received);
     EXPECT_EQ(NO_ERROR, err);
     ASSERT_TRUE(received != NULL);
     EXPECT_TRUE(CheckAHardwareBufferMatchesDesc(received, desc));
@@ -247,8 +211,7 @@ TEST(AHardwareBufferTest, AHardwareBuffer_SendAndRecv_Succeeds) {
     void* ret_val;
     ASSERT_EQ(0, pthread_join(thread, &ret_val));
     ASSERT_EQ(NULL, ret_val);
-    close(acceptFd);
-    close(fd);
+    close(fds[0]);
 
     AHardwareBuffer_release(buffer);
     AHardwareBuffer_release(received);
