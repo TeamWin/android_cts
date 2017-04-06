@@ -70,11 +70,11 @@ public class GridActivity extends AbstractAutoFillActivity {
         mClearButton.setOnClickListener((v) -> resetFields());
     }
 
-    private void save() {
+    void save() {
         getSystemService(AutofillManager.class).commit();
     }
 
-    private void resetFields() {
+    void resetFields() {
         for (int i = 0; i < N_ROWS; i++) {
             for (int j = 0; j < N_COLS; j++) {
                 mCells[i][j].setText("");

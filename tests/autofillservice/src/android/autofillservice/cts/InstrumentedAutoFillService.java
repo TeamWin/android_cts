@@ -158,7 +158,6 @@ public class InstrumentedAutoFillService extends AutofillService {
             this.callback = callback;
             this.flags = flags;
         }
-
     }
 
     /**
