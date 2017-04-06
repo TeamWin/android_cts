@@ -16,7 +16,7 @@ def extract_neverallow_rules(policy_file):
         # remove comments
         no_comments = re.sub(r'#.+?$', r'', policy_str, flags = re.M)
         # match neverallow rules
-        return re.findall(r'(^neverallow\s.+?;)', no_comments, flags = re.M |re.S);
+        return re.findall(r'^\s*(neverallow\s.+?;)', no_comments, flags = re.M |re.S);
 
 # neverallow_rule_to_test - takes a neverallow statement and transforms it into
 # the output necessary to form a cts unit test in a java source file.
