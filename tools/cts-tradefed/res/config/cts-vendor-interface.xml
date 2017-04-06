@@ -48,6 +48,7 @@
     <option name="compatibility:include-filter" value="CtsPrintTestCases" />
     <option name="compatibility:include-filter" value="CtsProviderTestCases" />
     <option name="compatibility:include-filter" value="CtsRsBlasTestCases" />
+    <option name="compatibility:include-filter" value="CtsSecurityHostTestCases" />
     <option name="compatibility:include-filter" value="CtsSecurityTestCases" />
     <option name="compatibility:include-filter" value="CtsSensorTestCases" />
     <option name="compatibility:include-filter" value="CtsShortcutHostTestCases" />
