@@ -164,7 +164,7 @@ public class ExpandableListViewTest {
         mExpandableListView.setOnItemClickListener(mockOnItemClickListener);
         assertTrue(mExpandableListView.performItemClick(null, 100, 99));
         verify(mockOnItemClickListener, times(1)).onItemClick(eq(mExpandableListView),
-                any(View.class), eq(100), eq(99L));
+                any(), eq(100), eq(99L));
     }
 
     @Test
@@ -309,7 +309,7 @@ public class ExpandableListViewTest {
 
         mExpandableListView.performItemClick(null, 0, 0);
         verify(mockOnGroupClickListener, times(1)).onGroupClick(eq(mExpandableListView),
-                any(View.class), eq(0), eq(0L));
+                any(), eq(0), eq(0L));
     }
 
     @UiThreadTest
@@ -328,7 +328,7 @@ public class ExpandableListViewTest {
         // click on the child list of the first group
         mExpandableListView.performItemClick(null, 1, 0);
         verify(mockOnChildClickListener, times(1)).onChildClick(eq(mExpandableListView),
-                any(View.class), eq(0), eq(0), eq(0L));
+                any(), eq(0), eq(0), eq(0L));
     }
 
     @UiThreadTest
