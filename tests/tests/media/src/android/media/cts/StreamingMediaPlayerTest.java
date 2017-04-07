@@ -332,7 +332,8 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
-    public void testBuffering() throws Throwable {
+    // TODO: unhide this test when we sort out how to expose buffering control API.
+    private void testBuffering() throws Throwable {
         final String name = "ringer.mp3";
         mServer = new CtsTestServer(mContext);
         try {
