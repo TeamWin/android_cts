@@ -114,7 +114,6 @@ import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -3038,7 +3037,7 @@ public class TextViewTest {
             ((ContextMenu) invocation.getArguments() [0]).add("menu item");
             return null;
         }).when(mockOnCreateContextMenuListener).onCreateContextMenu(
-                any(ContextMenu.class), any(View.class), any(ContextMenuInfo.class));
+                any(ContextMenu.class), any(View.class), any());
 
         mTextView.setOnLongClickListener(mockOnLongClickListener);
         mTextView.setOnCreateContextMenuListener(mockOnCreateContextMenuListener);
@@ -3051,16 +3050,16 @@ public class TextViewTest {
         assertTrue(mTextView.performLongClick());
         verify(mockOnLongClickListener, times(1)).onLongClick(mTextView);
         verify(mockOnCreateContextMenuListener, times(1)).onCreateContextMenu(
-                any(ContextMenu.class), eq(mTextView), any(ContextMenuInfo.class));
+                any(ContextMenu.class), eq(mTextView), any());
 
         reset(mockOnCreateContextMenuListener);
         mTextView.setOnLongClickListener(null);
         doNothing().when(mockOnCreateContextMenuListener).onCreateContextMenu(
-                any(ContextMenu.class), any(View.class), any(ContextMenuInfo.class));
+                any(ContextMenu.class), any(View.class), any());
         assertFalse(mTextView.performLongClick());
         verifyNoMoreInteractions(mockOnLongClickListener);
         verify(mockOnCreateContextMenuListener, times(1)).onCreateContextMenu(
-                any(ContextMenu.class), eq(mTextView), any(ContextMenuInfo.class));
+                any(ContextMenu.class), eq(mTextView), any());
     }
 
     @UiThreadTest
