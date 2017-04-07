@@ -17,12 +17,16 @@ package android.server.cts;
 
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 
+import android.platform.test.annotations.Presubmit;
+
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.server.cts.ActivityAndWindowManagersState.dpToPx;
 
 /**
  * Build: mmma -j32 cts/hostsidetests/services
@@ -34,8 +38,12 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     private static final String PORTRAIT_ACTIVITY_NAME = "PortraitOrientationActivity";
     private static final String LANDSCAPE_ACTIVITY_NAME = "LandscapeOrientationActivity";
     private static final String NIGHT_MODE_ACTIVITY = "NightModeActivity";
+    private static final String DIALOG_WHEN_LARGE_ACTIVITY = "DialogWhenLargeActivity";
 
     private static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
+
+    private static final int SMALL_WIDTH_DP = 426;
+    private static final int SMALL_HEIGHT_DP = 320;
 
     /**
      * Tests that the WindowManager#getDefaultDisplay() and the Configuration of the Activity
@@ -200,6 +208,26 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     public void testSameConfigurationSplitFullSplitNoRelaunch() throws Exception {
         moveActivitySplitFullSplit(RESIZEABLE_ACTIVITY_NAME);
+    }
+
+    /**
+     * Tests that an activity with the DialogWhenLarge theme can transform properly when in split
+     * screen.
+     */
+    @Presubmit
+    public void testDialogWhenLargeSplitSmall() throws Exception {
+        launchActivityInStack(DIALOG_WHEN_LARGE_ACTIVITY, DOCKED_STACK_ID);
+        final ActivityManagerState.ActivityStack stack = mAmWmState.getAmState()
+                .getStackById(DOCKED_STACK_ID);
+        final WindowManagerState.Display display =
+                mAmWmState.getWmState().getDisplay(stack.mDisplayId);
+        final int density = display.getDpi();
+        final int smallWidthPx = dpToPx(SMALL_WIDTH_DP, density);
+        final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
+
+        runCommandAndPrintOutput("am stack resize " + DOCKED_STACK_ID + " 0 0 "
+                + smallWidthPx + " " + smallHeightPx);
+        mAmWmState.waitForValidState(mDevice, DIALOG_WHEN_LARGE_ACTIVITY, DOCKED_STACK_ID);
     }
 
     /**

@@ -59,6 +59,10 @@
             android:taskAffinity="nobody.but.TranslucentActivity"
             android:exported="true"
         />
+        <activity android:name=".DialogWhenLargeActivity"
+                android:exported="true"
+                android:theme="@android:style/Theme.DeviceDefault.Light.DialogWhenLarge"
+        />
         <activity android:name=".NoRelaunchActivity"
                 android:resizeableActivity="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale"
