@@ -242,7 +242,11 @@ public class TelephonyManagerPermissionTest {
             getContext().sendBroadcast(intent);
             fail("SecurityException expected!");
         } catch (SecurityException e) {}
-
+        try {
+            Intent intent = new Intent("android.provider.Telephony.SECRET_CODE");
+            getContext().sendBroadcast(intent);
+            fail("SecurityException expected!");
+        } catch (SecurityException e) {}
     }
 
     /**
