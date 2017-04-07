@@ -181,7 +181,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                     @Override
                     public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
                         final AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
-                        info.addChild(v, virtualViewId);
+                        if (virtualViewId == View.NO_ID) {
+                          info.addChild(v, 108);
+                        }
                         return info;
                     }
                 };
