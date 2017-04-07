@@ -265,13 +265,13 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
         // 6. Request network (as Responder) and wait for network
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
-        String networkSpecifier = mIsSecurityOpen ? mWifiAwareSession.createNetworkSpecifierOpen(
-                WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_RESPONDER, peerMac)
-                : mWifiAwareSession.createNetworkSpecifierPassphrase(
-                        WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_RESPONDER, peerMac, PASSPHRASE);
         NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
                 NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
-                networkSpecifier).build();
+                mIsSecurityOpen ? mWifiAwareSession.createNetworkSpecifierOpen(
+                        WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_RESPONDER, peerMac)
+                        : mWifiAwareSession.createNetworkSpecifierPassphrase(
+                                WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_RESPONDER, peerMac,
+                                PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
         cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
@@ -397,13 +397,13 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
         // 8. Request network (as Initiator) and wait for network
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
-        String networkSpecifier = mIsSecurityOpen ? mWifiAwareSession.createNetworkSpecifierOpen(
-                WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR, peerMac)
-                : mWifiAwareSession.createNetworkSpecifierPassphrase(
-                        WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR, peerMac, PASSPHRASE);
         NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
                 NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
-                networkSpecifier).build();
+                mIsSecurityOpen ? mWifiAwareSession.createNetworkSpecifierOpen(
+                        WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR, peerMac)
+                        : mWifiAwareSession.createNetworkSpecifierPassphrase(
+                                WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR, peerMac,
+                                PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
         cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
