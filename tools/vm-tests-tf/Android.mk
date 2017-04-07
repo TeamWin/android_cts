@@ -89,13 +89,13 @@ $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)
 $(LOCAL_BUILT_MODULE): PRIVATE_CLASS_PATH := $(subst $(space),:,$(vmteststf_dep_jars)):$(HOST_JDK_TOOLS_JAR)
 $(LOCAL_BUILT_MODULE): PRIVATE_JACK_VERSION := $(LOCAL_JACK_VERSION)
 ifndef LOCAL_JACK_ENABLED
-$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar
+$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
 	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
 	@echo "Write generated Main_*.java files to $(PRIVATE_INTERMEDIATES_MAIN_FILES)"
 	$(hide) java -cp $(PRIVATE_CLASS_PATH) util.build.BuildDalvikSuite $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
-		$(HOST_OUT_JAVA_LIBRARIES)/cts-tf-dalvik-buildutil.jar:$(HOST_OUT_JAVA_LIBRARIES)/tradefed-prebuilt.jar \
+		$(HOST_OUT_JAVA_LIBRARIES)/cts-tf-dalvik-buildutil.jar:$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar \
 		$(PRIVATE_INTERMEDIATES_MAIN_FILES) $(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES) $$RUN_VM_TESTS_RTO
 	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
 	$(hide) jar -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jar \
