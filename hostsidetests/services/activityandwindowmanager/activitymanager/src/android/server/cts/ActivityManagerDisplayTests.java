@@ -135,11 +135,42 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Tests that launch on secondary display is not permitted if device has the feature disabled.
+     * Activities requested to be launched on a secondary display in this case should land on the
+     * default display.
+     */
+    public void testMultiDisplayDisabled() throws Exception {
+        if (supportsMultiDisplay()) {
+            // Only check devices with the feature disabled.
+            return;
+        }
+
+        // Create new virtual display.
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
+
+        mAmWmState.assertFocusedActivity("Launched activity must be focused", TEST_ACTIVITY_NAME);
+
+        // Check that activity is on the right display.
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+        final ActivityManagerState.ActivityStack frontStack
+                = mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be resumed",
+                getActivityComponentName(TEST_ACTIVITY_NAME), frontStack.mResumedActivity);
+        assertEquals("Front stack must be on the default display", DEFAULT_DISPLAY_ID,
+                frontStack.mDisplayId);
+        mAmWmState.assertFocusedStack("Focus must be on the default display", frontStackId);
+    }
+
+    /**
      * Tests that any new activity launch in Vr mode is in Vr display.
      */
     public void testVrActivityLaunch() throws Exception {
-        // VR Mode is not supported on this device, bail from this test.
-        if (!supportsVrMode()) {
+        if (!supportsVrMode() || !supportsMultiDisplay()) {
+            // VR Mode is not supported on this device, bail from this test.
             return;
         }
 
@@ -185,8 +216,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that any activity already present is re-launched in Vr display in vr mode.
      */
     public void testVrActivityReLaunch() throws Exception {
-        // VR Mode is not supported on this device, bail from this test.
-        if (!supportsVrMode()) {
+        if (!supportsVrMode() || !supportsMultiDisplay()) {
+            // VR Mode is not supported on this device, bail from this test.
             return;
         }
 
@@ -235,8 +266,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that any new activity launch post Vr mode is in the main display.
      */
     public void testActivityLaunchPostVr() throws Exception {
-        // VR Mode is not supported on this device, bail from this test.
-        if (!supportsVrMode()) {
+        if (!supportsVrMode() || !supportsMultiDisplay()) {
+            // VR Mode is not supported on this device, bail from this test.
             return;
         }
 
@@ -304,7 +335,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 DEFAULT_DISPLAY_ID, frontStack.mDisplayId);
     }
 
-
     public void testCreateMultipleVirtualDisplays() throws Exception {
         // Create new virtual display.
         final List<DisplayState> newDisplays = new VirtualDisplayBuilder(this).build(3);
@@ -316,6 +346,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests launching an activity on virtual display.
      */
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
@@ -348,6 +380,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * primary display.
      */
     public void testConsequentLaunchActivity() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
@@ -378,6 +412,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * first one - it must appear on the secondary display, because it was launched from there.
      */
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
@@ -407,6 +443,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests launching an activity to secondary display from activity on primary display.
      */
     public void testLaunchActivityFromAppToSecondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Start launching activity.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         // Create new virtual display.
@@ -435,6 +473,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * visibility is not affected.
      */
     public void testLaunchActivitiesAffectsVisibility() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Start launching activity.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -465,6 +505,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that move-task works when moving between displays.
      */
     public void testMoveTaskBetweenDisplays() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -493,6 +535,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * This version launches virtual display creator to fullscreen stack.
      */
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Start launching activity into docked stack.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -506,6 +550,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * This version launches virtual display creator to docked stack.
      */
     public void testStackFocusSwitchOnDisplayRemoved2() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Setup split-screen.
         launchActivityInDockStack(RESIZEABLE_ACTIVITY_NAME);
 
@@ -555,6 +601,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * is moved correctly.
      */
     public void testStackFocusSwitchOnStackEmptied() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Start launching activity.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -590,6 +638,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that input events on the primary display take focus from the virtual display.
      */
     public void testStackFocusSwitchOnTouchEvent() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
@@ -615,6 +665,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     /** Test that system is allowed to launch on secondary displays. */
     public void testPermissionLaunchFromSystem() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -647,6 +699,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     /** Test that launching from app that is on external display is allowed. */
     public void testPermissionLaunchFromAppOnSecondary() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -688,6 +742,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     /** Tests that an activity can launch an activity from a different UID into its own task. */
     public void testPermissionLaunchMultiUidTask() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mDisplayId);
@@ -719,6 +775,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * doesn't have anything on the display.
      */
     public void testPermissionLaunchFromOwner() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -757,6 +815,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * that external display is not allowed.
      */
     public void testPermissionLaunchFromDifferentApp() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -814,6 +874,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that virtual display content is hidden when device is locked.
      */
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new usual virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -838,6 +900,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * locked.
      */
     public void testShowWhenLockedVirtualDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new show-with-insecure-keyguard virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this)
                 .setCanShowWithInsecureKeyguard(true)
@@ -863,6 +927,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that only private virtual display can show content with insecure keyguard.
      */
     public void testShowWhenLockedPublicVirtualDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Try to create new show-with-insecure-keyguard public virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this)
                 .setPublicDisplay(true)
@@ -879,6 +945,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that all activities that were on the private display are destroyed on display removal.
      */
     public void testContentDestroyOnDisplayRemoved() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new private virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -931,6 +999,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that the update of display metrics updates all its content.
      */
     public void testDisplayResize() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Start launching activity.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
 
@@ -991,6 +1061,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * they receive onMovedToDisplay and onConfigurationChanged callbacks.
      */
     public void testOnMovedToDisplayCallback() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
@@ -1018,6 +1090,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * matching task on some other display - that task will moved to the target display.
      */
     public void testMoveToDisplayOnLaunch() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Launch activity with unique affinity, so it will the only one in its task.
         launchActivity(LAUNCHING_ACTIVITY);
 
@@ -1072,6 +1146,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that when primary display is rotated secondary displays are not affected.
      */
     public void testRotationNotAffectingSecondaryScreen() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         // Create new virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this)
                 .setResizeDisplay(false)
@@ -1108,6 +1184,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * matching the task component root does.
      */
     public void testTaskMatchAcrossDisplays() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mDisplayId);
@@ -1153,6 +1231,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * even if the focused stack is not on that activity's display.
      */
     public void testNewTaskSameDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mDisplayId);
@@ -1680,5 +1760,19 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private static String getDestroyVirtualDisplayCommand() {
         return getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY) + " -f 0x20000000" +
                 " --es command destroy_display";
+    }
+
+    /** Checks if the device supports multi-display. */
+    private boolean supportsMultiDisplay() throws Exception {
+        final String supportsMD = mDevice.executeShellCommand("am supports-multi-display").trim();
+        if ("true".equals(supportsMD)) {
+            return true;
+        } else if ("false".equals(supportsMD)) {
+            log("No Multi-Display support.");
+            return false;
+        } else {
+            throw new Exception(
+                    "Device does not support \"am supports-multi-display\" shell command.");
+        }
     }
 }
