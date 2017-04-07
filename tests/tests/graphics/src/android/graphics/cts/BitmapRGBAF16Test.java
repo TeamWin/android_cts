@@ -15,38 +15,41 @@
  */
 package android.graphics.cts;
 
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class BitmapRGBAF16Test {
     private Bitmap mOpaqueBitmap;
     private Bitmap mTransparentBitmap;
+    private Resources mResources;
 
     @Before
     public void setup() {
-        Resources resources = InstrumentationRegistry.getTargetContext().getResources();
+        mResources = InstrumentationRegistry.getTargetContext().getResources();
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
 
         // The bitmaps are in raw-nodpi/ to guarantee aapt and framework leave them untouched
-        mOpaqueBitmap = BitmapFactory.decodeResource(resources, R.raw.p3_opaque, options);
-        mTransparentBitmap = BitmapFactory.decodeResource(resources, R.raw.p3_transparent, options);
+        mOpaqueBitmap = BitmapFactory.decodeResource(mResources, R.raw.p3_opaque, options);
+        mTransparentBitmap = BitmapFactory.decodeResource(mResources, R.raw.p3_transparent, options);
     }
 
     @Test
@@ -132,5 +135,17 @@ public class BitmapRGBAF16Test {
         after = mTransparentBitmap.getPixel(5, 5);
         assertTrue(before != after);
         assertEquals(0x7f102030, after);
+    }
+
+    @Test
+    public void testCopyFromA8() {
+        Bitmap res = BitmapFactory.decodeResource(mResources, R.drawable.alpha_mask);
+        Bitmap mask = Bitmap.createBitmap(res.getWidth(), res.getHeight(),
+                Bitmap.Config.ALPHA_8);
+        Canvas c = new Canvas(mask);
+        c.drawBitmap(res, 0, 0, null);
+
+        Bitmap b = mask.copy(Config.RGBA_F16, false);
+        assertNotNull(b);
     }
 }
