@@ -73,6 +73,10 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
         devicePolicyFile.deleteOnExit();
         mDevice.pullFile("/sys/fs/selinux/policy", devicePolicyFile);
     }
+
+    private boolean isFullTrebleDevice() throws Exception {
+        return android.security.cts.SELinuxHostTest.isFullTrebleDevice(mDevice);
+    }
 """
 src_body = ""
 src_footer = """}
@@ -82,6 +86,12 @@ src_method = """
     @RestrictedBuildTest
     public void testNeverallowRules() throws Exception {
         String neverallowRule = "$NEVERALLOW_RULE_HERE$";
+        boolean fullTrebleOnly = $FULL_TREBLE_ONLY_BOOL_HERE$;
+
+        if ((fullTrebleOnly) && (!isFullTrebleDevice())) {
+            // This test applies only to Treble devices but this device isn't one
+            return;
+        }
 
         /* run sepolicy-analyze neverallow check on policy file using given neverallow rules */
         ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
