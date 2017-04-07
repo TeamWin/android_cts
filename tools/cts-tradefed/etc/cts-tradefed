@@ -76,7 +76,7 @@ fi;
 
 if [ -z ${CTS_ROOT} ]; then
     # assume we're in an extracted cts install
-    CTS_ROOT="$(dirname $0)/../.."
+    CTS_ROOT="$(dirname $(readlink -e $0))/../.."
 fi;
 
 JAR_DIR=${CTS_ROOT}/android-cts/tools
