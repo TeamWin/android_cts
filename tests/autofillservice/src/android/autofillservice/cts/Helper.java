@@ -338,7 +338,7 @@ final class Helper {
         final AutofillValue value = node.getAutofillValue();
         assertWithMessage("null autofill value on %s", node).that(value).isNotNull();
         assertWithMessage("wrong autofill type on %s", node).that(value.isText()).isTrue();
-        assertWithMessage("wrong autofill value on %s", node).that(value.getTextValue())
+        assertWithMessage("wrong autofill value on %s", node).that(value.getTextValue().toString())
                 .isEqualTo(expectedText);
         return node;
     }
