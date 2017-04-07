@@ -285,12 +285,11 @@ public class DataPathInBandTestCase extends BaseTestCase {
         // 6. request network
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
-        String networkSpecifier = mIsSecurityOpen ? discoverySession.createNetworkSpecifierOpen(
-                peerHandle) : discoverySession.createNetworkSpecifierPassphrase(peerHandle,
-                PASSPHRASE);
         NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
                 NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
-                networkSpecifier).build();
+                mIsSecurityOpen ? discoverySession.createNetworkSpecifierOpen(peerHandle)
+                        : discoverySession.createNetworkSpecifierPassphrase(peerHandle,
+                                PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
         cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
@@ -374,12 +373,11 @@ public class DataPathInBandTestCase extends BaseTestCase {
         // 4. Request network
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
-        String networkSpecifier = mIsSecurityOpen ? discoverySession.createNetworkSpecifierOpen(
-                peerHandle) : discoverySession.createNetworkSpecifierPassphrase(peerHandle,
-                PASSPHRASE);
         NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
                 NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
-                networkSpecifier).build();
+                mIsSecurityOpen ? discoverySession.createNetworkSpecifierOpen(peerHandle)
+                        : discoverySession.createNetworkSpecifierPassphrase(peerHandle,
+                                PASSPHRASE)).build();
         CallbackUtils.NetworkCb networkCb = new CallbackUtils.NetworkCb();
         cm.requestNetwork(nr, CALLBACK_TIMEOUT_SEC * 1000, networkCb);
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_requested));
