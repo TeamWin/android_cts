@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
 import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 
 import java.util.ArrayList;
@@ -65,6 +66,23 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_1);
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
         }
+    }
+
+    /**
+     * Tests {@link TelecomManager#getSelfManagedPhoneAccounts()} API to ensure it returns a list of
+     * the registered self-managed {@link android.telecom.PhoneAccount}s.
+     */
+    public void testTelecomManagerGetSelfManagedPhoneAccounts() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        List<PhoneAccountHandle> phoneAccountHandles =
+                mTelecomManager.getSelfManagedPhoneAccounts();
+
+        assertTrue(phoneAccountHandles.contains(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
+        assertTrue(phoneAccountHandles.contains(TestUtils.TEST_SELF_MANAGED_HANDLE_2));
+        assertFalse(phoneAccountHandles.contains(TestUtils.TEST_PHONE_ACCOUNT_HANDLE));
     }
 
     /**
