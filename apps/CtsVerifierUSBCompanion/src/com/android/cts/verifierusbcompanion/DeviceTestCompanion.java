@@ -76,7 +76,8 @@ class DeviceTestCompanion extends TestCompanion {
         assertEquals(42, sizeBuffer[0]);
         assertEquals(1, numRead);
 
-        return Charset.forName("UTF-8").decode(ByteBuffer.wrap(nextTestNameBytes)).toString();
+        return Charset.forName("UTF-8").decode(
+                ByteBuffer.wrap(nextTestNameBytes)).toString().trim();
     }
 
     /**
