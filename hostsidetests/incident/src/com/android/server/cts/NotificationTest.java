@@ -43,7 +43,6 @@ public class NotificationTest extends ProtoDumpTestCase {
                 found = true;
                 assertEquals(State.POSTED, record.getState());
                 assertTrue(record.getImportance() > 0 /* NotificationManager.IMPORTANCE_NONE */);
-                assertEquals(record.getKey(), record.getGroupKey());
 
                 // Ensure these fields exist, at least
                 record.getFlags();
