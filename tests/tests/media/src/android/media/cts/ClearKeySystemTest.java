@@ -66,8 +66,10 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private static final int SLEEP_TIME_MS = 1000;
     private static final int VIDEO_WIDTH_CENC = 1280;
     private static final int VIDEO_HEIGHT_CENC = 720;
-    private static final int VIDEO_WIDTH_WEBM = 320;
-    private static final int VIDEO_HEIGHT_WEBM = 180;
+    private static final int VIDEO_WIDTH_WEBM = 352;
+    private static final int VIDEO_HEIGHT_WEBM = 288;
+    private static final int VIDEO_WIDTH_MPEG2TS = 320;
+    private static final int VIDEO_HEIGHT_MPEG2TS = 240;
     private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(25, TimeUnit.SECONDS);
     private static final String MIME_VIDEO_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String MIME_VIDEO_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
@@ -78,6 +80,10 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             "http://yt-dash-mse-test.commondatastorage.googleapis.com/media/car_cenc-20120827-88.mp4");
     private static final Uri WEBM_URL = Uri.parse(
             "android.resource://android.media.cts/" + R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz_crypt);
+    private static final Uri MPEG2TS_SCRAMBLED_URL = Uri.parse(
+            "android.resource://android.media.cts/" + R.raw.segment000001_scrambled);
+    private static final Uri MPEG2TS_CLEAR_URL = Uri.parse(
+            "android.resource://android.media.cts/" + R.raw.segment000001);
 
     private static final UUID CLEARKEY_SCHEME_UUID =
             new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
@@ -327,15 +333,20 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             String initDataType, byte[][] clearKeys,
             Uri audioUrl, boolean audioEncrypted,
             Uri videoUrl, boolean videoEncrypted,
-            int videoWidth, int videoHeight) throws Exception {
-        MediaDrm drm = startDrm(clearKeys, initDataType);
-        if (null == drm) {
-            throw new Error("Failed to create drm.");
-        }
+            int videoWidth, int videoHeight, boolean scrambled) throws Exception {
+        MediaDrm drm = null;
+        mSessionId = null;
+        if (!scrambled) {
+            drm = startDrm(clearKeys, initDataType);
+            if (null == drm) {
+                throw new Error("Failed to create drm.");
+            }
 
-        if (!drm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID)) {
-            stopDrm(drm);
-            throw new Error("Crypto scheme is not supported.");
+            if (!drm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID)) {
+                stopDrm(drm);
+                throw new Error("Crypto scheme is not supported.");
+            }
+            mSessionId = openSession(drm);
         }
 
         if (!isResolutionSupported(videoMime, videoFeatures, videoWidth, videoHeight)) {
@@ -364,19 +375,19 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
         }
         connectionStatus.testConnection(videoUrl);
 
-        mSessionId = openSession(drm);
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 getActivity().getSurfaceHolder(),
-                mSessionId,
+                mSessionId, scrambled,
                 mContext.getResources());
 
         mMediaCodecPlayer.setAudioDataSource(audioUrl, null, audioEncrypted);
         mMediaCodecPlayer.setVideoDataSource(videoUrl, null, videoEncrypted);
         mMediaCodecPlayer.start();
         mMediaCodecPlayer.prepare();
-        mDrmInitData = mMediaCodecPlayer.getDrmInitData();
-
-        getKeys(mDrm, initDataType, mSessionId, mDrmInitData, clearKeys);
+        if (!scrambled) {
+            mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+            getKeys(mDrm, initDataType, mSessionId, mDrmInitData, clearKeys);
+        }
         // starts video playback
         mMediaCodecPlayer.startThread();
 
@@ -392,8 +403,10 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
         Log.d(TAG, "playVideo player.reset()");
         mMediaCodecPlayer.reset();
-        closeSession(drm, mSessionId);
-        stopDrm(drm);
+        if (!scrambled) {
+            closeSession(drm, mSessionId);
+            stopDrm(drm);
+        }
     }
 
     public void testClearKeyPlaybackCenc() throws Exception {
@@ -403,7 +416,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             "cenc", new byte[][] { CLEAR_KEY_CENC },
             CENC_AUDIO_URL, false,
             CENC_VIDEO_URL, true,
-            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
+            VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false);
     }
 
     public void testClearKeyPlaybackWebm() throws Exception {
@@ -412,6 +425,24 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             "webm", new byte[][] { CLEAR_KEY_WEBM },
             WEBM_URL, true,
             WEBM_URL, true,
-            VIDEO_WIDTH_WEBM, VIDEO_WIDTH_WEBM);
+            VIDEO_WIDTH_WEBM, VIDEO_HEIGHT_WEBM, false);
+    }
+
+    public void testClearKeyPlaybackMpeg2ts() throws Exception {
+        testClearKeyPlayback(
+            MIME_VIDEO_AVC, new String[0],
+            "mpeg2ts", null,
+            MPEG2TS_SCRAMBLED_URL, false,
+            MPEG2TS_SCRAMBLED_URL, false,
+            VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, true);
+    }
+
+    public void testPlaybackMpeg2ts() throws Exception {
+        testClearKeyPlayback(
+            MIME_VIDEO_AVC, new String[0],
+            "mpeg2ts", null,
+            MPEG2TS_CLEAR_URL, false,
+            MPEG2TS_CLEAR_URL, false,
+            VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, false);
     }
 }
