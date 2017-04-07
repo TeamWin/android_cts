@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # check usage
     if len(sys.argv) != 3:
         print usage
-        exit()
+        exit(1)
     input_file = sys.argv[1]
     output_file = sys.argv[2]
 
