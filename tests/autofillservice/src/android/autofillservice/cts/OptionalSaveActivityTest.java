@@ -130,7 +130,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_ADDRESS, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
@@ -330,7 +330,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_ADDRESS, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_ADDRESS);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();

@@ -93,7 +93,7 @@ public class PreFilledLoginActivityTest extends AutoFillServiceTestCase {
         mActivity.tapLogin();
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
         // Assert sanitization on save: everything should be available!

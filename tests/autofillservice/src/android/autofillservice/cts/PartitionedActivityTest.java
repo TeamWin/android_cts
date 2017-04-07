@@ -25,7 +25,11 @@ import static android.autofillservice.cts.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.GridActivity.ID_L4C2;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -210,7 +214,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
                         .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
                         .build())
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .setExtras(extras)
                 .build();
         sReplier.addResponse(response1);
@@ -272,6 +275,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L4C1, "l4c1", createPresentation("l4c1"))
                         .setField(ID_L4C2, "l4c2", createPresentation("l4c2"))
                         .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
                 .setExtras(extras)
                 .build();
         sReplier.addResponse(response4);
@@ -285,7 +289,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 1, "L1C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
         assertWithMessage("wrong number of extras on save request bundle")
@@ -293,6 +297,308 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertThat(saveRequest.data.getString("numbers4")).isEqualTo("2342");
     }
 
+    @Test
+    public void testSaveOneSaveInfoOnFirstPartitionWithIdsOnSecond() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 2nd partition.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                        .setField(ID_L2C2, "l2c2", createPresentation("l2c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L2C1)
+                .build();
+        sReplier.addResponse(response2);
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger save
+        mActivity.setText(2, 1, "L2C1");
+        mActivity.save();
+
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertValue(saveRequest.structure, ID_L2C1, "L2C1");
+    }
+
+    @Test
+    public void testSaveOneSaveInfoOnSecondPartitionWithIdsOnFirst() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 2nd partition.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                        .setField(ID_L2C2, "l2c2", createPresentation("l2c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
+                .build();
+        sReplier.addResponse(response2);
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger save
+        mActivity.setText(1, 1, "L1C1");
+        mActivity.save();
+
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertValue(saveRequest.structure, ID_L1C1, "L1C1");
+    }
+
+    @Test
+    public void testSaveTwoSaveInfosDifferentTypes() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
+                .build();
+        sReplier.addResponse(response1);
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 2nd partition.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                        .setField(ID_L2C2, "l2c2", createPresentation("l2c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_CREDIT_CARD,
+                        ID_L2C1)
+                .build();
+        sReplier.addResponse(response2);
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger save
+        mActivity.setText(1, 1, "L1C1");
+        mActivity.setText(2, 1, "L2C1");
+        mActivity.save();
+
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_CREDIT_CARD);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertValue(saveRequest.structure, ID_L1C1, "L1C1");
+        assertValue(saveRequest.structure, ID_L2C1, "L2C1");
+    }
+
+    @Test
+    public void testSaveThreeSaveInfosDifferentTypes() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
+                .build();
+        sReplier.addResponse(response1);
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 2nd partition.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                        .setField(ID_L2C2, "l2c2", createPresentation("l2c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_CREDIT_CARD,
+                        ID_L2C1)
+                .build();
+        sReplier.addResponse(response2);
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 3rd partition.
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L3C1, "l3c1", createPresentation("l3c1"))
+                        .setField(ID_L3C2, "l3c2", createPresentation("l3c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_CREDIT_CARD
+                        | SAVE_DATA_TYPE_USERNAME, ID_L3C1)
+                .build();
+        sReplier.addResponse(response3);
+        mActivity.focusCell(3, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger save
+        mActivity.setText(1, 1, "L1C1");
+        mActivity.setText(2, 1, "L2C1");
+        mActivity.setText(3, 1, "L3C1");
+        mActivity.save();
+
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_CREDIT_CARD,
+                SAVE_DATA_TYPE_USERNAME);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertValue(saveRequest.structure, ID_L1C1, "L1C1");
+        assertValue(saveRequest.structure, ID_L2C1, "L2C1");
+        assertValue(saveRequest.structure, ID_L3C1, "L3C1");
+    }
+
+    @Test
+    public void testSaveThreeSaveInfosDifferentTypesIncludingGeneric() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
+                .build();
+        sReplier.addResponse(response1);
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 2nd partition.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                        .setField(ID_L2C2, "l2c2", createPresentation("l2c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_GENERIC, ID_L2C1)
+                .build();
+        sReplier.addResponse(response2);
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 3rd partition.
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L3C1, "l3c1", createPresentation("l3c1"))
+                        .setField(ID_L3C2, "l3c2", createPresentation("l3c2"))
+                        .build())
+                .setRequiredSavableIds(
+                        SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_GENERIC | SAVE_DATA_TYPE_USERNAME,
+                        ID_L3C1)
+                .build();
+        sReplier.addResponse(response3);
+        mActivity.focusCell(3, 1);
+        sReplier.getNextFillRequest();
+
+
+        // Trigger save
+        mActivity.setText(1, 1, "L1C1");
+        mActivity.setText(2, 1, "L2C1");
+        mActivity.setText(3, 1, "L3C1");
+        mActivity.save();
+
+        // Make sure GENERIC type is not shown on snackbar
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_USERNAME);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertValue(saveRequest.structure, ID_L1C1, "L1C1");
+        assertValue(saveRequest.structure, ID_L2C1, "L2C1");
+        assertValue(saveRequest.structure, ID_L3C1, "L3C1");
+    }
+
+    @Test
+    public void testSaveMoreThanThreeSaveInfosDifferentTypes() throws Exception {
+        // Set service.
+        enableService();
+
+        // Trigger 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_L1C1)
+                .build();
+        sReplier.addResponse(response1);
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 2nd partition.
+        final CannedFillResponse response2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L2C1, "l2c1", createPresentation("l2c1"))
+                        .setField(ID_L2C2, "l2c2", createPresentation("l2c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_CREDIT_CARD,
+                        ID_L2C1)
+                .build();
+        sReplier.addResponse(response2);
+        mActivity.focusCell(2, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 3rd partition.
+        final CannedFillResponse response3 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L3C1, "l3c1", createPresentation("l3c1"))
+                        .setField(ID_L3C2, "l3c2", createPresentation("l3c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_CREDIT_CARD
+                        | SAVE_DATA_TYPE_USERNAME, ID_L3C1)
+                .build();
+        sReplier.addResponse(response3);
+        mActivity.focusCell(3, 1);
+        sReplier.getNextFillRequest();
+
+        // Trigger 4th partition.
+        final CannedFillResponse response4 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L4C1, "l4c1", createPresentation("l4c1"))
+                        .setField(ID_L4C2, "l4c2", createPresentation("l4c2"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD | SAVE_DATA_TYPE_CREDIT_CARD
+                        | SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_ADDRESS, ID_L4C1)
+                .build();
+        sReplier.addResponse(response4);
+        mActivity.focusCell(4, 1);
+        sReplier.getNextFillRequest();
+
+
+        // Trigger save
+        mActivity.setText(1, 1, "L1C1");
+        mActivity.setText(2, 1, "L2C1");
+        mActivity.setText(3, 1, "L3C1");
+        mActivity.setText(4, 1, "L4C1");
+        mActivity.save();
+
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertValue(saveRequest.structure, ID_L1C1, "L1C1");
+        assertValue(saveRequest.structure, ID_L2C1, "L2C1");
+        assertValue(saveRequest.structure, ID_L3C1, "L3C1");
+        assertValue(saveRequest.structure, ID_L4C1, "L4C1");
+    }
+
     // TODO(b/33197203, b/35707731): test force autofill after autofilled
-    // TODO(b/33197203, b/35707731): add test for saving (1, 2, 3, or more unique save types)
+    // TODO(b/33197203, b/35707731): test save with different subtitles and custom no button
 }
