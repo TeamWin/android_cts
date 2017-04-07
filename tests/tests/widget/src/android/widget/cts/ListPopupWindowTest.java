@@ -504,7 +504,7 @@ public class ListPopupWindowTest {
         mInstrumentation.waitForIdleSync();
 
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
-                any(AdapterView.class), any(View.class), eq(1), eq(1L));
+                any(AdapterView.class), any(), eq(1), eq(1L));
         // Also verify that the popup window has been dismissed
         assertFalse(mPopupWindow.isShowing());
         verify(mPopupWindowBuilder.mOnDismissListener, times(2)).onDismiss();
