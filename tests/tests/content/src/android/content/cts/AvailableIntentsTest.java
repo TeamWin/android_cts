@@ -276,6 +276,9 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testAlarmClockShowTimers() {
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)) {
+            return;
+        }
         Intent intent = new Intent(AlarmClock.ACTION_SHOW_TIMERS);
         assertCanBeHandled(intent);
     }
