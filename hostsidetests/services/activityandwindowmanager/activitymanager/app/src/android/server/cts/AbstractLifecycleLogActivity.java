@@ -76,6 +76,12 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(getTag(), "onStop");
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(getTag(), "onDestroy");

@@ -581,7 +581,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // stack, but that the home stack is still focused
         removeStacks(PINNED_STACK_ID);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
-                true /* expectTopTaskHasActivity */, false /* expectBottomTaskHasActivity */);
+                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
     public void testMovePipToBackWithNoFullscreenStack() throws Exception {
@@ -598,7 +598,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // fullscreen stack existed before)
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
-                true /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
+                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
     public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
@@ -630,7 +630,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // stack, but that the home stack is still focused
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY, HOME_STACK_ID,
-                true /* expectTopTaskHasActivity */, false /* expectBottomTaskHasActivity */);
+                false /* expectTopTaskHasActivity */, true /* expectBottomTaskHasActivity */);
     }
 
     public void testPinnedStackAlwaysOnTop() throws Exception {
@@ -748,6 +748,43 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         logSeparator = clearLogcat();
         launchActivity(PIP_ACTIVITY);
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
+    }
+
+    public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch a PiP activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        assertPinnedStackExists();
+
+        // Dismiss it
+        String logSeparator = clearLogcat();
+        removeStacks(PINNED_STACK_ID);
+        mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, FULLSCREEN_WORKSPACE_STACK_ID);
+
+        // Confirm that we get stop before the multi-window and picture-in-picture mode change
+        // callbacks
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY,
+                logSeparator);
+        if (lifecycleCounts.mStopCount != 1) {
+            fail(PIP_ACTIVITY + " has received " + lifecycleCounts.mStopCount
+                    + " onStop() calls, expecting 1");
+        } else if (lifecycleCounts.mPictureInPictureModeChangedCount != 1) {
+            fail(PIP_ACTIVITY + " has received " + lifecycleCounts.mPictureInPictureModeChangedCount
+                    + " onMultiWindowModeChanged() calls, expecting 1");
+        } else if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
+            fail(PIP_ACTIVITY + " has received " + lifecycleCounts.mMultiWindowModeChangedCount
+                    + " onPictureInPictureModeChanged() calls, expecting 1");
+        } else {
+            int lastStopLine = lifecycleCounts.mLastStopLineIndex;
+            int lastPipLine = lifecycleCounts.mLastPictureInPictureModeChangedLineIndex;
+            int lastMwLine = lifecycleCounts.mLastMultiWindowModeChangedLineIndex;
+            if (!(lastStopLine < lastPipLine && lastPipLine < lastMwLine)) {
+                fail(PIP_ACTIVITY + " has received callbacks in unexpected order.  Expected:"
+                        + " stop < pip < mw, but got line indices: " + lastStopLine + ", "
+                        + lastPipLine + ", " + lastMwLine + " respectively");
+            }
+        }
     }
 
     public void testPreventSetAspectRatioWhileExpanding() throws Exception {
