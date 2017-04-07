@@ -64,6 +64,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 
 # do not compress VP9 video files
 LOCAL_AAPT_FLAGS := -0 .vp9
+LOCAL_AAPT_FLAGS += -0 .ts
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
