@@ -121,6 +121,7 @@ import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.PointerIcon;
@@ -7388,6 +7389,32 @@ public class TextViewTest {
         Typeface expected = mActivity.getResources().getFont(R.font.samplexmlfont);
 
         assertEquals(expected, mTextView.getTypeface());
+    }
+
+    @Test
+    @MediumTest
+    public void testFontResourcesXml_restrictedContext()
+            throws PackageManager.NameNotFoundException {
+        Context restrictedContext = mActivity.createPackageContext(mActivity.getPackageName(),
+                Context.CONTEXT_RESTRICTED);
+        LayoutInflater layoutInflater = (LayoutInflater) restrictedContext.getSystemService(
+                Context.LAYOUT_INFLATER_SERVICE);
+        View root = layoutInflater.inflate(R.layout.textview_restricted_layout, null);
+
+        mTextView = root.findViewById(R.id.textview_fontresource_fontfamily);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
+        mTextView = root.findViewById(R.id.textview_fontxmlresource_fontfamily);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
+        mTextView = root.findViewById(R.id.textview_fontxmlresource_nonFontReference);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
+        mTextView = root.findViewById(R.id.textview_fontresource_style);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
+        mTextView = root.findViewById(R.id.textview_fontxmlresource_style);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
+        mTextView = root.findViewById(R.id.textview_fontresource_textAppearance);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
+        mTextView = root.findViewById(R.id.textview_fontxmlresource_textAppearance);
+        assertEquals(Typeface.DEFAULT, mTextView.getTypeface());
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
