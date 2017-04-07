@@ -57,7 +57,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
@@ -82,7 +81,7 @@ import java.util.concurrent.TimeUnit;
  *
  *  Save
  *  - test cases where only non-savable-ids are changed
- *  - test case where 'no thanks' is tapped (similar to testSaveSnackBarGoesAway())
+ *  - test case where 'no thanks' or 'x' is tapped (similar to former testSaveSnackBarGoesAway())
  *
  *  Other assertions
  *  - illegal state thrown on callback calls
@@ -789,53 +788,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Sanity check: once saved, the session should be finsihed.
         assertNoDanglingSessions();
-    }
-
-    private void setSnackBarLifetimeMs(long timeout) {
-        runShellCommand("cmd autofill set save_timeout %s", timeout);
-    }
-
-    @Test
-    public void testSaveSnackBarGoesAway() throws Exception {
-        enableService();
-        final int timeout = 1000;
-        setSnackBarLifetimeMs(timeout);
-
-        try {
-            // Set expectations.
-            sReplier.addResponse(new CannedFillResponse.Builder()
-                    .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                    .build());
-
-            // Trigger auto-fill.
-            mActivity.onUsername(View::requestFocus);
-
-            // Wait for onFill() before proceeding, otherwise the fields might be changed before
-            // the session started
-            sReplier.getNextFillRequest();
-
-            // Sanity check.
-            sUiBot.assertNoDatasets();
-
-            // Set credentials...
-            mActivity.onUsername((v) -> v.setText("malkovich"));
-            mActivity.onPassword((v) -> v.setText("malkovich"));
-
-            // ...and login
-            final String expectedMessage = getWelcomeMessage("malkovich");
-            final String actualMessage = mActivity.tapLogin();
-            assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-
-            // Assert the snack bar is shown.
-            sUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
-            SystemClock.sleep(timeout);
-            sUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
-
-            // Sanity check: once timed out, session should be finsihed.
-            assertNoDanglingSessions();
-        } finally {
-            setSnackBarLifetimeMs(5000);
-        }
     }
 
     @Test
