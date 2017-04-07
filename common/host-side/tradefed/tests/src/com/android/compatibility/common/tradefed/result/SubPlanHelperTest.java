@@ -39,7 +39,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Set;
 
-public class SubPlanCreatorTest extends TestCase {
+public class SubPlanHelperTest extends TestCase {
 
     // Values used to populate mock results
     private static final String SUITE_NAME = "CTS";
@@ -75,7 +75,7 @@ public class SubPlanCreatorTest extends TestCase {
     private static final String SP_RESULT_TYPE_NOT_EXECUTED = "not_executed";
 
     private CompatibilityBuildHelper mBuildHelper;
-    private SubPlanCreator mSubPlanCreator;
+    private SubPlanHelper mSubPlanHelper;
 
     private File mResultsDir = null;
     private File mResultDir = null;
@@ -89,8 +89,8 @@ public class SubPlanCreatorTest extends TestCase {
         mBuildHelper = new SpctMockCompatibilityBuildHelper(new BuildInfo("0", "", ""));
         populateResults();
 
-        mSubPlanCreator = new SubPlanCreator();
-        ArgsOptionParser optionParser = new ArgsOptionParser(mSubPlanCreator);
+        mSubPlanHelper = new SubPlanHelper();
+        ArgsOptionParser optionParser = new ArgsOptionParser(mSubPlanHelper);
         optionParser.parse(Arrays.asList(
             "-n", SP_NAME,
             "--session", SP_SESSION,
@@ -109,7 +109,7 @@ public class SubPlanCreatorTest extends TestCase {
     }
 
     public void testCreateSubPlan() throws Exception {
-        ISubPlan plan = mSubPlanCreator.createSubPlan(mBuildHelper);
+        ISubPlan plan = mSubPlanHelper.createSubPlan(mBuildHelper);
         Set<String> planIncludes = plan.getIncludeFilters();
         Set<String> planExcludes = plan.getExcludeFilters();
         TestFilter mf1 = new TestFilter(ABI, NAME_A, null);
