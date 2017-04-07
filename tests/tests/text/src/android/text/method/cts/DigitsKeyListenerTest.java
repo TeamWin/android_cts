@@ -899,8 +899,9 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertEquals(-1, acceptedChars.indexOf(usDecimalSeparator));
     }
 
+    // Deprecated constructors that need to preserve pre-existing behavior.
     @Test
-    public void testGetInputType1() {
+    public void testGetInputType_deprecatedConstructors() {
         DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(false, false);
         int expected = InputType.TYPE_CLASS_NUMBER;
         assertEquals(expected, digitsKeyListener.getInputType());
@@ -922,27 +923,57 @@ public class DigitsKeyListenerTest extends KeyListenerTestCase {
         assertEquals(expected, digitsKeyListener.getInputType());
     }
 
+    // Deprecated constructors that need to preserve pre-existing behavior.
     @Test
-    public void testGetInputType2() {
-        final Locale irLocale = Locale.forLanguageTag("fa-IR");
-        DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(irLocale, false, false);
+    public void testGetInputType_English() {
         int expected = InputType.TYPE_CLASS_NUMBER;
+        DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(
+                Locale.US, false, false);
+        assertEquals(expected, digitsKeyListener.getInputType());
+        digitsKeyListener = DigitsKeyListener.getInstance(
+                Locale.UK, false, false);
         assertEquals(expected, digitsKeyListener.getInputType());
 
-        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, true, false);
         expected = InputType.TYPE_CLASS_NUMBER
                 | InputType.TYPE_NUMBER_FLAG_SIGNED;
+        digitsKeyListener = DigitsKeyListener.getInstance(Locale.US, true, false);
+        assertEquals(expected, digitsKeyListener.getInputType());
+        digitsKeyListener = DigitsKeyListener.getInstance(Locale.UK, true, false);
         assertEquals(expected, digitsKeyListener.getInputType());
 
-        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, false, true);
         expected = InputType.TYPE_CLASS_NUMBER
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL;
+        digitsKeyListener = DigitsKeyListener.getInstance(Locale.US, false, true);
+        assertEquals(expected, digitsKeyListener.getInputType());
+        digitsKeyListener = DigitsKeyListener.getInstance(Locale.UK, false, true);
         assertEquals(expected, digitsKeyListener.getInputType());
 
-        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, true, true);
         expected = InputType.TYPE_CLASS_NUMBER
                 | InputType.TYPE_NUMBER_FLAG_SIGNED
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL;
+        digitsKeyListener = DigitsKeyListener.getInstance(Locale.US, true, true);
+        assertEquals(expected, digitsKeyListener.getInputType());
+        digitsKeyListener = DigitsKeyListener.getInstance(Locale.UK, true, true);
+        assertEquals(expected, digitsKeyListener.getInputType());
+    }
+
+    // Persian needs more characters then typically provided by datetime inputs, so it falls
+    // back on normal text.
+    @Test
+    public void testGetInputType_Persian() {
+        final Locale irLocale = Locale.forLanguageTag("fa-IR");
+        final int expected = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL;
+
+        DigitsKeyListener digitsKeyListener = DigitsKeyListener.getInstance(irLocale, false, false);
+        assertEquals(expected, digitsKeyListener.getInputType());
+
+        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, true, false);
+        assertEquals(expected, digitsKeyListener.getInputType());
+
+        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, false, true);
+        assertEquals(expected, digitsKeyListener.getInputType());
+
+        digitsKeyListener = DigitsKeyListener.getInstance(irLocale, true, true);
         assertEquals(expected, digitsKeyListener.getInputType());
     }
 

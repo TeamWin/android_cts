@@ -114,17 +114,26 @@ public class DateTimeKeyListenerTest extends KeyListenerTestCase {
 
     @Test
     public void testGetInputType() {
-        final int expected = InputType.TYPE_CLASS_DATETIME
+        // The "normal" input type that has been used consistently until Android O.
+        final int dateTimeType = InputType.TYPE_CLASS_DATETIME
                 | InputType.TYPE_DATETIME_VARIATION_NORMAL;
+        // Fallback for locales that need more characters.
+        final int textType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL;
 
+        // Deprecated constructor that needs to preserve pre-existing behavior.
         DateTimeKeyListener listener = DateTimeKeyListener.getInstance();
-        assertEquals(expected, listener.getInputType());
+        assertEquals(dateTimeType, listener.getInputType());
 
+        // TYPE_CLASS_DATETIME is fine for English locales.
         listener = DateTimeKeyListener.getInstance(Locale.US);
-        assertEquals(expected, listener.getInputType());
+        assertEquals(dateTimeType, listener.getInputType());
+        listener = DateTimeKeyListener.getInstance(Locale.UK);
+        assertEquals(dateTimeType, listener.getInputType());
 
+        // Persian needs more characters then typically provided by datetime inputs, so it falls
+        // back on normal text.
         listener = DateTimeKeyListener.getInstance(Locale.forLanguageTag("fa-IR"));
-        assertEquals(expected, listener.getInputType());
+        assertEquals(textType, listener.getInputType());
     }
 
     /*
