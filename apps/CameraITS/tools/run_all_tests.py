@@ -19,11 +19,26 @@ import tempfile
 import subprocess
 import time
 import sys
-import textwrap
+
+import its.caps
 import its.device
 from its.device import ItsSession
 
 CHART_DELAY = 1  # seconds
+FACING_EXTERNAL = 2
+SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
+
+
+def skip_sensor_fusion():
+    """Determine if sensor fusion test is skipped for this camera."""
+
+    skip_code = SKIP_RET_CODE
+    with ItsSession() as cam:
+        props = cam.get_camera_properties()
+        if (its.caps.sensor_fusion(props) and its.caps.manual_sensor(props) and
+                props['android.lens.facing'] is not FACING_EXTERNAL):
+            skip_code = None
+    return skip_code
 
 
 def main():
@@ -45,61 +60,58 @@ def main():
                all android devices.
     """
 
-    SKIP_RET_CODE = 101
-
     # Not yet mandated tests
     NOT_YET_MANDATED = {
-        "scene0":[
+        "scene0": [
             "test_jitter"
-        ],
-        "scene1":[
+            ],
+        "scene1": [
             "test_ae_af",
             "test_ae_precapture_trigger",
             "test_crop_region_raw",
             "test_ev_compensation_advanced",
             "test_ev_compensation_basic",
             "test_yuv_plus_jpeg"
-        ],
-        "scene2":[],
-        "scene3":[
+            ],
+        "scene2": [],
+        "scene3": [
             "test_lens_movement_reporting",
             "test_lens_position"
-        ],
-        "scene4":[],
-        "scene5":[],
-        "sensor_fusion":[]
+            ],
+        "scene4": [],
+        "scene5": [],
+        "sensor_fusion": []
     }
 
-    all_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5"]
+    all_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5",
+                  "sensor_fusion"]
 
     auto_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4"]
 
     scene_req = {
-        "scene0" : None,
-        "scene1" : "A grey card covering at least the middle 30% of the scene",
-        "scene2" : "A picture containing human faces",
-        "scene3" : "The ISO 12233 chart",
-        "scene4" : "A specific test page of a circle covering at least the "
-                   "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
-                   "for more details",
-        "scene5" : "Capture images with a diffuser attached to the camera. See "
-                   "CameraITS.pdf section 2.3.4 for more details",
-        "sensor_fusion" : "Rotating checkboard pattern. See "
-                          "sensor_fusion/SensorFusion.pdf for detailed "
-                          "instructions. Note that this test will be skipped "
-                          "on devices not supporting REALTIME camera timestamp."
-                          "If that is the case, no scene setup is required and "
-                          "you can just answer Y when being asked if the scene "
-                          "is okay"
+        "scene0": None,
+        "scene1": "A grey card covering at least the middle 30% of the scene",
+        "scene2": "A picture containing human faces",
+        "scene3": "The ISO 12233 chart",
+        "scene4": "A specific test page of a circle covering at least the "
+                  "middle 50% of the scene. See CameraITS.pdf section 2.3.4 "
+                  "for more details",
+        "scene5": "Capture images with a diffuser attached to the camera. See "
+                  "CameraITS.pdf section 2.3.4 for more details",
+        "sensor_fusion": "Rotating checkboard pattern. See "
+                         "sensor_fusion/SensorFusion.pdf for detailed "
+                         "instructions.\nNote that this test will be skipped "
+                         "on devices not supporting REALTIME camera timestamp."
     }
     scene_extra_args = {
-        "scene5" : ["doAF=False"]
+        "scene5": ["doAF=False"]
     }
 
     camera_ids = []
     scenes = []
     chart_host_id = None
     result_device_id = None
+    rot_rig_id = None
 
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
@@ -110,6 +122,9 @@ def main():
             chart_host_id = s[6:]
         elif s[:7] == 'result=' and len(s) > 7:
             result_device_id = s[7:]
+        elif s[:8] == 'rot_rig=' and len(s) > 8:
+            rot_rig_id = s[8:]  # valid values: 'default' or '$VID:$PID:$CH'
+            # The default '$VID:$PID:$CH' is '04d8:fc73:1'
 
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
@@ -128,7 +143,6 @@ def main():
             else:
                 try:
                     # Try replace "X" to "sceneX"
-                    scene_num = int(s)
                     scene_str = "scene" + s
                     if scene_str not in possible_scenes:
                         valid_scenes = False
@@ -140,7 +154,7 @@ def main():
 
         if not valid_scenes:
             print "Unknown scene specifiied:", s
-            assert(False)
+            assert False
         scenes = temp_scenes
 
     # Initialize test results
@@ -157,7 +171,7 @@ def main():
     device_id_arg = "device=" + device_id
     print "Testing device " + device_id
 
-    #Sanity Check for devices
+    # Sanity Check for devices
     device_bfp = its.device.get_device_fingerprint(device_id)
     assert device_bfp is not None
 
@@ -167,19 +181,19 @@ def main():
 
     if merge_result_switch:
         result_device_bfp = its.device.get_device_fingerprint(result_device_id)
-        assert device_bfp == result_device_bfp, \
-            "Can not merge result to a different build, from %s to %s" \
-             % (device_bfp, result_device_bfp)
+        assert_err_msg = ('Cannot merge result to a different build, from '
+                          '%s to %s' % (device_bfp, result_device_bfp))
+        assert device_bfp == result_device_bfp, assert_err_msg
 
     # user doesn't specify camera id, run through all cameras
     if not camera_ids:
         camera_ids_path = os.path.join(topdir, "camera_ids.txt")
         out_arg = "out=" + camera_ids_path
         cmd = ['python',
-               os.path.join(os.getcwd(),"tools/get_camera_ids.py"), out_arg,
+               os.path.join(os.getcwd(), "tools/get_camera_ids.py"), out_arg,
                device_id_arg]
-        retcode = subprocess.call(cmd,cwd=topdir)
-        assert(retcode == 0)
+        cam_code = subprocess.call(cmd, cwd=topdir)
+        assert cam_code == 0
         with open(camera_ids_path, "r") as f:
             for line in f:
                 camera_ids.append(line.replace('\n', ''))
@@ -196,8 +210,8 @@ def main():
             screen_id_arg = ('screen=%s' % chart_host_id)
             cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
                                           'wake_up_screen.py'), screen_id_arg]
-            retcode = subprocess.call(cmd)
-            assert retcode == 0
+            wake_code = subprocess.call(cmd)
+            assert wake_code == 0
 
     for camera_id in camera_ids:
         # Loop capturing images until user confirm test scene is correct
@@ -209,8 +223,9 @@ def main():
             os.mkdir(os.path.join(topdir, camera_id, d))
 
         for scene in scenes:
-            tests = [(s[:-3],os.path.join("tests", scene, s))
-                     for s in os.listdir(os.path.join("tests",scene))
+            skip_code = None
+            tests = [(s[:-3], os.path.join("tests", scene, s))
+                     for s in os.listdir(os.path.join("tests", scene))
                      if s[-3:] == ".py" and s[:4] == "test"]
             tests.sort()
 
@@ -219,36 +234,42 @@ def main():
             numskip = 0
             num_not_mandated_fail = 0
             numfail = 0
-            if scene_req[scene] != None:
+            validate_switch = True
+            if scene_req[scene] is not None:
                 out_path = os.path.join(topdir, camera_id, scene+".jpg")
                 out_arg = "out=" + out_path
+                if scene == 'sensor_fusion':
+                    skip_code = skip_sensor_fusion()
+                    if rot_rig_id or skip_code == SKIP_RET_CODE:
+                        validate_switch = False
+                if scene == 'scene5':
+                    validate_switch = False
                 cmd = None
                 if auto_scene_switch:
-                    if not merge_result_switch or \
-                            (merge_result_switch and camera_ids[0] == '0'):
-                        scene_arg = "scene=" + scene
+                    if (not merge_result_switch or
+                            (merge_result_switch and camera_ids[0] == '0')):
+                        scene_arg = 'scene=' + scene
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
                                scene_arg, screen_id_arg]
                     else:
                         time.sleep(CHART_DELAY)
                 else:
-                    # Skip scene validation for scene 5 running in parallel
-                    if not merge_result_switch or scene != 'scene5':
-                        scene_arg = "scene=" + scene_req[scene]
+                    # Skip scene validation under certain conditions
+                    if validate_switch and not merge_result_switch:
+                        scene_arg = 'scene=' + scene_req[scene]
                         extra_args = scene_extra_args.get(scene, [])
                         cmd = ['python',
-                                os.path.join(os.getcwd(),"tools/validate_scene.py"),
-                                camera_id_arg, out_arg,
-                                scene_arg, device_id_arg] + extra_args
-
+                               os.path.join(os.getcwd(),
+                                            'tools/validate_scene.py'),
+                               camera_id_arg, out_arg,
+                               scene_arg, device_id_arg] + extra_args
                 if cmd is not None:
-                    retcode = subprocess.call(cmd,cwd=topdir)
-                    assert(retcode == 0)
+                    valid_scene_code = subprocess.call(cmd, cwd=topdir)
+                    assert valid_scene_code == 0
             print "Start running ITS on camera %s, %s" % (camera_id, scene)
-
             # Run each test, capturing stdout and stderr.
-            for (testname,testpath) in tests:
+            for (testname, testpath) in tests:
                 if auto_scene_switch:
                     if merge_result_switch and camera_ids[0] == '0':
                         # Send an input event to keep the screen not dimmed.
@@ -260,25 +281,37 @@ def main():
                         cmd = ('adb -s %s shell input keyevent FOCUS'
                                % chart_host_id)
                         subprocess.call(cmd.split())
-                cmd = ['python', os.path.join(os.getcwd(),testpath)] + \
-                      sys.argv[1:] + [camera_id_arg]
-                outdir = os.path.join(topdir,camera_id,scene)
-                outpath = os.path.join(outdir,testname+"_stdout.txt")
-                errpath = os.path.join(outdir,testname+"_stderr.txt")
                 t0 = time.time()
-                with open(outpath,"w") as fout, open(errpath,"w") as ferr:
-                    retcode = subprocess.call(
-                            cmd,stderr=ferr,stdout=fout,cwd=outdir)
+                outdir = os.path.join(topdir, camera_id, scene)
+                outpath = os.path.join(outdir, testname+'_stdout.txt')
+                errpath = os.path.join(outdir, testname+'_stderr.txt')
+                if scene == 'sensor_fusion':
+                    if skip_code is not SKIP_RET_CODE:
+                        if rot_rig_id:
+                            print 'Rotating phone w/ rig %s' % rot_rig_id
+                            rig = ('python tools/rotation_rig.py rotator=%s' %
+                                   rot_rig_id)
+                            subprocess.Popen(rig.split())
+                        else:
+                            print 'Rotate phone 15s as shown in SensorFusion.pdf'
+                    else:
+                        test_code = skip_code
+                if skip_code is not SKIP_RET_CODE:
+                    cmd = ['python', os.path.join(os.getcwd(), testpath)]
+                    cmd += sys.argv[1:] + [camera_id_arg]
+                    with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
+                        test_code = subprocess.call(
+                            cmd, stderr=ferr, stdout=fout, cwd=outdir)
                 t1 = time.time()
 
                 test_failed = False
-                if retcode == 0:
+                if test_code == 0:
                     retstr = "PASS "
                     numpass += 1
-                elif retcode == SKIP_RET_CODE:
+                elif test_code == SKIP_RET_CODE:
                     retstr = "SKIP "
                     numskip += 1
-                elif retcode != 0 and testname in NOT_YET_MANDATED[scene]:
+                elif test_code != 0 and testname in NOT_YET_MANDATED[scene]:
                     retstr = "FAIL*"
                     num_not_mandated_fail += 1
                 else:
@@ -294,16 +327,15 @@ def main():
 
             if numskip > 0:
                 skipstr = ", %d test%s skipped" % (
-                        numskip, "s" if numskip > 1 else "")
+                    numskip, "s" if numskip > 1 else "")
             else:
                 skipstr = ""
 
             test_result = "\n%d / %d tests passed (%.1f%%)%s" % (
-                    numpass + num_not_mandated_fail, len(tests) - numskip,
-                    100.0 * float(numpass + num_not_mandated_fail) /
-                            (len(tests) - numskip)
-                            if len(tests) != numskip else 100.0,
-                    skipstr)
+                numpass + num_not_mandated_fail, len(tests) - numskip,
+                100.0 * float(numpass + num_not_mandated_fail) /
+                (len(tests) - numskip)
+                if len(tests) != numskip else 100.0, skipstr)
             print test_result
 
             if num_not_mandated_fail > 0:
@@ -316,7 +348,7 @@ def main():
 
             passed = numfail == 0
             results[scene][result_key] = (ItsSession.RESULT_PASS if passed
-                    else ItsSession.RESULT_FAIL)
+                                          else ItsSession.RESULT_FAIL)
             results[scene][ItsSession.SUMMARY_KEY] = summary_path
 
         print "Reporting ITS result to CtsVerifier"
@@ -335,15 +367,15 @@ def main():
             screen_id_arg = ('screen=%s' % chart_host_id)
             cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
                                           'turn_off_screen.py'), screen_id_arg]
-            retcode = subprocess.call(cmd)
-            assert retcode == 0
+            screen_off_code = subprocess.call(cmd)
+            assert screen_off_code == 0
 
             print 'Shutting down DUT screen: ', device_id
             screen_id_arg = ('screen=%s' % device_id)
             cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
-                                      'turn_off_screen.py'), screen_id_arg]
-            retcode = subprocess.call(cmd)
-            assert retcode == 0
+                                          'turn_off_screen.py'), screen_id_arg]
+            screen_off_code = subprocess.call(cmd)
+            assert screen_off_code == 0
 
     print "ITS tests finished. Please go back to CtsVerifier and proceed"
 
