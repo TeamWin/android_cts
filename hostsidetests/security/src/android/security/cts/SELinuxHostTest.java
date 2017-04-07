@@ -235,8 +235,17 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         }
     }
 
-    private boolean isFullTrebleDevice() throws Exception {
-        return PropertyUtil.getFirstApiLevel(mDevice) > 25;
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns {@code true} if this device is required to be a full Treble device.
+     */
+    public static boolean isFullTrebleDevice(ITestDevice device)
+            throws DeviceNotAvailableException {
+        return PropertyUtil.getFirstApiLevel(device) > 25;
+    }
+
+    private boolean isFullTrebleDevice() throws DeviceNotAvailableException {
+        return isFullTrebleDevice(mDevice);
     }
 
     /**
