@@ -123,14 +123,6 @@ public class ToastTest extends BaseToastTest {
     }
 
     @Test
-    public void testAddTwoToastsViaAddingWindowApisWhenUidFocusedQuickly() throws Exception {
-        showToastsViaAddingWindow(2, false);
-
-        // Wait for the toast to timeout
-        waitForToastTimeout();
-    }
-
-    @Test
     public void testAddTwoToastsViaAddingWindowApisWhenUidFocusedSlowly() throws Exception {
         // Add one window
         showToastsViaAddingWindow(1, true);
