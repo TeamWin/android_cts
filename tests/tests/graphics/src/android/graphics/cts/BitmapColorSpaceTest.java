@@ -26,6 +26,7 @@ import android.os.Parcel;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,11 +41,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class BitmapColorSpaceTest {
+    private static final String LOG_TAG = "BitmapColorSpaceTest";
+
     private Resources mResources;
 
     @Before
@@ -52,10 +56,90 @@ public class BitmapColorSpaceTest {
         mResources = InstrumentationRegistry.getTargetContext().getResources();
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    public void createWithColorSpace() {
+        Bitmap b;
+        ColorSpace cs;
+
+        // We don't test HARDWARE configs because they are not compatible with mutable bitmaps
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true, null);
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true,
+                ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGBA_F16, true, null);
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGBA_F16, true,
+                ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGB_565, true, null);
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGB_565, true,
+                ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ALPHA_8, true, null);
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ALPHA_8, true,
+                ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_4444, true, null);
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_4444, true,
+                ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createWithNonRgbColorSpace() {
+        Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true,
+                ColorSpace.get(ColorSpace.Named.CIE_LAB));
+    }
+
     @Test
     public void sRGB() {
         Bitmap b = BitmapFactory.decodeResource(mResources, R.drawable.robot);
         ColorSpace cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+        cs = b.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+        cs = b.getColorSpace();
         assertNotNull(cs);
         assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
     }
@@ -65,6 +149,16 @@ public class BitmapColorSpaceTest {
         try (InputStream in = mResources.getAssets().open("green-p3.png")) {
             Bitmap b = BitmapFactory.decodeStream(in);
             ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            cs = b.getColorSpace();
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
         } catch (IOException e) {
@@ -77,6 +171,16 @@ public class BitmapColorSpaceTest {
         try (InputStream in = mResources.getAssets().open("prophoto-rgba16f.png")) {
             Bitmap b = BitmapFactory.decodeStream(in);
             ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+
+            b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+
+            b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            cs = b.getColorSpace();
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
         } catch (IOException e) {
@@ -139,7 +243,7 @@ public class BitmapColorSpaceTest {
 
     @Test
     public void getPixel() {
-        verifyGetPixel("green-p3.png", 0x75fb4cff, 0xff03ff00);
+        verifyGetPixel("green-p3.png", 0x75fb4cff, 0xff00ff00);
         verifyGetPixel("translucent-green-p3.png", 0x3a7d267f, 0x7f00ff00); // 50% translucent
     }
 
@@ -151,22 +255,34 @@ public class BitmapColorSpaceTest {
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
 
-            ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
-            b.copyPixelsToBuffer(dst);
-            dst.rewind();
-            // Stored as RGBA
-            assertEquals(rawColor, dst.asIntBuffer().get());
+            verifyGetPixel(b, rawColor, srgbColor);
 
-            int srgb = b.getPixel(31, 31);
-            assertEquals(srgbColor, srgb);
+            b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            verifyGetPixel(b, rawColor, srgbColor);
+
+            b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            verifyGetPixel(b, rawColor, srgbColor);
         } catch (IOException e) {
             fail();
         }
     }
 
+    private static void verifyGetPixel(@NonNull Bitmap b,
+            @ColorInt int rawColor, @ColorInt int srgbColor) {
+        ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
+        b.copyPixelsToBuffer(dst);
+        dst.rewind();
+
+        // Stored as RGBA
+        assertEquals(rawColor, dst.asIntBuffer().get());
+
+        int srgb = b.getPixel(15, 15);
+        almostEqual(srgbColor, srgb, 3, 15 * b.getWidth() + 15);
+    }
+
     @Test
     public void getPixels() {
-        verifyGetPixels("green-p3.png", 0xff03ff00);
+        verifyGetPixels("green-p3.png", 0xff00ff00);
         verifyGetPixels("translucent-green-p3.png", 0x7f00ff00); // 50% translucent
     }
 
@@ -177,13 +293,25 @@ public class BitmapColorSpaceTest {
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
 
-            int[] pixels = new int[b.getWidth() * b.getHeight()];
-            b.getPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
-            for (int pixel : pixels) {
-                assertEquals(expected, pixel);
-            }
+            verifyGetPixels(b, expected);
+
+            b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            verifyGetPixels(b, expected);
+
+            b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            verifyGetPixels(b, expected);
         } catch (IOException e) {
             fail();
+        }
+    }
+
+    private static void verifyGetPixels(@NonNull Bitmap b, @ColorInt int expected) {
+        int[] pixels = new int[b.getWidth() * b.getHeight()];
+        b.getPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+
+        for (int i = 0; i < pixels.length; i++) {
+            int pixel = pixels[i];
+            almostEqual(expected, pixel, 3, i);
         }
     }
 
@@ -204,16 +332,27 @@ public class BitmapColorSpaceTest {
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
 
-            b.setPixel(0, 0, newColor);
+            verifySetPixel(b, newColor, expectedColor);
 
-            ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
-            b.copyPixelsToBuffer(dst);
-            dst.rewind();
-            // Stored as RGBA
-            assertEquals(expectedColor, dst.asIntBuffer().get());
+            b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            verifySetPixel(b, newColor, expectedColor);
+
+            b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            verifySetPixel(b, newColor, expectedColor);
         } catch (IOException e) {
             fail();
         }
+    }
+
+    private static void verifySetPixel(@NonNull Bitmap b,
+            @ColorInt int newColor, @ColorInt int expectedColor) {
+        b.setPixel(0, 0, newColor);
+
+        ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
+        b.copyPixelsToBuffer(dst);
+        dst.rewind();
+        // Stored as RGBA
+        assertEquals(expectedColor, dst.asIntBuffer().get());
     }
 
     @Test
@@ -233,22 +372,33 @@ public class BitmapColorSpaceTest {
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
 
-            int[] pixels = new int[b.getWidth() * b.getHeight()];
-            Arrays.fill(pixels, newColor);
-            b.setPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+            verifySetPixels(b, newColor, expectedColor);
 
-            ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
-            b.copyPixelsToBuffer(dst);
-            dst.rewind();
+            b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            verifySetPixels(b, newColor, expectedColor);
 
-            IntBuffer buffer = dst.asIntBuffer();
-            //noinspection ForLoopReplaceableByForEach
-            for (int i = 0; i < pixels.length; i++) {
-                // Stored as RGBA
-                assertEquals(expectedColor, buffer.get());
-            }
+            b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            verifySetPixels(b, newColor, expectedColor);
         } catch (IOException e) {
             fail();
+        }
+    }
+
+    private static void verifySetPixels(@NonNull Bitmap b,
+            @ColorInt int newColor, @ColorInt int expectedColor) {
+        int[] pixels = new int[b.getWidth() * b.getHeight()];
+        Arrays.fill(pixels, newColor);
+        b.setPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+
+        ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
+        b.copyPixelsToBuffer(dst);
+        dst.rewind();
+
+        IntBuffer buffer = dst.asIntBuffer();
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < pixels.length; i++) {
+            // Stored as RGBA
+            assertEquals(expectedColor, buffer.get());
         }
     }
 
@@ -399,5 +549,66 @@ public class BitmapColorSpaceTest {
         } catch (IOException e) {
             fail();
         }
+    }
+
+    @Test
+    public void copy() {
+        Bitmap b = BitmapFactory.decodeResource(mResources, R.drawable.robot);
+        Bitmap c = b.copy(Bitmap.Config.ARGB_8888, false);
+        ColorSpace cs = c.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        c = b.copy(Bitmap.Config.ARGB_8888, true);
+        cs = c.getColorSpace();
+        assertNotNull(cs);
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            b = BitmapFactory.decodeStream(in);
+            c = b.copy(Bitmap.Config.ARGB_8888, false);
+            cs = c.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+
+            c = b.copy(Bitmap.Config.ARGB_8888, true);
+            cs = c.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+        } catch (IOException e) {
+            fail();
+        }
+
+        try (InputStream in = mResources.getAssets().open("prophoto-rgba16f.png")) {
+            b = BitmapFactory.decodeStream(in);
+            c = b.copy(Bitmap.Config.RGBA_F16, false);
+            cs = c.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+
+            c = b.copy(Bitmap.Config.RGBA_F16, true);
+            cs = c.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static void almostEqual(@ColorInt int expected,
+            @ColorInt int pixel, int threshold, int index) {
+        int diffA = Math.abs(expected >>> 24 - pixel >>> 24);
+        int diffR = Math.abs((expected >> 16) & 0xff - (pixel >> 16) & 0xff);
+        int diffG = Math.abs((expected >>  8) & 0xff - (pixel >>  8) & 0xff);
+        int diffB = Math.abs((expected      ) & 0xff - (pixel      ) & 0xff);
+
+        boolean pass = diffA + diffR + diffG + diffB < threshold;
+        if (!pass) {
+            Log.d(LOG_TAG, "Expected 0x" + Integer.toHexString(expected) +
+                    " but was 0x" + Integer.toHexString(pixel) + " with index " + index);
+        }
+
+        assertTrue(pass);
     }
 }
