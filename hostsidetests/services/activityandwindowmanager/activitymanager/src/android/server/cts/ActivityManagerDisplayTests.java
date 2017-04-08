@@ -1764,15 +1764,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     /** Checks if the device supports multi-display. */
     private boolean supportsMultiDisplay() throws Exception {
-        final String supportsMD = mDevice.executeShellCommand("am supports-multi-display").trim();
-        if ("true".equals(supportsMD)) {
-            return true;
-        } else if ("false".equals(supportsMD)) {
-            log("No Multi-Display support.");
-            return false;
-        } else {
-            throw new Exception(
-                    "Device does not support \"am supports-multi-display\" shell command.");
-        }
+        return hasDeviceFeature("android.software.activities_on_secondary_displays");
     }
 }
