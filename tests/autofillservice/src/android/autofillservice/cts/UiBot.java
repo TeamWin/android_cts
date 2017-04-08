@@ -162,6 +162,39 @@ final class UiBot {
     }
 
     /**
+     * Selects a view by id.
+     */
+    void selectById(String id) {
+        Log.v(TAG, "selectById(): " + id);
+
+        final UiObject2 view = waitForObject(By.res(id));
+        view.click();
+    }
+
+    /**
+     * Asserts the id is shown on the screen.
+     */
+    void assertShownById(String id) {
+        assertThat(waitForObject(By.res(id))).isNotNull();
+    }
+
+    /**
+     * Gets the text set on a view.
+     */
+    String getTextById(String id) {
+        UiObject2 view = waitForObject(By.res(id));
+        return view.getText();
+    }
+
+    /**
+     * Sets a new text on a view.
+     */
+    void setTextById(String id, String newText) {
+        UiObject2 view = waitForObject(By.res(id));
+        view.setText(newText);
+    }
+
+    /**
      * Asserts the save snackbar is showing and returns it.
      */
     UiObject2 assertSaveShowing(int type) {

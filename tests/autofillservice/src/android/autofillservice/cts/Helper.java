@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.os.UserManager;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -58,6 +59,12 @@ final class Helper {
     static final String ID_LOGIN = "login";
     static final String ID_OUTPUT = "output";
 
+    /** Pass to {@link #setOrientation(int)} to change the display to portrait mode */
+    public static int PORTRAIT = 0;
+
+    /** Pass to {@link #setOrientation(int)} to change the display to landscape mode */
+    public static int LANDSCAPE = 1;
+
     /**
      * Timeout (in milliseconds) until framework binds / unbinds from service.
      */
@@ -87,6 +94,13 @@ final class Helper {
      * Time to wait in between retries
      */
     static final int RETRY_MS = 100;
+
+    private final static String ACCELLEROMETER_CHANGE =
+            "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
+                    + "--bind value:i:%d";
+    private final static String ORIENTATION_CHANGE =
+            "content insert --uri content://settings/system --bind name:s:user_rotation --bind "
+                    + "value:i:%d";
 
     /**
      * Runs a {@code r}, ignoring all {@link RuntimeException} and {@link Error} until the
@@ -531,6 +545,56 @@ final class Helper {
 
         }
         return requiredIds;
+    }
+
+    /**
+     * Prevents the screen to rotate by itself
+     */
+    public static void disableAutoRotation() {
+        runShellCommand(ACCELLEROMETER_CHANGE, 0);
+        setOrientation(PORTRAIT);
+    }
+
+    /**
+     * Allows the screen to rotate by itself
+     */
+    public static void allowAutoRotation() {
+        runShellCommand(ACCELLEROMETER_CHANGE, 1);
+    }
+
+    /**
+     * Changes the screen orientation. This triggers a activity lifecycle (destroy -> create) for
+     * activities that do not handle this config change such as {@link OutOfProcessLoginActivity}.
+     *
+     * @param value {@link #PORTRAIT} or {@link #LANDSCAPE};
+     */
+    public static void setOrientation(int value) {
+        runShellCommand(ORIENTATION_CHANGE, value);
+    }
+
+    /**
+     * Wait until a process starts and returns the process ID of the process.
+     *
+     * @return The pid of the process
+     */
+    public static int getOutOfProcessPid(@NonNull String processName) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < UI_TIMEOUT_MS) {
+            String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
+
+            for (String processDesc : allProcessDescs) {
+                String[] pidAndName = processDesc.trim().split(" ");
+
+                if (pidAndName[1].equals(processName)) {
+                    return Integer.parseInt(pidAndName[0]);
+                }
+            }
+
+            Thread.sleep(RETRY_MS);
+        }
+
+        throw new IllegalStateException("process not found");
     }
 
     private Helper() {
