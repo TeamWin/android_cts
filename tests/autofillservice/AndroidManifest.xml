@@ -31,6 +31,7 @@
         <activity android:name=".WelcomeActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
         <activity android:name=".AuthenticationActivity" />
+        <activity android:name=".ManualAuthenticationActivity" />
         <activity android:name=".CheckoutActivity"/>
         <activity android:name=".InitializedCheckoutActivity" />
         <activity android:name=".DatePickerCalendarActivity" />
@@ -49,6 +50,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".EmptyActivity"/>
+        <activity android:name=".OutOfProcessLoginActivity"
+            android:process="android.autofillservice.cts.outside"/>
 
         <service
             android:name=".InstrumentedAutoFillService"
