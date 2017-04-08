@@ -185,9 +185,6 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "setUpClass()");
 
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
-        assumeTrue(sInstrumentation.getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_PRINTING));
-
         sUiDevice = UiDevice.getInstance(sInstrumentation);
 
         // Make sure we start with a clean slate.
@@ -239,6 +236,10 @@ public abstract class BasePrintTest {
     @Before
     public void setUp() throws Exception {
         Log.d(LOG_TAG, "setUp()");
+
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        assumeTrue(sInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_PRINTING));
 
         // Initialize the latches.
         Log.d(LOG_TAG, "init counters");
