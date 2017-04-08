@@ -384,7 +384,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -797,7 +797,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -872,7 +872,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        final UiObject2 saveSnackBar = sUiBot.assertSaveShowing(type, saveDescription);
+        final UiObject2 saveSnackBar = sUiBot.assertSaveShowing(saveDescription, type);
         sUiBot.saveForAutofill(saveSnackBar, true);
 
         // Assert save was called.
@@ -1183,7 +1183,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         }, intentFilter);
 
         // Trigger the negative button.
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, false);
+        sUiBot.saveForAutofill(false, SAVE_DATA_TYPE_PASSWORD);
 
         // Wait for the custom action.
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -1379,7 +1379,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
                 mActivity.tapSave();
 
                 // Assert the snack bar is shown and tap "Save".
-                sUiBot.saveForAutofill(SAVE_DATA_TYPE_PASSWORD, true);
+                sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
                 final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 

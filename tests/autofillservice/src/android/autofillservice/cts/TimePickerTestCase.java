@@ -89,7 +89,7 @@ abstract class TimePickerTestCase<T extends AbstractTimePickerActivity>
         activity.setTime(10, 40);
         activity.tapOk();
 
-        sUiBot.saveForAutofill(SAVE_DATA_TYPE_GENERIC, true);
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
