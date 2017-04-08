@@ -17,13 +17,11 @@
 package android.text.method.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
@@ -219,23 +217,6 @@ public class PasswordTransformationMethodTest {
         PasswordTransformationMethod method1 = PasswordTransformationMethod.getInstance();
         assertNotNull(method1);
         assertSame(method0, method1);
-    }
-
-    @Test
-    public void testOnFocusChanged() {
-        // lose focus
-        reset(mMethod);
-        assertTrue(mEditText.isFocused());
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "DPAD_DOWN");
-        assertFalse(mEditText.isFocused());
-        verify(mMethod, atLeastOnce()).onFocusChanged(any(), any(), anyBoolean(), anyInt(), any());
-
-        // gain focus
-        reset(mMethod);
-        assertFalse(mEditText.isFocused());
-        CtsKeyEventUtil.sendKeys(mInstrumentation, mEditText, "DPAD_UP");
-        assertTrue(mEditText.isFocused());
-        verify(mMethod, atLeastOnce()).onFocusChanged(any(), any(), anyBoolean(), anyInt(), any());
     }
 
     private void savePasswordPref() {
