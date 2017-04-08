@@ -291,29 +291,34 @@ public class ExternalStorageHostTest extends DeviceTestCase
             final String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
 
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
-            enableWriteSettings(WRITE_PKG);
-            runDeviceTests(
-                    WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testChangeDefaultUris", users[0]);
-
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
 
             for (int user : users) {
+                enableWriteSettings(WRITE_PKG, user);
+                runDeviceTests(
+                        WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testChangeDefaultUris", user);
+
                 runDeviceTests(
                         NONE_PKG, NONE_PKG + ".ReadDefaultUris", "testPlayDefaultUris", user);
             }
         } finally {
             // Make sure the provider and uris are reset on failure.
-            runDeviceTests(
-                    WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testResetDefaultUris", users[0]);
+            for (int user : users) {
+                runDeviceTests(
+                        WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testResetDefaultUris", user);
+            }
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
             removeUsersForTest(users);
         }
     }
 
-    private void enableWriteSettings(String packageName) throws DeviceNotAvailableException {
+    private void enableWriteSettings(String packageName, int userId)
+            throws DeviceNotAvailableException {
         StringBuilder cmd = new StringBuilder();
-        cmd.append("appops set ");
+        cmd.append("appops set --user ");
+        cmd.append(userId);
+        cmd.append(" ");
         cmd.append(packageName);
         cmd.append(" android:write_settings allow");
         getDevice().executeShellCommand(cmd.toString());
