@@ -1005,6 +1005,18 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
     }
 
+    public void testEnableSafeBrowsing() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        assertFalse(mSettings.getSafeBrowsingEnabled());
+        mSettings.setSafeBrowsingEnabled(true);
+        assertTrue(mSettings.getSafeBrowsingEnabled());
+        mSettings.setSafeBrowsingEnabled(false);
+        assertFalse(mSettings.getSafeBrowsingEnabled());
+    }
+
+
     /**
      * Starts the internal web server. The server will be shut down automatically
      * during tearDown().
