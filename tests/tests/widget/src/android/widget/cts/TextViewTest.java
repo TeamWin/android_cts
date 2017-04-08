@@ -4531,7 +4531,8 @@ public class TextViewTest {
         assertEquals(InputType.TYPE_CLASS_NUMBER
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL
                 | InputType.TYPE_NUMBER_FLAG_SIGNED, mTextView.getInputType());
-        assertSame(mTextView.getKeyListener(), DigitsKeyListener.getInstance(true, true));
+        assertSame(mTextView.getKeyListener(),
+                DigitsKeyListener.getInstance(mTextView.getTextLocale(), true, true));
 
         mTextView.setInputType(InputType.TYPE_CLASS_PHONE);
         assertEquals(InputType.TYPE_CLASS_PHONE, mTextView.getInputType());
