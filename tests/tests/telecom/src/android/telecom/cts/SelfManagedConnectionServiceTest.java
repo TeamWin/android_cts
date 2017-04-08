@@ -348,14 +348,19 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         waitOnAllHandlers(getInstrumentation());
     }
 
-    public void testEmergencyCallOngoing() throws Exception {
+    /**
+     * Disabled for now; there is not a reliable means of setting a phone number as a test emergency
+     * number.
+     * @throws Exception
+     */
+    public void DONOTtestEmergencyCallOngoing() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
 
+        // TODO: Need to find a reliable way to set a test emergency number.
         // Set 555-1212 as a test emergency number.
-        TestUtils.executeShellCommand(getInstrumentation(),
-                "setprop ril.ecclist 5551212");
+        TestUtils.executeShellCommand(getInstrumentation(), "setprop ril.ecclist 5551212");
 
         Bundle extras = new Bundle();
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
