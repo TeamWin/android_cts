@@ -22,6 +22,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 import junit.framework.AssertionFailedError;
 
+import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -61,6 +62,12 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             = "content://com.android.cts.contact.directory.provider/";
     private static final String SET_CUSTOM_DIRECTORY_PREFIX_METHOD = "set_prefix";
 
+    private static final String NOTIFICATION_APK = "CtsNotificationSenderApp.apk";
+    private static final String NOTIFICATION_PKG =
+            "com.android.cts.managedprofiletests.notificationsender";
+    private static final String NOTIFICATION_ACTIVITY =
+            NOTIFICATION_PKG + ".SendNotification";
+
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
 
@@ -74,6 +81,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
 
     private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(15);
+
+    private static final String PARAM_PROFILE_ID = "profile-id";
 
     private int mParentUserId;
 
@@ -112,6 +121,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);
             getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
+            getDevice().uninstallPackage(NOTIFICATION_PKG);
         }
         super.tearDown();
     }
@@ -351,6 +361,60 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testAddParentCanAccessManagedFilters", mProfileUserId);
         runDeviceTestsAsUser(INTENT_SENDER_PKG, ".ContentTest", mProfileUserId);
 
+    }
+
+    public void testCrossProfileNotificationListeners_EmptyWhitelist() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
+        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+
+        // Profile owner in the profile sets an empty whitelist
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testSetEmptyWhitelist", mProfileUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
+        // Listener outside the profile can only see personal notifications.
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testCannotReceiveProfileNotifications", mParentUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
+    }
+
+    public void testCrossProfileNotificationListeners_NullWhitelist() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
+        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+
+        // Profile owner in the profile sets a null whitelist
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testSetNullWhitelist", mProfileUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
+        // Listener outside the profile can see profile and personal notifications
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testCanReceiveNotifications", mParentUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
+    }
+
+    public void testCrossProfileNotificationListeners_InWhitelist() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
+        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+
+        // Profile owner in the profile adds listener to the whitelist
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testAddListenerToWhitelist", mProfileUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
+        // Listener outside the profile can see profile and personal notifications
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testCanReceiveNotifications", mParentUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
     }
 
     public void testCrossProfileCopyPaste() throws Exception {
