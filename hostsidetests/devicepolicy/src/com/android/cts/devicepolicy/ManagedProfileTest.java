@@ -71,6 +71,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
 
+    private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
+    private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
 
     private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.SECONDS.toMillis(15);
 
@@ -868,6 +870,15 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         } finally {
             changeUserCredential(null, "1234", mProfileUserId);
         }
+    }
+
+    public void testSanityCheck() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Install SimpleApp in work profile only and check activity in it can be launched.
+        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
     }
 
     private void disableActivityForUser(String activityName, int userId)
