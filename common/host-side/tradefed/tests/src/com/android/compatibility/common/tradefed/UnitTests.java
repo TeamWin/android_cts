@@ -21,16 +21,15 @@ import com.android.compatibility.common.tradefed.result.ChecksumReporterTest;
 import com.android.compatibility.common.tradefed.result.ConsoleReporterTest;
 import com.android.compatibility.common.tradefed.result.MetadataReporterTest;
 import com.android.compatibility.common.tradefed.result.ResultReporterTest;
-import com.android.compatibility.common.tradefed.result.SubPlanHelperTest;
+import com.android.compatibility.common.tradefed.result.SubPlanCreatorTest;
 import com.android.compatibility.common.tradefed.targetprep.PropertyCheckTest;
 import com.android.compatibility.common.tradefed.targetprep.SettingsPreparerTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTestTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleDefTest;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepoTest;
 import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
-import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
-import com.android.compatibility.common.tradefed.util.RetryFilterHelperTest;
+import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -59,8 +58,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(PropertyCheckTest.class);
         addTestSuite(SettingsPreparerTest.class);
         addTestSuite(SubPlanTest.class);
-        addTestSuite(SubPlanHelperTest.class);
-        addTestSuite(RetryFilterHelperTest.class);
+        addTestSuite(SubPlanCreatorTest.class);
     }
 
     public static Test suite() {
