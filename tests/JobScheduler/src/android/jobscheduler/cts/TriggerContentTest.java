@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 @TargetApi(23)
 public class TriggerContentTest extends ConstraintTest {
-    public static final int TRIGGER_CONTENT_JOB_ID = ConnectivityConstraintTest.class.hashCode();
+    public static final int TRIGGER_CONTENT_JOB_ID = TriggerContentTest.class.hashCode();
 
     // The root URI of the media provider, to monitor for generic changes to its content.
     static final Uri MEDIA_URI = Uri.parse("content://" + MediaStore.AUTHORITY + "/");
@@ -120,7 +120,7 @@ public class TriggerContentTest extends ConstraintTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
         for (int i=0; i<mActiveFiles.length; i++) {
             cleanupActive(i);
