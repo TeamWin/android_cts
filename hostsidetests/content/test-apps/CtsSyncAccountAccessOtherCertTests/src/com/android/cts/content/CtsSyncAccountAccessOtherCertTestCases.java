@@ -25,7 +25,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
@@ -45,13 +48,17 @@ import static junit.framework.Assert.assertTrue;
  */
 @RunWith(AndroidJUnit4.class)
 public class CtsSyncAccountAccessOtherCertTestCases {
-    private static final long SYNC_TIMEOUT_MILLIS = 10000; // 20 sec
+    private static final long SYNC_TIMEOUT_MILLIS = 10000; // 10 sec
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
 
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
 
     @Test
     public void testAccountAccess_otherCertAsAuthenticatorCanNotSeeAccount() throws Exception {
+        if (!hasDataConnection()) {
+            return;
+        }
+
         Intent intent = new Intent(getContext(), StubActivity.class);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
 
@@ -62,6 +69,8 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         Account addedAccount = new Account(
                 result.getString(AccountManager.KEY_ACCOUNT_NAME),
                 result.getString(AccountManager.KEY_ACCOUNT_TYPE));
+
+        waitForSyncManagerAccountChangeUpdate();
 
         try {
             CountDownLatch latch = new CountDownLatch(1);
@@ -113,5 +122,18 @@ public class CtsSyncAccountAccessOtherCertTestCases {
 
     private UiDevice getUiDevice() {
         return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    }
+
+    private void waitForSyncManagerAccountChangeUpdate() {
+        // Wait for the sync manager to be notified for the new account.
+        // Unfortunately, there is no way to detect this event, sigh...
+        SystemClock.sleep(5000);
+    }
+
+    private boolean hasDataConnection() {
+        ConnectivityManager connectivityManager = getContext().getSystemService(
+                ConnectivityManager.class);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 }

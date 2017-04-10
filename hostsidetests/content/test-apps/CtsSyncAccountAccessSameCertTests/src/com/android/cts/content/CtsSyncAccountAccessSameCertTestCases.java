@@ -27,7 +27,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
@@ -41,10 +44,14 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 public class CtsSyncAccountAccessSameCertTestCases {
-    private static final long SYNC_TIMEOUT_MILLIS = 10000; // 20 sec
+    private static final long SYNC_TIMEOUT_MILLIS = 10000; // 10 sec
 
     @Test
     public void testAccountAccess_sameCertAsAuthenticatorCanSeeAccount() throws Exception {
+        if (!hasDataConnection()) {
+            return;
+        }
+
         Intent intent = new Intent(getContext(), StubActivity.class);
         Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
 
@@ -55,6 +62,8 @@ public class CtsSyncAccountAccessSameCertTestCases {
         Account addedAccount = new Account(
                 result.getString(AccountManager.KEY_ACCOUNT_NAME),
                         result.getString(AccountManager.KEY_ACCOUNT_TYPE));
+
+        waitForSyncManagerAccountChangeUpdate();
 
         try {
             CountDownLatch latch = new CountDownLatch(1);
@@ -84,5 +93,18 @@ public class CtsSyncAccountAccessSameCertTestCases {
 
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private void waitForSyncManagerAccountChangeUpdate() {
+        // Wait for the sync manager to be notified for the new account.
+        // Unfortunately, there is no way to detect this event, sigh...
+        SystemClock.sleep(5000);
+    }
+
+    private boolean hasDataConnection() {
+        ConnectivityManager connectivityManager = getContext().getSystemService(
+                ConnectivityManager.class);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 }
