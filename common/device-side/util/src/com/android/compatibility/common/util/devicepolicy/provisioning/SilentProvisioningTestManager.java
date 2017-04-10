@@ -29,13 +29,15 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class SilentProvisioningTestManager {
     private static final long TIMEOUT_SECONDS = 120L;
-    private static final String TAG = "SilentProvisioningTestManager";
+    private static final String TAG = "SilentProvisioningTest";
 
     private final LinkedBlockingQueue<Boolean> mProvisioningResults = new LinkedBlockingQueue(1);
 
@@ -51,18 +53,14 @@ public class SilentProvisioningTestManager {
     };
 
     private final Context mContext;
-    private final BlockingReceiver mManagedProfileProvisionedReceiver;
-    private final BlockingReceiver mManagedProfileAddedReceiver;
+    private Intent mReceivedProfileProvisionedIntent;
 
     public SilentProvisioningTestManager(Context context) {
         mContext = context.getApplicationContext();
-        mManagedProfileProvisionedReceiver =
-                new BlockingReceiver(mContext, ACTION_MANAGED_PROFILE_PROVISIONED);
-        mManagedProfileAddedReceiver = new BlockingReceiver(mContext, ACTION_MANAGED_PROFILE_ADDED);
     }
 
     public Intent getReceviedProfileProvisionedIntent() {
-        return mManagedProfileProvisionedReceiver.getReceivedIntent();
+        return mReceivedProfileProvisionedIntent;
     }
 
     public boolean startProvisioningAndWait(Intent provisioningIntent) throws InterruptedException {
@@ -82,23 +80,33 @@ public class SilentProvisioningTestManager {
     }
 
     private boolean waitManagedProfileProvisioning() throws InterruptedException {
-        mManagedProfileProvisionedReceiver.register();
-        mManagedProfileAddedReceiver.register();
+        BlockingBroadcastReceiver managedProfileProvisionedReceiver =
+                new BlockingBroadcastReceiver(mContext, ACTION_MANAGED_PROFILE_PROVISIONED);
+        BlockingBroadcastReceiver managedProfileAddedReceiver =
+                new BlockingBroadcastReceiver(mContext, ACTION_MANAGED_PROFILE_ADDED);
+        try {
+            managedProfileProvisionedReceiver.register();
+            managedProfileAddedReceiver.register();
 
-        if (!pollProvisioningResult()) {
-            return false;
+            if (!pollProvisioningResult()) {
+                return false;
+            }
+
+            mReceivedProfileProvisionedIntent =
+                    managedProfileProvisionedReceiver.awaitForBroadcast();
+            if (mReceivedProfileProvisionedIntent == null) {
+                Log.i(TAG, "managedProfileProvisionedReceiver.awaitForBroadcast(): failed");
+                return false;
+            }
+
+            if (managedProfileAddedReceiver.awaitForBroadcast() == null) {
+                Log.i(TAG, "managedProfileAddedReceiver.awaitForBroadcast(): failed");
+                return false;
+            }
+        } finally {
+            managedProfileProvisionedReceiver.unregisterQuietly();
+            managedProfileAddedReceiver.unregisterQuietly();
         }
-
-        if (!mManagedProfileProvisionedReceiver.await()) {
-            Log.i(TAG, "mManagedProfileProvisionedReceiver.await(): false");
-            return false;
-        }
-
-        if (!mManagedProfileAddedReceiver.await()) {
-            Log.i(TAG, "mManagedProfileAddedReceiver.await(): false");
-            return false;
-        }
-
         return true;
     }
 
