@@ -21,6 +21,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.view.KeyEvent;
 
 import android.view.Window;
+import org.junit.Assume;
 
 public class ToolbarActionBarTest extends ActivityInstrumentationTestCase2<ToolbarActivity> {
 
@@ -39,6 +40,7 @@ public class ToolbarActionBarTest extends ActivityInstrumentationTestCase2<Toolb
     }
 
     public void testOptionsMenuKey() {
+        Assume.assumeTrue(mActivity.getWindow().hasFeature(Window.FEATURE_OPTIONS_PANEL));
         final boolean menuIsVisible[] = {false};
         mActivity.getActionBar().addOnMenuVisibilityListener(
                 isVisible -> menuIsVisible[0] = isVisible);
