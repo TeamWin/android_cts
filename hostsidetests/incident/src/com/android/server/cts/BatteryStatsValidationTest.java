@@ -28,11 +28,21 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     private static final String DEVICE_SIDE_TEST_APK = "CtsBatteryStatsApp.apk";
     private static final String DEVICE_SIDE_TEST_PACKAGE
             = "com.android.server.cts.device.batterystats";
+    private static final String DEVICE_SIDE_BG_SERVICE_COMPONENT
+            = "com.android.server.cts.device.batterystats/.BatteryStatsBackgroundService";
+    private static final String DEVICE_SIDE_FG_ACTIVITY_COMPONENT
+            = "com.android.server.cts.device.batterystats/.BatteryStatsForegroundActivity";
     private static final String DEVICE_SIDE_JOB_COMPONENT
             = "com.android.server.cts.device.batterystats/.SimpleJobService";
     private static final String DEVICE_SIDE_SYNC_COMPONENT
             = "com.android.server.cts.device.batterystats.provider/"
             + "com.android.server.cts.device.batterystats";
+
+
+    // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
+    public static final String KEY_ACTION = "action";
+    public static final String ACTION_JOB_SCHEDULE = "action.jobs";
+    public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
 
     @Override
     protected void setUp() throws Exception {
@@ -107,16 +117,41 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOffScreenOn();
     }
 
+    public void testJobBgVsFg() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        // Foreground test.
+        executeForeground(ACTION_JOB_SCHEDULE);
+        Thread.sleep(4_000);
+        assertValueRange("jb", "", 6, 1, 1); // count
+        assertValueRange("jb", "", 8, 0, 0); // background_count
+
+        // Background test.
+        executeBackground(ACTION_JOB_SCHEDULE);
+        Thread.sleep(4_000);
+        assertValueRange("jb", "", 6, 2, 2); // count
+        assertValueRange("jb", "", 8, 1, 1); // background_count
+
+        batteryOffScreenOn();
+    }
+
     public void testWifiScans() throws Exception {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiScanTests",
-                "testBackgroundScan");
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiScanTests",
-                "testForegroundScan");
+        // Foreground count test.
+        executeForeground(ACTION_WIFI_SCAN);
+        Thread.sleep(4_000);
+        assertValueRange("wfl", "", 7, 1, 1); // scan_count
+        assertValueRange("wfl", "", 11, 0, 0); // scan_count_bg
 
-        assertValueRange("wfl", "", 7, 2, 2);
+        // Background count test.
+        executeBackground(ACTION_WIFI_SCAN);
+        Thread.sleep(4_000);
+        assertValueRange("wfl", "", 7, 2, 2); // scan_count
+        assertValueRange("wfl", "", 11, 1, 1); // scan_count_bg
+
         batteryOffScreenOn();
     }
 
@@ -271,6 +306,35 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             }
         }
         return value;
+    }
+
+    /**
+     * Runs a (background) service to perform the given action.
+     * @param actionValue one of the constants in BatteryStatsBgVsFgActions indicating the desired
+     *                    action to perform.
+     */
+    private void executeBackground(String actionValue) throws Exception {
+        allowBackgroundServices();
+        getDevice().executeShellCommand(String.format(
+                "am startservice -n '%s' -e %s %s",
+                DEVICE_SIDE_BG_SERVICE_COMPONENT, KEY_ACTION, actionValue));
+    }
+
+    /** Required to successfully start a background service from adb in O. */
+    private void allowBackgroundServices() throws Exception {
+        getDevice().executeShellCommand(String.format(
+                "cmd deviceidle tempwhitelist %s", DEVICE_SIDE_TEST_PACKAGE));
+    }
+
+    /**
+     * Runs an activity (in the foreground) to perform the given action.
+     * @param actionValue one of the constants in BatteryStatsBgVsFgActions indicating the desired
+     *                    action to perform.
+     */
+    private void executeForeground(String actionValue) throws Exception {
+        getDevice().executeShellCommand(String.format(
+                "am start -n '%s' -e %s %s",
+                DEVICE_SIDE_FG_ACTIVITY_COMPONENT, KEY_ACTION, actionValue));
     }
 
     /**
