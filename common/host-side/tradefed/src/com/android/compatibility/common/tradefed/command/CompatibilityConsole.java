@@ -18,7 +18,7 @@ package com.android.compatibility.common.tradefed.command;
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildProvider;
-import com.android.compatibility.common.tradefed.result.SubPlanHelper;
+import com.android.compatibility.common.tradefed.result.SubPlanCreator;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.ResultHandler;
@@ -412,7 +412,7 @@ public class CompatibilityConsole extends Console {
     }
 
     private void addSubPlan(String[] flatArgs) {
-        SubPlanHelper creator = new SubPlanHelper();
+        SubPlanCreator creator = new SubPlanCreator();
         try {
             ArgsOptionParser optionParser = new ArgsOptionParser(creator);
             optionParser.parse(Arrays.asList(flatArgs));
