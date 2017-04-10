@@ -179,8 +179,11 @@ public class ContactsContract_Wipe extends AndroidTestCase {
 
         wipeContactsProvider();
 
+        // Accessing CP2 to make sure the process starts.
+        getDatabaseCreationTimestamp();
+
         assertTrue("Didn't receive content change notification",
-                latch.await(60, TimeUnit.SECONDS));
+                latch.await(120, TimeUnit.SECONDS));
 
         assertEquals(ProviderStatus.CONTENT_URI, notifiedUri.get());
     }
@@ -201,7 +204,10 @@ public class ContactsContract_Wipe extends AndroidTestCase {
 
         wipeContactsProvider();
 
+        // Accessing CP2 to make sure the process starts.
+        getDatabaseCreationTimestamp();
+
         assertTrue("Didn't receive contacts wipe broadcast",
-                latch.await(60, TimeUnit.SECONDS));
+                latch.await(120, TimeUnit.SECONDS));
     }
 }
