@@ -54,6 +54,9 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         BEFORE, AFTER, BOTH;
     }
 
+    @Option(name = "throw-error", description = "Whether to throw error for device test failure")
+    protected boolean mThrowError = true;
+
     @Option(name = "when", description = "When to instrument the apk", mandatory = true)
     protected When mWhen = null;
 
@@ -73,7 +76,7 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
         try {
             if (instrument(device, buildInfo)) {
                 logInfo("Target preparation successful");
-            } else {
+            } else if (mThrowError) {
                 throw new TargetSetupError("Not all target preparation steps completed");
             }
         } catch (FileNotFoundException e) {
@@ -128,7 +131,12 @@ public class ApkInstrumentationPreparer extends PreconditionPreparer implements 
             for (TestIdentifier test : testFailures.keySet()) {
                 success = false;
                 String trace = testFailures.get(test);
-                logError("Target preparation step %s failed.\n%s", test.getTestName(), trace);
+                if (mThrowError) {
+                    logError("Target preparation step %s failed.\n%s", test.getTestName(), trace);
+                } else {
+                    logWarning("Target preparation step %s failed.\n%s", test.getTestName(),
+                            trace);
+                }
             }
         }
         return success;
