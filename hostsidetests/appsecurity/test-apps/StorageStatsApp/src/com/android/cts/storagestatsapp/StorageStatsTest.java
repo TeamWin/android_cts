@@ -201,7 +201,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final long manualSize = getSizeManual(Environment.getExternalStorageDirectory());
         final long statsSize = stats.queryExternalStatsForUser(null, user).getTotalBytes();
 
-        assertEquals(manualSize, statsSize);
+        assertMostlyEquals(manualSize, statsSize);
     }
 
     public void testVerifyCategory() throws Exception {
@@ -234,16 +234,24 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Ask apps to allocate some cached data
         final long targetA = doAllocateProvider(PKG_A, 0.5, 1262304000);
         final long targetB = doAllocateProvider(PKG_B, 2.0, 1420070400);
+        final long totalAllocated = targetA + targetB;
 
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real
         // disk space.
-        assertMostlyEquals(beforeAllocatable, sm.getAllocatableBytes(filesDir, 0),
-                10 * MB_IN_BYTES);
-        assertMostlyEquals(beforeFree, stats.getFreeBytes(null),
-                10 * MB_IN_BYTES);
-        assertMostlyEquals(targetA + targetB, beforeRaw - filesDir.getUsableSpace(),
-                10 * MB_IN_BYTES);
+        if (stats.isQuotaSupported(null)) {
+            assertMostlyEquals(beforeAllocatable,
+                    sm.getAllocatableBytes(filesDir, 0), 10 * MB_IN_BYTES);
+            assertMostlyEquals(beforeFree,
+                    stats.getFreeBytes(null), 10 * MB_IN_BYTES);
+        } else {
+            assertMostlyEquals(beforeAllocatable - totalAllocated,
+                    sm.getAllocatableBytes(filesDir, 0), 10 * MB_IN_BYTES);
+            assertMostlyEquals(beforeFree - totalAllocated,
+                    stats.getFreeBytes(null), 10 * MB_IN_BYTES);
+        }
+        assertMostlyEquals(beforeRaw - totalAllocated,
+                filesDir.getUsableSpace(), 10 * MB_IN_BYTES);
 
         assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
         assertMostlyEquals(targetB, getCacheBytes(PKG_B, user));

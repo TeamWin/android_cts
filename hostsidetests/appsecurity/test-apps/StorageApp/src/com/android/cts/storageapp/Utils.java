@@ -25,10 +25,12 @@ import android.util.Log;
 
 import junit.framework.AssertionFailedError;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -152,7 +154,21 @@ public class Utils {
         return success;
     }
 
-    public static boolean shouldHaveQuota(StructUtsname uname) {
+    public static boolean shouldHaveQuota(StructUtsname uname) throws Exception {
+        try (BufferedReader br = new BufferedReader(new FileReader("/proc/mounts"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                final String[] fields = line.split(" ");
+                final String target = fields[1];
+                final String format = fields[2];
+
+                if (target.equals("/data") && !format.equals("ext4")) {
+                    Log.d(TAG, "Assuming no quota support because /data is " + format);
+                    return false;
+                }
+            }
+        }
+
         final Matcher matcher = Pattern.compile("(\\d+)\\.(\\d+)").matcher(uname.release);
         if (!matcher.find()) {
             throw new IllegalStateException("Failed to parse version: " + uname.release);
