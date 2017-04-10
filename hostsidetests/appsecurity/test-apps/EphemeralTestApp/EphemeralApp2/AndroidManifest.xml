@@ -43,12 +43,23 @@
                 <action android:name="com.android.cts.ephemeraltest.START_EPHEMERAL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-          </activity>
-          <!-- This should still not be visible to other Instant Apps -->
-          <activity
-            android:name=".FakeExposedActivity"
+        </activity>
+
+        <!-- This should still not be visible to other Instant Apps -->
+        <activity
+            android:name=".ExposedActivity"
             android:visibleToInstantApps="true"
             android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- This should still not be visible to other Instant Apps -->
+        <provider
+            android:name=".EphemeralProvider"
+            android:authorities="com.android.cts.ephemeralapp2.provider"
+            android:exported="true">
+            <intent-filter android:priority="0">
+                <action android:name="com.android.cts.ephemeraltest.QUERY" />
+            </intent-filter>
+        </provider>
     </application>
 
     <instrumentation
