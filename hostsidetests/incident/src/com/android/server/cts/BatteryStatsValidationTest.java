@@ -229,7 +229,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         long foregroundBytes = getDownloadedBytes();
         assertTrue(foregroundBytes > 0);
         long min = foregroundBytes + MIN_HTTP_HEADER_BYTES;
-        long max = foregroundBytes + (16 * 1024); // Add some fuzzing.
+        long max = foregroundBytes + (30 * 1024); // Add some fuzzing.
         assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
         assertValueRange("nt", "", 11, 1, 40); // wifi_bytes_tx
 
@@ -238,7 +238,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         long backgroundBytes = getDownloadedBytes();
         assertTrue(backgroundBytes > 0);
         min += backgroundBytes + MIN_HTTP_HEADER_BYTES;
-        max += backgroundBytes + (16 * 1024);
+        max += backgroundBytes + (30 * 1024);
         assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
         assertValueRange("nt", "", 11, 2, 80); // wifi_bytes_tx
 
