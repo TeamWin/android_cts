@@ -27,7 +27,9 @@ public class DeviceAdminServiceProfileOwnerTest extends BaseDeviceAdminServiceTe
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mUserId = createUser();
+        if (isTestEnabled()) {
+            mUserId = createUser();
+        }
     }
 
     @Override
