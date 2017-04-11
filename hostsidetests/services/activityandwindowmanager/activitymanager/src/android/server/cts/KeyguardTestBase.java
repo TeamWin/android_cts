@@ -37,23 +37,24 @@ public class KeyguardTestBase extends ActivityManagerTestBase {
         assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
     }
 
-    protected void assertOnDismissSucceededInLogcat() throws Exception {
-        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded");
+    protected void assertOnDismissSucceededInLogcat(String logSeparator) throws Exception {
+        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded", logSeparator);
     }
 
-    protected void assertOnDismissCancelledInLogcat() throws Exception {
-        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissCancelled");
+    protected void assertOnDismissCancelledInLogcat(String logSeparator) throws Exception {
+        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissCancelled", logSeparator);
     }
 
-    protected void assertOnDismissErrorInLogcat() throws Exception {
-        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissError");
+    protected void assertOnDismissErrorInLogcat(String logSeparator) throws Exception {
+        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissError", logSeparator);
     }
 
-    private void assertInLogcat(String activityName, String entry) throws Exception {
+    private void assertInLogcat(String activityName, String entry, String logSeparator)
+            throws Exception {
         final Pattern pattern = Pattern.compile("(.+)" + entry);
         int tries = 0;
         while (tries < 5) {
-            final String[] lines = getDeviceLogsForComponent(activityName);
+            final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
             log("Looking at logcat");
             for (int i = lines.length - 1; i >= 0; i--) {
                 final String line = lines[i].trim();

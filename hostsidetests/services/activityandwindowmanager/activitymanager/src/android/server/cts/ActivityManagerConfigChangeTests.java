@@ -52,12 +52,12 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
-        testChangeFontScale(TEST_ACTIVITY_NAME, true);
+        testChangeFontScale(TEST_ACTIVITY_NAME, true /* relaunch */);
     }
 
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
-        testChangeFontScale(NO_RELAUNCH_ACTIVITY_NAME, false);
+        testChangeFontScale(NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);
     }
 
     private void testRotation(
@@ -72,10 +72,10 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
         for (int rotation = 0; rotation < 4; rotation += rotationStep) {
-            clearLogcat();
+            final String logSeparator = clearLogcat();
             setDeviceRotation(rotation);
             mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-            assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange);
+            assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange, logSeparator);
         }
     }
 
@@ -89,10 +89,11 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, waitForActivitiesVisible);
 
         for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
-            clearLogcat();
+            final String logSeparator = clearLogcat();
             setFontScale(fontScale);
             mAmWmState.computeState(mDevice, waitForActivitiesVisible);
-            assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1);
+            assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
+                    logSeparator);
         }
     }
 
@@ -101,19 +102,19 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
      * must be recreated and its asset sequence number must be incremented.
      */
     public void testUpdateApplicationInfo() throws Exception {
-        clearLogcat();
+        final String firstLogSeparator = clearLogcat();
 
         // Launch an activity that prints applied config.
         launchActivity(TEST_ACTIVITY_NAME);
-        final int assetSeq = readAssetSeqNumber(TEST_ACTIVITY_NAME);
-        clearLogcat();
+        final int assetSeq = readAssetSeqNumber(TEST_ACTIVITY_NAME, firstLogSeparator);
 
+        final String logSeparator = clearLogcat();
         // Update package info.
         executeShellCommand("am update-appinfo all " + componentName);
         mAmWmState.waitForWithAmState(mDevice, (amState) -> {
             // Wait for activity to be resumed and asset seq number to be updated.
             try {
-                return readAssetSeqNumber(TEST_ACTIVITY_NAME) == assetSeq + 1
+                return readAssetSeqNumber(TEST_ACTIVITY_NAME, logSeparator) == assetSeq + 1
                         && amState.hasActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
             } catch (Exception e) {
                 return false;
@@ -122,8 +123,8 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
         // Check if activity is relaunched and asset seq is updated.
         assertRelaunchOrConfigChanged(TEST_ACTIVITY_NAME, 1 /* numRelaunch */,
-                0 /* numConfigChange */);
-        final int newAssetSeq = readAssetSeqNumber(TEST_ACTIVITY_NAME);
+                0 /* numConfigChange */, logSeparator);
+        final int newAssetSeq = readAssetSeqNumber(TEST_ACTIVITY_NAME, logSeparator);
         assertEquals("Asset sequence number must be incremented.", assetSeq + 1, newAssetSeq);
     }
 
@@ -131,8 +132,8 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             "(.+): Configuration: \\{(.*) as.(\\d+)(.*)\\}");
 
     /** Read asset sequence number in last applied configuration from logs. */
-    private int readAssetSeqNumber(String activityName) throws Exception {
-        final String[] lines = getDeviceLogsForComponent(activityName);
+    private int readAssetSeqNumber(String activityName, String logSeparator) throws Exception {
+        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sConfigurationPattern.matcher(line);
