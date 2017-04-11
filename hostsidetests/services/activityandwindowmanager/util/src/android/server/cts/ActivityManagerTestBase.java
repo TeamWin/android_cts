@@ -28,6 +28,7 @@ import java.lang.Integer;
 import java.lang.String;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,7 @@ import android.server.cts.ActivityManagerState.ActivityStack;
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
+    private static final String LOG_SEPARATOR = "LOG_SEPARATOR";
 
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
     // updated.
@@ -687,13 +689,22 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return output;
     }
 
-    protected void clearLogcat() throws DeviceNotAvailableException {
+    /**
+     * Tries to clear logcat and inserts log separator in case clearing didn't succeed, so we can
+     * always find the starting point from where to evaluate following logs.
+     * @return Unique log separator.
+     */
+    protected String clearLogcat() throws DeviceNotAvailableException {
         mDevice.executeAdbCommand("logcat", "-c");
+        final String uniqueString = UUID.randomUUID().toString();
+        executeShellCommand("log -t " + LOG_SEPARATOR + " " + uniqueString);
+        return uniqueString;
     }
 
-    protected void assertActivityLifecycle(String activityName, boolean relaunched)
-            throws DeviceNotAvailableException {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+    protected void assertActivityLifecycle(String activityName, boolean relaunched,
+            String logSeparator) throws DeviceNotAvailableException {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
+                logSeparator);
 
         if (relaunched) {
             if (lifecycleCounts.mDestroyCount < 1) {
@@ -722,9 +733,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     protected void assertRelaunchOrConfigChanged(
-            String activityName, int numRelaunch, int numConfigChange)
+            String activityName, int numRelaunch, int numConfigChange, String logSeparator)
             throws DeviceNotAvailableException {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
+                logSeparator);
 
         if (lifecycleCounts.mDestroyCount != numRelaunch) {
             fail(activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
@@ -738,8 +750,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    protected void assertActivityDestroyed(String activityName) throws DeviceNotAvailableException {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+    protected void assertActivityDestroyed(String activityName, String logSeparator)
+            throws DeviceNotAvailableException {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
+                logSeparator);
 
         if (lifecycleCounts.mDestroyCount != 1) {
             fail(activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
@@ -753,20 +767,37 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    protected String[] getDeviceLogsForComponent(String componentName)
+    protected String[] getDeviceLogsForComponent(String componentName, String logSeparator)
             throws DeviceNotAvailableException {
-        return mDevice.executeAdbCommand(
-                "logcat", "-v", "brief", "-d", componentName + ":I", "*:S").split("\\n");
+        return getDeviceLogsForComponents(new String[]{componentName}, logSeparator);
     }
 
-    protected String[] getDeviceLogsForComponents(final String[] componentNames)
-            throws DeviceNotAvailableException {
-        String filters = "";
-        for (int i = 0; i < componentNames.length; i++) {
-            filters += componentNames[i] + ":I ";
+    protected String[] getDeviceLogsForComponents(final String[] componentNames,
+            String logSeparator) throws DeviceNotAvailableException {
+        String filters = LOG_SEPARATOR + ":I ";
+        for (String component : componentNames) {
+            filters += component + ":I ";
         }
-        return mDevice.executeAdbCommand(
+        final String[] result = mDevice.executeAdbCommand(
                 "logcat", "-v", "brief", "-d", filters, "*:S").split("\\n");
+        if (logSeparator == null) {
+            return result;
+        }
+
+        // Make sure that we only check logs after the separator.
+        int i = 0;
+        boolean lookingForSeparator = true;
+        while (i < result.length && lookingForSeparator) {
+            if (result[i].contains(logSeparator)) {
+                lookingForSeparator = false;
+            }
+            i++;
+        }
+        final String[] filteredResult = new String[result.length - i];
+        for (int curPos = 0; i < result.length; curPos++, i++) {
+            filteredResult[curPos] = result[i];
+        }
+        return filteredResult;
     }
 
     private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
@@ -819,9 +850,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         }
     }
 
-    ReportedSizes getLastReportedSizesForActivity(String activityName)
+    ReportedSizes getLastReportedSizesForActivity(String activityName, String logSeparator)
             throws DeviceNotAvailableException {
-        final String[] lines = getDeviceLogsForComponent(activityName);
+        final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
         for (int i = lines.length - 1; i >= 0; i--) {
             final String line = lines[i].trim();
             final Matcher matcher = sNewConfigPattern.matcher(line);
@@ -852,9 +883,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int mLastPictureInPictureModeChangedLineIndex;
         int mDestroyCount;
 
-        public ActivityLifecycleCounts(String activityName) throws DeviceNotAvailableException {
+        public ActivityLifecycleCounts(String activityName, String logSeparator)
+                throws DeviceNotAvailableException {
             int lineIndex = 0;
-            for (String line : getDeviceLogsForComponent(activityName)) {
+            for (String line : getDeviceLogsForComponent(activityName, logSeparator)) {
                 line = line.trim();
                 lineIndex++;
 

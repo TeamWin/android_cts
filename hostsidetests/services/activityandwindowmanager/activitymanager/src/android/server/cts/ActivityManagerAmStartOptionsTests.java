@@ -77,7 +77,8 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
 
     private void startActivityAndVerifyResult(final String entryActivity,
             final String actualActivity, boolean shouldStart) throws Exception {
-        clearLogcat();
+        // See TODO below
+        // final String logSeparator = clearLogcat();
 
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias
@@ -96,7 +97,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
         // still catch most failures.
 
         // Verify adb logcat log
-        //verifyLogcat(actualActivity, shouldStart);
+        //verifyLogcat(actualActivity, shouldStart, logSeparator);
     }
 
     private static final Pattern sNotStartedWarningPattern = Pattern.compile(
@@ -149,12 +150,12 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private static final Pattern sDisplayTimePattern =
             Pattern.compile("(.+): Displayed (.*): (\\+{0,1})([0-9]+)ms(.*)");
 
-    void verifyLogcat(String actualActivityName, boolean shouldStart)
+    void verifyLogcat(String actualActivityName, boolean shouldStart, String logSeparator)
             throws DeviceNotAvailableException {
         int displayCount = 0;
         String activityName = null;
 
-        for (String line : getDeviceLogsForComponent("ActivityManager")) {
+        for (String line : getDeviceLogsForComponent("ActivityManager", logSeparator)) {
             line = line.trim();
 
             Matcher matcher = sDisplayTimePattern.matcher(line);
