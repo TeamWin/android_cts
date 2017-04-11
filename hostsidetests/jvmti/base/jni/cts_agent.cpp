@@ -17,41 +17,40 @@
 #include <jni.h>
 #include <jvmti.h>
 
+#include "agent_startup.h"
 #include "android-base/logging.h"
-#include "common.h"
 #include "jni_binder.h"
 #include "jvmti_helper.h"
+#include "scoped_local_ref.h"
+#include "test_env.h"
 
-namespace cts {
-namespace jvmti {
+namespace art {
 
-static jvmtiEnv* jvmti_env;
+static void InformMainAttach(jvmtiEnv* jenv,
+                             JNIEnv* env,
+                             const char* class_name,
+                             const char* method_name) {
+  // Use JNI to load the class.
+  ScopedLocalRef<jclass> klass(env, FindClass(jenv, env, class_name, nullptr));
+  CHECK(klass.get() != nullptr) << class_name;
 
-jvmtiEnv* GetJvmtiEnv() {
-  return jvmti_env;
+  jmethodID method = env->GetStaticMethodID(klass.get(), method_name, "()V");
+  CHECK(method != nullptr);
+
+  env->CallStaticVoidMethod(klass.get(), method);
 }
 
-int JniThrowNullPointerException(JNIEnv* env, const char* msg) {
-  if (env->ExceptionCheck()) {
-    env->ExceptionClear();
-  }
+static constexpr const char* kMainClass = "art/CtsMain";
+static constexpr const char* kMainClassStartup = "startup";
 
-  jclass exc_class = env->FindClass("java/lang/NullPointerException");
-  if (exc_class == nullptr) {
-    return -1;
-  }
-
-  bool ok = env->ThrowNew(exc_class, msg) == JNI_OK;
-
-  env->DeleteLocalRef(exc_class);
-
-  return ok ? 0 : -1;
+static void CtsStartCallback(jvmtiEnv* jenv, JNIEnv* env) {
+  InformMainAttach(jenv, env, kMainClass, kMainClassStartup);
 }
 
 extern "C" JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm,
                                                char* options ATTRIBUTE_UNUSED,
                                                void* reserved ATTRIBUTE_UNUSED) {
-  BindOnLoad(vm);
+  BindOnLoad(vm, nullptr);
 
   if (vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION_1_0) != 0) {
     LOG(FATAL) << "Could not get shared jvmtiEnv";
@@ -64,7 +63,7 @@ extern "C" JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm,
 extern "C" JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm,
                                                  char* options ATTRIBUTE_UNUSED,
                                                  void* reserved ATTRIBUTE_UNUSED) {
-  BindOnAttach(vm);
+  BindOnAttach(vm, CtsStartCallback);
 
   if (vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION_1_0) != 0) {
     LOG(FATAL) << "Could not get shared jvmtiEnv";
@@ -74,5 +73,4 @@ extern "C" JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm,
   return 0;
 }
 
-}
-}
+}  // namespace art
