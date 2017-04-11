@@ -82,6 +82,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             IntentFilter filter = new IntentFilter();
             filter.addAction(ByodHelperActivity.ACTION_QUERY_PROFILE_OWNER);
             filter.addAction(ByodHelperActivity.ACTION_REMOVE_MANAGED_PROFILE);
+            filter.addAction(ByodHelperActivity.ACTION_CHECK_DISK_ENCRYPTION);
             filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK);
             filter.addAction(ByodHelperActivity.ACTION_CHECK_INTENT_FILTERS);
             filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_IMAGE);
@@ -118,6 +119,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             // Work -> primary direction
             filter = new IntentFilter();
             filter.addAction(ByodHelperActivity.ACTION_PROFILE_OWNER_STATUS);
+            filter.addAction(ByodHelperActivity.ACTION_DISK_ENCRYPTION_STATUS);
             filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL);
             filter.addAction(LocationListenerActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES);
             dpm.addCrossProfileIntentFilter(getWho(context), filter,
