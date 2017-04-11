@@ -24,6 +24,8 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import art.Main;
+
 /**
  * Check tagging-related functionality.
  */
@@ -32,33 +34,33 @@ public class JvmtiTaggingTest extends JvmtiTestBase {
     @Before
     public void setUp() throws Exception {
         // Bind our native methods.
-        JniBindings.bindAgentJNI("android/jvmti/cts/JvmtiTaggingTest", getClass().getClassLoader());
+        Main.bindAgentJNI("android/jvmti/cts/JvmtiTaggingTest", getClass().getClassLoader());
     }
 
     private static WeakReference<Object> test() {
         Object o1 = new Object();
-        JniBindings.setTag(o1, 1);
+        Main.setTag(o1, 1);
 
         Object o2 = new Object();
-        JniBindings.setTag(o2, 2);
+        Main.setTag(o2, 2);
 
-        assertEquals(1, JniBindings.getTag(o1));
-        assertEquals(2, JniBindings.getTag(o2));
-
-        Runtime.getRuntime().gc();
-        Runtime.getRuntime().gc();
-
-        assertEquals(1, JniBindings.getTag(o1));
-        assertEquals(2, JniBindings.getTag(o2));
+        assertEquals(1, Main.getTag(o1));
+        assertEquals(2, Main.getTag(o2));
 
         Runtime.getRuntime().gc();
         Runtime.getRuntime().gc();
 
-        JniBindings.setTag(o1, 10);
-        JniBindings.setTag(o2, 20);
+        assertEquals(1, Main.getTag(o1));
+        assertEquals(2, Main.getTag(o2));
 
-        assertEquals(10, JniBindings.getTag(o1));
-        assertEquals(20, JniBindings.getTag(o2));
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().gc();
+
+        Main.setTag(o1, 10);
+        Main.setTag(o2, 20);
+
+        assertEquals(10, Main.getTag(o1));
+        assertEquals(20, Main.getTag(o2));
 
         return new WeakReference<Object>(o1);
     }
@@ -93,7 +95,7 @@ public class JvmtiTaggingTest extends JvmtiTestBase {
             Integer o = new Integer(i);
             l.add(o);
             if (i % 10 != 0) {
-                JniBindings.setTag(o, i % 10);
+                Main.setTag(o, i % 10);
             }
         }
 

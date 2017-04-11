@@ -23,15 +23,13 @@
 
 #include "android-base/logging.h"
 #include "android-base/macros.h"
-#include "common.h"
 #include "jni_helper.h"
 #include "jvmti_helper.h"
 #include "jvmti.h"
 #include "scoped_primitive_array.h"
+#include "test_env.h"
 
-namespace cts {
-namespace jvmti {
-namespace redefine {
+namespace art {
 
 extern "C" JNIEXPORT jint JNICALL Java_android_jvmti_cts_JvmtiRedefineClassesTest_redefineClass(
     JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jclass target, jbyteArray dex_bytes) {
@@ -39,21 +37,21 @@ extern "C" JNIEXPORT jint JNICALL Java_android_jvmti_cts_JvmtiRedefineClassesTes
   def.klass = target;
   def.class_byte_count = static_cast<jint>(env->GetArrayLength(dex_bytes));
   signed char* redef_bytes = env->GetByteArrayElements(dex_bytes, nullptr);
-  jvmtiError res = GetJvmtiEnv()->Allocate(def.class_byte_count,
-                                           const_cast<unsigned char**>(&def.class_bytes));
+  jvmtiError res =jvmti_env->Allocate(def.class_byte_count,
+                                      const_cast<unsigned char**>(&def.class_bytes));
   if (res != JVMTI_ERROR_NONE) {
     return static_cast<jint>(res);
   }
   memcpy(const_cast<unsigned char*>(def.class_bytes), redef_bytes, def.class_byte_count);
   env->ReleaseByteArrayElements(dex_bytes, redef_bytes, 0);
   // Do the redefinition.
-  res = GetJvmtiEnv()->RedefineClasses(1, &def);
+  res = jvmti_env->RedefineClasses(1, &def);
   return static_cast<jint>(res);
 }
 
 extern "C" JNIEXPORT jint JNICALL Java_android_jvmti_cts_JvmtiRedefineClassesTest_retransformClass(
     JNIEnv* env ATTRIBUTE_UNUSED, jclass klass ATTRIBUTE_UNUSED, jclass target) {
-  return GetJvmtiEnv()->RetransformClasses(1, &target);
+  return jvmti_env->RetransformClasses(1, &target);
 }
 
 class TransformationData {
@@ -105,7 +103,7 @@ class TransformationData {
 static TransformationData data;
 
 // The hook we are using.
-void JNICALL CommonClassFileLoadHookRetransformable(jvmtiEnv* jvmti_env,
+void JNICALL CommonClassFileLoadHookRetransformable(jvmtiEnv* local_jvmti_env,
                                                     JNIEnv* jni_env ATTRIBUTE_UNUSED,
                                                     jclass class_being_redefined ATTRIBUTE_UNUSED,
                                                     jobject loader ATTRIBUTE_UNUSED,
@@ -119,7 +117,7 @@ void JNICALL CommonClassFileLoadHookRetransformable(jvmtiEnv* jvmti_env,
   std::vector<unsigned char> dex_data;
   if (data.RetrieveRedefinition(name_str, &dex_data)) {
     unsigned char* jvmti_dex_data;
-    if (JVMTI_ERROR_NONE != jvmti_env->Allocate(dex_data.size(), &jvmti_dex_data)) {
+    if (JVMTI_ERROR_NONE != local_jvmti_env->Allocate(dex_data.size(), &jvmti_dex_data)) {
       LOG(FATAL) << "Unable to allocate output buffer for " << name;
       return;
     }
@@ -136,12 +134,12 @@ JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiRedefineClassesTest_setTransf
   jvmtiEventCallbacks cb;
   memset(&cb, 0, sizeof(cb));
   cb.ClassFileLoadHook = CommonClassFileLoadHookRetransformable;
-  if (JvmtiErrorToException(env, GetJvmtiEnv(),
-                            GetJvmtiEnv()->SetEventCallbacks(&cb, sizeof(cb)))) {
+  if (JvmtiErrorToException(env, jvmti_env, jvmti_env->SetEventCallbacks(&cb, sizeof(cb)))) {
     return;
   }
-  JvmtiErrorToException(env, GetJvmtiEnv(),
-                        GetJvmtiEnv()->SetEventNotificationMode(
+  JvmtiErrorToException(env,
+                        jvmti_env,
+                        jvmti_env->SetEventNotificationMode(
                             enable == JNI_TRUE ? JVMTI_ENABLE : JVMTI_DISABLE,
                             JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
                             nullptr));
@@ -174,7 +172,5 @@ JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiRedefineClassesTest_pushTrans
   env->ReleaseByteArrayElements(dex_bytes, redef_bytes, 0);
 }
 
-}  // namespace redefine
-}  // namespace jvmti
-}  // namespace cts
+}  // namespace art
 
