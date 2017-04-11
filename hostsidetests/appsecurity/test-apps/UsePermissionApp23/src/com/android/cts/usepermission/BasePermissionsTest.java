@@ -267,6 +267,11 @@ public abstract class BasePermissionsTest {
         getUiDevice().pressBack();
         waitForIdle();
 
+        if (isTv()) {
+            getUiDevice().pressHome();
+            waitForIdle();
+        }
+
         // Open the app details settings
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
@@ -505,5 +510,10 @@ public abstract class BasePermissionsTest {
     private static void waitForIdle() throws TimeoutException {
         getInstrumentation().getUiAutomation().waitForIdle(IDLE_TIMEOUT_MILLIS,
                 GLOBAL_TIMEOUT_MILLIS);
+    }
+
+    private static boolean isTv() {
+        return getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
  }
