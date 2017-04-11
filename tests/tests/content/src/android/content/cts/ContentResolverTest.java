@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.PageViewCursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -35,6 +34,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.internal.util.ArrayUtils;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -419,118 +419,15 @@ public class ContentResolverTest extends AndroidTestCase {
     }
 
     /**
-     * Verifies that paging arguments are handled correctly
-     * when the provider supports paging.
+     * Verifies that paging information is correctly relayed, and that
+     * honored arguments from a supporting client are returned correctly.
      */
-    public void testQuery_InProcessProvider_NoAutoPaging() {
-
-        mContentResolver.delete(TABLE1_URI, null, null);
-        ContentValues values = new ContentValues();
-
-        for (int i = 0; i < 100; i++) {
-            values.put(COLUMN_KEY_NAME, i);
-            mContentResolver.insert(TABLE1_URI, values);
-        }
-
-        Bundle queryArgs = new Bundle();
-        queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 10);
-        queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 3);
-
-        mCursor = mContentResolver.query(TABLE1_URI, null, queryArgs, null);
-        int col = mCursor.getColumnIndexOrThrow(COLUMN_KEY_NAME);
-
-        Bundle extras = mCursor.getExtras();
-        extras = extras != null ? extras : Bundle.EMPTY;
-
-        assertEquals(100, mCursor.getCount());
-        assertFalse(extras.containsKey(PageViewCursor.EXTRA_AUTO_PAGED));
-        assertFalse(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
-
-        mCursor.close();
-    }
-
-    /**
-     * Verifies that paging arguments are handled correctly
-     * when the provider supports paging.
-     */
-    public void testQuery_OutOfProcessProvider_AutoPaging() {
+    public void testQuery_PagedResults() {
 
         Bundle queryArgs = new Bundle();
         queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 10);
         queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 3);
         queryArgs.putInt(TestPagingContentProvider.RECORDSET_SIZE, 100);
-
-        mCursor = mContentResolver.query(
-                TestPagingContentProvider.UNPAGED_DATA_URI, null, queryArgs, null);
-
-        Bundle extras = mCursor.getExtras();
-        extras = extras != null ? extras : Bundle.EMPTY;
-
-        assertEquals(3, mCursor.getCount());
-        assertTrue(extras.getBoolean(PageViewCursor.EXTRA_AUTO_PAGED));
-        assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
-        assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_SIZE));
-
-        int col = mCursor.getColumnIndexOrThrow(TestPagingContentProvider.COLUMN_POS);
-
-        mCursor.moveToNext();
-        assertEquals(10, mCursor.getInt(col));
-        mCursor.moveToNext();
-        assertEquals(11, mCursor.getInt(col));
-        mCursor.moveToNext();
-        assertEquals(12, mCursor.getInt(col));
-
-        assertFalse(mCursor.moveToNext());
-
-        mCursor.close();
-    }
-
-    /**
-     * Verifies that paging arguments are handled correctly
-     * when the provider supports paging.
-     */
-    public void testQuery_OutOfProcessProvider_AutoPaging_OffsetOutOfBounds() {
-
-        Bundle queryArgs = new Bundle();
-        queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 10);
-        queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 3);
-        queryArgs.putInt(TestPagingContentProvider.RECORDSET_SIZE, 100);
-
-        mCursor = mContentResolver.query(
-                TestPagingContentProvider.UNPAGED_DATA_URI, null, queryArgs, null);
-
-        Bundle extras = mCursor.getExtras();
-        extras = extras != null ? extras : Bundle.EMPTY;
-
-        assertEquals(3, mCursor.getCount());
-        assertTrue(extras.getBoolean(PageViewCursor.EXTRA_AUTO_PAGED));
-        assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
-        assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_SIZE));
-
-        int col = mCursor.getColumnIndexOrThrow(TestPagingContentProvider.COLUMN_POS);
-
-        mCursor.moveToNext();
-        assertEquals(10, mCursor.getInt(col));
-        mCursor.moveToNext();
-        assertEquals(11, mCursor.getInt(col));
-        mCursor.moveToNext();
-        assertEquals(12, mCursor.getInt(col));
-
-        assertFalse(mCursor.moveToNext());
-
-        mCursor.close();
-    }
-
-    /**
-     * Verifies that auto-paging isn't applied when the underlying remote
-     * provider has already applied paging.
-     */
-    public void testQuery_OutOfProcessProvider_NoAutoPagingForAlreadyPagedResults() {
-
-        Bundle queryArgs = new Bundle();
-        queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, 20);
-        queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, 2);
-        queryArgs.putInt(TestPagingContentProvider.RECORDSET_SIZE, 500);
 
         mCursor = mContentResolver.query(
                 TestPagingContentProvider.PAGED_DATA_URI, null, queryArgs, null);
@@ -538,11 +435,25 @@ public class ContentResolverTest extends AndroidTestCase {
         Bundle extras = mCursor.getExtras();
         extras = extras != null ? extras : Bundle.EMPTY;
 
-        assertFalse(extras.getBoolean(PageViewCursor.EXTRA_AUTO_PAGED));
+        assertEquals(3, mCursor.getCount());
+        assertTrue(extras.containsKey(ContentResolver.EXTRA_TOTAL_SIZE));
+        assertEquals(100, extras.getInt(ContentResolver.EXTRA_TOTAL_SIZE));
 
-        // we don't test the contents of the self-paged cursor
-        // because that's provided by TestPagingContentProvider
-        // a test-only test support class.
+        String[] honoredArgs = extras.getStringArray(ContentResolver.EXTRA_HONORED_ARGS);
+        assertNotNull(honoredArgs);
+        assertTrue(ArrayUtils.contains(honoredArgs, ContentResolver.QUERY_ARG_OFFSET));
+        assertTrue(ArrayUtils.contains(honoredArgs, ContentResolver.QUERY_ARG_LIMIT));
+
+        int col = mCursor.getColumnIndexOrThrow(TestPagingContentProvider.COLUMN_POS);
+
+        mCursor.moveToNext();
+        assertEquals(10, mCursor.getInt(col));
+        mCursor.moveToNext();
+        assertEquals(11, mCursor.getInt(col));
+        mCursor.moveToNext();
+        assertEquals(12, mCursor.getInt(col));
+
+        assertFalse(mCursor.moveToNext());
 
         mCursor.close();
     }
