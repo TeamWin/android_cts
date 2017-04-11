@@ -1667,7 +1667,33 @@ You should be prompted to select credentials; choose the ones you just installed
         The only way to disable the encryption is to factory reset the device.
     </string>
     <string name="provisioning_byod_profileowner">Profile owner installed</string>
-    <string name="provisioning_byod_diskencryption">Full disk encryption enabled</string>
+    <string name="provisioning_byod_disk_encryption">Full disk encryption enabled</string>
+    <string name="provisioning_byod_disk_encryption_default_key_toast">
+        Cannot secure device with screen lock. Please re-run the test if you forgot to select
+        the \"require PIN to boot\" option.
+    </string>
+    <string name="provisioning_byod_disk_encryption_no_pin_toast">
+        No PIN is detected. Please re-run the test if you forgot to set a PIN.
+    </string>
+    <string name="provisioning_byod_set_screen_lock_dialog_message">
+        Next, you will be asked to set a screen lock for the device.\n
+        \n
+        Please set \"1111\" as the new PIN (or any other PIN that you can memorize).
+        You have to enter this PIN again later in order to finish the test.\n
+        \n
+        You may be asked whether the PIN should be required to boot the device. Please answer yes.\n
+        \n
+        Tap Go button to set a new screen lock.
+    </string>
+    <string name="provisioning_byod_remove_screen_lock_dialog_message">
+        The test is almost finished. \n
+        \n
+        Next, you will be asked to remove the screen lock that you just set. Please enter \"1111\"
+        (or your own PIN) when prompted for the old PIN, and do not set any new screen lock. This
+        is to make sure that the device returns to the initial state after this test.\n
+        \n
+        Tap Go button to remove existing screen lock.
+    </string>
     <string name="provisioning_byod_profile_visible">Profile-aware accounts settings</string>
     <string name="provisioning_byod_admin_visible">Profile-aware device administrator settings</string>
     <string name="provisioning_byod_workapps_visible">Badged work apps visible in Launcher</string>
