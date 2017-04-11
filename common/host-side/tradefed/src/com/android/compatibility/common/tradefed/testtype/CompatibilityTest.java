@@ -19,10 +19,12 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.SuiteInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
-import com.android.compatibility.common.tradefed.result.SubPlanCreator;
+import com.android.compatibility.common.tradefed.result.SubPlanHelper;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
 import com.android.compatibility.common.tradefed.targetprep.SystemStatusChecker;
 import com.android.compatibility.common.tradefed.util.OptionHelper;
+import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
+import com.android.compatibility.common.tradefed.util.RetryType;
 import com.android.compatibility.common.util.AbiUtils;
 import com.android.compatibility.common.util.ICaseResult;
 import com.android.compatibility.common.util.IInvocationResult;
@@ -33,7 +35,6 @@ import com.android.compatibility.common.util.TestFilter;
 import com.android.compatibility.common.util.TestStatus;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.config.ArgsOptionParser;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
@@ -159,10 +160,6 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                     + "\"<test-class>:<arg-name>:[<arg-key>:]<arg-value>\"",
             importance = Importance.ALWAYS)
     private List<String> mTestArgs = new ArrayList<>();
-
-    public enum RetryType {
-        FAILED, NOT_EXECUTED;
-    }
 
     @Option(name = RETRY_OPTION,
             shortName = 'r',
@@ -605,117 +602,44 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
      */
     void setupFilters() throws DeviceNotAvailableException {
         if (mRetrySessionId != null) {
-            // Track --module/-m and --test/-t options to ensure we don't overwrite non-null
-            // values on retry
-            String newModuleName = mModuleName;
-            String newTestName = mTestName;
-
-            // Load the invocation result
-            IInvocationResult result = null;
-            try {
-                result = ResultHandler.findResult(mBuildHelper.getResultsDir(), mRetrySessionId);
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            if (result == null) {
-                throw new IllegalArgumentException(String.format(
-                        "Could not find session with id %d", mRetrySessionId));
-            }
-
-            String oldBuildFingerprint = result.getBuildFingerprint();
-            String currentBuildFingerprint = mDevice.getProperty("ro.build.fingerprint");
-            if (oldBuildFingerprint.equals(currentBuildFingerprint)) {
-                CLog.logAndDisplay(LogLevel.INFO, "Retrying session from: %s",
-                        CompatibilityBuildHelper.getDirSuffix(result.getStartTime()));
-            } else {
-                throw new IllegalArgumentException(String.format(
-                        "Device build fingerprint must match %s to retry session %d",
-                        oldBuildFingerprint, mRetrySessionId));
-            }
-
-            String retryCommandLineArgs = result.getCommandLineArgs();
-            if (retryCommandLineArgs != null) {
-                try {
-                    // parse the command-line string from the result file and set options
-                    ArgsOptionParser parser = new ArgsOptionParser(this);
-                    parser.parse(OptionHelper.getValidCliArgs(retryCommandLineArgs, this));
-                } catch (ConfigurationException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            if ((mModuleName != null && mModuleName != newModuleName)
-                    || (mTestName != null && mTestName != newTestName)) {
-                // These options cannot be changed on retry if non-null for the previous session
-                CLog.w("Cannot override non-null value(s) from session %d for option(s) \"%s\""
-                        + " or \"%s\" on retry", mRetrySessionId, MODULE_OPTION, TEST_OPTION);
-            }
-
-            SubPlanCreator retryPlanCreator = new SubPlanCreator();
-            retryPlanCreator.setResult(result);
-            if (RetryType.FAILED.equals(mRetryType)) {
-                // retry only failed tests
-                retryPlanCreator.addResultType(SubPlanCreator.FAILED);
-            } else if (RetryType.NOT_EXECUTED.equals(mRetryType)){
-                // retry only not executed tests
-                retryPlanCreator.addResultType(SubPlanCreator.NOT_EXECUTED);
-            } else {
-                // retry both failed and not executed tests
-                retryPlanCreator.addResultType(SubPlanCreator.FAILED);
-                retryPlanCreator.addResultType(SubPlanCreator.NOT_EXECUTED);
-            }
-            try {
-                ISubPlan retryPlan = retryPlanCreator.createSubPlan(mBuildHelper);
-                mIncludeFilters.addAll(retryPlan.getIncludeFilters());
-                mExcludeFilters.addAll(retryPlan.getExcludeFilters());
-            } catch (ConfigurationException e) {
-                throw new RuntimeException ("Failed to create subplan for retry", e);
-            }
-        }
-        if (mSubPlan != null) {
-            try {
-                File subPlanFile = new File(mBuildHelper.getSubPlansDir(), mSubPlan + ".xml");
-                if (!subPlanFile.exists()) {
-                    throw new IllegalArgumentException(
-                            String.format("Could not retrieve subplan \"%s\"", mSubPlan));
-                }
-                InputStream subPlanInputStream = new FileInputStream(subPlanFile);
-                ISubPlan subPlan = new SubPlan();
-                subPlan.parse(subPlanInputStream);
+            RetryFilterHelper helper = new RetryFilterHelper(mBuildHelper, mRetrySessionId);
+            helper.validateBuildFingerprint(mDevice);
+            helper.setAllOptionsFrom(this);
+            helper.setCommandLineOptionsFor(this);
+            helper.populateRetryFilters();
+            mIncludeFilters = helper.getIncludeFilters();
+            mExcludeFilters = helper.getExcludeFilters();
+            helper.tearDown();
+        } else {
+            if (mSubPlan != null) {
+                ISubPlan subPlan = SubPlanHelper.getSubPlanByName(mBuildHelper, mSubPlan);
                 mIncludeFilters.addAll(subPlan.getIncludeFilters());
                 mExcludeFilters.addAll(subPlan.getExcludeFilters());
-            } catch (FileNotFoundException | ParseException e) {
-                throw new RuntimeException(
-                        String.format("Unable to find or parse subplan %s", mSubPlan), e);
             }
-        }
-        if (mModuleName != null) {
-            try {
-                List<String> modules = ModuleRepo.getModuleNamesMatching(
-                        mBuildHelper.getTestsDir(), mModuleName);
-                if (modules.size() == 0) {
-                    throw new IllegalArgumentException(
-                            String.format("No modules found matching %s", mModuleName));
-                } else if (modules.size() > 1) {
-                    throw new IllegalArgumentException(String.format(
-                            "Multiple modules found matching %s:\n%s\nWhich one did you mean?\n",
-                            mModuleName, ArrayUtil.join("\n", modules)));
-                } else {
-                    String module = modules.get(0);
-                    cleanFilters(mIncludeFilters, module);
-                    cleanFilters(mExcludeFilters, module);
-                    mIncludeFilters.add(new TestFilter(mAbiName, module, mTestName).toString());
+            if (mModuleName != null) {
+                try {
+                    List<String> modules = ModuleRepo.getModuleNamesMatching(
+                            mBuildHelper.getTestsDir(), mModuleName);
+                    if (modules.size() == 0) {
+                        throw new IllegalArgumentException(
+                                String.format("No modules found matching %s", mModuleName));
+                    } else if (modules.size() > 1) {
+                        throw new IllegalArgumentException(String.format("Multiple modules found"
+                                + " matching %s:\n%s\nWhich one did you mean?\n",
+                                mModuleName, ArrayUtil.join("\n", modules)));
+                    } else {
+                        String module = modules.get(0);
+                        cleanFilters(mIncludeFilters, module);
+                        cleanFilters(mExcludeFilters, module);
+                        mIncludeFilters.add(
+                                new TestFilter(mAbiName, module, mTestName).toString());
+                    }
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        } else if (mTestName != null) {
-            throw new IllegalArgumentException(
-                    "Test name given without module name. Add --module <module-name>");
-        } else {
-            // If a module has an arg, assume it's included
-            for (String arg : mModuleArgs) {
-                mIncludeFilters.add(arg.split(":")[0]);
+            } else if (mTestName != null) {
+                throw new IllegalArgumentException(
+                        "Test name given without module name. Add --module <module-name>");
             }
         }
     }
