@@ -27,7 +27,8 @@ LOCAL_C_INCLUDES := \
     frameworks/av/media/libaaudio/include
 
 LOCAL_SRC_FILES := \
-    src/test_aaudio.cpp
+    src/test_aaudio.cpp \
+    src/test_aaudio_callback.cpp
 
 LOCAL_SHARED_LIBRARIES := \
     libaaudio \
