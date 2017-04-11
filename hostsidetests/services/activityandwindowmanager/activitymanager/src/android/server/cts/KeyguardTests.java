@@ -174,7 +174,7 @@ public class KeyguardTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
@@ -183,28 +183,28 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardMethodActivity"});
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
         assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertOnDismissSucceededInLogcat();
+        assertOnDismissSucceededInLogcat(logSeparator);
     }
 
     public void testDismissKeyguardActivity_method_notTop() throws Exception {
         if (!isHandheld()) {
             return;
         }
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         launchActivity("BroadcastReceiverActivity");
         launchActivity("TestActivity");
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguardMethod true");
-        assertOnDismissErrorInLogcat();
+        assertOnDismissErrorInLogcat(logSeparator);
     }
 
     public void testDismissKeyguardActivity_method_turnScreenOn() throws Exception {
         if (!isHandheld()) {
             return;
         }
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         sleepDevice();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
@@ -213,7 +213,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mAmWmState.computeState(mDevice, new String[] { "TurnScreenOnDismissKeyguardActivity"});
         mAmWmState.assertVisibility("TurnScreenOnDismissKeyguardActivity", true);
         assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertOnDismissSucceededInLogcat();
+        assertOnDismissSucceededInLogcat(logSeparator);
     }
 
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {

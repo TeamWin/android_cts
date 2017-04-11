@@ -55,11 +55,15 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * docked state.
      */
     public void testConfigurationUpdatesWhenResizedFromFullscreen() throws Exception {
+        String logSeparator = clearLogcat();
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
+        logSeparator = clearLogcat();
         moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
-        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
         assertSizesAreSane(fullscreenSizes, dockedSizes);
     }
@@ -69,11 +73,15 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * from docked state to fullscreen (reverse).
      */
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
+        String logSeparator = clearLogcat();
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, DOCKED_STACK_ID);
-        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes dockedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
+        logSeparator = clearLogcat();
         moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes fullscreenSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
         assertSizesAreSane(fullscreenSizes, dockedSizes);
     }
@@ -83,8 +91,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() throws Exception {
         setDeviceRotation(0);
+        final String logSeparator = clearLogcat();
         launchActivityInStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
         rotateAndCheckSizes(initialSizes);
     }
@@ -95,6 +105,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
         setDeviceRotation(0);
+        final String logSeparator = clearLogcat();
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         // Launch our own activity to side in case Recents (or other activity to side) doesn't
         // support rotation.
@@ -102,7 +113,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 .execute();
         // Launch target activity in docked stack.
         getLaunchActivityBuilder().setTargetActivityName(RESIZEABLE_ACTIVITY_NAME).execute();
-        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
         rotateAndCheckSizes(initialSizes);
     }
@@ -114,17 +126,19 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() throws Exception {
         setDeviceRotation(0);
 
+        final String logSeparator = clearLogcat();
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder().setToSide(true).setTargetActivityName(RESIZEABLE_ACTIVITY_NAME)
                 .execute();
-        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes initialSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
 
         rotateAndCheckSizes(initialSizes);
     }
 
     private void rotateAndCheckSizes(ReportedSizes prevSizes) throws Exception {
         for (int rotation = 3; rotation >= 0; --rotation) {
-            clearLogcat();
+            final String logSeparator = clearLogcat();
             final int actualStackId = mAmWmState.getAmState().getTaskByActivityName(
                     RESIZEABLE_ACTIVITY_NAME).mStackId;
             final int displayId = mAmWmState.getAmState().getStackById(actualStackId).mDisplayId;
@@ -139,7 +153,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 return;
             }
 
-            final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME);
+            final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME,
+                    logSeparator);
             assertSizesRotate(prevSizes, rotatedSizes);
             prevSizes = rotatedSizes;
         }
@@ -169,13 +184,16 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     private void moveActivityFullSplitFull(String activityName) throws Exception {
         // Launch to fullscreen stack and record size.
+        String logSeparator = clearLogcat();
         launchActivityInStack(activityName, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes initialFullscreenSizes = getActivityDisplaySize(activityName);
+        final ReportedSizes initialFullscreenSizes = getActivityDisplaySize(activityName,
+                logSeparator);
         final Rectangle displayRect = getDisplayRect(activityName);
 
         // Move to docked stack.
+        logSeparator = clearLogcat();
         moveActivityToStack(activityName, DOCKED_STACK_ID);
-        final ReportedSizes dockedSizes = getActivityDisplaySize(activityName);
+        final ReportedSizes dockedSizes = getActivityDisplaySize(activityName, logSeparator);
         assertSizesAreSane(initialFullscreenSizes, dockedSizes);
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
@@ -185,11 +203,13 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Resize docked stack to fullscreen size. This will trigger activity relaunch with
         // non-empty override configuration corresponding to fullscreen size.
+        logSeparator = clearLogcat();
         runCommandAndPrintOutput("am stack resize " + DOCKED_STACK_ID + " 0 0 "
                 + displayRect.width + " " + displayRect.height);
         // Move activity back to fullscreen stack.
         moveActivityToStack(activityName, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes finalFullscreenSizes = getActivityDisplaySize(activityName);
+        final ReportedSizes finalFullscreenSizes = getActivityDisplaySize(activityName,
+                logSeparator);
 
         // After activity configuration was changed twice it must report same size as original one.
         assertSizesAreSame(initialFullscreenSizes, finalFullscreenSizes);
@@ -348,8 +368,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     private void moveActivitySplitFullSplit(String activityName) throws Exception {
         // Launch to docked stack and record size.
+        String logSeparator = clearLogcat();
         launchActivityInStack(activityName, DOCKED_STACK_ID);
-        final ReportedSizes initialDockedSizes = getActivityDisplaySize(activityName);
+        final ReportedSizes initialDockedSizes = getActivityDisplaySize(activityName, logSeparator);
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
         launchActivityInStack(activityName, DOCKED_STACK_ID);
@@ -357,13 +378,15 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 false /* compareTaskAndStackBounds */);
 
         // Move to fullscreen stack.
+        logSeparator = clearLogcat();
         moveActivityToStack(activityName, FULLSCREEN_WORKSPACE_STACK_ID);
-        final ReportedSizes fullscreenSizes = getActivityDisplaySize(activityName);
+        final ReportedSizes fullscreenSizes = getActivityDisplaySize(activityName, logSeparator);
         assertSizesAreSane(fullscreenSizes, initialDockedSizes);
 
         // Move activity back to docked stack.
+        logSeparator = clearLogcat();
         moveActivityToStack(activityName, DOCKED_STACK_ID);
-        final ReportedSizes finalDockedSizes = getActivityDisplaySize(activityName);
+        final ReportedSizes finalDockedSizes = getActivityDisplaySize(activityName, logSeparator);
 
         // After activity configuration was changed twice it must report same size as original one.
         assertSizesAreSame(initialDockedSizes, finalDockedSizes);
@@ -424,10 +447,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertEquals(firstSize.smallestWidthDp, secondSize.smallestWidthDp);
     }
 
-    private ReportedSizes getActivityDisplaySize(String activityName) throws Exception {
+    private ReportedSizes getActivityDisplaySize(String activityName, String logSeparator)
+            throws Exception {
         mAmWmState.computeState(mDevice, new String[] { activityName },
                 false /* compareTaskAndStackBounds */);
-        final ReportedSizes details = getLastReportedSizesForActivity(activityName);
+        final ReportedSizes details = getLastReportedSizesForActivity(activityName, logSeparator);
         assertNotNull(details);
         return details;
     }
@@ -459,8 +483,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Test launching an activity which requests specific UI mode during creation.
      */
     public void testLaunchWithUiModeChange() throws Exception {
-        clearLogcat();
-
         // Launch activity that changes UI mode and handles this configuration change.
         launchActivity(NIGHT_MODE_ACTIVITY);
         mAmWmState.waitForActivityState(mDevice, NIGHT_MODE_ACTIVITY, STATE_RESUMED);

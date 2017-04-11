@@ -101,14 +101,14 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
 
         mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
 
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         resizeActivityTask(TEST_ACTIVITY,
                 TEST_TASK_OFFSET, TEST_TASK_OFFSET, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
                 TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, TEST_TASK_SIZE_2, TEST_TASK_SIZE_1);
         mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY});
 
-        assertActivityLifecycle(TEST_ACTIVITY, true);
-        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false);
+        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
+        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */, logSeparator);
     }
 }
