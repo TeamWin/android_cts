@@ -93,7 +93,6 @@ public class ResultHandler {
     private static final String MODULES_DONE_ATTR = "modules_done";
     private static final String MODULES_TOTAL_ATTR = "modules_total";
     private static final String NAME_ATTR = "name";
-    private static final String NOT_EXECUTED_ATTR = "not_executed";
     private static final String OS_ARCH_ATTR = "os_arch";
     private static final String OS_NAME_ATTR = "os_name";
     private static final String OS_VERSION_ATTR = "os_version";
@@ -210,9 +209,6 @@ public class ResultHandler {
                 boolean done = Boolean.parseBoolean(parser.getAttributeValue(NS, DONE_ATTR));
                 IModuleResult module = invocation.getOrCreateModule(moduleId);
                 module.initializeDone(done);
-                int notExecuted = Integer.parseInt(
-                        parser.getAttributeValue(NS, NOT_EXECUTED_ATTR));
-                module.setNotExecuted(notExecuted);
                 long runtime = Long.parseLong(parser.getAttributeValue(NS, RUNTIME_ATTR));
                 module.addRuntime(runtime);
                 while (parser.nextTag() == XmlPullParser.START_TAG) {
@@ -300,7 +296,6 @@ public class ResultHandler {
                     throws IOException, XmlPullParserException {
         int passed = result.countResults(TestStatus.PASS);
         int failed = result.countResults(TestStatus.FAIL);
-        int notExecuted = result.getNotExecuted();
         File resultFile = new File(resultDir, TEST_RESULT_FILE_NAME);
         OutputStream stream = new FileOutputStream(resultFile);
         XmlSerializer serializer = XmlPullParserFactory.newInstance(TYPE, null).newSerializer();
@@ -371,7 +366,6 @@ public class ResultHandler {
         serializer.startTag(NS, SUMMARY_TAG);
         serializer.attribute(NS, PASS_ATTR, Integer.toString(passed));
         serializer.attribute(NS, FAILED_ATTR, Integer.toString(failed));
-        serializer.attribute(NS, NOT_EXECUTED_ATTR, Integer.toString(notExecuted));
         serializer.attribute(NS, MODULES_DONE_ATTR,
                 Integer.toString(result.getModuleCompleteCount()));
         serializer.attribute(NS, MODULES_TOTAL_ATTR,
@@ -385,7 +379,6 @@ public class ResultHandler {
             serializer.attribute(NS, ABI_ATTR, module.getAbi());
             serializer.attribute(NS, RUNTIME_ATTR, String.valueOf(module.getRuntime()));
             serializer.attribute(NS, DONE_ATTR, Boolean.toString(module.isDone()));
-            serializer.attribute(NS, NOT_EXECUTED_ATTR, Integer.toString(module.getNotExecuted()));
             serializer.attribute(NS, PASS_ATTR,
                     Integer.toString(module.countResults(TestStatus.PASS)));
             for (ICaseResult cr : module.getResults()) {

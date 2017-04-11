@@ -185,7 +185,6 @@ public class IntegrationTest {
         mReporter.invocationEnded(500);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         IInvocationResult result = mReporter.getResult();
-        assertEquals(0, result.getNotExecuted());
         assertEquals(2, result.countResults(TestStatus.PASS));
         assertEquals(1, result.countResults(TestStatus.FAIL));
         assertEquals(1, result.getModules().size());
@@ -212,7 +211,6 @@ public class IntegrationTest {
         mReporter.invocationEnded(500);
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         IInvocationResult result = mReporter.getResult();
-        assertEquals(1, result.getNotExecuted());
         assertEquals(1, result.countResults(TestStatus.PASS));
         assertEquals(1, result.countResults(TestStatus.FAIL));
         // Module should not be seen as complete.
@@ -243,7 +241,6 @@ public class IntegrationTest {
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         IInvocationResult result = mReporter.getResult();
         // FIXME: All tests should be marked as executed and not aggregating the count.
-        assertEquals(3, result.getNotExecuted());
         assertEquals(2, result.countResults(TestStatus.PASS));
         assertEquals(1, result.countResults(TestStatus.FAIL));
         // FIXME: Module should be complete since all its test have run.
@@ -283,7 +280,6 @@ public class IntegrationTest {
         mReporter.invocationEnded(500);
 
         IInvocationResult result = mReporter.getResult();
-        assertEquals(1, result.getNotExecuted());
         assertEquals(1, result.countResults(TestStatus.PASS));
         assertEquals(1, result.countResults(TestStatus.FAIL));
         // Module should not be seen as complete.
@@ -313,7 +309,6 @@ public class IntegrationTest {
         result = mReporter.getResult();
         // FIXME: We should only have 1 not_executed in the retry too. They should not aggregate
         // from one run to another.
-        assertEquals(2, result.getNotExecuted());
         assertEquals(1, result.countResults(TestStatus.PASS));
         assertEquals(1, result.countResults(TestStatus.FAIL));
         // Module should not be seen as complete.
@@ -352,7 +347,6 @@ public class IntegrationTest {
         mReporter.invocationEnded(500);
 
         IInvocationResult result = mReporter.getResult();
-        assertEquals(1, result.getNotExecuted());
         assertEquals(1, result.countResults(TestStatus.PASS));
         assertEquals(1, result.countResults(TestStatus.FAIL));
         // Module should not be seen as complete.
@@ -386,7 +380,6 @@ public class IntegrationTest {
 
         // Check retry results
         result = mReporter.getResult();
-        assertEquals(0, result.getNotExecuted());
         assertEquals(3, result.countResults(TestStatus.PASS));
         assertEquals(0, result.countResults(TestStatus.FAIL));
         // Module should be marked as complete after retry.
@@ -489,7 +482,6 @@ public class IntegrationTest {
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
         IInvocationResult result = mReporter.getResult();
-        assertEquals(0, result.getNotExecuted());
         assertEquals(4, result.countResults(TestStatus.PASS));
         assertEquals(4, result.countResults(TestStatus.FAIL));
         assertEquals(2, result.getModules().size());
@@ -540,7 +532,6 @@ public class IntegrationTest {
         EasyMock.verify(mMockDevice, mMockBuildInfo);
         // Check aggregated results to make sure it's consistent.
         IInvocationResult result = mReporter.getResult();
-        assertEquals(4, result.getNotExecuted());
         assertEquals(4, result.countResults(TestStatus.PASS));
         assertEquals(4, result.countResults(TestStatus.FAIL));
         assertEquals(2, result.getModules().size());
@@ -592,7 +583,6 @@ public class IntegrationTest {
         EasyMock.verify(mMockDevice, mMockBuildInfo);
 
         IInvocationResult result = mReporter.getResult();
-        assertEquals(0, result.getNotExecuted());
         assertEquals(2, result.countResults(TestStatus.PASS));
         assertEquals(2, result.countResults(TestStatus.FAIL));
         // FIXME: Only one module should be expected since within the one shard requested to run
