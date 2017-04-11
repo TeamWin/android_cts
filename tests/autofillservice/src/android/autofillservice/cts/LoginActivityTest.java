@@ -1097,50 +1097,15 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testDisableSelfWhenConnected() throws Exception {
+    public void testDisableSelf() throws Exception {
         enableService();
 
-        // Set no-op behavior.
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .build());
-
-        // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
-        waitUntilConnected();
-        sReplier.getNextFillRequest();
-
         // Can disable while connected.
-        mActivity.runOnUiThread(() ->
-                InstrumentedAutoFillService.peekInstance().disableSelf());
+        mActivity.runOnUiThread(() -> getContext().getSystemService(
+                AutofillManager.class).disableOwnedAutofillServices());
 
         // Ensure disabled.
         assertServiceDisabled();
-    }
-
-    @Test
-    public void testDisableSelfWhenDisconnected() throws Exception {
-        enableService();
-
-        // Set no-op behavior.
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .build());
-
-        // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
-        waitUntilConnected();
-        sReplier.getNextFillRequest();
-
-        // Wait until we timeout and disconnect.
-        waitUntilDisconnected();
-
-        // Cannot disable while disconnected.
-        mActivity.runOnUiThread(() ->
-                InstrumentedAutoFillService.peekInstance().disableSelf());
-
-        // Ensure enabled.
-        assertServiceEnabled();
     }
 
     @Test
