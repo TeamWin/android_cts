@@ -174,8 +174,6 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
             // Login
             sUiBot.selectById(LOGIN_FULL_ID);
 
-            /* TODO: b/37117412
-
             // Wait for save UI to be shown
             sUiBot.assertShownById("android:id/autofill_save_yes");
 
@@ -201,8 +199,6 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
             assertThat(saveRequest.data).isNotNull();
             final String extraValue = saveRequest.data.getString("numbers");
             assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
-
-            */
 
             eventually(() -> assertNoDanglingSessions());
         } finally {
