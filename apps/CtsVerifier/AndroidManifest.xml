@@ -1711,6 +1711,10 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_STATUS" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.BYOD_DISK_ENCRYPTION_STATUS" />
+                <category android:name="android.intent.category.DEFAULT"></category>
+            </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
         </activity>
@@ -1732,6 +1736,7 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_QUERY" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_REMOVE" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.BYOD_CHECK_DISK_ENCRYPTION" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_INTENT_FILTERS" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_CAPTURE_AND_CHECK_IMAGE" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_CAPTURE_AND_CHECK_VIDEO_WITH_EXTRA_OUTPUT" />
