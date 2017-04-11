@@ -295,6 +295,26 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Asserts that no vendor domains are exempted from the prohibition on directly
+     * executing binaries from /system.
+     * */
+    public void testNoExemptionsForVendorExecutingCore() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        Set<String> types =
+                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                        "vendor_executes_system_violators");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts vendor domains from ban on executing files in /system: "
+                    + sortedTypes);
+        }
+    }
+
+    /**
      * Tests that mlstrustedsubject does not include untrusted_app
      * and that mlstrustedobject does not include app_data_file.
      * This helps prevent circumventing the per-user isolation of
