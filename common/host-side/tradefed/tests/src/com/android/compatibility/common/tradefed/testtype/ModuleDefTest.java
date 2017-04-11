@@ -16,6 +16,7 @@
 
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.ITargetPreparer;
@@ -46,7 +47,8 @@ public class ModuleDefTest extends TestCase {
     public void testAccessors() throws Exception {
         IAbi abi = new Abi(ABI, "");
         MockRemoteTest mockTest = new MockRemoteTest();
-        IModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>());
+        IModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>(),
+                new ConfigurationDescriptor());
         assertEquals("Incorrect ID", ID, def.getId());
         assertEquals("Incorrect ABI", ABI, def.getAbi().getName());
         assertEquals("Incorrect Name", NAME, def.getName());
@@ -55,7 +57,8 @@ public class ModuleDefTest extends TestCase {
     public void testModuleFinisher() throws Exception {
         IAbi abi = new Abi(ABI, "");
         MockRemoteTest mockTest = new MockRemoteTest();
-        IModuleDef def = new ModuleDef(NAME, abi, mockTest, new ArrayList<ITargetPreparer>());
+        IModuleDef def = new ModuleDef(NAME, abi, mockTest,
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor());
         ITestInvocationListener mockListener = EasyMock.createMock(ITestInvocationListener.class);
         // listener should receive testRunStarted/testRunEnded events even for no-op run() method
         mockListener.testRunStarted(ID, 0);

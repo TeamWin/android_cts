@@ -341,7 +341,8 @@ public class ModuleRepo implements IModuleRepo {
             String[] configPaths) throws ConfigurationException {
         // Invokes parser to process the test module config file
         IConfiguration config = mConfigFactory.createConfigurationFromArgs(configPaths);
-        addModuleDef(new ModuleDef(name, abi, test, config.getTargetPreparers()));
+        addModuleDef(new ModuleDef(name, abi, test, config.getTargetPreparers(),
+                config.getConfigurationDescription()));
     }
 
     private void addModuleDef(IModuleDef moduleDef) {
