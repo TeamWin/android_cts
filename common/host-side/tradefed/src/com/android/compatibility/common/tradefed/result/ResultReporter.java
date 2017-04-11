@@ -106,6 +106,9 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     @Option(name = "use-log-saver", description = "Also saves generated result with log saver")
     private boolean mUseLogSaver = false;
 
+    @Option(name = "compress-logs", description = "Whether logs will be saved with compression")
+    private boolean mCompressLogs = true;
+
     private CompatibilityBuildHelper mBuildHelper;
     private File mResultDir = null;
     private File mLogDir = null;
@@ -514,6 +517,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             } else {
                 info("Test Result: %s", resultFile.getCanonicalPath());
             }
+            info("Test Logs: %s", mLogDir.getCanonicalPath());
             debug("Full Result: %s", zippedResults.getCanonicalPath());
 
             saveLog(resultFile, zippedResults);
@@ -554,7 +558,12 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             return;
         }
         try {
-            File logFile = mTestLogSaver.saveAndZipLogData(name, type, stream.createInputStream());
+            File logFile = null;
+            if (mCompressLogs) {
+                logFile = mTestLogSaver.saveAndGZipLogData(name, type, stream.createInputStream());
+            } else {
+                logFile = mTestLogSaver.saveLogData(name, type, stream.createInputStream());
+            }
             debug("Saved logs for %s in %s", name, logFile.getAbsolutePath());
         } catch (IOException e) {
             warn("Failed to write log for %s", name);
