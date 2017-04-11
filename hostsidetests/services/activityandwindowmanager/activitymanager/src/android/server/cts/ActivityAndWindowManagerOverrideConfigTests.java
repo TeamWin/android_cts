@@ -40,12 +40,12 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
         private ConfigurationChangeObserver() {
         }
 
-        private boolean findConfigurationChange(String activityName)
+        private boolean findConfigurationChange(String activityName, String logSeparator)
                 throws DeviceNotAvailableException, InterruptedException {
             int tries = 0;
             boolean observedChange = false;
             while (tries < 5 && !observedChange) {
-                final String[] lines = getDeviceLogsForComponent(activityName);
+                final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
                 log("Looking at logcat");
                 for (int i = lines.length - 1; i >= 0; i--) {
                     final String line = lines[i].trim();
@@ -72,16 +72,18 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
         launchActivityInStack(TEST_ACTIVITY_NAME, FREEFORM_WORKSPACE_STACK_ID);
 
         setDeviceRotation(0);
-        clearLogcat();
+        String logSeparator = clearLogcat();
         resizeActivityTask(TEST_ACTIVITY_NAME, 0, 0, 100, 100);
         ConfigurationChangeObserver c = new ConfigurationChangeObserver();
-        final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME);
+        final boolean reportedSizeAfterResize = c.findConfigurationChange(TEST_ACTIVITY_NAME,
+                logSeparator);
         assertTrue("Expected to observe configuration change when resizing",
                 reportedSizeAfterResize);
 
-        clearLogcat();
+        logSeparator = clearLogcat();
         setDeviceRotation(2);
-        final boolean reportedSizeAfterRotation = c.findConfigurationChange(TEST_ACTIVITY_NAME);
+        final boolean reportedSizeAfterRotation = c.findConfigurationChange(TEST_ACTIVITY_NAME,
+                logSeparator);
         assertFalse("Not expected to observe configuration change after flip rotation",
                 reportedSizeAfterRotation);
     }

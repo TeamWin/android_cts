@@ -715,17 +715,17 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
-        clearLogcat();
+        String logSeparator = clearLogcat();
         executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
         mAmWmState.waitForValidState(mDevice, PIP_ACTIVITY, PINNED_STACK_ID);
         assertPinnedStackExists();
-        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
 
         // Trigger it to go back to fullscreen and ensure that only triggered one configuration
         // change as well
-        clearLogcat();
+        logSeparator = clearLogcat();
         launchActivity(PIP_ACTIVITY);
-        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
     }
 
     public void testPreventSetAspectRatioWhileExpanding() throws Exception {
@@ -864,8 +864,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the activity received exactly one of each of the callbacks when entering and
      * exiting picture-in-picture.
      */
-    private void assertValidPictureInPictureCallbackOrder(String activityName) throws Exception {
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName);
+    private void assertValidPictureInPictureCallbackOrder(String activityName, String logSeparator)
+            throws Exception {
+        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
+                logSeparator);
 
         if (lifecycleCounts.mConfigurationChangedCount != 1) {
             fail(activityName + " has received " + lifecycleCounts.mConfigurationChangedCount

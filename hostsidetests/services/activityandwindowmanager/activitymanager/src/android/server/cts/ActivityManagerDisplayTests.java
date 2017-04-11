@@ -352,6 +352,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
 
         // Launch activity on new secondary display.
+        final String logSeparator = clearLogcat();
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
 
@@ -369,7 +370,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
         // Check that activity config corresponds to display config.
-        final ReportedSizes reportedSizes = getLastReportedSizesForActivity(TEST_ACTIVITY_NAME);
+        final ReportedSizes reportedSizes = getLastReportedSizesForActivity(TEST_ACTIVITY_NAME,
+                logSeparator);
         assertEquals("Activity launched on secondary display must have proper configuration",
                 CUSTOM_DENSITY_DPI, reportedSizes.densityDpi);
     }
@@ -833,7 +835,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         assertTrue("Focused stack must be on secondary display",
                 FULLSCREEN_WORKSPACE_STACK_ID != externalFocusedStackId);
 
-        clearLogcat();
+        final String logSeparator = clearLogcat();
 
         // Launch other activity with different uid and check it is launched on primary display.
         final String broadcastAction = SECOND_PACKAGE_NAME + ".LAUNCH_BROADCAST_ACTION";
@@ -845,7 +847,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         boolean match = false;
         final Pattern pattern = Pattern.compile(".*SecurityException launching activity.*");
         while (tries < 5 && !match) {
-            String[] logs = getDeviceLogsForComponent("LaunchBroadcastReceiver");
+            String[] logs = getDeviceLogsForComponent("LaunchBroadcastReceiver", logSeparator);
             for (String line : logs) {
                 Matcher m = pattern.matcher(line);
                 if (m.matches()) {
@@ -961,7 +963,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 RESIZEABLE_ACTIVITY_NAME);
 
         // Destroy the display and check if activities are removed from system.
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         destroyVirtualDisplays();
         final String activityName1
                 = ActivityManagerTestBase.getActivityComponentName(TEST_ACTIVITY_NAME);
@@ -991,8 +993,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         assertFalse("Activity windows from removed display must be destroyed",
                 mAmWmState.getWmState().containsWindow(windowName2));
         // Check activity logs.
-        assertActivityDestroyed(TEST_ACTIVITY_NAME);
-        assertActivityDestroyed(RESIZEABLE_ACTIVITY_NAME);
+        assertActivityDestroyed(TEST_ACTIVITY_NAME, logSeparator);
+        assertActivityDestroyed(RESIZEABLE_ACTIVITY_NAME, logSeparator);
     }
 
     /**
@@ -1012,21 +1014,22 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         // Launch a resizeable activity on new secondary display.
-        clearLogcat();
+        String logSeparator = clearLogcat();
         launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
         mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
         mAmWmState.assertFocusedActivity("Launched activity must be focused",
                 RESIZEABLE_ACTIVITY_NAME);
 
         // Grab reported sizes and compute new with slight size change.
-        final ReportedSizes initialSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes initialSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
         final Rectangle initialBounds
                 = mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds();
         final Rectangle newBounds = new Rectangle(initialBounds.x, initialBounds.y,
                 initialBounds.width + SIZE_VALUE_SHIFT, initialBounds.height + SIZE_VALUE_SHIFT);
 
         // Resize the docked stack, so that activity with virtual display will also be resized.
-        clearLogcat();
+        logSeparator = clearLogcat();
         resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
         mAmWmState.computeState(mDevice, new String[] {RESIZEABLE_ACTIVITY_NAME, LAUNCHING_ACTIVITY,
                 VIRTUAL_DISPLAY_ACTIVITY}, false /* compareTaskAndStackBounds */);
@@ -1043,9 +1046,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Check if activity in virtual display was resized properly.
         assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY_NAME, 0 /* numRelaunch */,
-                1 /* numConfigChange */);
+                1 /* numConfigChange */, logSeparator);
 
-        final ReportedSizes updatedSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME);
+        final ReportedSizes updatedSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME,
+                logSeparator);
         assertTrue(updatedSize.widthDp <= initialSize.widthDp);
         assertTrue(updatedSize.heightDp <= initialSize.heightDp);
         assertTrue(updatedSize.displayWidth <= initialSize.displayWidth);
@@ -1072,7 +1076,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                 RESIZEABLE_ACTIVITY_NAME);
 
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         moveActivityToStack(RESIZEABLE_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.waitForFocusedStack(mDevice, FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertFocusedActivity("Focus must be on moved activity",
@@ -1081,8 +1085,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 FULLSCREEN_WORKSPACE_STACK_ID);
 
         // Check if client received the callbacks.
-        assertMovedToDisplay(RESIZEABLE_ACTIVITY_NAME);
-        assertMovedToDisplay("LifecycleLogView");
+        assertMovedToDisplay(RESIZEABLE_ACTIVITY_NAME, logSeparator);
+        assertMovedToDisplay("LifecycleLogView", logSeparator);
     }
 
     /**
@@ -1155,11 +1159,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
         // Launch activity on new secondary display.
+        String logSeparator = clearLogcat();
         launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
         mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                 RESIZEABLE_ACTIVITY_NAME);
         final ReportedSizes initialSizes = getLastReportedSizesForActivity(
-                RESIZEABLE_ACTIVITY_NAME);
+                RESIZEABLE_ACTIVITY_NAME, logSeparator);
         assertNotNull("Test activity must have reported initial sizes on launch", initialSizes);
 
         // Rotate primary display and check that activity on secondary display is not affected.
@@ -1169,12 +1174,13 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final int initialRotation = mAmWmState.getWmState().getRotation();
         setDeviceRotation((initialRotation + 1) % 4);
 
+        logSeparator = clearLogcat();
         launchActivityOnDisplay(TEST_ACTIVITY_NAME, newDisplay.mDisplayId);
         mAmWmState.waitForActivityState(mDevice, TEST_ACTIVITY_NAME, STATE_RESUMED);
         mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                 TEST_ACTIVITY_NAME);
         final ReportedSizes testActivitySizes = getLastReportedSizesForActivity(
-                TEST_ACTIVITY_NAME);
+                TEST_ACTIVITY_NAME, logSeparator);
         assertEquals("Sizes of secondary display must not change after rotation of primary display",
                 initialSizes, testActivitySizes);
     }
@@ -1278,9 +1284,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
     private void rotateAndCheckSameSizes(String activityName) throws Exception {
         for (int rotation = 3; rotation >= 0; --rotation) {
-            clearLogcat();
+            final String logSeparator = clearLogcat();
             setDeviceRotation(rotation);
-            final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName);
+            final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName,
+                    logSeparator);
             assertNull("Sizes must not change after rotation", rotatedSizes);
         }
     }
@@ -1423,9 +1430,9 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     }
 
     /** Assert that component received onMovedToDisplay and onConfigurationChanged callbacks. */
-    private void assertMovedToDisplay(String componentName) throws Exception {
+    private void assertMovedToDisplay(String componentName, String logSeparator) throws Exception {
         final ActivityLifecycleCounts lifecycleCounts
-                = new ActivityLifecycleCounts(componentName);
+                = new ActivityLifecycleCounts(componentName, logSeparator);
         if (lifecycleCounts.mDestroyCount != 0) {
             fail(componentName + " has been destroyed " + lifecycleCounts.mDestroyCount
                     + " time(s), wasn't expecting any");

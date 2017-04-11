@@ -379,7 +379,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         final Rectangle initialDockBounds =
                 mAmWmState.getWmState().getStack(DOCKED_STACK_ID).getBounds();
 
-        clearLogcat();
+        final String logSeparator = clearLogcat();
 
         Rectangle newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
         resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
@@ -392,8 +392,8 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
         mAmWmState.computeState(mDevice,
                 new String[]{TEST_ACTIVITY_NAME, NO_RELAUNCH_ACTIVITY_NAME});
-        assertActivityLifecycle(TEST_ACTIVITY_NAME, true);
-        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false);
+        assertActivityLifecycle(TEST_ACTIVITY_NAME, true /* relaunched */, logSeparator);
+        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY_NAME, false /* relaunched */, logSeparator);
     }
 
     private Rectangle computeNewDockBounds(

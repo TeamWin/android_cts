@@ -98,7 +98,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         if (!isHandheld()) {
             return;
         }
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
@@ -108,20 +108,20 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.computeState(mDevice, new String[] { "DismissKeyguardMethodActivity"});
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", true);
         assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-        assertOnDismissSucceededInLogcat();
+        assertOnDismissSucceededInLogcat(logSeparator);
     }
 
     public void testDismissKeyguardActivity_method_cancelled() throws Exception {
         if (!isHandheld()) {
             return;
         }
-        clearLogcat();
+        final String logSeparator = clearLogcat();
         gotoKeyguard();
         mAmWmState.computeState(mDevice, null);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
         launchActivity("DismissKeyguardMethodActivity");
         pressBackButton();
-        assertOnDismissCancelledInLogcat();
+        assertOnDismissCancelledInLogcat(logSeparator);
         mAmWmState.computeState(mDevice, new String[] {});
         mAmWmState.assertVisibility("DismissKeyguardMethodActivity", false);
         assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
