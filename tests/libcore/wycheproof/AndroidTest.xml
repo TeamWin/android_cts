@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Libcore Wycheproof test cases">
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <!-- this has just the instrumentation which acts as the tests we want to run -->
         <option name="test-file-name" value="CtsLibcoreWycheproofTestCases.apk" />

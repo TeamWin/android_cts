@@ -26,6 +26,7 @@
 
     <option name="skip-preconditions" value="true" />
     <option name="skip-connectivity-check" value="true" />
+    <option name="preparer-whitelist" value="com.android.tradefed.targetprep.suite.SuiteApkInstaller" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.ApkInstaller" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.FilePusher" />
 
