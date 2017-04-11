@@ -874,7 +874,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that virtual display content is hidden when device is locked.
      */
     public void testVirtualDisplayHidesContentWhenLocked() throws Exception {
-        if (!supportsMultiDisplay()) { return; }
+        if (!supportsMultiDisplay() || !isHandheld()) { return; }
 
         // Create new usual virtual display.
         final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
@@ -1251,7 +1251,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.waitForValidState(mDevice, new String[] {TEST_ACTIVITY_NAME},
                 null /* stackIds */, false /* compareTaskAndStackBounds */, componentName);
 
-        // Check that the second activity is launched onto the fullscren stack
+        // Check that the second activity is launched onto the fullscreen stack
         final ActivityManagerState.ActivityStack fullscreenStack =
                 mAmWmState.getAmState().getStackById(FULLSCREEN_WORKSPACE_STACK_ID);
         assertEquals("Activity launched on default display must be resumed",
