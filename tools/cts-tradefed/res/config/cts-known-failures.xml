@@ -186,4 +186,7 @@
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testGyroscopeHardwareBufferVeryFast" />
     <option name="compatibility:exclude-filter" value="CtsSensorTestCases android.hardware.cts.SensorDirectReportTest#testMagneticFieldHardwareBufferVeryFast" />
 
+    <!-- b/37216168 -->
+    <option name="compatibility:exclude-filter" value="CtsNativeHardwareTestCases AHardwareBufferTest#AHardwareBuffer_SendAndRecv_Succeeds" />
+
 </configuration>
