@@ -21,9 +21,7 @@ LOCAL_MODULE := libctsjvmtiagent
 # Don't include this package in any configuration by default.
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SRC_FILES := cts_agent.cpp \
-                   jni_binder.cpp \
-                   jvmti_helper.cpp \
+LOCAL_SRC_FILES := cts_agent.cpp
 
 # Tagging.
 LOCAL_SRC_FILES += tagging.cpp
@@ -40,8 +38,12 @@ LOCAL_HEADER_LIBRARIES := libopenjdkjvmti_headers
 LOCAL_SHARED_LIBRARIES := liblog \
                           libdl
 
+# The test implementation. We get this provided by ART.
+# Note: Needs to be "whole" as this exposes JNI functions.
+LOCAL_WHOLE_STATIC_LIBRARIES := libctstiagent
+
 # Platform libraries that are not available to apps. Link in statically.
-LOCAL_STATIC_LIBRARIES := libbase
+LOCAL_STATIC_LIBRARIES += libbase
 
 LOCAL_STRIP_MODULE := keep_symbols
 
