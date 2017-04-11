@@ -91,6 +91,15 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String EXTRA_PROVISIONED = "extra_provisioned";
     public static final String EXTRA_PARAMETER_1 = "extra_parameter_1";
 
+    // Primary -> managed intent: check if the disk of the device is encrypted
+    public static final String ACTION_CHECK_DISK_ENCRYPTION =
+            "com.android.cts.verifier.managedprovisioning.action.BYOD_CHECK_DISK_ENCRYPTION";
+    // Managed -> primary intent: update disk encryption status in primary's CtsVerifier
+    public static final String ACTION_DISK_ENCRYPTION_STATUS =
+            "com.android.cts.verifier.managedprovisioning.action.BYOD_DISK_ENCRYPTION_STATUS";
+    // Int extra field indicating the encryption status of the device storage
+    public static final String EXTRA_ENCRYPTION_STATUS = "extra_encryption_status";
+
     // Primary -> managed intent: set unknown sources restriction and install package
     public static final String ACTION_INSTALL_APK = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK";
     public static final String EXTRA_ALLOW_NON_MARKET_APPS = INSTALL_NON_MARKET_APPS;
@@ -217,6 +226,11 @@ public class ByodHelperActivity extends LocationListenerActivity
                 mDevicePolicyManager.wipeData(0);
                 showToast(R.string.provisioning_byod_profile_deleted);
             }
+        } else if (action.equals(ACTION_CHECK_DISK_ENCRYPTION)) {
+            final int status = mDevicePolicyManager.getStorageEncryptionStatus();
+            final Intent response = new Intent(ACTION_DISK_ENCRYPTION_STATUS)
+                    .putExtra(EXTRA_ENCRYPTION_STATUS, status);
+            setResult(RESULT_OK, response);
         } else if (action.equals(ACTION_INSTALL_APK)) {
             boolean allowNonMarket = intent.getBooleanExtra(EXTRA_ALLOW_NON_MARKET_APPS, false);
             boolean wasAllowed = getAllowNonMarket();

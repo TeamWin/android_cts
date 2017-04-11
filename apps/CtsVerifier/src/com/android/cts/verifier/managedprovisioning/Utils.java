@@ -17,17 +17,19 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.widget.Toast;
+import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.cts.verifier.IntentDrivenTestActivity;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
-import com.android.cts.verifier.managedprovisioning.ByodHelperActivity;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 
@@ -76,5 +78,42 @@ public class Utils {
                 .setStyle(new Notification.BigTextStyle().bigText(msg))
                 .build();
         mNotificationManager.notify(notificationId, notification);
+    }
+
+    /**
+     * Prompts the tester to set a screen lock credential, or change it if one exists.
+     *
+     * An instruction dialog is shown before the tester is sent to the ChooseLockGeneric activity
+     * in Settings.
+     *
+     * @param activity The calling activity where the result is handled
+     * @param requestCode The callback request code when the lock is set
+     */
+    static void setScreenLock(Activity activity, int requestCode) {
+        final Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.provisioning_byod)
+                .setMessage(R.string.provisioning_byod_set_screen_lock_dialog_message)
+                .setPositiveButton(R.string.go_button_text, (DialogInterface dialog, int which) ->
+                        activity.startActivityForResult(intent, requestCode))
+                .show();
+    }
+
+    /**
+     * Prompts the tester to remove the current screen lock credential.
+     *
+     * An instruction dialog is shown before the tester is sent to the ChooseLockGeneric activity
+     * in Settings.
+     *
+     * @param activity The calling activity
+     */
+    static void removeScreenLock(Activity activity) {
+        final Intent intent = new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD);
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.provisioning_byod)
+                .setMessage(R.string.provisioning_byod_remove_screen_lock_dialog_message)
+                .setPositiveButton(R.string.go_button_text, (DialogInterface dialog, int which) ->
+                        activity.startActivity(intent))
+                .show();
     }
 }
