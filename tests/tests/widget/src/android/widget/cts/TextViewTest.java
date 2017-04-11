@@ -63,6 +63,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.fonts.FontVariationAxis;
+import android.icu.lang.UCharacter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -5392,23 +5393,70 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
-    public void testAllCapsLocalization() {
-        String testString = "abcdefghijklmnopqrstuvwxyz";
+    public void testAllCaps_Localization() {
+        final String testString = "abcdefghijklmnopqrstuvwxyz i\u0307\u0301 άέήίΐόύΰώάυ ή";
 
-        // The capitalized characters of "i" on Turkish and Azerbaijani are different from English.
-        Locale[] testLocales = {
-            new Locale("az", "AZ"),
-            new Locale("tr", "TR"),
-            new Locale("en", "US"),
+        // Capital "i" in Turkish and Azerbaijani is different from English, Lithuanian has special
+        // rules for uppercasing dotted i with accents, and Greek has complex capitalization rules.
+        final Locale[] testLocales = {
+            new Locale("az", "AZ"),  // Azerbaijani
+            new Locale("tr", "TR"),  // Turkish
+            new Locale("lt", "LT"),  // Lithuanian
+            new Locale("el", "GR"),  // Greek
+            Locale.US,
         };
 
-        TextView tv = new TextView(mActivity);
+        final TextView tv = new TextView(mActivity);
         tv.setAllCaps(true);
         for (Locale locale: testLocales) {
             tv.setTextLocale(locale);
             assertEquals("Locale: " + locale.getDisplayName(),
-                         testString.toUpperCase(locale),
+                         UCharacter.toUpperCase(locale, testString),
                          tv.getTransformationMethod().getTransformation(testString, tv).toString());
+        }
+    }
+
+    @UiThreadTest
+    @Test
+    public void testAllCaps_SpansArePreserved() {
+        final Locale greek = new Locale("el", "GR");
+        final String lowerString = "ι\u0301ριδα";  // ίριδα with first letter decomposed
+        final String upperString = "ΙΡΙΔΑ";  // uppercased
+        // expected lowercase to uppercase index map
+        final int[] indexMap = {0, 1, 1, 2, 3, 4, 5};
+        final int flags = Spanned.SPAN_INCLUSIVE_INCLUSIVE;
+
+        final TextView tv = new TextView(mActivity);
+        tv.setTextLocale(greek);
+        tv.setAllCaps(true);
+
+        final Spannable source = new SpannableString(lowerString);
+        source.setSpan(new Object(), 0, 1, flags);
+        source.setSpan(new Object(), 1, 2, flags);
+        source.setSpan(new Object(), 2, 3, flags);
+        source.setSpan(new Object(), 3, 4, flags);
+        source.setSpan(new Object(), 4, 5, flags);
+        source.setSpan(new Object(), 5, 6, flags);
+        source.setSpan(new Object(), 0, 2, flags);
+        source.setSpan(new Object(), 1, 3, flags);
+        source.setSpan(new Object(), 2, 4, flags);
+        source.setSpan(new Object(), 0, 6, flags);
+        final Object[] sourceSpans = source.getSpans(0, source.length(), Object.class);
+
+        final CharSequence transformed =
+                tv.getTransformationMethod().getTransformation(source, tv);
+        assertTrue(transformed instanceof Spanned);
+        final Spanned result = (Spanned) transformed;
+
+        assertEquals(upperString, transformed.toString());
+        final Object[] resultSpans = result.getSpans(0, result.length(), Object.class);
+        assertEquals(sourceSpans.length, resultSpans.length);
+        for (int i = 0; i < sourceSpans.length; i++) {
+            assertSame(sourceSpans[i], resultSpans[i]);
+            final Object span = sourceSpans[i];
+            assertEquals(indexMap[source.getSpanStart(span)], result.getSpanStart(span));
+            assertEquals(indexMap[source.getSpanEnd(span)], result.getSpanEnd(span));
+            assertEquals(source.getSpanFlags(span), result.getSpanFlags(span));
         }
     }
 
