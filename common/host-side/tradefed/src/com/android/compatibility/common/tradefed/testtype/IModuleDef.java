@@ -15,7 +15,9 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
+import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
@@ -31,6 +33,10 @@ import java.util.Set;
  */
 public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDeviceTest,
         IRemoteTest, IRuntimeHintProvider, ITestCollector {
+
+    /** key names used for saving module info into {@link IInvocationContext} */
+    public static String MODULE_NAME = "module-name";
+    public static String MODULE_ABI = "module-abi";
 
     /**
      * @return The name of this module.
@@ -75,4 +81,8 @@ public interface IModuleDef extends Comparable<IModuleDef>, IBuildReceiver, IDev
     boolean prepare(boolean skipPrep, List<String> preconditionArgs)
             throws DeviceNotAvailableException;
 
+    /**
+     * Retrieves the {@link ConfigurationDescriptor} associated with module config
+     */
+    ConfigurationDescriptor getConfigurationDescriptor();
 }

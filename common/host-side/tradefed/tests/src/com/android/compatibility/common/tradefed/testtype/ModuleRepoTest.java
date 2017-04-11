@@ -19,6 +19,7 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.ModuleRepo.ConfigFilter;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.targetprep.ITargetPreparer;
@@ -440,22 +441,22 @@ public class ModuleRepoTest extends TestCase {
         TestRuntime test1 = new TestRuntime();
         test1.runtimeHint = 100l;
         IModuleDef mod1 = new ModuleDef("test1", new Abi("arm", "32"), test1,
-                new ArrayList<ITargetPreparer>());
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor());
         testList.add(mod1);
         TestRuntime test2 = new TestRuntime();
         test2.runtimeHint = 100l;
         IModuleDef mod2 = new ModuleDef("test2", new Abi("arm", "32"), test2,
-                new ArrayList<ITargetPreparer>());
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor());
         testList.add(mod2);
         TestRuntime test3 = new TestRuntime();
         test3.runtimeHint = 100l;
         IModuleDef mod3 = new ModuleDef("test3", new Abi("arm", "32"), test3,
-                new ArrayList<ITargetPreparer>());
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor());
         testList.add(mod3);
         TestRuntime test4 = new TestRuntime();
         test4.runtimeHint = 100l;
         IModuleDef mod4 = new ModuleDef("test4", new Abi("arm", "32"), test4,
-                new ArrayList<ITargetPreparer>());
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor());
         testList.add(mod4);
         // if we don't shard everything is in one shard.
         List<IModuleDef> res = mRepo.getShard(testList, 0, 1);
@@ -480,7 +481,7 @@ public class ModuleRepoTest extends TestCase {
         TestRuntime test1 = new TestRuntime();
         test1.runtimeHint = 100l;
         IModuleDef mod1 = new ModuleDef("test1", new Abi("arm", "32"), test1,
-                new ArrayList<ITargetPreparer>());
+                new ArrayList<ITargetPreparer>(), new ConfigurationDescriptor());
         testList.add(mod1);
         List<IModuleDef> res = mRepo.getShard(testList, 1, 2);
         assertNull(res);
