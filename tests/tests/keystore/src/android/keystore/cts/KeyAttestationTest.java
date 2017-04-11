@@ -56,6 +56,7 @@ import android.os.Build;
 import android.os.SystemProperties;
 import android.security.KeyStoreException;
 import android.security.keystore.AttestationUtils;
+import android.security.keystore.DeviceIdAttestationException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
@@ -357,9 +358,9 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     public void testDeviceIdAttestation() throws Exception {
-        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_SERIAL);
-        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_IMEI);
-        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID);
+        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_SERIAL, null);
+        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_IMEI, "Unable to retrieve IMEI");
+        testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID, "Unable to retrieve MEID");
     }
 
     @SuppressWarnings("deprecation")
@@ -855,13 +856,23 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
-    private void testDeviceIdAttestationFailure(int idType) throws Exception {
+    private void testDeviceIdAttestationFailure(int idType,
+            String acceptableDeviceIdAttestationFailureMessage) throws Exception {
         try {
             AttestationUtils.attestDeviceIds(getContext(), new int[] {idType}, "123".getBytes());
             fail("Attestation should have failed.");
         } catch (SecurityException e) {
-            // Attestation is expected to fail with a SecurityException as we do not hold
+            // Attestation is expected to fail. If the device has the device ID type we are trying
+            // to attest, it should fail with a SecurityException as we do not hold
             // READ_PRIVILEGED_PHONE_STATE permission.
+        } catch (DeviceIdAttestationException e) {
+            // Attestation is expected to fail. If the device does not have the device ID type we
+            // are trying to attest (e.g. no IMEI on devices without a radio), it should fail with
+            // a corresponding DeviceIdAttestationException.
+            if (acceptableDeviceIdAttestationFailureMessage == null ||
+                    !acceptableDeviceIdAttestationFailureMessage.equals(e.getMessage())) {
+                throw e;
+            }
         }
     }
 }
