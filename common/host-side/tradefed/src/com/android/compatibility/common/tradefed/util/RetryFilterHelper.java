@@ -80,8 +80,9 @@ public class RetryFilterHelper {
     protected String mTestName = null;
 
     @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
-            description = "used with " + CompatibilityTest.RETRY_OPTION + ", retry tests"
-            + " of a certain status. Possible values include \"failed\" and \"not_executed\".",
+            description = "used with " + CompatibilityTest.RETRY_OPTION
+            + ", retry tests of a certain status. Possible values include \"failed\", "
+            + "\"not_executed\", and \"custom\".",
             importance = Importance.IF_UNSET)
     protected RetryType mRetryType = null;
 
