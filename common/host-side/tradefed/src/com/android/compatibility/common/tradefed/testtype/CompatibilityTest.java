@@ -170,7 +170,7 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
     @Option(name = RETRY_TYPE_OPTION,
             description = "used with " + RETRY_OPTION + ", retry tests of a certain status. "
-            + "Possible values include \"failed\" and \"not_executed\".",
+            + "Possible values include \"failed\", \"not_executed\", and \"custom\".",
             importance = Importance.IF_UNSET)
     private RetryType mRetryType = null;
 
