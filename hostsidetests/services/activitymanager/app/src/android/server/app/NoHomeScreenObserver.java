@@ -9,8 +9,13 @@ public class NoHomeScreenObserver extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        int id = Resources.getSystem().getIdentifier("config_noHomeScreen", "bool", "android");
-        boolean support = Resources.getSystem().getBoolean(id);
+        boolean support = false;
+        try {
+            int id = Resources.getSystem().getIdentifier("config_noHomeScreen", "bool", "android");
+            support = Resources.getSystem().getBoolean(id);
+        } catch (android.content.res.Resources.NotFoundException e) {
+            // Ignore the exception.
+        }
         Log.i(getClass().getSimpleName(), "HEAD=OK");
         Log.i(getClass().getSimpleName(), "config_noHomeScreen=" + support);
     }
