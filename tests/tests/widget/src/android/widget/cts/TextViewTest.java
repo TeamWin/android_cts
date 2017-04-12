@@ -4546,7 +4546,7 @@ public class TextViewTest {
                 | InputType.TYPE_NUMBER_FLAG_DECIMAL
                 | InputType.TYPE_NUMBER_FLAG_SIGNED, mTextView.getInputType());
         assertSame(mTextView.getKeyListener(),
-                DigitsKeyListener.getInstance(mTextView.getTextLocale(), true, true));
+                DigitsKeyListener.getInstance(null, true, true));
 
         mTextView.setInputType(InputType.TYPE_CLASS_PHONE);
         assertEquals(InputType.TYPE_CLASS_PHONE, mTextView.getInputType());
@@ -4758,6 +4758,59 @@ public class TextViewTest {
             textView.onCreateInputConnection(editorInfo);
             assertEquals(localeList, editorInfo.hintLocales);
         }
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSetImeHintLocalesChangesInputType() {
+        final TextView textView = new TextView(mActivity);
+        textView.setText("", BufferType.EDITABLE);
+
+        textView.setInputType(InputType.TYPE_CLASS_NUMBER);
+        assertEquals(InputType.TYPE_CLASS_NUMBER, textView.getInputType());
+
+        final LocaleList localeList = LocaleList.forLanguageTags("fa-IR");
+        textView.setImeHintLocales(localeList);
+        final int textType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL;
+        // Setting IME hint locales to Persian must change the input type to a full text IME,
+        // since the typical number input IME may not have localized digits.
+        assertEquals(textType, textView.getInputType());
+
+        // Changing the input type to datetime should keep the full text IME, since the IME hint
+        // is still set to Persian, which needs advanced input.
+        final int dateType = InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_DATE;
+        textView.setInputType(dateType);
+        assertEquals(textType, textView.getInputType());
+
+        // Changing the input type to number password should keep the full text IME, since the IME
+        // hint is still set to Persian, which needs advanced input. But it also needs to set the
+        // text password flag.
+        final int numberPasswordType = InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
+        final int textPasswordType = InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_PASSWORD;
+        textView.setInputType(numberPasswordType);
+        assertEquals(textPasswordType, textView.getInputType());
+
+        // Setting the IME hint locales to null should reset the type to number password, since we
+        // no longer need internationalized input.
+        textView.setImeHintLocales(null);
+        assertEquals(numberPasswordType, textView.getInputType());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSetImeHintLocalesDoesntLoseInputType() {
+        final TextView textView = new TextView(mActivity);
+        textView.setText("", BufferType.EDITABLE);
+        final int inputType = InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT
+                | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
+        textView.setInputType(inputType);
+        textView.setImeHintLocales(new LocaleList(Locale.US));
+        assertEquals(inputType, textView.getInputType());
     }
 
     @UiThreadTest
