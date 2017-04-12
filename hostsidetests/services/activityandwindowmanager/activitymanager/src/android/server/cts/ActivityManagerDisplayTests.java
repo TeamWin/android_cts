@@ -1014,7 +1014,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         // Launch a resizeable activity on new secondary display.
-        String logSeparator = clearLogcat();
+        final String initialLogSeparator = clearLogcat();
         launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
         mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY_NAME, true /* visible */);
         mAmWmState.assertFocusedActivity("Launched activity must be focused",
@@ -1022,15 +1022,26 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
 
         // Grab reported sizes and compute new with slight size change.
         final ReportedSizes initialSize = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY_NAME,
-                logSeparator);
+                initialLogSeparator);
         final Rectangle initialBounds
                 = mAmWmState.getAmState().getStackById(DOCKED_STACK_ID).getBounds();
         final Rectangle newBounds = new Rectangle(initialBounds.x, initialBounds.y,
                 initialBounds.width + SIZE_VALUE_SHIFT, initialBounds.height + SIZE_VALUE_SHIFT);
 
         // Resize the docked stack, so that activity with virtual display will also be resized.
-        logSeparator = clearLogcat();
+        final String logSeparator = clearLogcat();
         resizeDockedStack(newBounds.width, newBounds.height, newBounds.width, newBounds.height);
+
+        mAmWmState.waitForWithAmState(mDevice, amState -> {
+            try {
+                return readConfigChangeNumber(RESIZEABLE_ACTIVITY_NAME, logSeparator) == 1
+                        && amState.hasActivityState(RESIZEABLE_ACTIVITY_NAME, STATE_RESUMED);
+            } catch (Exception e) {
+                logE("Error waiting for valid state: " + e.getMessage());
+                return false;
+            }
+        }, "Wait for the configuration change to happen and for activity to be resumed.");
+
         mAmWmState.computeState(mDevice, new String[] {RESIZEABLE_ACTIVITY_NAME, LAUNCHING_ACTIVITY,
                 VIRTUAL_DISPLAY_ACTIVITY}, false /* compareTaskAndStackBounds */);
         mAmWmState.assertDockedTaskBounds(newBounds.width, newBounds.height,
@@ -1058,6 +1069,11 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final boolean heightUpdated = updatedSize.metricsHeight < initialSize.metricsHeight;
         assertTrue("Either width or height must be updated after split-screen resize",
                 widthUpdated ^ heightUpdated);
+    }
+
+    /** Read the number of configuration changes sent to activity from logs. */
+    private int readConfigChangeNumber(String activityName, String logSeparator) throws Exception {
+        return (new ActivityLifecycleCounts(activityName, logSeparator)).mConfigurationChangedCount;
     }
 
     /**

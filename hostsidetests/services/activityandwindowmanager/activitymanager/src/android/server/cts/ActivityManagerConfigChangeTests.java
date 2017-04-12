@@ -17,6 +17,7 @@
 package android.server.cts;
 
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
+import static android.server.cts.StateLogger.logE;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,6 +118,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
                 return readAssetSeqNumber(TEST_ACTIVITY_NAME, logSeparator) == assetSeq + 1
                         && amState.hasActivityState(TEST_ACTIVITY_NAME, STATE_RESUMED);
             } catch (Exception e) {
+                logE("Error waiting for valid state: " + e.getMessage());
                 return false;
             }
         }, "Waiting asset sequence number to be updated and for activity to be resumed.");
