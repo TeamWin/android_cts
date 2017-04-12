@@ -137,7 +137,6 @@ public class SubPlanHelperTest extends TestCase {
         moduleATest1.setResultStatus(TestStatus.PASS);
         ITestResult moduleATest2 = moduleACase.getOrCreateResult(METHOD_2);
         moduleATest2.setResultStatus(null); // not executed test
-        moduleA.setNotExecuted(1);
 
         IModuleResult moduleB = result.getOrCreateModule(ID_B);
         moduleB.setDone(true);
