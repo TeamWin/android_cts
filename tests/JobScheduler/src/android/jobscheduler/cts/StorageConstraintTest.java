@@ -40,40 +40,12 @@ public class StorageConstraintTest extends ConstraintTest {
         super.setUp();
 
         mBuilder = new JobInfo.Builder(STORAGE_JOB_ID, kJobServiceComponent);
-        String res = SystemUtil.runShellCommand(getInstrumentation(), "cmd activity set-inactive "
-                + mContext.getPackageName() + " false");
     }
 
     @Override
     public void tearDown() throws Exception {
+        super.tearDown();
         mJobScheduler.cancel(STORAGE_JOB_ID);
-        // Put storage service back in to normal operation.
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
-    }
-
-    void setStorageState(boolean low) throws Exception {
-        String res;
-        if (low) {
-            res = SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd devicestoragemonitor force-low -f");
-        } else {
-            res = SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd devicestoragemonitor force-not-low -f");
-        }
-        int seq = Integer.parseInt(res.trim());
-        long startTime = SystemClock.elapsedRealtime();
-
-        // Wait for the storage update to be processed by job scheduler before proceeding.
-        int curSeq;
-        do {
-            curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd jobscheduler get-storage-seq").trim());
-            if (curSeq == seq) {
-                return;
-            }
-        } while ((SystemClock.elapsedRealtime()-startTime) < 1000);
-
-        fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq);
     }
 
     // --------------------------------------------------------------------------------------------
