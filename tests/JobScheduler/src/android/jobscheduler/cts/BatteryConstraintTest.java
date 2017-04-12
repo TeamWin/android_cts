@@ -54,8 +54,6 @@ public class BatteryConstraintTest extends ConstraintTest {
 
         mBuilder = new JobInfo.Builder(BATTERY_JOB_ID, kJobServiceComponent);
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
-        String res = SystemUtil.runShellCommand(getInstrumentation(), "cmd activity set-inactive "
-                + mContext.getPackageName() + " false");
     }
 
     @Override
