@@ -19,8 +19,8 @@ package com.android.compatibility.common.tradefed.util;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.SubPlanHelper;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityTest;
-import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.tradefed.testtype.ISubPlan;
+import com.android.compatibility.common.tradefed.testtype.ModuleRepo;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.LightInvocationResult;
 import com.android.compatibility.common.util.ResultHandler;
@@ -33,7 +33,6 @@ import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.ArrayUtil;
 
 import java.io.FileNotFoundException;
@@ -127,7 +126,7 @@ public class RetryFilterHelper {
 
     /**
      * Set a single option on this instance of RetryFilterHelper
-     * @throws {@link ConfigurationException} if the option cannot be set.
+     * @throw {@link ConfigurationException} if the option cannot be set.
      */
     public void setOption(String option, String value) throws ConfigurationException {
         OptionSetter setter = new OptionSetter(this);
