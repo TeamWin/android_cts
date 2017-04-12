@@ -66,7 +66,8 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.ALLOW_PARENT_PROFILE_APP_LINKING,
             UserManager.DISALLOW_DATA_ROAMING,
             UserManager.DISALLOW_SET_USER_ICON,
-            UserManager.DISALLOW_BLUETOOTH
+            UserManager.DISALLOW_BLUETOOTH,
+            UserManager.DISALLOW_BLUETOOTH_SHARING
     };
 
     /**
