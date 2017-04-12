@@ -65,6 +65,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
     private ComponentName mAdminReceiverComponent;
     private KeyguardManager mKeyguardManager;
+    private ByodFlowTestHelper mByodFlowTestHelper;
 
     private DialogTestListItem mProfileOwnerInstalled;
     private DialogTestListItem mDiskEncryptionTest;
@@ -117,10 +118,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mByodFlowTestHelper = new ByodFlowTestHelper(this);
         mAdminReceiverComponent = new ComponentName(this, DeviceAdminTestReceiver.class.getName());
         mKeyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
 
-        enableComponent(PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
+        mByodFlowTestHelper.setup();
+
         mPrepareTestButton.setText(R.string.provisioning_byod_start);
         mPrepareTestButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -190,8 +193,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     public void finish() {
         // Pass and fail buttons are known to call finish() when clicked, and this is when we want to
         // clean up the provisioned profile.
-        Utils.requestDeleteManagedProfile(this);
-        enableComponent(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
+        mByodFlowTestHelper.tearDown();
         super.finish();
     }
 
@@ -721,29 +723,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 intentFiltersSetForPrimaryIntents & intentFiltersSetForManagedIntents;
         setTestResult(mIntentFiltersTest,
                 intentFiltersSet ? TestResult.TEST_RESULT_PASSED : TestResult.TEST_RESULT_FAILED);
-    }
-
-    /**
-     *  Disable or enable app components in the current profile. When they are disabled only the
-     * counterpart in the other profile can respond (via cross-profile intent filter).
-     * @param enabledState {@link PackageManager#COMPONENT_ENABLED_STATE_DISABLED} or
-     *                      {@link PackageManager#COMPONENT_ENABLED_STATE_DEFAULT}
-     */
-    private void enableComponent(final int enabledState) {
-        final String[] components = {
-            ByodHelperActivity.class.getName(),
-            WorkStatusTestActivity.class.getName(),
-            PermissionLockdownTestActivity.ACTIVITY_ALIAS,
-            AuthenticationBoundKeyTestActivity.class.getName(),
-            VpnTestActivity.class.getName(),
-            RecentsRedactionActivity.class.getName(),
-            CommandReceiverActivity.class.getName(),
-            SetSupportMessageActivity.class.getName()
-        };
-        for (String component : components) {
-            getPackageManager().setComponentEnabledSetting(new ComponentName(this, component),
-                    enabledState, PackageManager.DONT_KILL_APP);
-        }
     }
 
     private void setHandleIntentActivityEnabledSetting(final int enableState) {
