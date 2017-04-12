@@ -419,6 +419,39 @@ public class TvContractTest extends AndroidTestCase {
         verifyChannel(channelUri, values, channelId, false);
     }
 
+    public void testChannelsTableForModifyIdAndPackageName() throws Exception {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        ContentValues baseValues = createDummyChannelValues(mInputId, false);
+        Uri channelUri = mContentResolver.insert(mChannelsUri, baseValues);
+        long channelId = ContentUris.parseId(channelUri);
+
+        ContentValues values = new ContentValues(baseValues);
+        values.put(Channels._ID, channelId);
+        int result = mContentResolver.update(channelUri, values, null, null);
+        assertEquals(1, result);
+        values.put(Channels._ID, channelId + 1);
+        try {
+            mContentResolver.update(channelUri, values, null, null);
+            fail("Channels._ID should not be changed.");
+        } catch (Exception e) {
+            // Expected.
+        }
+
+        values = new ContentValues(baseValues);
+        values.put(Channels.COLUMN_PACKAGE_NAME, getContext().getPackageName());
+        result = mContentResolver.update(channelUri, values, null, null);
+        assertEquals(1, result);
+        values.put(Channels.COLUMN_PACKAGE_NAME, "");
+        try {
+            mContentResolver.update(channelUri, values, null, null);
+            fail("Channels.COLUMN_PACKAGE_NAME should not be changed.");
+        } catch (Exception e) {
+            // Expected.
+        }
+    }
+
     public void testChannelsTableForIllegalAccess() throws Exception {
         if (!Utils.hasTvInputFramework(getContext())) {
             return;
