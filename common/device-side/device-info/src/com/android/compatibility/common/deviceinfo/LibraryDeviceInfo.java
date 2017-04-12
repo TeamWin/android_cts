@@ -64,7 +64,11 @@ public final class LibraryDeviceInfo extends DeviceInfo {
     private void collectFileDetails(DeviceInfoStore store, String path, String suffix)
             throws Exception {
         File dir = new File(path);
-        for (File file : dir.listFiles()) {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File file : files) {
             String name = file.getName();
             if (file.isFile() && name.endsWith(suffix)) {
                 String sha1 = "unknown";
