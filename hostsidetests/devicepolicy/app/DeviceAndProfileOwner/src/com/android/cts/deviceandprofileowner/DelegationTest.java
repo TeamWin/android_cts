@@ -44,6 +44,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
     private static final String DELEGATE_PKG = "com.android.cts.delegate";
     private static final String DELEGATE_ACTIVITY_NAME =
             DELEGATE_PKG + ".DelegatedScopesReceiverActivity";
+    private static final String TEST_PKG = "com.android.cts.apprestrictions.targetapp";
 
     // Broadcasts received from the delegate app.
     private static final String ACTION_REPORT_SCOPES = "com.android.cts.delegate.report_scopes";
@@ -128,6 +129,53 @@ public class DelegationTest extends BaseDeviceAdminTest {
         // Assert no scopes were delegated.
         assertTrue("Delegation scopes granted to non existent package", mDevicePolicyManager
                 .getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, NON_EXISTENT_PKG).isEmpty());
+    }
+
+    public void testCanRetrieveDelegates() {
+        final List<String> someScopes = Arrays.asList(
+                DELEGATION_APP_RESTRICTIONS,
+                DELEGATION_ENABLE_SYSTEM_APP);
+        final List<String> otherScopes = Arrays.asList(
+                DELEGATION_BLOCK_UNINSTALL,
+                DELEGATION_ENABLE_SYSTEM_APP);
+
+        // In the beginning there are no delegates.
+        assertTrue("No delegates should be found", getDelegatePackages(DELEGATION_APP_RESTRICTIONS)
+                .isEmpty());
+        assertTrue("No delegates should be found", getDelegatePackages(DELEGATION_BLOCK_UNINSTALL)
+                .isEmpty());
+        assertTrue("No delegates should be found", getDelegatePackages(DELEGATION_ENABLE_SYSTEM_APP)
+                .isEmpty());
+
+        // After delegating scopes to two packages.
+        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
+                DELEGATE_PKG, someScopes);
+        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
+                TEST_PKG, otherScopes);
+
+        // The expected delegates are returned.
+        assertTrue("Expected delegate not found", getDelegatePackages(DELEGATION_APP_RESTRICTIONS)
+                .contains(DELEGATE_PKG));
+        assertTrue("Expected delegate not found", getDelegatePackages(DELEGATION_BLOCK_UNINSTALL)
+                .contains(TEST_PKG));
+        assertTrue("Expected delegate not found", getDelegatePackages(DELEGATION_ENABLE_SYSTEM_APP)
+                .contains(DELEGATE_PKG));
+        assertTrue("Expected delegate not found", getDelegatePackages(DELEGATION_ENABLE_SYSTEM_APP)
+                .contains(TEST_PKG));
+
+        // Packages are only returned in their recpective scopes.
+        assertFalse("Unexpected delegate package", getDelegatePackages(DELEGATION_APP_RESTRICTIONS)
+                .contains(TEST_PKG));
+        assertFalse("Unexpected delegate package", getDelegatePackages(DELEGATION_BLOCK_UNINSTALL)
+                .contains(DELEGATE_PKG));
+        assertFalse("Unexpected delegate package", getDelegatePackages(DELEGATION_CERT_INSTALL)
+                .contains(DELEGATE_PKG));
+        assertFalse("Unexpected delegate package", getDelegatePackages(DELEGATION_CERT_INSTALL)
+                .contains(TEST_PKG));
+    }
+
+    private List<String> getDelegatePackages(String scope) {
+        return mDevicePolicyManager.getDelegatePackages(ADMIN_RECEIVER_COMPONENT, scope);
     }
 
     private void startAndWaitDelegateActivity() throws InterruptedException {
