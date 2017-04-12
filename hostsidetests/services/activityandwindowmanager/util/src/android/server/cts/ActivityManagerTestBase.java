@@ -115,6 +115,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     static final String AM_MOVE_TASK = "am stack move-task ";
 
+    private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
+
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
     private static final String INPUT_KEYEVENT_BACK = "input keyevent 4";
     private static final String INPUT_KEYEVENT_APP_SWITCH = "input keyevent 187";
@@ -502,6 +504,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean isHandheld() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.software.leanback")
                 && !hasDeviceFeature("android.software.watch");
+    }
+
+    protected boolean noHomeScreen() throws DeviceNotAvailableException {
+        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        executeShellCommand(AM_NO_HOME_SCREEN, outputReceiver);
+        String output = outputReceiver.getOutput();
+        return output.startsWith("true");
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
