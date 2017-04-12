@@ -23,11 +23,15 @@ import static org.junit.Assert.fail;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Html;
+import android.text.Layout;
 import android.text.SpanWatcher;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.method.SingleLineTransformationMethod;
+import android.text.method.TransformationMethod;
+import android.text.style.AlignmentSpan;
 import android.text.style.ParagraphStyle;
 import android.text.style.QuoteSpan;
 
@@ -582,5 +586,28 @@ public class SpannableStringBuilderSpanTest {
         ParagraphStyle[] paragraphSpans = spannable.getSpans(0, spannable.length(),
                 ParagraphStyle.class);
         assertEquals(0, paragraphSpans.length);
+    }
+
+    @Test
+    public void testCopyConstructorDoesNotEnforceParagraphStyleConstraint() {
+        final SpannableStringBuilder original = new SpannableStringBuilder("\ntest data\nb");
+        final AlignmentSpan.Standard span = new AlignmentSpan.Standard(
+                Layout.Alignment.ALIGN_NORMAL);
+        original.setSpan(span, 1, original.length() - 1, Spanned.SPAN_PARAGRAPH);
+
+        // test that paragraph style is in the copied when it is valid
+        SpannableStringBuilder copied = new SpannableStringBuilder(original);
+        AlignmentSpan.Standard[] copiedSpans = copied.getSpans(0, copied.length(),
+                AlignmentSpan.Standard.class);
+
+        assertEquals(1, copiedSpans.length);
+
+        // test that paragraph style is in not in the copied when it is invalid
+        final TransformationMethod transformation = SingleLineTransformationMethod.getInstance();
+        final CharSequence transformed = transformation.getTransformation(original, null);
+        copied = new SpannableStringBuilder(transformed);
+        copiedSpans = copied.getSpans(0, copied.length(), AlignmentSpan.Standard.class);
+
+        assertEquals(0, copiedSpans.length);
     }
 }
