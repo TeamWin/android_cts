@@ -19,16 +19,10 @@ package android.jobscheduler.cts;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
-import android.content.ClipData;
 import android.content.ContentProviderClient;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Bundle;
 import android.os.Process;
-import android.os.SystemClock;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 /**
  * Schedules jobs with the {@link android.app.job.JobScheduler} that grant permissions through
@@ -41,16 +35,7 @@ public class ClipDataJobTest extends ConstraintTest {
     /** Unique identifier for the job scheduled by this suite of tests. */
     public static final int CLIP_DATA_JOB_ID = ClipDataJobTest.class.hashCode();
 
-    static final String MY_PACKAGE = "android.jobscheduler.cts";
-
-    static final String JOBPERM_PACKAGE = "android.jobscheduler.cts.jobperm";
-    static final String JOBPERM_AUTHORITY = "android.jobscheduler.cts.jobperm.provider";
-    static final String JOBPERM_PERM = "android.jobscheduler.cts.jobperm.perm";
-
-    private JobInfo.Builder mBuilder;
-    private Uri mFirstUri;
-    private Bundle mFirstUriBundle;
-    private ClipData mClipData;
+    JobInfo.Builder mBuilder;
     private ContentProviderClient mProvider;
 
     @Override
@@ -58,62 +43,15 @@ public class ClipDataJobTest extends ConstraintTest {
         super.setUp();
 
         mBuilder = new JobInfo.Builder(CLIP_DATA_JOB_ID, kJobServiceComponent);
-        mFirstUri = Uri.parse("content://" + JOBPERM_AUTHORITY + "/protected/foo");
-        mFirstUriBundle = new Bundle();
-        mFirstUriBundle.putParcelable("uri", mFirstUri);
-        mClipData = new ClipData("JobPerm", new String[] { "application/*" },
-                new ClipData.Item(mFirstUri));
         mProvider = getContext().getContentResolver().acquireContentProviderClient(mFirstUri);
-        String res = SystemUtil.runShellCommand(getInstrumentation(), "cmd activity set-inactive "
-                + mContext.getPackageName() + " false");
+        assertNotNull(mProvider);
     }
 
     @Override
     public void tearDown() throws Exception {
+        super.tearDown();
         mProvider.close();
         mJobScheduler.cancel(CLIP_DATA_JOB_ID);
-        // Put storage service back in to normal operation.
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
-    }
-
-    // Note we are just using storage state as a way to control when the job gets executed.
-    void setStorageState(boolean low) throws Exception {
-        String res;
-        if (low) {
-            res = SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd devicestoragemonitor force-low -f");
-        } else {
-            res = SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd devicestoragemonitor force-not-low -f");
-        }
-        int seq = Integer.parseInt(res.trim());
-        long startTime = SystemClock.elapsedRealtime();
-
-        // Wait for the storage update to be processed by job scheduler before proceeding.
-        int curSeq;
-        do {
-            curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd jobscheduler get-storage-seq").trim());
-            if (curSeq == seq) {
-                return;
-            }
-        } while ((SystemClock.elapsedRealtime()-startTime) < 1000);
-
-        fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq);
-    }
-
-    void waitPermissionRevoke(Uri uri, int access, long timeout) {
-        long startTime = SystemClock.elapsedRealtime();
-        while (getContext().checkUriPermission(uri, Process.myPid(), Process.myUid(), access)
-                 != PackageManager.PERMISSION_GRANTED) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-            }
-            if ((SystemClock.elapsedRealtime()-startTime) >= timeout) {
-                fail("Timed out waiting for permission revoke");
-            }
-        }
     }
 
     /**
