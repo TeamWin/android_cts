@@ -26,7 +26,9 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.String;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,6 +91,10 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected ITestDevice mDevice;
 
     private HashSet<String> mAvailableFeatures;
+    final private String RESULT_KEY_HEAD = "HEAD";
+    final private String NO_HOME_SCREEN_OBSERVER = "NoHomeScreenObserver";
+    private static boolean mCheckedNoHomeScreen = false;
+    private static boolean mNoHomeScreen = false;
 
     protected static String getAmStartCmd(final String activityName) {
         return "am start -n " + getActivityComponentName(activityName);
@@ -286,6 +292,63 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW, outputReceiver);
         String output = outputReceiver.getOutput();
         return !output.startsWith("false");
+    }
+
+    protected boolean noHomeScreen() throws DeviceNotAvailableException {
+        if (!mCheckedNoHomeScreen) {
+            try {
+                executeShellCommand("am start -n android.server.app/." + NO_HOME_SCREEN_OBSERVER);
+                waitForResume("android.server.app", NO_HOME_SCREEN_OBSERVER);
+                Map map = getLogResults(NO_HOME_SCREEN_OBSERVER);
+                String value = (String)map.get(RESULT_KEY_HEAD);
+                if (value != null && value.equals("OK")) {
+                    mCheckedNoHomeScreen = true;
+                    mNoHomeScreen = map.get("config_noHomeScreen").equals("true");
+                }
+                executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return mNoHomeScreen;
+    }
+
+    private Map<String, String> getLogResults(String className) throws Exception {
+        int retryCount = 3;
+        Map<String, String> output = new HashMap<String, String>();
+        do {
+
+            String logs = executeShellCommand("logcat -v brief -d " + className + ":I" + " *:S");
+            for (String line : logs.split("\\n")) {
+                if (line.startsWith("I/" + className)) {
+                    String payload = line.split(":")[1].trim();
+                    final String[] split = payload.split("=");
+                    if (split.length > 1) {
+                        output.put(split[0], split[1]);
+                    }
+                }
+            }
+            if (output.containsKey(RESULT_KEY_HEAD)) {
+                return output;
+            }
+        } while (retryCount-- > 0);
+        return output;
+    }
+
+    private void waitForResume(String packageName, String activityName) throws Exception {
+        final String fullActivityName = packageName + "." + activityName;
+        int retryCount = 3;
+        do {
+            Thread.sleep(500);
+            String logs = executeShellCommand("logcat -d -b events");
+            for (String line : logs.split("\\n")) {
+                if(line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
+                    return;
+                }
+            }
+        } while (retryCount-- > 0);
+
+        throw new Exception(fullActivityName + " has failed to start");
     }
 
     protected boolean hasDeviceFeature(String requiredFeature) throws DeviceNotAvailableException {
