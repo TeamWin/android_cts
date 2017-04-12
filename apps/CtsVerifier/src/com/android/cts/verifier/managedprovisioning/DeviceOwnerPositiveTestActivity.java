@@ -78,6 +78,10 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Tidy up in case previous run crashed.
+        new ByodFlowTestHelper(this).tearDown();
+
         if (ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
             DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(
                     Context.DEVICE_POLICY_SERVICE);
