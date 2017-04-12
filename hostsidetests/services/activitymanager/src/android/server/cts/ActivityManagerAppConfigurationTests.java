@@ -15,6 +15,9 @@
  */
 package android.server.cts;
 
+import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.log.LogUtil.CLog;
+
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "ResizeableActivity";
 
@@ -28,6 +31,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * docked state.
      */
     public void testConfigurationUpdatesWhenResizedFromFullscreen() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
         final ReportedSizes fullscreenSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -44,6 +52,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * from docked state to fullscreen (reverse).
      */
     public void testConfigurationUpdatesWhenResizedFromDockedStack() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInStack(TEST_ACTIVITY_NAME, DOCKED_STACK_ID);
         final ReportedSizes dockedSizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
                 DOCKED_STACK_ID);
@@ -76,6 +89,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * is in the docked stack.
      */
     public void testConfigurationUpdatesWhenRotatingWhileDocked() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         setDeviceRotation(0);
         launchActivityInStack(TEST_ACTIVITY_NAME, DOCKED_STACK_ID);
         final ReportedSizes orientationASizes = getActivityDisplaySize(TEST_ACTIVITY_NAME,
