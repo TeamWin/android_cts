@@ -81,7 +81,7 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     }
 
     public void testMinimalSizeDocked() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
+        if (!supportsSplitScreenMultiWindow() || !supportsMultiWindowMode()) {
             CLog.logAndDisplay(INFO, "Skipping test: no multi-window support");
             return;
         }

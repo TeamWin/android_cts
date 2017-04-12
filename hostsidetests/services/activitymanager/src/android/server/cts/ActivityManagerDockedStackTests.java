@@ -84,14 +84,13 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         launchActivityToSide();
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY, TEST_ACTIVITY_NAME});
-
         mAmWmState.assertContainsStack(
                 "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
         mAmWmState.assertContainsStack("Must contain docked stack.", DOCKED_STACK_ID);
     }
 
     public void testLaunchToSideAndBringToFront() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
+        if (!supportsSplitScreenMultiWindow() || !supportsMultiWindowMode()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
             return;
         }
@@ -131,14 +130,13 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSideMultiple() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
+        if (!supportsSplitScreenMultiWindow() || !supportsMultiWindowMode()) {
             CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
             return;
         }
 
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
-
         final String[] waitForActivitiesVisible =
             new String[] {TEST_ACTIVITY_NAME, LAUNCHING_ACTIVITY};
 
@@ -165,10 +163,18 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSideSingleInstance() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
         launchTargetToSide(SINGLE_INSTANCE_ACTIVITY_NAME, false);
     }
 
     public void testLaunchToSideSingleTask() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
         launchTargetToSide(SINGLE_TASK_ACTIVITY_NAME, false);
     }
 
