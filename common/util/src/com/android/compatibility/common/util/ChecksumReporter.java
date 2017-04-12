@@ -331,7 +331,6 @@ public final class ChecksumReporter implements Serializable {
         sb.append(buildFingerprint).append(SEPARATOR)
                 .append(module.getId()).append(SEPARATOR)
                 .append(module.isDone()).append(SEPARATOR)
-                .append(module.getNotExecuted()).append(SEPARATOR)
                 .append(module.countResults(TestStatus.FAIL));
         return sb.toString();
     }
