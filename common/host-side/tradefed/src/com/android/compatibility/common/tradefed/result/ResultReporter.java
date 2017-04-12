@@ -86,8 +86,8 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
 
     @Option(name = CompatibilityTest.RETRY_TYPE_OPTION,
             description = "used with " + CompatibilityTest.RETRY_OPTION
-            + ", retry tests of a certain status. Possible values include \"failed\" and "
-            + "\"not_executed\".",
+            + ", retry tests of a certain status. Possible values include \"failed\", "
+            + "\"not_executed\", and \"custom\".",
             importance = Importance.IF_UNSET)
     private RetryType mRetryType = null;
 
@@ -667,6 +667,7 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
             return true; // always allow modules to be marked done if not retry
         }
         return !(RetryType.FAILED.equals(mRetryType)
+                || RetryType.CUSTOM.equals(mRetryType)
                 || args.contains(CompatibilityTest.INCLUDE_FILTER_OPTION)
                 || args.contains(CompatibilityTest.EXCLUDE_FILTER_OPTION)
                 || args.contains(CompatibilityTest.SUBPLAN_OPTION)
