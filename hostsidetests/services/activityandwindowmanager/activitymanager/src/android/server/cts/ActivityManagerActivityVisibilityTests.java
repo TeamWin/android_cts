@@ -36,6 +36,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     private static final String MOVE_TASK_TO_BACK_ACTIVITY_NAME = "MoveTaskToBackActivity";
 
     public void testVisibleBehindHomeActivity() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         launchActivity(VISIBLE_BEHIND_ACTIVITY);
         mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY,
                 FULLSCREEN_WORKSPACE_STACK_ID);
@@ -65,6 +69,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testVisibleBehindOtherActivity_OverHome() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         executeShellCommand(getAmStartCmdOverHome(VISIBLE_BEHIND_ACTIVITY));
         mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY);
         executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
@@ -97,6 +105,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      * fullscreen stack over the home activity.
      */
     public void testTranslucentActivityOnTopOfHome() throws Exception {
+        if (noHomeScreen()) {
+            return;
+        }
+
         launchHomeActivity();
         launchActivity(TRANSLUCENT_ACTIVITY);
 
