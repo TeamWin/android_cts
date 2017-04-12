@@ -297,72 +297,53 @@ public class TypefaceTest {
 
     @Test
     public void testTypefaceBuilder_AssetSource() throws FontVariationAxis.InvalidFormatException {
-        Typeface.Builder builder = Typeface.Builder.obtain();
-        try {
-            Typeface typeface1 =
-                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf").build();
-            assertNotNull(typeface1);
+        Typeface typeface1 = new Typeface.Builder(mContext.getAssets(), "samplefont.ttf").build();
+        assertNotNull(typeface1);
 
-            builder.reset();
-            Typeface typeface2 =
-                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf").build();
-            assertNotNull(typeface2);
-            assertSame("Same font asset should return same Typeface object", typeface1, typeface2);
+        Typeface typeface2 = new Typeface.Builder(mContext.getAssets(), "samplefont.ttf").build();
+        assertNotNull(typeface2);
+        assertSame("Same font asset should return same Typeface object", typeface1, typeface2);
 
-            builder.reset();
-            Typeface typeface3 =
-                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont2.ttf").build();
-            assertNotNull(typeface3);
-            assertNotSame("Different font asset should return different Typeface object",
-                    typeface2, typeface3);
+        Typeface typeface3 = new Typeface.Builder(mContext.getAssets(), "samplefont2.ttf").build();
+        assertNotNull(typeface3);
+        assertNotSame("Different font asset should return different Typeface object",
+                typeface2, typeface3);
 
-            builder.reset();
-            Typeface typeface4 =
-                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont3.ttf").build();
-            assertNotNull(typeface4);
-            assertNotSame("Different font asset should return different Typeface object",
-                    typeface2, typeface4);
-            assertNotSame("Different font asset should return different Typeface object",
-                    typeface3, typeface4);
+        Typeface typeface4 = new Typeface.Builder(mContext.getAssets(), "samplefont3.ttf").build();
+        assertNotNull(typeface4);
+        assertNotSame("Different font asset should return different Typeface object",
+                typeface2, typeface4);
+        assertNotSame("Different font asset should return different Typeface object",
+                typeface3, typeface4);
 
-            builder.reset();
-            Typeface typeface5 =
-                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf")
-                    .setFontVariationSettings("'wdth' 1.0").build();
-            assertNotNull(typeface5);
-            assertNotSame("Different font font variation should return different Typeface object",
-                    typeface2, typeface5);
+        Typeface typeface5 = new Typeface.Builder(mContext.getAssets(), "samplefont.ttf")
+                .setFontVariationSettings("'wdth' 1.0").build();
+        assertNotNull(typeface5);
+        assertNotSame("Different font font variation should return different Typeface object",
+                typeface2, typeface5);
 
-            builder.reset();
-            Typeface typeface6 =
-                    builder.setSourceFromAsset(mContext.getAssets(), "samplefont.ttf")
-                    .setFontVariationSettings("'wdth' 2.0").build();
-            assertNotNull(typeface6);
-            assertNotSame("Different font font variation should return different Typeface object",
-                    typeface2, typeface6);
-            assertNotSame("Different font font variation should return different Typeface object",
-                    typeface5, typeface6);
+        Typeface typeface6 = new Typeface.Builder(mContext.getAssets(), "samplefont.ttf")
+                .setFontVariationSettings("'wdth' 2.0").build();
+        assertNotNull(typeface6);
+        assertNotSame("Different font font variation should return different Typeface object",
+                typeface2, typeface6);
+        assertNotSame("Different font font variation should return different Typeface object",
+                typeface5, typeface6);
 
-            // TODO: Add ttc index case. Need TTC file for CTS. (b/36731640)
-        } finally {
-            builder.recycle();
-        }
+        // TODO: Add ttc index case. Need TTC file for CTS. (b/36731640)
     }
 
     @Test
     public void testTypefaceBuilder_FileSource() {
-        Typeface.Builder builder = Typeface.Builder.obtain();
         try {
             File file = new File(obtainPath());
-            Typeface typeface1 = builder.setSourceFromFile(file).build();
+            Typeface typeface1 = new Typeface.Builder(obtainPath()).build();
             assertNotNull(typeface1);
 
-            builder.reset();
-            Typeface typeface2 = builder.setSourceFromFilePath(file.getAbsolutePath()).build();
+            Typeface typeface2 = new Typeface.Builder(file).build();
             assertNotNull(typeface2);
 
-            builder.reset();
-            Typeface typeface3 = builder.setSourceFromFile(file)
+            Typeface typeface3 = new Typeface.Builder(file)
                     .setFontVariationSettings("'wdth' 1.0")
                     .build();
             assertNotNull(typeface3);
@@ -372,20 +353,15 @@ public class TypefaceTest {
             // TODO: Add ttc index case. Need TTC file for CTS.
         } catch (IOException | FontVariationAxis.InvalidFormatException e) {
             throw new RuntimeException(e);
-        } finally {
-            builder.recycle();
         }
     }
 
     @Test
     public void testTypefaceBuilder_FileSourceFD() {
-        Typeface.Builder builder = Typeface.Builder.obtain();
         try (FileInputStream fis = new FileInputStream(obtainPath())) {
-            assertNotNull(builder.setSourceFromFile(fis.getFD()).build());
+            assertNotNull(new Typeface.Builder(fis.getFD()).build());
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            builder.recycle();
         }
     }
 
