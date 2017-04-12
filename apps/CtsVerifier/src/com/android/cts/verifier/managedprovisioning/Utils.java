@@ -59,9 +59,8 @@ public class Utils {
     static void requestDeleteManagedProfile(Context context) {
         try {
             Intent intent = new Intent(ByodHelperActivity.ACTION_REMOVE_MANAGED_PROFILE);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
-            String message = context.getString(R.string.provisioning_byod_delete_profile);
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         }
         catch (ActivityNotFoundException e) {
             Log.d(TAG, "requestDeleteProfileOwner: ActivityNotFoundException", e);
