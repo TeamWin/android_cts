@@ -19,6 +19,8 @@ package android.content.pm.cts.shortcuthost;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.util.concurrent.TimeUnit;
+
 public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     private static final String LAUNCHER1_APK = "CtsShortcutBackupLauncher1.apk";
     private static final String LAUNCHER2_APK = "CtsShortcutBackupLauncher2.apk";
@@ -40,6 +42,8 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     private static final String PUBLISHER3_PKG =
             "android.content.pm.cts.shortcut.backup.publisher3";
 
+    private static final int BROADCAST_TIMEOUT_SECONDS = 120;
+
     private static final String FEATURE_BACKUP = "android.software.backup";
 
     private boolean mSupportsBackup;
@@ -57,6 +61,16 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
             clearShortcuts(PUBLISHER1_PKG, getPrimaryUserId());
             clearShortcuts(PUBLISHER2_PKG, getPrimaryUserId());
             clearShortcuts(PUBLISHER3_PKG, getPrimaryUserId());
+
+            getDevice().uninstallPackage(LAUNCHER1_PKG);
+            getDevice().uninstallPackage(LAUNCHER2_PKG);
+            getDevice().uninstallPackage(LAUNCHER3_PKG);
+
+            getDevice().uninstallPackage(PUBLISHER1_PKG);
+            getDevice().uninstallPackage(PUBLISHER2_PKG);
+            getDevice().uninstallPackage(PUBLISHER3_PKG);
+
+            waitUntilPackagesGone();
         }
     }
 
@@ -106,10 +120,46 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
 
     }
 
+    /**
+     * Wait until all the test packages are forgotten by the shortcut manager.
+     */
+    private void waitUntilPackagesGone() throws Exception {
+        CLog.i("Waiting until all packages are removed from shortcut manager...");
+
+        final String packages[] = {
+                LAUNCHER1_PKG,  LAUNCHER2_PKG, LAUNCHER3_PKG,
+                PUBLISHER1_PKG, PUBLISHER2_PKG, PUBLISHER3_PKG,
+        };
+
+        String dumpsys = "";
+        final long TIMEOUT = System.nanoTime() +
+                TimeUnit.SECONDS.toNanos(BROADCAST_TIMEOUT_SECONDS);
+
+        while (System.nanoTime() < TIMEOUT) {
+            Thread.sleep(2000);
+            dumpsys = getDevice().executeShellCommand("dumpsys shortcut");
+
+            if (dumpsys.contains("Launcher: " + LAUNCHER1_PKG)) continue;
+            if (dumpsys.contains("Launcher: " + LAUNCHER2_PKG)) continue;
+            if (dumpsys.contains("Launcher: " + LAUNCHER3_PKG)) continue;
+            if (dumpsys.contains("Package: " + PUBLISHER1_PKG)) continue;
+            if (dumpsys.contains("Package: " + PUBLISHER2_PKG)) continue;
+            if (dumpsys.contains("Package: " + PUBLISHER3_PKG)) continue;
+
+            dumpsys("All clear");
+
+            // All packages gone.
+            return;
+        }
+        fail("ShortcutManager didn't handle all expected broadcasts before time out."
+                + " Last dumpsys=\n" + dumpsys);
+    }
+
     public void testBackupAndRestore() throws Exception {
         if (!mSupportsBackup) {
             return;
         }
+        dumpsys("Test start");
 
         installAppAsUser(LAUNCHER1_APK, getPrimaryUserId());
         installAppAsUser(LAUNCHER2_APK, getPrimaryUserId());
@@ -131,6 +181,8 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
         // Tweak shortcuts a little bit to make disabled shortcuts.
         runDeviceTestsAsUser(PUBLISHER2_PKG, ".ShortcutManagerPreBackup2Test", getPrimaryUserId());
 
+        dumpsys("Before backup");
+
         // Backup
         doBackup();
 
@@ -143,8 +195,13 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
         getDevice().uninstallPackage(PUBLISHER2_PKG);
         getDevice().uninstallPackage(PUBLISHER3_PKG);
 
+        // Make sure the shortcut service handled all the uninstall broadcasts.
+        waitUntilPackagesGone();
+
         // Then restore
         doRestore();
+
+        dumpsys("After restore");
 
         // First, restore launcher 1, which shouldn't see any shortcuts from the packages yet.
         installAppAsUser(LAUNCHER1_APK, getPrimaryUserId());
