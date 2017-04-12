@@ -25,7 +25,11 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.Layout;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.method.SingleLineTransformationMethod;
+import android.text.style.AlignmentSpan;
 import android.util.TypedValue;
 import android.widget.EditText;
 
@@ -71,6 +75,21 @@ public class SingleLineTransformationMethodTest {
         editText.setText("hello\nworld\r");
         // TODO cannot get transformed text from the view
     }
+
+    @Test
+    public void testSubsequence_doesNotThrowExceptionWithParagraphSpans() {
+        final SingleLineTransformationMethod method = SingleLineTransformationMethod.getInstance();
+        final SpannableString original = new SpannableString("\ntest data\nb");
+        final AlignmentSpan.Standard span = new AlignmentSpan.Standard(
+                Layout.Alignment.ALIGN_NORMAL);
+        original.setSpan(span, 1, original.length() - 1, Spanned.SPAN_PARAGRAPH);
+
+        final CharSequence transformed = method.getTransformation(original, null);
+        // expectation: should not throw an exception
+        transformed.subSequence(0, transformed.length());
+    }
+
+
 
     private static class MySingleLineTranformationMethod extends SingleLineTransformationMethod {
         @Override
