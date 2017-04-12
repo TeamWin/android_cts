@@ -167,6 +167,9 @@
                   android:resizeableActivity="true"
                   android:exported="true"
         />
+        <activity android:name=".NoHomeScreenObserver"
+                  android:exported="true"
+        />
         <activity-alias android:enabled="true"
                 android:exported="true"
                 android:name=".EntryPointAliasActivity"
