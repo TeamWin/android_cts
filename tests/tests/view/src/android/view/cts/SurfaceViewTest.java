@@ -79,7 +79,7 @@ public class SurfaceViewTest {
         assertTrue(mMockSurfaceView.isDraw());
         assertTrue(mMockSurfaceView.isOnAttachedToWindow());
         assertTrue(mMockSurfaceView.isDispatchDraw());
-        assertTrue(mMockSurfaceView.isDrawColor());
+        assertTrue(mMockSurfaceView.isSurfaceCreatedCalled());
         assertTrue(mMockSurfaceView.isSurfaceChanged());
 
         assertTrue(mMockSurfaceView.isOnWindowVisibilityChanged());

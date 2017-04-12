@@ -52,8 +52,9 @@ public class SurfaceViewCtsActivity extends Activity {
         private static final int RECT_RIGHT = 200;
         private static final int RECT_BOTTOM = 200;
 
+        private Canvas mCanvas;
+
         private SurfaceHolder mHolder;
-        private MockCanvas mCanvas;
 
         private boolean mIsDraw;
         private boolean mIsAttachedToWindow;
@@ -64,6 +65,7 @@ public class SurfaceViewCtsActivity extends Activity {
         private boolean mIsOnWindowVisibilityChanged;
         private boolean mIsDispatchDraw;
         private boolean mIsSurfaceChanged;
+        private boolean mSurfaceCreatedCalled;
 
         private int mWidthInOnMeasure;
         private int mHeightInOnMeasure;
@@ -170,10 +172,12 @@ public class SurfaceViewCtsActivity extends Activity {
         }
 
         public void surfaceCreated(SurfaceHolder holder) {
+            mSurfaceCreatedCalled = true;
+
             // Use mock canvas listening to the drawColor() calling.
-            mCanvas = new MockCanvas(Bitmap.createBitmap( BITMAP_WIDTH,
-                                                          BITMAP_HEIGHT,
-                                                          Bitmap.Config.ARGB_8888));
+            mCanvas = new Canvas(Bitmap.createBitmap( BITMAP_WIDTH,
+                            BITMAP_HEIGHT,
+                            Bitmap.Config.ARGB_8888));
             draw(mCanvas);
 
             // Lock the surface, this returns a Canvas that can be used to render into.
@@ -184,6 +188,10 @@ public class SurfaceViewCtsActivity extends Activity {
 
             // And finally unlock and post the surface.
             mHolder.unlockCanvasAndPost(canvas);
+        }
+
+        boolean isSurfaceCreatedCalled() {
+            return mSurfaceCreatedCalled;
         }
 
         public void surfaceDestroyed(SurfaceHolder holder) {
@@ -229,44 +237,8 @@ public class SurfaceViewCtsActivity extends Activity {
             return mIsDispatchDraw;
         }
 
-        public boolean isDrawColor() {
-            if (mCanvas != null) {
-                return mCanvas.isDrawColor();
-            } else {
-                return false;
-            }
-        }
-
         public boolean isSurfaceChanged() {
             return mIsSurfaceChanged;
-        }
-
-        public void setDrawColor(boolean isDrawColor) {
-            if (mCanvas != null) {
-                mCanvas.setDrawColor(isDrawColor);
-            }
-        }
-    }
-
-    class MockCanvas extends Canvas {
-        private boolean mIsDrawColor;
-
-        public MockCanvas(Bitmap bitmap) {
-            super(bitmap);
-        }
-
-        @Override
-        public void drawColor(int color, Mode mode) {
-            super.drawColor(color, mode);
-            mIsDrawColor = true;
-        }
-
-        public boolean isDrawColor() {
-            return mIsDrawColor;
-        }
-
-        public void setDrawColor(boolean isDrawColor) {
-            this.mIsDrawColor = isDrawColor;
         }
     }
 }
