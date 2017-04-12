@@ -17,19 +17,24 @@ package android.transition.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import android.animation.Animator;
 import android.content.res.Resources;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.ChangeBounds;
 import android.transition.Transition;
+import android.transition.TransitionValues;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.animation.LinearInterpolator;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,19 +48,22 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     private static final int SMALL_OFFSET_DP = 2;
 
     ChangeBounds mChangeBounds;
+    ValidateBoundsListener mBoundsChangeListener;
 
     @Override
     @Before
     public void setup() {
         super.setup();
         resetChangeBoundsTransition();
+        mBoundsChangeListener = null;
     }
 
     private void resetChangeBoundsTransition() {
         mListener = mock(Transition.TransitionListener.class);
-        mChangeBounds = new ChangeBounds();
+        mChangeBounds = new MyChangeBounds();
         mChangeBounds.setDuration(400);
         mChangeBounds.addListener(mListener);
+        mChangeBounds.setInterpolator(new LinearInterpolator());
         mTransition = mChangeBounds;
     }
 
@@ -65,11 +73,10 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         validateInScene1();
 
-        startTransition(R.layout.scene6);
+        mBoundsChangeListener = new ValidateBoundsListener(true);
 
-        // now delay for at least a few frames before checking intermediate values:
-        Thread.sleep(150);
-        validateNormalIntermediate();
+        startTransition(R.layout.scene6);
+        // The update listener will validate that it is changing throughout the animation
         waitForEnd(400);
 
         validateInScene6();
@@ -84,11 +91,11 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         validateInScene1();
 
+        mBoundsChangeListener = new ValidateBoundsListener(true);
+
         startTransition(R.layout.scene6);
 
-        // now delay for at least a few frames before checking intermediate values:
-        Thread.sleep(150);
-        validateClippedIntermediate();
+        // The update listener will validate that it is changing throughout the animation
         waitForEnd(400);
 
         validateInScene6();
@@ -101,11 +108,10 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         validateInScene6();
 
+        mBoundsChangeListener = new ValidateBoundsListener(false);
         startTransition(R.layout.scene1);
 
-        // now delay for at least a few frames before checking intermediate values:
-        Thread.sleep(150);
-        validateClippedIntermediate();
+        // The update listener will validate that it is changing throughout the animation
         waitForEnd(400);
 
         validateInScene1();
@@ -252,63 +258,6 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         assertNull(belowSquare.getClipBounds());
     }
 
-    private void validateIntermediatePosition() {
-        Resources resources = mActivity.getResources();
-        float smallDim = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                SMALL_SQUARE_SIZE_DP, resources.getDisplayMetrics());
-        float largeDim = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                LARGE_SQUARE_SIZE_DP, resources.getDisplayMetrics());
-
-        View redSquare = mActivity.findViewById(R.id.redSquare);
-        View greenSquare = mActivity.findViewById(R.id.greenSquare);
-        assertTrue(redSquare.getTop() != 0);
-        assertTrue(greenSquare.getTop() != 0);
-        assertNotWithinAPixel(smallDim, redSquare.getTop());
-        assertNotWithinAPixel(largeDim, redSquare.getTop());
-        assertNotWithinAPixel(smallDim, greenSquare.getTop());
-        assertNotWithinAPixel(largeDim, greenSquare.getTop());
-    }
-
-    private void validateClippedIntermediate() {
-        validateIntermediatePosition();
-        Resources resources = mActivity.getResources();
-        float largeDim = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                LARGE_SQUARE_SIZE_DP, resources.getDisplayMetrics());
-        View redSquare = mActivity.findViewById(R.id.redSquare);
-        View greenSquare = mActivity.findViewById(R.id.greenSquare);
-
-        assertWithinAPixel(largeDim, redSquare.getWidth());
-        assertWithinAPixel(largeDim, redSquare.getHeight());
-        assertWithinAPixel(largeDim, greenSquare.getWidth());
-        assertWithinAPixel(largeDim, greenSquare.getHeight());
-
-        assertNotNull(redSquare.getClipBounds());
-        assertNotNull(greenSquare.getClipBounds());
-    }
-
-    private void validateNormalIntermediate() {
-        validateIntermediatePosition();
-        Resources resources = mActivity.getResources();
-        float smallDim = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                SMALL_SQUARE_SIZE_DP, resources.getDisplayMetrics());
-        float largeDim = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                LARGE_SQUARE_SIZE_DP, resources.getDisplayMetrics());
-        View redSquare = mActivity.findViewById(R.id.redSquare);
-        View greenSquare = mActivity.findViewById(R.id.greenSquare);
-        assertNotWithinAPixel(smallDim, redSquare.getWidth());
-        assertNotWithinAPixel(smallDim, redSquare.getHeight());
-        assertNotWithinAPixel(largeDim, redSquare.getWidth());
-        assertNotWithinAPixel(largeDim, redSquare.getHeight());
-
-        assertNotWithinAPixel(smallDim, greenSquare.getWidth());
-        assertNotWithinAPixel(smallDim, greenSquare.getHeight());
-        assertNotWithinAPixel(largeDim, greenSquare.getWidth());
-        assertNotWithinAPixel(largeDim, greenSquare.getHeight());
-
-        assertNull(redSquare.getClipBounds());
-        assertNull(greenSquare.getClipBounds());
-    }
-
     private static boolean isWithinAPixel(float expectedDim, int dim) {
         return (Math.abs(dim - expectedDim) <= 1);
     }
@@ -321,6 +270,115 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     private static void assertNotWithinAPixel(float expectedDim, int dim) {
         assertTrue("Expected dimension to not be within one pixel of "
                 + expectedDim + ", but was " + dim, !isWithinAPixel(expectedDim, dim));
+    }
+
+    private class MyChangeBounds extends ChangeBounds {
+        private static final String PROPNAME_BOUNDS = "android:changeBounds:bounds";
+        @Override
+        public Animator createAnimator(ViewGroup sceneRoot, TransitionValues startValues,
+                TransitionValues endValues) {
+            Animator animator = super.createAnimator(sceneRoot, startValues, endValues);
+            if (animator != null && mBoundsChangeListener != null) {
+                animator.addListener(mBoundsChangeListener);
+                Rect startBounds = (Rect) startValues.values.get(PROPNAME_BOUNDS);
+                Rect endBounds = (Rect) endValues.values.get(PROPNAME_BOUNDS);
+            }
+            return animator;
+        }
+    }
+
+    private class ValidateBoundsListener implements ViewTreeObserver.OnDrawListener,
+            Animator.AnimatorListener {
+        final boolean mGrow;
+        final int mMin;
+        final int mMax;
+
+        final Point mRedDimensions = new Point(-1, -1);
+        final Point mGreenDimensions = new Point(-1, -1);
+
+        View mRedSquare;
+        View mGreenSquare;
+
+        boolean mDidChangeSize;
+
+        private ValidateBoundsListener(boolean grow) {
+            mGrow = grow;
+
+            Resources resources = mActivity.getResources();
+            mMin = (int) (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    SMALL_SQUARE_SIZE_DP, resources.getDisplayMetrics()));
+            mMax = (int) Math.ceil(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    LARGE_SQUARE_SIZE_DP, resources.getDisplayMetrics()));
+        }
+
+        public void validateView(View view, Point dimensions) {
+            final String name = view.getTransitionName();
+            final boolean clipped = mChangeBounds.getResizeClip();
+            assertEquals(clipped, view.getClipBounds() != null);
+
+            final int width;
+            final int height;
+            if (clipped) {
+                width = view.getClipBounds().width();
+                height = view.getClipBounds().height();
+            } else {
+                width = view.getWidth();
+                height = view.getHeight();
+            }
+            validateDim(name, "width", dimensions.x, width);
+            validateDim(name, "height", dimensions.y, height);
+            dimensions.set(width, height);
+        }
+
+        private void validateDim(String name, String dimen, int lastDim, int newDim) {
+            if (lastDim != -1) {
+                if (mGrow) {
+                    assertTrue(name + " new " + dimen + " " + newDim
+                                    + " is less than previous " + lastDim,
+                            newDim >= lastDim);
+                } else {
+                    assertTrue(name + " new " + dimen + " " + newDim
+                                    + " is more than previous " + lastDim,
+                            newDim <= lastDim);
+                }
+                if (newDim != lastDim) {
+                    mDidChangeSize = true;
+                }
+            }
+            assertTrue(name + " " + dimen + " " + newDim + " must be <= " + mMax,
+                    newDim <= mMax);
+            assertTrue(name + " " + dimen + " " + newDim + " must be >= " + mMin,
+                    newDim >= mMin);
+        }
+
+        @Override
+        public void onDraw() {
+            if (mRedSquare == null) {
+                mRedSquare = mActivity.findViewById(R.id.redSquare);
+                mGreenSquare = mActivity.findViewById(R.id.greenSquare);
+            }
+            validateView(mRedSquare, mRedDimensions);
+            validateView(mGreenSquare, mGreenDimensions);
+        }
+
+        @Override
+        public void onAnimationStart(Animator animation) {
+            mActivity.getWindow().getDecorView().getViewTreeObserver().addOnDrawListener(this);
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            mActivity.getWindow().getDecorView().getViewTreeObserver().removeOnDrawListener(this);
+            assertTrue(mDidChangeSize);
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animation) {
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+        }
     }
 }
 
