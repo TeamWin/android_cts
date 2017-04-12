@@ -60,7 +60,7 @@ public class MenuItemTest {
     }
 
     @Test
-    public void testAccessThumbTint() {
+    public void testAccessIconTint() {
         // Note that this test is not marked as @UiThreadTest. Updating MenuItem does not
         // immediately update the displayed content, and even though the getters are expected
         // to immediately return the just-set value, using instrumentation to wait for the
