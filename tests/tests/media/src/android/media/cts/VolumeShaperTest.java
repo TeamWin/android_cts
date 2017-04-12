@@ -45,7 +45,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
                 .setCurve(new float[] { 0.f, 1.f } /* times */,
                         new float[] { 0.f, 0.f } /* volumes */)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     // Duck configurations go from 1.f down to 0.2f (not full ramp down).
@@ -54,28 +54,28 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
                 .setCurve(new float[] { 0.f, 1.f } /* times */,
                         new float[] { 1.f, 0.2f } /* volumes */)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     // Ramp configurations go from 0.f up to 1.f
     private static final VolumeShaper.Configuration LINEAR_RAMP =
             new VolumeShaper.Configuration.Builder(VolumeShaper.Configuration.LINEAR_RAMP)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     private static final VolumeShaper.Configuration CUBIC_RAMP =
             new VolumeShaper.Configuration.Builder(VolumeShaper.Configuration.CUBIC_RAMP)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     private static final VolumeShaper.Configuration SINE_RAMP =
             new VolumeShaper.Configuration.Builder(VolumeShaper.Configuration.SINE_RAMP)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     private static final VolumeShaper.Configuration SCURVE_RAMP =
             new VolumeShaper.Configuration.Builder(VolumeShaper.Configuration.SCURVE_RAMP)
-            .setDurationMs((double)RAMP_TIME_MS)
+            .setDurationMillis((double)RAMP_TIME_MS)
             .build();
 
     // internal use only
@@ -85,7 +85,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 .setOptionFlags(VolumeShaper.Configuration.OPTION_FLAG_VOLUME_IN_DBFS)
                 .setCurve(new float[] { 0.f, 1.f } /* times */,
                         new float[] { -80.f, 0.f } /* volumes */)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     private static final VolumeShaper.Configuration[] ALL_STANDARD_RAMPS = {
@@ -101,7 +101,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_CUBIC_MONOTONIC)
                 .setCurve(new float[] { 0.f, 0.3f, 0.7f, 1.f } /* times */,
                         new float[] { 0.f, 0.5f, 0.5f, 1.f } /* volumes */)
-                .setDurationMs((double)RAMP_TIME_MS)
+                .setDurationMillis((double)RAMP_TIME_MS)
                 .build();
 
     private static final VolumeShaper.Configuration MONOTONIC_TEST_FAIL =
@@ -266,7 +266,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
             final VolumeShaper.Configuration config =
                     new VolumeShaper.Configuration.Builder()
                     .setCurve(ohOne, ohOne)
-                    .setDurationMs(-1.)
+                    .setDurationMillis(-1.)
                     .build();
             fail(TEST_NAME + " configuration builder should fail on invalid duration");
         } catch (IllegalArgumentException e) {
@@ -291,7 +291,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         assertEquals(TEST_NAME + " default interpolation should be cubic",
                 VolumeShaper.Configuration.INTERPOLATOR_TYPE_CUBIC, config.getInterpolatorType());
         assertEquals(TEST_NAME + " default duration should be 1000 ms",
-                1000., config.getDurationMs());
+                1000., config.getDurationMillis());
         assertTrue(TEST_NAME + " times should be { 0.f, 1.f }",
                 Arrays.equals(ohOne, config.getTimes()));
         assertTrue(TEST_NAME + " volumes should be { 0.f, 1.f }",
@@ -319,7 +319,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
             checkEqual(TEST_NAME, testRamp, ramp);
 
             ramp = new VolumeShaper.Configuration.Builder(testRamp)
-                    .setDurationMs(10)
+                    .setDurationMillis(10)
                     .build();
             checkNotEqual(TEST_NAME, testRamp, ramp);
 
@@ -563,7 +563,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                 // we join several LINEAR_RAMPS together - this should effectively
                 // be one long LINEAR_RAMP.
                 volumeShaper.replace(new VolumeShaper.Configuration.Builder(LINEAR_RAMP)
-                                        .setDurationMs((double)(duration - i))
+                                        .setDurationMillis((double)(duration - i))
                                         .build(),
                                 VolumeShaper.Operation.PLAY, true /* join */);
                 assertEquals(TEST_NAME + " linear ramp should continue on join",
