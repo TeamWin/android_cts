@@ -3018,9 +3018,13 @@ You should be prompted to select credentials; choose the ones you just installed
         5) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
         6) Use the Back button to return to this page.\n
         7) Press the Install button.\n
-        8) Repeat steps (4) through (6), verifying that in step (5), you are told now that your administrator installed at least one app.\n
-        9) Press the Uninstall button.\n
-        10) Issue the following command on the host:\n
+        8) Press the Open Settings button.\n
+        9) In the screen that opens, verify that you are told now that your administrator installed at least one app.\n
+        10) Tap on that information. Verify that a list of apps installed shows.\n
+        11) Verify that the list contains the CTS Robot app.\n
+        12) Use the Back button to return to this page.\n
+        13) Press the Uninstall button.\n
+        14) Issue the following command on the host:\n
             adb shell rm /sdcard/NotificationBot.apk
     </string>
     <string name="enterprise_privacy_install">Install</string>
@@ -3036,7 +3040,7 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Open Settings button.\n
         7) In the screen that opens, verify that you are told now that your administrator has granted location access to at least one app.\n
         8) Tap on that information. Verify that a list of apps which have location access shows.\n
-        9) Verify that the list indicates CTS Verifier\'s location access was enabled by your administrator.\n
+        9) Verify that the list contains the CTS Verifier app.\n
         10) Use the Back button to return to this page.\n
         11) Press the Reset button.
     </string>
@@ -3053,7 +3057,7 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Open Settings button.\n
         7) In the screen that opens, verify that you are told now that your administrator has granted microphone access to at least one app.\n
         8) Tap on that information. Verify that a list of apps that have microphone access shows.\n
-        9) Verify that the list indicates CTS Verifier\'s microphone access was enabled by your administrator.\n
+        9) Verify that the list contains the CTS Verifier app.\n
         10) Use the Back button to return to this page.\n
         11) Press the Reset button.
     </string>
@@ -3068,7 +3072,7 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Open Settings button.\n
         7) In the screen that opens, verify that you are told now that your administrator has granted camera access to at least one app.\n
         8) Tap on that information. Verify that a list of apps that have camera access shows.\n
-        9) Verify that the list indicates CTS Verifier\'s camera access was enabled by your administrator.\n
+        9) Verify that the list contains the CTS Verifier app.\n
         10) Use the Back button to return to this page.\n
         11) Press the Reset button.
     </string>
@@ -3080,8 +3084,12 @@ You should be prompted to select credentials; choose the ones you just installed
         3) In the screen that opens, verify that you are not told that your administrator set any default apps.\n
         4) Use the Back button to return to this page.\n
         5) Press the Set Default Apps button.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that your administrator has set seven default apps.\n
-        7) Press the Reset button.
+        6) Press the Open Settings button.\n
+        7) In the screen that opens, verify that you are now told that your administrator has set 7 default apps.\n
+        8) Tap on that information. Verify that a list of default apps shows, with 7 elements in it.\n
+        9) Verify that each element shows the CTS Verifier is the default app.\n
+        10) Use the Back button to return to this page.\n
+        11) Press the Reset button.
     </string>
     <string name="enterprise_privacy_set_default_apps">Set Default Apps</string>
     <string name="enterprise_privacy_default_ime">Default keyboard</string>
