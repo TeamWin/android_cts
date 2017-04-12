@@ -16,7 +16,9 @@
 
 package android.server.cts;
 
+import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import java.lang.Exception;
 import java.lang.String;
@@ -127,6 +129,11 @@ public class ActivityManagerActivityVisiblityTests extends ActivityManagerTestBa
     }
 
     public void testTranslucentActivityOverDockedStack() throws Exception {
+        if (!supportsMultiWindowMode()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {DOCKED_ACTIVITY_NAME});
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
