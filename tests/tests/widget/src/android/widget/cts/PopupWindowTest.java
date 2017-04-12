@@ -1445,6 +1445,12 @@ public class PopupWindowTest {
         mPopupWindow = createPopupWindow(
                 mActivity.getLayoutInflater().inflate(R.layout.popup_window, null));
 
+        // This ensures that mPopupWindow is flipped vertically when anchored to one of the views
+        // at the bottom of the window (R.id.anchor_lower_*).
+        // This way the bottom edge of subPopup's anchor is aligned with the bottom edge of the
+        // window as well, which makes it possible to predict whether subPopup is going to flipped.
+        mPopupWindow.setOverlapAnchor(true);
+
         final PopupWindow subPopup =
                 createPopupWindow(createPopupContent(CONTENT_SIZE_DP, CONTENT_SIZE_DP));
 
