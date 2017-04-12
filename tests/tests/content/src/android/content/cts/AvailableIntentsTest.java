@@ -331,14 +331,20 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
  
     public void testVoiceCommand() {
-        Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);
-        assertCanBeHandled(intent);
-        assertDefaultHandlerValidPriority(intent);
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
+            Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);
+            assertCanBeHandled(intent);
+            assertDefaultHandlerValidPriority(intent);
+        }
     }
 
     public void testVoiceSearchHandsFree() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_VOICE_SEARCH_HANDS_FREE);
-        assertCanBeHandled(intent);
-        assertDefaultHandlerValidPriority(intent);
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
+            Intent intent = new Intent(RecognizerIntent.ACTION_VOICE_SEARCH_HANDS_FREE);
+            assertCanBeHandled(intent);
+            assertDefaultHandlerValidPriority(intent);
+        }
     }
 }
