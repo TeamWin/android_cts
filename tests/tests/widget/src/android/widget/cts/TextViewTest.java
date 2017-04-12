@@ -7346,8 +7346,8 @@ public class TextViewTest {
         }
 
         private void calculatePositions() {
-            int xStart = (int) mParent.getLayout().getPrimaryHorizontal(mStartCharPos, true, true);
-            int xEnd = (int) mParent.getLayout().getPrimaryHorizontal(mEndCharPos, true, true);
+            int xStart = (int) mParent.getLayout().getPrimaryHorizontal(mStartCharPos, true);
+            int xEnd = (int) mParent.getLayout().getPrimaryHorizontal(mEndCharPos, true);
             int line = mParent.getLayout().getLineForOffset(mEndCharPos);
             int yTop = mParent.getLayout().getLineTop(line);
             int yBottom = mParent.getLayout().getLineBottom(line);
@@ -7487,8 +7487,8 @@ public class TextViewTest {
      */
     private static Point getCenterPositionOfTextAt(
             TextView textView, int startIndex, int endIndex) {
-        int xStart = (int) textView.getLayout().getPrimaryHorizontal(startIndex, true, true);
-        int xEnd = (int) textView.getLayout().getPrimaryHorizontal(endIndex, true, true);
+        int xStart = (int) textView.getLayout().getPrimaryHorizontal(startIndex, true);
+        int xEnd = (int) textView.getLayout().getPrimaryHorizontal(endIndex, true);
         int line = textView.getLayout().getLineForOffset(endIndex);
         int yTop = textView.getLayout().getLineTop(line);
         int yBottom = textView.getLayout().getLineBottom(line);
