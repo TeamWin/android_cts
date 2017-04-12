@@ -71,11 +71,14 @@ static bool is_directory(const std::string& path) {
 }
 
 static bool already_loaded(const std::string& library, const std::string& err) {
-  if (err.find("dlopen failed: library \"" + library + "\"") != 0 ||
-      err.find("is not accessible for the namespace \"classloader-namespace\"") == std::string::npos) {
-    return false;
+  // SELinux denials for /vendor libraries may return with library not found
+  if (err.find("dlopen failed: library \"" + library + "\"") == 0 &&
+      (err.find("not found") != std::string::npos ||
+      err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos)) {
+    return true;
   }
-  return true;
+
+  return false;
 }
 
 static bool check_lib(const std::string& path,
