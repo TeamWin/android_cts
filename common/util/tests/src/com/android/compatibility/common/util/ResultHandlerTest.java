@@ -48,8 +48,6 @@ public class ResultHandlerTest extends TestCase {
     private static final String NAME_B = "ModuleB";
     private static final String DONE_A = "false";
     private static final String DONE_B = "true";
-    private static final String NOT_EXECUTED_A = "1";
-    private static final String NOT_EXECUTED_B = "0";
     private static final String RUNTIME_A = "100";
     private static final String RUNTIME_B = "200";
     private static final String ABI = "mips64";
@@ -104,10 +102,10 @@ public class ResultHandlerTest extends TestCase {
             "  <Build build_fingerprint=\"%s\" " + BUILD_ID + "=\"%s\" " +
                BUILD_PRODUCT + "=\"%s\" />\n";
     private static final String XML_SUMMARY =
-            "  <Summary pass=\"%d\" failed=\"%d\" not_executed=\"%d\" " +
+            "  <Summary pass=\"%d\" failed=\"%d\" " +
             "modules_done=\"1\" modules_total=\"1\" />\n";
     private static final String XML_MODULE =
-            "  <Module name=\"%s\" abi=\"%s\" device=\"%s\" runtime=\"%s\" done=\"%s\" not_executed=\"%s\">\n" +
+            "  <Module name=\"%s\" abi=\"%s\" device=\"%s\" runtime=\"%s\" done=\"%s\">\n" +
             "%s" +
             "  </Module>\n";
     private static final String XML_CASE =
@@ -167,7 +165,6 @@ public class ResultHandlerTest extends TestCase {
         moduleATest1.setResultStatus(TestStatus.PASS);
         ITestResult moduleATest2 = moduleACase.getOrCreateResult(METHOD_2);
         moduleATest2.setResultStatus(null); // not executed test
-        moduleA.setNotExecuted(1);
 
         IModuleResult moduleB = result.getOrCreateModule(ID_B);
         moduleB.setDone(true);
@@ -230,7 +227,7 @@ public class ResultHandlerTest extends TestCase {
             String moduleATest = String.format(XML_TEST_PASS, METHOD_1);
             String moduleACases = String.format(XML_CASE, CLASS_A, moduleATest);
             String moduleA = String.format(XML_MODULE, NAME_A, ABI, DEVICE_A, RUNTIME_A, DONE_A,
-                    NOT_EXECUTED_A, moduleACases);
+                    moduleACases);
             String moduleBTest3 = String.format(XML_TEST_FAIL, METHOD_3, MESSAGE, STACK_TRACE,
                     BUG_REPORT, LOGCAT, SCREENSHOT);
             String moduleBTest4 = String.format(XML_TEST_RESULT, METHOD_4,
@@ -241,7 +238,7 @@ public class ResultHandlerTest extends TestCase {
             String moduleBTests = String.format(JOIN, moduleBTest3, moduleBTest4);
             String moduleBCases = String.format(XML_CASE, CLASS_B, moduleBTests);
             String moduleB = String.format(XML_MODULE, NAME_B, ABI, DEVICE_B, RUNTIME_B, DONE_B,
-                    NOT_EXECUTED_B, moduleBCases);
+                    moduleBCases);
             String modules = String.format(JOIN, moduleA, moduleB);
             String hostName = "";
             try {
@@ -265,7 +262,6 @@ public class ResultHandlerTest extends TestCase {
     static void checkLightResult(IInvocationResult lightResult) throws Exception {
         assertEquals("Expected 2 passes", 2, lightResult.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, lightResult.countResults(TestStatus.FAIL));
-        assertEquals("Expected 1 not executed", 1, lightResult.getNotExecuted());
 
         Map<String, String> buildInfo = lightResult.getInvocationInfo();
         assertEquals("Incorrect Build ID", EXAMPLE_BUILD_ID, buildInfo.get(BUILD_ID));
@@ -287,7 +283,6 @@ public class ResultHandlerTest extends TestCase {
     static void checkResult(IInvocationResult result) throws Exception {
         assertEquals("Expected 2 passes", 2, result.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
-        assertEquals("Expected 1 not executed", 1, result.getNotExecuted());
 
         Map<String, String> buildInfo = result.getInvocationInfo();
         assertEquals("Incorrect Build ID", EXAMPLE_BUILD_ID, buildInfo.get(BUILD_ID));
