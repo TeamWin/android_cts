@@ -290,16 +290,16 @@ public abstract class BasePrintTest {
         clearPrintSpoolerData();
 
         Log.d(LOG_TAG, "enable animations");
-        if (sWindowAnimationScaleBefore != Float.NaN) {
+        if (!Float.isNaN(sWindowAnimationScaleBefore)) {
             SystemUtil.runShellCommand(sInstrumentation,
                     "settings put global window_animation_scale " + sWindowAnimationScaleBefore);
         }
-        if (sTransitionAnimationScaleBefore != Float.NaN) {
+        if (!Float.isNaN(sTransitionAnimationScaleBefore)) {
             SystemUtil.runShellCommand(sInstrumentation,
                     "settings put global transition_animation_scale " +
                             sTransitionAnimationScaleBefore);
         }
-        if (sAnimatiorDurationScaleBefore != Float.NaN) {
+        if (!Float.isNaN(sAnimatiorDurationScaleBefore)) {
             SystemUtil.runShellCommand(sInstrumentation,
                     "settings put global animator_duration_scale " + sAnimatiorDurationScaleBefore);
         }
