@@ -159,6 +159,9 @@ public class TvContractTest extends AndroidTestCase {
         TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
                 "US_TVPG_TV_MA", "US_TVPG_S", "US_TVPG_V");
         values.put(Programs.COLUMN_CONTENT_RATING, rating.flattenToString());
+        values.put(Programs.COLUMN_REVIEW_RATING_STYLE,
+                RecordedPrograms.REVIEW_RATING_STYLE_STARS);
+        values.put(Programs.COLUMN_REVIEW_RATING, "4.5");
 
         return values;
     }
@@ -256,6 +259,9 @@ public class TvContractTest extends AndroidTestCase {
         values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG2, 3);
         values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG3, 2);
         values.put(RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG4, 1);
+        values.put(RecordedPrograms.COLUMN_REVIEW_RATING_STYLE,
+                RecordedPrograms.REVIEW_RATING_STYLE_STARS);
+        values.put(RecordedPrograms.COLUMN_REVIEW_RATING, "4.5");
 
         return values;
     }
@@ -547,6 +553,8 @@ public class TvContractTest extends AndroidTestCase {
             verifyStringColumn(cursor, expectedValues, Programs.COLUMN_THUMBNAIL_URI);
             verifyBlobColumn(cursor, expectedValues, Programs.COLUMN_INTERNAL_PROVIDER_DATA);
             verifyIntegerColumn(cursor, expectedValues, Programs.COLUMN_VERSION_NUMBER);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_REVIEW_RATING_STYLE);
+            verifyStringColumn(cursor, expectedValues, Programs.COLUMN_REVIEW_RATING);
         }
     }
 
@@ -991,6 +999,8 @@ public class TvContractTest extends AndroidTestCase {
             verifyIntegerColumn(cursor, expectedValues,
                     RecordedPrograms.COLUMN_INTERNAL_PROVIDER_FLAG4);
             verifyIntegerColumn(cursor, expectedValues, RecordedPrograms.COLUMN_VERSION_NUMBER);
+            verifyStringColumn(cursor, expectedValues, RecordedPrograms.COLUMN_REVIEW_RATING_STYLE);
+            verifyStringColumn(cursor, expectedValues, RecordedPrograms.COLUMN_REVIEW_RATING);
         }
     }
 
