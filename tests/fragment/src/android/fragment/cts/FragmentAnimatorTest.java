@@ -59,11 +59,8 @@ public class FragmentAnimatorTest {
     public ActivityTestRule<FragmentTestActivity> mActivityRule =
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
 
-    private Instrumentation mInstrumentation;
-
     @Before
     public void setupContainer() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
     }
 
@@ -365,12 +362,12 @@ public class FragmentAnimatorTest {
                 .replace(R.id.fragmentContainer, fragment2, "2")
                 .addToBackStack(null)
                 .commit();
-        mInstrumentation.runOnMainSync(fm1::executePendingTransactions);
+        mActivityRule.runOnUiThread(fm1::executePendingTransactions);
         FragmentTestUtil.waitForExecution(mActivityRule);
 
         fm1.popBackStack();
 
-        mInstrumentation.runOnMainSync(fm1::executePendingTransactions);
+        mActivityRule.runOnUiThread(fm1::executePendingTransactions);
         FragmentTestUtil.waitForExecution(mActivityRule);
         // Now fragment2 should be animating away
         assertFalse(fragment2.isAdded());

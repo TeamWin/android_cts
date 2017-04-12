@@ -15,11 +15,11 @@
  */
 package android.fragment.cts;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.FragmentManager;
-import android.app.Instrumentation;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -39,14 +39,12 @@ public class FragmentOptimizationTest {
 
     private ViewGroup mContainer;
     private FragmentManager mFM;
-    private Instrumentation mInstrumentation;
 
     @Before
     public void setup() {
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         mContainer = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.fragmentContainer);
         mFM = mActivityRule.getActivity().getFragmentManager();
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
     // Test that when you add and replace a fragment that only the replace's add
@@ -55,7 +53,7 @@ public class FragmentOptimizationTest {
     public void addReplace() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final StrictViewFragment fragment2 = new StrictViewFragment();
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction().add(R.id.fragmentContainer, fragment1).addToBackStack(null).commit();
@@ -69,7 +67,7 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onCreateViewCount);
         FragmentTestUtil.assertChildren(mContainer, fragment2);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.popBackStack();
@@ -92,7 +90,7 @@ public class FragmentOptimizationTest {
         FragmentTestUtil.assertChildren(mContainer, fragment1);
 
         // Now pop and add
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.popBackStack();
@@ -116,7 +114,7 @@ public class FragmentOptimizationTest {
     public void middlePop() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final CountCallsFragment fragment2 = new CountCallsFragment();
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
@@ -146,7 +144,7 @@ public class FragmentOptimizationTest {
     public void optimizeRemove() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final int[] id = new int[1];
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 id[0] = mFM.beginTransaction()
@@ -186,7 +184,7 @@ public class FragmentOptimizationTest {
         FragmentTestUtil.executePendingTransactions(mActivityRule);
         assertEquals(1, fragment1.onCreateViewCount);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
@@ -224,7 +222,7 @@ public class FragmentOptimizationTest {
         assertEquals(1, fragment1.onAttachCount);
         FragmentTestUtil.assertChildren(mContainer, fragment1);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction().detach(fragment1).addToBackStack(null).commit();
@@ -274,7 +272,7 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onCreateViewCount);
         FragmentTestUtil.assertChildren(mContainer);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction().attach(fragment1).addToBackStack(null).commit();
@@ -318,7 +316,7 @@ public class FragmentOptimizationTest {
         assertEquals(1, fragment1.onHideCount);
         FragmentTestUtil.assertChildren(mContainer, fragment1);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
@@ -353,7 +351,7 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onShowCount);
         assertEquals(1, fragment1.onHideCount);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction().show(fragment1).addToBackStack(null).commit();
@@ -373,7 +371,7 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onShowCount);
         assertEquals(1, fragment1.onHideCount);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction().show(fragment1).addToBackStack(null).commit();
@@ -408,7 +406,7 @@ public class FragmentOptimizationTest {
         assertEquals(0, fragment1.onHideCount);
         FragmentTestUtil.assertChildren(mContainer, fragment1);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction().hide(fragment1).addToBackStack(null).commit();
@@ -445,7 +443,7 @@ public class FragmentOptimizationTest {
 
         final CountCallsFragment fragment2 = new CountCallsFragment();
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
@@ -470,7 +468,7 @@ public class FragmentOptimizationTest {
     @Test
     public void addPopBackStack() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
@@ -493,7 +491,7 @@ public class FragmentOptimizationTest {
     public void popNonBackStack() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final CountCallsFragment fragment2 = new CountCallsFragment();
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
@@ -519,7 +517,7 @@ public class FragmentOptimizationTest {
     public void noOptimization() throws Throwable {
         final CountCallsFragment fragment1 = new CountCallsFragment();
         final CountCallsFragment fragment2 = new CountCallsFragment();
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFM.beginTransaction()
