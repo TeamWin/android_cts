@@ -295,55 +295,6 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
-     * Asserts that no vendor domains are exempted from the prohibition on directly
-     * accessing /data outside /data/vendor.
-     *
-     * <p>NOTE: coredata_in_vendor_violators attribute is only there to help bring up Treble
-     * devices. It offers a convenient way to temporarily bypass the prohibition on vendor domains
-     * directly accessing /data outside /data/vendor. This attribute must not be used on production
-     * Treble devices.
-     */
-    public void testNoExemptionsForCoreDataInVendor() throws Exception {
-        if (!isFullTrebleDevice()) {
-            return;
-        }
-
-        Set<String> types =
-                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
-                        "coredata_in_vendor_violators");
-        if (!types.isEmpty()) {
-            List<String> sortedTypes = new ArrayList<>(types);
-            Collections.sort(sortedTypes);
-            fail("Policy exempts domains from ban on vendor domains accessing data partition"
-                    + " outside /data/vendor: " + sortedTypes);
-        }
-    }
-
-    /**
-     * Asserts that no core domains are exempted from the prohibition on directly
-     * accessing /data/vendor.
-     *
-     * <p>NOTE: vendordata_in_core_violators attribute is only there to help bring up Treble
-     * devices. It offers a convenient way to temporarily bypass the prohibition on core domains
-     * directly accessing /data/vendor. This attribute must not be used on production Treble
-     * devices.
-     */
-    public void testNoExemptionsForVendorDataInCore() throws Exception {
-        if (!isFullTrebleDevice()) {
-            return;
-        }
-
-        Set<String> types =
-                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
-                        "vendordata_in_core_violators");
-        if (!types.isEmpty()) {
-            List<String> sortedTypes = new ArrayList<>(types);
-            Collections.sort(sortedTypes);
-            fail("Policy exempts domains from ban on core domains accessing vendor data"
-                    + " in /data/vendor: " + sortedTypes);
-        }
-    }
-    /**
      * Tests that mlstrustedsubject does not include untrusted_app
      * and that mlstrustedobject does not include app_data_file.
      * This helps prevent circumventing the per-user isolation of
