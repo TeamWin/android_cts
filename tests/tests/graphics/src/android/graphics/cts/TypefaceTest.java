@@ -21,11 +21,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.fonts.FontVariationAxis;
@@ -354,6 +356,88 @@ public class TypefaceTest {
         } catch (IOException | FontVariationAxis.InvalidFormatException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    public void testTypefaceBuilder_fallback() throws IOException {
+        final File validFile = new File(obtainPath());
+        final File invalidFile = new File("/some/invalid/path/to/font/file");
+        final AssetManager assets = mContext.getAssets();
+        // By default, returns null if no fallback font is specified.
+        assertNull(new Typeface.Builder(invalidFile).build());
+
+        assertNull(new Typeface.Builder(validFile)
+                .setTtcIndex(100 /* non-existing ttc index */).build());
+
+        assertNull(new Typeface.Builder(assets, "invalid path").build());
+
+        assertNull(new Typeface.Builder(assets, "samplefont.ttf")
+                .setTtcIndex(100 /* non-existing ttc index */).build());
+
+        // If fallback is set, the builder never returns null.
+        assertNotNull(new Typeface.Builder(invalidFile).setFallback("").build());
+
+        assertNotNull(new Typeface.Builder(invalidFile).setFallback("invalid name").build());
+
+        Typeface sansSerifTypeface = new Typeface.Builder(invalidFile)
+                .setFallback("sans-serif").build();
+        assertNotNull(sansSerifTypeface);
+
+        Typeface serifTypeface = new Typeface.Builder(invalidFile).setFallback("serif").build();
+        assertNotNull(serifTypeface);
+
+        Typeface boldSansSerifTypeface = new Typeface.Builder(invalidFile)
+                .setFallback("sans-serif").setWeight(700).build();
+        assertNotNull(boldSansSerifTypeface);
+
+        Typeface boldSerifTypeface = new Typeface.Builder(invalidFile)
+                .setFallback("serif").setWeight(700).build();
+        assertNotNull(boldSerifTypeface);
+
+        Typeface italicSansSerifTypeface = new Typeface.Builder(invalidFile)
+                .setFallback("sans-serif").setItalic(true).build();
+        assertNotNull(italicSansSerifTypeface);
+
+        Typeface italicSerifTypeface = new Typeface.Builder(invalidFile)
+                .setFallback("serif").setItalic(true).build();
+        assertNotNull(italicSerifTypeface);
+
+        // All fallbacks should be different each other.
+        assertNotSame(sansSerifTypeface, serifTypeface);
+        assertNotSame(sansSerifTypeface, boldSansSerifTypeface);
+        assertNotSame(sansSerifTypeface, boldSerifTypeface);
+        assertNotSame(sansSerifTypeface, italicSansSerifTypeface);
+        assertNotSame(sansSerifTypeface, italicSerifTypeface);
+        assertNotSame(serifTypeface, boldSansSerifTypeface);
+        assertNotSame(serifTypeface, boldSerifTypeface);
+        assertNotSame(serifTypeface, italicSansSerifTypeface);
+        assertNotSame(serifTypeface, italicSerifTypeface);
+        assertNotSame(boldSansSerifTypeface, boldSerifTypeface);
+        assertNotSame(boldSansSerifTypeface, italicSansSerifTypeface);
+        assertNotSame(boldSansSerifTypeface, italicSerifTypeface);
+        assertNotSame(boldSerifTypeface, italicSansSerifTypeface);
+        assertNotSame(boldSerifTypeface, italicSerifTypeface);
+        assertNotSame(italicSansSerifTypeface, italicSerifTypeface);
+
+        // Cache should work for the same fallback.
+        assertSame(sansSerifTypeface,
+                new Typeface.Builder(assets, "samplefont.ttf").setFallback("sans-serif")
+                        .setTtcIndex(100 /* non-existing ttc index */).build());
+        assertSame(serifTypeface,
+                new Typeface.Builder(assets, "samplefont.ttf").setFallback("serif")
+                        .setTtcIndex(100 /* non-existing ttc index */).build());
+        assertSame(boldSansSerifTypeface,
+                new Typeface.Builder(assets, "samplefont.ttf").setFallback("sans-serif")
+                        .setTtcIndex(100 /* non-existing ttc index */).setWeight(700).build());
+        assertSame(boldSerifTypeface,
+                new Typeface.Builder(assets, "samplefont.ttf").setFallback("serif")
+                        .setTtcIndex(100 /* non-existing ttc index */).setWeight(700).build());
+        assertSame(italicSansSerifTypeface,
+                new Typeface.Builder(assets, "samplefont.ttf").setFallback("sans-serif")
+                        .setTtcIndex(100 /* non-existing ttc index */).setItalic(true).build());
+        assertSame(italicSerifTypeface,
+                new Typeface.Builder(assets, "samplefont.ttf").setFallback("serif")
+                        .setTtcIndex(100 /* non-existing ttc index */).setItalic(true).build());
     }
 
     @Test
