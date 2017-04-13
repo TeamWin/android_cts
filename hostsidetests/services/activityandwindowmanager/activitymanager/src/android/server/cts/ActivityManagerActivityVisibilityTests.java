@@ -23,6 +23,10 @@ import android.platform.test.annotations.Presubmit;
 import java.lang.Exception;
 import java.lang.String;
 
+import static com.android.ddmlib.Log.LogLevel.INFO;
+
+import com.android.tradefed.log.LogUtil.CLog;
+
 /**
  * Build: mmma -j32 cts/hostsidetests/services
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerActivityVisibilityTests
@@ -144,6 +148,11 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testTranslucentActivityOverDockedStack() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {DOCKED_ACTIVITY_NAME});
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
@@ -168,6 +177,11 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     public void testFinishActivityInNonFocusedStack() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(INFO, "Skipping test: no multi-window support");
+            return;
+        }
+
         // Launch two activities in docked stack.
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder().setTargetActivityName(BROADCAST_RECEIVER_ACTIVITY).execute();
