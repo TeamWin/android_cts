@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelperTest;
 import com.android.compatibility.common.tradefed.command.CompatibilityConsoleTest;
 import com.android.compatibility.common.tradefed.config.ConfigurationFactoryTest;
+import com.android.compatibility.common.tradefed.presubmit.CtsConfigLoadingTest;
 import com.android.compatibility.common.tradefed.presubmit.IntegrationTest;
 import com.android.compatibility.common.tradefed.presubmit.PresubmitSetupValidation;
 import com.android.compatibility.common.tradefed.presubmit.ValidateTestsAbi;
@@ -59,6 +60,7 @@ import org.junit.runners.Suite.SuiteClasses;
     ConfigurationFactoryTest.class,
 
     // presubmit
+    CtsConfigLoadingTest.class,
     IntegrationTest.class,
     PresubmitSetupValidation.class,
     ValidateTestsAbi.class,
