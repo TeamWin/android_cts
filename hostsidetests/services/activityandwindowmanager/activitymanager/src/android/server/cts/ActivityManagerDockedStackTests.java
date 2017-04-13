@@ -16,6 +16,9 @@
 
 package android.server.cts;
 
+import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.log.LogUtil.CLog;
+
 import java.awt.Rectangle;
 
 /**
@@ -36,6 +39,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     private static final int STACK_SIZE = 300;
 
     public void testStackList() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
@@ -45,6 +53,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testDockActivity() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         mAmWmState.assertContainsStack("Must contain home stack.", HOME_STACK_ID);
@@ -52,6 +65,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testNonResizeableNotDocked() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(NON_RESIZEABLE_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
 
@@ -62,6 +80,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSide() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         getLaunchActivityBuilder().setToSide(true).execute();
@@ -72,6 +95,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSideAndBringToFront() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         final String[] waitForFirstVisible = new String[] {TEST_ACTIVITY_NAME};
         final String[] waitForSecondVisible = new String[] {NO_RELAUNCH_ACTIVITY_NAME};
@@ -107,6 +135,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSideMultiple() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         final String[] waitForActivitiesVisible =
@@ -148,6 +181,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
 
     private void launchTargetToSide(String targetActivityName,
                                     boolean taskCountMustIncrement) throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
 
@@ -203,6 +241,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testLaunchToSideMultipleWithFlag() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         final String[] waitForActivitiesVisible =
@@ -232,6 +275,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRotationWhenDocked() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         getLaunchActivityBuilder().setToSide(true).execute();
@@ -263,6 +311,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRotationWhenDockedWhileLocked() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(LAUNCHING_ACTIVITY);
         mAmWmState.computeState(mDevice, new String[] {LAUNCHING_ACTIVITY});
         getLaunchActivityBuilder().setToSide(true).execute();
@@ -283,6 +336,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testRotationWhileDockMinimized() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY_NAME);
         assertDockMinimized();
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
@@ -314,6 +372,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testFinishDockActivityWhileMinimized() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
         assertDockMinimized();
 
@@ -324,6 +387,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testDockedStackToMinimizeWhenUnlocked() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {TEST_ACTIVITY_NAME});
         sleepDevice();
@@ -333,6 +401,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testMinimizedStateWhenUnlockedAndUnMinimized() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStackAndMinimize(FINISHABLE_ACTIVITY_NAME);
         assertDockMinimized();
 
@@ -346,6 +419,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testResizeDockedStack() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(DOCKED_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[] {DOCKED_ACTIVITY_NAME});
         launchActivityInStack(TEST_ACTIVITY_NAME, FULLSCREEN_WORKSPACE_STACK_ID);
@@ -364,6 +442,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         final String[] waitTestActivityName = new String[] {TEST_ACTIVITY_NAME};
         launchActivity(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, waitTestActivityName);
@@ -414,6 +497,11 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
     }
 
     public void testStackListOrderLaunchDockedActivity() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no split multi-window support");
+            return;
+        }
+
         launchActivityInDockStack(TEST_ACTIVITY_NAME);
         mAmWmState.computeState(mDevice, new String[]{TEST_ACTIVITY_NAME});
 
