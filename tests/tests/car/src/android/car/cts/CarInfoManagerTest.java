@@ -18,7 +18,12 @@ package android.car.cts;
 import android.car.Car;
 import android.car.CarInfoManager;
 import android.os.Bundle;
+import android.platform.test.annotations.RequiresDevice;
+import android.test.suitebuilder.annotation.SmallTest;
 
+
+@SmallTest
+@RequiresDevice
 public class CarInfoManagerTest extends CarApiTestBase {
 
     private CarInfoManager mCarInfoManager;
