@@ -217,6 +217,9 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
