@@ -64,6 +64,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".NormalService">
             <!-- TEST: ephemeral apps can't see this service using query methods -->
@@ -91,6 +92,24 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
+
+        <provider
+            android:name=".NormalProvider"
+            android:authorities="com.android.cts.normalapp.provider"
+            android:exported="true">
+            <intent-filter android:priority="-20">
+                <action android:name="com.android.cts.ephemeraltest.QUERY" />
+            </intent-filter>
+        </provider>
+        <provider
+            android:name=".ExposedProvider"
+            android:authorities="com.android.cts.normalapp.exposed.provider"
+            android:visibleToInstantApps="true"
+            android:exported="true">
+            <intent-filter android:priority="-10">
+                <action android:name="com.android.cts.ephemeraltest.QUERY" />
+            </intent-filter>
+        </provider>
     </application>
 
     <instrumentation

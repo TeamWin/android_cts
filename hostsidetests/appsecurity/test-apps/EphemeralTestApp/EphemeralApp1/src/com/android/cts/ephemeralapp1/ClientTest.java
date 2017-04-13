@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import android.annotation.Nullable;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -32,6 +33,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
@@ -135,6 +137,53 @@ public class ClientTest {
 
     @Test
     public void testQuery() throws Exception {
+        // query normal activities
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).activityInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).activityInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralActivity"));
+            assertThat(resolveInfo.get(0).instantAppAvailable,
+                    is(true));
+            assertThat(resolveInfo.get(1).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).activityInfo.name,
+                    is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
+        }
+
+        // query normal activities; directed package
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).activityInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).activityInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralActivity"));
+            assertThat(resolveInfo.get(0).instantAppAvailable,
+                    is(true));
+            assertThat(resolveInfo.get(1).activityInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).activityInfo.name,
+                    is("com.android.cts.normalapp.ExposedActivity"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
+        }
+
+        // query normal activities; directed component
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
@@ -175,6 +224,93 @@ public class ClientTest {
                     is("com.android.cts.normalapp.ExposedService"));
             assertThat(resolveInfo.get(1).instantAppAvailable,
                     is(false));
+        }
+
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            queryIntent.setPackage("com.android.cts.ephemeralapp1");
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().queryIntentServices(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(1));
+            assertThat(resolveInfo.get(0).serviceInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).serviceInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralService"));
+        }
+
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            queryIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralService"));
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().queryIntentServices(queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(1));
+            assertThat(resolveInfo.get(0).serviceInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).serviceInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralService"));
+        }
+
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().queryIntentContentProviders(
+                            queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(2));
+            assertThat(resolveInfo.get(0).providerInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).providerInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralProvider"));
+            assertThat(resolveInfo.get(1).providerInfo.packageName,
+                    is("com.android.cts.normalapp"));
+            assertThat(resolveInfo.get(1).providerInfo.name,
+                    is("com.android.cts.normalapp.ExposedProvider"));
+            assertThat(resolveInfo.get(1).instantAppAvailable,
+                    is(false));
+        }
+
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            queryIntent.setPackage("com.android.cts.ephemeralapp1");
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().queryIntentContentProviders(
+                            queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(1));
+            assertThat(resolveInfo.get(0).providerInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).providerInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralProvider"));
+        }
+
+        {
+            final Intent queryIntent = new Intent(ACTION_QUERY);
+            queryIntent.setComponent(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralProvider"));
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry
+                    .getContext().getPackageManager().queryIntentContentProviders(
+                            queryIntent, 0 /*flags*/);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            assertThat(resolveInfo.size(), is(1));
+            assertThat(resolveInfo.get(0).providerInfo.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+            assertThat(resolveInfo.get(0).providerInfo.name,
+                    is("com.android.cts.ephemeralapp1.EphemeralProvider"));
         }
     }
 
@@ -230,6 +366,48 @@ public class ClientTest {
         // provide any feedback. The alternative is to wait for the broadcast timeout
         // but it's silly to artificially slow down CTS. We'll rely on queryIntentService
         // to check whether or not the service is actually exposed
+
+        // bind to the normal service; directed package
+        {
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
+            startNormalIntent.setPackage("com.android.cts.normalapp");
+            final TestServiceConnection connection = new TestServiceConnection();
+            try {
+                assertThat(InstrumentationRegistry.getContext().bindService(
+                        startNormalIntent, connection, Context.BIND_AUTO_CREATE /*flags*/),
+                        is(false));
+            } finally {
+                InstrumentationRegistry.getContext().unbindService(connection);
+            }
+        }
+
+        // bind to the normal service; directed component
+        {
+            final Intent startNormalIntent = new Intent(ACTION_START_NORMAL);
+            startNormalIntent.setComponent(new ComponentName(
+                    "com.android.cts.normalapp", "com.android.cts.normalapp.NormalService"));
+            final TestServiceConnection connection = new TestServiceConnection();
+            try {
+                assertThat(InstrumentationRegistry.getContext().bindService(
+                        startNormalIntent, connection, Context.BIND_AUTO_CREATE /*flags*/),
+                        is(false));
+            } finally {
+                InstrumentationRegistry.getContext().unbindService(connection);
+            }
+        }
+
+        // connect to the normal provider
+        {
+            final String provider = "content://com.android.cts.normalapp.provider/table";
+            final Cursor testCursor = InstrumentationRegistry
+                    .getContext().getContentResolver().query(
+                            Uri.parse(provider),
+                            null /*projection*/,
+                            null /*selection*/,
+                            null /*selectionArgs*/,
+                            null /*sortOrder*/);
+            assertThat(testCursor, is(nullValue()));
+        }
     }
 
     @Test
@@ -376,11 +554,42 @@ public class ClientTest {
                         is("onBind"));
                 assertThat(testResult.getStatus(),
                         is("PASS"));
+                assertThat(testResult.getEphemeralPackageInfoExposed(),
+                        is(true));
                 assertThat(testResult.getException(),
                         is(nullValue()));
             } finally {
                 InstrumentationRegistry.getContext().unbindService(connection);
             }
+        }
+
+        // connect to exposed provider
+        {
+            final String provider = "content://com.android.cts.normalapp.exposed.provider/table";
+            final Cursor testCursor = InstrumentationRegistry
+                    .getContext().getContentResolver().query(
+                            Uri.parse(provider),
+                            null /*projection*/,
+                            null /*selection*/,
+                            null /*selectionArgs*/,
+                            null /*sortOrder*/);
+            assertThat(testCursor, is(notNullValue()));
+            assertThat(testCursor.getCount(), is(1));
+            assertThat(testCursor.getColumnCount(), is(2));
+            assertThat(testCursor.moveToFirst(), is(true));
+            assertThat(testCursor.getInt(0), is(1));
+            assertThat(testCursor.getString(1), is("ExposedProvider"));
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
+                    is("com.android.cts.normalapp"));
+            assertThat(testResult.getComponentName(),
+                    is("ExposedProvider"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getEphemeralPackageInfoExposed(),
+                    is(true));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
         }
     }
 
@@ -606,6 +815,24 @@ public class ClientTest {
             } finally {
                 InstrumentationRegistry.getContext().unbindService(connection);
             }
+        }
+
+        // connect to the instant app provider
+        {
+            final String provider = "content://com.android.cts.ephemeralapp1.provider/table";
+            final Cursor testCursor = InstrumentationRegistry
+                    .getContext().getContentResolver().query(
+                            Uri.parse(provider),
+                            null /*projection*/,
+                            null /*selection*/,
+                            null /*selectionArgs*/,
+                            null /*sortOrder*/);
+            assertThat(testCursor, is(notNullValue()));
+            assertThat(testCursor.getCount(), is(1));
+            assertThat(testCursor.getColumnCount(), is(2));
+            assertThat(testCursor.moveToFirst(), is(true));
+            assertThat(testCursor.getInt(0), is(1));
+            assertThat(testCursor.getString(1), is("InstantAppProvider"));
         }
     }
 
