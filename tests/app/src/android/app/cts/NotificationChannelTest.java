@@ -25,6 +25,7 @@ import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Parcel;
+import android.provider.Settings;
 import android.test.AndroidTestCase;
 
 public class NotificationChannelTest extends AndroidTestCase {
@@ -52,7 +53,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(false, channel.shouldVibrate());
         assertEquals(null, channel.getVibrationPattern());
         assertEquals(IMPORTANCE_DEFAULT, channel.getImportance());
-        assertEquals(null, channel.getSound());
+        assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, channel.getSound());
         assertTrue(channel.canShowBadge());
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
         assertEquals(null, channel.getGroup());
