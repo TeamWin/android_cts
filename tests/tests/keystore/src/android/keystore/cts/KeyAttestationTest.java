@@ -109,6 +109,7 @@ public class KeyAttestationTest extends AndroidTestCase {
             .compile("([0-9]{4})-([0-9]{2})-[0-9]{2}");
 
     private static final int KM_ERROR_INVALID_INPUT_LENGTH = -21;
+    private static final int KM_ERROR_PERMISSION_DENIED = 6;
 
     public void testVersionParser() throws Exception {
         // Non-numerics/empty give version 0
@@ -207,6 +208,29 @@ public class KeyAttestationTest extends AndroidTestCase {
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             assertNull(attestationCert.getExtensionValue(Attestation.KEY_DESCRIPTION_OID));
         } finally {
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
+    public void testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId() throws Exception {
+        String keystoreAlias = "test_key";
+        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
+                .setAttestationChallenge(new byte[128])
+                .setUniqueIdIncluded(true)
+                .build();
+
+        try {
+            generateKeyPair(KEY_ALGORITHM_EC, spec);
+            fail("Attestation should have failed.");
+        } catch (ProviderException e) {
+            // Attestation is expected to fail because of lack of permissions.
+            KeyStoreException cause = (KeyStoreException) e.getCause();
+            assertEquals(KM_ERROR_PERMISSION_DENIED, cause.getErrorCode());
+        } finally {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
             keyStore.deleteEntry(keystoreAlias);
         }
     }
