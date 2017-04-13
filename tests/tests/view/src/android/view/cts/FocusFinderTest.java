@@ -21,10 +21,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Rect;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.FocusFinder;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -339,5 +341,27 @@ public class FocusFinderTest {
         nextFocus = mFocusFinder.findNextKeyboardNavigationCluster(mLayout, mTopRight,
                 View.FOCUS_BACKWARD);
         assertTrue(nextFocus == mBottomRight || nextFocus == mBottomLeft);
+    }
+
+    @Test
+    public void testDuplicateId() throws Throwable {
+        LayoutInflater inflater = mActivityRule.getActivity().getLayoutInflater();
+        mLayout = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.inflate_layout);
+        View[] buttons = new View[3];
+        View[] boxes = new View[3];
+        mActivityRule.runOnUiThread(() -> {
+            for (int i = 0; i < 3; ++i) {
+                View item = inflater.inflate(R.layout.focus_finder_sublayout, mLayout, false);
+                buttons[i] = item.findViewById(R.id.itembutton);
+                boxes[i] = item.findViewById(R.id.itembox);
+                mLayout.addView(item);
+            }
+        });
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+        verifyNextFocus(buttons[0], View.FOCUS_FORWARD, boxes[0]);
+        verifyNextFocus(boxes[0], View.FOCUS_FORWARD, buttons[1]);
+        verifyNextFocus(buttons[1], View.FOCUS_FORWARD, boxes[1]);
+        verifyNextFocus(boxes[1], View.FOCUS_FORWARD, buttons[2]);
     }
 }
