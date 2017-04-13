@@ -251,9 +251,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /**
      * Asserts that no vendor domains are exempted from the prohibition on Binder use.
      *
-     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
-     * during Android O development. This test will be removed before Android O.
-     * TODO(b/35870313): Remove this test once b/35870313 is fixed.
+     * <p>NOTE: binder_in_vendor_violators attribute is only there to help bring up Treble devices.
+     * It offers a convenient way to temporarily bypass the prohibition on Binder use in vendor
+     * domains. This attribute must not be used on production Treble devices.
      */
     public void testNoExemptionsForBinderInVendorBan() throws Exception {
         if (!isFullTrebleDevice()) {
@@ -273,9 +273,10 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * Asserts that no domains are exempted from the prohibition on initiating socket communications
      * between core and vendor domains.
      *
-     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
-     * during Android O development. This test will be removed before Android O.
-     * TODO(b/36577153): Remove this test once b/36577153 is fixed.
+     * <p>NOTE: socket_between_core_and_vendor_violators attribute is only there to help bring up
+     * Treble devices. It offers a convenient way to temporarily bypass the prohibition on
+     * initiating socket communications between core and vendor domains. This attribute must not be
+     * used on production Treble devices.
      */
     public void testNoExemptionsForSocketsBetweenCoreAndVendorBan() throws Exception {
         if (!isFullTrebleDevice()) {
@@ -297,9 +298,10 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * Asserts that no vendor domains are exempted from the prohibition on directly
      * accessing /data outside /data/vendor.
      *
-     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
-     * during Android O development. This test will be removed before Android O.
-     * TODO(b/34980020): Remove this test once b/34980020 is fixed.
+     * <p>NOTE: coredata_in_vendor_violators attribute is only there to help bring up Treble
+     * devices. It offers a convenient way to temporarily bypass the prohibition on vendor domains
+     * directly accessing /data outside /data/vendor. This attribute must not be used on production
+     * Treble devices.
      */
     public void testNoExemptionsForCoreDataInVendor() throws Exception {
         if (!isFullTrebleDevice()) {
@@ -321,9 +323,10 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      * Asserts that no core domains are exempted from the prohibition on directly
      * accessing /data/vendor.
      *
-     * <p>NOTE: There's no explicit CDD requirement for this because this is a temporary crutch
-     * during Android O development. This test will be removed before Android O.
-     * TODO(b/34980020): Remove this test once b/34980020 is fixed.
+     * <p>NOTE: vendordata_in_core_violators attribute is only there to help bring up Treble
+     * devices. It offers a convenient way to temporarily bypass the prohibition on core domains
+     * directly accessing /data/vendor. This attribute must not be used on production Treble
+     * devices.
      */
     public void testNoExemptionsForVendorDataInCore() throws Exception {
         if (!isFullTrebleDevice()) {
