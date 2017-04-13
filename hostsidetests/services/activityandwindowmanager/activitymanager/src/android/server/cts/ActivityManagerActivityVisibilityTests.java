@@ -18,6 +18,8 @@ package android.server.cts;
 
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 
+import android.platform.test.annotations.Presubmit;
+
 import java.lang.Exception;
 import java.lang.String;
 
@@ -157,6 +159,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY_NAME, true);
     }
 
+    @Presubmit
     public void testTurnScreenOnActivity() throws Exception {
         sleepDevice();
         launchActivity(TURN_SCREEN_ON_ACTIVITY_NAME);
