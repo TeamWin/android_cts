@@ -357,23 +357,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
         mCurrentModuleResult.inProgress(false);
         mCurrentModuleResult.addRuntime(elapsedTime);
-        if (!mModuleWasDone) {
-            // Not executed count now represents an upper-bound for a fix to b/33211104.
-            // Only setNotExecuted this number if the module has already been completely executed.
-            int testCountDiff = Math.max(mTotalTestsInModule - mCurrentTestNum, 0);
-            if (isShardResultReporter()) {
-                // reset value, which is added to total count for master shard upon merge
-                mCurrentModuleResult.setNotExecuted(testCountDiff);
-            } else {
-                // increment value for master shard
-                mCurrentModuleResult.setNotExecuted(mCurrentModuleResult.getNotExecuted()
-                        + testCountDiff);
-            }
-            if (mCanMarkDone) {
-                // Only mark module done if status of the invocation allows it (mCanMarkDone) and
-                // if module has not already been marked done.
-                mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
-            }
+        if (!mModuleWasDone && mCanMarkDone) {
+            // Only mark module done if status of the invocation allows it (mCanMarkDone) and
+            // if module has not already been marked done.
+            mCurrentModuleResult.setDone(mCurrentTestNum >= mTotalTestsInModule);
         }
         if (isShardResultReporter()) {
             // Forward module results to the master.
@@ -479,11 +466,10 @@ public class ResultReporter implements ILogSaverListener, ITestInvocationListene
         String moduleProgress = String.format("%d of %d",
                 mResult.getModuleCompleteCount(), mResult.getModules().size());
 
-        info("Invocation finished in %s. PASSED: %d, FAILED: %d, NOT EXECUTED: %d, MODULES: %s",
+        info("Invocation finished in %s. PASSED: %d, FAILED: %d, MODULES: %s",
                 TimeUtil.formatElapsedTime(elapsedTime),
                 mResult.countResults(TestStatus.PASS),
                 mResult.countResults(TestStatus.FAIL),
-                mResult.getNotExecuted(),
                 moduleProgress);
 
         long startTime = mResult.getStartTime();
