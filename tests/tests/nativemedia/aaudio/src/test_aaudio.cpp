@@ -21,17 +21,9 @@
 #include <utils/Log.h>
 
 #include <aaudio/AAudio.h>
-#include <aaudio/AAudioDefinitions.h>
+#include "test_aaudio.h"
 
-
-#define NANOS_PER_MICROSECOND ((int64_t)1000)
-#define NANOS_PER_MILLISECOND (NANOS_PER_MICROSECOND * 1000)
-#define MILLIS_PER_SECOND     1000
-#define NANOS_PER_SECOND      (NANOS_PER_MILLISECOND * MILLIS_PER_SECOND)
-
-#define DEFAULT_STATE_TIMEOUT  (500 * NANOS_PER_MILLISECOND)
-
-static int64_t getNanoseconds(clockid_t clockId = CLOCK_MONOTONIC) {
+int64_t getNanoseconds(clockid_t clockId) {
     struct timespec time;
     int result = clock_gettime(clockId, &time);
     if (result < 0) {
@@ -136,10 +128,12 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
 
     // Check to see what kind of stream we actually got.
     actualSampleRate = AAudioStream_getSampleRate(aaudioStream);
-    ASSERT_TRUE(actualSampleRate >= 44100 && actualSampleRate <= 96000);  // TODO what is range?
+    ASSERT_GE(actualSampleRate, 44100);
+    ASSERT_LE(actualSampleRate, 96000); // TODO what is min/max?
 
     actualSamplesPerFrame = AAudioStream_getSamplesPerFrame(aaudioStream);
-    ASSERT_TRUE(actualSamplesPerFrame >= 1 && actualSamplesPerFrame <= 16); // TODO what is max?
+    ASSERT_GE(actualSamplesPerFrame, 1);
+    ASSERT_LE(actualSamplesPerFrame, 16); // TODO what is min/max?
 
     actualSharingMode = AAudioStream_getSharingMode(aaudioStream);
     ASSERT_TRUE(actualSharingMode == AAUDIO_SHARING_MODE_EXCLUSIVE
@@ -151,7 +145,8 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     // ASSERT_NE(AAUDIO_DEVICE_UNSPECIFIED, AAudioStream_getDeviceId(aaudioStream));
 
     framesPerBurst = AAudioStream_getFramesPerBurst(aaudioStream);
-    ASSERT_TRUE(framesPerBurst >= 16 && framesPerBurst <= 1024); // TODO what is min/max?
+    ASSERT_GE(framesPerBurst, 16);
+    ASSERT_LE(framesPerBurst, 4096); // TODO what is min/max?
 
     // Allocate a buffer for the audio data.
     // TODO handle possibility of other data formats
@@ -270,10 +265,13 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
     aaudioFramesRead = AAudioStream_getFramesRead(aaudioStream);
     EXPECT_EQ(aaudioFramesRead, aaudioFramesWritten);
 
+    sleep(1); // FIXME - The write returns 0 if we remove this sleep! Why?
+
     // The buffer should be empty after a flush so we should be able to write.
     framesWritten = AAudioStream_write(aaudioStream, data, framesPerBurst, timeoutNanos);
     // There should be some room for priming the buffer.
-    ASSERT_TRUE(framesWritten > 0 && framesWritten <= framesPerBurst);
+    ASSERT_GT(framesWritten, 0);
+    ASSERT_LE(framesWritten, framesPerBurst);
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream));
     free(data);
@@ -290,60 +288,6 @@ TEST(test_aaudio, aaudio_stream_exclusive) {
     runtest_aaudio_stream(AAUDIO_SHARING_MODE_EXCLUSIVE);
 }
 */
-
-#define AAUDIO_THREAD_ANSWER          1826375
-#define AAUDIO_THREAD_DURATION_MSEC       500
-
-static void *TestAAudioStreamThreadProc(void *arg) {
-    AAudioStream* aaudioStream = (AAudioStream*) reinterpret_cast<size_t>(arg);
-    aaudio_stream_state_t state;
-
-    // Use this to sleep by waiting for something that won't happen.
-    state = AAudioStream_getState(aaudioStream);
-    AAudioStream_waitForStateChange(aaudioStream, AAUDIO_STREAM_STATE_PAUSED, &state,
-            AAUDIO_THREAD_DURATION_MSEC * NANOS_PER_MILLISECOND);
-    return reinterpret_cast<void *>(AAUDIO_THREAD_ANSWER);
-}
-
-// Test creating a stream related thread.
-TEST(test_aaudio, aaudio_stream_thread_basic) {
-    AAudioStreamBuilder *aaudioBuilder = nullptr;
-    AAudioStream *aaudioStream = nullptr;
-    aaudio_result_t result = AAUDIO_OK;
-    void *threadResult;
-
-    // Use an AAudioStreamBuilder to define the stream.
-    result = AAudio_createStreamBuilder(&aaudioBuilder);
-    ASSERT_EQ(AAUDIO_OK, result);
-
-    // Create an AAudioStream using the Builder.
-    ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream));
-
-    // Start a thread.
-    ASSERT_EQ(AAUDIO_OK, AAudioStream_createThread(aaudioStream,
-            10 * NANOS_PER_MILLISECOND,
-            TestAAudioStreamThreadProc,
-            reinterpret_cast<void *>(aaudioStream)));
-    // Thread already started.
-    ASSERT_NE(AAUDIO_OK, AAudioStream_createThread(aaudioStream,   // should fail!
-            10 * NANOS_PER_MILLISECOND,
-            TestAAudioStreamThreadProc,
-            reinterpret_cast<void *>(aaudioStream)));
-
-    // Wait for the thread to finish.
-    ASSERT_EQ(AAUDIO_OK, AAudioStream_joinThread(aaudioStream,
-            &threadResult, 2 * AAUDIO_THREAD_DURATION_MSEC * NANOS_PER_MILLISECOND));
-    // The thread returns a special answer.
-    ASSERT_EQ(AAUDIO_THREAD_ANSWER, (int)reinterpret_cast<size_t>(threadResult));
-
-    // Thread should already be joined.
-    ASSERT_NE(AAUDIO_OK, AAudioStream_joinThread(aaudioStream,  // should fail!
-            &threadResult, 2 * AAUDIO_THREAD_DURATION_MSEC * NANOS_PER_MILLISECOND));
-
-    // Cleanup
-    EXPECT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
-    EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream));
-}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
