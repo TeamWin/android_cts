@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.media.MediaCas;
 import android.media.MediaCas.PluginDescriptor;
+import android.media.MediaCas.Session;
 import android.media.MediaCasException;
 import android.media.MediaCasException.UnsupportedCasException;
 import android.media.MediaCasStateException;
@@ -181,10 +182,10 @@ public class MediaCasTest extends AndroidTestCase {
                 }, null);
             } finally {
                 if (mediaCas != null) {
-                    mediaCas.release();
+                    mediaCas.close();
                 }
                 if (descrambler != null) {
-                    descrambler.release();
+                    descrambler.close();
                 }
             }
         }
@@ -213,10 +214,10 @@ public class MediaCasTest extends AndroidTestCase {
             }
         } finally {
             if (unsupportedCAS != null) {
-                unsupportedCAS.release();
+                unsupportedCAS.close();
             }
             if (unsupportedDescrambler != null) {
-                unsupportedDescrambler.release();
+                unsupportedDescrambler.close();
             }
         }
     }
@@ -247,24 +248,22 @@ public class MediaCasTest extends AndroidTestCase {
             byte[] pvtData = new byte[256];
             mediaCas.setPrivateData(pvtData);
 
-            int program_number = 72849;
-            int elementary_PID = 256;
-            byte[] sessionId = mediaCas.openSession(72849);
-            if (sessionId == null || sessionId.length == 0) {
+            Session session = mediaCas.openSession();
+            if (session == null) {
                 fail("Can't open session for program");
             }
 
-            mediaCas.setSessionPrivateData(sessionId, pvtData);
+            session.setPrivateData(pvtData);
 
-            byte[] streamSessionId = mediaCas.openSession(72849, 256);
-            if (streamSessionId == null || streamSessionId.length == 0) {
+            Session streamSession = mediaCas.openSession();
+            if (streamSession == null) {
                 fail("Can't open session for stream");
             }
-            mediaCas.setSessionPrivateData(streamSessionId, pvtData);
+            streamSession.setPrivateData(pvtData);
 
-            descrambler.setMediaCasSession(sessionId);
+            descrambler.setMediaCasSession(session);
 
-            descrambler.setMediaCasSession(streamSessionId);
+            descrambler.setMediaCasSession(streamSession);
 
             mediaCas.refreshEntitlements(3, null);
 
@@ -291,8 +290,8 @@ public class MediaCasTest extends AndroidTestCase {
             mediaCas.processEmm(emmData);
 
             byte[] ecmData = loadByteArrayFromString(sEcmBufferStr);
-            mediaCas.processEcm(sessionId, ecmData);
-            mediaCas.processEcm(streamSessionId, ecmData);
+            session.processEcm(ecmData);
+            streamSession.processEcm(ecmData);
 
             ByteBuffer outputBuf = descrambleTestInputBuffer(descrambler);
             ByteBuffer expectedOutputBuf = ByteBuffer.wrap(
@@ -300,14 +299,14 @@ public class MediaCasTest extends AndroidTestCase {
             assertTrue("Incorrect decryption result",
                     expectedOutputBuf.compareTo(outputBuf) == 0);
 
-            mediaCas.closeSession(sessionId);
-            mediaCas.closeSession(streamSessionId);
+            session.close();
+            streamSession.close();
         } finally {
             if (mediaCas != null) {
-                mediaCas.release();
+                mediaCas.close();
             }
             if (descrambler != null) {
-                descrambler.release();
+                descrambler.close();
             }
         }
     }
@@ -324,28 +323,28 @@ public class MediaCasTest extends AndroidTestCase {
             descrambler = new MediaDescrambler(sClearKeySystemId);
             mediaCas.provision(sProvisionStr);
 
-            byte[] sessionId = mediaCas.openSession(72849);
-            if (sessionId == null || sessionId.length == 0) {
+            Session session = mediaCas.openSession();
+            if (session == null) {
                 fail("Can't open session for program");
             }
 
-            byte[] streamSessionId = mediaCas.openSession(72849, 256);
-            if (streamSessionId == null || streamSessionId.length == 0) {
+            Session streamSession = mediaCas.openSession();
+            if (streamSession == null) {
                 fail("Can't open session for stream");
             }
 
-            mediaCas.release();
+            mediaCas.close();
             mediaCas = null;
 
             try {
-                descrambler.setMediaCasSession(sessionId);
+                descrambler.setMediaCasSession(session);
                 fail("Program session not closed after MediaCas is released");
             } catch (MediaCasStateException e) {
                 Log.d(TAG, "setMediaCasSession throws "
                         + e.getDiagnosticInfo() + " (as expected)");
             }
             try {
-                descrambler.setMediaCasSession(streamSessionId);
+                descrambler.setMediaCasSession(streamSession);
                 fail("Stream session not closed after MediaCas is released");
             } catch (MediaCasStateException e) {
                 Log.d(TAG, "setMediaCasSession throws "
@@ -353,10 +352,10 @@ public class MediaCasTest extends AndroidTestCase {
             }
         } finally {
             if (mediaCas != null) {
-                mediaCas.release();
+                mediaCas.close();
             }
             if (descrambler != null) {
-                descrambler.release();
+                descrambler.close();
             }
         }
     }
@@ -393,26 +392,31 @@ public class MediaCasTest extends AndroidTestCase {
                 Log.d(TAG, "processEmm throws ArrayIndexOutOfBoundsException (as expected)");
             }
 
-            byte[] invalidSessionId = new byte[] {};
+            // open a session, then close it so that it should become invalid
+            Session invalidSession = mediaCas.openSession();
+            if (invalidSession == null) {
+                fail("Can't open session for program");
+            }
+            invalidSession.close();
 
             byte[] ecmData = loadByteArrayFromString(sEcmBufferStr);
 
             // processEcm should fail with an invalid session id
             try {
-                mediaCas.processEcm(invalidSessionId, ecmData);
+                invalidSession.processEcm(ecmData);
                 fail("processEcm shouldn't succeed with invalid session id");
             } catch (MediaCasStateException e) {
                 Log.d(TAG, "processEcm throws " + e.getDiagnosticInfo() + " (as expected)");
             }
 
-            byte[] sessionId = mediaCas.openSession(72849);
-            if (sessionId == null || sessionId.length == 0) {
+            Session session = mediaCas.openSession();
+            if (session == null) {
                 fail("Can't open session for program");
             }
 
             // processEcm should fail without provisioning
             try {
-                mediaCas.processEcm(sessionId, ecmData);
+                session.processEcm(ecmData);
                 fail("processEcm shouldn't succeed without provisioning");
             } catch (MediaCasException.NotProvisionedException e) {
                 Log.d(TAG, "processEcm throws NotProvisionedException (as expected)");
@@ -423,7 +427,7 @@ public class MediaCasTest extends AndroidTestCase {
 
             // processEcm should fail with ecm buffer that's too short
             try {
-                mediaCas.processEcm(sessionId, ecmData, 0, 8);
+                session.processEcm(ecmData, 0, 8);
                 fail("processEcm shouldn't succeed with truncated ecm");
             } catch (IllegalArgumentException e) {
                 Log.d(TAG, "processEcm throws " + e.toString() + " (as expected)");
@@ -432,7 +436,7 @@ public class MediaCasTest extends AndroidTestCase {
             // processEcm should fail with ecm with bad descriptor count
             try {
                 ecmData[17] = 3; // change the descriptor count field to 3 (invalid)
-                mediaCas.processEcm(sessionId, ecmData);
+                session.processEcm(ecmData);
                 fail("processEcm shouldn't succeed with altered descriptor count");
             } catch (MediaCasStateException e) {
                 Log.d(TAG, "processEcm throws " + e.getDiagnosticInfo() + " (as expected)");
@@ -444,7 +448,7 @@ public class MediaCasTest extends AndroidTestCase {
 
             // setMediaCasSession should fail with an invalid session id
             try {
-                descrambler.setMediaCasSession(invalidSessionId);
+                descrambler.setMediaCasSession(invalidSession);
                 fail("setMediaCasSession shouldn't succeed with invalid session id");
             } catch (MediaCasStateException e) {
                 Log.d(TAG, "setMediaCasSession throws "
@@ -460,7 +464,7 @@ public class MediaCasTest extends AndroidTestCase {
             }
 
             // Now set a valid session, should still fail because no valid ecm is processed
-            descrambler.setMediaCasSession(sessionId);
+            descrambler.setMediaCasSession(session);
             try {
                 ByteBuffer outputBuf = descrambleTestInputBuffer(descrambler);
                 fail("descramble should fail without valid ecm");
@@ -469,10 +473,10 @@ public class MediaCasTest extends AndroidTestCase {
             }
         } finally {
             if (mediaCas != null) {
-                mediaCas.release();
+                mediaCas.close();
             }
             if (descrambler != null) {
-                descrambler.release();
+                descrambler.close();
             }
         }
     }
@@ -537,7 +541,7 @@ public class MediaCasTest extends AndroidTestCase {
         ByteBuffer inputBuf = ByteBuffer.wrap(
                 loadByteArrayFromString(sInputBufferStr));
         ByteBuffer outputBuf = ByteBuffer.allocate(inputBuf.capacity());
-        descrambler.descramble(inputBuf, 0, outputBuf, 0, cryptoInfo);
+        descrambler.descramble(inputBuf, outputBuf, cryptoInfo);
 
         return outputBuf;
     }
