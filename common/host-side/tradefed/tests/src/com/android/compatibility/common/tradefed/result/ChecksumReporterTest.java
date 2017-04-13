@@ -77,7 +77,6 @@ public class ChecksumReporterTest extends TestCase {
         mInvocationResult = resultReporter.getResult();
         mModuleResult = mInvocationResult.getOrCreateModule("Module-1");
         mModuleResult.setDone(true);
-        mModuleResult.setNotExecuted(0);
         ICaseResult caseResult = mModuleResult.getOrCreateResult("Case-1");
         ITestResult test1 = caseResult.getOrCreateResult("Test1");
         test1.passed(mReportLog);
@@ -87,7 +86,6 @@ public class ChecksumReporterTest extends TestCase {
         IModuleResult moduleResult2 = mInvocationResult.getOrCreateModule("Module-2");
         ICaseResult caseResult2 = moduleResult2.getOrCreateResult("Case-2");
         mModuleResult.setDone(false);
-        mModuleResult.setNotExecuted(1);
         ITestResult test3 = caseResult2.getOrCreateResult("Test3");
         test3.passed(mReportLog);
 
