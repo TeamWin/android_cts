@@ -202,6 +202,13 @@ final class UiBot {
     }
 
     /**
+     * Presses the back button.
+     */
+    void pressBack() {
+        mDevice.pressBack();
+    }
+
+    /**
      * Asserts the save snackbar is not showing and returns it.
      */
     void assertSaveNotShowing(int type) {

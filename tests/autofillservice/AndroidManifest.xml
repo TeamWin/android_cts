@@ -51,6 +51,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".EmptyActivity"/>
+        <activity android:name=".DummyActivity"/>
         <activity android:name=".OutOfProcessLoginActivity"
             android:process="android.autofillservice.cts.outside"/>
 
