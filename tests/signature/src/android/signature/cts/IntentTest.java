@@ -57,6 +57,8 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -90,19 +92,21 @@ public class IntentTest {
             new File("/data/local/tmp/signature-test-packages");
     private static final String ANDROID_INTENT_PREFIX = "android.intent.action";
     private static final String ACTION_LINE_PREFIX = "          Action: ";
-    private static final Set<String> INTENT_WHITELIST = getIntentWhitelist();
+    private static final String MODULE_NAME = "CtsSignatureTestCases";
 
     private PackageManager mPackageManager;
+    private Set<String> intentWhitelist;
 
     @Before
-    public void setupPackageManager() {
+    public void setupPackageManager() throws Exception {
       mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
+      intentWhitelist = getIntentWhitelist();
     }
 
     @Test
     public void shouldNotFindUnexpectedIntents() throws Exception {
         Set<String> platformIntents = lookupPlatformIntents();
-        platformIntents.addAll(INTENT_WHITELIST);
+        platformIntents.addAll(intentWhitelist);
 
         Set<String> allInvalidIntents = new HashSet<>();
 
@@ -268,8 +272,17 @@ public class IntentTest {
         }
     }
 
-    private static Set<String> getIntentWhitelist() {
+    private static Set<String> getIntentWhitelist() throws Exception {
         Set<String> whitelist = new HashSet<>();
+
+        DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(MODULE_NAME);
+        List<String> intentWhitelist = dcds.getValues("intent_whitelist");
+
+        // Log the whitelist Intent
+        for (String intent : intentWhitelist) {
+           Log.d(TAG, String.format("whitelist add: %s", intent));
+           whitelist.add(intent);
+        }
 
         return whitelist;
     }
