@@ -65,6 +65,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 
+import android.widget.RemoteViews;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1459,5 +1460,48 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         } finally {
             setUserRestrictionForAutofill(false);
         }
+    }
+
+    @Test
+    public void testClickCustomButton() throws Exception {
+        // Set service.
+        enableService();
+
+        Intent intent = new Intent(getContext(), EmptyActivity.class);
+        IntentSender sender = PendingIntent.getActivity(getContext(), 0, intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT)
+                .getIntentSender();
+
+        RemoteViews presentation = new RemoteViews(getContext().getPackageName(),
+                R.layout.list_item);
+        presentation.setTextViewText(R.id.text1, "Poke");
+        Intent firstIntent = new Intent(getContext(), DummyActivity.class);
+        presentation.setOnClickPendingIntent(R.id.text1, PendingIntent.getActivity(
+                getContext(), 0, firstIntent, PendingIntent.FLAG_ONE_SHOT
+                        | PendingIntent.FLAG_CANCEL_CURRENT));
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(sender)
+                .setPresentation(presentation)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+
+        // Click on the custom button
+        sUiBot.selectByText("Poke");
+
+        // Make sure the click worked
+        sUiBot.selectByText("foo");
+
+        // Go back to the filled app.
+        sUiBot.pressBack();
+
+        // The session should be gone
+        assertNoDanglingSessions();
     }
 }
