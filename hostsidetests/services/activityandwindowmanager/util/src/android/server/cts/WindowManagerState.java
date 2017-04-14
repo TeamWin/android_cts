@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 public class WindowManagerState {
 
-    public static  final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
+    public static final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
     public static final String TRANSIT_ACTIVITY_CLOSE = "TRANSIT_ACTIVITY_CLOSE";
     public static final String TRANSIT_TASK_OPEN = "TRANSIT_TASK_OPEN";
     public static final String TRANSIT_TASK_CLOSE = "TRANSIT_TASK_CLOSE";
@@ -52,6 +52,8 @@ public class WindowManagerState {
             "TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER";
     public static final String TRANSIT_KEYGUARD_OCCLUDE = "TRANSIT_KEYGUARD_OCCLUDE";
     public static final String TRANSIT_KEYGUARD_UNOCCLUDE = "TRANSIT_KEYGUARD_UNOCCLUDE";
+
+    public static final String APP_STATE_IDLE = "APP_STATE_IDLE";
 
     private static final String DUMPSYS_WINDOW = "dumpsys window -a";
 
@@ -87,6 +89,8 @@ public class WindowManagerState {
 
     private static final Pattern sLastAppTransitionPattern =
             Pattern.compile("mLastUsedAppTransition=(.+)");
+    private static final Pattern sAppTransitionStatePattern =
+            Pattern.compile("mAppTransitionState=(.+)");
 
     private static final Pattern sStackIdPattern = Pattern.compile("mStackId=(\\d+)");
 
@@ -120,6 +124,7 @@ public class WindowManagerState {
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private String mLastTransition = null;
+    private String mAppTransitionState = null;
     private String mInputMethodWindowAppToken = null;
     private Rectangle mStableBounds = new Rectangle();
     private final Rectangle mDefaultPinnedStackBounds = new Rectangle();
@@ -157,7 +162,7 @@ public class WindowManagerState {
             dump = outputReceiver.getOutput();
             parseSysDump(dump);
 
-            retry = mWindowStates.isEmpty() || mFocusedWindow == null || mFocusedApp == null;
+            retry = mWindowStates.isEmpty() || mFocusedApp == null;
         } while (retry && retriesLeft-- > 0);
 
         if (retry) {
@@ -257,6 +262,15 @@ public class WindowManagerState {
                 final String focusedApp = matcher.group(5);
                 log(focusedApp);
                 mFocusedApp = focusedApp;
+                continue;
+            }
+
+            matcher = sAppTransitionStatePattern.matcher(line);
+            if (matcher.matches()) {
+                log(line);
+                final String appTransitionState = matcher.group(1);
+                log(appTransitionState);
+                mAppTransitionState = appTransitionState;
                 continue;
             }
 
@@ -440,6 +454,10 @@ public class WindowManagerState {
 
     String getLastTransition() {
         return mLastTransition;
+    }
+
+    String getAppTransitionState() {
+        return mAppTransitionState;
     }
 
     int getFrontStackId(int displayId) {

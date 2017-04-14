@@ -325,6 +325,11 @@
                  android:permission="android.permission.BIND_VOICE_INTERACTION"
                  android:exported="true" />
 
+        <activity android:name=".SplashscreenActivity"
+            android:taskAffinity="nobody.but.SplashscreenActivity"
+            android:theme="@style/SplashscreenTheme"
+            android:exported="true" />
+
         <service android:name="com.android.cts.verifier.vr.MockVrListenerService"
                  android:exported="true"
                  android:enabled="true"
