@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
  *
  * This testcase tests operation of:
  *   - SensorManager.createDirectChannel()
- *   - SensorManager.configureDirectReport()
  *   - SensorDirectChannel.*
  *   - Sensor.getHighestDirectReportRateLevel()
  *   - Sensor.isDirectChannelTypeSupported()
@@ -89,7 +88,7 @@ public class SensorDirectReportTest extends SensorTestCase {
     protected void setUp() throws Exception {
         mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
 
-        mNeedMemoryFile = isMemoryTypeNeeded(SensorDirectChannel.TYPE_ASHMEM);
+        mNeedMemoryFile = isMemoryTypeNeeded(SensorDirectChannel.TYPE_MEMORY_FILE);
         mNeedHardwareBuffer = isMemoryTypeNeeded(SensorDirectChannel.TYPE_HARDWARE_BUFFER);
 
         if (mNeedMemoryFile) {
@@ -129,28 +128,28 @@ public class SensorDirectReportTest extends SensorTestCase {
     public void testAccelerometerAshmemNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_NORMAL);
     }
 
     public void testGyroscopeAshmemNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_NORMAL);
     }
 
     public void testMagneticFieldAshmemNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_NORMAL);
     }
 
     public void testAccelerometerAshmemFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_FAST);
 
     }
@@ -158,21 +157,21 @@ public class SensorDirectReportTest extends SensorTestCase {
     public void testGyroscopeAshmemFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_FAST);
     }
 
     public void testMagneticFieldAshmemFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_FAST);
     }
 
     public void testAccelerometerAshmemVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_VERY_FAST);
 
     }
@@ -180,14 +179,14 @@ public class SensorDirectReportTest extends SensorTestCase {
     public void testGyroscopeAshmemVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_VERY_FAST);
     }
 
     public void testMagneticFieldAshmemVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
-                SensorDirectChannel.TYPE_ASHMEM,
+                SensorDirectChannel.TYPE_MEMORY_FILE,
                 SensorDirectChannel.RATE_VERY_FAST);
     }
 
@@ -263,39 +262,40 @@ public class SensorDirectReportTest extends SensorTestCase {
             return;
         }
 
-        mChannel = null;
         try {
             switch(memType) {
-                case SensorDirectChannel.TYPE_ASHMEM:
+                case SensorDirectChannel.TYPE_MEMORY_FILE:
                     assertTrue("MemoryFile is null", mMemoryFile != null);
                     mChannel = mSensorManager.createDirectChannel(mMemoryFile);
-                    assertTrue("createDirectChannel(MemoryFile) failed", mChannel != null);
                     break;
                 case SensorDirectChannel.TYPE_HARDWARE_BUFFER:
                     assertTrue("HardwareBuffer is null", mHardwareBuffer != null);
                     mChannel = mSensorManager.createDirectChannel(mHardwareBuffer);
-                    assertTrue("createDirectChannel(HardwareBuffer) failed", mChannel != null);
                     break;
                 default:
                     Log.e(TAG, "Specified illegal memory type " + memType);
                     return;
             }
+        } catch (IllegalStateException e) {
+            mChannel = null;
+        }
+        assertTrue("createDirectChannel failed", mChannel != null);
+
+        try {
             assertTrue("Shared memory is not formatted", isSharedMemoryFormatted(memType));
             waitBeforeStartSensor();
 
-            int token = mSensorManager.configureDirectChannel(mChannel, s, rateLevel);
+            int token = mChannel.configure(s, rateLevel);
             assertTrue("configure direct mChannel failed", token > 0);
 
             waitSensorCollection();
 
             //stop sensor and analyze content
-            mSensorManager.configureDirectChannel(mChannel, s, SensorDirectChannel.RATE_STOP);
+            mChannel.configure(s, SensorDirectChannel.RATE_STOP);
             checkSharedMemoryContent(s, memType, rateLevel, token);
         } finally {
-            if (mChannel != null) {
-                mChannel.close();
-                mChannel = null;
-            }
+            mChannel.close();
+            mChannel = null;
         }
     }
 
@@ -348,7 +348,7 @@ public class SensorDirectReportTest extends SensorTestCase {
     }
 
     private boolean isSharedMemoryFormatted(int memType) {
-        if (memType == SensorDirectChannel.TYPE_ASHMEM) {
+        if (memType == SensorDirectChannel.TYPE_MEMORY_FILE) {
             if (!readMemoryFileContent()) {
                 Log.e(TAG, "Read MemoryFile content fail");
                 return false;
@@ -369,7 +369,7 @@ public class SensorDirectReportTest extends SensorTestCase {
     }
 
     private void checkSharedMemoryContent(Sensor s, int memType, int rateLevel, int token) {
-        if (memType == SensorDirectChannel.TYPE_ASHMEM) {
+        if (memType == SensorDirectChannel.TYPE_MEMORY_FILE) {
             assertTrue("read MemoryFile content failed", readMemoryFileContent());
         } else {
             assertTrue("read HardwareBuffer content failed", readHardwareBufferContent());
