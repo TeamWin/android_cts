@@ -431,17 +431,6 @@ public class VectorDrawableTest {
 
     @SmallTest
     @Test
-    public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final int densityDpi = mResources.getConfiguration().densityDpi;
-        try {
-            verifyPreloadDensityInner(mResources, densityDpi);
-        } finally {
-            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
-        }
-    }
-
-    @SmallTest
-    @Test
     public void testGetOpacity () throws XmlPullParserException, IOException {
         VectorDrawable vectorDrawable = new VectorDrawable();
 
@@ -453,6 +442,30 @@ public class VectorDrawableTest {
         assertEquals("Alpha should be 0 now", 0, vectorDrawable.getAlpha());
         assertEquals("Opacity should be TRANSPARENT now", PixelFormat.TRANSPARENT,
                 vectorDrawable.getOpacity());
+    }
+
+    @SmallTest
+    @Test
+    public void testPreloadDensity() throws XmlPullParserException, IOException {
+        final int densityDpi = mResources.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
+            verifyPreloadDensityInner(mResources, densityDpi);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
+        }
+    }
+
+    @SmallTest
+    @Test
+    public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
+        final int densityDpi = mResources.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(mResources, 213);
+            verifyPreloadDensityInner(mResources, 213);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
+        }
     }
 
     private void verifyPreloadDensityInner(Resources res, int densityDpi)
@@ -470,7 +483,9 @@ public class VectorDrawableTest {
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final VectorDrawable halfDrawable =
                 (VectorDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
+        assertEquals(Math.round(origWidth * approxHalf), halfDrawable.getIntrinsicWidth());
 
         // Set density to double original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);
