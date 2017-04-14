@@ -19,34 +19,6 @@
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:orientation="vertical" android:id="@+id/rootContainer">
 
-    <EditText android:id="@+id/firstLevelDefault" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <EditText android:id="@+id/firstLevelInherit" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillMode="inherit" />
-
-    <EditText android:id="@+id/firstLevelAuto" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillMode="auto" />
-
-    <EditText android:id="@+id/firstLevelManual" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillMode="manual" />
-
-    <LinearLayout android:id="@+id/manualContainer" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:autofillMode="manual"
-        android:orientation="vertical">
-        <EditText android:id="@+id/manualContainerDefault" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <EditText android:id="@+id/manualContainerInherit" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:autofillMode="inherit" />
-
-        <EditText android:id="@+id/manualContainerAuto" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:autofillMode="auto" />
-
-        <EditText android:id="@+id/manualContainerManual" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:autofillMode="manual" />
-    </LinearLayout>
-
     <TextView android:id="@+id/textViewNoHint" android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <TextView android:id="@+id/textViewHintCustom" android:layout_width="wrap_content"
