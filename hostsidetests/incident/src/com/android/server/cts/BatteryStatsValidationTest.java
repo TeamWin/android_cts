@@ -42,6 +42,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
     public static final String KEY_ACTION = "action";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
+    public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
 
     @Override
@@ -132,6 +133,26 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         Thread.sleep(4_000);
         assertValueRange("jb", "", 6, 2, 2); // count
         assertValueRange("jb", "", 8, 1, 1); // background_count
+
+        batteryOffScreenOn();
+    }
+
+    public void testSyncBgVsFg() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        // Foreground test.
+        executeForeground(ACTION_SYNC);
+        Thread.sleep(3_000);
+        // Allow one or two syncs in this time frame (not just one) due to unpredictable syncs.
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 1, 2); // count
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 0, 0); // background_count
+
+        // Background test.
+        executeBackground(ACTION_SYNC);
+        Thread.sleep(3_000);
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 2, 4); // count
+        assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 1, 2); // background_count
 
         batteryOffScreenOn();
     }
