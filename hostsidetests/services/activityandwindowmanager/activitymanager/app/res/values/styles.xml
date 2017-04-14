@@ -40,4 +40,7 @@
     <style name="NoPreview">
         <item name="android:windowDisablePreview">true</item>
     </style>
+    <style name="SplashscreenTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowSplashscreenContent">@drawable/red</item>
+    </style>
 </resources>
