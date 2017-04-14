@@ -26,6 +26,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Process;
 import android.util.Log;
 
@@ -99,16 +100,90 @@ public class MockJobService extends JobService {
             while ((work = params.dequeueWork()) != null) {
                 Log.i(TAG, "Received work #" + index + ": " + work.getIntent());
                 mReceivedWork.add(work.getIntent());
-                params.completeWork(work);
-                if (index < expectedWork.length && expectedWork[index].subitems != null) {
-                    final TestWorkItem[] sub = expectedWork[index].subitems;
-                    final JobInfo ji = expectedWork[index].jobInfo;
-                    final JobScheduler js = (JobScheduler) getSystemService(
-                            Context.JOB_SCHEDULER_SERVICE);
-                    for (int subi = 0; subi < sub.length; subi++) {
-                        js.enqueue(ji, new JobWorkItem(sub[subi].intent));
+
+                if (index < expectedWork.length) {
+                    TestWorkItem expected = expectedWork[index];
+                    int grantFlags = work.getIntent().getFlags();
+                    if (expected.requireUrisGranted != null) {
+                        for (int ui = 0; ui < expected.requireUrisGranted.length; ui++) {
+                            if ((grantFlags & Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
+                                if (checkUriPermission(expected.requireUrisGranted[ui],
+                                        Process.myPid(), Process.myUid(),
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    TestEnvironment.getTestEnvironment().notifyExecution(params,
+                                            permCheckRead, permCheckWrite, null,
+                                            "Expected read permission but not granted: "
+                                                    + expected.requireUrisGranted[ui]
+                                                    + " @ #" + index);
+                                    return false;
+                                }
+                            }
+                            if ((grantFlags & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
+                                if (checkUriPermission(expected.requireUrisGranted[ui],
+                                        Process.myPid(), Process.myUid(),
+                                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    TestEnvironment.getTestEnvironment().notifyExecution(params,
+                                            permCheckRead, permCheckWrite, null,
+                                            "Expected write permission but not granted: "
+                                                    + expected.requireUrisGranted[ui]
+                                                    + " @ #" + index);
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    if (expected.requireUrisNotGranted != null) {
+                        // XXX note no delay here, current impl will have fully revoked the
+                        // permission by the time we return from completing the last work.
+                        for (int ui = 0; ui < expected.requireUrisNotGranted.length; ui++) {
+                            if ((grantFlags & Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
+                                if (checkUriPermission(expected.requireUrisNotGranted[ui],
+                                        Process.myPid(), Process.myUid(),
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        != PackageManager.PERMISSION_DENIED) {
+                                    TestEnvironment.getTestEnvironment().notifyExecution(params,
+                                            permCheckRead, permCheckWrite, null,
+                                            "Not expected read permission but granted: "
+                                                    + expected.requireUrisNotGranted[ui]
+                                                    + " @ #" + index);
+                                    return false;
+                                }
+                            }
+                            if ((grantFlags & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
+                                if (checkUriPermission(expected.requireUrisNotGranted[ui],
+                                        Process.myPid(), Process.myUid(),
+                                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                                        != PackageManager.PERMISSION_DENIED) {
+                                    TestEnvironment.getTestEnvironment().notifyExecution(params,
+                                            permCheckRead, permCheckWrite, null,
+                                            "Not expected write permission but granted: "
+                                                    + expected.requireUrisNotGranted[ui]
+                                                    + " @ #" + index);
+                                    return false;
+                                }
+                            }
+                        }
                     }
                 }
+
+                params.completeWork(work);
+
+                if (index < expectedWork.length) {
+                    TestWorkItem expected = expectedWork[index];
+                    if (expected.subitems != null) {
+                        final TestWorkItem[] sub = expected.subitems;
+                        final JobInfo ji = expected.jobInfo;
+                        final JobScheduler js = (JobScheduler) getSystemService(
+                                Context.JOB_SCHEDULER_SERVICE);
+                        for (int subi = 0; subi < sub.length; subi++) {
+                            js.enqueue(ji, new JobWorkItem(sub[subi].intent));
+                        }
+                    }
+                }
+
+                index++;
             }
             Log.i(TAG, "Done with all work at #" + index);
             // We don't notifyExecution here because we want to make sure the job properly
@@ -130,17 +205,32 @@ public class MockJobService extends JobService {
         public final Intent intent;
         public final JobInfo jobInfo;
         public final TestWorkItem[] subitems;
+        public final Uri[] requireUrisGranted;
+        public final Uri[] requireUrisNotGranted;
 
         public TestWorkItem(Intent _intent) {
             intent = _intent;
             jobInfo = null;
             subitems = null;
+            requireUrisGranted = null;
+            requireUrisNotGranted = null;
         }
 
         public TestWorkItem(Intent _intent, JobInfo _jobInfo, TestWorkItem[] _subitems) {
             intent = _intent;
             jobInfo = _jobInfo;
             subitems = _subitems;
+            requireUrisGranted = null;
+            requireUrisNotGranted = null;
+        }
+
+        public TestWorkItem(Intent _intent, Uri[] _requireUrisGranted,
+                Uri[] _requireUrisNotGranted) {
+            intent = _intent;
+            jobInfo = null;
+            subitems = null;
+            requireUrisGranted = _requireUrisGranted;
+            requireUrisNotGranted = _requireUrisNotGranted;
         }
     }
 
