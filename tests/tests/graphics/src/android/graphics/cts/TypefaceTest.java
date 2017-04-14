@@ -476,4 +476,27 @@ public class TypefaceTest {
             assertNotEquals(widthDefaultTypeface, widthCustomTypeface, 1.0f);
         }
     }
+
+    @Test
+    public void testTypefaceBuilder_customFallback() {
+        final String fontPath = "samplefont2.ttf";
+        final Typeface regularTypeface = new Typeface.Builder(mContext.getAssets(), fontPath)
+                .setWeight(400).build();
+        final Typeface blackTypeface = new Typeface.Builder(mContext.getAssets(), fontPath)
+                .setWeight(900).build();
+
+        // W is not supported by samplefont2.ttf
+        final String testString = "WWWWWWWWWWWWWWWWWWWWW";
+
+        final Paint p = new Paint();
+        p.setTextSize(128);
+
+        p.setTypeface(regularTypeface);
+        final float widthFromRegular = p.measureText(testString);
+
+        p.setTypeface(blackTypeface);
+        final float widthFromBlack = p.measureText(testString);
+
+        assertTrue(Math.abs(widthFromRegular - widthFromBlack) > 1.0f);
+    }
 }
