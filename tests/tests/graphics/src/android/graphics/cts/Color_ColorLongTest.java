@@ -84,6 +84,11 @@ public class Color_ColorLongTest {
         assertEquals(p3, colorSpace(pack(0.5f, 0.7f, 1.0f, 1.0f, p3)));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvalidColorSpace() {
+        colorSpace(0xffffffffffffffffL);
+    }
+
     @Test
     public void testIsSrgb() {
         ColorSpace p3 = ColorSpace.get(Named.DISPLAY_P3);
