@@ -42,6 +42,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
+import android.annotation.IntDef;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
@@ -158,6 +161,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.lang.annotation.Retention;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -409,6 +413,108 @@ public class TextViewTest {
         //test negative input value.
         mTextView.setGravity(-1);
         assertEquals(-1, mTextView.getGravity());
+    }
+
+    @Retention(SOURCE)
+    @IntDef({EditorInfo.IME_ACTION_UNSPECIFIED, EditorInfo.IME_ACTION_NONE,
+            EditorInfo.IME_ACTION_GO, EditorInfo.IME_ACTION_SEARCH, EditorInfo.IME_ACTION_SEND,
+            EditorInfo.IME_ACTION_NEXT, EditorInfo.IME_ACTION_DONE, EditorInfo.IME_ACTION_PREVIOUS})
+    private @interface ImeOptionAction {}
+
+    @Retention(SOURCE)
+    @IntDef(flag = true,
+            value = {EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING,
+                    EditorInfo.IME_FLAG_NO_FULLSCREEN, EditorInfo.IME_FLAG_NAVIGATE_PREVIOUS,
+                    EditorInfo.IME_FLAG_NAVIGATE_NEXT, EditorInfo.IME_FLAG_NO_EXTRACT_UI,
+                    EditorInfo.IME_FLAG_NO_ACCESSORY_ACTION, EditorInfo.IME_FLAG_NO_ENTER_ACTION,
+                    EditorInfo.IME_FLAG_FORCE_ASCII})
+    private @interface ImeOptionFlags {}
+
+    private static void assertImeOptions(TextView textView,
+            @ImeOptionAction int expectedImeOptionAction,
+            @ImeOptionFlags int expectedImeOptionFlags) {
+        final int actualAction = textView.getImeOptions() & EditorInfo.IME_MASK_ACTION;
+        final int actualFlags = textView.getImeOptions() & ~EditorInfo.IME_MASK_ACTION;
+        assertEquals(expectedImeOptionAction, actualAction);
+        assertEquals(expectedImeOptionFlags, actualFlags);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testImeOptions() {
+        mActivity.setContentView(R.layout.textview_imeoptions);
+
+        // Test "normal" to be a synonym EditorInfo.IME_NULL
+        assertEquals(EditorInfo.IME_NULL,
+                mActivity.<TextView>findViewById(R.id.textview_imeoption_normal).getImeOptions());
+
+        // Test EditorInfo.IME_ACTION_*
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_unspecified),
+                EditorInfo.IME_ACTION_UNSPECIFIED, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_none),
+                EditorInfo.IME_ACTION_NONE, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_go),
+                EditorInfo.IME_ACTION_GO, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_search),
+                EditorInfo.IME_ACTION_SEARCH, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_send),
+                EditorInfo.IME_ACTION_SEND, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_next),
+                EditorInfo.IME_ACTION_NEXT, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_done),
+                EditorInfo.IME_ACTION_DONE, 0);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_action_previous),
+                EditorInfo.IME_ACTION_PREVIOUS, 0);
+
+        // Test EditorInfo.IME_FLAG_*
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_no_personalized_learning),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_no_fullscreen),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_navigation_previous),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NAVIGATE_PREVIOUS);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_navigation_next),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NAVIGATE_NEXT);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_no_extract_ui),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_no_accessory_action),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NO_ACCESSORY_ACTION);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_no_enter_action),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_NO_ENTER_ACTION);
+        assertImeOptions(
+                mActivity.findViewById(R.id.textview_imeoption_force_ascii),
+                EditorInfo.IME_ACTION_UNSPECIFIED,
+                EditorInfo.IME_FLAG_FORCE_ASCII);
+
+        // test action + multiple flags
+        assertImeOptions(
+                mActivity.findViewById(
+                        R.id.textview_imeoption_action_go_nagivate_next_no_extract_ui_force_ascii),
+                EditorInfo.IME_ACTION_GO,
+                EditorInfo.IME_FLAG_NAVIGATE_NEXT | EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                        | EditorInfo.IME_FLAG_FORCE_ASCII);
     }
 
     @Test
