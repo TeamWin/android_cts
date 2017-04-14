@@ -45,6 +45,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testLockAndUnlock() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
@@ -54,6 +57,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
@@ -65,6 +71,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard_whileOccluded() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
@@ -80,6 +89,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
+        if (!isHandheld()) {
+            return;
+        }
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
