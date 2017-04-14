@@ -348,6 +348,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testFilter_originatingNumber_match_filtered() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
                 .setClientPrefix("//CTSVVM")
                 .setOriginatingNumbers(Arrays.asList(mPhoneNumber))
@@ -357,6 +361,10 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     public void testFilter_originatingNumber_mismatch_notFiltered() {
+        if (!hasTelephony(mContext)) {
+            Log.d(TAG, "skipping test that requires telephony feature");
+            return;
+        }
         VisualVoicemailSmsFilterSettings settings = new VisualVoicemailSmsFilterSettings.Builder()
                 .setClientPrefix("//CTSVVM")
                 .setOriginatingNumbers(Arrays.asList("1"))
