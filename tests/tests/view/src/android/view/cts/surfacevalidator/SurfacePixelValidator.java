@@ -36,7 +36,7 @@ public class SurfacePixelValidator {
      * Observed that first few frames have errors with SurfaceView placement, so we skip for now.
      * b/29603849 tracking that issue.
      */
-    private static final int NUM_FIRST_FRAMES_SKIPPED = 8;
+    private static final int NUM_FIRST_FRAMES_SKIPPED = 25;
 
     // If no channel is greater than this value, pixel will be considered 'blackish'.
     private static final short PIXEL_CHANNEL_THRESHOLD = 4;
@@ -78,6 +78,7 @@ public class SurfacePixelValidator {
             synchronized (mResultLock) {
                 if (numSkipped < NUM_FIRST_FRAMES_SKIPPED) {
                     numSkipped++;
+                    Log.d(TAG, "skipped fram nr " + numSkipped + ", success = " + success);
                 } else {
                     if (success) {
                         mResultSuccessFrames++;
