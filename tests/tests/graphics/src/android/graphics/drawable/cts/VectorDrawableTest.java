@@ -417,17 +417,6 @@ public class VectorDrawableTest extends AndroidTestCase {
     }
 
     @SmallTest
-    public void testPreloadDensity() throws XmlPullParserException, IOException {
-        final Resources res = getContext().getResources();
-        final int densityDpi = res.getConfiguration().densityDpi;
-        try {
-            testPreloadDensityInner(res);
-        } finally {
-            DrawableTestUtils.setResourcesDensity(res, densityDpi);
-        }
-    }
-
-    @SmallTest
     public void testGetOpacity() throws XmlPullParserException, IOException {
         VectorDrawable vectorDrawable = new VectorDrawable();
 
@@ -441,12 +430,30 @@ public class VectorDrawableTest extends AndroidTestCase {
                 vectorDrawable.getOpacity());
     }
 
-    private void testPreloadDensityInner(Resources res) throws XmlPullParserException, IOException {
-        // Set density to a fixed value so that we're not affected by the
-        // device's native density.
-        final int densityDpi = DisplayMetrics.DENSITY_MEDIUM;
-        DrawableTestUtils.setResourcesDensity(res, densityDpi);
+    @SmallTest
+    public void testPreloadDensity() throws XmlPullParserException, IOException {
+        final int densityDpi = mResources.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
+            verifyPreloadDensityInner(mResources, densityDpi);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
+        }
+    }
 
+    @SmallTest
+    public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
+        final int densityDpi = mResources.getConfiguration().densityDpi;
+        try {
+            DrawableTestUtils.setResourcesDensity(mResources, 213);
+            verifyPreloadDensityInner(mResources, 213);
+        } finally {
+            DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
+        }
+    }
+
+    private void verifyPreloadDensityInner(Resources res, int densityDpi)
+            throws XmlPullParserException, IOException {
         // Capture initial state at default density.
         final XmlResourceParser parser = DrawableTestUtils.getResourceParser(
                 res, R.drawable.vector_density);
@@ -460,7 +467,9 @@ public class VectorDrawableTest extends AndroidTestCase {
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final VectorDrawable halfDrawable =
                 (VectorDrawable) preloadedConstantState.newDrawable(res);
-        assertEquals(Math.round(origWidth / 2f), halfDrawable.getIntrinsicWidth());
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
+        assertEquals(Math.round(origWidth * approxHalf), halfDrawable.getIntrinsicWidth());
 
         // Set density to double original.
         DrawableTestUtils.setResourcesDensity(res, densityDpi * 2);

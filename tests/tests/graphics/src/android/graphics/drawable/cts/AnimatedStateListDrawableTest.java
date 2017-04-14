@@ -192,9 +192,11 @@ public class AnimatedStateListDrawableTest extends InstrumentationTestCase {
         DrawableTestUtils.setResourcesDensity(res, densityDpi / 2);
         final StateListDrawable halfDrawable =
                 (StateListDrawable) cs.newDrawable(res);
+        // NOTE: densityDpi may not be an even number, so account for *actual* scaling in asserts
+        final float approxHalf = (float)(densityDpi / 2) / densityDpi;
         for (int i = 0; i < count; i++) {
             halfDrawable.selectDrawable(i);
-            assertEquals(Math.round(origWidth[i] / 2f), halfDrawable.getIntrinsicWidth());
+            assertEquals(Math.round(origWidth[i] * approxHalf), halfDrawable.getIntrinsicWidth());
         }
 
         // Set density to double original.
