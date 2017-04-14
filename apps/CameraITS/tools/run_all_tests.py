@@ -63,7 +63,8 @@ def main():
     # Not yet mandated tests
     NOT_YET_MANDATED = {
         "scene0": [
-            "test_jitter"
+            "test_jitter",
+            "test_burst_capture"
             ],
         "scene1": [
             "test_ae_af",
