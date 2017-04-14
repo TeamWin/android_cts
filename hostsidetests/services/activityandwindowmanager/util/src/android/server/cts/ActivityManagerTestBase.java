@@ -115,6 +115,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     static final String AM_MOVE_TASK = "am stack move-task ";
 
+    private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
+            "am supports-split-screen-multiwindow";
     private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
 
     private static final String INPUT_KEYEVENT_HOME = "input keyevent 3";
@@ -504,6 +506,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean isHandheld() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.software.leanback")
                 && !hasDeviceFeature("android.software.watch");
+    }
+
+    protected boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
+        CollectingOutputReceiver outputReceiver = new CollectingOutputReceiver();
+        executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW, outputReceiver);
+        String output = outputReceiver.getOutput();
+        return !output.startsWith("false");
     }
 
     protected boolean noHomeScreen() throws DeviceNotAvailableException {
