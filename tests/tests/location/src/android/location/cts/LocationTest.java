@@ -282,10 +282,6 @@ public class LocationTest extends AndroidTestCase {
         location.setVerticalAccuracyMeters(1.0f);
         assertEquals(1.0, location.getVerticalAccuracyMeters(), DELTA);
         assertTrue(location.hasVerticalAccuracy());
-
-        location.removeVerticalAccuracy();
-        assertEquals(0.0, location.getVerticalAccuracyMeters(), DELTA);
-        assertFalse(location.hasVerticalAccuracy());
     }
 
     public void testAccessSpeedAccuracy() {
@@ -295,10 +291,6 @@ public class LocationTest extends AndroidTestCase {
         location.setSpeedAccuracyMetersPerSecond(1.0f);
         assertEquals(1.0, location.getSpeedAccuracyMetersPerSecond(), DELTA);
         assertTrue(location.hasSpeedAccuracy());
-
-        location.removeSpeedAccuracy();
-        assertEquals(0.0, location.getSpeedAccuracyMetersPerSecond(), DELTA);
-        assertFalse(location.hasSpeedAccuracy());
     }
 
     public void testAccessBearingAccuracy() {
@@ -308,10 +300,6 @@ public class LocationTest extends AndroidTestCase {
         location.setBearingAccuracyDegrees(1.0f);
         assertEquals(1.0, location.getBearingAccuracyDegrees(), DELTA);
         assertTrue(location.hasBearingAccuracy());
-
-        location.removeBearingAccuracy();
-        assertEquals(0.0, location.getBearingAccuracyDegrees(), DELTA);
-        assertFalse(location.hasBearingAccuracy());
     }
 
 
