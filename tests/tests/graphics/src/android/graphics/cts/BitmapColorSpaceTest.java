@@ -38,6 +38,7 @@ import java.nio.IntBuffer;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -520,6 +521,22 @@ public class BitmapColorSpaceTest {
     }
 
     @Test
+    public void guessAdobeRGB() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+
+        try (InputStream in = mResources.getAssets().open("red-adobergb.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = opts.outColorSpace;
+            assertNull(b);
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
     public void guessUnknown() {
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inJustDecodeBounds = true;
@@ -546,6 +563,99 @@ public class BitmapColorSpaceTest {
             assertNull(b);
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void inColorSpaceP3ToSRGB() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB);
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+            assertEquals(opts.inPreferredColorSpace, opts.outColorSpace);
+
+            verifyGetPixel(b, 0x3ff00ff, 0xff00ff00);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void inColorSpaceSRGBToP3() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
+
+        try (InputStream in = mResources.getAssets().open("green-srgb.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
+            assertEquals(opts.inPreferredColorSpace, opts.outColorSpace);
+
+            verifyGetPixel(b, 0x75fb4cff, 0xff00ff00);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void inColorSpaceRGBA16F() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
+
+        try (InputStream in = mResources.getAssets().open("prophoto-rgba16f.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
+            assertNotEquals(opts.inPreferredColorSpace, opts.outColorSpace);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void inColorSpace565() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
+        opts.inPreferredConfig = Bitmap.Config.RGB_565;
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            Bitmap b = BitmapFactory.decodeStream(in, null, opts);
+            ColorSpace cs = b.getColorSpace();
+            assertNotNull(cs);
+            assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+            assertNotEquals(opts.inPreferredColorSpace, opts.outColorSpace);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void inColorSpaceNotRGB() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.CIE_LAB);
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            BitmapFactory.decodeStream(in, null, opts);
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void inColorSpaceNoTransferParameters() {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+
+        try (InputStream in = mResources.getAssets().open("green-p3.png")) {
+            BitmapFactory.decodeStream(in, null, opts);
         } catch (IOException e) {
             fail();
         }
