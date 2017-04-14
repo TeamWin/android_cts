@@ -34,7 +34,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.graphics.cts.R;
+import android.graphics.pdf.cts.R;
 import android.graphics.pdf.PdfRenderer;
 import android.graphics.pdf.PdfRenderer.Page;
 import android.os.ParcelFileDescriptor;
