@@ -44,6 +44,7 @@
     <option name="compatibility:include-filter" value="CtsMonkeyTestCases" />
     <option name="compatibility:include-filter" value="CtsNetTestCases" />
     <option name="compatibility:include-filter" value="CtsOsTestCases" />
+    <option name="compatibility:include-filter" value="CtsPdfTestCases" />
     <option name="compatibility:include-filter" value="CtsPreference2TestCases" />
     <option name="compatibility:include-filter" value="CtsPrintTestCases" />
     <option name="compatibility:include-filter" value="CtsProviderTestCases" />
