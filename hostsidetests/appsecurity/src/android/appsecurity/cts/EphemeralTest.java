@@ -105,12 +105,9 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
-    /*
-     * Disabled pending drops of updated prebuilts
     public void testExposedSystemActivities() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testExposedSystemActivities");
     }
-    */
 
     public void testBuildSerialUnknown() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testBuildSerialUnknown");

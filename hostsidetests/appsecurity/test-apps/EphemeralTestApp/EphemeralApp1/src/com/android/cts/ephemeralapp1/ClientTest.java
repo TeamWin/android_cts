@@ -95,9 +95,6 @@ public class ClientTest {
                 ContactsContract.CommonDataKinds.Email.CONTENT_TYPE, null),
         makeIntent(Intent.ACTION_PICK, null,
                 ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_TYPE, null),
-        makeIntent(Intent.ACTION_INSERT, null, ContactsContract.Contacts.CONTENT_TYPE, null),
-        // Email
-        makeIntent(Intent.ACTION_SEND, null, "text/plain", Uri.parse("mailto:")),
         // File Storage
         makeIntent(Intent.ACTION_OPEN_DOCUMENT, Intent.CATEGORY_OPENABLE, "*/*", null),
         makeIntent(Intent.ACTION_OPEN_DOCUMENT, null, "*/*", null),
@@ -106,13 +103,8 @@ public class ClientTest {
         makeIntent(Intent.ACTION_OPEN_DOCUMENT_TREE, null, null, null),
         makeIntent(Intent.ACTION_CREATE_DOCUMENT, Intent.CATEGORY_OPENABLE, "text/plain", null),
         makeIntent(Intent.ACTION_CREATE_DOCUMENT, null, "text/plain", null),
-        // Phone call
-        makeIntent(Intent.ACTION_DIAL, null, null, Uri.parse("tel:")),
-        // SMS
-        makeIntent(Intent.ACTION_SEND, null, "text/plain", Uri.parse("sms:")),
-        makeIntent(Intent.ACTION_SEND, null, "text/plain", Uri.parse("smsto:")),
-        // Web
-        makeIntent(Intent.ACTION_VIEW, null, "text/html", Uri.parse("https://example.com")),
+        // Framework
+        makeIntent(Intent.ACTION_CHOOSER, null, null, null),
     };
 
     private BroadcastReceiver mReceiver;
