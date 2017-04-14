@@ -31,6 +31,7 @@ import android.graphics.BitmapFactory.Options;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
@@ -63,9 +64,33 @@ public class BitmapRegionDecoderTest {
             R.drawable.gif_test, R.drawable.bmp_test
     };
     private static final String[] NAMES_TEMP_FILES = new String[] {
-        "baseline_temp.jpg", "progressive_temp.jpg", "baseline_restart_temp.jpg",
-        "progressive_restart_temp.jpg", "png_temp.png", "webp_temp.webp",
-        "gif_temp.gif", "bmp_temp.bmp"
+            "baseline_temp.jpg", "progressive_temp.jpg", "baseline_restart_temp.jpg",
+            "progressive_restart_temp.jpg", "png_temp.png", "webp_temp.webp",
+            "gif_temp.gif", "bmp_temp.bmp"
+    };
+
+    // Do not change the order!
+    private static final String[] ASSET_NAMES = {
+            "prophoto-rgba16f.png",
+            "green-p3.png",
+            "red-adobergb.png",
+            "green-srgb.png",
+    };
+    private static final ColorSpace.Named[][] ASSET_COLOR_SPACES = {
+            // ARGB8888
+            {
+                    ColorSpace.Named.LINEAR_EXTENDED_SRGB,
+                    ColorSpace.Named.DISPLAY_P3,
+                    ColorSpace.Named.ADOBE_RGB,
+                    ColorSpace.Named.SRGB
+            },
+            // RGB565
+            {
+                    ColorSpace.Named.SRGB,
+                    ColorSpace.Named.SRGB,
+                    ColorSpace.Named.SRGB,
+                    ColorSpace.Named.SRGB
+            }
     };
 
     // The width and height of the above image.
@@ -78,6 +103,7 @@ public class BitmapRegionDecoderTest {
     private static final int NUM_TEST_IMAGES = 6;
 
     private static final int TILE_SIZE = 256;
+    private static final int SMALL_TILE_SIZE = 16;
 
     // Configurations for BitmapFactory.Options
     private static final Config[] COLOR_CONFIGS = new Config[] {Config.ARGB_8888,
@@ -409,6 +435,120 @@ public class BitmapRegionDecoderTest {
         assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
     }
 
+    @Test
+    public void testOutColorType() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        for (int i = 0; i < NUM_TEST_IMAGES; ++i) {
+            for (int j = 0; j < SAMPLESIZES.length; ++j) {
+                for (int k = 0; k < COLOR_CONFIGS.length; ++k) {
+                    opts.inSampleSize = SAMPLESIZES[j];
+                    opts.inPreferredConfig = COLOR_CONFIGS[k];
+
+                    InputStream is1 = obtainInputStream(RES_IDS[i]);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                    Bitmap region = decoder.decodeRegion(
+                            new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
+                    decoder.recycle();
+
+                    assertSame(opts.inPreferredConfig, opts.outConfig);
+                    assertSame(opts.outConfig, region.getConfig());
+                    region.recycle();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testOutColorSpace() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        for (int i = 0; i < ASSET_NAMES.length; i++) {
+            for (int j = 0; j < SAMPLESIZES.length; ++j) {
+                for (int k = 0; k < COLOR_CONFIGS.length; ++k) {
+                    opts.inPreferredConfig = COLOR_CONFIGS[k];
+
+                    String assetName = ASSET_NAMES[i];
+                    InputStream is1 = obtainInputStream(assetName);
+                    BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                    Bitmap region = decoder.decodeRegion(
+                            new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
+                    decoder.recycle();
+
+                    ColorSpace expected = ColorSpace.get(ASSET_COLOR_SPACES[k][i]);
+                    assertSame(expected, opts.outColorSpace);
+                    assertSame(expected, region.getColorSpace());
+                    region.recycle();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testInColorSpace() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        for (int i = 0; i < NUM_TEST_IMAGES; ++i) {
+            for (int j = 0; j < SAMPLESIZES.length; ++j) {
+                opts.inSampleSize = SAMPLESIZES[j];
+                opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.DISPLAY_P3);
+
+                InputStream is1 = obtainInputStream(RES_IDS[i]);
+                BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+                Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
+                decoder.recycle();
+
+                assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), opts.outColorSpace);
+                assertSame(opts.outColorSpace, region.getColorSpace());
+                region.recycle();
+            }
+        }
+    }
+
+    @Test
+    public void testInColorSpaceRGBA16F() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
+
+        InputStream is1 = obtainInputStream(ASSET_NAMES[0]); // ProPhoto 16 bit
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
+        decoder.recycle();
+
+        assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), region.getColorSpace());
+        region.recycle();
+    }
+
+    @Test
+    public void testInColorSpace565() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        opts.inPreferredConfig = Config.RGB_565;
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.ADOBE_RGB);
+
+        InputStream is1 = obtainInputStream(ASSET_NAMES[1]); // Display P3
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
+        decoder.recycle();
+
+        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), region.getColorSpace());
+        region.recycle();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInColorSpaceNotRgb() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.CIE_LAB);
+        InputStream is1 = obtainInputStream(RES_IDS[0]);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInColorSpaceNoTransferParameters() throws IOException {
+        Options opts = new BitmapFactory.Options();
+        opts.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB);
+        InputStream is1 = obtainInputStream(RES_IDS[0]);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is1, false);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), opts);
+    }
+
     private void compareRegionByRegion(BitmapRegionDecoder decoder,
             Options opts, int mseMargin, Bitmap wholeImage) {
         int width = decoder.getWidth();
@@ -457,6 +597,10 @@ public class BitmapRegionDecoderTest {
 
     private InputStream obtainInputStream(int resId) {
         return mRes.openRawResource(resId);
+    }
+
+    private InputStream obtainInputStream(String assetName) throws IOException {
+        return mRes.getAssets().open(assetName);
     }
 
     private byte[] obtainByteArray(int resId) throws IOException {
