@@ -34,13 +34,12 @@ import com.android.tradefed.device.ITestDevice;
 
 import junit.framework.Assert;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 /** Combined state of the activity manager and window manager. */
 public class ActivityAndWindowManagersState extends Assert {
@@ -250,6 +249,12 @@ public class ActivityAndWindowManagersState extends Assert {
     void waitForFocusedStack(ITestDevice device, int stackId) throws Exception {
         waitForWithAmState(device, state -> state.getFocusedStackId() == stackId,
                 "***Waiting for focused stack...");
+    }
+
+    void waitForAppTransitionIdle(ITestDevice device) throws Exception {
+        waitForWithWmState(device,
+                state -> WindowManagerState.APP_STATE_IDLE.equals(state.getAppTransitionState()),
+                "***Waiting for app transition idle...");
     }
 
     void waitForWithAmState(ITestDevice device, Predicate<ActivityManagerState> waitCondition,

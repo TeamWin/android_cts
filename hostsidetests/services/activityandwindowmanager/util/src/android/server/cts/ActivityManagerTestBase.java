@@ -21,8 +21,11 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.testtype.DeviceTestCase;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.lang.String;
@@ -36,6 +39,8 @@ import static android.server.cts.StateLogger.log;
 import static android.server.cts.StateLogger.logE;
 
 import android.server.cts.ActivityManagerState.ActivityStack;
+
+import javax.imageio.ImageIO;
 
 public abstract class ActivityManagerTestBase extends DeviceTestCase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -291,11 +296,23 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         mDevice.executeShellCommand(command, outputReceiver);
     }
 
+    protected BufferedImage takeScreenshot() throws Exception {
+        final InputStreamSource stream = mDevice.getScreenshot("PNG", false /* rescale */);
+        if (stream == null) {
+            fail("Failed to take screenshot of device");
+        }
+        return ImageIO.read(stream.createInputStream());
+    }
+
     protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
             throws Exception {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
-
         mAmWmState.waitForValidState(mDevice, targetActivityName);
+    }
+
+    protected void launchActivityNoWait(final String targetActivityName,
+            final String... keyValuePairs) throws Exception {
+        executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
     }
 
     protected void launchActivityInNewTask(final String targetActivityName) throws Exception {
