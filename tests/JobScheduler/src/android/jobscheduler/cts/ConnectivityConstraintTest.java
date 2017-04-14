@@ -163,6 +163,27 @@ public class ConnectivityConstraintTest extends ConstraintTest {
                 kTestEnvironment.awaitExecution());
     }
 
+    /**
+     * Schedule a job with a metered connectivity constraint, and ensure that it executes
+     * on on a mobile data connection.
+     */
+    public void testConnectivityConstraintExecutes_metered() throws Exception {
+        if (!checkDeviceSupportsMobileData()) {
+            return;
+        }
+        disconnectWifiToConnectToMobile();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(
+                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_METERED)
+                        .build());
+
+        sendExpediteStableChargingBroadcast();
+
+        assertTrue("Job with metered connectivity constraint did not fire on mobile.",
+                kTestEnvironment.awaitExecution());
+    }
+
     // --------------------------------------------------------------------------------------------
     // Negatives - schedule jobs under conditions that require that they fail.
     // --------------------------------------------------------------------------------------------
