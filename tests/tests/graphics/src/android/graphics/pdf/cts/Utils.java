@@ -53,8 +53,8 @@ class Utils {
 
     static final int A4_WIDTH_PTS = 595;
     static final int A4_HEIGHT_PTS = 841;
-    static final int A4_PORTRAIT = android.graphics.pdf.cts.R.raw.a4_portrait_rgbb;
-    static final int A5_PORTRAIT = android.graphics.pdf.cts.R.raw.a5_portrait_rgbb;
+    static final int A4_PORTRAIT = android.graphics.cts.R.raw.a4_portrait_rgbb;
+    static final int A5_PORTRAIT = android.graphics.cts.R.raw.a5_portrait_rgbb;
 
     /**
      * Create a {@link PdfRenderer} pointing to a file copied from a resource.
