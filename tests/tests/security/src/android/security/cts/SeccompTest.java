@@ -67,6 +67,30 @@ public class SeccompTest extends AndroidTestCase {
         }
     }
 
+    public void testCTSSwapOnOffBlocked() {
+        if (CpuFeatures.isArm64Cpu()) {
+            testBlocked(224); // __NR_swapon
+            testBlocked(225); // __NR_swapoff
+        } else if (CpuFeatures.isArmCpu()) {
+            testBlocked(87);  // __NR_swapon
+            testBlocked(115); // __NR_swapoff
+        } else if (CpuFeatures.isX86_64Cpu()) {
+            testBlocked(167); // __NR_swapon
+            testBlocked(168); // __NR_swapoff
+        } else if (CpuFeatures.isX86Cpu()) {
+            testBlocked(87);  // __NR_swapon
+            testBlocked(115); // __NR_swapoff
+        } else if (CpuFeatures.isMips64Cpu()) {
+            testBlocked(5162); // __NR_swapon
+            testBlocked(5163); // __NR_swapoff
+        } else if (CpuFeatures.isMipsCpu()) {
+            testBlocked(4087); // __NR_swapon
+            testBlocked(4115); // __NR_swapoff
+        } else {
+            fail("Unsupported OS");
+        }
+    }
+
     private void testBlocked(int nr) {
         assertTrue("Syscall " + nr + " allowed", testSyscallBlocked(nr));
     }
