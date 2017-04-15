@@ -550,6 +550,47 @@ public class TelephonyManagerTest {
         mTelephonyManager.getMeid(mTelephonyManager.getPhoneCount());
     }
 
+    /**
+     * Tests that the device properly reports the contents of EF_FPLMN or null
+     */
+    @Test
+    public void testGetForbiddenPlmns() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        String[] plmns = mTelephonyManager.getForbiddenPlmns();
+
+        int phoneType = mTelephonyManager.getPhoneType();
+        switch (phoneType) {
+            case TelephonyManager.PHONE_TYPE_GSM:
+                assertNotNull("Forbidden PLMNs must be valid or an empty list!", plmns);
+            case TelephonyManager.PHONE_TYPE_CDMA:
+            case TelephonyManager.PHONE_TYPE_NONE:
+                if (plmns == null) {
+                    return;
+                }
+        }
+
+        for(String plmn : plmns) {
+            if (plmn.length() > 6 || plmn.length() < 5) {
+                fail("Invalid Length for PLMN-ID, must be 5 or 6: " + plmn);
+            }
+
+            // A record which is written in the SIM but empty will
+            // be all f's
+            if(android.text.TextUtils.isDigitsOnly(plmn)) {
+                assertTrue(
+                        "PLMNs must be strings of digits 0-9,F! " + plmn,
+                        android.text.TextUtils.isDigitsOnly(plmn));
+            } else {
+                for (char c : plmn.toUpperCase().toCharArray()) {
+                    assertTrue("PLMNs must be strings of digits 0-9,F! " + plmn,
+                            Character.toUpperCase(c) == 'F');
+                }
+            }
+        }
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
     }
