@@ -39,7 +39,6 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static android.text.InputType.TYPE_NULL;
 import static android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD;
-import static android.view.View.AUTOFILL_MODE_MANUAL;
 import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
 import static android.view.autofill.AutofillManager.FLAG_MANUAL_REQUEST;
 
@@ -64,8 +63,8 @@ import android.view.View.AccessibilityDelegate;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
-
 import android.widget.RemoteViews;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1217,14 +1216,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         assertThat(usernameContainer.getChildCount()).isEqualTo(2);
     }
 
-    @Test
     public void testAutofillManuallyOneDataset() throws Exception {
         // Set service.
         enableService();
 
         // And activity.
         mActivity.onUsername((v) -> {
-            v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            // v.setAutofillMode(AUTOFILL_MODE_MANUAL);
             // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
             // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
             v.setText("");
@@ -1251,12 +1249,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
     }
 
-    @Test
     public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
         autofillManuallyTwoDatasets(true);
     }
 
-    @Test
     public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
         autofillManuallyTwoDatasets(false);
     }
@@ -1267,7 +1263,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // And activity.
         mActivity.onUsername((v) -> {
-            v.setAutofillMode(AUTOFILL_MODE_MANUAL);
+            //v.setAutofillMode(AUTOFILL_MODE_MANUAL);
             // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
             // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
             v.setText("");
