@@ -20,8 +20,8 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
-import android.media.MediaMetricsSet;
 import android.net.Uri;
+import android.os.PersistableBundle;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -324,15 +324,15 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
         }
 
         // validate a few MediaMetrics.
-        MediaMetricsSet metricsSet = mMediaPlayer.getMetrics();
-        if (metricsSet == null) {
+        PersistableBundle metrics = mMediaPlayer.getMetrics();
+        if (metrics == null) {
             fail("MediaPlayer.getMetrics() returned null metrics");
-        } else if (metricsSet.isEmpty()) {
+        } else if (metrics.isEmpty()) {
             fail("MediaPlayer.getMetrics() returned empty metrics");
         } else {
 
-            int size = metricsSet.size();
-            Set<String> keys = metricsSet.keySet();
+            int size = metrics.size();
+            Set<String> keys = metrics.keySet();
 
             if (keys == null) {
                 fail("MediaMetricsSet returned no keys");
@@ -341,22 +341,22 @@ public class MediaPlayerTestBase extends ActivityInstrumentationTestCase2<MediaS
             }
 
             // we played something; so one of these should be non-null
-            String vmime = metricsSet.getString(MediaMetricsSet.MediaPlayer.KEY_MIME_VIDEO, null);
-            String amime = metricsSet.getString(MediaMetricsSet.MediaPlayer.KEY_MIME_AUDIO, null);
+            String vmime = metrics.getString(MediaPlayer.MetricsConstants.MIME_TYPE_VIDEO, null);
+            String amime = metrics.getString(MediaPlayer.MetricsConstants.MIME_TYPE_AUDIO, null);
             if (vmime == null && amime == null) {
                 fail("getMetrics() returned neither video nor audio mime value");
             }
 
-            long duration = metricsSet.getLong(MediaMetricsSet.MediaPlayer.KEY_DURATION, -2);
+            long duration = metrics.getLong(MediaPlayer.MetricsConstants.DURATION, -2);
             if (duration == -2) {
                 fail("getMetrics() didn't return a duration");
             }
-            long playing = metricsSet.getLong(MediaMetricsSet.MediaPlayer.KEY_PLAYING, -2);
+            long playing = metrics.getLong(MediaPlayer.MetricsConstants.PLAYING, -2);
             if (playing == -2) {
                 fail("getMetrics() didn't return a playing time");
             }
-            if (!keys.contains(MediaMetricsSet.MediaPlayer.KEY_PLAYING)) {
-                fail("MediaMetricsSet.keys() missing: " + MediaMetricsSet.MediaPlayer.KEY_PLAYING);
+            if (!keys.contains(MediaPlayer.MetricsConstants.PLAYING)) {
+                fail("MediaMetricsSet.keys() missing: " + MediaPlayer.MetricsConstants.PLAYING);
             }
         }
 

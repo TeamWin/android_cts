@@ -32,10 +32,10 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
-import android.media.MediaMetricsSet;
 import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.PersistableBundle;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -919,17 +919,17 @@ public class MediaCodecTest extends AndroidTestCase {
                 // good
             }
 
-            MediaMetricsSet metricsSet = encoder.getMetrics();
-            if (metricsSet == null) {
+            PersistableBundle metrics = encoder.getMetrics();
+            if (metrics == null) {
                 fail("getMetrics() returns null");
-            } else if (metricsSet.isEmpty()) {
+            } else if (metrics.isEmpty()) {
                 fail("getMetrics() returns empty results");
             }
-            int encoding = metricsSet.getInt(MediaMetricsSet.MediaCodec.KEY_ENCODER, -1);
+            int encoding = metrics.getInt(MediaCodec.MetricsConstants.ENCODER, -1);
             if (encoding != 1) {
                 fail("getMetrics() returns bad encoder value " + encoding);
             }
-            String theCodec = metricsSet.getString(MediaMetricsSet.MediaCodec.KEY_CODEC, null);
+            String theCodec = metrics.getString(MediaCodec.MetricsConstants.CODEC, null);
             if (theCodec == null) {
                 fail("getMetrics() returns null codec value ");
             }
@@ -989,17 +989,17 @@ public class MediaCodecTest extends AndroidTestCase {
                 // good
             }
 
-            MediaMetricsSet metricsSet = encoder.getMetrics();
-            if (metricsSet == null) {
+            PersistableBundle metrics = encoder.getMetrics();
+            if (metrics == null) {
                 fail("getMetrics() returns null");
-            } else if (metricsSet.isEmpty()) {
+            } else if (metrics.isEmpty()) {
                 fail("getMetrics() returns empty results");
             }
-            int encoding = metricsSet.getInt(MediaMetricsSet.MediaCodec.KEY_ENCODER, -1);
+            int encoding = metrics.getInt(MediaCodec.MetricsConstants.ENCODER, -1);
             if (encoding != 1) {
                 fail("getMetrics() returns bad encoder value " + encoding);
             }
-            String theCodec = metricsSet.getString(MediaMetricsSet.MediaCodec.KEY_CODEC, null);
+            String theCodec = metrics.getString(MediaCodec.MetricsConstants.CODEC, null);
             if (theCodec == null) {
                 fail("getMetrics() returns null codec value ");
             }
@@ -1050,17 +1050,17 @@ public class MediaCodecTest extends AndroidTestCase {
                         throw new RuntimeException("decoder does not generate non-empty output.");
                     }
 
-                    MediaMetricsSet metricsSet = mediaCodec.getMetrics();
-                    if (metricsSet == null) {
+                    PersistableBundle metrics = mediaCodec.getMetrics();
+                    if (metrics == null) {
                         fail("getMetrics() returns null");
-                    } else if (metricsSet.isEmpty()) {
+                    } else if (metrics.isEmpty()) {
                         fail("getMetrics() returns empty results");
                     }
-                    int encoder = metricsSet.getInt(MediaMetricsSet.MediaCodec.KEY_ENCODER, -1);
+                    int encoder = metrics.getInt(MediaCodec.MetricsConstants.ENCODER, -1);
                     if (encoder != 0) {
                         fail("getMetrics() returns bad encoder value " + encoder);
                     }
-                    String theCodec = metricsSet.getString(MediaMetricsSet.MediaCodec.KEY_CODEC, null);
+                    String theCodec = metrics.getString(MediaCodec.MetricsConstants.CODEC, null);
                     if (theCodec == null) {
                         fail("getMetrics() returns null codec value ");
                     }
@@ -1071,17 +1071,17 @@ public class MediaCodecTest extends AndroidTestCase {
                     mediaCodec.flush();
 
                     completed.set(runDecodeTillFirstOutput(mediaCodec, mediaExtractor));
-                    metricsSet = mediaCodec.getMetrics();
-                    if (metricsSet == null) {
+                    metrics = mediaCodec.getMetrics();
+                    if (metrics == null) {
                         fail("getMetrics() returns null");
-                    } else if (metricsSet.isEmpty()) {
+                    } else if (metrics.isEmpty()) {
                         fail("getMetrics() returns empty results");
                     }
-                    int encoding = metricsSet.getInt(MediaMetricsSet.MediaCodec.KEY_ENCODER, -1);
+                    int encoding = metrics.getInt(MediaCodec.MetricsConstants.ENCODER, -1);
                     if (encoding != 0) {
                         fail("getMetrics() returns bad encoder value " + encoding);
                     }
-                    String theCodec2 = metricsSet.getString(MediaMetricsSet.MediaCodec.KEY_CODEC, null);
+                    String theCodec2 = metrics.getString(MediaCodec.MetricsConstants.CODEC, null);
                     if (theCodec2 == null) {
                         fail("getMetrics() returns null codec value ");
                     }
@@ -1092,17 +1092,17 @@ public class MediaCodecTest extends AndroidTestCase {
                     if (mediaCodec != null) {
                         mediaCodec.stop();
 
-                        MediaMetricsSet metricsSet = mediaCodec.getMetrics();
-                        if (metricsSet == null) {
+                        PersistableBundle metrics = mediaCodec.getMetrics();
+                        if (metrics == null) {
                             fail("getMetrics() returns null");
-                        } else if (metricsSet.isEmpty()) {
+                        } else if (metrics.isEmpty()) {
                             fail("getMetrics() returns empty results");
                         }
-                        int encoder = metricsSet.getInt(MediaMetricsSet.MediaCodec.KEY_ENCODER, -1);
+                        int encoder = metrics.getInt(MediaCodec.MetricsConstants.ENCODER, -1);
                         if (encoder != 0) {
                             fail("getMetrics() returns bad encoder value " + encoder);
                         }
-                        String theCodec = metricsSet.getString(MediaMetricsSet.MediaCodec.KEY_CODEC, null);
+                        String theCodec = metrics.getString(MediaCodec.MetricsConstants.CODEC, null);
                         if (theCodec == null) {
                             fail("getMetrics() returns null codec value ");
                         }
@@ -1166,14 +1166,14 @@ public class MediaCodecTest extends AndroidTestCase {
             }
             assertTrue("Wrong output buffer index", outputBufferIndex >= 0);
 
-            MediaMetricsSet metricsSet = mediaCodec.getMetrics();
-            Log.d(TAG, "getMetrics after first buffer metricsSet says: " + metricsSet);
+            PersistableBundle metrics = mediaCodec.getMetrics();
+            Log.d(TAG, "getMetrics after first buffer metrics says: " + metrics);
 
-            int encoder = metricsSet.getInt(MediaMetricsSet.MediaCodec.KEY_ENCODER, -1);
+            int encoder = metrics.getInt(MediaCodec.MetricsConstants.ENCODER, -1);
             if (encoder != 0) {
                 fail("getMetrics() returns bad encoder value " + encoder);
             }
-            String theCodec = metricsSet.getString(MediaMetricsSet.MediaCodec.KEY_CODEC, null);
+            String theCodec = metrics.getString(MediaCodec.MetricsConstants.CODEC, null);
             if (theCodec == null) {
                 fail("getMetrics() returns null codec value ");
             }
