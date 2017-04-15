@@ -1262,7 +1262,11 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     private long getExposureValue(CaptureResult result) throws Exception {
         int expTimeUs = (int) (getValueNotNull(result, CaptureResult.SENSOR_EXPOSURE_TIME) / 1000);
         int sensitivity = getValueNotNull(result, CaptureResult.SENSOR_SENSITIVITY);
-        return expTimeUs * sensitivity;
+        Integer postRawSensitivity = result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
+        if (postRawSensitivity != null) {
+            return (long) sensitivity * postRawSensitivity / 100 * expTimeUs;
+        }
+        return (long) sensitivity * expTimeUs;
     }
 
     private long getMaxExposureValue(CaptureRequest.Builder request, long maxExposureTimeUs,
