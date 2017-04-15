@@ -30,10 +30,10 @@ import android.media.EncoderCapabilities.VideoEncoderCap;
 import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaMetricsSet;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.PersistableBundle;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
@@ -230,14 +230,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
 
 
         // verify some getMetrics() behaviors while we're here.
-        MediaMetricsSet metricsSet = mMediaRecorder.getMetrics();
-        if (metricsSet == null) {
+        PersistableBundle metrics = mMediaRecorder.getMetrics();
+        if (metrics == null) {
             fail("MediaRecorder.getMetrics() returned null metrics");
-        } else if (metricsSet.isEmpty()) {
+        } else if (metrics.isEmpty()) {
             fail("MediaRecorder.getMetrics() returned empty metrics");
         } else {
-            int size = metricsSet.size();
-            Set<String> keys = metricsSet.keySet();
+            int size = metrics.size();
+            Set<String> keys = metrics.keySet();
 
             if (size == 0) {
                 fail("MediaRecorder.getMetrics().size() reports empty record");
@@ -250,14 +250,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             }
 
             // ensure existence of some known fields
-            int videoBitRate = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_VIDEO_BITRATE, -1);
+            int videoBitRate = metrics.getInt(MediaRecorder.MetricsConstants.VIDEO_BITRATE, -1);
             if (videoBitRate != VIDEO_BIT_RATE_IN_BPS) {
                 fail("getMetrics() videoEncodeBitrate set " +
                      VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
             }
 
             // careful when comparing floating point numbers
-            double captureFrameRate = metricsSet.getDouble(MediaMetricsSet.MediaRecorder.KEY_CAPTURE_FPS, -1);
+            double captureFrameRate = metrics.getDouble(MediaRecorder.MetricsConstants.CAPTURE_FPS, -1);
             if (captureFrameRate < 0) {
                 fail("getMetrics() capture framerate reports " + captureFrameRate);
             }
@@ -304,14 +304,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         Thread.sleep(RECORD_TIME_MS);
 
         // verify some getMetrics() behaviors while we're here.
-        MediaMetricsSet metricsSet = mMediaRecorder.getMetrics();
-        if (metricsSet == null) {
+        PersistableBundle metrics = mMediaRecorder.getMetrics();
+        if (metrics == null) {
             fail("MediaRecorder.getMetrics() returned null metrics");
-        } else if (metricsSet.isEmpty()) {
+        } else if (metrics.isEmpty()) {
             fail("MediaRecorder.getMetrics() returned empty metrics");
         } else {
-            int size = metricsSet.size();
-            Set<String> keys = metricsSet.keySet();
+            int size = metrics.size();
+            Set<String> keys = metrics.keySet();
 
             if (size == 0) {
                 fail("MediaRecorder.getMetrics().size() reports empty record");
@@ -324,14 +324,14 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             }
 
             // ensure existence of some known fields
-            int videoBitRate = metricsSet.getInt(MediaMetricsSet.MediaRecorder.KEY_VIDEO_BITRATE, -1);
+            int videoBitRate = metrics.getInt(MediaRecorder.MetricsConstants.VIDEO_BITRATE, -1);
             if (videoBitRate != VIDEO_BIT_RATE_IN_BPS) {
                 fail("getMetrics() videoEncodeBitrate set " +
                      VIDEO_BIT_RATE_IN_BPS + " got " + videoBitRate);
             }
 
             // careful when comparing floating point numbers
-            double captureFrameRate = metricsSet.getDouble(MediaMetricsSet.MediaRecorder.KEY_CAPTURE_FPS, -1);
+            double captureFrameRate = metrics.getDouble(MediaRecorder.MetricsConstants.CAPTURE_FPS, -1);
             if (captureFrameRate < 0) {
                 fail("getMetrics() capture framerate reports " + captureFrameRate);
             }
