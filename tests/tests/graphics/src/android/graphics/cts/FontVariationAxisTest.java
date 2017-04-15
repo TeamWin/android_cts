@@ -37,19 +37,18 @@ public class FontVariationAxisTest {
 
     @Test
     public void testConstruction() throws FontVariationAxis.InvalidFormatException {
-        new FontVariationAxis("abcd", 1.0f);
-        new FontVariationAxis("    ", 0.0f);
-        new FontVariationAxis("A X ", -1.0f);
+        new FontVariationAxis("wght", 1.0f);
+        new FontVariationAxis("PRIV", -1.0f);
     }
 
     @Test
     public void testGetterTest() throws FontVariationAxis.InvalidFormatException {
-        FontVariationAxis axis = new FontVariationAxis("abcd", 1.0f);
-        assertEquals("abcd", axis.getTag());
+        FontVariationAxis axis = new FontVariationAxis("wght", 1.0f);
+        assertEquals("wght", axis.getTag());
         assertEquals(1.0f, axis.getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axis = new FontVariationAxis("    ", -1.0f);
-        assertEquals("    ", axis.getTag());
+        axis = new FontVariationAxis("PRIV", -1.0f);
+        assertEquals("PRIV", axis.getTag());
         assertEquals(-1.0f, axis.getStyleValue(), FLOT_EQUALITY_PREC);
     }
 
@@ -94,36 +93,36 @@ public class FontVariationAxisTest {
         assertEquals("wdth", axes[0].getTag());
         assertEquals(0.5f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axes = FontVariationAxis.fromFontVariationSettings("'AX  ' 1");
+        axes = FontVariationAxis.fromFontVariationSettings("'PRIV' 1");
         assertEquals(1, axes.length);
-        assertEquals("AX  ", axes[0].getTag());
+        assertEquals("PRIV", axes[0].getTag());
         assertEquals(1.0f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axes = FontVariationAxis.fromFontVariationSettings("'AX  '\t1");
+        axes = FontVariationAxis.fromFontVariationSettings("'PRIV'\t1");
         assertEquals(1, axes.length);
-        assertEquals("AX  ", axes[0].getTag());
+        assertEquals("PRIV", axes[0].getTag());
         assertEquals(1.0f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axes = FontVariationAxis.fromFontVariationSettings("'AX  '\n1");
+        axes = FontVariationAxis.fromFontVariationSettings("'PRIV'\n1");
         assertEquals(1, axes.length);
-        assertEquals("AX  ", axes[0].getTag());
+        assertEquals("PRIV", axes[0].getTag());
         assertEquals(1.0f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axes = FontVariationAxis.fromFontVariationSettings("'AX  '\r1");
+        axes = FontVariationAxis.fromFontVariationSettings("'PRIV'\r1");
         assertEquals(1, axes.length);
-        assertEquals("AX  ", axes[0].getTag());
+        assertEquals("PRIV", axes[0].getTag());
         assertEquals(1.0f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axes = FontVariationAxis.fromFontVariationSettings("'AX  '\r\t\n 1");
+        axes = FontVariationAxis.fromFontVariationSettings("'PRIV'\r\t\n 1");
         assertEquals(1, axes.length);
-        assertEquals("AX  ", axes[0].getTag());
+        assertEquals("PRIV", axes[0].getTag());
         assertEquals(1.0f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
 
-        axes = FontVariationAxis.fromFontVariationSettings("'wdth' 10,'AX  '\r1");
+        axes = FontVariationAxis.fromFontVariationSettings("'wdth' 10,'PRIV'\r1");
         assertEquals(2, axes.length);
         assertEquals("wdth", axes[0].getTag());
         assertEquals(10.0f, axes[0].getStyleValue(), FLOT_EQUALITY_PREC);
-        assertEquals("AX  ", axes[1].getTag());
+        assertEquals("PRIV", axes[1].getTag());
         assertEquals(1.0f, axes[1].getStyleValue(), FLOT_EQUALITY_PREC);
     }
 
@@ -155,8 +154,7 @@ public class FontVariationAxisTest {
 
         final FontVariationAxis[] axes = {
             new FontVariationAxis("wght", 1.0f),
-            new FontVariationAxis("    ", 2.0f),
-            new FontVariationAxis("AX  ", 3.0f)
+            new FontVariationAxis("PRIV", 3.0f)
         };
 
         String stringData = FontVariationAxis.toFontVariationSettings(axes);
