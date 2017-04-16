@@ -18,6 +18,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -480,6 +481,31 @@ public class BitmapRegionDecoderTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testReusedColorSpace() throws IOException {
+        Bitmap b = Bitmap.createBitmap(SMALL_TILE_SIZE, SMALL_TILE_SIZE, Config.ARGB_8888,
+                false, ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
+
+        Options opts = new BitmapFactory.Options();
+        opts.inBitmap = b;
+
+        // sRGB
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(
+                obtainInputStream(ASSET_NAMES[3]), false);
+        Bitmap region = decoder.decodeRegion(
+                new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
+        decoder.recycle();
+
+        assertEquals(ColorSpace.get(ColorSpace.Named.SRGB), region.getColorSpace());
+
+        // DisplayP3
+        decoder = BitmapRegionDecoder.newInstance(obtainInputStream(ASSET_NAMES[1]), false);
+        region = decoder.decodeRegion(new Rect(0, 0, SMALL_TILE_SIZE, SMALL_TILE_SIZE), opts);
+        decoder.recycle();
+
+        assertEquals(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), region.getColorSpace());
     }
 
     @Test
