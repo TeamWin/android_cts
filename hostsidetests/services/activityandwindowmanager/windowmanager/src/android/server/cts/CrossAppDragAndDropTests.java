@@ -24,6 +24,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class CrossAppDragAndDropTests extends DeviceTestCase {
     // Constants copied from ActivityManager.StackId. If they are changed there, these must be
@@ -42,11 +43,17 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
 
     private static final String AM_FORCE_STOP = "am force-stop ";
     private static final String AM_MOVE_TASK = "am stack move-task ";
+    private static final String AM_RESIZE_TASK = "am task resize ";
     private static final String AM_REMOVE_STACK = "am stack remove ";
     private static final String AM_START_N = "am start -n ";
     private static final String AM_STACK_LIST = "am stack list";
     private static final String INPUT_MOUSE_SWIPE = "input mouse swipe ";
     private static final String TASK_ID_PREFIX = "taskId";
+
+    // Regex pattern to match adb shell am stack list output of the form:
+    // taskId=<TASK_ID>: <componentName> bounds=[LEFT,TOP][RIGHT,BOTTOM]
+    private static final String TASK_REGEX_PATTERN_STRING =
+            "taskId=[0-9]+: %s bounds=\\[[0-9]+,[0-9]+\\]\\[[0-9]+,[0-9]+\\]";
 
     private static final int SWIPE_DURATION_MS = 500;
 
@@ -93,6 +100,9 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
     private static final String RESULT_OK = "OK";
     private static final String RESULT_EXCEPTION = "Exception";
     private static final String RESULT_NULL_DROP_PERMISSIONS = "Null DragAndDropPermissions";
+
+    private static final String AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW =
+            "am supports-split-screen-multiwindow";
 
     private ITestDevice mDevice;
 
@@ -145,6 +155,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         return AM_MOVE_TASK + taskId + " " + stackId + " true";
     }
 
+    private String getResizeTaskCommand(int taskId, Point topLeft, Point bottomRight)
+            throws Exception {
+        return AM_RESIZE_TASK + taskId + " " + topLeft.x + " " + topLeft.y + " " + bottomRight.x
+                + " " + bottomRight.y;
+    }
+
     private String getComponentName(String packageName, String activityName) {
         return packageName + "/" + packageName + "." + activityName;
     }
@@ -195,6 +211,24 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         waitForResume(packageName, activityName);
     }
 
+    /**
+     * @param displaySize size of the display
+     * @param leftSide {@code true} to launch the app taking up the left half of the display,
+     *         {@code false} to launch the app taking up the right half of the display.
+     */
+    private void launchFreeformActivity(String packageName, String activityName, String mode,
+            Point displaySize, boolean leftSide) throws Exception{
+        clearLogs();
+        final String componentName = getComponentName(packageName, activityName);
+        executeShellCommand(getStartCommand(componentName, mode) + " --stack "
+                + FREEFORM_WORKSPACE_STACK_ID);
+        waitForResume(packageName, activityName);
+        Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
+        Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);
+        executeShellCommand(getResizeTaskCommand(getActivityTaskId(componentName), topLeft,
+                bottomRight));
+    }
+
     private void waitForResume(String packageName, String activityName) throws Exception {
         final String fullActivityName = packageName + "." + activityName;
         int retryCount = 3;
@@ -238,6 +272,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
         builder.append("\nParsing adb shell am output: " );
         builder.append(output);
         CLog.i(builder.toString());
+        final Pattern pattern = Pattern.compile(String.format(TASK_REGEX_PATTERN_STRING, name));
         for (String line : output.split("\\n")) {
             final String truncatedLine;
             // Only look for the activity name before the "topActivity" string.
@@ -247,7 +282,7 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             } else {
                 truncatedLine = line;
             }
-            if (truncatedLine.contains(name)) {
+            if (pattern.matcher(truncatedLine).find()) {
                 return truncatedLine;
             }
         }
@@ -278,6 +313,12 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             }
         }
         return -1;
+    }
+
+    private Point getDisplaySize() throws Exception {
+        final String output = executeShellCommand("wm size");
+        final String[] sizes = output.split(" ")[2].split("x");
+        return new Point(Integer.valueOf(sizes[0].trim()), Integer.valueOf(sizes[1].trim()));
     }
 
     private Point getWindowCenter(String name) throws Exception {
@@ -343,8 +384,19 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             return;
         }
 
-        launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
-        launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
+        if (supportsSplitScreenMultiWindow()) {
+            launchDockedActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode);
+            launchFullscreenActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode);
+        } else if (supportsFreeformMultiWindow()) {
+            // Fallback to try to launch two freeform windows side by side.
+            Point displaySize = getDisplaySize();
+            launchFreeformActivity(mSourcePackageName, SOURCE_ACTIVITY_NAME, sourceMode,
+                    displaySize, true /* leftSide */);
+            launchFreeformActivity(mTargetPackageName, TARGET_ACTIVITY_NAME, targetMode,
+                    displaySize, false /* leftSide */);
+        } else {
+            return;
+        }
 
         clearLogs();
 
@@ -410,6 +462,14 @@ public class CrossAppDragAndDropTests extends DeviceTestCase {
             throw new Exception(
                     "device does not support \"am supports-multiwindow\" shell command.");
         }
+    }
+
+    private boolean supportsSplitScreenMultiWindow() throws DeviceNotAvailableException {
+        return !executeShellCommand(AM_SUPPORTS_SPLIT_SCREEN_MULTIWINDOW).startsWith("false");
+    }
+
+    private boolean supportsFreeformMultiWindow() throws DeviceNotAvailableException {
+        return mDevice.hasFeature("feature:android.software.freeform_window_management");
     }
 
     public void testCancelSoon() throws Exception {
