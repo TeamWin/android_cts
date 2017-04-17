@@ -41,11 +41,8 @@ public class FragmentExecuteTests {
     public ActivityTestRule<FragmentTestActivity> mActivityRule =
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
 
-    private Instrumentation mInstrumentation;
-
     @Before
     public void setupContentView() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
     }
 
@@ -58,7 +55,7 @@ public class FragmentExecuteTests {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         final StrictViewFragment fragment = new StrictViewFragment();
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 fm.beginTransaction()
