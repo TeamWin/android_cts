@@ -28,6 +28,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_SRC_FILES := \
     src/test_aaudio.cpp \
+    src/test_aaudio_misc.cpp \
     src/test_aaudio_callback.cpp
 
 LOCAL_SHARED_LIBRARIES := \
