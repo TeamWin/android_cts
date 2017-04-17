@@ -149,6 +149,9 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         session.setPlaybackState(state);
         session.setActive(true);
 
+        // A media playback is also needed to receive media key events.
+        Utils.assertMediaPlaybackStarted(getInstrumentation().getTargetContext());
+
         // Ensure that the listener is called for media key event,
         // and any other media sessions don't get the key.
         MediaKeyListener listener = new MediaKeyListener(2, true, handler);

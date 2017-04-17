@@ -354,6 +354,9 @@ public class MediaSessionTest extends AndroidTestCase {
                 .setState(PlaybackState.STATE_PLAYING, 0L, 0.0f).build();
         mSession.setPlaybackState(defaultState);
 
+        // A media playback is also needed to receive media key events.
+        Utils.assertMediaPlaybackStarted(getContext());
+
         synchronized (mWaitLock) {
             sessionCallback.reset();
             simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY);
