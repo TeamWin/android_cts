@@ -53,6 +53,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import junit.framework.AssertionFailedError;
@@ -254,6 +255,32 @@ public class StorageManagerTest extends AndroidTestCase {
         StorageVolume childVolume = mStorageManager.getStorageVolume(child);
         assertNotNull("No volume for child (" + child + ")", childVolume);
         assertStorageVolumesEquals(primary, childVolume);
+    }
+
+    private void assertNoUuid(File file) {
+        try {
+            final UUID uuid = mStorageManager.getUuidForPath(file);
+            fail("Unexpected UUID " + uuid + " for " + file);
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testGetUuidForPath() throws Exception {
+        assertEquals(StorageManager.UUID_DEFAULT,
+                mStorageManager.getUuidForPath(Environment.getDataDirectory()));
+        assertEquals(StorageManager.UUID_DEFAULT,
+                mStorageManager.getUuidForPath(mContext.getDataDir()));
+
+        final UUID extUuid = mStorageManager
+                .getUuidForPath(Environment.getExternalStorageDirectory());
+        if (Environment.isExternalStorageEmulated()) {
+            assertEquals(StorageManager.UUID_DEFAULT, extUuid);
+        }
+
+        assertEquals(extUuid, mStorageManager.getUuidForPath(mContext.getExternalCacheDir()));
+
+        assertNoUuid(new File("/"));
+        assertNoUuid(new File("/proc/"));
     }
 
     private static class TestProxyFileDescriptorCallback extends ProxyFileDescriptorCallback {

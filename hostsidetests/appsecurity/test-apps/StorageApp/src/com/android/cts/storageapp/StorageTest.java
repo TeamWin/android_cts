@@ -41,6 +41,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * Client app for verifying storage behaviors.
@@ -85,8 +86,10 @@ public class StorageTest extends InstrumentationTestCase {
     public void testVerifySpaceApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
 
-        final long cacheSize = sm.getCacheSizeBytes(getContext().getCacheDir());
-        final long extCacheSize = sm.getCacheSizeBytes(getContext().getExternalCacheDir());
+        final long cacheSize = sm.getCacheSizeBytes(
+                sm.getUuidForPath(getContext().getCacheDir()));
+        final long extCacheSize = sm.getCacheSizeBytes(
+                sm.getUuidForPath(getContext().getExternalCacheDir()));
         if (cacheSize == extCacheSize) {
             assertMostlyEquals(CACHE_ALL, cacheSize);
         } else {
@@ -97,22 +100,28 @@ public class StorageTest extends InstrumentationTestCase {
 
     public void testVerifyQuotaApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
-        assertTrue("Apps must have at least 10MB quota",
-                sm.getCacheQuotaBytes(getContext().getCacheDir()) > 10 * MB_IN_BYTES);
+
+        final long cacheSize = sm.getCacheQuotaBytes(
+                sm.getUuidForPath(getContext().getCacheDir()));
+        assertTrue("Apps must have at least 10MB quota", cacheSize > 10 * MB_IN_BYTES);
     }
 
     public void testVerifyAllocateApi() throws Exception {
         final StorageManager sm = getContext().getSystemService(StorageManager.class);
 
         final File filesDir = getContext().getFilesDir();
-        assertTrue("Apps must be able to allocate internal space",
-                sm.getAllocatableBytes(filesDir, 0) > 10 * MB_IN_BYTES);
         final File extDir = Environment.getExternalStorageDirectory();
+
+        final UUID filesUuid = sm.getUuidForPath(filesDir);
+        final UUID extUuid = sm.getUuidForPath(extDir);
+
+        assertTrue("Apps must be able to allocate internal space",
+                sm.getAllocatableBytes(filesUuid, 0) > 10 * MB_IN_BYTES);
         assertTrue("Apps must be able to allocate external space",
-                sm.getAllocatableBytes(extDir, 0) > 10 * MB_IN_BYTES);
+                sm.getAllocatableBytes(extUuid, 0) > 10 * MB_IN_BYTES);
 
         // Should always be able to allocate 1MB indirectly
-        sm.allocateBytes(filesDir, 1 * MB_IN_BYTES, 0);
+        sm.allocateBytes(filesUuid, 1 * MB_IN_BYTES, 0);
 
         // Should always be able to allocate 1MB directly
         final File filesFile = makeUniqueFile(filesDir);
