@@ -131,6 +131,14 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         }
     }
 
+    private void maybeClick(UiSelector sel) {
+        try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
+    }
+
+    private void maybeClick(BySelector sel) {
+        try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
+    }
+
     /**
      * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri.
@@ -164,7 +172,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
                 + pkg + " " + android.Manifest.permission.ACCESS_COARSE_LOCATION);
         getInstrumentation().getUiAutomation().executeShellCommand("pm grant "
                 + pkg + " " + android.Manifest.permission.ACCESS_FINE_LOCATION);
-        Thread.sleep(1000);
+        SystemClock.sleep(DateUtils.SECOND_IN_MILLIS);
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
@@ -184,15 +192,27 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         // Hrm, that didn't work; let's try an alternative approach of digging
         // around for a shutter button
         if (result == null) {
-            mDevice.findObject(new UiSelector().resourceId(pkg + ":id/shutter_button")).click();
+            maybeClick(new UiSelector().resourceId(pkg + ":id/shutter_button"));
             mDevice.waitForIdle();
             SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
-            mDevice.findObject(new UiSelector().resourceId(pkg + ":id/shutter_button")).click();
+            maybeClick(new UiSelector().resourceId(pkg + ":id/shutter_button"));
             mDevice.waitForIdle();
+
+            result = mActivity.getResult(15, TimeUnit.SECONDS);
+            Log.d(TAG, "Second pass result was " + result);
         }
 
-        result = mActivity.getResult(15, TimeUnit.SECONDS);
-        Log.d(TAG, "Second pass result was " + result);
+        // Grr, let's try hunting around even more
+        if (result == null) {
+            maybeClick(By.pkg(pkg).descContains("Capture"));
+            mDevice.waitForIdle();
+            SystemClock.sleep(5 * DateUtils.SECOND_IN_MILLIS);
+            maybeClick(By.pkg(pkg).descContains("Done"));
+            mDevice.waitForIdle();
+
+            result = mActivity.getResult(15, TimeUnit.SECONDS);
+            Log.d(TAG, "Third pass result was " + result);
+        }
 
         assertNotNull("Expected to get a IMAGE_CAPTURE result; your camera app should "
                 + "respond to the CAMERA and DPAD_CENTER keycodes", result);
