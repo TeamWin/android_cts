@@ -18,6 +18,7 @@ package com.android.server.cts.device.batterystats;
 
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions
         .ACTION_JOB_SCHEDULE;
+import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.ACTION_SYNC;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_ACTION;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.doAction;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.isAppInBackground;
@@ -51,7 +52,12 @@ public class BatteryStatsForegroundActivity extends Activity {
             Log.w(TAG, "Couldn't determine if app is in foreground. Proceeding with test anyway");
         }
 
-        doAction(this, intent.getStringExtra(KEY_ACTION));
-        finish();
+        String action = intent.getStringExtra(KEY_ACTION);
+        doAction(this, action);
+
+        // ACTION_SYNC will finish itself. Others get finished here.
+        if (!ACTION_SYNC.equals(action)) {
+            finish();
+        }
     }
 }

@@ -16,11 +16,14 @@
 
 package com.android.server.cts.device.batterystats;
 
+import android.accounts.Account;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -31,6 +34,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +44,7 @@ public class BatteryStatsBgVsFgActions {
 
     public static final String KEY_ACTION = "action";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
+    public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
 
     /** Perform the action specified by the given action code (see constants above). */
@@ -52,6 +57,9 @@ public class BatteryStatsBgVsFgActions {
         switch(actionCode) {
             case ACTION_JOB_SCHEDULE:
                 doScheduleJob(ctx);
+                break;
+            case ACTION_SYNC:
+                doSync(ctx);
                 break;
             case ACTION_WIFI_SCAN:
                 doWifi(ctx);
@@ -82,6 +90,41 @@ public class BatteryStatsBgVsFgActions {
             protected Void doInBackground(Void... params) {
                 waitForReceiver(null, 3_000, latch, null);
                 return null;
+            }
+        }.execute();
+    }
+
+    private static void doSync(Context ctx) {
+        BatteryStatsAuthenticator.removeAllAccounts(ctx);
+        final Account account = BatteryStatsAuthenticator.getTestAccount();
+        // Create the test account.
+        BatteryStatsAuthenticator.ensureTestAccount(ctx);
+        // Force set is syncable.
+        ContentResolver.setMasterSyncAutomatically(true);
+        ContentResolver.setIsSyncable(account, BatteryStatsProvider.AUTHORITY, 1);
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    Log.v(TAG, "Starting sync");
+                    BatteryStatsSyncAdapter.requestSync(account);
+                    sleep(500);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception trying to sync", e);
+                }
+                BatteryStatsAuthenticator.removeAllAccounts(ctx);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                Log.v(TAG, "Finished sync method");
+                // If ctx is an Activity, finish it when sync is done. If it's a service, don't.
+                if(ctx instanceof Activity){
+                    ((Activity) ctx).finish();
+                }
             }
         }.execute();
     }
