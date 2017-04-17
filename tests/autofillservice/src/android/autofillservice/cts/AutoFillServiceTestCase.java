@@ -32,6 +32,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 /**
@@ -47,6 +48,9 @@ abstract class AutoFillServiceTestCase {
     protected static UiBot sUiBot;
 
     protected static final Replier sReplier = InstrumentedAutoFillService.getReplier();
+
+    @Rule
+    public final RetryRule mRetryRule = new RetryRule(2);
 
     @BeforeClass
     public static void removeLockScreen() {

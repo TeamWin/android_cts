@@ -50,8 +50,8 @@ abstract class AbstractAutoFillActivity extends Activity {
         });
         try {
             if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
-                throw new AssertionError(
-                        "action on UI thread timed out after " + timeoutMs + " ms");
+                throw new RetryableException("action on UI thread timed out after %d ms",
+                        timeoutMs);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
