@@ -146,7 +146,7 @@ void runtest_aaudio_stream(aaudio_sharing_mode_t requestedSharingMode) {
 
     framesPerBurst = AAudioStream_getFramesPerBurst(aaudioStream);
     ASSERT_GE(framesPerBurst, 16);
-    ASSERT_LE(framesPerBurst, 4096); // TODO what is min/max?
+    ASSERT_LE(framesPerBurst, 10000); // TODO what is min/max?
 
     // Allocate a buffer for the audio data.
     // TODO handle possibility of other data formats
