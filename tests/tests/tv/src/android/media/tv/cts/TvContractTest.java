@@ -699,6 +699,14 @@ public class TvContractTest extends AndroidTestCase {
         Uri programUri = TvContract.buildPreviewProgramUri(programId);
         verifyPreviewProgram(programUri, values, programId);
 
+        values.remove(PreviewPrograms.COLUMN_TYPE);
+        try {
+            mContentResolver.insert(previewProgramsUri, values);
+            fail("Type should be a required column.");
+        } catch (IllegalArgumentException e) {
+            // Expected.
+        }
+
         // Test: update
         values.put(PreviewPrograms.COLUMN_EPISODE_TITLE, "Sample title");
         values.put(PreviewPrograms.COLUMN_SHORT_DESCRIPTION, "Short description");
@@ -725,6 +733,14 @@ public class TvContractTest extends AndroidTestCase {
         long programId = ContentUris.parseId(rowUri);
         Uri programUri = TvContract.buildWatchNextProgramUri(programId);
         verifyWatchNextProgram(programUri, values, programId);
+
+        values.remove(WatchNextPrograms.COLUMN_TYPE);
+        try {
+            mContentResolver.insert(watchNextProgramsUri, values);
+            fail("Type should be a required column.");
+        } catch (IllegalArgumentException e) {
+            // Expected.
+        }
 
         // Test: update
         values.put(WatchNextPrograms.COLUMN_EPISODE_TITLE, "Sample title");
