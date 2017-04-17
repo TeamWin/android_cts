@@ -66,6 +66,7 @@ final class CannedFillResponse {
     private final String[] mAuthenticationIds;
     private final CharSequence mNegativeActionLabel;
     private final IntentSender mNegativeActionListener;
+    private final boolean mSaveOnAllViewsInvisible;
 
     private CannedFillResponse(Builder builder) {
         mDatasets = builder.mDatasets;
@@ -79,6 +80,7 @@ final class CannedFillResponse {
         mAuthenticationIds = builder.mAuthenticationIds;
         mNegativeActionLabel = builder.mNegativeActionLabel;
         mNegativeActionListener = builder.mNegativeActionListener;
+        mSaveOnAllViewsInvisible = builder.mSaveOnAllViewsInvisible;
     }
 
     /**
@@ -100,9 +102,18 @@ final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
-        if (mRequiredSavableIds != null) {
-            final SaveInfo.Builder saveInfo = new SaveInfo.Builder(mSaveType,
-                    getAutofillIds(structure, mRequiredSavableIds));
+        if (mRequiredSavableIds != null || mSaveOnAllViewsInvisible) {
+            final SaveInfo.Builder saveInfo;
+
+            if (mRequiredSavableIds == null) {
+                saveInfo = new SaveInfo.Builder(mSaveType, null);
+            } else {
+                saveInfo = new SaveInfo.Builder(mSaveType,
+                        getAutofillIds(structure, mRequiredSavableIds));
+            }
+
+            saveInfo.setSaveOnAllViewsInvisible(mSaveOnAllViewsInvisible);
+
             if (mOptionalSavableIds != null) {
                 saveInfo.setOptionalIds(getAutofillIds(structure, mOptionalSavableIds));
             }
@@ -126,6 +137,7 @@ final class CannedFillResponse {
         return "CannedFillResponse: [datasets=" + mDatasets
                 + ", requiredSavableIds=" + Arrays.toString(mRequiredSavableIds)
                 + ", optionalSavableIds=" + Arrays.toString(mOptionalSavableIds)
+                + ", saveOnAllViewsInvisible=" + mSaveOnAllViewsInvisible
                 + ", saveDescription=" + mSaveDescription
                 + ", hasPresentation=" + (mPresentation != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
@@ -145,6 +157,7 @@ final class CannedFillResponse {
         private String[] mAuthenticationIds;
         private CharSequence mNegativeActionLabel;
         private IntentSender mNegativeActionListener;
+        private boolean mSaveOnAllViewsInvisible;
 
         public Builder addDataset(CannedDataset dataset) {
             mDatasets.add(dataset);
@@ -157,6 +170,14 @@ final class CannedFillResponse {
         public Builder setRequiredSavableIds(int type, String... ids) {
             mSaveType = type;
             mRequiredSavableIds = ids;
+            return this;
+        }
+
+        /**
+         * Sets the saveOnAllViewsInvisible flag
+         */
+        public Builder setSaveOnAllViewsInvisible(boolean saveOnAllViewsInvisible) {
+            mSaveOnAllViewsInvisible = saveOnAllViewsInvisible;
             return this;
         }
 

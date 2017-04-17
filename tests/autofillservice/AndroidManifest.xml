@@ -54,6 +54,7 @@
         <activity android:name=".DummyActivity"/>
         <activity android:name=".OutOfProcessLoginActivity"
             android:process="android.autofillservice.cts.outside"/>
+        <activity android:name=".FragmentContainerActivity" />
 
         <service
             android:name=".InstrumentedAutoFillService"
