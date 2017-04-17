@@ -28,7 +28,7 @@ import android.graphics.Canvas;
 import android.graphics.Movie;
 import android.graphics.Paint;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-@MediumTest
+@SmallTest
 @RunWith(AndroidJUnit4.class)
 public class MovieTest {
     private final int MOVIE = R.drawable.animated;
