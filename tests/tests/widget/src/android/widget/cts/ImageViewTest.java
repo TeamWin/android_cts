@@ -510,7 +510,6 @@ public class ImageViewTest {
         Drawable backgroundDrawable = new ColorDrawable(0xFF0000FF);
         mockImageView.setBackgroundDrawable(backgroundDrawable);
 
-        assertFalse(mockImageView.verifyDrawable(null));
         assertFalse(mockImageView.verifyDrawable(new ColorDrawable(0xFF00FF00)));
         assertTrue(mockImageView.verifyDrawable(drawable));
         assertTrue(mockImageView.verifyDrawable(backgroundDrawable));
