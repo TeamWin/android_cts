@@ -520,6 +520,19 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         fos.close();
     }
 
+    public void testSetOutputFile() throws Exception {
+        if (!hasCamera()) {
+            return;
+        }
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
+        mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
+        mMediaRecorder.setOutputFile(mOutFile);
+        long maxFileSize = MAX_FILE_SIZE * 10;
+        recordMedia(maxFileSize, mOutFile);
+    }
+
     public void testRecordingAudioInRawFormats() throws Exception {
         int testsRun = 0;
         if (hasAmrNb()) {
@@ -771,7 +784,8 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                     } else if (mFileIndex < 6) {
                         try {
                             String path = OUTPUT_PATH + mFileIndex;
-                            mMediaRecorder.setNextOutputFile(path);
+                            File nextFile = new File(path);
+                            mMediaRecorder.setNextOutputFile(nextFile);
                             recordFileList.add(path);
                             mFileIndex++;
                         } catch (IOException e) {
