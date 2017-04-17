@@ -82,7 +82,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
                     HARDWARE_OPTIONS);
             canvas.drawBitmap(hardwareBitmap, 0, 0, new Paint());
         }, true).runWithVerifier(new GoldenImageVerifier(getActivity(),
-                R.drawable.golden_headless_robot, new ExactComparer()));
+                R.drawable.golden_headless_robot, new MSSIMComparer(0.95)));
     }
 
     @Test
