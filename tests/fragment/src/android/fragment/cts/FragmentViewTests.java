@@ -46,13 +46,6 @@ public class FragmentViewTests {
     public ActivityTestRule<FragmentTestActivity> mActivityRule =
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
 
-    private Instrumentation mInstrumentation;
-
-    @Before
-    public void setupInstrumentation() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
-    }
-
     // Test that adding a fragment adds the Views in the proper order. Popping the back stack
     // should remove the correct Views.
     @Test
@@ -156,7 +149,7 @@ public class FragmentViewTests {
         fm.beginTransaction().add(R.id.fragmentContainer, fragment1).commit();
         FragmentTestUtil.executePendingTransactions(mActivityRule);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -917,7 +910,7 @@ public class FragmentViewTests {
 
         final StrictViewFragment fragment2 = new StrictViewFragment();
         final StrictViewFragment fragment3 = new StrictViewFragment();
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 fm.popBackStack();

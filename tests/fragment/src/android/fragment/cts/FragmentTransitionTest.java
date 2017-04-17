@@ -15,7 +15,8 @@
  */
 package android.fragment.cts;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -23,21 +24,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
-import com.android.compatibility.common.util.transition.TargetTracking;
-import com.android.compatibility.common.util.transition.TrackingTransition;
-
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.app.Instrumentation;
 import android.app.SharedElementCallback;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.transition.TransitionSet;
 import android.view.View;
+
+import com.android.compatibility.common.util.transition.TargetTracking;
+import com.android.compatibility.common.util.transition.TrackingTransition;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +67,6 @@ public class FragmentTransitionTest {
     public ActivityTestRule<FragmentTestActivity> mActivityRule =
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
 
-    private Instrumentation mInstrumentation;
     private FragmentManager mFragmentManager;
 
     public FragmentTransitionTest(final boolean optimize) {
@@ -77,7 +75,6 @@ public class FragmentTransitionTest {
 
     @Before
     public void setup() throws Throwable {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mFragmentManager = mActivityRule.getActivity().getFragmentManager();
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
     }
@@ -163,7 +160,7 @@ public class FragmentTransitionTest {
         final TransitionFragment fragment2 = new TransitionFragment();
         fragment2.setLayoutId(R.layout.scene2);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 mFragmentManager.beginTransaction()
@@ -966,7 +963,7 @@ public class FragmentTransitionTest {
         final View startRed = findRed();
         final Rect startSharedRect = getBoundsOnScreen(startBlue);
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             for (int i = 0; i < numPops; i++) {
                 mFragmentManager.popBackStack();
             }

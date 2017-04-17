@@ -26,10 +26,8 @@ import android.app.Fragment;
 import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
-import android.app.Instrumentation;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -50,12 +48,10 @@ public class PostponedTransitionTest {
     public ActivityTestRule<FragmentTestActivity> mActivityRule =
             new ActivityTestRule<FragmentTestActivity>(FragmentTestActivity.class);
 
-    private Instrumentation mInstrumentation;
     private PostponedFragment1 mBeginningFragment;
 
     @Before
     public void setupContainer() throws Throwable {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         FragmentTestUtil.setContentView(mActivityRule, R.layout.simple_container);
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
         mBeginningFragment = new PostponedFragment1();
@@ -119,7 +115,7 @@ public class PostponedTransitionTest {
         final int commit[] = new int[1];
         // Need to run this on the UI thread so that the transaction doesn't start
         // between the two
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 commit[0] = fm.beginTransaction()
@@ -489,7 +485,7 @@ public class PostponedTransitionTest {
         final TransitionFragment fragment4 = new PostponedFragment2();
         final StrictFragment strictFragment2 = new StrictFragment();
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 fm.beginTransaction()
@@ -539,7 +535,7 @@ public class PostponedTransitionTest {
 
         final View startBlue2 = fragment2.getView().findViewById(R.id.blueSquare);
 
-        mInstrumentation.runOnMainSync(new Runnable() {
+        mActivityRule.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 fm.beginTransaction()
@@ -664,7 +660,7 @@ public class PostponedTransitionTest {
         assertTrue(fragment2.isAdded());
         assertTrue(fragment2.getView().isAttachedToWindow());
 
-        mInstrumentation.runOnMainSync(() -> {
+        mActivityRule.runOnUiThread(() -> {
             assertTrue(fm2.popBackStackImmediate());
         });
 
