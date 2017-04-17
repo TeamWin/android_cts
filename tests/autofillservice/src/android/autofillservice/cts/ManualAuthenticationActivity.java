@@ -49,24 +49,23 @@ public class ManualAuthenticationActivity extends Activity {
         setContentView(R.layout.single_button_activity);
 
         findViewById(R.id.button).setOnClickListener((v) -> {
-            // We should get the assist structure
             AssistStructure structure = getIntent().getParcelableExtra(
                     AutofillManager.EXTRA_ASSIST_STRUCTURE);
-            assertWithMessage("structure not called").that(structure).isNotNull();
+            if (structure != null) {
+                Parcelable result;
+                if (sResponse != null) {
+                    result = sResponse.asFillResponse(structure);
+                } else if (sDataset != null) {
+                    result = sDataset.asDataset(structure);
+                } else {
+                    throw new IllegalStateException("no dataset or response");
+                }
 
-            Parcelable result = null;
-            if (sResponse != null) {
-                result = sResponse.asFillResponse(structure);
-            } else if (sDataset != null) {
-                result = sDataset.asDataset(structure);
-            } else {
-                throw new IllegalStateException("no dataset or response");
+                // Pass on the auth result
+                Intent intent = new Intent();
+                intent.putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, result);
+                setResult(RESULT_OK, intent);
             }
-
-            // Pass on the auth result
-            Intent intent = new Intent();
-            intent.putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, result);
-            setResult(RESULT_OK, intent);
 
             // Done
             finish();
