@@ -16,6 +16,8 @@
 
 package com.android.cts.storagestatsapp;
 
+import static android.os.storage.StorageManager.UUID_DEFAULT;
+
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
@@ -54,6 +56,7 @@ import android.util.MutableLong;
 import com.android.cts.storageapp.UtilsReceiver;
 
 import java.io.File;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -81,15 +84,18 @@ public class StorageStatsTest extends InstrumentationTestCase {
                     .getSystemService(StorageStatsManager.class);
             assertTrue("You're running kernel 3.18 or newer (" + uname.release + ") which "
                     + "means that CONFIG_QUOTA, CONFIG_QFMT_V2, CONFIG_QUOTACTL and the "
-                    + "'quota' fstab option on /data are required", stats.isQuotaSupported(null));
+                    + "'quota' fstab option on /data are required",
+                    stats.isQuotaSupported(UUID_DEFAULT));
         }
     }
 
     public void testVerifySummary() throws Exception {
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
 
-        assertAtLeast(Environment.getDataDirectory().getTotalSpace(), stats.getTotalBytes(null));
-        assertAtLeast(Environment.getDataDirectory().getUsableSpace(), stats.getFreeBytes(null));
+        assertAtLeast(Environment.getDataDirectory().getTotalSpace(),
+                stats.getTotalBytes(UUID_DEFAULT));
+        assertAtLeast(Environment.getDataDirectory().getUsableSpace(),
+                stats.getFreeBytes(UUID_DEFAULT));
     }
 
     public void testVerifyStats() throws Exception {
@@ -97,13 +103,13 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final int uid = android.os.Process.myUid();
         final UserHandle user = UserHandle.getUserHandleForUid(uid);
 
-        final StorageStats beforeApp = stats.queryStatsForUid(null, uid);
-        final StorageStats beforeUser = stats.queryStatsForUser(null, user);
+        final StorageStats beforeApp = stats.queryStatsForUid(UUID_DEFAULT, uid);
+        final StorageStats beforeUser = stats.queryStatsForUser(UUID_DEFAULT, user);
 
         useSpace(getContext());
 
-        final StorageStats afterApp = stats.queryStatsForUid(null, uid);
-        final StorageStats afterUser = stats.queryStatsForUser(null, user);
+        final StorageStats afterApp = stats.queryStatsForUid(UUID_DEFAULT, uid);
+        final StorageStats afterUser = stats.queryStatsForUser(UUID_DEFAULT, user);
 
         final long deltaData = DATA_ALL;
         assertMostlyEquals(deltaData, afterApp.getDataBytes() - beforeApp.getDataBytes());
@@ -121,8 +127,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final ApplicationInfo a = pm.getApplicationInfo(PKG_A, 0);
         final ApplicationInfo b = pm.getApplicationInfo(PKG_B, 0);
 
-        final StorageStats as = stats.queryStatsForUid(null, a.uid);
-        final StorageStats bs = stats.queryStatsForUid(null, b.uid);
+        final StorageStats as = stats.queryStatsForUid(UUID_DEFAULT, a.uid);
+        final StorageStats bs = stats.queryStatsForUid(UUID_DEFAULT, b.uid);
 
         assertMostlyEquals(DATA_ALL * 2, as.getDataBytes());
         assertMostlyEquals(CACHE_ALL * 2, as.getCacheBytes());
@@ -140,7 +146,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final int uid = android.os.Process.myUid();
         final UserHandle user = UserHandle.getUserHandleForUid(uid);
 
-        final ExternalStorageStats before = stats.queryExternalStatsForUser(null, user);
+        final ExternalStorageStats before = stats.queryExternalStatsForUser(UUID_DEFAULT, user);
 
         final File dir = Environment.getExternalStorageDirectory();
         final File downloadsDir = Environment.getExternalStoragePublicDirectory(
@@ -158,7 +164,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         useWrite(audio, 5 * MB_IN_BYTES);
         useWrite(internal, 7 * MB_IN_BYTES);
 
-        final ExternalStorageStats afterInit = stats.queryExternalStatsForUser(null, user);
+        final ExternalStorageStats afterInit = stats.queryExternalStatsForUser(UUID_DEFAULT, user);
 
         assertMostlyEquals(17 * MB_IN_BYTES, afterInit.getTotalBytes() - before.getTotalBytes());
         assertMostlyEquals(5 * MB_IN_BYTES, afterInit.getAudioBytes() - before.getAudioBytes());
@@ -168,7 +174,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Rename to ensure that stats are updated
         video.renameTo(new File(dir, System.nanoTime() + ".PnG"));
 
-        final ExternalStorageStats afterRename = stats.queryExternalStatsForUser(null, user);
+        final ExternalStorageStats afterRename = stats.queryExternalStatsForUser(UUID_DEFAULT, user);
 
         assertMostlyEquals(17 * MB_IN_BYTES, afterRename.getTotalBytes() - before.getTotalBytes());
         assertMostlyEquals(5 * MB_IN_BYTES, afterRename.getAudioBytes() - before.getAudioBytes());
@@ -199,7 +205,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         logCommand("sync");
 
         final long manualSize = getSizeManual(Environment.getExternalStorageDirectory());
-        final long statsSize = stats.queryExternalStatsForUser(null, user).getTotalBytes();
+        final long statsSize = stats.queryExternalStatsForUser(UUID_DEFAULT, user).getTotalBytes();
 
         assertMostlyEquals(manualSize, statsSize);
     }
@@ -220,9 +226,10 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final UserHandle user = android.os.Process.myUserHandle();
 
         final File filesDir = context.getFilesDir();
+        final UUID filesUuid = sm.getUuidForPath(filesDir);
 
-        final long beforeAllocatable = sm.getAllocatableBytes(filesDir, 0);
-        final long beforeFree = stats.getFreeBytes(null);
+        final long beforeAllocatable = sm.getAllocatableBytes(filesUuid, 0);
+        final long beforeFree = stats.getFreeBytes(UUID_DEFAULT);
         final long beforeRaw = filesDir.getUsableSpace();
 
         Log.d(TAG, "Before raw " + beforeRaw + ", free " + beforeFree + ", allocatable "
@@ -239,16 +246,16 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real
         // disk space.
-        if (stats.isQuotaSupported(null)) {
+        if (stats.isQuotaSupported(UUID_DEFAULT)) {
             assertMostlyEquals(beforeAllocatable,
-                    sm.getAllocatableBytes(filesDir, 0), 10 * MB_IN_BYTES);
+                    sm.getAllocatableBytes(filesUuid, 0), 10 * MB_IN_BYTES);
             assertMostlyEquals(beforeFree,
-                    stats.getFreeBytes(null), 10 * MB_IN_BYTES);
+                    stats.getFreeBytes(UUID_DEFAULT), 10 * MB_IN_BYTES);
         } else {
             assertMostlyEquals(beforeAllocatable - totalAllocated,
-                    sm.getAllocatableBytes(filesDir, 0), 10 * MB_IN_BYTES);
+                    sm.getAllocatableBytes(filesUuid, 0), 10 * MB_IN_BYTES);
             assertMostlyEquals(beforeFree - totalAllocated,
-                    stats.getFreeBytes(null), 10 * MB_IN_BYTES);
+                    stats.getFreeBytes(UUID_DEFAULT), 10 * MB_IN_BYTES);
         }
         assertMostlyEquals(beforeRaw - totalAllocated,
                 filesDir.getUsableSpace(), 10 * MB_IN_BYTES);
@@ -259,7 +266,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Allocate some space for ourselves, which should trim away at
         // over-quota app first, even though its files are newer.
         final long clear1 = filesDir.getUsableSpace() + (targetB / 2);
-        sm.allocateBytes(filesDir, clear1, 0);
+        sm.allocateBytes(filesUuid, clear1, 0);
 
         assertMostlyEquals(targetA, getCacheBytes(PKG_A, user));
         assertMostlyEquals(targetB / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
@@ -269,7 +276,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // they're tied for cache ratios, we expect to clear about half of the
         // remaining space from each of them.
         final long clear2 = filesDir.getUsableSpace() + (targetB / 2);
-        sm.allocateBytes(filesDir, clear2, 0);
+        sm.allocateBytes(filesUuid, clear2, 0);
 
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_A, user), 2 * MB_IN_BYTES);
         assertMostlyEquals(targetA / 2, getCacheBytes(PKG_B, user), 2 * MB_IN_BYTES);
@@ -313,7 +320,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         tomb.setLastModified(tombTime);
 
         final long clear1 = group.getUsableSpace() + (8 * MB_IN_BYTES);
-        sm.allocateBytes(group, clear1, 0);
+        sm.allocateBytes(sm.getUuidForPath(group), clear1, 0);
 
         assertTrue(a.exists());
         assertTrue(b.exists());
@@ -327,9 +334,9 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertTrue(i.exists()); assertEquals(0, i.length());
     }
 
-    private long getCacheBytes(String pkg, UserHandle user) {
+    private long getCacheBytes(String pkg, UserHandle user) throws Exception {
         return getContext().getSystemService(StorageStatsManager.class)
-                .queryStatsForPackage(null, pkg, user).getCacheBytes();
+                .queryStatsForPackage(UUID_DEFAULT, pkg, user).getCacheBytes();
     }
 
     private long doAllocateReceiver(String pkg, double fraction, long time) throws Exception {
