@@ -23,10 +23,8 @@ import android.app.Fragment;
 import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
-import android.app.Instrumentation;
 import android.os.Looper;
 import android.os.Parcelable;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Pair;
 import android.view.View;
@@ -42,9 +40,14 @@ public class FragmentTestUtil {
         // the UI thread and then the execution will be added onto the queue after that.
         // The two-cycle wait makes sure fragments have the opportunity to complete both
         // before returning.
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.runOnMainSync(() -> {});
-        instrumentation.runOnMainSync(() -> {});
+        try {
+            rule.runOnUiThread(() -> {
+            });
+            rule.runOnUiThread(() -> {
+            });
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     private static void runOnUiThreadRethrow(ActivityTestRule<? extends Activity> rule,
