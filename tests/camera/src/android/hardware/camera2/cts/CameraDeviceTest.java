@@ -1649,10 +1649,6 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                     checkMeteringRect(afRegions);
                 }
             }
-            // ZSL must default to OFF
-            if (request.get(CONTROL_ENABLE_ZSL) != null) {
-                mCollector.expectKeyValueEquals(request, CONTROL_ENABLE_ZSL, false);
-            }
         }
 
         // Sensor settings.
@@ -1912,6 +1908,13 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             }
             if (mStaticInfo.areKeysAvailable(STATISTICS_LENS_SHADING_MAP_MODE)) {
                 mCollector.expectKeyValueNotNull(request, STATISTICS_LENS_SHADING_MAP_MODE);
+            }
+        }
+
+        // Enable ZSL
+        if (template != CameraDevice.TEMPLATE_STILL_CAPTURE) {
+            if (mStaticInfo.areKeysAvailable(CONTROL_ENABLE_ZSL)) {
+                    mCollector.expectKeyValueEquals(request, CONTROL_ENABLE_ZSL, false);
             }
         }
 
