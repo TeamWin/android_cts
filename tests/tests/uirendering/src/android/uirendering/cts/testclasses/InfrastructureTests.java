@@ -18,7 +18,9 @@ package android.uirendering.cts.testclasses;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
@@ -28,8 +30,10 @@ import android.uirendering.cts.testinfrastructure.CanvasClient;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class InfrastructureTests extends ActivityTestBase {
 
     @Test
@@ -45,6 +49,7 @@ public class InfrastructureTests extends ActivityTestBase {
      * by verifying that two paths that should render differently *do* render
      * differently.
      */
+    @LargeTest
     @Test
     public void testRenderSpecIsolation() {
         CanvasClient canvasClient = (canvas, width, height) -> {

@@ -26,11 +26,13 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.util.DisplayMetrics;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Tests of state query-able from canvas at draw time.
@@ -39,6 +41,7 @@ import org.junit.Test;
  * capability to test the hardware accelerated Canvas in the way that it is used by Views.
  */
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class CanvasStateTests extends ActivityTestBase {
     @Test
     public void testClipRectReturnValues() {

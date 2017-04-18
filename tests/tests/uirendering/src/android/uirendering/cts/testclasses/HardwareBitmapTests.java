@@ -28,6 +28,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 
 import android.graphics.Bitmap;
@@ -41,11 +42,13 @@ import android.util.DisplayMetrics;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class HardwareBitmapTests extends ActivityTestBase {
 
     private Resources mRes;
