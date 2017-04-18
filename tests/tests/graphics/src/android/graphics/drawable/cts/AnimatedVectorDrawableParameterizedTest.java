@@ -30,7 +30,9 @@ import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.View;
@@ -50,7 +52,7 @@ import org.junit.runners.Parameterized;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@MediumTest
+@LargeTest
 @RunWith(Parameterized.class)
 public class AnimatedVectorDrawableParameterizedTest {
     @Rule
@@ -183,6 +185,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         return frameLatch.await(timeout, TimeUnit.MILLISECONDS);
     }
 
+    @SmallTest
     @Test
     public void testSingleFrameAnimation() throws Throwable {
         int resId = R.drawable.avd_single_frame;
@@ -208,6 +211,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         });
     }
 
+    @MediumTest
     @Test
     public void testEmptyAnimatorSet() throws Throwable {
         int resId = R.drawable.avd_empty_animator;
