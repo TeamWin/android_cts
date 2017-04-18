@@ -101,7 +101,7 @@ public class UseSharedLibraryTest {
 
                 List<VersionedPackage> dependentPackages = sharedLib.getDependentPackages();
 
-                switch (sharedLib.getVersion()) {
+                switch ((int) sharedLib.getVersion()) {
                     case 1: {
                         firstLibFound = true;
                         assertSame(1, declaringPackage.getVersionCode());
