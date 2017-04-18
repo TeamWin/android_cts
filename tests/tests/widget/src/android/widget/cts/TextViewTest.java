@@ -6789,19 +6789,17 @@ public class TextViewTest {
     public void testAutoSizeCallers_setHorizontallyScrolling() throws Throwable {
         final TextView autoSizeTextView = prepareAndRetrieveAutoSizeTestData(
                 R.id.textview_autosize_uniform, false);
+        // Verify that we do not have horizontal scrolling turned on.
+        assertTrue(!autoSizeTextView.getHorizontallyScrolling());
+
         final float initialTextSize = autoSizeTextView.getTextSize();
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setHorizontallyScrolling(
-                !autoSizeTextView.getHorizontallyScrolling()));
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setHorizontallyScrolling(true));
         mInstrumentation.waitForIdleSync();
-        final float changedTextSize = autoSizeTextView.getTextSize();
+        assertTrue(autoSizeTextView.getTextSize() > initialTextSize);
 
-        assertTrue(changedTextSize < initialTextSize);
-
-        mActivityRule.runOnUiThread(() -> autoSizeTextView.setHorizontallyScrolling(
-                autoSizeTextView.getHorizontallyScrolling()));
+        mActivityRule.runOnUiThread(() -> autoSizeTextView.setHorizontallyScrolling(false));
         mInstrumentation.waitForIdleSync();
-
-        assertEquals(changedTextSize, autoSizeTextView.getTextSize(), 0f);
+        assertEquals(initialTextSize, autoSizeTextView.getTextSize(), 0f);
     }
 
     @Test
