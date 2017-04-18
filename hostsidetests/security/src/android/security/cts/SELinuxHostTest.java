@@ -23,6 +23,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
@@ -258,6 +259,31 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Returns {@code true} if the actual file contents starts with the expected
+     * file contents.
+     *
+     * @param expectedFile
+     *  The file with the expected contents.
+     * @param actualFile
+     *  The actual file being checked.
+     */
+    private boolean isFileStartsWith(File expectedFile, File actualFile) throws Exception {
+        BufferedReader expectedReader = new BufferedReader(new FileReader(expectedFile.getAbsolutePath()));
+        BufferedReader actualReader = new BufferedReader(new FileReader(actualFile.getAbsolutePath()));
+        String expectedLine, actualLine;
+        boolean startsWith = true;
+        while ((expectedLine = expectedReader.readLine()) != null) {
+            actualLine = actualReader.readLine();
+            if (!expectedLine.equals(actualLine)) {
+                startsWith = false;
+                CLog.d("Lines do not match, expected:" + expectedLine +
+                        " actual:" + actualLine);
+            }
+        }
+        return startsWith;
+    }
+
+    /**
      * Tests that the seapp_contexts file on the device contains
      * the standard AOSP entries.
      *
@@ -295,22 +321,40 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         deviceFcFile.deleteOnExit();
         mDevice.pullFile("/file_contexts.bin", deviceFcFile);
 
-        /* retrieve the AOSP file_contexts file from jar */
-        aospFcFile = copyResourceToTempFile("/general_file_contexts.bin");
+        /* Compares with AOSP file_contexts file from jar */
+        String line = checkFileContexts("/general_file_contexts.bin");
 
-        /* run checkfc -c general_file_contexts.bin file_contexts.bin */
+        if(line.equals("equal") || line.equals("subset")) {
+            CLog.d("The file_contexts.bin file includes the latest AOSP entries.\n");
+        } else {
+            CLog.d("The file_contexts.bin file did not include the latest AOSP entries:\n"
+                       + line + "\n");
+
+            /* Compares with NMR1 AOSP file_contexts */
+            line = checkFileContexts("/ab3857191_file_contexts.bin");
+            assertTrue("The file_contexts.bin file did not include the AOSP entries:\n"
+                       + line + "\n",
+                       line.equals("equal") || line.equals("subset"));
+        }
+    }
+
+    /**
+     * Check deviceFcFile with a file_contexts file and returns the result string
+     *
+     * @param fcFileName
+     *  The file_contexts file name that with the expected contents in jar.
+     */
+    private String checkFileContexts(String fcFileName) throws Exception {
+        File fcFile = copyResourceToTempFile(fcFileName);
         ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
-                "-c", aospFcFile.getAbsolutePath(),
+                "-c", fcFile.getAbsolutePath(),
                 deviceFcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
         p.waitFor();
         BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line = result.readLine();
-        assertTrue("The file_contexts.bin file did not include the AOSP entries:\n"
-                   + line + "\n",
-                   line.equals("equal") || line.equals("subset"));
+        return result.readLine();
     }
 
     /**
@@ -350,7 +394,11 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         /* retrieve the AOSP service_contexts file from jar */
         aospSvcFile = copyResourceToTempFile("/general_service_contexts");
 
-        assertFileStartsWith(aospSvcFile, deviceSvcFile);
+        /* retrieve NMR1 AOSP service_contexts file from jar */
+        if (!isFileStartsWith(aospSvcFile, deviceSvcFile)) {
+            aospSvcFile = copyResourceToTempFile("/ab3857191_service_contexts");
+            assertFileStartsWith(aospSvcFile, deviceSvcFile);
+        }
     }
 
     /**
