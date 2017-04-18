@@ -161,35 +161,4 @@ public class BitmapShaderTest {
         Assert.assertArrayEquals(new int[] { Color.RED, Color.BLUE, Color.BLUE, Color.RED },
                 pixels);
     }
-
-    @Test
-    public void testSetTileMode() {
-        Bitmap bitmap = Bitmap.createBitmap(2, 1, Config.ARGB_8888);
-        bitmap.setPixel(0, 0, Color.RED);
-        bitmap.setPixel(1, 0, Color.BLUE);
-        Bitmap dstBitmap = Bitmap.createBitmap(4, 1, Config.ARGB_8888);
-        Canvas canvas = new Canvas(dstBitmap);
-        Paint paint = new Paint();
-        int[] pixels = new int[4];
-
-
-        // use clamp, verify
-        BitmapShader shader = new BitmapShader(bitmap,
-                Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-        paint.setShader(shader);
-        canvas.drawRect(0, 0, 4, 1, paint);
-
-        dstBitmap.getPixels(pixels, 0, 4, 0, 0, 4, 1);
-        Assert.assertArrayEquals(new int[] { Color.RED, Color.BLUE, Color.BLUE, Color.BLUE },
-                pixels);
-
-        // set to use mirror, verify
-        // Note: we don't need to re-apply shader on paint, it's picked up automatically.
-        shader.set(bitmap, Shader.TileMode.MIRROR, Shader.TileMode.MIRROR);
-        canvas.drawRect(0, 0, 4, 1, paint);
-
-        dstBitmap.getPixels(pixels, 0, 4, 0, 0, 4, 1);
-        Assert.assertArrayEquals(new int[] { Color.RED, Color.BLUE, Color.BLUE, Color.RED },
-                pixels);
-    }
 }
