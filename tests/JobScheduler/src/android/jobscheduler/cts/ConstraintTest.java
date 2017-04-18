@@ -17,7 +17,6 @@ package android.jobscheduler.cts;
 
 import android.annotation.TargetApi;
 import android.app.Instrumentation;
-import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ClipData;
 import android.content.ComponentName;
@@ -30,7 +29,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
-import android.test.AndroidTestCase;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -67,7 +65,10 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
 
     Uri mFirstUri;
     Bundle mFirstUriBundle;
-    ClipData mClipData;
+    Uri mSecondUri;
+    Bundle mSecondUriBundle;
+    ClipData mFirstClipData;
+    ClipData mSecondClipData;
 
     boolean mStorageStateChanged;
 
@@ -82,8 +83,13 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
         mFirstUri = Uri.parse("content://" + JOBPERM_AUTHORITY + "/protected/foo");
         mFirstUriBundle = new Bundle();
         mFirstUriBundle.putParcelable("uri", mFirstUri);
-        mClipData = new ClipData("JobPerm", new String[] { "application/*" },
+        mSecondUri = Uri.parse("content://" + JOBPERM_AUTHORITY + "/protected/bar");
+        mSecondUriBundle = new Bundle();
+        mSecondUriBundle.putParcelable("uri", mSecondUri);
+        mFirstClipData = new ClipData("JobPerm1", new String[] { "application/*" },
                 new ClipData.Item(mFirstUri));
+        mSecondClipData = new ClipData("JobPerm2", new String[] { "application/*" },
+                new ClipData.Item(mSecondUri));
         try {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd activity set-inactive "
                     + mContext.getPackageName() + " false");
@@ -122,10 +128,23 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
         getContext().sendBroadcast(EXPEDITE_STABLE_CHARGING);
     }
 
+    public void assertHasUriPermission(Uri uri, int grantFlags) {
+        if ((grantFlags&Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
+            assertEquals(PackageManager.PERMISSION_GRANTED,
+                    getContext().checkUriPermission(uri, Process.myPid(),
+                            Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        }
+        if ((grantFlags&Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
+            assertEquals(PackageManager.PERMISSION_GRANTED,
+                    getContext().checkUriPermission(uri, Process.myPid(),
+                            Process.myUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+        }
+    }
+
     void waitPermissionRevoke(Uri uri, int access, long timeout) {
         long startTime = SystemClock.elapsedRealtime();
         while (getContext().checkUriPermission(uri, Process.myPid(), Process.myUid(), access)
-                != PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_DENIED) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {

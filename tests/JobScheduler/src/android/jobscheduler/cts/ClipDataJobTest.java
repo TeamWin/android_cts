@@ -73,7 +73,7 @@ public class ClipDataJobTest extends ConstraintTest {
         // Schedule the job, the system should now also be holding a URI grant for us.
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(mBuilder.setRequiresStorageNotLow(true)
-                .setClipData(mClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                .setClipData(mFirstClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
                         | Intent.FLAG_GRANT_WRITE_URI_PERMISSION).build());
 
         // Remove the explicit grant, we should still have a grant due to the job.
@@ -105,7 +105,7 @@ public class ClipDataJobTest extends ConstraintTest {
     public void testClipDataGrant_Failed() throws Exception {
         try {
             mJobScheduler.schedule(mBuilder.setRequiresStorageNotLow(true)
-                    .setClipData(mClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    .setClipData(mFirstClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
                             | Intent.FLAG_GRANT_WRITE_URI_PERMISSION).build());
         } catch (SecurityException e) {
             return;
@@ -131,7 +131,7 @@ public class ClipDataJobTest extends ConstraintTest {
         // Schedule the job, the system should now also be holding a URI grant for us.
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(mBuilder.setMinimumLatency(60*60*1000)
-                .setClipData(mClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                .setClipData(mFirstClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
                         | Intent.FLAG_GRANT_WRITE_URI_PERMISSION).build());
 
         // Remove the explicit grant, we should still have a grant due to the job.
@@ -145,7 +145,7 @@ public class ClipDataJobTest extends ConstraintTest {
 
         // Now reschedule the job to have it happen right now.
         mJobScheduler.schedule(mBuilder.setMinimumLatency(0)
-                .setClipData(mClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                .setClipData(mFirstClipData, Intent.FLAG_GRANT_READ_URI_PERMISSION
                         | Intent.FLAG_GRANT_WRITE_URI_PERMISSION).build());
         assertTrue("Job with storage not low constraint did not fire when storage not low.",
                 kTestEnvironment.awaitExecution());
