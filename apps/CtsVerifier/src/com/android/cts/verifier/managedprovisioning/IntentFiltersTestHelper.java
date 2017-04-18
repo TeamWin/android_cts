@@ -29,6 +29,7 @@ import android.content.pm.ResolveInfo;
 import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.nfc.cardemulation.CardEmulation;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.UserHandle;
@@ -67,7 +68,6 @@ public class IntentFiltersTestHelper {
                 new Intent(AlarmClock.ACTION_SET_TIMER),
                 new Intent(AlarmClock.ACTION_SHOW_ALARMS),
                 new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS),
-                new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS),
                 new Intent(Settings.ACTION_CAPTIONING_SETTINGS),
                 new Intent(Settings.ACTION_DATE_SETTINGS),
                 new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS),
@@ -265,6 +265,11 @@ public class IntentFiltersTestHelper {
         if (pm.hasSystemFeature(PackageManager.FEATURE_PRINTING)) {
             notForwardedIntentsFromManaged.add(
                     new Intent(Settings.ACTION_PRINT_SETTINGS));
+        }
+
+        if (Build.TYPE.equals("user")) {
+            forwardedIntentsFromManaged.add(
+                    new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
         }
     }
 
