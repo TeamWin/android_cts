@@ -38,12 +38,18 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
             = "com.android.server.cts.device.batterystats.provider/"
             + "com.android.server.cts.device.batterystats";
 
+    // Low end of packet size. TODO: Get exact packet size
+    private static final int LOW_MTU = 1500;
+    // High end of packet size. TODO: Get exact packet size
+    private static final int HIGH_MTU = 2500;
 
     // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
     public static final String KEY_ACTION = "action";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
+    public static final String ACTION_WIFI_DOWNLOAD = "action.wifi_download";
+    public static final String ACTION_WIFI_UPLOAD = "action.wifi_upload";
 
     @Override
     protected void setUp() throws Exception {
@@ -169,7 +175,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
         // Background count test.
         executeBackground(ACTION_WIFI_SCAN);
-        Thread.sleep(4_000);
+        Thread.sleep(6_000);
         assertValueRange("wfl", "", 7, 2, 2); // scan_count
         assertValueRange("wfl", "", 11, 1, 1); // scan_count_bg
 
@@ -245,23 +251,34 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
-                "testForegroundDownload");
-        long foregroundBytes = getDownloadedBytes();
-        assertTrue(foregroundBytes > 0);
-        long min = foregroundBytes + MIN_HTTP_HEADER_BYTES;
-        long max = foregroundBytes + (30 * 1024); // Add some fuzzing.
-        assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
-        assertValueRange("nt", "", 11, 1, 40); // wifi_bytes_tx
+        final long FUZZ = 50 * 1024;
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
-                "testBackgroundDownload");
-        long backgroundBytes = getDownloadedBytes();
-        assertTrue(backgroundBytes > 0);
-        min += backgroundBytes + MIN_HTTP_HEADER_BYTES;
-        max += backgroundBytes + (30 * 1024);
+        long prevBytes = getLongValue(getUid(), "nt", "", 6);
+
+        executeForeground(ACTION_WIFI_DOWNLOAD);
+        long downloadedBytes = getDownloadedBytes();
+        assertTrue(downloadedBytes > 0);
+        long min = prevBytes + downloadedBytes + MIN_HTTP_HEADER_BYTES;
+        long max = prevBytes + downloadedBytes + FUZZ; // Add some fuzzing.
         assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
-        assertValueRange("nt", "", 11, 2, 80); // wifi_bytes_tx
+        assertValueRange("nt", "", 10, min / HIGH_MTU, max / LOW_MTU); // wifi_packets_rx
+
+        // Do the background download
+        long prevBgBytes = getLongValue(getUid(), "nt", "", 20);
+        executeBackground(ACTION_WIFI_DOWNLOAD);
+        Thread.sleep(4000);
+        downloadedBytes = getDownloadedBytes();
+
+        long minBg = prevBgBytes + downloadedBytes + MIN_HTTP_HEADER_BYTES;
+        long maxBg = prevBgBytes + downloadedBytes + FUZZ;
+        assertValueRange("nt", "", 20, minBg, maxBg); // wifi_bytes_bg_rx
+        assertValueRange("nt", "", 24, minBg / HIGH_MTU, maxBg / LOW_MTU); // wifi_packets_bg_rx
+
+        // Also increases total wifi counts.
+        min += downloadedBytes + MIN_HTTP_HEADER_BYTES;
+        max += downloadedBytes + FUZZ;
+        assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
+        assertValueRange("nt", "", 10, min / HIGH_MTU, max / LOW_MTU); // wifi_packets_rx
 
         batteryOffScreenOn();
     }
@@ -273,17 +290,28 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
-                "testForegroundUpload");
+        executeForeground(ACTION_WIFI_UPLOAD);
+        Thread.sleep(2000);
         int min = MIN_HTTP_HEADER_BYTES + (2 * 1024);
         int max = min + (6 * 1024); // Add some fuzzing.
         assertValueRange("nt", "", 7, min, max); // wifi_bytes_tx
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsWifiTransferTests",
-                "testBackgroundUpload");
-        assertValueRange("nt", "", 7, min * 2, max * 2); // wifi_bytes_tx
+        executeBackground(ACTION_WIFI_UPLOAD);
+        Thread.sleep(4000);
+        assertValueRange("nt", "", 21, min * 2, max * 2); // wifi_bytes_bg_tx
 
         batteryOffScreenOn();
+    }
+
+    private int getUid() throws Exception {
+        String uidLine = getDevice().executeShellCommand("cmd package list packages -U "
+                + DEVICE_SIDE_TEST_PACKAGE);
+        String[] uidLineParts = uidLine.split(":");
+        // 3rd entry is package uid
+        assertTrue(uidLineParts.length > 2);
+        int uid = Integer.parseInt(uidLineParts[2].trim());
+        assertTrue(uid > 10000);
+        return uid;
     }
 
     /**
@@ -292,14 +320,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      */
     private void assertValueRange(String tag, String optionalAfterTag,
             int index, long min, long max) throws Exception {
-        String uidLine = getDevice().executeShellCommand("cmd package list packages -U "
-                + DEVICE_SIDE_TEST_PACKAGE);
-        String[] uidLineParts = uidLine.split(":");
-        // 3rd entry is package uid
-        assertTrue(uidLineParts.length > 2);
-        int uid = Integer.parseInt(uidLineParts[2].trim());
-        assertTrue(uid > 10000);
-
+        int uid = getUid();
         long value = getLongValue(uid, tag, optionalAfterTag, index);
 
         assertTrue("Value " + value + " is less than min " + min, value >= min);
@@ -365,13 +386,14 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         String log = getDevice().executeShellCommand(
                 "logcat -d -s BatteryStatsWifiTransferTests -e '\\d+'");
         String[] lines = log.split("\n");
+        long size = 0;
         for (int i = lines.length - 1; i >= 0; i--) {
             String[] parts = lines[i].split(":");
             String num = parts[parts.length - 1].trim();
             if (num.matches("\\d+")) {
-                return Integer.parseInt(num);
+                size = Integer.parseInt(num);
             }
         }
-        return 0;
+        return size;
     }
 }
