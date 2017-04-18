@@ -20,17 +20,13 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.renderscript.Allocation;
-import android.renderscript.RenderScript;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.differencevisualizers.DifferenceVisualizer;
 import android.uirendering.cts.differencevisualizers.PassFailVisualizer;
 
 public class BitmapAsserter {
-    public static final boolean USE_RS = false;
     private DifferenceVisualizer mDifferenceVisualizer;
-    private RenderScript mRenderScript;
     private Context mContext;
     private String mClassName;
 
@@ -50,9 +46,6 @@ public class BitmapAsserter {
     public void setUp(Context context) {
         mDifferenceVisualizer = new PassFailVisualizer();
         mContext = context;
-        if (USE_RS) {
-            mRenderScript = RenderScript.create(context.getApplicationContext());
-        }
     }
 
     /**
@@ -69,20 +62,11 @@ public class BitmapAsserter {
             fail("Can't compare bitmaps of different sizes");
         }
 
-        if (USE_RS && comparer.supportsRenderScript()) {
-            Allocation idealAllocation = Allocation.createFromBitmap(mRenderScript, bitmap1,
-                    Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT);
-            Allocation givenAllocation = Allocation.createFromBitmap(mRenderScript, bitmap2,
-                    Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT);
-            success = comparer.verifySameRS(mContext.getResources(), idealAllocation,
-                    givenAllocation, 0, width, width, height, mRenderScript);
-        } else {
-            int[] pixels1 = new int[width * height];
-            int[] pixels2 = new int[width * height];
-            bitmap1.getPixels(pixels1, 0, width, 0, 0, width, height);
-            bitmap2.getPixels(pixels2, 0, width, 0, 0, width, height);
-            success = comparer.verifySame(pixels1, pixels2, 0, width, width, height);
-        }
+        int[] pixels1 = new int[width * height];
+        int[] pixels2 = new int[width * height];
+        bitmap1.getPixels(pixels1, 0, width, 0, 0, width, height);
+        bitmap2.getPixels(pixels2, 0, width, 0, 0, width, height);
+        success = comparer.verifySame(pixels1, pixels2, 0, width, width, height);
 
         if (!success) {
             BitmapDumper.dumpBitmaps(bitmap1, bitmap2, testName, mClassName, mDifferenceVisualizer);
