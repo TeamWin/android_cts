@@ -16,7 +16,6 @@
 package com.android.cts.deviceowner;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.os.Process;
@@ -25,7 +24,6 @@ import android.provider.Settings;
 import com.android.org.conscrypt.TrustedCertificateStore;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.Method;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.List;
@@ -133,9 +131,7 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
 
         long timeBefore = System.currentTimeMillis();
-        final Method retrieveNetworkLogsMethod = DevicePolicyManager.class.getDeclaredMethod(
-                "retrieveNetworkLogs", ComponentName.class, long.class);
-        retrieveNetworkLogsMethod.invoke(mDevicePolicyManager, getWho(), 0 /* batchToken */);
+        mDevicePolicyManager.retrieveNetworkLogs(getWho(), 0 /* batchToken */);
         long timeAfter = System.currentTimeMillis();
 
         final long newTimestamp = mDevicePolicyManager.getLastNetworkLogRetrievalTime();
