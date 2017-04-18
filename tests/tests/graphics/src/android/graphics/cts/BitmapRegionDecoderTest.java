@@ -18,7 +18,6 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +35,7 @@ import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -198,6 +198,7 @@ public class BitmapRegionDecoderTest {
         }
     }
 
+    @LargeTest
     @Test
     public void testDecodeRegionInputStream() throws IOException {
         Options opts = new BitmapFactory.Options();
@@ -224,6 +225,7 @@ public class BitmapRegionDecoderTest {
         }
     }
 
+    @LargeTest
     @Test
     public void testDecodeRegionInputStreamInBitmap() throws IOException {
         Options opts = new BitmapFactory.Options();
@@ -255,6 +257,7 @@ public class BitmapRegionDecoderTest {
         }
     }
 
+    @LargeTest
     @Test
     public void testDecodeRegionByteArray() throws IOException {
         Options opts = new BitmapFactory.Options();
@@ -282,6 +285,7 @@ public class BitmapRegionDecoderTest {
         }
     }
 
+    @LargeTest
     @Test
     public void testDecodeRegionStringAndFileDescriptor() throws IOException {
         Options opts = new BitmapFactory.Options();
@@ -354,6 +358,7 @@ public class BitmapRegionDecoderTest {
     //     (2) The width, height, and Config of inBitmap are never changed.
     //     (3) All of the pixels decoded into inBitmap exactly match the pixels
     //         of a decode where inBitmap is NULL.
+    @LargeTest
     @Test
     public void testInBitmapReuse() throws IOException {
         Options defaultOpts = new BitmapFactory.Options();

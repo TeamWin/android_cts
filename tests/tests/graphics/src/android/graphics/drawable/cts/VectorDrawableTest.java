@@ -33,7 +33,6 @@ import android.graphics.cts.R;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.VectorDrawable;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
@@ -50,6 +49,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+@SmallTest
 @RunWith(AndroidJUnit4.class)
 public class VectorDrawableTest {
     private static final String LOGTAG = "VectorDrawableTest";
@@ -200,31 +200,26 @@ public class VectorDrawableTest {
         mResources = InstrumentationRegistry.getTargetContext().getResources();
     }
 
-    @MediumTest
     @Test
     public void testBasicVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(BASIC_ICON_RES_IDS, BASIC_GOLDEN_IMAGES, null);
     }
 
-    @MediumTest
     @Test
     public void testLMVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(L_M_ICON_RES_IDS, L_M_GOLDEN_IMAGES, null);
     }
 
-    @MediumTest
     @Test
     public void testNVectorDrawables() throws XmlPullParserException, IOException {
         verifyVectorDrawables(N_ICON_RES_IDS, N_GOLDEN_IMAGES, null);
     }
 
-    @MediumTest
     @Test
     public void testVectorDrawableGradient() throws XmlPullParserException, IOException {
         verifyVectorDrawables(GRADIENT_ICON_RES_IDS, GRADIENT_GOLDEN_IMAGES, null);
     }
 
-    @MediumTest
     @Test
     public void testColorStateList() throws XmlPullParserException, IOException {
         for (int i = 0; i < STATEFUL_STATE_SETS.length; i++) {
@@ -344,7 +339,6 @@ public class VectorDrawableTest {
         return builder.toString();
     }
 
-    @SmallTest
     @Test
     public void testGetChangingConfigurations() {
         VectorDrawable vectorDrawable = new VectorDrawable();
@@ -369,7 +363,6 @@ public class VectorDrawableTest {
         assertEquals(0xffff,  vectorDrawable.getChangingConfigurations());
     }
 
-    @SmallTest
     @Test
     public void testGetConstantState() {
         VectorDrawable vectorDrawable = new VectorDrawable();
@@ -383,7 +376,6 @@ public class VectorDrawableTest {
         assertEquals(1, constantState.getChangingConfigurations());
     }
 
-    @SmallTest
     @Test
     public void testMutate() {
         // d1 and d2 will be mutated, while d3 will not.
@@ -419,7 +411,6 @@ public class VectorDrawableTest {
         }
     }
 
-    @SmallTest
     @Test
     public void testColorFilter() {
         PorterDuffColorFilter filter = new PorterDuffColorFilter(Color.RED, Mode.SRC_IN);
@@ -429,7 +420,6 @@ public class VectorDrawableTest {
         assertEquals(filter, vectorDrawable.getColorFilter());
     }
 
-    @SmallTest
     @Test
     public void testGetOpacity () throws XmlPullParserException, IOException {
         VectorDrawable vectorDrawable = new VectorDrawable();
@@ -444,7 +434,6 @@ public class VectorDrawableTest {
                 vectorDrawable.getOpacity());
     }
 
-    @SmallTest
     @Test
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final int densityDpi = mResources.getConfiguration().densityDpi;
@@ -456,7 +445,6 @@ public class VectorDrawableTest {
         }
     }
 
-    @SmallTest
     @Test
     public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
         final int densityDpi = mResources.getConfiguration().densityDpi;
