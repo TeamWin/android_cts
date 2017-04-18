@@ -54,7 +54,7 @@ void test(JNIEnv* env, jclass, jlong instance) {
     std::vector<int32_t> rates = {
         ASENSOR_DIRECT_RATE_NORMAL, ASENSOR_DIRECT_RATE_FAST, ASENSOR_DIRECT_RATE_VERY_FAST};
     std::vector<int32_t> channelTypes =
-        {ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY, ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY};
+        {ASENSOR_DIRECT_CHANNEL_TYPE_SHARED_MEMORY, ASENSOR_DIRECT_CHANNEL_TYPE_HARDWARE_BUFFER};
     for (auto s : sensorTypes) {
         for (auto c : channelTypes) {
             for (auto r : rates) {
