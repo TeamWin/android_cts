@@ -16,6 +16,7 @@
 
 package com.android.server.cts.device.batterystats;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
@@ -67,6 +68,12 @@ public class SimpleForegroundService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Notification notification = new Notification.Builder(this, "Foreground Service")
+                .setContentTitle("CTS Foreground")
+                .setSmallIcon(android.R.drawable.ic_secure)
+                .build();
+        startForeground(1, notification);
+
         Message msg = mServiceHandler.obtainMessage();
         msg.arg1 = startId;
         mServiceHandler.sendMessage(msg);

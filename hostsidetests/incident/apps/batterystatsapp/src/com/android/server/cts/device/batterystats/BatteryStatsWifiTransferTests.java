@@ -63,6 +63,9 @@ public class BatteryStatsWifiTransferTests extends BatteryStatsDeviceTestBase {
     /** String extra of any error encountered during wifi transfer. */
     private static final String EXTRA_TRANSFER_ERROR = "transfer_error";
 
+    /** String extra: the service is required to startForeground() */
+    private static final String EXTRA_FOREGROUND = "fg";
+
     private static final int READ_BUFFER_SIZE = 4096;
 
     /** Server to send requests to. */
@@ -120,15 +123,10 @@ public class BatteryStatsWifiTransferTests extends BatteryStatsDeviceTestBase {
         if (!mHasFeature) {
             return;
         }
-        mTransferService.putExtra(EXTRA_ACTION, action);
-        Notification notification =
-            new Notification.Builder(mContext, "Wifi Transfer Foreground Service")
-                    .setContentTitle("Wifi Transfer Foreground")
-                    .setContentText("Wifi Transfer Foreground")
-                    .setSmallIcon(android.R.drawable.ic_secure)
-                    .build();
-        mContext.getSystemService(NotificationManager.class).startServiceInForeground(mTransferService,
-                1, notification);
+        Intent launchIntent = new Intent(mTransferService)
+                .putExtra(EXTRA_ACTION, action)
+                .putExtra(EXTRA_FOREGROUND, true);
+        mContext.startForegroundService(launchIntent);
 
         mResultsReceivedSignal.await(10, TimeUnit.SECONDS);
         assertTrue("Got error: " + mError, mError == null);
@@ -155,6 +153,16 @@ public class BatteryStatsWifiTransferTests extends BatteryStatsDeviceTestBase {
 
         @Override
         protected void onHandleIntent(Intent intent) {
+            if (intent.getBooleanExtra(EXTRA_FOREGROUND, false)) {
+                Notification notification =
+                        new Notification.Builder(this, "Wifi Transfer Foreground Service")
+                                .setContentTitle("Wifi Transfer Foreground")
+                                .setContentText("Wifi Transfer Foreground")
+                                .setSmallIcon(android.R.drawable.ic_secure)
+                                .build();
+                startForeground(1, notification);
+            }
+
             String error = null;
             switch (intent.getStringExtra(EXTRA_ACTION)) {
                 case ACTION_DOWNLOAD:
