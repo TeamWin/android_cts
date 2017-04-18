@@ -16,8 +16,6 @@
 
 package android.graphics.cts;
 
-import static org.junit.Assert.assertEquals;
-
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -90,52 +88,5 @@ public class LightingColorFilterTest {
 
     private void verifyColor(int expected, int actual) {
         ColorUtils.verifyColor(expected, actual, TOLERANCE);
-    }
-
-    @Test
-    public void testGetSet() {
-        LightingColorFilter filter = new LightingColorFilter(Color.WHITE, Color.BLACK);
-        assertEquals(Color.WHITE, filter.getColorMultiply());
-        assertEquals(Color.BLACK, filter.getColorAdd());
-
-        filter.setColorMultiply(Color.RED);
-        filter.setColorAdd(Color.BLUE);
-
-        assertEquals(Color.RED, filter.getColorMultiply());
-        assertEquals(Color.BLUE, filter.getColorAdd());
-    }
-
-    @Test
-    public void testSetDraw() {
-        LightingColorFilter filter = new LightingColorFilter(Color.CYAN, Color.BLACK);
-
-        Bitmap bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setColorFilter(filter);
-
-        // test initial state
-        paint.setColor(Color.YELLOW);
-        canvas.drawPaint(paint);
-        // Cyan * yellow = green
-        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(0, 0));
-
-
-        // test set color multiply
-        filter.setColorMultiply(Color.MAGENTA);
-        paint.setColor(Color.YELLOW);
-        canvas.drawPaint(paint);
-        // Magenta * yellow = red
-        ColorUtils.verifyColor(Color.RED, bitmap.getPixel(0, 0));
-
-
-        // test set color add
-        filter.setColorMultiply(Color.WHITE);
-        filter.setColorAdd(Color.MAGENTA);
-        paint.setColor(Color.GREEN);
-        canvas.drawPaint(paint);
-        // Magenta + green = white
-        ColorUtils.verifyColor(Color.WHITE, bitmap.getPixel(0, 0));
-
     }
 }
