@@ -37,6 +37,7 @@
     <protected-broadcast android:name="android.intent.action.BOOT_COMPLETED" />
     <protected-broadcast android:name="android.intent.action.PACKAGE_INSTALL" />
     <protected-broadcast android:name="android.intent.action.PACKAGE_ADDED" />
+    <protected-broadcast android:name="android.intent.action.PACKAGE_FIRST_ADDED" />
     <protected-broadcast android:name="android.intent.action.PACKAGE_REPLACED" />
     <protected-broadcast android:name="android.intent.action.MY_PACKAGE_REPLACED" />
     <protected-broadcast android:name="android.intent.action.PACKAGE_REMOVED" />
@@ -284,6 +285,7 @@
     <protected-broadcast android:name="android.btopp.intent.action.STOP_HANDOVER_TRANSFER" />
     <protected-broadcast android:name="android.nfc.handover.intent.action.HANDOVER_SEND" />
     <protected-broadcast android:name="android.nfc.handover.intent.action.HANDOVER_SEND_MULTIPLE" />
+    <protected-broadcast android:name="com.android.nfc.handover.action.CANCEL_HANDOVER_TRANSFER" />
 
     <protected-broadcast android:name="android.intent.action.CLEAR_DNS_CACHE" />
     <protected-broadcast android:name="android.intent.action.PROXY_CHANGE" />
@@ -491,7 +493,9 @@
     <protected-broadcast android:name="android.intent.action.ACTION_RADIO_OFF" />
 
     <protected-broadcast android:name="android.accounts.LOGIN_ACCOUNTS_CHANGED" />
+    <protected-broadcast android:name="android.accounts.action.ACCOUNT_REMOVED" />
     <protected-broadcast android:name="android.accounts.action.VISIBLE_ACCOUNTS_CHANGED" />
+
     <protected-broadcast android:name="com.android.sync.SYNC_CONN_STATUS_CHANGED" />
 
     <protected-broadcast android:name="com.android.phone.SIP_INCOMING_CALL" />
@@ -528,9 +532,14 @@
     <protected-broadcast android:name="com.android.internal.autofill.action.REQUEST_AUTOFILL" />
     <protected-broadcast android:name="android.app.action.APPLICATION_DELEGATION_SCOPES_CHANGED" />
     <protected-broadcast android:name="com.android.server.wm.ACTION_REVOKE_SYSTEM_ALERT_WINDOW_PERMISSION" />
+    <protected-broadcast android:name="android.media.tv.action.PARENTAL_CONTROLS_ENABLED_CHANGED" />
 
     <protected-broadcast android:name="android.content.pm.action.SESSION_COMMITTED" />
     <protected-broadcast android:name="android.os.action.USER_RESTRICTIONS_CHANGED" />
+    <protected-broadcast android:name="android.media.tv.action.PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT" />
+    <protected-broadcast android:name="android.media.tv.action.PREVIEW_PROGRAM_BROWSABLE_DISABLED" />
+    <protected-broadcast android:name="android.media.tv.action.WATCH_NEXT_PROGRAM_BROWSABLE_DISABLED" />
+    <protected-broadcast android:name="android.media.tv.action.CHANNEL_BROWSABLE_REQUESTED" />
 
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
@@ -803,7 +812,7 @@
          <p>Protection level: dangerous-->
     <permission android:name="android.permission.READ_PHONE_NUMBERS"
         android:permissionGroup="android.permission-group.PHONE"
-        android:label="@string/permlab_readPhoneNumber"
+        android:label="@string/permlab_readPhoneNumbers"
         android:description="@string/permdesc_readPhoneNumbers"
         android:protectionLevel="dangerous|ephemeral" />
 
@@ -1299,6 +1308,13 @@
     <permission android:name="android.permission.REQUEST_NETWORK_SCORES"
         android:protectionLevel="signature|setup" />
 
+    <!-- Allows network stack services (Connectivity and Wifi) to coordinate
+         <p>Not for use by third-party or privileged applications.
+         @hide This should only be used by Connectivity and Wifi Services.
+    -->
+    <permission android:name="android.permission.NETWORK_STACK"
+                android:protectionLevel="signature" />
+
     <!-- ======================================= -->
     <!-- Permissions for short range, peripheral networks -->
     <!-- ======================================= -->
@@ -1654,6 +1670,21 @@
     <permission android:name="android.permission.BIND_IMS_SERVICE"
         android:protectionLevel="signature|privileged" />
 
+    <!-- Allows an application to manage embedded subscriptions (those on a eUICC) through
+         EuiccManager APIs.
+         <p>Protection level: signature|privileged|development
+         TODO(b/35851809): Mark this as a SystemApi.
+         @hide -->
+    <permission android:name="android.permission.WRITE_EMBEDDED_SUBSCRIPTIONS"
+                android:protectionLevel="signature|privileged|development" />
+
+    <!-- Must be required by an EuiccService to ensure that only the system can bind to it.
+         <p>Protection level: signature
+         TODO(b/35851809): Mark this as a SystemApi.
+         @hide -->
+    <permission android:name="android.permission.BIND_EUICC_SERVICE"
+                android:protectionLevel="signature" />
+
 
     <!-- ================================== -->
     <!-- Permissions for sdcard interaction -->
@@ -1860,6 +1891,11 @@
         android:label="@string/permlab_useDataInBackground"
         android:description="@string/permdesc_useDataInBackground"
         android:protectionLevel="signature" />
+
+    <!-- @hide Allows an application to set display offsets for the screen.
+         This permission is not available to third party applications. -->
+    <permission android:name="android.permission.SET_DISPLAY_OFFSET"
+                android:protectionLevel="signature|privileged" />
 
     <!-- ================================== -->
     <!-- Permissions affecting the system wallpaper -->
@@ -2521,6 +2557,13 @@
     <permission android:name="android.permission.MODIFY_PARENTAL_CONTROLS"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows an application to notify TV inputs by sending broadcasts.
+         <p>Protection level: signature|privileged
+         <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.NOTIFY_TV_INPUTS"
+                android:protectionLevel="signature|privileged" />
+
     <!-- Must be required by a {@link android.media.routing.MediaRouteService}
          to ensure that only the system can interact with it.
          @hide -->
@@ -3139,6 +3182,15 @@
     <permission android:name="android.permission.BIND_CHOOSER_TARGET_SERVICE"
         android:protectionLevel="signature" />
 
+    <!-- @SystemApi Must be required by services that extend
+         {@link android.service.resolver.ResolverRankerService}, to ensure that only the system can
+         bind to them.
+         <p>Protection level: signature
+         @hide
+    -->
+    <permission android:name="android.permission.BIND_RESOLVER_RANKER_SERVICE"
+                android:protectionLevel="signature" />
+
     <!-- Must be required by a {@link
          android.service.notification.ConditionProviderService},
          to ensure that only the system can bind to it.
@@ -3356,7 +3408,8 @@
                 android:documentLaunchMode="never"
                 android:relinquishTaskIdentity="true"
                 android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
-                android:process=":ui">
+                android:process=":ui"
+                android:visibleToInstantApps="true">
             <intent-filter>
                 <action android:name="android.intent.action.CHOOSER" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -3364,15 +3417,17 @@
             </intent-filter>
         </activity>
         <activity android:name="com.android.internal.app.AccessibilityButtonChooserActivity"
+                  android:exported="false"
                   android:theme="@style/Theme.DeviceDefault.Resolver"
                   android:finishOnCloseSystemDialogs="true"
                   android:excludeFromRecents="true"
                   android:documentLaunchMode="never"
                   android:relinquishTaskIdentity="true"
                   android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
-                  android:process=":ui">
+                  android:process=":ui"
+                  android:visibleToInstantApps="true">
             <intent-filter>
-                <action android:name="android.intent.action.CHOOSE_ACCESSIBILITY_BUTTON" />
+                <action android:name="com.android.internal.intent.action.CHOOSE_ACCESSIBILITY_BUTTON" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -3431,7 +3486,8 @@
                 android:exported="true"
                 android:theme="@style/Theme.DeviceDefault.Light.Dialog"
                 android:label="@string/choose_account_label"
-                android:process=":ui">
+                android:process=":ui"
+                android:visibleToInstantApps="true">
         </activity>
 
         <activity android:name="android.accounts.ChooseTypeAndAccountActivity"
@@ -3439,14 +3495,16 @@
                 android:exported="true"
                 android:theme="@style/Theme.DeviceDefault.Light.Dialog"
                 android:label="@string/choose_account_label"
-                android:process=":ui">
+                android:process=":ui"
+                android:visibleToInstantApps="true">
         </activity>
 
         <activity android:name="android.accounts.ChooseAccountTypeActivity"
                 android:excludeFromRecents="true"
                 android:theme="@style/Theme.DeviceDefault.Light.Dialog"
                 android:label="@string/choose_account_label"
-                android:process=":ui">
+                android:process=":ui"
+                android:visibleToInstantApps="true">
         </activity>
 
         <activity android:name="android.accounts.CantAddAccountActivity"
@@ -3460,7 +3518,8 @@
                 android:excludeFromRecents="true"
                 android:exported="true"
                 android:theme="@style/Theme.DeviceDefault.Light.DialogWhenLarge"
-                android:process=":ui">
+                android:process=":ui"
+                android:visibleToInstantApps="true">
         </activity>
 
         <activity android:name="android.content.SyncActivityTooManyDeletes"
@@ -3516,6 +3575,11 @@
                 android:theme="@style/Theme.DeviceDefault.Light.Dialog.Alert"
                 android:excludeFromRecents="true"
                 android:process=":ui">
+        </activity>
+
+        <activity android:name="com.android.settings.notification.NotificationAccessConfirmationActivity"
+                  android:theme="@android:style/Theme.DeviceDefault.Light.Dialog.Alert"
+                  android:excludeFromRecents="true">
         </activity>
 
         <receiver android:name="com.android.server.BootReceiver"
