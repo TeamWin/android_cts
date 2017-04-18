@@ -183,10 +183,10 @@ public class TelephonyManagerTest {
         mTelephonyManager.getNeighboringCellInfo();
         mTelephonyManager.isNetworkRoaming();
         mTelephonyManager.getDeviceId();
-        mTelephonyManager.getDeviceId(mTelephonyManager.getDefaultSim());
+        mTelephonyManager.getDeviceId(mTelephonyManager.getSlotIndex());
         mTelephonyManager.getDeviceSoftwareVersion();
         mTelephonyManager.getImei();
-        mTelephonyManager.getImei(mTelephonyManager.getDefaultSim());
+        mTelephonyManager.getImei(mTelephonyManager.getSlotIndex());
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
@@ -254,7 +254,7 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetDeviceIdForSlot() {
-        String deviceId = mTelephonyManager.getDeviceId(mTelephonyManager.getDefaultSim());
+        String deviceId = mTelephonyManager.getDeviceId(mTelephonyManager.getSlotIndex());
         verifyDeviceId(deviceId);
         // Also verify that no exception is thrown for any slot index (including invalid ones)
         for (int i = -1; i <= mTelephonyManager.getPhoneCount(); i++) {
