@@ -20,6 +20,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
@@ -27,8 +28,10 @@ import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class BitmapFilterTests extends ActivityTestBase {
     private static final int WHITE_WEIGHT = 255 * 3;
     private enum FilterEnum {

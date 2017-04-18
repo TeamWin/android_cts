@@ -22,6 +22,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
@@ -29,8 +30,10 @@ import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class FontRenderingTests extends ActivityTestBase {
     // Thresholds are barely loose enough for differences between sw and hw renderers.
     private static final double REGULAR_THRESHOLD = 0.92;
