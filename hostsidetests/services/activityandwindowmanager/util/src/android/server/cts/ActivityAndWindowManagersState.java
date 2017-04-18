@@ -194,7 +194,8 @@ public class ActivityAndWindowManagersState extends Assert {
             mAmState.computeState(device);
             mWmState.computeState(device);
             if (shouldWaitForValidStacks(compareTaskAndStackBounds)
-                    || shouldWaitForActivities(waitForActivitiesVisible, stackIds, packageName)) {
+                    || shouldWaitForActivities(waitForActivitiesVisible, stackIds, packageName)
+                    || shouldWaitForWindows()) {
                 log("***Waiting for valid stacks and activities states...");
                 try {
                     Thread.sleep(1000);
@@ -288,6 +289,7 @@ public class ActivityAndWindowManagersState extends Assert {
         } while (retriesLeft-- > 0);
     }
 
+    /** @return true if should wait for valid stacks state. */
     private boolean shouldWaitForValidStacks(boolean compareTaskAndStackBounds) {
         if (!taskListsInAmAndWmAreEqual()) {
             // We want to wait for equal task lists in AM and WM in case we caught them in the
@@ -309,9 +311,24 @@ public class ActivityAndWindowManagersState extends Assert {
             log("***taskBoundsInAMAndWMAreEqual=false : " + e.getMessage());
             return true;
         }
+        final int stackCount = mAmState.getStackCount();
+        if (stackCount == 0) {
+            log("***stackCount=" + stackCount);
+            return true;
+        }
+        final int resumedActivitiesCount = mAmState.getResumedActivitiesCount();
+        if (!mAmState.getKeyguardControllerState().keyguardShowing && resumedActivitiesCount != 1) {
+            log("***resumedActivitiesCount=" + resumedActivitiesCount);
+            return true;
+        }
+        if (mAmState.getFocusedActivity() == null) {
+            log("***focusedActivity=null");
+            return true;
+        }
         return false;
     }
 
+    /** @return true if should wait for some activities to become visible. */
     private boolean shouldWaitForActivities(String[] waitForActivitiesVisible, int[] stackIds,
             String packageName) {
         if (waitForActivitiesVisible == null || waitForActivitiesVisible.length == 0) {
@@ -356,6 +373,24 @@ public class ActivityAndWindowManagersState extends Assert {
             }
         }
         return !allActivityWindowsVisible || !tasksInCorrectStacks;
+    }
+
+    /** @return true if should wait valid windows state. */
+    private boolean shouldWaitForWindows() {
+        if (mWmState.getFrontWindow() == null) {
+            log("***frontWindow=null");
+            return true;
+        }
+        if (mWmState.getFocusedWindow() == null) {
+            log("***focusedWindow=null");
+            return true;
+        }
+        if (mWmState.getFocusedApp() == null) {
+            log("***focusedApp=null");
+            return true;
+        }
+
+        return false;
     }
 
     private boolean shouldWaitForDebuggerWindow() {
