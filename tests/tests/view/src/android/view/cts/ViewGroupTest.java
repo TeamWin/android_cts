@@ -208,6 +208,19 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.setVisibility(View.GONE);
         parent.addKeyboardNavigationClusters(list, 0);
         assertEquals(0, list.size());
+        list.clear();
+
+        // Nested clusters are ignored
+        TestClusterHier h = new TestClusterHier();
+        h.nestedGroup.setKeyboardNavigationCluster(true);
+        h.cluster2.setKeyboardNavigationCluster(false);
+        h.top.addKeyboardNavigationClusters(list, View.FOCUS_FORWARD);
+        assertTrue(list.contains(h.nestedGroup));
+        list.clear();
+        h.cluster2.setKeyboardNavigationCluster(true);
+        h.top.addKeyboardNavigationClusters(list, View.FOCUS_FORWARD);
+        assertFalse(list.contains(h.nestedGroup));
+        list.clear();
     }
 
     @UiThreadTest
@@ -1562,6 +1575,14 @@ public class ViewGroupTest implements CTSResult {
         h.c2view1.setVisibility(View.INVISIBLE);
         h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
         assertSame(h.c2view2, h.top.findFocus());
+
+        // Nested clusters should be ignored.
+        h = new TestClusterHier();
+        h.c1view1.setFocusedInCluster();
+        h.nestedGroup.setKeyboardNavigationCluster(true);
+        h.c2view2.setFocusedInCluster();
+        h.cluster2.restoreFocusInCluster(View.FOCUS_DOWN);
+        assertSame(h.c2view2, h.top.findFocus());
     }
 
     @UiThreadTest
@@ -1781,6 +1802,7 @@ public class ViewGroupTest implements CTSResult {
         // can normal-navigate around once inside
         h.top.addFocusables(views, View.FOCUS_DOWN);
         assertTrue(views.contains(h.c1view1));
+        views.clear();
         h.c1view1.requestFocus();
         assertSame(h.c1view1, h.top.findFocus());
         // focus loops within cluster (doesn't leave)
@@ -1791,6 +1813,17 @@ public class ViewGroupTest implements CTSResult {
         h.c2view2.requestFocus();
         h.c1view1.requestFocus();
         assertSame(h.c2view2, h.top.findFocus());
+
+        h = new TestClusterHier(false);
+        h.c1view1.requestFocus();
+        h.nestedGroup.setKeyboardNavigationCluster(true);
+        h.nestedGroup.setTouchscreenBlocksFocus(true);
+        // since cluster is nested, it should ignore its touchscreenBlocksFocus behavior.
+        h.c2view2.requestFocus();
+        assertSame(h.c2view2, h.top.findFocus());
+        h.top.addFocusables(views, View.FOCUS_DOWN);
+        assertTrue(views.contains(h.c2view2));
+        views.clear();
     }
 
     @UiThreadTest
