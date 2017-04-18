@@ -15,7 +15,6 @@
  */
 package android.graphics.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.Bitmap;
@@ -97,56 +96,6 @@ public class ColorMatrixColorFilterTest {
         paint.setColorFilter(new ColorMatrixColorFilter(transparentRedAddBlue));
         canvas.drawPoint(0, 0, paint);
         ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(0, 0));
-    }
-
-    @Test
-    public void testGetSetMatrix() {
-        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(new ColorMatrix());
-        ColorMatrix getMatrix = new ColorMatrix();
-        filter.getColorMatrix(getMatrix);
-        assertEquals(new ColorMatrix(), getMatrix);
-
-        ColorMatrix scaleTranslate = new ColorMatrix(new float[] {
-                2, 0, 0, 0, 5,
-                0, 2, 0, 0, 5,
-                0, 0, 2, 0, 5,
-                0, 0, 0, 2, 5
-        });
-
-        filter.setColorMatrix(scaleTranslate);
-
-        filter.getColorMatrix(getMatrix);
-        assertEquals(scaleTranslate, getMatrix);
-        assertArrayEquals(scaleTranslate.getArray(), getMatrix.getArray(), 0);
-
-        filter.setColorMatrixArray(null);
-        filter.getColorMatrix(getMatrix);
-        assertEquals(new ColorMatrix(), getMatrix);
-    }
-
-    @Test
-    public void testSetMatrixDraw() {
-        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(new ColorMatrix(new float[] {
-                2, 0, 0, 0, 5,
-                0, 2, 0, 0, 5,
-                0, 0, 2, 0, 5,
-                0, 0, 0, 1, 0
-        }));
-
-        Bitmap bitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setColorFilter(filter);
-
-
-        paint.setColor(0xFF101010);
-        canvas.drawPaint(paint);
-        ColorUtils.verifyColor(0xFF252525, bitmap.getPixel(0, 0));
-
-
-        filter.setColorMatrix(null);
-        canvas.drawPaint(paint);
-        ColorUtils.verifyColor(0xFF101010, bitmap.getPixel(0, 0));
     }
 }
 
