@@ -34,12 +34,7 @@ public class BatteryStatsProcessStateTests extends BatteryStatsDeviceTestBase {
     public void testForegroundService() throws Exception {
         Intent intent = new Intent();
         intent.setClass(mContext, SimpleForegroundService.class);
-        Notification notification = new Notification.Builder(mContext, "Foreground Service")
-                .setContentTitle("CTS Foreground")
-                .setSmallIcon(android.R.drawable.ic_secure)
-                .build();
-        mContext.getSystemService(NotificationManager.class).startServiceInForeground(intent,
-                1, notification);
+        mContext.startForegroundService(intent);
         Thread.sleep(3000);
     }
 
