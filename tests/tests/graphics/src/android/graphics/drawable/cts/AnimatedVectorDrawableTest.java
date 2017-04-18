@@ -36,7 +36,8 @@ import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
-import android.support.test.filters.MediumTest;
+import android.support.test.filters.LargeTest;
+import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.AttributeSet;
@@ -50,7 +51,7 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-@MediumTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class AnimatedVectorDrawableTest {
     private static final int IMAGE_WIDTH = 64;
@@ -75,6 +76,7 @@ public class AnimatedVectorDrawableTest {
         mResources = mActivity.getResources();
     }
 
+    @SmallTest
     @Test
     public void testInflate() throws Exception {
         // Setup AnimatedVectorDrawable from xml file
@@ -144,6 +146,7 @@ public class AnimatedVectorDrawableTest {
         assertEquals(1, constantState.getChangingConfigurations());
     }
 
+    @SmallTest
     @Test
     public void testMutate() {
         AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
@@ -178,6 +181,7 @@ public class AnimatedVectorDrawableTest {
         }
     }
 
+    @SmallTest
     @Test
     public void testGetOpacity() {
         AnimatedVectorDrawable d1 = (AnimatedVectorDrawable) mResources.getDrawable(mResId);
@@ -186,6 +190,7 @@ public class AnimatedVectorDrawableTest {
         assertEquals("Still translucent", PixelFormat.TRANSLUCENT, d1.getOpacity());
     }
 
+    @SmallTest
     @Test
     public void testColorFilter() {
         PorterDuffColorFilter filter = new PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);

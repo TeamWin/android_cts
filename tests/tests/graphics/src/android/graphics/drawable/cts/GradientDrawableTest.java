@@ -52,6 +52,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.util.Arrays;
 
+@SmallTest
 @RunWith(AndroidJUnit4.class)
 public class GradientDrawableTest {
     private Resources mResources;
@@ -61,7 +62,6 @@ public class GradientDrawableTest {
         mResources = InstrumentationRegistry.getTargetContext().getResources();
     }
 
-    @SmallTest
     @Test
     public void testConstructor() {
         int[] color = new int[] {1, 2, 3};
@@ -71,7 +71,6 @@ public class GradientDrawableTest {
         new GradientDrawable(null, null);
     }
 
-    @SmallTest
     @Test
     public void testGetOpacity() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -105,7 +104,6 @@ public class GradientDrawableTest {
 
     }
 
-    @SmallTest
     @Test
     public void testSetOrientation() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -117,7 +115,6 @@ public class GradientDrawableTest {
                 orientation, gradientDrawable.getOrientation());
     }
 
-    @SmallTest
     @Test
     public void testSetCornerRadii() {
         float[] radii = new float[] {1.0f, 2.0f, 3.0f};
@@ -136,7 +133,6 @@ public class GradientDrawableTest {
         gradientDrawable.setCornerRadii(null);
     }
 
-    @SmallTest
     @Test
     public void testSetCornerRadius() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -145,7 +141,6 @@ public class GradientDrawableTest {
         gradientDrawable.setCornerRadius(-2.5f);
     }
 
-    @SmallTest
     @Test
     public void testGetCornerRadius() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -160,7 +155,6 @@ public class GradientDrawableTest {
         assertEquals(0, gradientDrawable.getCornerRadius(), 0);
     }
 
-    @SmallTest
     @Test
     public void testSetStroke() {
         helpTestSetStroke(2, Color.RED);
@@ -174,7 +168,6 @@ public class GradientDrawableTest {
         // TODO: Verify stroke properties.
     }
 
-    @SmallTest
     @Test
     public void testSetStroke_WidthGap() {
         verifySetStroke_WidthGap(2, Color.RED, 3.4f, 5.5f);
@@ -189,7 +182,6 @@ public class GradientDrawableTest {
         // TODO: Verify stroke properties.
     }
 
-    @SmallTest
     @Test
     public void testSetStrokeList() {
         verifySetStrokeList(2, ColorStateList.valueOf(Color.RED));
@@ -204,7 +196,6 @@ public class GradientDrawableTest {
         // TODO: Verify stroke properties.
     }
 
-    @SmallTest
     @Test
     public void testSetStrokeList_WidthGap() {
         verifySetStrokeList_WidthGap(2, ColorStateList.valueOf(Color.RED), 3.4f, 5.5f);
@@ -219,7 +210,6 @@ public class GradientDrawableTest {
         // TODO: Verify stroke properties.
     }
 
-    @SmallTest
     @Test
     public void testSetSize() {
         verifySetSize(6, 4);
@@ -235,7 +225,6 @@ public class GradientDrawableTest {
         assertEquals(height, gradientDrawable.getIntrinsicHeight());
     }
 
-    @SmallTest
     @Test
     public void testSetShape() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -252,7 +241,6 @@ public class GradientDrawableTest {
                 shape, gradientDrawable.getShape());
     }
 
-    @SmallTest
     @Test
     public void testSetGradientType() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -269,7 +257,6 @@ public class GradientDrawableTest {
                 gradientType, gradientDrawable.getGradientType());
     }
 
-    @SmallTest
     @Test
     public void testSetGradientCenter() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -294,7 +281,6 @@ public class GradientDrawableTest {
         assertEquals(centerY, gradientDrawable.getGradientCenterY(), 0.01f);
     }
 
-    @SmallTest
     @Test
     public void testSetGradientRadius() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -303,7 +289,6 @@ public class GradientDrawableTest {
         gradientDrawable.setGradientRadius(-3.6f);
     }
 
-    @SmallTest
     @Test
     public void testSetUseLevel() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -322,7 +307,6 @@ public class GradientDrawableTest {
                 useLevel, gradientDrawable.getUseLevel());
     }
 
-    @SmallTest
     @Test
     public void testDraw() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -333,7 +317,6 @@ public class GradientDrawableTest {
         gradientDrawable.draw(null);
     }
 
-    @SmallTest
     @Test
     public void testSetColor() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -350,7 +333,6 @@ public class GradientDrawableTest {
                 gradientDrawable.getColor().getDefaultColor());
     }
 
-    @SmallTest
     @Test
     public void testSetColors() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -367,7 +349,6 @@ public class GradientDrawableTest {
                 colors, gradientDrawable.getColors());
     }
 
-    @SmallTest
     @Test
     public void testSetColorList() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -382,7 +363,6 @@ public class GradientDrawableTest {
         assertEquals("Color was set to null (TRANSPARENT)", color, gradientDrawable.getColor());
     }
 
-    @SmallTest
     @Test
     public void testGetChangingConfigurations() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -395,7 +375,6 @@ public class GradientDrawableTest {
         assertEquals(-20, gradientDrawable.getChangingConfigurations());
     }
 
-    @SmallTest
     @Test
     public void testSetAlpha() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -404,7 +383,6 @@ public class GradientDrawableTest {
         gradientDrawable.setAlpha(-1);
     }
 
-    @SmallTest
     @Test
     public void testSetDither() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -413,7 +391,6 @@ public class GradientDrawableTest {
         gradientDrawable.setDither(false);
     }
 
-    @SmallTest
     @Test
     public void testSetColorFilter() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -424,7 +401,6 @@ public class GradientDrawableTest {
         gradientDrawable.setColorFilter(null);
     }
 
-    @SmallTest
     @Test
     public void testInflate() throws XmlPullParserException, IOException {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -469,7 +445,6 @@ public class GradientDrawableTest {
         }
     }
 
-    @SmallTest
     @Test
     public void testInflateGradientRadius() throws XmlPullParserException, IOException {
         Rect parentBounds = new Rect(0, 0, 100, 100);
@@ -490,7 +465,6 @@ public class GradientDrawableTest {
         assertEquals(50.0f, radius, 0.0f);
     }
 
-    @SmallTest
     @Test
     public void testGetIntrinsicWidth() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -501,7 +475,6 @@ public class GradientDrawableTest {
         assertEquals(-10, gradientDrawable.getIntrinsicWidth());
     }
 
-    @SmallTest
     @Test
     public void testGetIntrinsicHeight() {
         GradientDrawable gradientDrawable = new GradientDrawable();
@@ -512,14 +485,12 @@ public class GradientDrawableTest {
         assertEquals(-15, gradientDrawable.getIntrinsicHeight());
     }
 
-    @SmallTest
     @Test
     public void testGetConstantState() {
         GradientDrawable gradientDrawable = new GradientDrawable();
         assertNotNull(gradientDrawable.getConstantState());
     }
 
-    @SmallTest
     @Test
     public void testMutate() {
         GradientDrawable d1 =
@@ -555,7 +526,6 @@ public class GradientDrawableTest {
         assertEquals(40, d3.getIntrinsicWidth());
     }
 
-    @MediumTest
     @Test
     public void testPreloadDensity() throws XmlPullParserException, IOException {
         final int densityDpi = mResources.getConfiguration().densityDpi;
@@ -567,7 +537,6 @@ public class GradientDrawableTest {
         }
     }
 
-    @MediumTest
     @Test
     public void testPreloadDensity_tvdpi() throws XmlPullParserException, IOException {
         final int densityDpi = mResources.getConfiguration().densityDpi;

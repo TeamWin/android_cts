@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
+import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertFalse;
  * on animation duration scale. When the scale is 0, it is a static drawable, otherwise, it is an
  * animatable drawable.
  */
-@MediumTest
+@SmallTest
 @RunWith(AndroidJUnit4.class)
 public class CustomAnimationScaleListDrawableTest {
     private static final int DRAWABLE_ID = R.drawable.custom_animation_scale_list_drawable;
@@ -58,7 +59,6 @@ public class CustomAnimationScaleListDrawableTest {
         ValueAnimator.setDurationScale(mOriginalScale);
     }
 
-    @MediumTest
     @Test
     public void testNonZeroDurationScale() {
         // Set the duration scale to a non-zero value will cause the AnimationScaleListDrawable's
@@ -69,7 +69,6 @@ public class CustomAnimationScaleListDrawableTest {
         assertTrue(dr.getCurrent() instanceof Animatable);
     }
 
-    @MediumTest
     @Test
     public void testZeroDurationScale() {
         // Set the duration scale to zero will cause the AnimationScaleListDrawable's current
