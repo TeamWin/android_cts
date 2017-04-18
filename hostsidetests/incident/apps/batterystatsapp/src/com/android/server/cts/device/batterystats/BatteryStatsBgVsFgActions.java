@@ -46,6 +46,9 @@ public class BatteryStatsBgVsFgActions {
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
+    public static final String ACTION_WIFI_DOWNLOAD = "action.wifi_download";
+    public static final String ACTION_WIFI_UPLOAD = "action.wifi_upload";
+
 
     /** Perform the action specified by the given action code (see constants above). */
     public static void doAction(Context ctx, String actionCode) {
@@ -62,7 +65,13 @@ public class BatteryStatsBgVsFgActions {
                 doSync(ctx);
                 break;
             case ACTION_WIFI_SCAN:
-                doWifi(ctx);
+                doWifiScan(ctx);
+                break;
+            case ACTION_WIFI_DOWNLOAD:
+                doWifiDownload(ctx);
+                break;
+            case ACTION_WIFI_UPLOAD:
+                doWifiUpload(ctx);
                 break;
             default:
                 Log.e(TAG, "Intent had invalid action");
@@ -129,12 +138,32 @@ public class BatteryStatsBgVsFgActions {
         }.execute();
     }
 
-    private static void doWifi(Context ctx) {
+    private static void doWifiScan(Context ctx) {
         IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         CountDownLatch onReceiveLatch = new CountDownLatch(1);
         BroadcastReceiver receiver = registerReceiver(ctx, onReceiveLatch, intentFilter);
         ctx.getSystemService(WifiManager.class).startScan();
         waitForReceiver(ctx, 3_000, onReceiveLatch, receiver);
+    }
+
+    private static void doWifiDownload(Context ctx) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                BatteryStatsWifiTransferTests.download();
+                return null;
+            }
+        }.execute();
+    }
+
+    private static void doWifiUpload(Context ctx) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                BatteryStatsWifiTransferTests.upload();
+                return null;
+            }
+        }.execute();
     }
 
     /** Register receiver to determine when given action is complete. */
