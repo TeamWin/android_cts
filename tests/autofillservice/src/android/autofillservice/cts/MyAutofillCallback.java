@@ -50,7 +50,7 @@ final class MyAutofillCallback extends AutofillCallback {
     MyEvent getEvent() throws InterruptedException {
         final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (event == null) {
-            throw new AssertionError("no event in " + CONNECTION_TIMEOUT_MS + " ms");
+            throw new RetryableException("no event in %d ms", CONNECTION_TIMEOUT_MS);
         }
         return event;
     }

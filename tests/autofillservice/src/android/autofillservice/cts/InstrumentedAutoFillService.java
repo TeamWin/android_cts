@@ -107,7 +107,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         final String state = sConnectionStates.poll(CONNECTION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (state == null) {
             dumpAutofillService();
-            throw new AssertionError("not connected in " + CONNECTION_TIMEOUT_MS + " ms");
+            throw new RetryableException("not connected in %d ms", CONNECTION_TIMEOUT_MS);
         }
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_CONNECTED);
     }
@@ -122,7 +122,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         final String state = sConnectionStates.poll(2 * IDLE_UNBIND_TIMEOUT_MS,
                 TimeUnit.MILLISECONDS);
         if (state == null) {
-            throw new AssertionError("not disconnected in " + IDLE_UNBIND_TIMEOUT_MS + " ms");
+            throw new RetryableException("not disconnected in %d ms", IDLE_UNBIND_TIMEOUT_MS);
         }
         assertWithMessage("Invalid connection state").that(state).isEqualTo(STATE_DISCONNECTED);
     }
@@ -221,8 +221,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         FillRequest getNextFillRequest() throws InterruptedException {
             final FillRequest request = mFillRequests.poll(FILL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (request == null) {
-                throw new AssertionError(
-                        "onFillRequest() not called in " + FILL_TIMEOUT_MS + " ms");
+                throw new RetryableException("onFillRequest() not called in %s ms",
+                        FILL_TIMEOUT_MS);
             }
             return request;
         }
@@ -245,8 +245,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         SaveRequest getNextSaveRequest() throws InterruptedException {
             final SaveRequest request = mSaveRequests.poll(SAVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (request == null) {
-                throw new AssertionError(
-                        "onSaveRequest() not called in " + SAVE_TIMEOUT_MS + " ms");
+                throw new RetryableException(
+                        "onSaveRequest() not called in %d ms", SAVE_TIMEOUT_MS);
             }
             return request;
         }
