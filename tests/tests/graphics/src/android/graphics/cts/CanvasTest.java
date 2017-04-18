@@ -1112,6 +1112,19 @@ public class CanvasTest {
     }
 
     @Test
+    public void testClipInversePath() {
+        final Path p = new Path();
+        p.addRoundRect(new RectF(0, 0, 10, 10), 0.5f, 0.5f, Direction.CW);
+        p.setFillType(Path.FillType.INVERSE_WINDING);
+        assertTrue(mCanvas.clipPath(p, Op.INTERSECT));
+
+        mCanvas.drawColor(PAINT_COLOR);
+
+        assertEquals(Color.TRANSPARENT, mMutableBitmap.getPixel(0, 0));
+        assertEquals(PAINT_COLOR, mMutableBitmap.getPixel(0, 20));
+    }
+
+    @Test
     public void testGetDrawFilter() {
         assertNull(mCanvas.getDrawFilter());
         final DrawFilter dF = new DrawFilter();
