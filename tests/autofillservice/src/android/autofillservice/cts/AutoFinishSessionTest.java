@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Fragment;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.Intent;
+import android.service.autofill.SaveInfo;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.rule.ActivityTestRule;
@@ -68,7 +69,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
         try {
             // Set expectations.
             sReplier.addResponse(new CannedFillResponse.Builder()
-                    .setSaveOnAllViewsInvisible(true)
+                    .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                     .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, viewsToSave).build());
 
             // Trigger autofill
@@ -190,7 +191,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
         try {
             // Set expectations.
             sReplier.addResponse(new CannedFillResponse.Builder()
-                    .setSaveOnAllViewsInvisible(true)
+                    .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                     .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText1").build());
 
             // Trigger autofill
