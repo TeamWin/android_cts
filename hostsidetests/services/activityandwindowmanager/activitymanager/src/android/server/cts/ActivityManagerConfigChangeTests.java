@@ -16,6 +16,8 @@
 
 package android.server.cts;
 
+import android.platform.test.annotations.Presubmit;
+
 import static android.server.cts.ActivityManagerState.STATE_RESUMED;
 import static android.server.cts.StateLogger.logE;
 
@@ -54,11 +56,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
         testRotation(NO_RELAUNCH_ACTIVITY_NAME, 2, 0, 0);
     }
 
+    @Presubmit
     public void testChangeFontScaleRelaunch() throws Exception {
         // Should relaunch and receive no onConfigurationChanged()
         testChangeFontScale(TEST_ACTIVITY_NAME, true /* relaunch */);
     }
 
+    @Presubmit
     public void testChangeFontScaleNoRelaunch() throws Exception {
         // Should receive onConfigurationChanged() and no relaunch
         testChangeFontScale(NO_RELAUNCH_ACTIVITY_NAME, false /* relaunch */);

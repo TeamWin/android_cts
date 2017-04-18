@@ -736,70 +736,139 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return uniqueString;
     }
 
-    protected void assertActivityLifecycle(String activityName, boolean relaunched,
+    void assertActivityLifecycle(String activityName, boolean relaunched,
             String logSeparator) throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString = verifyLifecycleCondition(activityName, logSeparator, relaunched);
+            if (resultString != null) {
+                log("***Waiting for valid lifecycle state: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    /** @return Error string if lifecycle counts don't match, null if everything is fine. */
+    private String verifyLifecycleCondition(String activityName, String logSeparator,
+            boolean relaunched) throws DeviceNotAvailableException {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
-
         if (relaunched) {
             if (lifecycleCounts.mDestroyCount < 1) {
-                fail(activityName + " must have been destroyed. mDestroyCount="
-                        + lifecycleCounts.mDestroyCount);
+                return activityName + " must have been destroyed. mDestroyCount="
+                        + lifecycleCounts.mDestroyCount;
             }
             if (lifecycleCounts.mCreateCount < 1) {
-                fail(activityName + " must have been (re)created. mCreateCount="
-                        + lifecycleCounts.mCreateCount);
+                return activityName + " must have been (re)created. mCreateCount="
+                        + lifecycleCounts.mCreateCount;
             }
         } else {
             if (lifecycleCounts.mDestroyCount > 0) {
-                fail(activityName + " must *NOT* have been destroyed. mDestroyCount="
-                        + lifecycleCounts.mDestroyCount);
+                return activityName + " must *NOT* have been destroyed. mDestroyCount="
+                        + lifecycleCounts.mDestroyCount;
             }
             if (lifecycleCounts.mCreateCount > 0) {
-                fail(activityName + " must *NOT* have been (re)created. mCreateCount="
-                        + lifecycleCounts.mCreateCount);
+                return activityName + " must *NOT* have been (re)created. mCreateCount="
+                        + lifecycleCounts.mCreateCount;
             }
             if (lifecycleCounts.mConfigurationChangedCount < 1) {
-                fail(activityName + " must have received configuration changed. "
+                return activityName + " must have received configuration changed. "
                         + "mConfigurationChangedCount="
-                        + lifecycleCounts.mConfigurationChangedCount);
+                        + lifecycleCounts.mConfigurationChangedCount;
             }
         }
+        return null;
     }
 
     protected void assertRelaunchOrConfigChanged(
             String activityName, int numRelaunch, int numConfigChange, String logSeparator)
             throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString = verifyRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
+                    logSeparator);
+            if (resultString != null) {
+                log("***Waiting for relaunch or config changed: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    /** @return Error string if lifecycle counts don't match, null if everything is fine. */
+    private String verifyRelaunchOrConfigChanged(String activityName, int numRelaunch,
+            int numConfigChange, String logSeparator) throws DeviceNotAvailableException {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
 
         if (lifecycleCounts.mDestroyCount != numRelaunch) {
-            fail(activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
-                    + " time(s), expecting " + numRelaunch);
+            return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    + " time(s), expecting " + numRelaunch;
         } else if (lifecycleCounts.mCreateCount != numRelaunch) {
-            fail(activityName + " has been (re)created " + lifecycleCounts.mCreateCount
-                    + " time(s), expecting " + numRelaunch);
+            return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    + " time(s), expecting " + numRelaunch;
         } else if (lifecycleCounts.mConfigurationChangedCount != numConfigChange) {
-            fail(activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
-                    + " onConfigurationChanged() calls, expecting " + numConfigChange);
+            return activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
+                    + " onConfigurationChanged() calls, expecting " + numConfigChange;
         }
+        return null;
     }
 
     protected void assertActivityDestroyed(String activityName, String logSeparator)
+            throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        String resultString;
+        do {
+            resultString = verifyActivityDestroyed(activityName, logSeparator);
+            if (resultString != null) {
+                log("***Waiting for activity destroyed: " + resultString);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+
+        assertNull(resultString, resultString);
+    }
+
+    /** @return Error string if lifecycle counts don't match, null if everything is fine. */
+    private String verifyActivityDestroyed(String activityName, String logSeparator)
             throws DeviceNotAvailableException {
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
                 logSeparator);
 
         if (lifecycleCounts.mDestroyCount != 1) {
-            fail(activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
-                    + " time(s), expecting single destruction.");
+            return activityName + " has been destroyed " + lifecycleCounts.mDestroyCount
+                    + " time(s), expecting single destruction.";
         } else if (lifecycleCounts.mCreateCount != 0) {
-            fail(activityName + " has been (re)created " + lifecycleCounts.mCreateCount
-                    + " time(s), not expecting any.");
+            return activityName + " has been (re)created " + lifecycleCounts.mCreateCount
+                    + " time(s), not expecting any.";
         } else if (lifecycleCounts.mConfigurationChangedCount != 0) {
-            fail(activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
-                    + " onConfigurationChanged() calls, not expecting any.");
+            return activityName + " has received " + lifecycleCounts.mConfigurationChangedCount
+                    + " onConfigurationChanged() calls, not expecting any.";
         }
+        return null;
     }
 
     protected String[] getDeviceLogsForComponent(String componentName, String logSeparator)
@@ -886,6 +955,27 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     ReportedSizes getLastReportedSizesForActivity(String activityName, String logSeparator)
+            throws DeviceNotAvailableException {
+        int retriesLeft = 5;
+        ReportedSizes result;
+        do {
+            result = readLastReportedSizes(activityName, logSeparator);
+            if (result == null) {
+                log("***Waiting for sizes to be reported...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+        return result;
+    }
+
+    private ReportedSizes readLastReportedSizes(String activityName, String logSeparator)
             throws DeviceNotAvailableException {
         final String[] lines = getDeviceLogsForComponent(activityName, logSeparator);
         for (int i = lines.length - 1; i >= 0; i--) {
