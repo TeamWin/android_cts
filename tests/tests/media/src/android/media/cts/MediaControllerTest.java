@@ -21,7 +21,6 @@ import android.media.Rating;
 import android.media.VolumeProvider;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.media.session.PlaybackState.CustomAction;
 import android.net.Uri;
 import android.os.Bundle;
@@ -296,26 +295,6 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromUriCalled);
             assertEquals(uri, mCallback.mUri);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onPrepareFromUri(mCallback.mUri, mCallback.mExtras);
-
-            mCallback.reset();
-            final int repeatMode = PlaybackState.REPEAT_MODE_ALL;
-            controls.setRepeatMode(repeatMode);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSetRepeatModeCalled);
-            assertEquals(repeatMode, mCallback.mRepeatMode);
-            // just call the callback once directly so it's marked as tested
-            callback.onSetRepeatMode(mCallback.mRepeatMode);
-
-            mCallback.reset();
-            final boolean shuffleModeEnabled = true;
-            controls.setShuffleModeEnabled(shuffleModeEnabled);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSetShuffleModeEnabledCalled);
-            assertEquals(shuffleModeEnabled, mCallback.mShuffleModeEnabled);
-            // just call the callback once directly so it's marked as tested
-            callback.onSetShuffleModeEnabled(mCallback.mShuffleModeEnabled);
         }
     }
 
@@ -347,8 +326,6 @@ public class MediaControllerTest extends AndroidTestCase {
         private String mCommand;
         private Bundle mExtras;
         private ResultReceiver mCommandCallback;
-        private int mRepeatMode;
-        private boolean mShuffleModeEnabled;
 
         private boolean mOnPlayCalled;
         private boolean mOnPauseCalled;
@@ -369,8 +346,6 @@ public class MediaControllerTest extends AndroidTestCase {
         private boolean mOnPrepareFromMediaIdCalled;
         private boolean mOnPrepareFromSearchCalled;
         private boolean mOnPrepareFromUriCalled;
-        private boolean mOnSetRepeatModeCalled;
-        private boolean mOnSetShuffleModeEnabledCalled;
 
         public void reset() {
             mSeekPosition = -1;
@@ -383,8 +358,6 @@ public class MediaControllerTest extends AndroidTestCase {
             mExtras = null;
             mCommand = null;
             mCommandCallback = null;
-            mShuffleModeEnabled = false;
-            mRepeatMode = PlaybackState.REPEAT_MODE_NONE;
 
             mOnPlayCalled = false;
             mOnPauseCalled = false;
@@ -405,8 +378,6 @@ public class MediaControllerTest extends AndroidTestCase {
             mOnPrepareFromMediaIdCalled = false;
             mOnPrepareFromSearchCalled = false;
             mOnPrepareFromUriCalled = false;
-            mOnSetRepeatModeCalled = false;
-            mOnSetShuffleModeEnabledCalled = false;
         }
 
         @Override
@@ -577,24 +548,6 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPrepareFromUriCalled = true;
                 mUri = uri;
                 mExtras = extras;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onSetRepeatMode(int repeatMode) {
-            synchronized (mWaitLock) {
-                mOnSetRepeatModeCalled = true;
-                mRepeatMode = repeatMode;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onSetShuffleModeEnabled(boolean enabled) {
-            synchronized (mWaitLock) {
-                mOnSetShuffleModeEnabledCalled = true;
-                mShuffleModeEnabled = enabled;
                 mWaitLock.notify();
             }
         }
