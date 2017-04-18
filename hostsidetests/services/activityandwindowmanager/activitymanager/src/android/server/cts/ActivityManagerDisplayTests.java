@@ -15,6 +15,8 @@
  */
 package android.server.cts;
 
+import android.platform.test.annotations.Presubmit;
+
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -345,6 +347,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Tests launching an activity on virtual display.
      */
+    @Presubmit
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -381,6 +384,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * command and without specifying the display id - the second activity must appear on the
      * primary display.
      */
+    @Presubmit
     public void testConsequentLaunchActivity() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -413,6 +417,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests launching an activity on virtual display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
+    @Presubmit
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -474,6 +479,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests launching activities on secondary and then on primary display to see if the stack
      * visibility is not affected.
      */
+    @Presubmit
     public void testLaunchActivitiesAffectsVisibility() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -506,6 +512,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Test that move-task works when moving between displays.
      */
+    @Presubmit
     public void testMoveTaskBetweenDisplays() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -536,6 +543,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack.
      */
+    @Presubmit
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -900,6 +908,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
+    @Presubmit
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -954,6 +963,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     /**
      * Test that the update of display metrics updates all its content.
      */
+    @Presubmit
     public void testDisplayResize() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -1034,6 +1044,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Tests that when activities that handle configuration changes are moved between displays,
      * they receive onMovedToDisplay and onConfigurationChanged callbacks.
      */
+    @Presubmit
     public void testOnMovedToDisplayCallback() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -1266,7 +1277,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
      * Test that display overrides apply correctly and won't be affected by display changes.
      * This sets overrides to display size and density, initiates a display changed event by locking
      * and unlocking the phone and verifies that overrides are kept.
-     * */
+     */
+    @Presubmit
     public void testForceDisplayMetrics() throws Exception {
         launchHomeActivity();
 
