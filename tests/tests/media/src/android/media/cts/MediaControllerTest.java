@@ -19,10 +19,8 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.Rating;
 import android.media.VolumeProvider;
-import android.media.MediaDescription;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
-import android.media.session.MediaSession.QueueItem;
 import android.media.session.PlaybackState;
 import android.media.session.PlaybackState.CustomAction;
 import android.net.Uri;
@@ -53,7 +51,6 @@ public class MediaControllerTest extends AndroidTestCase {
         super.setUp();
         mSession = new MediaSession(getContext(), SESSION_TAG);
         mSession.setCallback(mCallback, mHandler);
-        mSession.setFlags(MediaSession.FLAG_HANDLES_QUEUE_COMMANDS);
         mController = mSession.getController();
     }
 
@@ -85,53 +82,6 @@ public class MediaControllerTest extends AndroidTestCase {
             assertNotNull(mCallback.mCommandCallback);
             assertEquals(command, mCallback.mCommand);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-        }
-    }
-
-    public void testAddRemoveQueueItems() throws Exception {
-        final String mediaId = "media_id";
-        final String mediaTitle = "media_title";
-        MediaDescription itemDescription = new MediaDescription.Builder()
-                .setMediaId(mediaId).setTitle(mediaTitle).build();
-        final MediaSession.Callback callback = (MediaSession.Callback) mCallback;
-
-        synchronized (mWaitLock) {
-            mCallback.reset();
-            mController.addQueueItem(itemDescription);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnAddQueueItemCalled);
-            assertEquals(-1, mCallback.mQueueIndex);
-            assertEquals(mediaId, mCallback.mQueueDescription.getMediaId());
-            assertEquals(mediaTitle, mCallback.mQueueDescription.getTitle());
-            // just call the callback once directly so it's marked as tested
-            callback.onAddQueueItem(mCallback.mQueueDescription);
-
-            mCallback.reset();
-            mController.addQueueItem(itemDescription, 0);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnAddQueueItemAtCalled);
-            assertEquals(0, mCallback.mQueueIndex);
-            assertEquals(mediaId, mCallback.mQueueDescription.getMediaId());
-            assertEquals(mediaTitle, mCallback.mQueueDescription.getTitle());
-            // just call the callback once directly so it's marked as tested
-            callback.onAddQueueItem(mCallback.mQueueDescription, mCallback.mQueueIndex);
-
-            mCallback.reset();
-            mController.removeQueueItemAt(0);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnRemoveQueueItemAtCalled);
-            assertEquals(0, mCallback.mQueueIndex);
-            // just call the callback once directly so it's marked as tested
-            callback.onRemoveQueueItemAt(mCallback.mQueueIndex);
-
-            mCallback.reset();
-            mController.removeQueueItem(itemDescription);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnRemoveQueueItemCalled);
-            assertEquals(mediaId, mCallback.mQueueDescription.getMediaId());
-            assertEquals(mediaTitle, mCallback.mQueueDescription.getTitle());
-            // just call the callback once directly so it's marked as tested
-            callback.onRemoveQueueItem(mCallback.mQueueDescription);
         }
     }
 
@@ -389,8 +339,6 @@ public class MediaControllerTest extends AndroidTestCase {
     private class MediaSessionCallback extends MediaSession.Callback {
         private long mSeekPosition;
         private long mQueueItemId;
-        private int mQueueIndex;
-        private MediaDescription mQueueDescription;
         private Rating mRating;
         private String mMediaId;
         private String mQuery;
@@ -423,16 +371,10 @@ public class MediaControllerTest extends AndroidTestCase {
         private boolean mOnPrepareFromUriCalled;
         private boolean mOnSetRepeatModeCalled;
         private boolean mOnSetShuffleModeEnabledCalled;
-        private boolean mOnAddQueueItemCalled;
-        private boolean mOnAddQueueItemAtCalled;
-        private boolean mOnRemoveQueueItemCalled;
-        private boolean mOnRemoveQueueItemAtCalled;
 
         public void reset() {
             mSeekPosition = -1;
             mQueueItemId = -1;
-            mQueueIndex = -1;
-            mQueueDescription = null;
             mRating = null;
             mMediaId = null;
             mQuery = null;
@@ -465,10 +407,6 @@ public class MediaControllerTest extends AndroidTestCase {
             mOnPrepareFromUriCalled = false;
             mOnSetRepeatModeCalled = false;
             mOnSetShuffleModeEnabledCalled = false;
-            mOnAddQueueItemCalled = false;
-            mOnAddQueueItemAtCalled = false;
-            mOnRemoveQueueItemCalled = false;
-            mOnRemoveQueueItemAtCalled = false;
         }
 
         @Override
@@ -657,43 +595,6 @@ public class MediaControllerTest extends AndroidTestCase {
             synchronized (mWaitLock) {
                 mOnSetShuffleModeEnabledCalled = true;
                 mShuffleModeEnabled = enabled;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onAddQueueItem(MediaDescription description) {
-            synchronized (mWaitLock) {
-                mOnAddQueueItemCalled = true;
-                mQueueDescription = description;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onAddQueueItem(MediaDescription description, int index) {
-            synchronized (mWaitLock) {
-                mOnAddQueueItemAtCalled = true;
-                mQueueIndex = index;
-                mQueueDescription = description;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onRemoveQueueItem(MediaDescription description) {
-            synchronized (mWaitLock) {
-                mOnRemoveQueueItemCalled = true;
-                mQueueDescription = description;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onRemoveQueueItemAt(int index) {
-            synchronized (mWaitLock) {
-                mOnRemoveQueueItemAtCalled = true;
-                mQueueIndex = index;
                 mWaitLock.notify();
             }
         }
