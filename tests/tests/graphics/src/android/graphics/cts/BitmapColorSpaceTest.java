@@ -62,13 +62,14 @@ public class BitmapColorSpaceTest {
     public void createWithColorSpace() {
         Bitmap b;
         ColorSpace cs;
+        ColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB);
 
         // We don't test HARDWARE configs because they are not compatible with mutable bitmaps
 
-        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true, null);
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true, sRGB);
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
 
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true,
                 ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
@@ -76,7 +77,7 @@ public class BitmapColorSpaceTest {
         assertNotNull(cs);
         assertSame(ColorSpace.get(ColorSpace.Named.ADOBE_RGB), cs);
 
-        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGBA_F16, true, null);
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGBA_F16, true, sRGB);
         cs = b.getColorSpace();
         assertNotNull(cs);
         assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
@@ -87,38 +88,43 @@ public class BitmapColorSpaceTest {
         assertNotNull(cs);
         assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), cs);
 
-        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGB_565, true, null);
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGB_565, true, sRGB);
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
 
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.RGB_565, true,
                 ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
 
-        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ALPHA_8, true, null);
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ALPHA_8, true, sRGB);
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
 
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.ALPHA_8, true,
                 ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
 
-        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_4444, true, null);
+        b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_4444, true, sRGB);
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
 
         b = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_4444, true,
                 ColorSpace.get(ColorSpace.Named.ADOBE_RGB));
         cs = b.getColorSpace();
         assertNotNull(cs);
-        assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
+        assertSame(sRGB, cs);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createWithoutColorSpace() {
+        Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888, true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
