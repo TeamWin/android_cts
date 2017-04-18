@@ -22,7 +22,6 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -145,33 +144,6 @@ public class SweepGradientTest {
                 throw e;
             }
         }
-    }
-
-    @Test
-    public void testSet() {
-        // Only use two pixel wide bitmap since we don't care about interpolation here.
-        // Note: we place the gradient in between the two pixels, so both are solid colors.
-        SweepGradient gradient = new SweepGradient(1, 0.5f,
-                new int[] {Color.BLUE, Color.RED, Color.BLUE}, null);
-
-        Bitmap bitmap = Bitmap.createBitmap(2, 1, Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-
-        Paint paint = new Paint();
-        paint.setShader(gradient);
-        canvas.drawPaint(paint);
-
-        // red to left, blue to right
-        ColorUtils.verifyColor(Color.RED, bitmap.getPixel(0, 0), 5);
-        ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
-
-        gradient.set(1, 0.5f,
-                new int[] {Color.GREEN, Color.YELLOW, Color.GREEN}, null);
-        canvas.drawPaint(paint);
-
-        // yellow to left, green to right
-        ColorUtils.verifyColor(Color.YELLOW, bitmap.getPixel(0, 0), 5);
-        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(1, 0), 5);
     }
 
     @Test

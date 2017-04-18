@@ -35,34 +35,6 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class RadialGradientTest {
-    @Test
-    public void testSet() {
-        // only using 1 pixel radius gradient since we don't care about interpolation here.
-        // Note: we align start/end to be center pixel so colors at those pixels are exact.
-        RadialGradient gradient = new RadialGradient(0.5f, 0.5f, 1,
-                Color.RED, Color.BLUE, TileMode.CLAMP);
-
-        Bitmap bitmap = Bitmap.createBitmap(3, 1, Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-
-        Paint paint = new Paint();
-        paint.setShader(gradient);
-        canvas.drawPaint(paint);
-
-
-        // red, blue, clamped to blue
-        ColorUtils.verifyColor(Color.RED, bitmap.getPixel(0, 0), 5);
-        ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(1, 0), 5);
-        ColorUtils.verifyColor(Color.BLUE, bitmap.getPixel(2, 0), 5);
-
-        gradient.set(0.5f, 0.5f, 1, Color.GREEN, Color.WHITE, TileMode.MIRROR);
-        canvas.drawPaint(paint);
-
-        // green, white, mirrored to green
-        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(0, 0), 5);
-        ColorUtils.verifyColor(Color.WHITE, bitmap.getPixel(1, 0), 5);
-        ColorUtils.verifyColor(Color.GREEN, bitmap.getPixel(2, 0), 5);
-    }
 
     @Test
     public void testZeroScaleMatrix() {
