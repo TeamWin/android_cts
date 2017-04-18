@@ -45,6 +45,7 @@ public class BatteryStatsBackgroundService extends IntentService {
             Log.w(TAG, "Couldn't determine if app is in background. Proceeding with test anyway.");
         }
 
+        Log.i(TAG, "Starting action from background service");
         doAction(this, intent.getStringExtra(KEY_ACTION));
     }
 }
