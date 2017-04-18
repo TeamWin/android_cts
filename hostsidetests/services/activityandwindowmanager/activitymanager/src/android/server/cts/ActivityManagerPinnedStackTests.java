@@ -38,6 +38,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final String NON_RESIZEABLE_ACTIVITY = "NonResizeableActivity";
     private static final String RESUME_WHILE_PAUSING_ACTIVITY = "ResumeWhilePausingActivity";
     private static final String PIP_ACTIVITY = "PipActivity";
+    private static final String PIP_ACTIVITY2 = "PipActivity2";
     private static final String ALWAYS_FOCUSABLE_PIP_ACTIVITY = "AlwaysFocusablePipActivity";
     private static final String LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY =
             "LaunchIntoPinnedStackPipActivity";
@@ -465,6 +466,27 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertTrue(pinnedStack.getTasks().size() == 1);
         assertTrue(pinnedStack.getTasks().get(0).mRealActivity.equals(getActivityComponentName(
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY)));
+    }
+
+    public void testDisallowMultipleTasksInPinnedStack() throws Exception {
+        if (!supportsPip()) return;
+
+        // Launch first PIP activity
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+
+        // Launch second PIP activity
+        launchActivity(PIP_ACTIVITY2, EXTRA_ENTER_PIP, "true");
+
+        final ActivityStack pinnedStack = mAmWmState.getAmState().getStackById(PINNED_STACK_ID);
+        assertEquals(1, pinnedStack.getTasks().size());
+
+        assertTrue(pinnedStack.getTasks().get(0).mRealActivity.equals(getActivityComponentName(
+                PIP_ACTIVITY2)));
+
+        final ActivityStack fullScreenStack = mAmWmState.getAmState().getStackById(
+                FULLSCREEN_WORKSPACE_STACK_ID);
+        assertTrue(fullScreenStack.getBottomTask().mRealActivity.equals(getActivityComponentName(
+                PIP_ACTIVITY)));
     }
 
     public void testPipUnPipOverHome() throws Exception {

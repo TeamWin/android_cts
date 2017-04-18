@@ -90,6 +90,14 @@
                 android:exported="true"
                 android:taskAffinity="nobody.but.PipActivity"
         />
+        <activity android:name=".PipActivity2"
+                  android:resizeableActivity="false"
+                  android:supportsPictureInPicture="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:exported="true"
+                  android:taskAffinity="nobody.but.PipActivity2"
+        />
+
         <activity android:name=".AlwaysFocusablePipActivity"
                   android:theme="@style/Theme.Transparent"
                   android:resizeableActivity="false"
