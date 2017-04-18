@@ -25,6 +25,7 @@ import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.ExactComparer;
@@ -35,8 +36,10 @@ import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class ExactCanvasTests extends ActivityTestBase {
     private final BitmapComparer mExactComparer = new ExactComparer();
 

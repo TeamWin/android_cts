@@ -26,8 +26,10 @@ import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class VectorDrawableTests extends ActivityTestBase {
     @Test
     public void testScaleDown() {

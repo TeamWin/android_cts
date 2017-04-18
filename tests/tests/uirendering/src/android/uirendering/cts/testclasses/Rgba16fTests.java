@@ -25,16 +25,19 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Shader;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class Rgba16fTests extends ActivityTestBase {
     @Test
     public void testTransferFunctions() {

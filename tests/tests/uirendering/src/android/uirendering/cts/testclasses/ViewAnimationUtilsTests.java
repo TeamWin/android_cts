@@ -17,6 +17,7 @@
 package android.uirendering.cts.testclasses;
 
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier;
@@ -25,8 +26,10 @@ import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.ViewAnimationUtils;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class ViewAnimationUtilsTests extends ActivityTestBase {
     @Test
     public void testCreateCircularReveal() {

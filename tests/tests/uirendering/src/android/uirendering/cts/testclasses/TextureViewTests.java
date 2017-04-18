@@ -27,6 +27,7 @@ import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.support.annotation.ColorInt;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -42,10 +43,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class TextureViewTests extends ActivityTestBase {
 
     private static SurfaceTexture sRedTexture;

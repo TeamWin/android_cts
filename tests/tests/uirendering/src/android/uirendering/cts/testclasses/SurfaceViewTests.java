@@ -24,7 +24,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -40,10 +42,12 @@ import android.widget.FrameLayout;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
-@MediumTest
+@LargeTest
+@RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
 
     static final CanvasCallback sGreenCanvasCallback =

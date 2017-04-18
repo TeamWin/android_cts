@@ -22,7 +22,9 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -31,11 +33,13 @@ import android.uirendering.cts.testinfrastructure.DisplayModifier;
 import android.uirendering.cts.testinfrastructure.ResourceModifier;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test cases of all combination of resource modifications.
  */
-@MediumTest
+@LargeTest
+@RunWith(AndroidJUnit4.class)
 public class SweepTests extends ActivityTestBase {
     private final static DisplayModifier COLOR_FILTER_GRADIENT_MODIFIER = new DisplayModifier() {
         private final Rect mBounds = new Rect(30, 30, 150, 150);

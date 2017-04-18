@@ -24,7 +24,9 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Typeface;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
@@ -38,10 +40,12 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class PathClippingTests extends ActivityTestBase {
     // draw circle with hole in it, with stroked circle
     static final CanvasClient sTorusDrawCanvasClient = (canvas, width, height) -> {
@@ -173,6 +177,7 @@ public class PathClippingTests extends ActivityTestBase {
         };
     }
 
+    @LargeTest
     @Test
     public void testWebViewClipWithCircle() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
