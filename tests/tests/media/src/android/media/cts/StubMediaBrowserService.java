@@ -45,10 +45,6 @@ public class StubMediaBrowserService extends MediaBrowserService {
         MEDIA_ID_CHILDREN_DELAYED
     };
 
-    static final String SEARCH_QUERY = "test_media_children";
-    static final String SEARCH_QUERY_FOR_NO_RESULT = "query no result";
-    static final String SEARCH_QUERY_FOR_ERROR = "query for error";
-
     static StubMediaBrowserService sInstance;
 
     /* package private */ static MediaSession sSession;
@@ -76,8 +72,10 @@ public class StubMediaBrowserService extends MediaBrowserService {
     public void onLoadChildren(final String parentMediaId, final Result<List<MediaItem>> result) {
         List<MediaItem> mediaItems = new ArrayList<>();
         if (MEDIA_ID_ROOT.equals(parentMediaId)) {
+            Bundle rootHints = getBrowserRootHints();
             for (String id : MEDIA_ID_CHILDREN) {
-                mediaItems.add(createMediaItem(id));
+                mediaItems.add(new MediaItem(new MediaDescription.Builder()
+                        .setMediaId(id).setExtras(rootHints).build(), MediaItem.FLAG_BROWSABLE));
             }
             result.sendResult(mediaItems);
         } else if (MEDIA_ID_CHILDREN_DELAYED.equals(parentMediaId)) {
@@ -101,33 +99,14 @@ public class StubMediaBrowserService extends MediaBrowserService {
 
         for (String id : MEDIA_ID_CHILDREN) {
             if (id.equals(itemId)) {
-                result.sendResult(createMediaItem(id));
+                result.sendResult(new MediaItem(new MediaDescription.Builder()
+                        .setMediaId(id).setExtras(getBrowserRootHints()).build(),
+                                MediaItem.FLAG_BROWSABLE));
                 return;
             }
         }
 
         super.onLoadItem(itemId, result);
-    }
-
-    @Override
-    public void onSearch(String query, Bundle extras, Result<List<MediaItem>> result) {
-        if (result == null) {
-            // called the callback to mark as tested
-            return;
-        }
-        if (SEARCH_QUERY_FOR_NO_RESULT.equals(query)) {
-            result.sendResult(Collections.<MediaItem>emptyList());
-        } else if (SEARCH_QUERY_FOR_ERROR.equals(query)) {
-            result.sendResult(null);
-        } else if (SEARCH_QUERY.equals(query)) {
-            List<MediaItem> items = new ArrayList<>();
-            for (String id : MEDIA_ID_CHILDREN) {
-                if (id.contains(query)) {
-                    items.add(createMediaItem(id));
-                }
-            }
-            result.sendResult(items);
-        }
     }
 
     public void sendDelayedNotifyChildrenChanged() {
@@ -146,11 +125,5 @@ public class StubMediaBrowserService extends MediaBrowserService {
             mPendingRootHints = null;
             mPendingLoadItemResult = null;
         }
-    }
-
-    private MediaItem createMediaItem(String id) {
-        return new MediaItem(new MediaDescription.Builder()
-                .setMediaId(id).setExtras(getBrowserRootHints()).build(),
-                MediaItem.FLAG_BROWSABLE);
     }
 }

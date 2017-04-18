@@ -36,13 +36,63 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
             "android.media.cts", "android.media.cts.StubMediaBrowserService");
     private final Object mWaitLock = new Object();
 
-    private final ConnectionCallback mConnectionCallback = new ConnectionCallback();
-    private final SubscriptionCallback mSubscriptionCallback = new SubscriptionCallback();
-    private final ItemCallback mItemCallback = new ItemCallback();
-    private final SearchCallback mSearchCallback = new SearchCallback();
+    private final MediaBrowser.ConnectionCallback mConnectionCallback =
+            new MediaBrowser.ConnectionCallback() {
+        @Override
+        public void onConnected() {
+            synchronized (mWaitLock) {
+                mMediaBrowserService = StubMediaBrowserService.sInstance;
+                mWaitLock.notify();
+            }
+        }
+    };
+
+    private final MediaBrowser.SubscriptionCallback mSubscriptionCallback =
+            new MediaBrowser.SubscriptionCallback() {
+            @Override
+            public void onChildrenLoaded(String parentId, List<MediaItem> children) {
+                synchronized (mWaitLock) {
+                    mOnChildrenLoaded = true;
+                    if (children != null) {
+                        for (MediaItem item : children) {
+                            assertRootHints(item);
+                        }
+                    }
+                    mWaitLock.notify();
+                }
+            }
+
+            @Override
+            public void onChildrenLoaded(String parentId, List<MediaItem> children,
+                    Bundle options) {
+                synchronized (mWaitLock) {
+                    mOnChildrenLoadedWithOptions = true;
+                    if (children != null) {
+                        for (MediaItem item : children) {
+                            assertRootHints(item);
+                        }
+                    }
+                    mWaitLock.notify();
+                }
+            }
+        };
+
+    private final MediaBrowser.ItemCallback mItemCallback = new MediaBrowser.ItemCallback() {
+        @Override
+        public void onItemLoaded(MediaItem item) {
+            synchronized (mWaitLock) {
+                mOnItemLoaded = true;
+                assertRootHints(item);
+                mWaitLock.notify();
+            }
+        }
+    };
 
     private MediaBrowser mMediaBrowser;
     private StubMediaBrowserService mMediaBrowserService;
+    private boolean mOnChildrenLoaded;
+    private boolean mOnChildrenLoadedWithOptions;
+    private boolean mOnItemLoaded;
     private Bundle mRootHints;
 
     @Override
@@ -72,15 +122,14 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
 
     public void testNotifyChildrenChanged() throws Exception {
         synchronized (mWaitLock) {
-            mSubscriptionCallback.reset();
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mSubscriptionCallback.mOnChildrenLoaded);
+            assertTrue(mOnChildrenLoaded);
 
-            mSubscriptionCallback.reset();
+            mOnChildrenLoaded = false;
             mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mSubscriptionCallback.mOnChildrenLoaded);
+            assertTrue(mOnChildrenLoaded);
         }
     }
 
@@ -92,54 +141,53 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
             options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
             options.putInt(MediaBrowser.EXTRA_PAGE, page);
 
-            mSubscriptionCallback.reset();
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
                     mSubscriptionCallback);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mSubscriptionCallback.mOnChildrenLoadedWithOptions);
+            assertTrue(mOnChildrenLoadedWithOptions);
 
-            mSubscriptionCallback.reset();
+            mOnChildrenLoadedWithOptions = false;
             mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mSubscriptionCallback.mOnChildrenLoadedWithOptions);
+            assertTrue(mOnChildrenLoadedWithOptions);
         }
     }
 
     public void testDelayedNotifyChildrenChanged() throws Exception {
         synchronized (mWaitLock) {
-            mSubscriptionCallback.reset();
+            mOnChildrenLoaded = false;
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mSubscriptionCallback);
             mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mSubscriptionCallback.mOnChildrenLoaded);
+            assertFalse(mOnChildrenLoaded);
 
             mMediaBrowserService.sendDelayedNotifyChildrenChanged();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mSubscriptionCallback.mOnChildrenLoaded);
+            assertTrue(mOnChildrenLoaded);
 
-            mSubscriptionCallback.reset();
+            mOnChildrenLoaded = false;
             mMediaBrowserService.notifyChildrenChanged(
                     StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED);
             mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mSubscriptionCallback.mOnChildrenLoaded);
+            assertFalse(mOnChildrenLoaded);
 
             mMediaBrowserService.sendDelayedNotifyChildrenChanged();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mSubscriptionCallback.mOnChildrenLoaded);
+            assertTrue(mOnChildrenLoaded);
         }
     }
 
     public void testDelayedItem() throws Exception {
         synchronized (mWaitLock) {
-            mItemCallback.reset();
-            mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED, mItemCallback);
+            mOnItemLoaded = false;
+            mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
+                    mItemCallback);
             mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mItemCallback.mOnItemLoaded);
+            assertFalse(mOnItemLoaded);
 
-            mItemCallback.reset();
             mMediaBrowserService.sendDelayedItemLoaded();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mItemCallback.mOnItemLoaded);
+            assertTrue(mOnItemLoaded);
         }
     }
 
@@ -155,60 +203,6 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertEquals(val, browserRoot.getExtras().getString(key));
     }
 
-    public void testSearch() throws Exception {
-        final String key = "test-key";
-        final String val = "test-val";
-
-        final MediaBrowser.SearchCallback searchCallback =
-                (MediaBrowser.SearchCallback) mSearchCallback;
-        final MediaBrowserService mediaBrowserService = (MediaBrowserService) mMediaBrowserService;
-
-        synchronized (mWaitLock) {
-            mSearchCallback.reset();
-            mMediaBrowser.search(StubMediaBrowserService.SEARCH_QUERY_FOR_NO_RESULT, null,
-                    mSearchCallback);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertTrue(mSearchCallback.mOnSearchResult);
-            assertTrue(mSearchCallback.mSearchResults != null
-                    && mSearchCallback.mSearchResults.size() == 0);
-            assertEquals(null, mSearchCallback.mSearchExtras);
-            // just call the callback once directly so it's marked as tested
-            mediaBrowserService.onSearch(
-                    StubMediaBrowserService.SEARCH_QUERY_FOR_NO_RESULT, null, null);
-            searchCallback.onSearchResult(StubMediaBrowserService.SEARCH_QUERY_FOR_NO_RESULT,
-                    mSearchCallback.mSearchExtras, mSearchCallback.mSearchResults);
-
-            mSearchCallback.reset();
-            mMediaBrowser.search(StubMediaBrowserService.SEARCH_QUERY_FOR_ERROR, null,
-                    mSearchCallback);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertTrue(mSearchCallback.mOnSearchResult);
-            assertNull(mSearchCallback.mSearchResults);
-            assertEquals(null, mSearchCallback.mSearchExtras);
-            // just call the callback once directly so it's marked as tested
-            mediaBrowserService.onSearch(
-                    StubMediaBrowserService.SEARCH_QUERY_FOR_ERROR, null, null);
-            searchCallback.onError(StubMediaBrowserService.SEARCH_QUERY_FOR_ERROR, null);
-
-            mSearchCallback.reset();
-            Bundle extras = new Bundle();
-            extras.putString(key, val);
-            mMediaBrowser.search(StubMediaBrowserService.SEARCH_QUERY, extras, mSearchCallback);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertTrue(mSearchCallback.mOnSearchResult);
-            assertNotNull(mSearchCallback.mSearchResults);
-            for (MediaItem item : mSearchCallback.mSearchResults) {
-                assertTrue(item.getMediaId().contains(StubMediaBrowserService.SEARCH_QUERY));
-            }
-            assertNotNull(mSearchCallback.mSearchExtras);
-            assertEquals(val, mSearchCallback.mSearchExtras.getString(key));
-            // just call the callback once directly so it's marked as tested
-            mediaBrowserService.onSearch(StubMediaBrowserService.SEARCH_QUERY, extras, null);
-            searchCallback.onSearchResult(StubMediaBrowserService.SEARCH_QUERY,
-                    mSearchCallback.mSearchExtras, mSearchCallback.mSearchResults);
-        }
-    }
-
     private void assertRootHints(MediaItem item) {
         Bundle rootHints = item.getDescription().getExtras();
         assertNotNull(rootHints);
@@ -218,101 +212,5 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
                 rootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE));
         assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED),
                 rootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED));
-    }
-
-    private class ConnectionCallback extends MediaBrowser.ConnectionCallback {
-        @Override
-        public void onConnected() {
-            synchronized (mWaitLock) {
-                mMediaBrowserService = StubMediaBrowserService.sInstance;
-                mWaitLock.notify();
-            }
-        }
-    }
-
-    private class SubscriptionCallback extends MediaBrowser.SubscriptionCallback {
-        boolean mOnChildrenLoaded;
-        boolean mOnChildrenLoadedWithOptions;
-
-        @Override
-        public void onChildrenLoaded(String parentId, List<MediaItem> children) {
-            synchronized (mWaitLock) {
-                mOnChildrenLoaded = true;
-                if (children != null) {
-                    for (MediaItem item : children) {
-                        assertRootHints(item);
-                    }
-                }
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onChildrenLoaded(String parentId, List<MediaItem> children,
-                Bundle options) {
-            synchronized (mWaitLock) {
-                mOnChildrenLoadedWithOptions = true;
-                if (children != null) {
-                    for (MediaItem item : children) {
-                        assertRootHints(item);
-                    }
-                }
-                mWaitLock.notify();
-            }
-        }
-
-        public void reset() {
-            mOnChildrenLoaded = false;
-            mOnChildrenLoadedWithOptions = false;
-        }
-    }
-
-    private class ItemCallback extends MediaBrowser.ItemCallback {
-        boolean mOnItemLoaded;
-
-        @Override
-        public void onItemLoaded(MediaItem item) {
-            synchronized (mWaitLock) {
-                mOnItemLoaded = true;
-                assertRootHints(item);
-                mWaitLock.notify();
-            }
-        }
-
-        public void reset() {
-            mOnItemLoaded = false;
-        }
-    }
-
-    private class SearchCallback extends MediaBrowser.SearchCallback {
-        boolean mOnSearchResult;
-        Bundle mSearchExtras;
-        List<MediaItem> mSearchResults;
-
-        @Override
-        public void onSearchResult(String query, Bundle extras, List<MediaItem> items) {
-            synchronized (mWaitLock) {
-                mOnSearchResult = true;
-                mSearchResults = items;
-                mSearchExtras = extras;
-                mWaitLock.notify();
-            }
-        }
-
-        @Override
-        public void onError(String query, Bundle extras) {
-            synchronized (mWaitLock) {
-                mOnSearchResult = true;
-                mSearchResults = null;
-                mSearchExtras = extras;
-                mWaitLock.notify();
-            }
-        }
-
-        public void reset() {
-            mOnSearchResult = false;
-            mSearchExtras = null;
-            mSearchResults = null;
-        }
     }
 }
