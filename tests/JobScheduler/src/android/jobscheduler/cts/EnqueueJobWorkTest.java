@@ -22,6 +22,7 @@ import android.app.job.JobWorkItem;
 import android.content.ContentProviderClient;
 import android.content.Intent;
 import android.jobscheduler.MockJobService.TestWorkItem;
+import android.net.Uri;
 
 import java.util.ArrayList;
 
@@ -44,13 +45,13 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         super.setUp();
 
         mBuilder = new JobInfo.Builder(ENQUEUE_WORK_JOB_ID, kJobServiceComponent);
-        //mProvider = getContext().getContentResolver().acquireContentProviderClient(mFirstUri);
+        mProvider = getContext().getContentResolver().acquireContentProviderClient(mFirstUri);
     }
 
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        //mProvider.close();
+        mProvider.close();
         mJobScheduler.cancel(ENQUEUE_WORK_JOB_ID);
     }
 
@@ -74,18 +75,18 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         }
         for (int i = 0; i < received.size(); i++) {
             Intent work = received.get(i);
-            if (i >= expected.length) {
-                fail("Received more than " + expected.length + " work items, first extra is "
-                        + work);
-            }
-            if (!intentEquals(work, expectedArray.get(i).intent)) {
-                fail("Received work #" + i + " " + work + " but expected " + expected[i]);
-            }
             if (i < expected.length && expected[i].subitems != null) {
                 TestWorkItem[] sub = expected[i].subitems;
                 for (int j = 0; j < sub.length; j++) {
                     expectedArray.add(sub[j]);
                 }
+            }
+            if (i >= expectedArray.size()) {
+                fail("Received more than " + expected.length + " work items, first extra is "
+                        + work);
+            }
+            if (!intentEquals(work, expectedArray.get(i).intent)) {
+                fail("Received work #" + i + " " + work + " but expected " + expected[i]);
             }
         }
         if (received.size() < expected.length) {
@@ -175,5 +176,62 @@ public class EnqueueJobWorkTest extends ConstraintTest {
         assertTrue("Job with work enqueued did not fire.",
                 kTestEnvironment.awaitExecution());
         compareWork(work, kTestEnvironment.getLastReceivedWork());
+    }
+
+    /**
+     * Test basic enqueueing batches of work.
+     */
+    public void testEnqueueMultipleUriGrantWork() throws Exception {
+        // Start out with storage low, so job is enqueued but not executed yet.
+        setStorageState(true);
+
+        // We need to get a permission grant so that we can grant it to ourself.
+        mProvider.call("grant", MY_PACKAGE, mFirstUriBundle);
+        mProvider.call("grant", MY_PACKAGE, mSecondUriBundle);
+        assertHasUriPermission(mFirstUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertHasUriPermission(mSecondUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        Intent work1 = new Intent("work1");
+        work1.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        work1.setData(mFirstUri);
+        work1.setClipData(mSecondClipData);
+
+        Intent work2 = new Intent("work2");
+        work2.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        work2.setData(mFirstUri);
+
+        TestWorkItem[] work = new TestWorkItem[] {
+                new TestWorkItem(work1, new Uri[] { mFirstUri, mSecondUri}, new Uri[0]),
+                new TestWorkItem(work2, new Uri[] { mFirstUri }, new Uri[] { mSecondUri}) };
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setExpectedWork(work);
+        JobInfo ji = mBuilder.setOverrideDeadline(0).setRequiresStorageNotLow(true).build();
+        mJobScheduler.enqueue(ji, new JobWorkItem(work1));
+        mJobScheduler.enqueue(ji, new JobWorkItem(work2));
+
+        // Remove the explicit grant, we should still have a grant due to the job.
+        mProvider.call("revoke", MY_PACKAGE, mFirstUriBundle);
+        mProvider.call("revoke", MY_PACKAGE, mSecondUriBundle);
+        assertHasUriPermission(mFirstUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertHasUriPermission(mSecondUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        kTestEnvironment.readyToWork();
+
+        // Now allow the job to run.
+        setStorageState(false);
+
+        assertTrue("Job with work enqueued did not fire.",
+                kTestEnvironment.awaitExecution());
+        compareWork(work, kTestEnvironment.getLastReceivedWork());
+
+        // And wait for everything to be cleaned up.
+        waitPermissionRevoke(mFirstUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, 5000);
+        waitPermissionRevoke(mSecondUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, 5000);
     }
 }
