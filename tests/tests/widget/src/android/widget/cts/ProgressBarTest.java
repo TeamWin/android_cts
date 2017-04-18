@@ -514,26 +514,22 @@ public class ProgressBarTest {
     public void testVerifyDrawable() {
         MockProgressBar mockProgressBar =
                 (MockProgressBar) mActivity.findViewById(R.id.progress_custom);
-        assertTrue(mockProgressBar.verifyDrawable(null));
 
         Drawable d1 = mActivity.getDrawable(R.drawable.blue);
         Drawable d2 = mActivity.getDrawable(R.drawable.red);
         Drawable d3 = mActivity.getDrawable(R.drawable.yellow);
 
         mockProgressBar.setBackgroundDrawable(d1);
-        assertTrue(mockProgressBar.verifyDrawable(null));
         assertTrue(mockProgressBar.verifyDrawable(d1));
         assertFalse(mockProgressBar.verifyDrawable(d2));
         assertFalse(mockProgressBar.verifyDrawable(d3));
 
         mockProgressBar.setIndeterminateDrawable(d2);
-        assertTrue(mockProgressBar.verifyDrawable(null));
         assertTrue(mockProgressBar.verifyDrawable(d1));
         assertTrue(mockProgressBar.verifyDrawable(d2));
         assertFalse(mockProgressBar.verifyDrawable(d3));
 
         mockProgressBar.setProgressDrawable(d3);
-        assertFalse(mockProgressBar.verifyDrawable(null));
         assertTrue(mockProgressBar.verifyDrawable(d1));
         assertTrue(mockProgressBar.verifyDrawable(d2));
         assertTrue(mockProgressBar.verifyDrawable(d3));
