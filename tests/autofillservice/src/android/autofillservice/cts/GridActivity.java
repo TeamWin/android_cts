@@ -113,7 +113,7 @@ public class GridActivity extends AbstractAutoFillActivity {
         onCell(row, column, (c) -> queue.offer(c.getText().toString()));
         final String text = queue.poll(100, TimeUnit.MILLISECONDS);
         if (text == null) {
-            throw new AssertionError("text not set in 100ms");
+            throw new RetryableException("text not set in 100ms");
         }
         return text;
     }

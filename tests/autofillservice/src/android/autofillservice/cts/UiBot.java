@@ -92,7 +92,7 @@ final class UiBot {
             // not showing...
             return;
         }
-        throw new AssertionError("floating ui is shown: " + ui);
+        throw new RetryableException("floating ui is shown: %s", ui);
     }
 
     /**
@@ -219,7 +219,7 @@ final class UiBot {
             // not showing (in which case it wouldn't need a type as parameter).
             return;
         }
-        throw new AssertionError("snack bar is showing");
+        throw new RetryableException("snack bar is showing");
     }
 
     private String getSaveTypeString(int type) {
@@ -335,7 +335,7 @@ final class UiBot {
             }
             menuNames.append("'").append(menuName).append("' ");
         }
-        throw new AssertionError("no '" + expectedText + "' on " + menuNames);
+        throw new RetryableException("no '%s' on '%s'", expectedText, menuNames);
     }
 
     /**
@@ -382,8 +382,8 @@ final class UiBot {
             }
             SystemClock.sleep(napTime);
         }
-        throw new AssertionError("Object with selector " + selector + " not found in "
-                + mTimeout + " ms");
+        throw new RetryableException("Object with selector '%s' not found in %d ms",
+                selector, mTimeout);
     }
 
     /**
@@ -412,9 +412,10 @@ final class UiBot {
             }
             SystemClock.sleep(napTime);
         }
-        throw new AssertionError("Objects with selector " + selector + " not found in "
-                + mTimeout + " ms");
+        throw new RetryableException("Objects with selector '%s' not found in %d ms",
+                selector, mTimeout);
     }
+
     private UiObject2 findDatasetPicker() {
         final UiObject2 picker = waitForObject(By.res("android", RESOURCE_ID_DATASET_PICKER));
 
@@ -436,6 +437,6 @@ final class UiBot {
                 return;
             }
         }
-        throw new AssertionError("Title (" + expectedTitle + ") not found for " + object);
+        throw new RetryableException("Title '%s' not found for %s", expectedTitle, object);
     }
 }

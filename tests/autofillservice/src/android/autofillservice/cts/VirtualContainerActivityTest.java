@@ -127,7 +127,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         try {
             VirtualContainerView.assertHtmlInfo(username);
             VirtualContainerView.assertHtmlInfo(password);
-        } catch (AssertionError e) {
+        } catch (AssertionError | RuntimeException e) {
             dumpStructure("HtmlInfo failed", request.structure);
             throw e;
         }
