@@ -18,14 +18,17 @@ package android.uirendering.cts.testclasses;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.util.CompareUtils;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @MediumTest
+@RunWith(AndroidJUnit4.class)
 public class ShadowTests extends ActivityTestBase {
 
     private class GrayScaleVerifier extends SamplePointVerifier {

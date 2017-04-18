@@ -32,6 +32,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Region.Op;
 import android.support.annotation.ColorInt;
+import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
@@ -140,6 +141,7 @@ public class LayerTests extends ActivityTestBase {
                 .runWithVerifier(new ColorVerifier(expectedColor));
     }
 
+    @LargeTest
     @Test
     public void testLayerClear() {
         ViewInitializer initializer = new ViewInitializer() {
