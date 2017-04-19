@@ -174,6 +174,38 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    public void testGetAppWidgetIdsForHost() throws Exception {
+        if (!hasAppWidgets()) {
+            return;
+        }
+        AppWidgetHost host1 = new AppWidgetHost(getInstrumentation().getTargetContext(), 1);
+        AppWidgetHost host2 = new AppWidgetHost(getInstrumentation().getTargetContext(), 2);
+
+        host1.deleteHost();
+        host2.deleteHost();
+
+        assertTrue(Arrays.equals(host1.getAppWidgetIds(), new int[]{}));
+        assertTrue(Arrays.equals(host2.getAppWidgetIds(), new int[]{}));
+
+        int id1 = host1.allocateAppWidgetId();
+        assertTrue(Arrays.equals(host1.getAppWidgetIds(), new int[]{id1}));
+        assertTrue(Arrays.equals(host2.getAppWidgetIds(), new int[]{}));
+
+        int id2 = host1.allocateAppWidgetId();
+        assertTrue(Arrays.equals(host1.getAppWidgetIds(), new int[]{id1, id2}));
+        assertTrue(Arrays.equals(host2.getAppWidgetIds(), new int[]{}));
+
+        int id3 = host2.allocateAppWidgetId();
+        assertTrue(Arrays.equals(host1.getAppWidgetIds(), new int[]{id1, id2}));
+        assertTrue(Arrays.equals(host2.getAppWidgetIds(), new int[]{id3}));
+
+        host1.deleteHost();
+        assertTrue(Arrays.equals(host1.getAppWidgetIds(), new int[]{}));
+        assertTrue(Arrays.equals(host2.getAppWidgetIds(), new int[]{id3}));
+
+        host2.deleteHost();
+    }
+
     public void testAppWidgetProviderCallbacks() throws Exception {
         if (!hasAppWidgets()) {
             return;
@@ -380,7 +412,7 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
-    public void testGetAppWidgetIds() throws Exception {
+    public void testGetAppWidgetIdsForProvider() throws Exception {
         if (!hasAppWidgets()) {
             return;
         }
