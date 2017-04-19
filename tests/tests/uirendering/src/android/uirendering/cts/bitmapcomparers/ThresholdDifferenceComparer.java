@@ -15,22 +15,14 @@
  */
 package android.uirendering.cts.bitmapcomparers;
 
-import android.uirendering.cts.R;
-import android.uirendering.cts.ScriptC_ThresholdDifferenceComparer;
-
-import android.content.res.Resources;
 import android.graphics.Color;
-import android.renderscript.Allocation;
-import android.renderscript.RenderScript;
-import android.uirendering.cts.bitmapcomparers.BaseRenderScriptComparer;
 import android.util.Log;
 
 /**
  * Compares two images to see if each pixel is the same, within a certain threshold value
  */
-public class ThresholdDifferenceComparer extends BaseRenderScriptComparer {
+public class ThresholdDifferenceComparer extends BitmapComparer {
     private static final String TAG = "ThresholdDifference";
-    private ScriptC_ThresholdDifferenceComparer mScript;
     private int mThreshold;
 
     /**
@@ -61,29 +53,6 @@ public class ThresholdDifferenceComparer extends BaseRenderScriptComparer {
             }
         }
         Log.d(TAG, "Number of different pixels : " + differentPixels);
-        return (differentPixels == 0);
-    }
-
-    @Override
-    public boolean verifySameRowsRS(Resources resources, Allocation ideal,
-            Allocation given, int offset, int stride, int width, int height,
-            RenderScript renderScript, Allocation inputAllocation, Allocation outputAllocation) {
-        if (mScript == null) {
-            mScript = new ScriptC_ThresholdDifferenceComparer(renderScript);
-        }
-
-        mScript.set_THRESHOLD(mThreshold);
-        mScript.set_WIDTH(width);
-
-        //Set the bitmap allocations
-        mScript.set_ideal(ideal);
-        mScript.set_given(given);
-
-        //Call the renderscript function on each row
-        mScript.forEach_thresholdCompare(inputAllocation, outputAllocation);
-
-        float differentPixels = sum1DFloatAllocation(outputAllocation);
-        Log.d(TAG, "Number of different pixels RS : " + differentPixels);
         return (differentPixels == 0);
     }
 }

@@ -15,21 +15,14 @@
  */
 package android.uirendering.cts.bitmapcomparers;
 
-import android.uirendering.cts.R;
-import android.uirendering.cts.ScriptC_MeanSquaredComparer;
-
-import android.content.res.Resources;
 import android.graphics.Color;
-import android.renderscript.Allocation;
-import android.renderscript.RenderScript;
 import android.util.Log;
 
 /**
  * Finds the MSE using two images.
  */
-public class MeanSquaredComparer extends BaseRenderScriptComparer {
+public class MeanSquaredComparer extends BitmapComparer {
     private static final String TAG = "MeanSquared";
-    private ScriptC_MeanSquaredComparer mScript;
     private float mErrorPerPixel;
 
     /**
@@ -46,30 +39,6 @@ public class MeanSquaredComparer extends BaseRenderScriptComparer {
         float totalError = getMSE(ideal, given, offset, stride, width, height);
         Log.d(TAG, "Error : " + totalError);
         return (totalError < (mErrorPerPixel));
-    }
-
-    @Override
-    public boolean verifySameRowsRS(Resources resources, Allocation ideal,
-            Allocation given, int offset, int stride, int width, int height,
-            RenderScript renderScript, Allocation inputAllocation, Allocation outputAllocation) {
-        if (mScript == null) {
-            mScript = new ScriptC_MeanSquaredComparer(renderScript);
-        }
-        mScript.set_WIDTH(width);
-
-        //Set the bitmap allocations
-        mScript.set_ideal(ideal);
-        mScript.set_given(given);
-
-        //Call the renderscript function on each row
-        mScript.forEach_calcMSE(inputAllocation, outputAllocation);
-
-        float error = sum1DFloatAllocation(outputAllocation);
-        error /= (height * width);
-
-        Log.d(TAG, "Error RS : " + error);
-
-        return (error < mErrorPerPixel);
     }
 
     /**
