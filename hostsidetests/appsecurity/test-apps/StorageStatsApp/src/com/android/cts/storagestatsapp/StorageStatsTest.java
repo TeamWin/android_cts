@@ -170,6 +170,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertMostlyEquals(5 * MB_IN_BYTES, afterInit.getAudioBytes() - before.getAudioBytes());
         assertMostlyEquals(3 * MB_IN_BYTES, afterInit.getVideoBytes() - before.getVideoBytes());
         assertMostlyEquals(2 * MB_IN_BYTES, afterInit.getImageBytes() - before.getImageBytes());
+        assertMostlyEquals(7 * MB_IN_BYTES, afterInit.getAppBytes() - before.getAppBytes());
 
         // Rename to ensure that stats are updated
         video.renameTo(new File(dir, System.nanoTime() + ".PnG"));
@@ -180,6 +181,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
         assertMostlyEquals(5 * MB_IN_BYTES, afterRename.getAudioBytes() - before.getAudioBytes());
         assertMostlyEquals(0 * MB_IN_BYTES, afterRename.getVideoBytes() - before.getVideoBytes());
         assertMostlyEquals(5 * MB_IN_BYTES, afterRename.getImageBytes() - before.getImageBytes());
+        assertMostlyEquals(7 * MB_IN_BYTES, afterRename.getAppBytes() - before.getAppBytes());
     }
 
     /**
