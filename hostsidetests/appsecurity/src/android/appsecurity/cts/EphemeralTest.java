@@ -47,6 +47,7 @@ public class EphemeralTest extends DeviceTestCase
     private static final String UNEXPOSED_PKG = "com.android.cts.unexposedapp";
 
     private static final String TEST_CLASS = ".ClientTest";
+    private static final String WEBVIEW_TEST_CLASS = ".WebViewTest";
 
     private String mOldVerifierValue;
     private IAbi mAbi;
@@ -118,6 +119,10 @@ public class EphemeralTest extends DeviceTestCase
 
     public void testPackageInfo() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testPackageInfo");
+    }
+
+    public void testWebViewLoads() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
