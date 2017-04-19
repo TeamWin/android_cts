@@ -26,12 +26,15 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.graphics.drawable.InsetDrawable;
 import android.support.test.InstrumentationRegistry;
@@ -141,9 +144,42 @@ public class InsetDrawableTest {
     }
 
     @Test
-    public void testGetPadding() {
+    public void testGetPadding_dimension() {
         InsetDrawable insetDrawable = new InsetDrawable(mPassDrawable, 1, 2, 3, 4);
+        Rect r = new Rect();
+        assertEquals(0, r.left);
+        assertEquals(0, r.top);
+        assertEquals(0, r.right);
+        assertEquals(0, r.bottom);
 
+        assertTrue(insetDrawable.getPadding(r));
+
+        assertEquals(1, r.left);
+        assertEquals(2, r.top);
+        assertEquals(3, r.right);
+        assertEquals(4, r.bottom);
+
+        // padding is set to 0, then return value should be false
+        insetDrawable = new InsetDrawable(mPassDrawable, .0f);
+
+        r = new Rect();
+        assertEquals(0, r.left);
+        assertEquals(0, r.top);
+        assertEquals(0, r.right);
+        assertEquals(0, r.bottom);
+
+        assertFalse(insetDrawable.getPadding(r));
+
+        assertEquals(0, r.left);
+        assertEquals(0, r.top);
+        assertEquals(0, r.right);
+        assertEquals(0, r.bottom);
+    }
+
+    @Test
+    public void testGetPadding_fraction() {
+        InsetDrawable insetDrawable = new InsetDrawable(mPassDrawable, .1f, .2f, .3f, .4f);
+        insetDrawable.setBounds(0, 0, 10, 10);
         Rect r = new Rect();
         assertEquals(0, r.left);
         assertEquals(0, r.top);
@@ -242,7 +278,7 @@ public class InsetDrawableTest {
     }
 
     @Test
-    public void testOnBoundsChange() {
+    public void testOnBoundsChange_dimension() {
         MockInsetDrawable insetDrawable = new MockInsetDrawable(mPassDrawable, 5);
 
         Rect bounds = mPassDrawable.getBounds();
@@ -258,6 +294,56 @@ public class InsetDrawableTest {
         assertEquals(5, bounds.top);
         assertEquals(-5, bounds.right);
         assertEquals(-5, bounds.bottom);
+    }
+
+    @Test
+    public void testOnBoundsChange_fraction() {
+        float inset = .1f;
+        int size = 40;
+        MockInsetDrawable insetDrawable = new MockInsetDrawable(mPassDrawable, 0.1f);
+
+        Rect bounds = mPassDrawable.getBounds();
+        assertEquals(0, bounds.left);
+        assertEquals(0, bounds.top);
+        assertEquals(0, bounds.right);
+        assertEquals(0, bounds.bottom);
+
+        Rect r = new Rect(0, 0, size, size);
+        insetDrawable.onBoundsChange(r);
+
+        assertEquals((int) (size * inset), bounds.left);
+        assertEquals((int) (size * inset), bounds.top);
+        assertEquals(size - (int) (size * inset), bounds.right);
+        assertEquals(size - (int) (size * inset), bounds.bottom);
+    }
+
+    @Test
+    public void testIsBoundsAndIntrinsicSizeInverse() {
+        float inset = .1f;
+
+        // Test that intrinsic Width and Height calculation logic is inverse of the onBoundsChange.
+        MockInsetDrawable insetDrawable = new MockInsetDrawable(mPassDrawable, inset);
+
+        assertEquals((int)(mPassDrawable.getIntrinsicWidth() / (1 - 2 * inset)),
+            insetDrawable.getIntrinsicWidth());
+        assertEquals((int)(mPassDrawable.getIntrinsicHeight() / (1 - 2 * inset)),
+            insetDrawable.getIntrinsicHeight());
+
+        Rect r = new Rect(0, 0, insetDrawable.getIntrinsicWidth(),
+            insetDrawable.getIntrinsicHeight());
+        insetDrawable.onBoundsChange(r);
+        r = mPassDrawable.getBounds();
+
+        assertEquals((int)(insetDrawable.getIntrinsicWidth() * inset), r.left);
+        assertEquals((int)(insetDrawable.getIntrinsicHeight() * inset), r.top);
+        assertEquals(insetDrawable.getIntrinsicWidth()
+            - (int)((inset) * insetDrawable.getIntrinsicWidth()), r.right);
+        assertEquals(insetDrawable.getIntrinsicHeight()
+            - (int)((inset) * insetDrawable.getIntrinsicHeight()), r.bottom);
+
+        // Verify inverse!!
+        assertEquals(r.width(), mPassDrawable.getIntrinsicWidth(), 1);
+        assertEquals(r.height(), mPassDrawable.getIntrinsicHeight(), 1);
     }
 
     @Test(expected=NullPointerException.class)
@@ -287,6 +373,10 @@ public class InsetDrawableTest {
         mPassDrawable = mContext.getDrawable(R.drawable.inset_color);
         expected = -1;
         assertEquals(expected, mPassDrawable.getIntrinsicWidth());
+
+        mInsetDrawable = new InsetDrawable(mPassDrawable, .2f);
+        expected = (int)(mPassDrawable.getIntrinsicWidth() * (1.4f));
+        assertEquals(expected, mInsetDrawable.getIntrinsicWidth());
     }
 
     @Test
@@ -309,6 +399,10 @@ public class InsetDrawableTest {
         mPassDrawable = mContext.getDrawable(R.drawable.inset_color);
         expected = -1;
         assertEquals(expected, mPassDrawable.getIntrinsicHeight());
+
+        mInsetDrawable = new InsetDrawable(mPassDrawable, .2f);
+        expected = (int)(mPassDrawable.getIntrinsicHeight() * (1.4f));
+        assertEquals(expected, mInsetDrawable.getIntrinsicHeight());
     }
 
     @Test
@@ -392,6 +486,10 @@ public class InsetDrawableTest {
     }
 
     private class MockInsetDrawable extends InsetDrawable {
+        public MockInsetDrawable(Drawable drawable, float inset) {
+            super(drawable, inset);
+        }
+
         public MockInsetDrawable(Drawable drawable, int inset) {
             super(drawable, inset);
         }
