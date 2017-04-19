@@ -22,7 +22,6 @@ import static android.inputmethodservice.cts.DeviceEvent.isType;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT_VIEW;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.ACTION_IME_COMMAND;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_ARG_STRING1;
@@ -54,9 +53,7 @@ public class InputMethodServiceDeviceTest {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
-    /**
-     * Test to check {@link Ime1Constants} receives onCreate, onStartInput, and onStartInputView.
-     */
+    /** Test to check CtsInputMethod1 receives onCreate and onStartInput. */
     @Test
     public void testCreateIme1() throws Throwable {
         final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_CREATE_IME1);
@@ -65,7 +62,7 @@ public class InputMethodServiceDeviceTest {
                         .collect(startingFrom(helper.isStartOfTest()))
                         .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE)))
                         .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onCreate is called");
+                TIMEOUT, "CtsInputMethod1.onCreate is called");
 
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
@@ -74,18 +71,10 @@ public class InputMethodServiceDeviceTest {
                         .filter(isNewerThan(startActivityTime))
                         .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
                         .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onStartInput is called");
-
-        final long touchEntryTime = SystemClock.uptimeMillis();
-        helper.findUiObject(R.id.text_entry).click();
-
-        pollingCheck(() -> helper.queryAllEvents()
-                        .filter(isNewerThan(touchEntryTime))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT_VIEW)))
-                        .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onStartInputView is called");
+                TIMEOUT, "CtsInputMethod1.onStartInput is called");
     }
 
+    /** Test to check IME is switched from CtsInputMethod1 to CtsInputMethod2. */
     @Test
     public void testSwitchIme1ToIme2() throws Throwable {
         final TestHelper helper = new TestHelper(
@@ -95,7 +84,7 @@ public class InputMethodServiceDeviceTest {
                         .collect(startingFrom(helper.isStartOfTest()))
                         .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_CREATE)))
                         .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onCreate is called");
+                TIMEOUT, "CtsInputMethod1.onCreate is called");
 
         final long startActivityTime = SystemClock.uptimeMillis();
         helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
@@ -104,18 +93,11 @@ public class InputMethodServiceDeviceTest {
                         .filter(isNewerThan(startActivityTime))
                         .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
                         .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onStartInput is called");
+                TIMEOUT, "CtsInputMethod1.onStartInput is called");
 
-        final long touchEntryTime = SystemClock.uptimeMillis();
         helper.findUiObject(R.id.text_entry).click();
 
-        pollingCheck(() -> helper.queryAllEvents()
-                        .filter(isNewerThan(touchEntryTime))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT_VIEW)))
-                        .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onStartInputView is called");
-
-        // Switch IME from Ime1Constants to Ime2Constants.
+        // Switch IME from CtsInputMethod1 to CtsInputMethod2.
         final long switchImeTime = SystemClock.uptimeMillis();
         helper.shell(ShellCommandUtils.broadcastIntent(
                 ACTION_IME_COMMAND, Ime1Constants.PACKAGE,
@@ -124,21 +106,22 @@ public class InputMethodServiceDeviceTest {
 
         pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
                         .equals(Ime2Constants.IME_ID),
-                TIMEOUT, "Ime2Constants is current IME");
+                TIMEOUT, "CtsInputMethod2 is current IME");
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
                         .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_DESTROY)))
                         .findAny().isPresent(),
-                TIMEOUT, "Ime1Constants.onDestroy is called");
+                TIMEOUT, "CtsInputMethod1.onDestroy is called");
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
                         .filter(isFrom(Ime2Constants.CLASS))
-                        .collect(sequenceOfTypes(ON_CREATE, ON_START_INPUT, ON_START_INPUT_VIEW))
+                        .collect(sequenceOfTypes(ON_CREATE, ON_START_INPUT))
                         .matched(),
                 TIMEOUT,
-                "Ime2Constants.onCreate,onStartInput,onStartInputView are called in sequence");
+                "CtsInputMethod2.onCreate and onStartInput are called in sequence");
     }
 
+    /** Test to check CtsInputMethod1 isn't current IME. */
     @Test
     public void testIme1IsNotCurrentIme() throws Throwable {
         final TestHelper helper =
@@ -150,7 +133,7 @@ public class InputMethodServiceDeviceTest {
         pollingCheck(() -> !helper.shell(ShellCommandUtils.getCurrentIme())
                         .equals(Ime1Constants.IME_ID),
                 TIMEOUT,
-                "Ime1Constants is uninstalled or disabled, and current IME becomes other IME");
+                "CtsInputMethod1 is uninstalled or disabled, and current IME becomes other IME");
     }
 
     /**
