@@ -71,22 +71,7 @@ public class ContentPaneFocusTest {
             return;
         }
 
-        final View content = mActivity.findViewById(android.R.id.content);
-        assertNotNull(content);
-        final ViewParent viewParent = content.getParent();
-        assertNotNull(viewParent);
-        assertTrue(viewParent instanceof ViewGroup);
-        ViewGroup parent = (ViewGroup) viewParent;
-        View actionBarView = null;
-        for (int i = 0; i < parent.getChildCount(); i++) {
-            View child = parent.getChildAt(i);
-            if ("android:action_bar".equals(child.getTransitionName())) {
-                actionBarView = child;
-                break;
-            }
-        }
-        assertNotNull(actionBarView);
-        final View actionBar = actionBarView;
+        final View actionBar = getActionBarView();
         // Should jump to the action bar after meta+tab
         mActivityRule.runOnUiThread(() -> {
             assertFalse(v1.hasFocus());
@@ -116,6 +101,47 @@ public class ContentPaneFocusTest {
             // but only for touch screens.
             mActivityRule.runOnUiThread(() -> assertTrue(v1.hasFocus()));
         }
+    }
+
+    @Test
+    public void testNoFocusablesInContent() throws Throwable {
+        ViewGroup top = mActivity.findViewById(R.id.linearlayout);
+        top.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        mActivityRule.runOnUiThread(top::clearFocus);
+        mInstrumentation.waitForIdleSync();
+        top.clearFocus();
+        final View content = mActivity.findViewById(android.R.id.content);
+        assertTrue(content.findFocus() == null);
+        sendMetaHotkey(KeyEvent.KEYCODE_TAB);
+        mInstrumentation.waitForIdleSync();
+
+        ActionBar action = mActivity.getActionBar();
+        if (action == null || !action.isShowing()) {
+            // No action bar, so we only needed to make sure that the shortcut didn't cause
+            // the framework to crash.
+            return;
+        }
+
+        assertTrue(getActionBarView().hasFocus());
+    }
+
+    private View getActionBarView() {
+        final View content = mActivity.findViewById(android.R.id.content);
+        assertNotNull(content);
+        final ViewParent viewParent = content.getParent();
+        assertNotNull(viewParent);
+        assertTrue(viewParent instanceof ViewGroup);
+        ViewGroup parent = (ViewGroup) viewParent;
+        View actionBarView = null;
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            View child = parent.getChildAt(i);
+            if ("android:action_bar".equals(child.getTransitionName())) {
+                actionBarView = child;
+                break;
+            }
+        }
+        assertNotNull(actionBarView);
+        return actionBarView;
     }
 
     private void sendMetaHotkey(int keyCode) throws Throwable {
