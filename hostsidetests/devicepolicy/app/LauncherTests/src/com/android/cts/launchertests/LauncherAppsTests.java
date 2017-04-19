@@ -25,6 +25,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -126,7 +127,12 @@ public class LauncherAppsTests extends AndroidTestCase {
     public void testAccessPrimaryProfileFromManagedProfile() throws Exception {
         // Try to access main profile from managed profile, which is not allowed.
         assertEquals(0, mLauncherApps.getActivityList(null, mUser).size());
-        assertNull(mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser));
+        try {
+            mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser);
+            fail("Missing exception");
+        } catch (PackageManager.NameNotFoundException e) {
+            // Expected.
+        }
         assertFalse(mLauncherApps.isPackageEnabled(SIMPLE_APP_PACKAGE, mUser));
 
         final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.android.com/"));
