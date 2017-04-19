@@ -262,12 +262,14 @@ final class CannedFillResponse {
         private final Map<String, RemoteViews> mFieldPresentations;
         private final RemoteViews mPresentation;
         private final IntentSender mAuthentication;
+        private final String mId;
 
         private CannedDataset(Builder builder) {
             mFieldValues = builder.mFieldValues;
             mFieldPresentations = builder.mFieldPresentations;
             mPresentation = builder.mPresentation;
             mAuthentication = builder.mAuthentication;
+            mId = builder.mId;
         }
 
         /**
@@ -296,13 +298,13 @@ final class CannedFillResponse {
                     }
                 }
             }
-            builder.setAuthentication(mAuthentication);
+            builder.setId(mId).setAuthentication(mAuthentication);
             return builder.build();
         }
 
         @Override
         public String toString() {
-            return "CannedDataset: [hasPresentation=" + (mPresentation != null)
+            return "CannedDataset " + mId + " : [hasPresentation=" + (mPresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
                     + ", hasAuthentication=" + (mAuthentication != null)
                     + ", fieldValuess=" + mFieldValues + "]";
@@ -313,6 +315,7 @@ final class CannedFillResponse {
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
             private RemoteViews mPresentation;
             private IntentSender mAuthentication;
+            private String mId;
 
             public Builder() {
 
@@ -380,6 +383,14 @@ final class CannedFillResponse {
              */
             public Builder setAuthentication(IntentSender authentication) {
                 mAuthentication = authentication;
+                return this;
+            }
+
+            /**
+             * Sets the name.
+             */
+            public Builder setId(String id) {
+                mId = id;
                 return this;
             }
 
