@@ -31,6 +31,10 @@ import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilD
 import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
+import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
@@ -56,6 +60,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.service.autofill.FillEventHistory;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
@@ -1499,5 +1504,186 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // The session should be gone
         assertNoDanglingSessions();
+    }
+
+    @Test
+    public void checkFillSelectionAfterSelectingDatasetAuthentication() throws Exception {
+        enableService();
+
+        // Set up FillResponse with dataset authentication
+        Bundle clientState = new Bundle();
+        clientState.putCharSequence("clientStateKey", "clientStateValue");
+
+        // Prepare the authenticated response
+        AuthenticationActivity.setDataset(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("Dataset"))
+                .build());
+
+        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setId("name")
+                        .setPresentation(createPresentation("authentication"))
+                        .setAuthentication(authentication)
+                        .build()).setExtras(clientState).build());
+
+        // Trigger autofill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Authenticate
+        sUiBot.selectDataset("authentication");
+        sReplier.getNextFillRequest();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "clientStateValue");
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_DATASET_AUTHENTICATION_SELECTED);
+            assertThat(event.getDatasetId()).isEqualTo("name");
+        });
+    }
+
+    @Test
+    public void checkFillSelectionAfterSelectingAuthentication() throws Exception {
+        enableService();
+
+        // Set up FillResponse with response wide authentication
+        Bundle clientState = new Bundle();
+        clientState.putCharSequence("clientStateKey", "clientStateValue");
+
+        // Prepare the authenticated response
+        AuthenticationActivity.setResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setId("name")
+                        .setPresentation(createPresentation("dataset"))
+                        .build())
+                .setExtras(clientState).build());
+
+        IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
+                new Intent(getContext(), AuthenticationActivity.class), 0).getIntentSender();
+
+        sReplier.addResponse(new CannedFillResponse.Builder().setExtras(clientState)
+                .setPresentation(createPresentation("authentication"))
+                .setAuthentication(authentication)
+                .build());
+
+        // Trigger autofill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Authenticate
+        sUiBot.selectDataset("authentication");
+        sReplier.getNextFillRequest();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "clientStateValue");
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_AUTHENTICATION_SELECTED);
+            assertThat(event.getDatasetId()).isNull();
+        });
+    }
+
+    @Test
+    public void checkFillSelectionAfterSelectingTwoDatasets() throws Exception {
+        enableService();
+
+        // Set up first partition with an anonymous dataset
+        sReplier.addResponse(new CannedFillResponse.Builder().addDataset(
+                new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setPresentation(createPresentation("dataset1"))
+                        .build())
+                .build());
+
+        // Trigger autofill on username
+        mActivity.onUsername(View::requestFocus);
+        sUiBot.selectDataset("dataset1");
+        sReplier.getNextFillRequest();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getClientState()).isNull();
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event.getDatasetId()).isNull();
+        });
+
+        // Set up second partition with a named dataset
+        Bundle clientState = new Bundle();
+        clientState.putCharSequence("clientStateKey", "clientStateValue");
+
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_PASSWORD, "password2")
+                                .setPresentation(createPresentation("dataset2"))
+                                .setId("name2")
+                                .build())
+                .addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_PASSWORD, "password3")
+                                .setPresentation(createPresentation("dataset3"))
+                                .setId("name3")
+                                .build())
+                .setExtras(clientState)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_PASSWORD).build());
+
+        // Trigger autofill on password
+        mActivity.onPassword(View::requestFocus);
+        sUiBot.selectDataset("dataset3");
+        sReplier.getNextFillRequest();
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "clientStateValue");
+
+            assertThat(selection.getEvents().size()).isEqualTo(1);
+            FillEventHistory.Event event = selection.getEvents().get(0);
+            assertThat(event.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event.getDatasetId()).isEqualTo("name3");
+        });
+
+        mActivity.onPassword((v) -> v.setText("new password"));
+        mActivity.syncRunOnUiThread(() -> mActivity.finish());
+
+        eventually(() -> {
+            // Verify fill selection
+            FillEventHistory selection =
+                    InstrumentedAutoFillService.peekInstance().getFillEventHistory();
+            assertThat(selection.getClientState().getCharSequence("clientStateKey")).isEqualTo(
+                    "clientStateValue");
+
+            assertThat(selection.getEvents().size()).isEqualTo(2);
+            FillEventHistory.Event event1 = selection.getEvents().get(0);
+            assertThat(event1.getType()).isEqualTo(TYPE_DATASET_SELECTED);
+            assertThat(event1.getDatasetId()).isEqualTo("name3");
+
+            FillEventHistory.Event event2 = selection.getEvents().get(1);
+            assertThat(event2.getType()).isEqualTo(TYPE_SAVE_SHOWN);
+            assertThat(event2.getDatasetId()).isNull();
+        });
     }
 }
