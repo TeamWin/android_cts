@@ -95,6 +95,29 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         TargetActivity.sLastCreated = null;
     }
 
+    // When using ActivityOptions.makeBasic(), no transitions should run
+    @Test
+    public void testMakeBasic() {
+        assertFalse(mActivity.isActivityTransitionRunning());
+        mInstrumentation.runOnMainSync(() -> {
+            Intent intent = new Intent(mActivity, TargetActivity.class);
+            ActivityOptions activityOptions =
+                    ActivityOptions.makeBasic();
+            mActivity.startActivity(intent, activityOptions.toBundle());
+        });
+
+        assertFalse(mActivity.isActivityTransitionRunning());
+
+        TargetActivity targetActivity = waitForTargetActivity();
+        assertFalse(targetActivity.isActivityTransitionRunning());
+        mInstrumentation.runOnMainSync(() -> {
+            targetActivity.finish();
+        });
+
+        assertFalse(targetActivity.isActivityTransitionRunning());
+        assertFalse(mActivity.isActivityTransitionRunning());
+    }
+
     // Views that are outside the visible area only during the shared element start
     // should not be stripped from the transition.
     @Test
