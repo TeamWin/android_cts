@@ -20,6 +20,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
     private static final String LAUNCHER1_APK = "CtsShortcutBackupLauncher1.apk";
@@ -62,13 +63,12 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
             clearShortcuts(PUBLISHER2_PKG, getPrimaryUserId());
             clearShortcuts(PUBLISHER3_PKG, getPrimaryUserId());
 
-            getDevice().uninstallPackage(LAUNCHER1_PKG);
-            getDevice().uninstallPackage(LAUNCHER2_PKG);
-            getDevice().uninstallPackage(LAUNCHER3_PKG);
-
-            getDevice().uninstallPackage(PUBLISHER1_PKG);
-            getDevice().uninstallPackage(PUBLISHER2_PKG);
-            getDevice().uninstallPackage(PUBLISHER3_PKG);
+            uninstallPackageAndWaitUntilBroadcastsDrain(LAUNCHER1_PKG);
+            uninstallPackageAndWaitUntilBroadcastsDrain(LAUNCHER2_PKG);
+            uninstallPackageAndWaitUntilBroadcastsDrain(LAUNCHER3_PKG);
+            uninstallPackageAndWaitUntilBroadcastsDrain(PUBLISHER1_PKG);
+            uninstallPackageAndWaitUntilBroadcastsDrain(PUBLISHER2_PKG);
+            uninstallPackageAndWaitUntilBroadcastsDrain(PUBLISHER3_PKG);
 
             waitUntilPackagesGone();
         }
@@ -120,6 +120,42 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
 
     }
 
+    private void uninstallPackageAndWaitUntilBroadcastsDrain(String pkg) throws Exception {
+        getDevice().uninstallPackage(pkg);
+        waitUntilBroadcastsDrain();
+    }
+
+    /**
+     * Wait until the broadcasts queues all drain.
+     */
+    private void waitUntilBroadcastsDrain() throws Exception {
+        final long TIMEOUT = System.nanoTime() +
+                TimeUnit.SECONDS.toNanos(BROADCAST_TIMEOUT_SECONDS);
+
+        final Pattern re = Pattern.compile("^\\s+Active (ordered)? broadcasts \\[",
+                Pattern.MULTILINE);
+
+        String dumpsys = "";
+        while (System.nanoTime() < TIMEOUT) {
+            Thread.sleep(1000);
+
+            dumpsys = getDevice().executeShellCommand("dumpsys activity broadcasts");
+
+            if (re.matcher(dumpsys).find()) {
+                continue;
+            }
+
+            CLog.d("Broadcast queues drained:\n" + dumpsys);
+
+            dumpsys("Broadcast queues drained");
+
+            // All packages gone.
+            return;
+        }
+        fail("Broadcast queues didn't drain before time out."
+                + " Last dumpsys=\n" + dumpsys);
+    }
+
     /**
      * Wait until all the test packages are forgotten by the shortcut manager.
      */
@@ -146,7 +182,7 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
             if (dumpsys.contains("Package: " + PUBLISHER2_PKG)) continue;
             if (dumpsys.contains("Package: " + PUBLISHER3_PKG)) continue;
 
-            dumpsys("All clear");
+            dumpsys("Shortcut manager handled broadcasts");
 
             // All packages gone.
             return;
@@ -187,16 +223,19 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
         doBackup();
 
         // Uninstall all apps
-        getDevice().uninstallPackage(LAUNCHER1_PKG);
-        getDevice().uninstallPackage(LAUNCHER2_PKG);
-        getDevice().uninstallPackage(LAUNCHER3_PKG);
+        uninstallPackageAndWaitUntilBroadcastsDrain(LAUNCHER1_PKG);
+        uninstallPackageAndWaitUntilBroadcastsDrain(LAUNCHER2_PKG);
+        uninstallPackageAndWaitUntilBroadcastsDrain(LAUNCHER3_PKG);
+        uninstallPackageAndWaitUntilBroadcastsDrain(PUBLISHER1_PKG);
+        uninstallPackageAndWaitUntilBroadcastsDrain(PUBLISHER2_PKG);
+        uninstallPackageAndWaitUntilBroadcastsDrain(PUBLISHER3_PKG);
 
-        getDevice().uninstallPackage(PUBLISHER1_PKG);
-        getDevice().uninstallPackage(PUBLISHER2_PKG);
-        getDevice().uninstallPackage(PUBLISHER3_PKG);
 
         // Make sure the shortcut service handled all the uninstall broadcasts.
         waitUntilPackagesGone();
+
+        // Do it one more time just in case...
+        waitUntilBroadcastsDrain();
 
         // Then restore
         doRestore();
