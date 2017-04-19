@@ -20,6 +20,10 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -354,6 +358,51 @@ public class FragmentTransactionTest {
         }
     }
 
+    @Test
+    public void testGetLayoutInflater() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            final OnGetLayoutInflaterFragment fragment1 = new OnGetLayoutInflaterFragment();
+            assertEquals(0, fragment1.onGetLayoutInflaterCalls);
+            mActivity.getFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment1)
+                    .addToBackStack(null)
+                    .commit();
+            mActivity.getFragmentManager().executePendingTransactions();
+            assertEquals(1, fragment1.onGetLayoutInflaterCalls);
+            assertEquals(fragment1.layoutInflater, fragment1.getLayoutInflater());
+            // getLayoutInflater() didn't force onGetLayoutInflater()
+            assertEquals(1, fragment1.onGetLayoutInflaterCalls);
+
+            LayoutInflater layoutInflater = fragment1.layoutInflater;
+            // Replacing fragment1 won't detach it, so the value won't be cleared
+            final OnGetLayoutInflaterFragment fragment2 = new OnGetLayoutInflaterFragment();
+            mActivity.getFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, fragment2)
+                    .addToBackStack(null)
+                    .commit();
+            mActivity.getFragmentManager().executePendingTransactions();
+
+            assertSame(layoutInflater, fragment1.getLayoutInflater());
+            assertEquals(1, fragment1.onGetLayoutInflaterCalls);
+
+            // Popping it should cause onCreateView again, so a new LayoutInflater...
+            mActivity.getFragmentManager().popBackStackImmediate();
+            assertNotSame(layoutInflater, fragment1.getLayoutInflater());
+            assertEquals(2, fragment1.onGetLayoutInflaterCalls);
+            layoutInflater = fragment1.layoutInflater;
+            assertSame(layoutInflater, fragment1.getLayoutInflater());
+
+            // Popping it should detach it, clearing the cached value again
+            mActivity.getFragmentManager().popBackStackImmediate();
+
+            // once it is detached, the getLayoutInflater() will default to throw
+            // an exception, but we've made it return null instead.
+            assertEquals(2, fragment1.onGetLayoutInflaterCalls);
+            assertNull(fragment1.getLayoutInflater());
+            assertEquals(3, fragment1.onGetLayoutInflaterCalls);
+        });
+    }
+
     private void getFragmentsUntilSize(int expectedSize) {
         final long endTime = SystemClock.uptimeMillis() + 3000;
 
@@ -371,6 +420,28 @@ public class FragmentTransactionTest {
     private class NonStaticFragment extends Fragment {}
 
     public static class FragmentWithView extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.text_a, container, false);
+        }
+    }
+
+    public static class OnGetLayoutInflaterFragment extends Fragment {
+        public int onGetLayoutInflaterCalls = 0;
+        public LayoutInflater layoutInflater;
+
+        @Override
+        public LayoutInflater onGetLayoutInflater(Bundle savedInstanceState) {
+            onGetLayoutInflaterCalls++;
+            try {
+                layoutInflater = super.onGetLayoutInflater(savedInstanceState);
+            } catch (Exception e) {
+                return null;
+            }
+            return layoutInflater;
+        }
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
