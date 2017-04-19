@@ -28,9 +28,7 @@ import android.app.Fragment;
 import android.app.FragmentController;
 import android.app.FragmentManager;
 import android.app.FragmentManagerNonConfig;
-import android.app.Instrumentation;
 import android.os.Parcelable;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -102,14 +100,19 @@ public class FragmentAnimatorTest {
     }
 
     // Ensure that showing and popping a Fragment uses the enter and popExit animators
+    // This tests optimized transactions
     @Test
-    public void showAnimators() throws Throwable {
+    public void showAnimatorsOptimized() throws Throwable {
         final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
 
         // One fragment with a view
         final AnimatorFragment fragment = new AnimatorFragment();
         fm.beginTransaction().add(R.id.fragmentContainer, fragment).hide(fragment).commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
+
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(View.GONE, fragment.getView().getVisibility());
+        });
 
         fm.beginTransaction()
                 .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
@@ -118,7 +121,51 @@ public class FragmentAnimatorTest {
                 .commit();
         FragmentTestUtil.waitForExecution(mActivityRule);
 
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(View.VISIBLE, fragment.getView().getVisibility());
+        });
         assertEnterPopExit(fragment);
+
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(View.GONE, fragment.getView().getVisibility());
+        });
+    }
+
+    // Ensure that showing and popping a Fragment uses the enter and popExit animators
+    // This tests unoptimized transactions
+    @Test
+    public void showAnimatorsUnoptimized() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        // One fragment with a view
+        final AnimatorFragment fragment = new AnimatorFragment();
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment)
+                .hide(fragment)
+                .setAllowOptimization(false)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(View.GONE, fragment.getView().getVisibility());
+        });
+
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .show(fragment)
+                .setAllowOptimization(false)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(View.VISIBLE, fragment.getView().getVisibility());
+        });
+        assertEnterPopExit(fragment);
+
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(View.GONE, fragment.getView().getVisibility());
+        });
     }
 
     // Ensure that hiding and popping a Fragment uses the exit and popEnter animators
