@@ -20,11 +20,11 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.test.AndroidTestCase;
-import android.util.LauncherIcons;
 import android.util.Printer;
 import android.util.StringBuilderPrinter;
 
@@ -68,9 +68,15 @@ public class ComponentInfoTest extends AndroidTestCase {
         }
     }
 
-    public void testLoadIcon() {
+    private Bitmap createIconBitmap(Drawable d) {
+        int size = Math.round(100 * getContext().getResources().getDisplayMetrics().density) + 100;
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        d.setBounds(0, 0, size, size);
+        d.draw(new Canvas(bitmap));
+        return bitmap;
+    }
 
-        LauncherIcons launcherIcons = new LauncherIcons(getContext());
+    public void testLoadIcon() {
         mComponentInfo = new ComponentInfo();
         mComponentInfo.applicationInfo = new ApplicationInfo();
 
@@ -83,14 +89,12 @@ public class ComponentInfoTest extends AndroidTestCase {
         d = mComponentInfo.loadIcon(pm);
         assertNotNull(d);
         assertNotSame(d, defaultIcon);
-        WidgetTestUtils.assertEquals(launcherIcons.createIconBitmap(d),
-                launcherIcons.createIconBitmap(defaultIcon));
+        WidgetTestUtils.assertEquals(createIconBitmap(d), createIconBitmap(defaultIcon));
 
         d2 = mComponentInfo.loadIcon(pm);
         assertNotNull(d2);
         assertNotSame(d, d2);
-        WidgetTestUtils.assertEquals(launcherIcons.createIconBitmap(d),
-                launcherIcons.createIconBitmap(d2));
+        WidgetTestUtils.assertEquals(createIconBitmap(d), createIconBitmap(d2));
 
         try {
             mComponentInfo.loadIcon(null);
