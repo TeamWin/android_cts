@@ -63,7 +63,7 @@
             android:theme="@android:style/Theme.NoDisplay">
             <!-- TEST: ephemeral apps can start this activity using directed intent -->
         </activity>
-
+        <activity android:name=".WebViewTestActivity" />
         <service
             android:name=".EphemeralService">
             <!-- TEST: ephemeral apps can see this service using query methods -->
