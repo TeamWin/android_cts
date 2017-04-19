@@ -45,9 +45,13 @@ public class LocalForegroundService extends LocalService {
     private int mNotificationId = 0;
 
     @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
+    public void onCreate() {
+        super.onCreate();
+        Log.d(TAG, "service created: " + this + " in " + android.os.Process.myPid());
+    }
 
+    @Override
+    public void onStart(Intent intent, int startId) {
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID,
@@ -55,6 +59,8 @@ public class LocalForegroundService extends LocalService {
 
         Context context = getApplicationContext();
         int command = intent.getIntExtra(EXTRA_COMMAND, -1);
+
+        Log.d(TAG, "service start cmd " + command + ", intent " + intent);
 
         switch (command) {
             case COMMAND_START_FOREGROUND:
@@ -89,11 +95,15 @@ public class LocalForegroundService extends LocalService {
             default:
                 Log.e(TAG, "Unknown command: " + command);
         }
+
+        // Do parent's onStart at the end, so we don't race with the test code waiting for us to
+        // execute.
+        super.onStart(intent, startId);
     }
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "service destroyed");
+        Log.d(TAG, "service destroyed: " + this + " in " + android.os.Process.myPid());
         super.onDestroy();
     }
 
