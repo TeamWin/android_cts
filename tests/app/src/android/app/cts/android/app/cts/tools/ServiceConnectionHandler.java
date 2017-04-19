@@ -164,7 +164,7 @@ public final class ServiceConnectionHandler implements ServiceConnection {
     }
 
     @Override
-    public void onBindingDead(ComponentName name) {
+    public void onBindingDied(ComponentName name) {
         synchronized (this) {
             // We want to remain connected to this service.
             if (mMonitoring) {
