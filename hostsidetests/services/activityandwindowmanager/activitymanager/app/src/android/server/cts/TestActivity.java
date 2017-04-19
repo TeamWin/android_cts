@@ -55,17 +55,22 @@ public class TestActivity extends AbstractLifecycleLogActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(mReceiver, new IntentFilter(ACTION_FINISH_SELF));
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mReceiver, new IntentFilter(ACTION_FINISH_SELF));
         final Configuration config = getResources().getConfiguration();
         dumpDisplaySize(config);
         dumpConfiguration(config);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         unregisterReceiver(mReceiver);
     }
 
