@@ -28,6 +28,7 @@ import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorCountVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
@@ -41,6 +42,8 @@ import android.widget.FrameLayout;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -147,21 +150,17 @@ public class BitmapTests extends ActivityTestBase {
     */
     @Test
     public void testChangeDuringUiAnimation() {
-        class PureBlueOrRedVerifier extends BitmapVerifier {
+        class BlueOrRedVerifier extends BitmapVerifier {
             @Override
             public boolean verify(int[] bitmap, int offset, int stride, int width, int height) {
-                int blueCount = 0;
-                int redCount = 0;
-                for (int x = 0; x < width; x++) {
-                    for (int y = 0; y < height; y++) {
-                        if (bitmap[indexFromXAndY(x, y, stride, offset)] == Color.BLUE) {
-                            blueCount++;
-                        } else if (bitmap[indexFromXAndY(x, y, stride, offset)] == Color.RED) {
-                            redCount++;
-                        }
-                    }
-                }
-                return blueCount == width * height || redCount == width * height;
+                MSSIMComparer comparer = new MSSIMComparer(0.99);
+                int[] red  = new int[offset + height * stride];
+                Arrays.fill(red, Color.RED);
+                int[] blue  = new int[offset + height * stride];
+                Arrays.fill(blue, Color.BLUE);
+                boolean isRed = comparer.verifySame(red, bitmap, offset, stride, width, height);
+                boolean isBlue = comparer.verifySame(blue, bitmap, offset, stride, width, height);
+                return isRed || isBlue;
             }
         }
 
@@ -211,6 +210,6 @@ public class BitmapTests extends ActivityTestBase {
 
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
-                .runWithAnimationVerifier(new PureBlueOrRedVerifier());
+                .runWithAnimationVerifier(new BlueOrRedVerifier());
     }
 }
