@@ -18,6 +18,7 @@ package com.android.compatibility.common.tradefed.testtype;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.TestRunHandler;
 import com.android.compatibility.common.tradefed.util.LinearPartition;
+import com.android.compatibility.common.tradefed.util.UniqueModuleCountUtil;
 import com.android.compatibility.common.util.TestFilter;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
@@ -491,14 +492,19 @@ public class ModuleRepo implements IModuleRepo {
             if (mInitCount == (mTotalShards - 1) &&
                     mTokenModuleScheduled.size() != mTokenModules.size()) {
                 mTokenModules.removeAll(mTokenModuleScheduled);
-                CLog.e("Could not find any token for %s. Adding to last shard.", mTokenModules);
+                if (mTotalShards != 1) {
+                    // Only print the warnings if we are sharding.
+                    CLog.e("Could not find any token for %s. Adding to last shard.", mTokenModules);
+                }
                 modules.addAll(mTokenModules);
             }
             mInitCount++;
         }
         Collections.sort(modules, new ExecutionOrderComparator());
-        CLog.logAndDisplay(LogLevel.INFO, "%s running %s modules, expected to complete in %s: %s",
-                serial, modules.size(), TimeUtil.formatElapsedTime(estimatedTime), modules);
+        int uniqueCount = UniqueModuleCountUtil.countUniqueModules(modules);
+        CLog.logAndDisplay(LogLevel.INFO, "%s running %s test sub-modules, expected to complete "
+                + "in %s.", serial, uniqueCount, TimeUtil.formatElapsedTime(estimatedTime));
+        CLog.d("module list for this shard: %s", modules);
         LinkedList<IModuleDef> tests = new LinkedList<>();
         tests.addAll(modules);
         return tests;
