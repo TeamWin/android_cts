@@ -19,6 +19,7 @@ package com.android.compatibility.common.tradefed.targetprep;
 import com.android.compatibility.common.util.MonitoringUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.suite.checker.ISystemStatusChecker;
 
 /**
@@ -26,14 +27,23 @@ import com.android.tradefed.suite.checker.ISystemStatusChecker;
  */
 public class NetworkConnectivityChecker implements ISystemStatusChecker {
 
+    // Only report is as failed (capture bugreport) when status goes from pass-> fail
+    private boolean mIsFailed = false;
+
     /**
      * {@inheritDoc}
      */
     @Override
     public boolean postExecutionCheck(ITestDevice device) throws DeviceNotAvailableException {
         if (!MonitoringUtils.checkDeviceConnectivity(device)) {
+            if (mIsFailed) {
+                CLog.w("NetworkConnectivityChecker is still failing.");
+                return true;
+            }
+            mIsFailed = true;
             return false;
         }
+        mIsFailed = false;
         return true;
     }
 }
