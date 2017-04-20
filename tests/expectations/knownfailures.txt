@@ -296,12 +296,5 @@
     "android.telecom.cts.WiredHeadsetTest"
   ],
   bug: 26149528
-},
-{
-  desciption: "Seems to be failing on X86, flaky on arm. Root cause to be investigated",
-  names: [
-    "android.webkit.cts.WebViewClientTest#testOnRenderProcessGone"
-  ],
-  bug: 37281280
 }
 ]
