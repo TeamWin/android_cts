@@ -119,12 +119,6 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
                   android:exported="true"
         />
-        <activity android:name=".VisibleBehindActivity"
-                  android:resizeableActivity="false"
-                  android:supportsPictureInPicture="true"
-                  android:exported="true"
-                  android:taskAffinity="nobody.but.VisibleBehindActivity"
-        />
         <activity android:name=".LaunchPipOnPipActivity"
                   android:resizeableActivity="false"
                   android:supportsPictureInPicture="true"
