@@ -29,6 +29,8 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Xfermode;
 import android.graphics.cts.R;
 import android.graphics.drawable.ColorDrawable;
 import android.support.test.InstrumentationRegistry;
@@ -145,6 +147,15 @@ public class ColorDrawableTest {
 
         d.setColorFilter(new PorterDuffColorFilter(Color.BLACK, Mode.SRC_OVER));
         assertEquals(Color.BLACK, DrawableTestUtils.getPixel(d, 0, 0));
+    }
+
+    @Test
+    public void testSetXfermode() {
+        final ColorDrawable d = new ColorDrawable(Color.WHITE);
+        final Xfermode xfermode = new PorterDuffXfermode(Mode.ADD);
+
+        d.setXfermode(xfermode);
+        assertEquals(xfermode, d.getXfermode());
     }
 
     @Test
