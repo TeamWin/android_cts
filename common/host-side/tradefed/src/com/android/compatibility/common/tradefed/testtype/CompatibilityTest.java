@@ -21,9 +21,9 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.result.InvocationFailureHandler;
 import com.android.compatibility.common.tradefed.result.SubPlanHelper;
 import com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker;
-import com.android.compatibility.common.tradefed.util.OptionHelper;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
 import com.android.compatibility.common.tradefed.util.RetryType;
+import com.android.compatibility.common.tradefed.util.UniqueModuleCountUtil;
 import com.android.compatibility.common.util.IInvocationResult;
 import com.android.compatibility.common.util.ResultHandler;
 import com.android.compatibility.common.util.TestFilter;
@@ -57,15 +57,11 @@ import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.ArrayUtil;
 import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.TimeUtil;
-import com.android.tradefed.util.xml.AbstractXmlParser.ParseException;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -357,6 +353,15 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
 
                     // Add the entire list of modules to the CompatibilityBuildHelper for reporting
                     mBuildHelper.setModuleIds(mModuleRepo.getModuleIds());
+
+                    int count = UniqueModuleCountUtil.countUniqueModules(
+                            mModuleRepo.getTokenModules()) +
+                            UniqueModuleCountUtil.countUniqueModules(
+                                    mModuleRepo.getNonTokenModules());
+                    CLog.logAndDisplay(LogLevel.INFO, "========================================");
+                    CLog.logAndDisplay(LogLevel.INFO, "Starting a run with %s unique modules.",
+                            count);
+                    CLog.logAndDisplay(LogLevel.INFO, "========================================");
                 } else {
                     CLog.d("ModuleRepo already initialized.");
                 }
@@ -383,8 +388,10 @@ public class CompatibilityTest implements IDeviceTest, IShardableTest, IBuildRec
                 }
                 return;
             } else {
-                CLog.logAndDisplay(LogLevel.INFO, "Starting %d module%s on %s", moduleCount,
-                        (moduleCount > 1) ? "s" : "", mDevice.getSerialNumber());
+                int uniqueModuleCount = UniqueModuleCountUtil.countUniqueModules(modules);
+                CLog.logAndDisplay(LogLevel.INFO, "Starting %d test sub-module%s on %s",
+                        uniqueModuleCount, (uniqueModuleCount > 1) ? "s" : "",
+                                mDevice.getSerialNumber());
             }
 
             if (mRebootBeforeTest) {
