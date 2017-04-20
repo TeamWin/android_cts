@@ -412,6 +412,8 @@ public class AccessibilityTextActionTest extends
         final AccessibilityNodeInfo text = mUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByText(getString(stringId)).get(0);
         CharSequence accessibilityTextWithSpan = text.getText();
+        // The span should work even with the node recycled
+        text.recycle();
         assertTrue(accessibilityTextWithSpan instanceof Spanned);
 
         T spans[] = ((Spanned) accessibilityTextWithSpan)
