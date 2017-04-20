@@ -81,6 +81,13 @@ static bool already_loaded(const std::string& library, const std::string& err) {
   return false;
 }
 
+static bool wrong_arch(const std::string& err) {
+  // https://issuetracker.google.com/37428428
+  // It's okay to not be able to load a library because it's for another
+  // architecture (typically on an x86 device, when we come across an arm library).
+  return err.find("unexpected e_machine: ") != std::string::npos;
+}
+
 static bool check_lib(const std::string& path,
                       const std::string& library_path,
                       const std::unordered_set<std::string>& libraries,
@@ -107,7 +114,7 @@ static bool check_lib(const std::string& path,
   } else { // (handle == nullptr && !shouldBeAccessible(path))
     // Check the error message
     std::string err = dlerror();
-    if (!already_loaded(path, err)) {
+    if (!already_loaded(path, err) && !wrong_arch(err)) {
       errors->push_back("unexpected dlerror: " + err);
       return false;
     }
