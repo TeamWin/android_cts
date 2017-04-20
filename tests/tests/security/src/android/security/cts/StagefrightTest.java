@@ -680,7 +680,7 @@ public class StagefrightTest extends InstrumentationTestCase {
             AssetFileDescriptor fd = resources.openRawResourceFd(rid);
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-            } catch (IllegalArgumentException e) {
+            } catch (RuntimeException e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
