@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +65,7 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
 
     private EditText mCcNumber;
     private Spinner mCcExpiration;
+    private ArrayAdapter<CharSequence> mCcExpirationAdapter;
     private RadioGroup mAddress;
     private RadioButton mHomeAddress;
     private CheckBox mSaveCc;
@@ -87,11 +89,11 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
         mBuyButton = (Button) findViewById(R.id.buy);
         mClearButton = (Button) findViewById(R.id.clear);
 
-        final ArrayAdapter<CharSequence> expirationValuesAdapter = createFromResource(this,
+        mCcExpirationAdapter = createFromResource(this,
                 R.array.cc_expiration_values, android.R.layout.simple_spinner_item);
-        expirationValuesAdapter
+        mCcExpirationAdapter
                 .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mCcExpiration.setAdapter(expirationValuesAdapter);
+        mCcExpiration.setAdapter(mCcExpirationAdapter);
 
         mBuyButton.setOnClickListener((v) -> buy());
         mClearButton.setOnClickListener((v) -> resetFields());
@@ -161,6 +163,13 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
      */
     void onCcExpiration(Visitor<Spinner> v) {
         syncRunOnUiThread(() -> v.visit(mCcExpiration));
+    }
+
+    /**
+     * Visits the {@code ccExpirationDate} adapter in the UiThread.
+     */
+    void onCcExpirationAdapter(Visitor<ArrayAdapter<CharSequence>> v) {
+        syncRunOnUiThread(() -> v.visit(mCcExpirationAdapter));
     }
 
     /**

@@ -41,10 +41,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.content.Context;
 import android.support.test.rule.ActivityTestRule;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
@@ -54,8 +51,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test case for an activity containing non-TextField views.
@@ -79,7 +74,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testAutoFill() throws Exception {
+    public void testAutofill() throws Exception {
         // Set service.
         enableService();
 
@@ -103,11 +98,12 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 assertTextIsSanitized(fillRequest.structure, ID_CC_EXPIRATION);
         assertThat(ccExpirationNode.getClassName()).isEqualTo(Spinner.class.getName());
         assertThat(ccExpirationNode.getAutofillType()).isEqualTo(AUTOFILL_TYPE_LIST);
-        final String[] options = ccExpirationNode.getAutofillOptions();
+        final CharSequence[] options = ccExpirationNode.getAutofillOptions();
         assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNotNull();
         assertWithMessage("Wrong auto-fill options for spinner").that(options).asList()
                 .containsExactly(
-                        getContext().getResources().getStringArray(R.array.cc_expiration_values));
+                        getContext().getResources().getStringArray(R.array.cc_expiration_values))
+                .inOrder();
 
         // Auto-fill it.
         sUiBot.selectDataset("ACME CC");
@@ -117,7 +113,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testAutoFillDynamicAdapter() throws Exception {
+    public void testAutofillDynamicAdapter() throws Exception {
         // Set activity.
         mActivity.onCcExpiration((v) -> v.setAdapter(new ArrayAdapter<String>(getContext(),
                 android.R.layout.simple_spinner_item,
@@ -146,10 +142,8 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 assertTextIsSanitized(fillRequest.structure, ID_CC_EXPIRATION);
         assertThat(ccExpirationNode.getClassName()).isEqualTo(Spinner.class.getName());
         assertThat(ccExpirationNode.getAutofillType()).isEqualTo(AUTOFILL_TYPE_LIST);
-        final String[] options = ccExpirationNode.getAutofillOptions();
-        assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNotNull();
-        assertWithMessage("Wrong auto-fill options for spinner").that(options).asList()
-                .containsExactly("YESTERDAY", "TODAY", "TOMORROW", "NEVER");
+        final CharSequence[] options = ccExpirationNode.getAutofillOptions();
+        assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNull();
 
         // Auto-fill it.
         sUiBot.selectDataset("ACME CC");
@@ -161,26 +155,25 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     // TODO(b/33197203): this should be a pure unit test exercising onProvideAutofillStructure(),
     // but that would require creating a custom ViewStructure.
     @Test
-    public void testAutoFillDynamicAdapterWithNullItems() throws Exception {
-        // Set activity.
-        final MyAdapter adapter = new MyAdapter(getContext(),
-                android.R.layout.simple_spinner_item,
-                Arrays.asList("YESTERDAY", null, "TOMORROW", "NEVER"));
-        mActivity.onCcExpiration((v) -> v.setAdapter(adapter));
-
+    public void testGetAutofillOptionsSorted() throws Exception {
         // Set service.
         enableService();
 
+        // Set activity.
+        mActivity.onCcExpirationAdapter((adapter) -> adapter.sort((a, b) -> {
+            return ((String) a).compareTo((String) b);
+        }));
+
         // Set expectations.
-        final int autoFilledIndex = 2; // NEVER
         sReplier.addResponse(new CannedDataset.Builder()
                 .setPresentation(createPresentation("ACME CC"))
                 .setField(ID_CC_NUMBER, "4815162342")
-                .setField(ID_CC_EXPIRATION, autoFilledIndex)
+                .setField(ID_CC_EXPIRATION, INDEX_CC_EXPIRATION_NEVER)
                 .setField(ID_ADDRESS, 1)
                 .setField(ID_SAVE_CC, true)
                 .build());
-        mActivity.expectAutoFill("4815162342", autoFilledIndex, R.id.work_address, true);
+        mActivity.expectAutoFill("4815162342", INDEX_CC_EXPIRATION_NEVER, R.id.work_address,
+                true);
 
         // Trigger auto-fill.
         mActivity.onCcNumber((v) -> v.requestFocus());
@@ -191,25 +184,20 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
                 assertTextIsSanitized(fillRequest.structure, ID_CC_EXPIRATION);
         assertThat(ccExpirationNode.getClassName()).isEqualTo(Spinner.class.getName());
         assertThat(ccExpirationNode.getAutofillType()).isEqualTo(AUTOFILL_TYPE_LIST);
-        final String[] options = ccExpirationNode.getAutofillOptions();
-        assertWithMessage("ccExpirationNode.getAutoFillOptions()").that(options).isNotNull();
+        final CharSequence[] options = ccExpirationNode.getAutofillOptions();
         assertWithMessage("Wrong auto-fill options for spinner").that(options).asList()
-                .containsExactly("YESTERDAY", "TOMORROW", "NEVER");
+                .containsExactly("never", "today", "tomorrow", "yesterday").inOrder();
 
         // Auto-fill it.
         sUiBot.selectDataset("ACME CC");
 
         // Check the results.
         mActivity.assertAutoFilled();
-
-        // Make sure proper index was set.
-        final AtomicInteger selected = new AtomicInteger();
-        mActivity.onCcExpiration((v) -> selected.set(v.getSelectedItemPosition()));
-        assertThat(selected.get()).isEqualTo(autoFilledIndex);
     }
 
     @Test
     public void testSanitization() throws Exception {
+        // Set service.
         enableService();
 
         // Set expectations.
@@ -253,38 +241,5 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_HOME_ADDRESS), false);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_WORK_ADDRESS), true);
         assertToggleValue(findNodeByResourceId(saveRequest.structure, ID_SAVE_CC), false);
-    }
-
-    /**
-     * Custom adapter used to change values after Spinner was rendered.
-     */
-    static class MyAdapter extends ArrayAdapter<String> {
-
-        private final List<String> mList;
-
-        public MyAdapter(Context context, int resource, List<String> objects) {
-            super(context, resource, objects);
-            mList = objects;
-        }
-
-        void setItem(int position, String value) {
-            mList.set(position, value);
-        }
-
-        @Override
-        public String getItem(int position) {
-            return mList.get(position);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            // Hack: always return non-null item, otherwise Spinner.measure() will crash.
-            for (int i = 0; i < mList.size(); i++) {
-                if (mList.get(i) != null) {
-                    return super.getView(i, convertView, parent);
-                }
-            }
-            return null;
-        }
     }
 }
