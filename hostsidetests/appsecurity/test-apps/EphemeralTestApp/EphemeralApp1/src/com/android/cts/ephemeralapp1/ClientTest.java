@@ -127,7 +127,7 @@ public class ClientTest {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mReceiver = new ActivityBroadcastReceiver(mResultQueue);
         InstrumentationRegistry.getContext()
-                .registerReceiver(mReceiver, filter, true /*visibleToEmphemeral*/);
+                .registerReceiver(mReceiver, filter, Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
     }
 
     @After
