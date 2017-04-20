@@ -1,4 +1,4 @@
-#!/usr/bin/python2.6
+#!/usr/bin/python
 
 # Copyright (C) 2014 The Android Open Source Project
 #
@@ -23,16 +23,16 @@ To install pyserial, see http://pyserial.sourceforge.net/
 
 Example usages:
   Set the voltage of the device 7536 to 4.0V
-  python2.6 monsoon.py --voltage=4.0 --serialno 7536
+  python monsoon.py --voltage=4.0 --serialno 7536
 
   Get 5000hz data from device number 7536, with unlimited number of samples
-  python2.6 monsoon.py --samples -1 --hz 5000 --serialno 7536
+  python monsoon.py --samples -1 --hz 5000 --serialno 7536
 
   Get 200Hz data for 5 seconds (1000 events) from default device
-  python2.6 monsoon.py --samples 100 --hz 200
+  python monsoon.py --samples 100 --hz 200
 
   Get unlimited 200Hz data from device attached at /dev/ttyACM0
-  python2.6 monsoon.py --samples -1 --hz 200 --device /dev/ttyACM0
+  python monsoon.py --samples -1 --hz 200 --device /dev/ttyACM0
 """
 
 import fcntl
