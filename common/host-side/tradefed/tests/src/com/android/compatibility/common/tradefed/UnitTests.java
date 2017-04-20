@@ -37,6 +37,7 @@ import com.android.compatibility.common.tradefed.testtype.SubPlanTest;
 import com.android.compatibility.common.tradefed.util.CollectorUtilTest;
 import com.android.compatibility.common.tradefed.util.OptionHelperTest;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelperTest;
+import com.android.compatibility.common.tradefed.util.UniqueModuleCountUtilTest;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -86,6 +87,7 @@ import org.junit.runners.Suite.SuiteClasses;
     CollectorUtilTest.class,
     OptionHelperTest.class,
     RetryFilterHelperTest.class,
+    UniqueModuleCountUtilTest.class,
 })
 public class UnitTests {
     // empty on purpose
