@@ -169,7 +169,7 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
     @Override
     protected void tearDown() {
         if (mWifiAwareSession != null) {
-            mWifiAwareSession.destroy();
+            mWifiAwareSession.close();
             mWifiAwareSession = null;
         }
         super.tearDown();
@@ -260,7 +260,7 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
         }
 
         // 5. Destroy discovery session
-        discoverySession.destroy();
+        discoverySession.close();
 
         // 6. Request network (as Responder) and wait for network
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(
@@ -387,7 +387,7 @@ public class DataPathOutOfBandTestCase extends BaseTestCase {
         }
 
         // 6. Destroy discovery session
-        discoverySession.destroy();
+        discoverySession.close();
 
         // 7. Sleep for 5 seconds to let Responder time to set up
         mListener.onTestMsgReceived(

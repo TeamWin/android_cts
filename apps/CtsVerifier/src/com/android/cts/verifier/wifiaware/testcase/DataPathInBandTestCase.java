@@ -154,7 +154,7 @@ public class DataPathInBandTestCase extends BaseTestCase {
     @Override
     protected void tearDown() {
         if (mWifiAwareSession != null) {
-            mWifiAwareSession.destroy();
+            mWifiAwareSession.close();
             mWifiAwareSession = null;
         }
         super.tearDown();
@@ -305,7 +305,7 @@ public class DataPathInBandTestCase extends BaseTestCase {
         if (DBG) Log.d(TAG, "executeTestSubscriber: network request granted - AVAILABLE");
 
         // 7. destroy session
-        discoverySession.destroy();
+        discoverySession.close();
 
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_lifecycle_ok));
         return true;
@@ -420,7 +420,7 @@ public class DataPathInBandTestCase extends BaseTestCase {
         if (DBG) Log.d(TAG, "executeTestPublisher: network request granted - AVAILABLE");
 
         // 7. destroy session
-        discoverySession.destroy();
+        discoverySession.close();
 
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_lifecycle_ok));
         return true;
