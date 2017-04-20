@@ -582,14 +582,14 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         }
         final MockWebViewClient webViewClient = new MockWebViewClient();
         mOnUiThread.setWebViewClient(webViewClient);
-        mOnUiThread.loadUrl("chrome://crash");
+        mOnUiThread.loadUrl("chrome://kill");
         new PollingCheck(TEST_TIMEOUT * 5) {
             @Override
             protected boolean check() {
                 return webViewClient.hasRenderProcessGoneCalled();
             }
         }.run();
-        assertTrue(webViewClient.didRenderProcessCrash());
+        assertFalse(webViewClient.didRenderProcessCrash());
     }
 
     private void requireLoadedPage() throws Throwable {
