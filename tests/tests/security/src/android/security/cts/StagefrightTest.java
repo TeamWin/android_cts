@@ -525,7 +525,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
             retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             // ignore
         }
         retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
