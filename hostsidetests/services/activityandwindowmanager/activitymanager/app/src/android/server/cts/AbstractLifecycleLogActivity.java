@@ -40,6 +40,12 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(getTag(), "onResume");
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Log.i(getTag(), "onConfigurationChanged");
@@ -73,6 +79,18 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
             Configuration newConfig) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
         Log.i(getTag(), "onPictureInPictureModeChanged");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(getTag(), "onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(getTag(), "onStop");
     }
 
     @Override

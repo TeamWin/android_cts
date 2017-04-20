@@ -50,6 +50,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     // Will apply the oriention to the value set in the EXTRA_FIXED_ORIENTATION extra.
     private static final String ACTION_SET_REQUESTED_ORIENTATION =
             "android.server.cts.PipActivity.set_requested_orientation";
+    // Intent action that will finish this activity
+    private static final String ACTION_FINISH = "android.server.cts.PipActivity.finish";
 
     // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
     private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
@@ -115,6 +117,9 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         setRequestedOrientation(Integer.parseInt(intent.getStringExtra(
                                 EXTRA_FIXED_ORIENTATION)));
                         break;
+                    case ACTION_FINISH:
+                        finish();
+                        break;
                 }
             }
         }
@@ -177,17 +182,14 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             launchIntent.setComponent(ComponentName.unflattenFromString(launchActivityComponent));
             startActivity(launchIntent);
         }
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-
+        // Register the broadcast receiver
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_ENTER_PIP);
         filter.addAction(ACTION_MOVE_TO_BACK);
         filter.addAction(ACTION_EXPAND_PIP);
         filter.addAction(ACTION_SET_REQUESTED_ORIENTATION);
+        filter.addAction(ACTION_FINISH);
         registerReceiver(mReceiver, filter);
     }
 
@@ -219,12 +221,18 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(mReceiver);
 
         if (getIntent().hasExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP) && !mEnteredPictureInPicture) {
             Log.w("PipActivity", "Unexpected onStop() called before entering picture-in-picture");
             finish();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(mReceiver);
     }
 
     @Override

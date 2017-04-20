@@ -905,10 +905,13 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     }
 
     private static final Pattern sCreatePattern = Pattern.compile("(.+): onCreate");
+    private static final Pattern sResumePattern = Pattern.compile("(.+): onResume");
+    private static final Pattern sPausePattern = Pattern.compile("(.+): onPause");
     private static final Pattern sConfigurationChangedPattern =
             Pattern.compile("(.+): onConfigurationChanged");
     private static final Pattern sMovedToDisplayPattern =
             Pattern.compile("(.+): onMovedToDisplay");
+    private static final Pattern sStopPattern = Pattern.compile("(.+): onStop");
     private static final Pattern sDestroyPattern = Pattern.compile("(.+): onDestroy");
     private static final Pattern sMultiWindowModeChangedPattern =
             Pattern.compile("(.+): onMultiWindowModeChanged");
@@ -999,6 +1002,7 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
 
     class ActivityLifecycleCounts {
         int mCreateCount;
+        int mResumeCount;
         int mConfigurationChangedCount;
         int mLastConfigurationChangedLineIndex;
         int mMovedToDisplayCount;
@@ -1006,6 +1010,9 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         int mLastMultiWindowModeChangedLineIndex;
         int mPictureInPictureModeChangedCount;
         int mLastPictureInPictureModeChangedLineIndex;
+        int mPauseCount;
+        int mStopCount;
+        int mLastStopLineIndex;
         int mDestroyCount;
 
         public ActivityLifecycleCounts(String activityName, String logSeparator)
@@ -1018,6 +1025,12 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 Matcher matcher = sCreatePattern.matcher(line);
                 if (matcher.matches()) {
                     mCreateCount++;
+                    continue;
+                }
+
+                matcher = sResumePattern.matcher(line);
+                if (matcher.matches()) {
+                    mResumeCount++;
                     continue;
                 }
 
@@ -1045,6 +1058,19 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
                 if (matcher.matches()) {
                     mPictureInPictureModeChangedCount++;
                     mLastPictureInPictureModeChangedLineIndex = lineIndex;
+                    continue;
+                }
+
+                matcher = sPausePattern.matcher(line);
+                if (matcher.matches()) {
+                    mPauseCount++;
+                    continue;
+                }
+
+                matcher = sStopPattern.matcher(line);
+                if (matcher.matches()) {
+                    mStopCount++;
+                    mLastStopLineIndex = lineIndex;
                     continue;
                 }
 

@@ -27,8 +27,14 @@
     <application>
         <activity android:name=".TestActivity"
                 android:resizeableActivity="true"
+                android:supportsPictureInPicture="true"
                 android:exported="true"
         />
+        <activity android:name=".TranslucentTestActivity"
+                android:resizeableActivity="true"
+                android:supportsPictureInPicture="true"
+                android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                android:theme="@style/Theme.Transparent" />
         <activity android:name=".VrTestActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
