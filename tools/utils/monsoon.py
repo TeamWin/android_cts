@@ -410,7 +410,9 @@ if __name__ == '__main__':
   flags.DEFINE_float("voltage", None, "Set output voltage (0 for off)")
   flags.DEFINE_float("current", None, "Set max output current")
   flags.DEFINE_string("usbpassthrough", None, "USB control (on, off, auto)")
-  flags.DEFINE_integer("samples", None, "Collect and print this many samples")
+  flags.DEFINE_integer("samples", None,
+                       "Collect and print this many samples. "
+                       "-1 means collect indefinitely.")
   flags.DEFINE_integer("hz", 5000, "Print this many samples/sec")
   flags.DEFINE_string("device", None,
                       "Path to the device in /dev/... (ex:/dev/ttyACM1)")
