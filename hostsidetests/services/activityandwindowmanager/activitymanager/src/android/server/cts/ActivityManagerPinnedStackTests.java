@@ -98,22 +98,25 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     private static final float ABOVE_MAX_ASPECT_RATIO = MAX_ASPECT_RATIO + FLOAT_COMPARE_EPSILON;
 
     public void testEnterPictureInPictureMode() throws Exception {
-        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"),
-                PIP_ACTIVITY, false, false);
+        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true"), PIP_ACTIVITY,
+                false /* moveTopToPinnedStack */, false /* isFocusable */);
     }
 
     public void testMoveTopActivityToPinnedStack() throws Exception {
-        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY), PIP_ACTIVITY, true, false);
+        pinnedStackTester(getAmStartCmd(PIP_ACTIVITY), PIP_ACTIVITY,
+                true /* moveTopToPinnedStack */, false /* isFocusable */);
     }
 
     public void testAlwaysFocusablePipActivity() throws Exception {
         pinnedStackTester(getAmStartCmd(ALWAYS_FOCUSABLE_PIP_ACTIVITY),
-                ALWAYS_FOCUSABLE_PIP_ACTIVITY, true, true);
+                ALWAYS_FOCUSABLE_PIP_ACTIVITY, false /* moveTopToPinnedStack */,
+                true /* isFocusable */);
     }
 
     public void testLaunchIntoPinnedStack() throws Exception {
         pinnedStackTester(getAmStartCmd(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY),
-                ALWAYS_FOCUSABLE_PIP_ACTIVITY, false, true);
+                ALWAYS_FOCUSABLE_PIP_ACTIVITY, false /* moveTopToPinnedStack */,
+                true /* isFocusable */);
     }
 
     public void testNonTappablePipActivity() throws Exception {
@@ -475,6 +478,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         if (!supportsPip()) return;
+
+        // Launch a test activity so that we have multiple fullscreen tasks
+        launchActivity(TEST_ACTIVITY);
 
         // Launch first PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -1055,6 +1061,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         executeShellCommand(INPUT_KEYEVENT_WINDOW);
     }
 
+    /**
+     * TODO: Improve tests check to actually check that apps are not interactive instead of checking
+     *       if the stack is focused.
+     */
     private void pinnedStackTester(String startActivityCmd, String topActivityName,
             boolean moveTopToPinnedStack, boolean isFocusable) throws Exception {
 
@@ -1082,8 +1092,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 // Not checking for resumed state here because PiP overlay can be launched on top
                 // in different task by SystemUI.
             } else {
-                mAmWmState.assertNotFocusedStack(
-                        "Pinned stack can't be the focused stack.", PINNED_STACK_ID);
+                // Don't assert that the stack is not focused as a focusable PiP overlay can be
+                // launched on top as a task overlay by SystemUI.
                 mAmWmState.assertNotFocusedActivity(
                         "Pinned activity can't be the focused activity.", topActivityName);
                 mAmWmState.assertNotResumedActivity(
