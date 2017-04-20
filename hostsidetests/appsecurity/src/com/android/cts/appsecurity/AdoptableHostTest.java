@@ -148,11 +148,13 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         assertEmpty(getDevice().executeShellCommand("sm partition " + diskId + " private"));
         final LocalVolumeInfo vol = getAdoptionVolume();
 
-        // Move storage there and verify that data went along for ride
-        final CollectingOutputReceiver out = new CollectingOutputReceiver();
-        getDevice().executeShellCommand("pm move-primary-storage " + vol.uuid, out, 2,
-                TimeUnit.HOURS, 1);
-        assertSuccess(out.getOutput());
+        {
+            // Move storage there and verify that data went along for ride
+            final CollectingOutputReceiver out = new CollectingOutputReceiver();
+            getDevice().executeShellCommand("pm move-primary-storage " + vol.uuid, out, 2,
+                    TimeUnit.HOURS, 1);
+            assertSuccess(out.getOutput());
+        }
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
@@ -168,8 +170,13 @@ public class AdoptableHostTest extends DeviceTestCase implements IAbiReceiver, I
         runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
-        // And move back to internal
-        assertSuccess(getDevice().executeShellCommand("pm move-primary-storage internal"));
+        {
+            // And move back to internal
+            final CollectingOutputReceiver out = new CollectingOutputReceiver();
+            getDevice().executeShellCommand("pm move-primary-storage internal", out, 2,
+                    TimeUnit.HOURS, 1);
+            assertSuccess(out.getOutput());
+        }
         runDeviceTests(PKG, CLASS, "testPrimaryInternal");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
