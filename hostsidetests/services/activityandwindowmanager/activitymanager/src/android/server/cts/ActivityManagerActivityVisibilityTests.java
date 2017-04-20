@@ -33,61 +33,12 @@ import com.android.tradefed.log.LogUtil.CLog;
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
     private static final String TRANSLUCENT_ACTIVITY = "AlwaysFocusablePipActivity";
-    private static final String VISIBLE_BEHIND_ACTIVITY = "VisibleBehindActivity";
     private static final String PIP_ON_PIP_ACTIVITY = "LaunchPipOnPipActivity";
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String TRANSLUCENT_ACTIVITY_NAME = "TranslucentActivity";
     private static final String DOCKED_ACTIVITY_NAME = "DockedActivity";
     private static final String TURN_SCREEN_ON_ACTIVITY_NAME = "TurnScreenOnActivity";
     private static final String MOVE_TASK_TO_BACK_ACTIVITY_NAME = "MoveTaskToBackActivity";
-
-    public void testVisibleBehindHomeActivity() throws Exception {
-        if (noHomeScreen()) {
-            return;
-        }
-
-        launchActivity(VISIBLE_BEHIND_ACTIVITY);
-        mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY,
-                FULLSCREEN_WORKSPACE_STACK_ID);
-        launchHomeActivity();
-
-        /* TODO: Find a proper way to wait until launcher activity
-         * becomes fully visible. It appears that both VisibleBehindActivity
-         * and home activity are visible at some point before the former
-         * disappears.*/
-        Thread.sleep(3000);
-        mAmWmState.computeState(mDevice, null);
-        mAmWmState.assertContainsStack(
-                "Must contain fullscreen stack.", FULLSCREEN_WORKSPACE_STACK_ID);
-        mAmWmState.assertFrontStack("Home stack must be the front stack.", HOME_STACK_ID);
-        mAmWmState.assertVisibility(
-                VISIBLE_BEHIND_ACTIVITY, hasDeviceFeature("android.software.leanback"));
-    }
-
-    public void testVisibleBehindOtherActivity_NotOverHome() throws Exception {
-        launchActivity(VISIBLE_BEHIND_ACTIVITY);
-        launchActivity(TRANSLUCENT_ACTIVITY);
-
-        mAmWmState.computeState(mDevice,
-                new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertVisibility(VISIBLE_BEHIND_ACTIVITY, true);
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
-    }
-
-    public void testVisibleBehindOtherActivity_OverHome() throws Exception {
-        if (noHomeScreen()) {
-            return;
-        }
-
-        executeShellCommand(getAmStartCmdOverHome(VISIBLE_BEHIND_ACTIVITY));
-        mAmWmState.waitForValidState(mDevice, VISIBLE_BEHIND_ACTIVITY);
-        executeShellCommand(getAmStartCmdOverHome(TRANSLUCENT_ACTIVITY));
-
-        mAmWmState.computeState(mDevice,
-                new String[] {VISIBLE_BEHIND_ACTIVITY, TRANSLUCENT_ACTIVITY});
-        mAmWmState.assertVisibility(VISIBLE_BEHIND_ACTIVITY, true);
-        mAmWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
-    }
 
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
