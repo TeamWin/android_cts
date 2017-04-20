@@ -627,7 +627,7 @@ public class StagefrightTest extends InstrumentationTestCase {
             try {
                 retriever.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
                 fd.close();
-            } catch (IllegalArgumentException e) {
+            } catch (RuntimeException e) {
                 // ignore
             } finally {
                 closeQuietly(fd);
