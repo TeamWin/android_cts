@@ -653,7 +653,7 @@ public class AccessibilityWindowQueryTest
                 numPictureInPictureWindows++;
             }
         }
-        assertEquals(1, numPictureInPictureWindows);
+        assertTrue(numPictureInPictureWindows >= 1);
     }
 
     private boolean isDividerWindowPresent(UiAutomation uiAutomation) {
