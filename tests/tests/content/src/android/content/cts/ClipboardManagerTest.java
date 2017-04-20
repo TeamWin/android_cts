@@ -145,17 +145,17 @@ public class ClipboardManagerTest extends InstrumentationTestCase {
         Uri contentUri8 = Uri.parse("content://ctstest/testtable2/3");
 
         ClipData clipData = ClipData.newPlainText("TextLabel", "Text");
-        clipData.addItem(new Item("More Text"), contentResolver);
-        clipData.addItem(new Item(intent), contentResolver);
-        clipData.addItem(new Item(uri), contentResolver);
-        clipData.addItem(new Item(contentUri1), contentResolver);
-        clipData.addItem(new Item(contentUri2), contentResolver);
-        clipData.addItem(new Item(contentUri3), contentResolver);
-        clipData.addItem(new Item(contentUri4), contentResolver);
-        clipData.addItem(new Item(contentUri5), contentResolver);
-        clipData.addItem(new Item(contentUri6), contentResolver);
-        clipData.addItem(new Item(contentUri7), contentResolver);
-        clipData.addItem(new Item(contentUri8), contentResolver);
+        clipData.addItem(contentResolver, new Item("More Text"));
+        clipData.addItem(contentResolver, new Item(intent));
+        clipData.addItem(contentResolver, new Item(uri));
+        clipData.addItem(contentResolver, new Item(contentUri1));
+        clipData.addItem(contentResolver, new Item(contentUri2));
+        clipData.addItem(contentResolver, new Item(contentUri3));
+        clipData.addItem(contentResolver, new Item(contentUri4));
+        clipData.addItem(contentResolver, new Item(contentUri5));
+        clipData.addItem(contentResolver, new Item(contentUri6));
+        clipData.addItem(contentResolver, new Item(contentUri7));
+        clipData.addItem(contentResolver, new Item(contentUri8));
 
         assertClipData(clipData, "TextLabel",
                 new String[] {
