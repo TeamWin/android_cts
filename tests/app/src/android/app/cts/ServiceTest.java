@@ -574,12 +574,14 @@ public class ServiceTest extends ActivityTestsBase {
         boolean success = false;
         try {
             // Start service as foreground - it should show notification #1
+            Log.d(TAG, "Expecting first start state...");
             mExpectedServiceState = STATE_START_1;
             startForegroundService(LocalForegroundService.COMMAND_START_FOREGROUND);
             waitForResultOrThrow(DELAY, "service to start first time");
             assertNotification(1, LocalForegroundService.getNotificationTitle(1));
 
             // Stop foreground removing notification
+            Log.d(TAG, "Expecting second start state...");
             mExpectedServiceState = STATE_START_2;
             if (usingFlags) {
                 startForegroundService(LocalForegroundService
@@ -730,7 +732,8 @@ public class ServiceTest extends ActivityTestsBase {
         boolean success = false;
 
         PendingIntent pi = PendingIntent.getForegroundService(mContext, 1,
-                foregroundServiceIntent(LocalForegroundService.COMMAND_START_FOREGROUND), 0);
+                foregroundServiceIntent(LocalForegroundService.COMMAND_START_FOREGROUND),
+                PendingIntent.FLAG_CANCEL_CURRENT);
         TestSendCallback callback = new TestSendCallback();
 
         try {
