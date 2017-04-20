@@ -89,6 +89,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <provider android:name="android.provider.cts.MockFontProvider"
+                  android:authorities="android.provider.fonts.cts.font"
+                  android:exported="false"
+                  android:multiprocess="true" />
 
     </application>
 
