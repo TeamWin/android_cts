@@ -33,6 +33,15 @@ Example usages:
 
   Get unlimited 200Hz data from device attached at /dev/ttyACM0
   python monsoon.py --samples -1 --hz 200 --device /dev/ttyACM0
+
+Output columns for collection with --samples, separated by space:
+
+  TIMESTAMP OUTPUT OUTPUT_AVG USB USB_AVG
+   |                |          |   |
+   |                |          |   ` (if --includeusb and --avg)
+   |                |          ` (if --includeusb)
+   |                ` (if --avg)
+   ` (if --timestamp)
 """
 
 import fcntl
