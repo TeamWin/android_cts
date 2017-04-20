@@ -165,10 +165,14 @@ public class ServiceControlUtils {
      * @param instrumentation A valid instrumentation
      */
     public static void turnAccessibilityOff(Instrumentation instrumentation) {
-        SpeakingAccessibilityService.sConnectedInstance.disableSelf();
-        SpeakingAccessibilityService.sConnectedInstance = null;
-        VibratingAccessibilityService.sConnectedInstance.disableSelf();
-        VibratingAccessibilityService.sConnectedInstance = null;
+        if (SpeakingAccessibilityService.sConnectedInstance != null) {
+            SpeakingAccessibilityService.sConnectedInstance.disableSelf();
+            SpeakingAccessibilityService.sConnectedInstance = null;
+        }
+        if (VibratingAccessibilityService.sConnectedInstance != null) {
+            VibratingAccessibilityService.sConnectedInstance.disableSelf();
+            VibratingAccessibilityService.sConnectedInstance = null;
+        }
         if (SpeakingAndVibratingAccessibilityService.sConnectedInstance != null) {
             SpeakingAndVibratingAccessibilityService.sConnectedInstance.disableSelf();
             SpeakingAndVibratingAccessibilityService.sConnectedInstance = null;
