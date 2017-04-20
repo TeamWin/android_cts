@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 public class CookieTest {
@@ -36,18 +37,23 @@ public class CookieTest {
         assertTrue(pm.isInstantApp());
 
         // The max cookie size is greater than zero
-        assertTrue(pm.getInstantAppCookieMaxSize() > 0);
+        assertTrue(pm.getInstantAppCookieMaxBytes() > 0);
 
         // Initially there is no cookie
         byte[] cookie = pm.getInstantAppCookie();
         assertTrue(cookie != null && cookie.length == 0);
 
         // Setting a cookie below max size should work
-        assertTrue(pm.setInstantAppCookie("1".getBytes()));
+        pm.updateInstantAppCookie("1".getBytes());
 
         // Setting a cookie above max size should not work
-        assertFalse(pm.setInstantAppCookie(
-                new byte[pm.getInstantAppCookieMaxSize() + 1]));
+        try {
+            pm.updateInstantAppCookie(
+                    new byte[pm.getInstantAppCookieMaxBytes() + 1]);
+            fail("Shouldn't be able to set a cookie larger than max size");
+        } catch (IllegalArgumentException e) {
+            /* expected */
+        }
 
         // Ensure cookie not modified
         assertEquals("1", new String(pm.getInstantAppCookie()));
@@ -58,7 +64,7 @@ public class CookieTest {
         PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
 
         // Set a cookie to later check when reinstalled as instant app
-        assertTrue(pm.setInstantAppCookie("2".getBytes()));
+        pm.updateInstantAppCookie("2".getBytes());
     }
 
     @Test
@@ -77,7 +83,7 @@ public class CookieTest {
         assertTrue(pm.isInstantApp());
 
         // Set a cookie to later check when upgrade to a normal app
-        assertTrue(pm.setInstantAppCookie("3".getBytes()));
+        pm.updateInstantAppCookie("3".getBytes());
     }
 
     @Test
@@ -96,7 +102,7 @@ public class CookieTest {
         PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
 
         // Set a cookie to later check when reinstalled as normal app
-        assertTrue(pm.setInstantAppCookie("4".getBytes()));
+        pm.updateInstantAppCookie("4".getBytes());
     }
 
     @Test
