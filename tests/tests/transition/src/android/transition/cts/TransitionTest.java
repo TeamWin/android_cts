@@ -410,9 +410,10 @@ public class TransitionTest extends BaseTransitionTest {
         assertEquals(500, mTransition.getDuration());
         startTransition(R.layout.scene3);
         long startTime = SystemClock.uptimeMillis();
-        waitForEnd(600);
+        waitForEnd(800);
         long endTime = SystemClock.uptimeMillis();
-        assertEquals(500, endTime - startTime, 100);
+        long duration = endTime - startTime;
+        assertTrue(duration >= 500 && duration < 900);
     }
 
     @Test
