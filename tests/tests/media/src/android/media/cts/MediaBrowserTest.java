@@ -104,6 +104,66 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }.run();
     }
 
+    public void testReconnection() {
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+
+        // Reconnect before the first connection was established.
+        mMediaBrowser.connect();
+        mMediaBrowser.disconnect();
+        resetCallbacks();
+        connectMediaBrowserService();
+
+        // Test subscribe.
+        resetCallbacks();
+        mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mSubscriptionCallback.mChildrenLoadedCount > 0;
+            }
+        }.run();
+
+        // Test getItem.
+        resetCallbacks();
+        mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mItemCallback.mLastMediaItem != null;
+            }
+        }.run();
+
+        // Reconnect after connection was established.
+        mMediaBrowser.disconnect();
+        resetCallbacks();
+        connectMediaBrowserService();
+
+        // Test getItem.
+        resetCallbacks();
+        mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mItemCallback.mLastMediaItem != null;
+            }
+        }.run();
+    }
+
+    public void testConnectionCallbackNotCalledAfterDisconnect() {
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+        mMediaBrowser.connect();
+        mMediaBrowser.disconnect();
+        resetCallbacks();
+        try {
+            Thread.sleep(SLEEP_MS);
+        } catch (InterruptedException e) {
+            fail("Unexpected InterruptedException occurred.");
+        }
+        assertEquals(0, mConnectionCallback.mConnectedCount);
+        assertEquals(0, mConnectionCallback.mConnectionFailedCount);
+        assertEquals(0, mConnectionCallback.mConnectionSuspendedCount);
+    }
+
     public void testGetServiceComponentBeforeConnection() {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
