@@ -139,7 +139,7 @@ class CtsBuilder(object):
 
     plan = tools.AnnotationTestPlan(packages, descriptions,"security")
     plan.MakeAnnotationPlan()
-    self.__WritePlan(plan, 'CTS-sts')
+    self.__WritePlan(plan, 'security-bulletin')
 
     # hard-coded white list for PDK plan
     plan.Exclude('.*')
