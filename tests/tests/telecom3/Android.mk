@@ -29,8 +29,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner
 src_dirs := src \
     ../telecom/src/android/telecom/cts/SelfManagedConnection.java \
     ../telecom/src/android/telecom/cts/CtsSelfManagedConnectionService.java \
-    ../telecom/src/android/telecom/cts/TestUtils.java \
-    ../telecom/src/android/telecom/cts/MockDialerActivity.java
+    ../telecom/src/android/telecom/cts/TestUtils.java
 
 res_dirs := ../telecom/res
 
