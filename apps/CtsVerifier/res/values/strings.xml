@@ -3902,11 +3902,11 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="telecom_outgoing_call_step_2">
         Click the button below to dial an outgoing call. This will populate the default dialer
         app with a dummy phone number. Initiate the phone call from the dialer app, then return
-        to this screen.
+        to this screen while the call is still in progress.
     </string>
     <string name="telecom_outgoing_call_dial_button">Dial</string>
     <string name="telecom_outgoing_call_step_3">
-        Click the button below to confirm that the outgoing call was correctly made.
+        Click the button below to confirm that the ongoing outgoing call was correctly made.
     </string>
     <string name="telecom_outgoing_call_confirm_button">Confirm</string>
 
@@ -3927,12 +3927,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="telecom_incoming_call_step_2">
         Click the button below to initiate an incoming call. The phone should start ringing.
         Answer the call, confirm that you can hear an audio clip with Eisenhower\'s voice, then
-        return to this screen.
+        return to this screen while the call is still ongoing.
     </string>
     <string name="telecom_incoming_call_dial_button">Dial</string>
     <string name="telecom_incoming_call_step_3">
-        Click the button below to confirm that the incoming call was properly answered and that
-        audio was audible.
+        Click the button below to confirm that the ongoing incoming call was properly answered and
+        that audio is audible.
     </string>
     <string name="telecom_incoming_call_confirm_button">Confirm</string>
     <string name="telecom_incoming_self_mgd_test"> Incoming Self-Managed Connection Test</string>
