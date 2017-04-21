@@ -65,6 +65,8 @@ final class UiBot {
     private static final String RESOURCE_STRING_AUTOFILL = "autofill";
     private static final String RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE =
             "autofill_picker_accessibility_title";
+    private static final String RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE =
+            "autofill_save_accessibility_title";
 
     private static final String TAG = "AutoFillCtsUiBot";
 
@@ -284,6 +286,10 @@ final class UiBot {
             final UiObject2 saveSubTitle = snackbar.findObject(By.text(description));
             assertWithMessage("save subtitle(%s)", description).that(saveSubTitle).isNotNull();
         }
+
+        final String expectedAccessibilityTitle =
+                getString(RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE);
+        assertAccessibilityTitle(snackbar, expectedAccessibilityTitle);
 
         return snackbar;
     }
