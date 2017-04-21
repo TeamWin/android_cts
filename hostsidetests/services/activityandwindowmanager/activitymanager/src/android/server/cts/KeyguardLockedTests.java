@@ -22,6 +22,7 @@ package android.server.cts;
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
 
+    private static final String SHOW_WHEN_LOCKED_ACTIVITY = "ShowWhenLockedActivity";
     private static final String PIP_ACTIVITY = "PipActivity";
     private static final String PIP_ACTIVITY_ACTION_ENTER_PIP =
             "android.server.cts.PipActivity.enter_pip";
@@ -77,15 +78,15 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
-        launchActivity("ShowWhenLockedActivity");
-        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
-        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] { SHOW_WHEN_LOCKED_ACTIVITY });
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         launchActivity("DismissKeyguardActivity");
         enterAndConfirmLockCredential();
         mAmWmState.waitForKeyguardGone(mDevice);
         assertKeyguardGone();
         mAmWmState.assertVisibility("DismissKeyguardActivity", true);
-        mAmWmState.assertVisibility("ShowWhenLockedActivity", false);
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
     }
 
     public void testDismissKeyguard_fromShowWhenLocked_notAllowed() throws Exception {
@@ -95,15 +96,15 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         gotoKeyguard();
         mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
         assertShowingAndNotOccluded();
-        launchActivity("ShowWhenLockedActivity");
-        mAmWmState.computeState(mDevice, new String[] { "ShowWhenLockedActivity" });
-        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] { SHOW_WHEN_LOCKED_ACTIVITY });
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
         enterAndConfirmLockCredential();
 
         // Make sure we stay on Keyguard.
         assertShowingAndOccluded();
-        mAmWmState.assertVisibility("ShowWhenLockedActivity", true);
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
     }
 
     public void testDismissKeyguardActivity_method() throws Exception {
@@ -163,5 +164,44 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mAmWmState.waitForKeyguardGone(mDevice);
         assertKeyguardGone();
         mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+    }
+
+    public void testShowWhenLockedActivityAndPipActivity() throws Exception {
+        if (!isHandheld() || !supportsPip()) {
+            return;
+        }
+
+        launchActivity(PIP_ACTIVITY);
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.computeState(mDevice, new String[] { PIP_ACTIVITY });
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mAmWmState.computeState(mDevice, new String[] { SHOW_WHEN_LOCKED_ACTIVITY });
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndOccluded(mDevice);
+        assertShowingAndOccluded();
+        mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        mAmWmState.assertVisibility(PIP_ACTIVITY, false);
+    }
+
+    public void testShowWhenLockedPipActivity() throws Exception {
+        if (!isHandheld() || !supportsPip()) {
+            return;
+        }
+
+        launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
+        executeShellCommand("am broadcast -a " + PIP_ACTIVITY_ACTION_ENTER_PIP);
+        mAmWmState.computeState(mDevice, new String[] { PIP_ACTIVITY });
+        mAmWmState.assertContainsStack("Must contain pinned stack.", PINNED_STACK_ID);
+        mAmWmState.assertVisibility(PIP_ACTIVITY, true);
+
+        gotoKeyguard();
+        mAmWmState.waitForKeyguardShowingAndNotOccluded(mDevice);
+        assertShowingAndNotOccluded();
+        mAmWmState.assertVisibility(PIP_ACTIVITY, false);
     }
 }
