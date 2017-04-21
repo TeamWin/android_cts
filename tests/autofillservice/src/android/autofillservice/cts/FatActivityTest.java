@@ -64,7 +64,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         sUiBot.assertNoDatasets();
 
-        // TODO(b/33197203, b/33802548): should only have 5 children, but there is an extra
+        // TODO: should only have 5 children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but
         // ideally we should change the .xml to exclude it.
         assertNumberOfChildren(fillRequest.structure, 6);

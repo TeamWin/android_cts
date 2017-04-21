@@ -45,11 +45,6 @@ import org.junit.Test;
 
 /**
  * Test case for an activity containing virtual children.
- *
- * TODO(b/33197203, b/33802548): test other scenarios like:
- *
- * - save
- * - move around different views
  */
 public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 

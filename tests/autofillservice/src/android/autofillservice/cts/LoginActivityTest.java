@@ -81,23 +81,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * This is the test case covering most scenarios - other test cases will cover characteristics
  * specific to that test's activity (for example, custom views).
- *
- * TODO(b/33197203, b/33802548): test other scenarios like:
- *
- * Fill
- *  - partitioned datasets (i.e., multiple fields)
- *
- *  Save
- *  - test cases where only non-savable-ids are changed
- *  - test case where 'no thanks' or 'x' is tapped (similar to former testSaveSnackBarGoesAway())
- *
- *  Other assertions
- *  - illegal state thrown on callback calls
- *  - system server state after calls (for example, no pending callback)
  */
 public class LoginActivityTest extends AutoFillServiceTestCase {
 
-    // TODO(b/33197203 , b/35707731): remove when fixed
+    // TODO(b/37424539): remove when fixed
     private static final boolean SUPPORTS_PARTITIONED_AUTH = false;
 
     @Rule
@@ -1274,7 +1261,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // And activity.
         mActivity.onUsername((v) -> {
             // v.setAutofillMode(AUTOFILL_MODE_MANUAL);
-            // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
+            // TODO: setting an empty text, otherwise longPress() does not
             // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
             v.setText("");
         });
@@ -1315,8 +1302,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
         // And activity.
         mActivity.onUsername((v) -> {
             //v.setAutofillMode(AUTOFILL_MODE_MANUAL);
-            // TODO(b/33197203, b/33802548): setting an empty text, otherwise longPress() does not
-            // display the AUTOFILL context menu. Need to fix it, but it's a test case issue...
+            // TODO: setting an empty text, otherwise longPress() does not display the AUTOFILL
+            // context menu. Need to fix it, but it's a test case issue...
             v.setText("");
         });
 
