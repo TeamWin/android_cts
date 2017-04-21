@@ -293,9 +293,6 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
                 });
     }
 
-    // TODO(b/33197203): add more autofillAndSaveOnChangeTest() for scenarios where the service
-    // did not autofill all fields.
-
     /**
      * Tests the scenario where the service autofilled the activity but the user changed fields
      * that triggered Save.
