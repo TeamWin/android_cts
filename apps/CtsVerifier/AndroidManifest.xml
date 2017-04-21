@@ -117,6 +117,18 @@
                        android:value="android.software.device_admin" />
         </activity>
 
+        <activity android:name=".companion.CompanionDeviceTestActivity"
+                  android:label="@string/companion_test"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_features" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.companion_device_setup" />
+        </activity>
+
         <!-- A generic activity for intent based tests -->
         <activity android:name=".IntentDrivenTestActivity"/>
 
