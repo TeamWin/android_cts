@@ -37,6 +37,9 @@ import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
 import android.widget.CursorAdapter;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
@@ -64,6 +67,7 @@ public class SearchView_CursorTest {
 
     private CursorAdapter mSuggestionsAdapter;
 
+    // This should be protected to spy an object of this class.
     protected class MyQueryTextListener implements SearchView.OnQueryTextListener {
         @Override
         public boolean onQueryTextSubmit(String s) {
@@ -75,7 +79,9 @@ public class SearchView_CursorTest {
             if (mSuggestionsAdapter == null) {
                 return false;
             }
-
+            if (!enoughToFilter()) {
+                return false;
+            }
             final MatrixCursor c = new MatrixCursor(
                     new String[] { BaseColumns._ID, TEXT_COLUMN_NAME} );
             for (int i = 0; i < mTextContent.length; i++) {
@@ -86,8 +92,32 @@ public class SearchView_CursorTest {
             mSuggestionsAdapter.swapCursor(c);
             return false;
         }
+
+        private boolean enoughToFilter() {
+            final AutoCompleteTextView searchSrcText = findAutoCompleteTextView(mSearchView);
+            return searchSrcText != null && searchSrcText.enoughToFilter();
+        }
+
+        private AutoCompleteTextView findAutoCompleteTextView(final ViewGroup viewGroup) {
+            final int count = viewGroup.getChildCount();
+            for (int index = 0; index < count; index++) {
+                final View view = viewGroup.getChildAt(index);
+                if (view instanceof AutoCompleteTextView) {
+                    return (AutoCompleteTextView) view;
+                }
+                if (view instanceof ViewGroup) {
+                    final AutoCompleteTextView findView =
+                            findAutoCompleteTextView((ViewGroup) view);
+                    if (findView != null) {
+                        return findView;
+                    }
+                }
+            }
+            return null;
+        }
     }
 
+    // This should be protected to spy an object of this class.
     protected class MySuggestionListener implements SearchView.OnSuggestionListener {
         @Override
         public boolean onSuggestionSelect(int position) {
@@ -103,7 +133,7 @@ public class SearchView_CursorTest {
                     mSearchView.setQuery(cursor.getString(1), false);
                 }
             }
-            return false;
+            return true;
         }
     }
 
