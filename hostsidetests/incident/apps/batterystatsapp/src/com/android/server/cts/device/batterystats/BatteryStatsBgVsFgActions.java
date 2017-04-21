@@ -19,6 +19,11 @@ package com.android.server.cts.device.batterystats;
 import android.accounts.Account;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -43,6 +48,7 @@ public class BatteryStatsBgVsFgActions {
     private static final String TAG = BatteryStatsBgVsFgActions.class.getSimpleName();
 
     public static final String KEY_ACTION = "action";
+    public static final String ACTION_BLE_SCAN = "action.ble_scan";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
@@ -58,6 +64,9 @@ public class BatteryStatsBgVsFgActions {
         }
         sleep(100);
         switch(actionCode) {
+            case ACTION_BLE_SCAN:
+                doBleScan(ctx);
+                break;
             case ACTION_JOB_SCHEDULE:
                 doScheduleJob(ctx);
                 break;
@@ -77,6 +86,48 @@ public class BatteryStatsBgVsFgActions {
                 Log.e(TAG, "Intent had invalid action");
         }
         sleep(100);
+    }
+
+    private static void doBleScan(Context ctx) {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            Log.e(TAG, "Device does not support Bluetooth");
+            return;
+        }
+        if (!bluetoothAdapter.isEnabled()) {
+            Log.e(TAG, "Bluetooth is not enabled");
+            return;
+        }
+
+        BluetoothLeScanner bleScanner = bluetoothAdapter.getBluetoothLeScanner();
+        if (bleScanner == null) {
+            Log.e(TAG, "Cannot access BLE scanner");
+            return;
+        }
+
+        ScanCallback scanCallback = new ScanCallback() {
+            @Override
+            public void onScanResult(int callbackType, ScanResult result) {
+                Log.v(TAG, "called onScanResult");
+            }
+
+            @Override
+            public void onScanFailed(int errorCode) {
+                Log.v(TAG, "called onScanFailed");
+            }
+
+            @Override
+            public void onBatchScanResults(List<ScanResult> results) {
+                Log.v(TAG, "called onBatchScanResults");
+
+            }
+        };
+        ScanSettings scanSettings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
+
+        bleScanner.startScan(null, scanSettings, scanCallback);
+        sleep(2_000);
+        bleScanner.stopScan(scanCallback);
     }
 
     private static void doScheduleJob(Context ctx) {
