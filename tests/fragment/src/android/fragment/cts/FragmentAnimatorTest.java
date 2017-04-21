@@ -466,6 +466,38 @@ public class FragmentAnimatorTest {
         });
     }
 
+    /**
+     * When a fragment container is null, you shouldn't see an NPE even with an animation.
+     */
+    @Test
+    public void animationOnNullContainer() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        // One fragment with a view
+        final AnimatorFragment fragment = new AnimatorFragment();
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .add(fragment, "1")
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .hide(fragment)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        fm.beginTransaction()
+                .setCustomAnimations(ENTER, EXIT, POP_ENTER, POP_EXIT)
+                .show(fragment)
+                .commit();
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+    }
+
     private void assertEnterPopExit(AnimatorFragment fragment) throws Throwable {
         assertFragmentAnimation(fragment, 1, true, ENTER);
 
