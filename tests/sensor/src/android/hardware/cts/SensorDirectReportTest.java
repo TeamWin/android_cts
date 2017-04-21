@@ -113,7 +113,7 @@ public class SensorDirectReportTest extends SensorTestCase {
         }
 
         if (mHardwareBuffer != null) {
-            mHardwareBuffer.destroy();
+            mHardwareBuffer.close();
             mHardwareBuffer = null;
         }
     }
