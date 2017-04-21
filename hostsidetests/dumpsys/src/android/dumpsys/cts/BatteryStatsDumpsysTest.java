@@ -169,6 +169,9 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
                     case "bsc":
                         checkBluetoothState(parts);
                         break;
+                    case "blem":
+                        checkBluetoothMisc(parts);
+                        break;
                     case "pws":
                         checkPowerUseSummary(parts);
                         break;
@@ -237,11 +240,13 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkSensor(String[] parts) {
-        assertEquals(8, parts.length);
+        assertEquals(10, parts.length);
         assertInteger(parts[4]); // sensorNumber
         assertInteger(parts[5]); // totalTime
         assertInteger(parts[6]); // count
         assertInteger(parts[7]); // backgroundCount
+        assertInteger(parts[8]); // actualTime
+        assertInteger(parts[9]); // backgroundActualTime
     }
 
     private void checkVibrator(String[] parts) {
@@ -295,17 +300,21 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkSync(String[] parts) {
-        assertEquals(7, parts.length);
+        assertEquals(9, parts.length);
         assertNotNull(parts[4]); // sync
         assertInteger(parts[5]); // totalTime
         assertInteger(parts[6]); // count
+        assertInteger(parts[7]); // bgTime
+        assertInteger(parts[8]); // bgCount
     }
 
     private void checkJob(String[] parts) {
-        assertEquals(7, parts.length);
+        assertEquals(9, parts.length);
         assertNotNull(parts[4]); // job
         assertInteger(parts[5]); // totalTime
         assertInteger(parts[6]); // count
+        assertInteger(parts[7]); // bgTime
+        assertInteger(parts[8]); // bgCount
     }
 
     private void checkKernelWakelock(String[] parts) {
@@ -423,10 +432,15 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void checkWifi(String[] parts) {
-        assertEquals(7, parts.length);
+        assertEquals(14, parts.length);
         assertInteger(parts[4]); // fullWifiLockOnTime (usec)
         assertInteger(parts[5]); // wifiScanTime (usec)
         assertInteger(parts[6]); // uidWifiRunningTime (usec)
+        assertInteger(parts[7]); // wifiScanCount
+        // Fields for parts[8 and 9 and 10] are deprecated.
+        assertInteger(parts[11]); // wifiScanCountBg
+        assertInteger(parts[12]); // wifiScanActualTimeMs (msec)
+        assertInteger(parts[13]); // wifiScanActualTimeMsBg (msec)
     }
 
     private void checkMisc(String[] parts) {
@@ -595,6 +609,15 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertTrue(parts.length >= 6);
         assertInteger(parts[4]); // user time
         assertInteger(parts[5]); // system time
+    }
+
+    private void checkBluetoothMisc(String[] parts) {
+        assertEquals(9, parts.length);
+        assertInteger(parts[4]); // totalTime
+        assertInteger(parts[5]); // count
+        assertInteger(parts[6]); // countBg
+        assertInteger(parts[7]); // actualTime
+        assertInteger(parts[8]); // actualTimeBg
     }
 
     /**
