@@ -45,6 +45,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
     // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
     public static final String KEY_ACTION = "action";
+    public static final String ACTION_BLE_SCAN = "action.ble_scan";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
@@ -120,6 +121,25 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsProcessStateTests",
                 "testForegroundService");
         assertValueRange("st", "", 5, (long) (2000 * 0.8), 4000);
+
+        batteryOffScreenOn();
+    }
+
+    public void testBleScans() throws Exception {
+        batteryOnScreenOff();
+        installPackage(DEVICE_SIDE_TEST_APK, true);
+
+        // Foreground test.
+        executeForeground(ACTION_BLE_SCAN);
+        Thread.sleep(2_500);
+        assertValueRange("blem", "", 5, 1, 1); // ble_scan_count
+        assertValueRange("blem", "", 6, 0, 0); // ble_scan_count_bg
+
+        // Background test.
+        executeBackground(ACTION_BLE_SCAN);
+        Thread.sleep(2_500);
+        assertValueRange("blem", "", 5, 2, 2); // ble_scan_count
+        assertValueRange("blem", "", 6, 1, 1); // ble_scan_count_bg
 
         batteryOffScreenOn();
     }
