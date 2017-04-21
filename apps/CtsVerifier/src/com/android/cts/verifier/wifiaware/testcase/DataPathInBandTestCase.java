@@ -171,8 +171,7 @@ public class DataPathInBandTestCase extends BaseTestCase {
                 SERVICE_NAME).setServiceSpecificInfo(SUB_SSI).setMatchFilter(
                 matchFilter).setSubscribeType(
                 mIsUnsolicited ? SubscribeConfig.SUBSCRIBE_TYPE_PASSIVE
-                        : SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE).setMatchStyle(
-                SubscribeConfig.MATCH_STYLE_FIRST_ONLY).setTerminateNotificationEnabled(
+                        : SubscribeConfig.SUBSCRIBE_TYPE_ACTIVE).setTerminateNotificationEnabled(
                 true).build();
         if (DBG) Log.d(TAG, "executeTestSubscriber: subscribeConfig=" + subscribeConfig);
         mWifiAwareSession.subscribe(subscribeConfig, discoveryCb, mHandler);
