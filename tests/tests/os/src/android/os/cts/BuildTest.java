@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
+import static android.os.Build.VERSION.CODENAME;
 import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 
 public class BuildTest extends TestCase {
@@ -239,6 +240,9 @@ public class BuildTest extends TestCase {
                     // It should be okay to change the value of this constant in future, but it
                     // should at least be a conscious decision.
                     assertEquals(10000, fieldValue);
+                } else if (fieldName.equals(CODENAME) && !CODENAME.equals("REL")) {
+                    // This is the current development version.
+                    assertEquals(CUR_DEVELOPMENT, fieldValue);
                 } else {
                     assertTrue("Expected " + fieldName + " value to be < " + CUR_DEVELOPMENT
                             + ", got " + fieldValue, fieldValue < CUR_DEVELOPMENT);
