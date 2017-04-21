@@ -599,6 +599,41 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertValue(saveRequest.structure, ID_L4C1, "L4C1");
     }
 
+    @Test
+    public void testIgnoredFieldsDontTriggerAutofill() throws Exception {
+        // Set service.
+        enableService();
+
+        // Prepare 1st partition.
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_L1C1, "l1c1", createPresentation("l1c1"))
+                        .setField(ID_L1C2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .setIgnoreFields(ID_L2C1, ID_L2C2)
+                .build();
+        sReplier.addResponse(response1);
+
+        // Trigger auto-fill on 1st partition.
+        mActivity.focusCell(1, 1);
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        final ViewNode p1l1c1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
+        final ViewNode p1l1c2 = assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
+        assertWithMessage("Focus on p1l1c1").that(p1l1c1.isFocused()).isTrue();
+        assertWithMessage("Focus on p1l1c2").that(p1l1c2.isFocused()).isFalse();
+
+        // Make sure UI is shown on 1st partition
+        sUiBot.assertDatasets("l1c1");
+        mActivity.focusCell(1, 2);
+        sUiBot.assertDatasets("l1c2");
+
+        // Make sure UI is not shown on ignored partition
+        mActivity.focusCell(2, 1);
+        sUiBot.assertNoDatasets();
+        mActivity.focusCell(2, 2);
+        sUiBot.assertNoDatasets();
+    }
+
     // TODO(b/33197203, b/35707731): test force autofill after autofilled
     // TODO(b/33197203, b/35707731): test save with different subtitles and custom no button
 }
