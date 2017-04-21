@@ -870,6 +870,45 @@ public class FragmentLifecycleTest {
         });
     }
 
+    /**
+     * When the FragmentManager state changes, the pending transactions should execute.
+     */
+    @Test
+    public void runTransactionsOnChange() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            FragmentController fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, null);
+            FragmentManager fm = fc.getFragmentManager();
+
+            RemoveHelloInOnResume fragment1 = new RemoveHelloInOnResume();
+            StrictFragment fragment2 = new StrictFragment();
+            fm.beginTransaction()
+                    .add(fragment1, "1")
+                    .setAllowOptimization(false)
+                    .commit();
+            fm.beginTransaction()
+                    .add(fragment2, "Hello")
+                    .setAllowOptimization(false)
+                    .commit();
+            fm.executePendingTransactions();
+
+            assertEquals(2, fm.getFragments().size());
+            assertTrue(fm.getFragments().contains(fragment1));
+            assertTrue(fm.getFragments().contains(fragment2));
+
+            Pair<Parcelable, FragmentManagerNonConfig> savedState =
+                    FragmentTestUtil.destroy(mActivityRule, fc);
+            fc = FragmentTestUtil.createController(mActivityRule);
+            FragmentTestUtil.resume(mActivityRule, fc, savedState);
+            fm = fc.getFragmentManager();
+
+            assertEquals(1, fm.getFragments().size());
+            for (Fragment fragment : fm.getFragments()) {
+                assertTrue(fragment instanceof RemoveHelloInOnResume);
+            }
+        });
+    }
+
     private void executePendingTransactions(final FragmentManager fm) throws Throwable {
         mActivityRule.runOnUiThread(new Runnable() {
             @Override
@@ -1063,6 +1102,17 @@ public class FragmentLifecycleTest {
 
         public int getValue() {
             return mValue;
+        }
+    }
+
+    public static class RemoveHelloInOnResume extends Fragment {
+        @Override
+        public void onResume() {
+            super.onResume();
+            Fragment fragment = getFragmentManager().findFragmentByTag("Hello");
+            if (fragment != null) {
+                getFragmentManager().beginTransaction().remove(fragment).commit();
+            }
         }
     }
 }
