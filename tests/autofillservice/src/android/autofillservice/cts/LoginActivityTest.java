@@ -794,6 +794,52 @@ public class LoginActivityTest extends AutoFillServiceTestCase {
 
         // Set credentials...
         mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword(View::requestFocus);
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+
+        // Assert value of expected fields - should not be sanitized.
+        final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        assertTextAndValue(username, "malkovich");
+        final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+        assertTextAndValue(password, "malkovich");
+
+        // Sanity check: once saved, the session should be finsihed.
+        assertNoDanglingSessions();
+    }
+
+    @Test
+    public void testSaveOnlyOptionalField() throws Exception {
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME)
+                .setOptionalSavableIds(ID_PASSWORD)
+                .build());
+
+        // Trigger auto-fill.
+        mActivity.onUsername(View::requestFocus);
+
+        // Sanity check.
+        sUiBot.assertNoDatasets();
+
+        // Wait for onFill() before proceeding, otherwise the fields might be changed before
+        // the session started
+        sReplier.getNextFillRequest();
+
+        // Set credentials...
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword(View::requestFocus);
         mActivity.onPassword((v) -> v.setText("malkovich"));
 
         // ...and login
