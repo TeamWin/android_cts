@@ -362,6 +362,27 @@
                 android:text="@string/sample_text"
                 android:autoSizeTextType="uniform"
                 android:autoSizePresetSizes="@array/auto_size_predefined_sizes_redundant_values" />
+
+            <TextView
+                android:id="@+id/textview_justification_default"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text" />
+
+            <TextView
+                android:id="@+id/textview_justification_none"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:justificationMode="none" />
+
+            <TextView
+                android:id="@+id/textview_justification_inter_word"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_text"
+                android:justificationMode="inter_word" />
+
         </LinearLayout>
 
 </ScrollView>
