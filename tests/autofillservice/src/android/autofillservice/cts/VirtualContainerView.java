@@ -41,6 +41,7 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -198,6 +199,7 @@ class VirtualContainerView extends View {
                     .addAttribute("a2", "v2")
                     .addAttribute("a1", "v2")
                     .build());
+            child.setAutofillHints(new String[] {"c", "a", "a", "b", "a", "a"});
 
             if (!mSync) {
                 Log.d(TAG, "Commiting virtual child");
