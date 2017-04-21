@@ -22,6 +22,7 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getAutofillIds;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
+import android.autofillservice.cts.CannedFillResponse.Builder;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
@@ -64,6 +65,7 @@ final class CannedFillResponse {
     private final RemoteViews mPresentation;
     private final IntentSender mAuthentication;
     private final String[] mAuthenticationIds;
+    private final String[] mIgnoredIds;
     private final CharSequence mNegativeActionLabel;
     private final IntentSender mNegativeActionListener;
     private final int mFlags;
@@ -78,6 +80,7 @@ final class CannedFillResponse {
         mPresentation = builder.mPresentation;
         mAuthentication = builder.mAuthentication;
         mAuthenticationIds = builder.mAuthenticationIds;
+        mIgnoredIds = builder.mIgnoredIds;
         mNegativeActionLabel = builder.mNegativeActionLabel;
         mNegativeActionListener = builder.mNegativeActionListener;
         mFlags = builder.mFlags;
@@ -125,8 +128,11 @@ final class CannedFillResponse {
             }
             builder.setSaveInfo(saveInfo.build());
         }
+        if (mIgnoredIds != null) {
+            builder.setIgnoredIds(getAutofillIds(structure, mIgnoredIds));
+        }
         return builder
-                .setExtras(mExtras)
+                .setClientState(mExtras)
                 .setAuthentication(getAutofillIds(structure, mAuthenticationIds), mAuthentication,
                         mPresentation)
                 .build();
@@ -142,6 +148,7 @@ final class CannedFillResponse {
                 + ", hasPresentation=" + (mPresentation != null)
                 + ", hasAuthentication=" + (mAuthentication != null)
                 + ", authenticationIds=" + Arrays.toString(mAuthenticationIds)
+                + ", ignoredIds=" + Arrays.toString(mIgnoredIds)
                 + "]";
     }
 
@@ -155,6 +162,7 @@ final class CannedFillResponse {
         private RemoteViews mPresentation;
         private IntentSender mAuthentication;
         private String[] mAuthenticationIds;
+        private String[] mIgnoredIds;
         private CharSequence mNegativeActionLabel;
         private IntentSender mNegativeActionListener;
         private int mFlags;
@@ -196,7 +204,7 @@ final class CannedFillResponse {
 
         /**
          * Sets the extra passed to {@link
-         * android.service.autofill.FillResponse.Builder#setExtras(Bundle)}.
+         * android.service.autofill.FillResponse.Builder#setClientState(Bundle)}.
          */
         public Builder setExtras(Bundle data) {
             mExtras = data;
@@ -224,6 +232,14 @@ final class CannedFillResponse {
          */
         public Builder setAuthenticationIds(String... ids) {
             mAuthenticationIds = ids;
+            return this;
+        }
+
+        /**
+         * Sets the ignored fields based on resource ids.
+         */
+        public Builder setIgnoreFields(String...ids) {
+            mIgnoredIds = ids;
             return this;
         }
 
