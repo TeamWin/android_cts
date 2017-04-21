@@ -277,6 +277,9 @@ cts_deqp_test_apis := \
     gles3 \
     gles31
 
+cts_device_executables := \
+    CVE-2016-8430
+
 # All the files that will end up under the repository/testcases
 # directory of the final CTS distribution.
 CTS_TEST_CASES := $(call cts-get-lib-paths,$(cts_host_libraries)) \
