@@ -32,6 +32,7 @@ import android.content.res.Resources.NotFoundException;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Typeface;
+import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -328,6 +329,40 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(100, hdpi.getIntrinsicWidth());
     }
 
+    public void testGetDrawableForDensityWithZeroDensityIsSameAsGetDrawable() {
+        final Drawable defaultDrawable = mResources.getDrawable(R.drawable.density_test, null);
+        assertNotNull(defaultDrawable);
+
+        final Drawable densityDrawable = mResources.getDrawableForDensity(R.drawable.density_test,
+                0 /*density*/, null);
+        assertNotNull(densityDrawable);
+
+        assertEquals(defaultDrawable.getIntrinsicWidth(), densityDrawable.getIntrinsicWidth());
+    }
+
+    private Drawable extractForegroundFromAdaptiveIconDrawable(int id, int density) {
+        final Drawable drawable = mResources.getDrawableForDensity(id, density, null);
+        assertTrue(drawable instanceof AdaptiveIconDrawable);
+        return ((AdaptiveIconDrawable) drawable).getForeground();
+    }
+
+    public void testGetDrawableForDensityWithAdaptiveIconDrawable() {
+        final Drawable ldpi = extractForegroundFromAdaptiveIconDrawable(R.drawable.adaptive_icon,
+                DisplayMetrics.DENSITY_LOW);
+        assertNotNull(ldpi);
+        assertEquals(300, ldpi.getIntrinsicWidth());
+
+        final Drawable mdpi = extractForegroundFromAdaptiveIconDrawable(R.drawable.adaptive_icon,
+                DisplayMetrics.DENSITY_MEDIUM);
+        assertNotNull(mdpi);
+        assertEquals(200, mdpi.getIntrinsicWidth());
+
+        final Drawable hdpi = extractForegroundFromAdaptiveIconDrawable(R.drawable.adaptive_icon,
+                DisplayMetrics.DENSITY_HIGH);
+        assertNotNull(hdpi);
+        assertEquals(100, hdpi.getIntrinsicWidth());
+    }
+
     public void testGetAnimation() throws Exception {
         try {
             mResources.getAnimation(-1);
@@ -410,6 +445,19 @@ public class ResourcesTest extends AndroidTestCase {
         mResources.getValueForDensity(R.string.density_string,
                 DisplayMetrics.DENSITY_HIGH, tv, false);
         assertEquals("hdpi", tv.coerceToString());
+    }
+
+    public void testGetValueForDensityWithZeroDensityIsSameAsGetValue() {
+        final TypedValue defaultTv = new TypedValue();
+        mResources.getValue(R.string.density_string, defaultTv, false);
+
+        final TypedValue densityTv = new TypedValue();
+        mResources.getValueForDensity(R.string.density_string, 0 /*density*/, densityTv, false);
+
+        assertEquals(defaultTv.assetCookie, densityTv.assetCookie);
+        assertEquals(defaultTv.data, densityTv.data);
+        assertEquals(defaultTv.type, densityTv.type);
+        assertEquals(defaultTv.string, densityTv.string);
     }
 
     public void testGetAssets() {
