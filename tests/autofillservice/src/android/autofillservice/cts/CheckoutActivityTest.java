@@ -152,7 +152,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
         mActivity.assertAutoFilled();
     }
 
-    // TODO(b/33197203): this should be a pure unit test exercising onProvideAutofillStructure(),
+    // TODO: this should be a pure unit test exercising onProvideAutofillStructure(),
     // but that would require creating a custom ViewStructure.
     @Test
     public void testGetAutofillOptionsSorted() throws Exception {

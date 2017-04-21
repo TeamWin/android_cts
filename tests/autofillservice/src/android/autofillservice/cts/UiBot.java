@@ -89,8 +89,7 @@ final class UiBot {
         try {
             ui = findDatasetPicker();
         } catch (Throwable t) {
-            // TODO(b/33197203): use a more elegant check than catching the expection because it's
-            // not showing...
+            // Use a more elegant check than catching the expection because it's not showing...
             return;
         }
         throw new RetryableException("floating ui is shown: %s", ui);
@@ -216,8 +215,8 @@ final class UiBot {
         try {
             assertSaveShowing(type);
         } catch (Throwable t) {
-            // TODO(b/33197203): use a more elegant check than catching the expection because it's
-            // not showing (in which case it wouldn't need a type as parameter).
+            // TODO: use a more elegant check than catching the expection because it's not showing
+            // (in which case it wouldn't need a type as parameter).
             return;
         }
         throw new RetryableException("snack bar is showing");
@@ -323,7 +322,7 @@ final class UiBot {
      */
     UiObject2 getAutofillMenuOption(String id) {
         final UiObject2 field = waitForObject(By.res(mPackageName, id));
-        // TODO(b/33197203, b/33802548): figure out why obj.longClick() doesn't always work
+        // TODO: figure out why obj.longClick() doesn't always work
         field.click(3000);
 
         final List<UiObject2> menuItems = waitForObjects(

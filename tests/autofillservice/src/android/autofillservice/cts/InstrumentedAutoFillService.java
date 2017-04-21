@@ -68,8 +68,6 @@ public class InstrumentedAutoFillService extends AutofillService {
         return sInstance.get();
     }
 
-    // TODO(b/33197203, b/33802548): add tests for onConnected() / onDisconnected() and/or remove
-    // overriden methods below that are only logging their calls.
     @Override
     public void onConnected() {
         Log.v(TAG, "onConnected(): " + sConnectionStates);
