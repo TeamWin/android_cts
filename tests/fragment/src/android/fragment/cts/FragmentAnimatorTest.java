@@ -34,6 +34,7 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Pair;
 import android.view.View;
+import android.view.animation.TranslateAnimation;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -433,6 +434,36 @@ public class FragmentAnimatorTest {
         Fragment fragment1restored = fm2.findFragmentByTag("1");
         assertNotNull(fragment1restored);
         assertNotNull(fragment1restored.getView());
+    }
+
+    // When an animation is running on a Fragment's View, the view shouldn't be
+    // prevented from being removed. There's no way to directly test this, so we have to
+    // test to see if the animation is still running.
+    @Test
+    public void clearAnimations() throws Throwable {
+        final FragmentManager fm = mActivityRule.getActivity().getFragmentManager();
+
+        final StrictViewFragment fragment1 = new StrictViewFragment();
+        fm.beginTransaction()
+                .add(R.id.fragmentContainer, fragment1)
+                .addToBackStack(null)
+                .commit();
+        FragmentTestUtil.waitForExecution(mActivityRule);
+
+        final View fragmentView = fragment1.getView();
+
+        final TranslateAnimation xAnimation = new TranslateAnimation(0, 1000, 0, 0);
+        xAnimation.setDuration(10000);
+        mActivityRule.runOnUiThread(() -> {
+            fragmentView.startAnimation(xAnimation);
+            assertEquals(xAnimation, fragmentView.getAnimation());
+        });
+
+        FragmentTestUtil.waitForExecution(mActivityRule);
+        FragmentTestUtil.popBackStackImmediate(mActivityRule);
+        mActivityRule.runOnUiThread(() -> {
+            assertNull(fragmentView.getAnimation());
+        });
     }
 
     private void assertEnterPopExit(AnimatorFragment fragment) throws Throwable {
