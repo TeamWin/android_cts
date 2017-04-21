@@ -36,6 +36,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.text.Html;
 import android.util.Log;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -260,9 +261,10 @@ final class UiBot {
         switch (types.length) {
             case 1:
                 final String expectedTitle = (types[0] == SAVE_DATA_TYPE_GENERIC)
-                        ? getString(RESOURCE_STRING_SAVE_TITLE, serviceLabel)
-                        : getString(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE,
-                                getSaveTypeString(types[0]), serviceLabel);
+                        ? Html.fromHtml(getString(RESOURCE_STRING_SAVE_TITLE,
+                                serviceLabel), 0).toString()
+                        : Html.fromHtml(getString(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE,
+                                getSaveTypeString(types[0]), serviceLabel), 0).toString();
                 assertThat(actualTitle).isEqualTo(expectedTitle);
                 break;
             case 2:
