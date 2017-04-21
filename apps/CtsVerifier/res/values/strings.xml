@@ -521,6 +521,15 @@
     <string name="ble_mtu_mismatch_message">MTU is not correct.(Request:%1$d, Actual:%2$d)</string>
     <string name="ble_mtu_fail_message">MTU test: failed to receive data</string>
 
+    <string name="companion_test">Companion Device Test</string>
+    <string name="companion_test_info">
+        This test checks that APIs to manage companion devices are working correctly,
+        including showing the dialog to the user to verify a device, as well as updating an internal
+        record once the user made the choice and then removing it.\n\n
+        Before proceeding, make sure you have a bluetooth device nearby and discoverable.
+        Once you press the button, wait for a dialog to pop up and select your device from the list.
+    </string>
+
     <!-- Strings for FeatureSummaryActivity -->
     <string name="feature_summary">Hardware/Software Feature Summary</string>
     <string name="feature_summary_info">This is a test for...</string>
