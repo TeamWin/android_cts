@@ -278,6 +278,7 @@ public class StorageManagerTest extends AndroidTestCase {
         }
 
         assertEquals(extUuid, mStorageManager.getUuidForPath(mContext.getExternalCacheDir()));
+        assertEquals(extUuid, mStorageManager.getUuidForPath(new File("/sdcard/")));
 
         assertNoUuid(new File("/"));
         assertNoUuid(new File("/proc/"));
