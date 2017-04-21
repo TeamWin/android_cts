@@ -5992,6 +5992,17 @@ public class TextViewTest {
     }
 
     @Test
+    public void testJustificationByStyle() {
+        TextView defaultTv = findTextView(R.id.textview_justification_default);
+        TextView noneTv = findTextView(R.id.textview_justification_none);
+        TextView interWordTv = findTextView(R.id.textview_justification_inter_word);
+
+        assertEquals(Layout.JUSTIFICATION_MODE_NONE, defaultTv.getJustificationMode());
+        assertEquals(Layout.JUSTIFICATION_MODE_NONE, noneTv.getJustificationMode());
+        assertEquals(Layout.JUSTIFICATION_MODE_INTER_WORD, interWordTv.getJustificationMode());
+    }
+
+    @Test
     public void testSetAndGetCustomSelectionActionModeCallback() throws Throwable {
         final String text = "abcde";
         mActivityRule.runOnUiThread(() -> {
