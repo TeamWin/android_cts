@@ -265,7 +265,7 @@ class VirtualContainerView extends View {
         }
 
         void changeFocus(boolean focused) {
-            // TODO(b/33197203, b/33802548): fix bounds
+            // TODO: fix bounds values
             Log.d(TAG, "changeFocus() on " + text.id + ": " + focused + " bounds: " + bounds);
             this.focused = focused;
             if (focused) {

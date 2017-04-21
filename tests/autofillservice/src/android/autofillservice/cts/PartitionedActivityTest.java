@@ -633,7 +633,4 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.focusCell(2, 2);
         sUiBot.assertNoDatasets();
     }
-
-    // TODO(b/33197203, b/35707731): test force autofill after autofilled
-    // TODO(b/33197203, b/35707731): test save with different subtitles and custom no button
 }

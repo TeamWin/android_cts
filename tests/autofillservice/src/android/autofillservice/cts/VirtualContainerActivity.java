@@ -27,15 +27,6 @@ import android.autofillservice.cts.VirtualContainerView.Line.OneTimeLineWatcher;
 import android.graphics.Canvas;
 import android.os.Bundle;
 
-/*
- * TODO(b/33197203): lotta of improvements:
- *
- * - add clear button
- * - add login button and logic
- * - fix view bounds
- * - improve focus area
- */
-
 /**
  * A custom activity that uses {@link Canvas} to draw the following fields:
  *
