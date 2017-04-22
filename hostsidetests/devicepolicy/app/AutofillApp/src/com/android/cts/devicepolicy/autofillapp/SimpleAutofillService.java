@@ -16,23 +16,24 @@
 
 package com.android.cts.devicepolicy.autofillapp;
 
-import android.app.assist.AssistStructure;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.service.autofill.AutofillService;
 import android.service.autofill.FillCallback;
+import android.service.autofill.FillRequest;
 import android.service.autofill.SaveCallback;
+import android.service.autofill.SaveRequest;
 
 public class SimpleAutofillService extends AutofillService {
 
     @Override
-    public void onFillRequest(AssistStructure structure, Bundle data, int flags,
-            CancellationSignal cancellationSignal, FillCallback callback) {
+    public void onFillRequest(FillRequest request, CancellationSignal cancellationSignal,
+            FillCallback callback) {
         callback.onSuccess(null);
     }
 
     @Override
-    public void onSaveRequest(AssistStructure structure, Bundle data, SaveCallback callback) {
+    public void onSaveRequest(SaveRequest request, SaveCallback callback) {
         callback.onSuccess();
     }
 }
