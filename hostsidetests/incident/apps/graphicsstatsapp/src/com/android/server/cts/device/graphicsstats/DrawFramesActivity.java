@@ -20,14 +20,17 @@ import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Choreographer;
+import android.view.FrameMetrics;
 import android.view.View;
+import android.view.Window;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class DrawFramesActivity extends Activity {
+public class DrawFramesActivity extends Activity implements Window.OnFrameMetricsAvailableListener {
 
     public static final int FRAME_JANK_RECORD_DRAW = 1 << 0;
     public static final int FRAME_JANK_ANIMATION = 1 << 1;
@@ -51,10 +54,14 @@ public class DrawFramesActivity extends Activity {
     private CountDownLatch mFramesFinishedFence = mReady;
     private int mFrameIndex;
     private int[] mFramesToDraw;
+    private int mDroppedReportsCount = 0;
+    private int mRenderedFrames = 0;
 
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        getWindow().addOnFrameMetricsAvailableListener(this, new Handler());
+
         mChoreographer = Choreographer.getInstance();
         mColorView = new View(this) {
             {
@@ -73,7 +80,6 @@ public class DrawFramesActivity extends Activity {
             }
         };
         updateColor();
-        mColorView.getViewTreeObserver().addOnDrawListener(this::onDraw);
         setContentView(mColorView);
     }
 
@@ -126,10 +132,6 @@ public class DrawFramesActivity extends Activity {
         }
     }
 
-    private void onDraw() {
-        mColorView.post(this::onDrawFinished);
-    }
-
     private void onDrawFinished() {
         if (mFramesToDraw != null && mFrameIndex < mFramesToDraw.length - 1) {
             mFrameIndex++;
@@ -171,5 +173,21 @@ public class DrawFramesActivity extends Activity {
             throw new TimeoutException("Drawing " + framesToDraw.length + " frames timed out after "
                     + timeoutDurationMs + "ms");
         }
+    }
+
+    public int getRenderedFramesCount() {
+        return mRenderedFrames;
+    }
+
+    public int getDroppedReportsCount() {
+        return mDroppedReportsCount;
+    }
+
+    @Override
+    public void onFrameMetricsAvailable(Window window, FrameMetrics frameMetrics,
+            int dropCountSinceLastInvocation) {
+        mDroppedReportsCount += dropCountSinceLastInvocation;
+        mRenderedFrames++;
+        onDrawFinished();
     }
 }
