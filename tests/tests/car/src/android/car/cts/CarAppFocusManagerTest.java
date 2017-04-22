@@ -21,6 +21,8 @@ import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND;
 
 import android.car.Car;
 import android.car.CarAppFocusManager;
+import android.platform.test.annotations.RequiresDevice;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
 import java.util.concurrent.Semaphore;
@@ -28,6 +30,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 
+
+@SmallTest
+@RequiresDevice
 public class CarAppFocusManagerTest extends CarApiTestBase {
     private static final String TAG = CarAppFocusManagerTest.class.getSimpleName();
     private CarAppFocusManager mManager;
