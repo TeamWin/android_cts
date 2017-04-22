@@ -196,8 +196,10 @@ public class StorageHostTest extends DeviceTestCase implements IAbiReceiver, IBu
     }
 
     public void doFullDisk() throws Exception {
-        // Clear all other cached data to give ourselves a clean slate
+        // Clear all other cached and external storage data to give ourselves a
+        // clean slate to test against
         getDevice().executeShellCommand("pm trim-caches 4096G");
+        getDevice().executeShellCommand("rm -rf /sdcard/*");
 
         // We're interested in any crashes while disk full
         final String lastEvent = getDevice().executeShellCommand("logcat -d -b events -t 1");
