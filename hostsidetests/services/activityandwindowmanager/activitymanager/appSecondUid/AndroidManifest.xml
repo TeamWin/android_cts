@@ -20,6 +20,7 @@
 
     <application>
         <activity android:name=".SecondActivity"
+                  android:resizeableActivity="true"
                   android:exported="true" />
         <receiver
             android:name=".LaunchBroadcastReceiver"

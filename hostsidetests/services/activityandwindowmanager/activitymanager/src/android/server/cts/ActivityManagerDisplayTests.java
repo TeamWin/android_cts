@@ -48,6 +48,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
     private static final String TEST_ACTIVITY_NAME = "TestActivity";
     private static final String VIRTUAL_DISPLAY_ACTIVITY = "VirtualDisplayActivity";
     private static final String RESIZEABLE_ACTIVITY_NAME = "ResizeableActivity";
+    private static final String NON_RESIZEABLE_ACTIVITY_NAME = "NonResizeableActivity";
     private static final String SECOND_ACTIVITY_NAME = "SecondActivity";
     private static final String THIRD_ACTIVITY_NAME = "ThirdActivity";
     private static final String VR_TEST_ACTIVITY_NAME = "VrTestActivity";
@@ -366,10 +367,8 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
         final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
         final ActivityManagerState.ActivityStack frontStack
                 = mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Activity launched on secondary display must be resumed",
+        assertEquals("Launched activity must be on the secondary display and resumed",
                 getActivityComponentName(TEST_ACTIVITY_NAME), frontStack.mResumedActivity);
-        assertEquals("Front stack must be on external display",
-                newDisplay.mDisplayId, frontStack.mDisplayId);
         mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
         // Check that activity config corresponds to display config.
@@ -377,6 +376,96 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 logSeparator);
         assertEquals("Activity launched on secondary display must have proper configuration",
                 CUSTOM_DENSITY_DPI, reportedSizes.densityDpi);
+    }
+
+    /**
+     * Tests launching a non-resizeable activity on virtual display. It should land on the
+     * default display.
+     */
+    public void testLaunchNonResizeableActivityOnSecondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
+        // Create new virtual display.
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(NON_RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
+
+        mAmWmState.assertFocusedActivity("Activity launched on secondary display must be focused",
+                NON_RESIZEABLE_ACTIVITY_NAME);
+
+        // Check that activity is on the right display.
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+        final ActivityManagerState.ActivityStack frontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityComponentName(NON_RESIZEABLE_ACTIVITY_NAME),
+                frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on the primary display", frontStackId);
+    }
+
+    /**
+     * Tests launching a non-resizeable activity on virtual display while split-screen is active
+     * on the primary display. It should land on the primary display and dismiss docked stack.
+     */
+    public void testLaunchNonResizeableActivityWithSplitScreen() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
+        // Start launching activity.
+        launchActivityInDockStack(LAUNCHING_ACTIVITY);
+        // Create new virtual display.
+        final DisplayState newDisplay =
+                new VirtualDisplayBuilder(this).setLaunchInSplitScreen(true).build();
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(NON_RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
+
+        mAmWmState.assertFocusedActivity("Activity launched on secondary display must be focused",
+                NON_RESIZEABLE_ACTIVITY_NAME);
+
+        // Check that activity is on the right display.
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+        final ActivityManagerState.ActivityStack frontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityComponentName(NON_RESIZEABLE_ACTIVITY_NAME),
+                frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on the primary display", frontStackId);
+        mAmWmState.assertDoesNotContainStack("Must not contain docked stack.", DOCKED_STACK_ID);
+    }
+
+    /**
+     * Tests moving a non-resizeable activity to a virtual display. It should land on the default
+     * display.
+     */
+    public void testMoveNonResizeableActivityToSecondaryDisplay() throws Exception {
+        if (!supportsMultiDisplay()) { return; }
+
+        // Create new virtual display.
+        final DisplayState newDisplay = new VirtualDisplayBuilder(this).build();
+        // Launch a non-resizeable activity on a primary display.
+        launchActivityInNewTask(NON_RESIZEABLE_ACTIVITY_NAME);
+        // Launch a resizeable activity on new secondary display to create a new stack there.
+        launchActivityOnDisplay(RESIZEABLE_ACTIVITY_NAME, newDisplay.mDisplayId);
+        int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mDisplayId);
+
+        // Try to move the non-resizeable activity to new secondary display.
+        moveActivityToStack(NON_RESIZEABLE_ACTIVITY_NAME, frontStackId);
+        mAmWmState.computeState(mDevice, new String[] {NON_RESIZEABLE_ACTIVITY_NAME});
+
+        mAmWmState.assertFocusedActivity("Activity launched on secondary display must be focused",
+                NON_RESIZEABLE_ACTIVITY_NAME);
+
+        // Check that activity is on the right display.
+        frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+        final ActivityManagerState.ActivityStack frontStack =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityComponentName(NON_RESIZEABLE_ACTIVITY_NAME),
+                frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on the primary display", frontStackId);
     }
 
     /**
@@ -442,8 +531,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Launched activity must be resumed in front stack",
                 getActivityComponentName(TEST_ACTIVITY_NAME), frontStack.mResumedActivity);
-        assertEquals("Front stack must be on external display",
-                newDisplay.mDisplayId, frontStack.mDisplayId);
     }
 
     /**
@@ -471,8 +558,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerTestBase {
                 = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Launched activity must be resumed in front stack",
                 getActivityComponentName(TEST_ACTIVITY_NAME), frontStack.mResumedActivity);
-        assertEquals("Front stack must be on external display",
-                newDisplay.mDisplayId, frontStack.mDisplayId);
     }
 
     /**
