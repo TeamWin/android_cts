@@ -16,8 +16,13 @@
 package android.car.cts;
 
 import android.car.CarNotConnectedException;
+import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 
+
+@SmallTest
+@RequiresDevice
 public class ExceptionsTest extends AndroidTestCase {
     private static final String MESSAGE = "Oops!";
     private static final Exception CAUSE = new RuntimeException();
