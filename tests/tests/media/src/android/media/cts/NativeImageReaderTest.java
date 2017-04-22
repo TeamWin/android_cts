@@ -34,9 +34,10 @@ public class NativeImageReaderTest extends AndroidTestCase {
         Log.i("NativeImageReaderTest", "after loadlibrary");
     }
 
-    public void testSucceedsWithSupportedUsage() {
+    public void testSucceedsWithSupportedUsageFormat() {
         assertTrue(
-                "Native test failed, see log for details", testSucceedsWithSupportedUsageNative());
+                "Native test failed, see log for details",
+                testSucceedsWithSupportedUsageFormatNative());
     }
 
     public void testTakePictures() {
@@ -49,7 +50,7 @@ public class NativeImageReaderTest extends AndroidTestCase {
         assertTrue("Surface created is invalid.", surface.isValid());
     }
 
-    private static native boolean testSucceedsWithSupportedUsageNative();
+    private static native boolean testSucceedsWithSupportedUsageFormatNative();
     private static native boolean testTakePicturesNative();
     private static native Surface testCreateSurfaceNative();
 }
